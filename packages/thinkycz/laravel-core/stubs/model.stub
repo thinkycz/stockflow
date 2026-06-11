@@ -1,0 +1,94 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Thinkycz\LaravelCore\Models\BaseModel;
+use Thinkycz\LaravelCore\Support\Config;
+
+class {{ class }} extends BaseModel
+{
+    /**
+     * Base select query.
+     *
+     * @param Builder<static> $builder
+     */
+    public static function querySelect(Builder $builder): void
+    {
+        $builder->getQuery()->select($builder->qualifyColumn('*'));
+    }
+
+    /**
+     * Search scope.
+     *
+     * @param Builder<static> $builder
+     */
+    public static function scopeSearch(Builder $builder, string $search): void
+    {
+        if (Config::inject()->appEnvIs(['testing'])) {
+            $builder->getQuery()->where($builder->qualifyColumn('title'), $search);
+        } else {
+            $builder->getQuery()->whereFullText($builder->qualifyColumn('title'), $search);
+        }
+    }
+
+    /**
+     * Scope user id.
+     *
+     * @param Builder<static> $builder
+     * @param array<mixed> $ids
+     */
+    public static function scopeUserId(Builder $builder, array $ids): void
+    {
+        static::scopeIn($builder, 'user_id', $ids);
+    }
+
+    /**
+     * Title getter.
+     */
+    public function getTitle(): string
+    {
+        return $this->assertString('title');
+    }
+
+    /**
+     * User relationship.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * User getter.
+     */
+    public function getUser(): User
+    {
+        return $this->assertRelationship('user', User::class);
+    }
+
+    /**
+     * User id getter.
+     */
+    public function getUserId(): int
+    {
+        return $this->assertInt('user_id');
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'user_id' => 'integer',
+        ];
+    }
+}

@@ -1,0 +1,63 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Http\Controllers\Api\{{ model }}\{{ model }}IndexController;
+use {{ namespacedModel }};
+use App\Models\User;
+use Database\Factories\{{ model }}Factory;
+use Database\Factories\UserFactory;
+use Thinkycz\LaravelCore\Support\Resolver;
+
+test('index {{ table }}', function (): void {
+    $auth = UserFactory::new()->createOne();
+    expect($auth)->toBeInstanceOf(User::class);
+
+    $model = {{ model }}Factory::new()
+        ->for($auth)
+        ->createOne();
+    expect($model)->toBeInstanceOf({{ model }}::class);
+
+    $query = [
+        'filter' => [
+            'id' => [$model->getKey()],
+            'slug' => [$model->getRouteKey()],
+            'search' => $model->getTitle(),
+        ],
+        'take' => {{ model }}IndexController::TAKE,
+        'sort' => {{ model }}IndexController::SORT,
+        'page' => 1,
+        'mode' => 'DEFAULT',
+    ];
+
+    $response = $this->be($auth)->get(Resolver::resolveUrlGenerator()->action({{ model }}IndexController::class, $query));
+
+    $response->assertOk();
+});
+
+test('index {{ table }} count', function (): void {
+    $auth = UserFactory::new()->createOne();
+    expect($auth)->toBeInstanceOf(User::class);
+
+    $model = {{ model }}Factory::new()
+        ->for($auth)
+        ->createOne();
+    expect($model)->toBeInstanceOf({{ model }}::class);
+
+    $query = [
+        'filter' => [
+            'id' => [$model->getKey()],
+            'slug' => [$model->getRouteKey()],
+            'search' => $model->getTitle(),
+        ],
+        'mode' => 'COUNT',
+    ];
+
+    $response = $this->be($auth)->get(Resolver::resolveUrlGenerator()->action({{ model }}IndexController::class, $query));
+
+    $response->assertOk();
+
+    $response->assertExactJson([
+        'data' => 1,
+    ]);
+});

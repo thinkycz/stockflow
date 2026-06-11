@@ -1,0 +1,50 @@
+{
+    "name": "thinkycz/laravel-core",
+    "description": "thinkycz/laravel-core",
+    "type": "library",
+    "keywords": [
+        "thinkycz",
+        "laravel",
+        "core"
+    ],
+    "homepage": "https://thinky.cz",
+    "readme": "README.md",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Thinkycz",
+            "email": "me@thinky.cz",
+            "homepage": "https://thinky.cz",
+            "role": "Author"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "laravel/framework": "^13.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Thinkycz\\LaravelCore\\": "src"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        },
+        "preferred-install": "dist",
+        "audit": {
+            "abandoned": "fail"
+        },
+        "optimize-autoloader": true,
+        "platform-check": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Thinkycz\\LaravelCore\\Providers\\CoreServiceProvider"
+            ]
+        }
+    }
+}

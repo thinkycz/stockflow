@@ -1,0 +1,352 @@
+{
+    "app": {
+        "name": "StockFlow"
+    },
+    "nav": {
+        "dashboard": "Nástěnka",
+        "inventory": "Inventář",
+        "stock_movements": "Skladové pohyby",
+        "stores": "Prodejny",
+        "reports": "Reporty",
+        "settings": "Nastavení",
+        "profile": "Profil",
+        "password": "Heslo",
+        "logout": "Odhlásit se"
+    },
+    "common": {
+        "save": "Uložit",
+        "cancel": "Zrušit",
+        "edit": "Upravit",
+        "delete": "Smazat",
+        "search": "Hledat",
+        "apply": "Použít",
+        "export": "Exportovat",
+        "loading": "Načítání...",
+        "no_results": "Nebyly nalezeny žádné výsledky.",
+        "results": "výsledků",
+        "searching_for": "Hledat",
+        "previous": "Předchozí",
+        "next": "Další"
+    },
+    "auth": {
+        "login": {
+            "title": "Přihlásit se",
+            "subtitle": "Pro pokračování zadejte své přihlašovací údaje.",
+            "submit": "Přihlásit se",
+            "forgot_link": "Zapomněli jste heslo?",
+            "back_link": "Zpět na přihlášení"
+        },
+        "register": {
+            "title": "Vytvořit účet",
+            "subtitle": "Začněte s autentizovaným Inertia pracovním prostorem.",
+            "submit": "Registrovat",
+            "login_link": "Přihlásit se"
+        },
+        "forgot": {
+            "title": "Zapomenuté heslo",
+            "subtitle": "Odešleme nové vygenerované heslo prostřednictvím core mail flow.",
+            "submit": "Odeslat heslo"
+        },
+        "reset": {
+            "title": "Obnovit heslo",
+            "subtitle": "Nastavte nové heslo pomocí platného tokenu pro obnovení.",
+            "submit": "Aktualizovat heslo",
+            "back_to_profile": "Zpět na profil",
+            "labels": {
+                "email": "E-mail",
+                "token": "Token",
+                "new_password": "Nové heslo"
+            }
+        },
+        "verify": {
+            "title": "Ověřit e-mail",
+            "description": "Ověření e-mailu je řízeno core notifikačním tokem. Odešlete novou ověřovací zprávu, pokud aktuální uživatel stále potřebuje ověřit svou adresu.",
+            "submit": "Odeslat ověřovací e-mail"
+        }
+    },
+    "settings": {
+        "title": "Nastavení",
+        "subtitle": "Spravujte údaje účtu a heslo.",
+        "profile": {
+            "title": "Profil",
+            "subtitle": "Aktualizujte údaje účtu a jazyk rozhraní.",
+            "submit": "Uložit profil"
+        },
+        "password": {
+            "title": "Heslo",
+            "subtitle": "Zvolte silné heslo a udržujte účet v bezpečí.",
+            "submit": "Aktualizovat heslo"
+        }
+    },
+    "dashboard": {
+        "title": "Nástěnka",
+        "subtitle": "Přehled o aktuálním stavu zásob a nedávné aktivitě.",
+        "welcome": "Přihlášený uživatel",
+        "settings_heading": "Nastavení",
+        "settings_description": "Aplikace používá referenční database-token cookie guard.",
+        "manage_profile": "Spravovat profil",
+        "metrics": {
+            "total_inventory_value": "Celková hodnota zásob",
+            "total_items": "Celkem položek",
+            "low_stock": "Nízké zásoby",
+            "today_movements": "Dnešní pohyby"
+        },
+        "recent": {
+            "title": "Nedávné skladové pohyby",
+            "subtitle": "Posledních 10 pohybů v systému.",
+            "empty": "Zatím žádné skladové pohyby.",
+            "number": "Číslo",
+            "type": "Typ",
+            "store": "Prodejna",
+            "quantity": "Množství",
+            "value": "Hodnota",
+            "date": "Datum"
+        }
+    },
+    "items": {
+        "title": "Inventář",
+        "subtitle": "Spravujte svůj katalog produktů a stav zásob.",
+        "title_create": "Přidat novou položku",
+        "subtitle_create": "Vytvořte novou skladovou položku. Množství nastavíte později skladovým pohybem.",
+        "title_edit": "Upravit položku",
+        "subtitle_edit": "Aktualizujte údaje položky. Množství zde nelze upravovat — vytvořte skladový pohyb.",
+        "add_item": "Přidat novou položku",
+        "search_placeholder": "Hledat podle názvu nebo SKU...",
+        "confirm_delete": "Opravdu chcete smazat tuto položku?",
+        "quantity_help": "Množství zde nelze upravovat. Pro změnu zásob vytvořte skladový pohyb.",
+        "unit_none": "— bez jednotky —",
+        "no_sku": "Bez SKU",
+        "back_to_inventory": "Zpět na inventář",
+        "adjust_stock": "Upravit zásoby",
+        "empty": {
+            "title": "Zatím žádné položky",
+            "description": "Vytvořte svou první skladovou položku."
+        },
+        "movements_empty": {
+            "title": "Zatím žádné pohyby",
+            "description": "Tato položka nemá žádnou historii pohybů. Vytvořte příjem nebo úpravu pro zaznamenání zásob."
+        },
+        "status": {
+            "in_stock": "Skladem",
+            "low_stock": "Nízký stav",
+            "out_of_stock": "Vyprodáno"
+        },
+        "columns": {
+            "title": "Položka",
+            "sku": "SKU",
+            "unit": "Jedn.",
+            "quantity": "Množství",
+            "price": "Cena",
+            "total_value": "Hodnota",
+            "status": "Stav",
+            "actions": "Akce",
+            "description": "Popis"
+        },
+        "movement_history": "Historie pohybů",
+        "movement_history_subtitle": "Každý skladový pohyb, ve kterém se položka vyskytuje.",
+        "store_quantities": "Zásoby podle prodejen",
+        "store_quantities_subtitle": "Aktuální množství položky v jednotlivých prodejnách.",
+        "no_store_stock": "Zatím není evidováno množství v žádné prodejně.",
+        "metrics": {
+            "quantity": "Množství ve skladu",
+            "unit_price": "Jednotková cena",
+            "total_value": "Celková hodnota"
+        }
+    },
+    "stores": {
+        "title": "Prodejny",
+        "subtitle": "Spravujte své prodejny a sledujte, co přijaly.",
+        "title_create": "Přidat novou prodejnu",
+        "subtitle_create": "Vytvořte novou prodejnu nebo pobočku.",
+        "title_edit": "Upravit prodejnu",
+        "subtitle_edit": "Aktualizujte údaje prodejny.",
+        "add_store": "Přidat novou prodejnu",
+        "search_placeholder": "Hledat prodejny...",
+        "back_to_list": "Zpět na prodejny",
+        "warehouse": "Sklad",
+        "inventory": "Aktuální zásoby",
+        "inventory_subtitle": "Položky aktuálně naskladněné v této prodejně.",
+        "inventory_empty": "V této prodejně nejsou žádné zásoby.",
+        "items_received": "Přijaté položky",
+        "items_received_subtitle": "Položky přijaté touto prodejnou ve všech příjmech.",
+        "movement_history": "Historie pohybů",
+        "status": {
+            "active": "Aktivní",
+            "inactive": "Neaktivní"
+        },
+        "empty": {
+            "title": "Zatím žádné prodejny",
+            "description": "Prodejny se zobrazí, jakmile budou vytvořeny."
+        },
+        "items_empty": {
+            "title": "Nebyly přijaty žádné položky",
+            "description": "Tato prodejna zatím nic nepřijala."
+        },
+        "movements_empty": {
+            "title": "Zatím žádné pohyby",
+            "description": "K této prodejně nejsou připojeny žádné pohyby."
+        },
+        "metrics": {
+            "outgoing_movements": "Výdejové pohyby",
+            "received_quantity": "Celkem přijato",
+            "received_value": "Celková hodnota příjmu"
+        },
+        "columns": {
+            "name": "Název",
+            "address": "Adresa",
+            "status": "Stav",
+            "is_warehouse": "Tato prodejna je sklad",
+            "notes": "Poznámky",
+            "movements": "Pohyby",
+            "received_value": "Hodnota příjmu",
+            "outgoing_value": "Hodnota výdeje",
+            "item": "Položka",
+            "sku": "SKU",
+            "total_quantity": "Celkem množství",
+            "total_value": "Celková hodnota"
+        }
+    },
+    "stock_movements": {
+        "title": "Skladové pohyby",
+        "subtitle": "Zaznamenávejte každou změnu zásob jako neměnný auditní doklad.",
+        "title_create": "Vytvořit skladový pohyb",
+        "subtitle_create": "Vyberte zdroj a cíl; typ pohybu se odvodí automaticky.",
+        "title_adjustment": "Ruční úprava",
+        "subtitle_adjustment": "Nastavte nové množství a důvod pro každou položku v prodejně.",
+        "open_adjustment": "Ruční úprava",
+        "back_to_transfer": "Zpět na přesun",
+        "create_new": "Nový pohyb",
+        "back_to_list": "Zpět na pohyby",
+        "search_placeholder": "Hledat podle čísla...",
+        "types": {
+            "incoming": "Naskladnění",
+            "outgoing": "Vyskladnění",
+            "transfer": "Přesun mezi prodejnami",
+            "adjustment": "Ruční úprava"
+        },
+        "filter": {
+            "all_types": "Všechny typy",
+            "all_stores": "Všechny prodejny",
+            "date_from": "Od",
+            "date_to": "Do"
+        },
+        "empty": {
+            "title": "Zatím žádné pohyby",
+            "description": "Vytvořte svůj první skladový pohyb."
+        },
+        "form": {
+            "type": "Typ pohybu",
+            "source_store": "Zdroj",
+            "no_source": "Žádný / nákup",
+            "inferred_type": "Typ pohybu",
+            "store": "Prodejna",
+            "warehouse": "Cílový sklad",
+            "source_warehouse": "Zdrojový sklad",
+            "destination_store": "Cílová prodejna",
+            "adjustment_store": "Upravovaná prodejna",
+            "select_store": "Vyberte prodejnu",
+            "select_warehouse": "Vyberte sklad",
+            "note": "Poznámka / reference",
+            "items": "Položky pohybu",
+            "item": "Položka",
+            "select_item": "Vyberte položku",
+            "add_row": "Přidat řádek",
+            "remove_row": "Odebrat řádek",
+            "current_quantity": "Aktuální množství",
+            "warehouse_quantity": "Množství ve skladu",
+            "quantity_in": "Množství k přidání",
+            "quantity_out": "Množství k odebrání",
+            "quantity_after": "Nové množství",
+            "difference": "Rozdíl",
+            "reason": "Důvod",
+            "line_total": "Řádek celkem",
+            "remaining": "Zbývající",
+            "save": "Uložit skladový pohyb"
+        },
+        "summary": {
+            "title": "Přehled pohybu",
+            "rows": "Řádků",
+            "quantity": "Celkem množství",
+            "value": "Celková hodnota"
+        },
+        "reasons": {
+            "initial_stock": "Počáteční stav",
+            "missing": "Chybějící",
+            "stolen": "Odcizené",
+            "damaged": "Poškozené",
+            "inventory_correction": "Inventurní korekce",
+            "other": "Jiné"
+        },
+        "errors": {
+            "out_of_stock": "Množství přesahuje aktuální zásobu. Snižte množství nebo nejprve vytvořte úpravu."
+        },
+        "detail": {
+            "title": "Pohyb č.",
+            "items": "Položky pohybu",
+            "item": "Položka",
+            "sku": "SKU",
+            "quantity": "Množství",
+            "line_total": "Celkem",
+            "before": "Před",
+            "after": "Po",
+            "difference": "Rozdíl",
+            "reason": "Důvod",
+            "total_quantity": "Celkové množství",
+            "total_value": "Celková hodnota",
+            "items_count": "Počet položek",
+            "export_pdf": "Exportovat do PDF",
+            "print": "Tisk",
+            "notes": "Interní poznámky"
+        },
+        "columns": {
+            "number": "Číslo",
+            "type": "Typ",
+            "store": "Prodejna",
+            "items_count": "Položek",
+            "quantity": "Množství",
+            "value": "Hodnota",
+            "date": "Datum",
+            "created_by": "Vytvořil"
+        }
+    },
+    "reports": {
+        "title": "Reporty",
+        "subtitle": "Rychlý přehled o stavu zásob a trendech pohybů.",
+        "inventory_value": "Aktuální hodnota zásob",
+        "monthly_incoming": "Příjem tento měsíc",
+        "monthly_outgoing": "Výdej tento měsíc",
+        "store_consumption": "Spotřeba prodejen",
+        "store_consumption_subtitle": "Celkové množství a hodnota výdejů za prodejnu v aktuálním měsíci.",
+        "most_moved": "Nejpohybovanější položky",
+        "most_moved_subtitle": "Položky s největší kumulativní změnou zásob napříč typy.",
+        "adjustments_by_reason": "Úpravy podle důvodu",
+        "adjustments_by_reason_subtitle": "Počet řádků úprav zaznamenaných podle důvodu.",
+        "empty": {
+            "stores": "Zatím žádná data o spotřebě prodejen.",
+            "movements": "Zatím žádná data o pohybech.",
+            "adjustments": "Zatím žádné úpravy."
+        },
+        "store": "Prodejna",
+        "item": "Položka",
+        "sku": "SKU",
+        "reason": "Důvod",
+        "movements": "Pohyby",
+        "quantity": "Množství",
+        "value": "Hodnota",
+        "adjustment_count": "Počet úprav"
+    },
+    "fields": {
+        "email": "E-mail",
+        "password": "Heslo",
+        "password_confirmation": "Potvrzení hesla",
+        "current_password": "Současné heslo",
+        "new_password": "Nové heslo",
+        "locale": "Jazyk"
+    },
+    "locale": {
+        "switcher_label": "Jazyk",
+        "en": "Angličtina",
+        "cs": "Čeština",
+        "sk": "Slovenčina"
+    }
+}

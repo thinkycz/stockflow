@@ -1,0 +1,34 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Http\Controllers\Api\{{ model }}\{{ model }}UpdateController;
+use {{ namespacedModel }};
+use App\Models\User;
+use Database\Factories\{{ model }}Factory;
+use Database\Factories\UserFactory;
+use Thinkycz\LaravelCore\Support\Resolver;
+
+test('update {{ table }}', function (): void {
+    $auth = UserFactory::new()->createOne();
+    expect($auth)->toBeInstanceOf(User::class);
+
+    $model = {{ model }}Factory::new()
+        ->for($auth)
+        ->createOne();
+    expect($model)->toBeInstanceOf({{ model }}::class);
+
+    $newModel = {{ model }}Factory::new()
+        ->for($auth)
+        ->makeOne();
+    expect($newModel)->toBeInstanceOf({{ model }}::class);
+
+    $data = [
+        'id' => $model->getKey(),
+        'title' => $newModel->getTitle(),
+    ];
+
+    $response = $this->be($auth)->post(Resolver::resolveUrlGenerator()->action({{ model }}UpdateController::class), $data);
+
+    $response->assertNoContent();
+});

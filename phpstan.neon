@@ -1,0 +1,27 @@
+includes:
+    - ./vendor/phpstan/phpstan/conf/bleedingEdge.neon
+    - ./vendor/spaze/phpstan-disallowed-calls/disallowed-dangerous-calls.neon
+    - ./vendor/spaze/phpstan-disallowed-calls/disallowed-execution-calls.neon
+    - ./vendor/spaze/phpstan-disallowed-calls/disallowed-insecure-calls.neon
+    - ./vendor/spaze/phpstan-disallowed-calls/disallowed-loose-calls.neon
+    - ./phpstan-baseline.neon
+
+parameters:
+  level: max
+  checkMissingCallableSignature: true
+  checkTooWideReturnTypesInProtectedAndPublicMethods: true
+  checkUninitializedProperties: true
+  reportAlwaysTrueInLastCondition: true
+  checkBenevolentUnionTypes: true
+  treatPhpDocTypesAsCertain: false
+  paths:
+    - ./app
+    - ./config
+    - ./database
+    - ./resources
+    - ./packages
+    - ./routes
+  excludePaths:
+    - ./tests
+  stubFiles:
+    - ./phpstan.stub

@@ -1,0 +1,60 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use App\Http\Validation\{{ model }}Validity;
+use {{ namespacedModel }};
+use App\Models\User;
+use Thinkycz\LaravelCore\Exceptions\GenericHttpException;
+use Thinkycz\LaravelCore\Http\ApiFormRequest;
+use Thinkycz\LaravelCore\Routing\AutomaticController;
+use Thinkycz\LaravelCore\Support\Parser;
+use Thinkycz\LaravelCore\Support\Resolver;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+
+class {{ class }} extends AutomaticController
+{
+    /**
+     * Handle the incoming request.
+     */
+    public function __invoke(ApiFormRequest $request): SymfonyResponse
+    {
+        $auth = $this->authorize($request);
+
+        $validated = $this->validate($request);
+
+        $model = {{ model }}::mustFindByKey($validated->mustParseInt('id'));
+
+        if ($model->user()->isNot($auth)) {
+            throw GenericHttpException::unauthorized();
+        }
+
+        $model->delete();
+
+        return Resolver::resolveResponseFactory()->noContent();
+    }
+
+    /**
+     * Authorize the incoming request.
+     */
+    protected function authorize(ApiFormRequest $request): User
+    {
+        return User::mustAuth();
+    }
+
+    /**
+     * Validate the incoming request.
+     */
+    protected function validate(ApiFormRequest $request): Parser
+    {
+        $validity = new {{ model }}Validity();
+
+        return $request->builder()
+            ->rules([
+                'id' => $validity->id()->required(),
+            ])
+            ->validate();
+    }
+}

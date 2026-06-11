@@ -1,0 +1,9 @@
+Resolver::resolveRouteRegistrar()
+    ->prefix('v1/{{ table }}')
+    ->group(static function (Router $router): void {
+        $router->get('index', App\Http\Controllers\Api\{{ model }}\{{ model }}IndexController::class);
+        $router->get('show', App\Http\Controllers\Api\{{ model }}\{{ model }}ShowController::class);
+        $router->post('store', App\Http\Controllers\Api\{{ model }}\{{ model }}StoreController::class);
+        $router->post('update', App\Http\Controllers\Api\{{ model }}\{{ model }}UpdateController::class);
+        $router->post('destroy', App\Http\Controllers\Api\{{ model }}\{{ model }}DestroyController::class);
+    });

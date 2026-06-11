@@ -1,0 +1,199 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use {{ namespacedModel }};
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Resources\JsonApi\JsonApiResource;
+use Thinkycz\LaravelCore\Http\ApiFormRequest;
+use Thinkycz\LaravelCore\Routing\AutomaticController;
+use Thinkycz\LaravelCore\Support\Parser;
+use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Typer;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+
+class {{ class }} extends AutomaticController
+{
+    /**
+     * Take.
+     */
+    public const TAKE = \PHP_INT_MAX;
+
+    /**
+     * Sort.
+     */
+    public const SORT = ['id', '-id', 'created_at', '-created_at', 'updated_at', '-updated_at', 'title', '-title'];
+
+    /**
+     * Mode.
+     *
+     * @var array<int, string>
+     */
+    public const MODE = ['DEFAULT', 'COUNT'];
+
+    /**
+     * Handle the incoming request.
+     */
+    public function __invoke(ApiFormRequest $request): SymfonyResponse
+    {
+        $auth = $this->authorize($request);
+
+        $validated = $this->validate($request);
+
+        $builder = {{ model }}::query();
+
+        $mode = $validated->mustParseNullableString('mode') ?? 'DEFAULT';
+
+        $this->filterSearch($builder, $validated);
+        $this->filterId($builder, $validated);
+        $this->filterNotId($builder, $validated);
+        $this->filterSlug($builder, $validated);
+        $this->filterNotSlug($builder, $validated);
+        $this->filterUserId($builder, $auth);
+
+        $this->sort($builder, $validated);
+
+        if ($mode === 'COUNT') {
+            return Resolver::resolveResponseFactory()->json(['data' => $builder->getQuery()->count()]);
+        }
+
+        $data = $builder->paginate($validated->mustParseNullableInt('take') ?? static::TAKE);
+
+        return JsonApiResource::collection($data)->response();
+    }
+
+    /**
+     * Sort query.
+     *
+     * @param Builder<{{ model }}> $builder
+     */
+    protected function sort(Builder $builder, Parser $validated): void
+    {
+        $sorts = $validated->mustParseNullableArray('sort') ?? [];
+
+        if (!\in_array('id', $sorts, true) && !\in_array('-id', $sorts, true)) {
+            $sorts[] = '-id';
+        }
+
+        foreach ($sorts as $mixed) {
+            $sort = Typer::assertString($mixed);
+
+            if (\str_starts_with($sort, '-')) {
+                $builder->getQuery()->orderByDesc($builder->qualifyColumn(\mb_substr($sort, 1)));
+            } else {
+                $builder->getQuery()->orderBy($builder->qualifyColumn($sort));
+            }
+        }
+    }
+
+    /**
+     * Filter by search.
+     *
+     * @param Builder<{{ model }}> $builder
+     */
+    protected function filterSearch(Builder $builder, Parser $validated): void
+    {
+        if ($validated->missing('filter.search')) {
+            return;
+        }
+
+        {{ model }}::scopeSearch($builder, $validated->mustParseString('filter.search'));
+    }
+
+    /**
+     * Filter by id.
+     *
+     * @param Builder<{{ model }}> $builder
+     */
+    protected function filterId(Builder $builder, Parser $validated): void
+    {
+        if ($validated->missing('filter.id')) {
+            return;
+        }
+
+        {{ model }}::scopeKey($builder, $validated->mustParseArray('filter.id'));
+    }
+
+    /**
+     * Filter by not id.
+     *
+     * @param Builder<{{ model }}> $builder
+     */
+    protected function filterNotId(Builder $builder, Parser $validated): void
+    {
+        if ($validated->missing('filter.not_id')) {
+            return;
+        }
+
+        {{ model }}::scopeNotKey($builder, $validated->mustParseArray('filter.not_id'));
+    }
+
+    /**
+     * Filter by slug.
+     *
+     * @param Builder<{{ model }}> $builder
+     */
+    protected function filterSlug(Builder $builder, Parser $validated): void
+    {
+        if ($validated->missing('filter.slug')) {
+            return;
+        }
+
+        {{ model }}::scopeRouteKey($builder, $validated->mustParseArray('filter.slug'));
+    }
+
+    /**
+     * Filter by not slug.
+     *
+     * @param Builder<{{ model }}> $builder
+     */
+    protected function filterNotSlug(Builder $builder, Parser $validated): void
+    {
+        if ($validated->missing('filter.not_slug')) {
+            return;
+        }
+
+        {{ model }}::scopeNotRouteKey($builder, $validated->mustParseArray('filter.not_slug'));
+    }
+
+    /**
+     * Filter by user id.
+     *
+     * @param Builder<{{ model }}> $builder
+     */
+    protected function filterUserId(Builder $builder, User $auth): void
+    {
+        {{ model }}::scopeUserId($builder, [$auth->getKey()]);
+    }
+
+    /**
+     * Authorize the incoming request.
+     */
+    protected function authorize(ApiFormRequest $request): User
+    {
+        return User::mustAuth();
+    }
+
+    /**
+     * Validate the incoming request.
+     */
+    protected function validate(ApiFormRequest $request): Parser
+    {
+        return $request->builder()
+            ->filter()
+            ->filterId()
+            ->filterNotId()
+            ->filterSlug()
+            ->filterNotSlug()
+            ->filterSearch()
+            ->take(static::TAKE)
+            ->mode(static::MODE)
+            ->sort(static::SORT)
+            ->page()
+            ->jsonApi()
+            ->validate();
+    }
+}

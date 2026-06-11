@@ -1,0 +1,57 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use App\Http\Validation\{{ model }}Validity;
+use {{ namespacedModel }};
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Resources\JsonApi\JsonApiResource;
+use Thinkycz\LaravelCore\Http\ApiFormRequest;
+use Thinkycz\LaravelCore\Routing\AutomaticController;
+use Thinkycz\LaravelCore\Support\Parser;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+
+class {{ class }} extends AutomaticController
+{
+    /**
+     * Handle the incoming request.
+     */
+    public function __invoke(ApiFormRequest $request): SymfonyResponse
+    {
+        $auth = $this->authorize($request);
+
+        $validated = $this->validate($request);
+
+        $model = {{ model }}::mustFindByKey($validated->mustParseInt('id'), static function (Builder $builder): void {
+            {{ model }}::querySelect($builder);
+        });
+
+        return (new JsonApiResource($model))->response();
+    }
+
+    /**
+     * Authorize the incoming request.
+     */
+    protected function authorize(ApiFormRequest $request): User
+    {
+        return User::mustAuth();
+    }
+
+    /**
+     * Validate the incoming request.
+     */
+    protected function validate(ApiFormRequest $request): Parser
+    {
+        $validity = new {{ model }}Validity();
+
+        return $request->builder()
+            ->rules([
+                'id' => $validity->id()->required(),
+            ])
+            ->jsonApi()
+            ->validate();
+    }
+}

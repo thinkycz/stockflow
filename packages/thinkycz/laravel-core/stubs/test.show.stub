@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Http\Controllers\Api\{{ model }}\{{ model }}ShowController;
+use {{ namespacedModel }};
+use App\Models\User;
+use Database\Factories\{{ model }}Factory;
+use Database\Factories\UserFactory;
+use Thinkycz\LaravelCore\Support\Resolver;
+
+test('show {{ table }}', function (): void {
+    $auth = UserFactory::new()->createOne();
+    expect($auth)->toBeInstanceOf(User::class);
+
+    $model = {{ model }}Factory::new()
+        ->for($auth)
+        ->createOne();
+    expect($model)->toBeInstanceOf({{ model }}::class);
+
+    $query = [
+        'id' => $model->getKey(),
+    ];
+
+    $response = $this->be($auth)->get(Resolver::resolveUrlGenerator()->action({{ model }}ShowController::class, $query));
+
+    $response->assertOk();
+});

@@ -1,0 +1,4 @@
+include:
+  - project: 'p4858/ci-cd/gitlab-ci'
+    ref: main
+    file: '/src/laravel.yml'

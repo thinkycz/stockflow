@@ -1,0 +1,21 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Thinkycz\LaravelCore\Support\Config;
+
+class {{ class }} extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        if (Config::inject()->appEnvIs(['staging', 'production'])) {
+            return;
+        }
+    }
+}

@@ -1,0 +1,46 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Thinkycz\LaravelCore\Support\Trans;
+
+enum {{ class }}: string
+{
+    case CASE = 'CASE';
+
+    /**
+     * Get possible values.
+     *
+     * @return array<int, string>
+     */
+    public static function values(): array
+    {
+        return \array_column(self::cases(), 'value');
+    }
+
+    /**
+     * Get possible options with translations.
+     *
+     * @return array<string, string>
+     */
+    public static function options(): array
+    {
+        $options = [];
+
+        foreach (self::cases() as $case) {
+            $options[$case->value] = $case->getTranslation();
+        }
+
+        return $options;
+    }
+
+    /**
+     * Get the translated label for the role.
+     */
+    public function getTranslation(): string
+    {
+        return Trans::inject()->assertString('nova.shared.options.' . self::class . '.' . $this->value);
+    }
+}

@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Http\Controllers\Api\{{ model }}\{{ model }}DestroyController;
+use {{ namespacedModel }};
+use App\Models\User;
+use Database\Factories\{{ model }}Factory;
+use Database\Factories\UserFactory;
+use Thinkycz\LaravelCore\Support\Resolver;
+
+test('destroy {{ table }}', function (): void {
+    $auth = UserFactory::new()->createOne();
+    expect($auth)->toBeInstanceOf(User::class);
+
+    $model = {{ model }}Factory::new()
+        ->for($auth)
+        ->createOne();
+    expect($model)->toBeInstanceOf({{ model }}::class);
+
+    $data = [
+        'id' => $model->getKey(),
+    ];
+
+    $response = $this->be($auth)->post(Resolver::resolveUrlGenerator()->action({{ model }}DestroyController::class), $data);
+
+    $response->assertNoContent();
+});

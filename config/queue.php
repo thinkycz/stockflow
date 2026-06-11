@@ -1,0 +1,91 @@
+<?php
+
+declare(strict_types=1);
+
+use Thinkycz\LaravelCore\Support\Env;
+
+$env = Env::inject();
+
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Default Queue Connection Name
+    |--------------------------------------------------------------------------
+    |
+    | Laravel's queue supports a variety of backends via a single, unified
+    | API, giving you convenient access to each backend using identical
+    | syntax for each. The default queue connection is defined below.
+    |
+    */
+
+    'default' => $env->parseNullableString('QUEUE_DRIVER') ?? $env->appEnvMap([
+        'local' => 'sync',
+        'testing' => 'sync',
+        'development' => 'redis',
+        'staging' => 'redis',
+        'production' => 'redis',
+    ]),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Queue Connections
+    |--------------------------------------------------------------------------
+    |
+    | Here you may configure the connection options for every queue backend
+    | used by your application. An example configuration is provided for
+    | each backend supported by Laravel. You're also free to add more.
+    |
+    | Drivers: "sync", "database", "beanstalkd", "sqs", "redis", "null"
+    |
+    */
+
+    'connections' => [
+        'sync' => [
+            'driver' => 'sync',
+        ],
+
+        'redis' => [
+            'driver' => 'redis',
+            'connection' => $env->parseNullableString('REDIS_QUEUE_CONNECTION') ?? 'default',
+            'queue' => $env->parseNullableString('REDIS_QUEUE') ?? 'default',
+            'retry_after' => $env->parseNullableInt('REDIS_QUEUE_RETRY_AFTER') ?? 90,
+            'block_for' => null,
+            'after_commit' => true,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Job Batching
+    |--------------------------------------------------------------------------
+    |
+    | The following options configure the database and table that store job
+    | batching information. These options can be updated to any database
+    | connection and table which has been defined by your application.
+    |
+    */
+
+    'batching' => [
+        'database' => $env->parseNullableString('DB_CONNECTION') ?? 'sqlite',
+        'table' => 'job_batches',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Failed Queue Jobs
+    |--------------------------------------------------------------------------
+    |
+    | These options configure the behavior of failed queue job logging so you
+    | can control how and where failed jobs are stored. Laravel ships with
+    | support for storing failed jobs in a simple file or in a database.
+    |
+    | Supported drivers: "database-uuids", "dynamodb", "file", "null"
+    |
+    */
+
+    'failed' => [
+        'driver' => $env->parseNullableString('QUEUE_FAILED_DRIVER') ?? 'database-uuids',
+        'database' => $env->parseNullableString('DB_CONNECTION') ?? 'sqlite',
+        'table' => 'failed_jobs',
+    ],
+];

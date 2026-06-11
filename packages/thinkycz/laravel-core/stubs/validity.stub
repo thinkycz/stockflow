@@ -1,0 +1,56 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Thinkycz\LaravelCore\Validation\BaseValidity;
+use Thinkycz\LaravelCore\Validation\Validity;
+
+class {{ class }}
+{
+    /**
+     * Base validity.
+     */
+    public BaseValidity $baseValidity;
+
+    /**
+     * Constructor.
+     */
+    public function __construct()
+    {
+        $this->baseValidity = new BaseValidity();
+    }
+
+    /**
+     * Id validation rules.
+     */
+    public function id(): Validity
+    {
+        return $this->baseValidity->id()->exists('{{ table }}', 'id');
+    }
+
+    /**
+     * Created at validation rules.
+     */
+    public function createdAt(): Validity
+    {
+        return $this->baseValidity->dateTime();
+    }
+
+    /**
+     * Updated at validation rules.
+     */
+    public function updatedAt(): Validity
+    {
+        return $this->baseValidity->dateTime();
+    }
+
+    /**
+     * Title validation rules.
+     */
+    public function title(): Validity
+    {
+        return $this->baseValidity->make()->varchar();
+    }
+}

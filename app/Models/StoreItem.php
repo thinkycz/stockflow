@@ -4,23 +4,16 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Database\Factories\StoreItemFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Thinkycz\LaravelCore\Models\BaseModel;
 use Thinkycz\LaravelCore\Support\Typer;
 
-/**
- * @property int $id
- * @property int $store_id
- * @property int $item_id
- * @property string $quantity
- * @property Store $store
- * @property Item $item
- */
 class StoreItem extends BaseModel
 {
-    /** @use HasFactory<\Database\Factories\StoreItemFactory> */
+    /** @use HasFactory<StoreItemFactory> */
     use HasFactory;
 
     /**
@@ -40,11 +33,9 @@ class StoreItem extends BaseModel
      */
     public static function scopeSearch(Builder $query, string $search): void
     {
-        $like = '%' . $search . '%';
-
-        $query->whereHas('item', static function (Builder $query) use ($like): void {
-            $query->where('title', 'like', $like)->getQuery()
-                ->orWhere('sku', 'like', $like);
+        $query->whereHas('item', static function (Builder $query) use ($search): void {
+            $query->where('title', 'like', '%' . $search . '%')->getQuery()
+                ->orWhere('sku', 'like', '%' . $search . '%');
         });
     }
 
@@ -52,6 +43,8 @@ class StoreItem extends BaseModel
      * Restrict the query to a curated set of columns for list views.
      *
      * @param Builder<StoreItem> $query
+     *
+     * @return Builder<StoreItem>
      */
     public static function querySelect(Builder $query): Builder
     {
@@ -76,6 +69,46 @@ class StoreItem extends BaseModel
     public function item(): BelongsTo
     {
         return $this->belongsTo(Item::class, 'item_id');
+    }
+
+    /**
+     * Store id getter.
+     */
+    public function getStoreId(): int
+    {
+        return $this->assertInt('store_id');
+    }
+
+    /**
+     * Item id getter.
+     */
+    public function getItemId(): int
+    {
+        return $this->assertInt('item_id');
+    }
+
+    /**
+     * Loaded or queried store.
+     */
+    public function getStore(): Store
+    {
+        if ($this->relationLoaded('store')) {
+            return $this->assertRelationship('store', Store::class);
+        }
+
+        return Typer::assertInstance($this->store()->first(), Store::class);
+    }
+
+    /**
+     * Loaded or queried item.
+     */
+    public function getItem(): Item
+    {
+        if ($this->relationLoaded('item')) {
+            return $this->assertRelationship('item', Item::class);
+        }
+
+        return Typer::assertInstance($this->item()->first(), Item::class);
     }
 
     /**

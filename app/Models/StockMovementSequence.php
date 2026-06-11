@@ -5,21 +5,26 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\StockMovementTypeEnum;
+use Database\Factories\StockMovementFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 use Thinkycz\LaravelCore\Models\BaseModel;
 use Thinkycz\LaravelCore\Support\Typer;
 
-/**
- * @property int $user_id
- * @property string $type
- * @property int $year
- * @property int $last_number
- */
 class StockMovementSequence extends BaseModel
 {
+    /** @use HasFactory<StockMovementFactory> */
     use HasFactory;
+
+    /**
+     * Composite key columns used by save queries.
+     *
+     * @var array<int, string>
+     */
+    private const array PRIMARY_KEYS = ['user_id', 'type', 'year'];
 
     /**
      * Indicates if the model should be timestamped.
@@ -38,10 +43,8 @@ class StockMovementSequence extends BaseModel
 
     /**
      * The primary key for the model.
-     *
-     * @var array<int, string>
      */
-    protected $primaryKey = ['user_id', 'type', 'year'];
+    protected $primaryKey = 'user_id';
 
     /**
      * Scope a search to nothing (no text search on this table).
@@ -57,6 +60,8 @@ class StockMovementSequence extends BaseModel
      * Restrict the query to a curated set of columns for list views.
      *
      * @param Builder<StockMovementSequence> $query
+     *
+     * @return Builder<StockMovementSequence>
      */
     public static function querySelect(Builder $query): Builder
     {
@@ -65,6 +70,13 @@ class StockMovementSequence extends BaseModel
 
     /**
      * Generate the next number for a given movement type and user, inside a row lock.
+     *
+     * The (user_id, type, year) row is treated as a single-row counter.
+     * Two concurrent first-time callers can both observe a missing row
+     * under `lockForUpdate`; the second `create()` then collides on the
+     * primary key. We catch the unique-key violation and retry the
+     * locked read+update path, which is now guaranteed to find the row
+     * the first caller just inserted.
      */
     public static function next(StockMovementTypeEnum $type, int $year, int $userId): string
     {
@@ -77,28 +89,30 @@ class StockMovementSequence extends BaseModel
                 ->first();
 
             if ($existing instanceof StockMovementSequence) {
-                $newNumber = $existing->getLastNumber() + 1;
-                static::query()
+                return self::bump($type, $year, $userId, $existing);
+            }
+
+            try {
+                return StockMovementSequence::query()->create([
+                    'user_id' => $userId,
+                    'type' => $type->value,
+                    'year' => $year,
+                    'last_number' => 1,
+                ]);
+            } catch (UniqueConstraintViolationException) {
+                $existing = static::query()
                     ->where('user_id', $userId)
                     ->where('type', $type->value)
                     ->where('year', $year)
-                    ->update(['last_number' => $newNumber]);
-                $existing->setRawAttributes(
-                    \array_merge($existing->getAttributes(), ['last_number' => $newNumber]),
-                    true,
-                );
+                    ->lockForUpdate()
+                    ->first();
 
-                return $existing;
+                if (!$existing instanceof StockMovementSequence) {
+                    throw new RuntimeException('Stock movement sequence race could not be resolved.');
+                }
+
+                return self::bump($type, $year, $userId, $existing);
             }
-
-            $created = StockMovementSequence::query()->create([
-                'user_id' => $userId,
-                'type' => $type->value,
-                'year' => $year,
-                'last_number' => 1,
-            ]);
-
-            return $created;
         });
 
         return \sprintf('%s-%d-%04d', $type->prefix(), $year, $row->getLastNumber());
@@ -147,12 +161,31 @@ class StockMovementSequence extends BaseModel
      */
     protected function setKeysForSaveQuery($query)
     {
-        $keys = (array) $this->getKeyName();
-
-        foreach ($keys as $key) {
+        foreach (self::PRIMARY_KEYS as $key) {
             $query->where($key, '=', $this->getAttribute($key));
         }
 
         return $query;
+    }
+
+    /**
+     * Increment and persist the last_number for an existing sequence row.
+     */
+    private static function bump(StockMovementTypeEnum $type, int $year, int $userId, self $existing): self
+    {
+        $newNumber = $existing->getLastNumber() + 1;
+
+        static::query()
+            ->where('user_id', $userId)
+            ->where('type', $type->value)
+            ->where('year', $year)
+            ->update(['last_number' => $newNumber]);
+
+        $existing->setRawAttributes(
+            \array_merge($existing->getAttributes(), ['last_number' => $newNumber]),
+            true,
+        );
+
+        return $existing;
     }
 }

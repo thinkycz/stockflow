@@ -13,7 +13,6 @@ use Thinkycz\LaravelCore\Routing\AutomaticController;
 use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Parser;
 use Thinkycz\LaravelCore\Support\Resolver;
-use Thinkycz\LaravelCore\Support\Typer;
 use Thinkycz\LaravelCore\Validation\AuthValidity;
 use Thinkycz\LaravelCore\Validation\Validity;
 
@@ -36,19 +35,23 @@ class MeUpdateController extends AutomaticController
             throw new AuthenticationException();
         }
 
-        $data = Typer::assertStringKeyArray($validated->except([
-            'fields',
-            'guard',
-            'include',
-        ]));
-
-        $user->update($data);
+        $user->update([
+            'email' => $validated->parseNullableString('email') ?? $user->getEmail(),
+            'locale' => $validated->parseNullableString('locale') ?? $user->getLocale(),
+        ]);
 
         return $user->meResource()->response();
     }
 
     /**
      * Validate the incoming request.
+     *
+     * Two passes are needed because the second pass's `unique` rule for
+     * `email` depends on the user identified by the `guard` field. The
+     * first pass extracts the guard and registers the same keys with
+     * `unsafe()` rules so the core's `SecureValidator` does not mark
+     * them as missing; the second pass replaces those rules with the
+     * real type/format validation.
      */
     protected function validate(ApiFormRequest $request): Parser
     {

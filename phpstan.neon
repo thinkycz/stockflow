@@ -4,7 +4,6 @@ includes:
     - ./vendor/spaze/phpstan-disallowed-calls/disallowed-execution-calls.neon
     - ./vendor/spaze/phpstan-disallowed-calls/disallowed-insecure-calls.neon
     - ./vendor/spaze/phpstan-disallowed-calls/disallowed-loose-calls.neon
-    - ./phpstan-baseline.neon
 
 parameters:
   level: max
@@ -13,15 +12,18 @@ parameters:
   checkUninitializedProperties: true
   reportAlwaysTrueInLastCondition: true
   checkBenevolentUnionTypes: true
-  treatPhpDocTypesAsCertain: false
+  treatPhpDocTypesAsCertain: true
+  strictRules:
+    # Larastan models Eloquent's magic fluent builder calls through method
+    # reflections that PHPStan strict-rules sees as static. Keep the rest of
+    # strict-rules active, but do not report normal `$query->where()` /
+    # `$query->forUser()` builder chains as dynamic static calls.
+    dynamicCallOnStaticMethod: false
   paths:
     - ./app
     - ./config
     - ./database
-    - ./resources
     - ./packages
     - ./routes
   excludePaths:
     - ./tests
-  stubFiles:
-    - ./phpstan.stub

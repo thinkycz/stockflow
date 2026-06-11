@@ -45,14 +45,16 @@ class StockMovementIndexController
         $dateFrom = $validated->assertNullableString('date_from');
         $dateTo = $validated->assertNullableString('date_to');
 
-        $query = StockMovement::querySelect(StockMovement::query()->forUser($user))
+        $baseQuery = StockMovement::query();
+        StockMovement::scopeForUser($baseQuery, $user);
+        $query = StockMovement::querySelect($baseQuery)
             ->with(['store', 'sourceStore', 'creator'])
             ->withCount('movementItems')
             ->orderByDesc('created_at')
             ->orderByDesc('id');
 
         if ($search !== '') {
-            $query->search($search);
+            StockMovement::scopeSearch($query, $search);
         }
 
         if ($type !== null) {
@@ -80,16 +82,18 @@ class StockMovementIndexController
                 'type' => $movement->getType()->value,
                 'display_label_key' => $movement->getDisplayLabelKey(),
                 'store_id' => $movement->getStoreId(),
-                'store_name' => $movement->store?->getName(),
+                'store_name' => $movement->getStore()?->getName(),
                 'created_at' => $movement->getCreatedAt()->toJSON(),
                 'total_quantity' => $movement->getTotalQuantity(),
                 'total_value' => $movement->getTotalValue(),
                 'items_count' => $movement->getItemsCount(),
-                'created_by' => $movement->creator?->getEmail(),
+                'created_by' => $movement->getCreator()?->getEmail(),
             ];
         })->all();
 
-        $stores = Store::querySelect(Store::query()->forUser($user))
+        $storesQuery = Store::query();
+        Store::scopeForUser($storesQuery, $user);
+        $stores = Store::querySelect($storesQuery)
             ->orderBy('name')
             ->get()
             ->map(static fn(Store $store): array => [

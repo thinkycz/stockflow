@@ -8,15 +8,22 @@ use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\StoreValidity;
 use App\Models\Store;
 use App\Models\User;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use stdClass;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class StoreIndexController
 {
     use ValidatesWebRequests;
+
+    /**
+     * Default page size.
+     */
+    public const int TAKE = 20;
 
     /**
      * Show the stores list with per-store totals.
@@ -32,15 +39,18 @@ class StoreIndexController
 
         $search = $validated->assertNullableString('search') ?? '';
 
-        $query = Store::querySelect(Store::query()->forUser($user))->orderBy('name');
+        $baseQuery = Store::query();
+        Store::scopeForUser($baseQuery, $user);
+        $query = Store::querySelect($baseQuery)->orderBy('name');
 
         if ($search !== '') {
-            $query->search($search);
+            Store::scopeSearch($query, $search);
         }
 
         $stores = $query->get()->map(function (Store $store): array {
+            /** @var stdClass|null $metrics */
             $metrics = DB::table('stock_movements')
-                ->where(function ($q) use ($store): void {
+                ->where(function (QueryBuilder $q) use ($store): void {
                     $q->where('store_id', $store->getKey())
                         ->orWhere('source_store_id', $store->getKey());
                 })
@@ -48,7 +58,7 @@ class StoreIndexController
                     SUM(CASE WHEN type = \'incoming\' THEN total_quantity ELSE 0 END) as total_received_quantity,
                     SUM(CASE WHEN type = \'incoming\' THEN total_value ELSE 0 END) as total_received_value,
                     SUM(CASE WHEN type = \'outgoing\' THEN total_value ELSE 0 END) as total_outgoing_value,
-                    COUNT(*) as movements_count
+                    COUNT(*) as movimientos_count
                 ')
                 ->first();
 
@@ -58,10 +68,10 @@ class StoreIndexController
                 'address' => $store->getAddress(),
                 'status' => $store->getStatus()->value,
                 'is_warehouse' => $store->isWarehouse(),
-                'movements_count' => Typer::assertInt($metrics->movements_count),
-                'total_received_quantity' => Typer::parseFloat($metrics->total_received_quantity),
-                'total_received_value' => Typer::parseFloat($metrics->total_received_value),
-                'total_outgoing_value' => Typer::parseFloat($metrics->total_outgoing_value),
+                'movements_count' => Typer::assertNullableInt($metrics->movements_count ?? null),
+                'total_received_quantity' => Typer::parseFloat($metrics->total_received_quantity ?? null),
+                'total_received_value' => Typer::parseFloat($metrics->total_received_value ?? null),
+                'total_outgoing_value' => Typer::parseFloat($metrics->total_outgoing_value ?? null),
             ];
         })->all();
 

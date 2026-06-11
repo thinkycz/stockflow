@@ -69,8 +69,6 @@ class CoreServiceProvider extends IlluminateServiceProvider
     {
         $this->app->afterResolving('auth', static function (AuthManager $authManager): void {
             $authManager->extend('database_token', function (Application $app, string $name): DatabaseTokenGuard {
-                \assert($this instanceof AuthManager);
-
                 return new DatabaseTokenGuard($name);
             });
         });

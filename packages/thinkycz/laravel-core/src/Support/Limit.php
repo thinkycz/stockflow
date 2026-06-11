@@ -6,6 +6,7 @@ namespace Thinkycz\LaravelCore\Support;
 
 use Closure;
 use Illuminate\Cache\RateLimiting\Limit as IlluminateLimit;
+use Symfony\Component\HttpFoundation\Response;
 use Thinkycz\LaravelCore\Http\RequestSignature;
 
 class Limit extends IlluminateLimit
@@ -31,5 +32,17 @@ class Limit extends IlluminateLimit
     public static function default(string $key = '', int $maxAttempts = 3, int $decaySeconds = 60, Closure|null $responseCallback = null): self
     {
         return new self(RequestSignature::default($key)->hash(), $maxAttempts, $decaySeconds, $responseCallback);
+    }
+
+    /**
+     * Response callback getter.
+     *
+     * @return Closure(int): never|Closure(int): Response|null
+     */
+    public function getResponseCallback(): Closure|null
+    {
+        $callback = $this->responseCallback;
+
+        return $callback instanceof Closure ? $callback : null;
     }
 }

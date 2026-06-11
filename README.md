@@ -1,6 +1,6 @@
-# Laravel Inertia Stack
+# StockFlow
 
-Inertia-first Laravel 13 boilerplate with Vue 3, TypeScript, Tailwind, shadcn-vue-style primitives, and the Thinkycz Laravel core database-token guard.
+StockFlow is an Inertia-first Laravel 13 inventory app for per-user stores, item catalogs, and stock movements. It uses Vue 3, TypeScript, Tailwind, and the Thinkycz Laravel core database-token guard.
 
 ## Development
 
@@ -27,7 +27,8 @@ make check
 - `/login`, `/register`, `/forgot-password`, `/reset-password`
 - `/dashboard`
 - `/verify-email`
-- `/settings/profile`, `/settings/password`
+- `/settings`
+- POST form actions: `/settings/profile`, `/settings/password`
 
 Minimal API-compatible auth endpoints remain under `/api/v1/auth`, `/api/v1/me`, `/api/v1/password`, and `/api/v1/email_verification`.
 

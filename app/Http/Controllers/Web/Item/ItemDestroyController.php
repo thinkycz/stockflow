@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Web\Item;
 
 use App\Models\Item;
 use App\Models\StockMovementItem;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,8 +21,8 @@ class ItemDestroyController
     public function __invoke(Request $request, Item $item): RedirectResponse
     {
         $hasMovements = StockMovementItem::query()
-            ->whereHas('stockMovement', static function ($query) use ($item): void {
-                $query->forUser($item->getUserId());
+            ->whereHas('stockMovement', static function (Builder $query) use ($item): void {
+                $query->where('user_id', $item->getUserId());
             })
             ->where('item_id', $item->getKey())
             ->exists();

@@ -9,6 +9,7 @@ use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\StoreItem;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -22,15 +23,15 @@ class DashboardController
     public function __invoke(): Response
     {
         $user = User::mustAuth();
-        $now = Carbon::now();
-        $startOfMonth = $now->copy()->startOfMonth();
-        $startOfToday = $now->copy()->startOfDay();
+        $startOfToday = Carbon::now()->startOfDay();
 
-        $items = Item::querySelect(Item::query()->forUser($user))->get();
+        $itemsQuery = Item::query();
+        Item::scopeForUser($itemsQuery, $user);
+        $items = Item::querySelect($itemsQuery)->get();
 
         $totalInventoryValue = (float) StoreItem::query()
-            ->whereHas('item', static function ($query) use ($user): void {
-                $query->forUser($user);
+            ->whereHas('item', static function (Builder $query) use ($user): void {
+                $query->where('user_id', $user->getKey());
             })
             ->join('items', 'items.id', '=', 'store_items.item_id')
             ->sum(DB::raw('store_items.quantity * items.purchase_price'));
@@ -41,13 +42,15 @@ class DashboardController
                 $item->getStockStatus() === ItemStockStatusEnum::OUT_OF_STOCK,
         )->count();
 
-        $todayMovements = StockMovement::query()
-            ->forUser($user)
+        $todayMovementsQuery = StockMovement::query();
+        StockMovement::scopeForUser($todayMovementsQuery, $user);
+        $todayMovements = $todayMovementsQuery
             ->where('created_at', '>=', $startOfToday->toDateString())
             ->count();
 
-        $recentMovements = StockMovement::query()
-            ->forUser($user)
+        $recentMovementsQuery = StockMovement::query();
+        StockMovement::scopeForUser($recentMovementsQuery, $user);
+        $recentMovements = $recentMovementsQuery
             ->with(['store', 'creator'])
             ->orderByDesc('created_at')
             ->orderByDesc('id')
@@ -57,7 +60,7 @@ class DashboardController
                 'id' => $movement->getKey(),
                 'number' => $movement->getNumber(),
                 'type' => $movement->getType()->value,
-                'store_name' => $movement->store?->getName(),
+                'store_name' => $movement->getStore()?->getName(),
                 'total_quantity' => $movement->getTotalQuantity(),
                 'total_value' => $movement->getTotalValue(),
                 'created_at' => $movement->getCreatedAt()->toDateTimeString(),

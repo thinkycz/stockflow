@@ -81,7 +81,7 @@ class BigDecimalCast implements CastsAttributes, ComparesCastableAttributes
             return null;
         }
 
-        if (!$value instanceof BigNumber && !\is_string($value) && !\is_int($value) && !\is_float($value)) {
+        if (!$value instanceof BigNumber && !\is_string($value) && !\is_int($value)) {
             throw new LogicException(static::class . ' try to set value by unsupported value type: ' . \gettype($value));
         }
 

@@ -53,3 +53,22 @@ use App\Models\StockMovementSequence;
     \expect($b1)->toBe('IN-2026-0001');
     \expect($a2)->toBe('IN-2026-0002');
 });
+
+\test('next() survives the first-time primary-key race', function (): void {
+    $user = Database\Factories\UserFactory::new()->createOne();
+
+    // Simulate the race by pre-inserting a row that the new
+    // `next()` call would also try to insert, then re-call `next()`
+    // and assert the locked read+update path recovers cleanly.
+    DB::table('stock_movement_sequences')->insert([
+        'user_id' => $user->getKey(),
+        'type' => App\Enums\StockMovementTypeEnum::INCOMING->value,
+        'year' => 2026,
+        'last_number' => 1,
+    ]);
+
+    $next = StockMovementSequence::next(App\Enums\StockMovementTypeEnum::INCOMING, 2026, $user->getKey());
+
+    \expect($next)->toBe('IN-2026-0002');
+    \expect(StockMovementSequence::query()->count())->toBe(1);
+});

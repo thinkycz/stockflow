@@ -36,10 +36,12 @@ class ItemIndexController
 
         $search = $validated->assertNullableString('search') ?? '';
 
-        $query = Item::querySelect(Item::query()->forUser($user))->orderBy('title');
+        $baseQuery = Item::query();
+        Item::scopeForUser($baseQuery, $user);
+        $query = Item::querySelect($baseQuery)->orderBy('title');
 
         if ($search !== '') {
-            $query->search($search);
+            Item::scopeSearch($query, $search);
         }
 
         $paginator = $query->paginate(self::TAKE)->withQueryString();

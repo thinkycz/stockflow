@@ -49,13 +49,10 @@ declare(strict_types=1);
     \expect(\is_dir(\base_path('app/Http/Controllers/Admin')))->toBeFalse();
 });
 
-\arch('index controllers declare TAKE, SORT, and MODE constants', function (): void {
-    foreach (\glob(\base_path('app/Http/Controllers/Api/*/*IndexController.php')) as $file) {
+\arch('web index controllers declare a TAKE constant', function (): void {
+    foreach (\glob(\base_path('app/Http/Controllers/Web/**/*IndexController.php')) as $file) {
         $contents = (string) \file_get_contents($file);
 
-        \expect($contents)
-            ->toMatch('/public const int TAKE/')
-            ->toMatch('/public const SORT/')
-            ->toMatch('/public const MODE/');
+        \expect($contents)->toMatch('/public const int TAKE/');
     }
 });

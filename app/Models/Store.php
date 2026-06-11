@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\StoreStatusEnum;
 use App\Models\Concerns\BelongsToUser;
+use Database\Factories\StoreFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,23 +15,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Thinkycz\LaravelCore\Models\BaseModel;
 use Thinkycz\LaravelCore\Support\Typer;
 
-/**
- * @property int $id
- * @property int $user_id
- * @property string $name
- * @property string|null $address
- * @property string $status
- * @property bool $is_warehouse
- * @property string|null $notes
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
- * @property Collection<array-key, StockMovement> $stockMovements
- * @property Collection<array-key, StoreItem> $storeItems
- * @property Collection<array-key, Item> $items
- */
 class Store extends BaseModel
 {
     use BelongsToUser;
+    /** @use HasFactory<StoreFactory> */
     use HasFactory;
 
     /**
@@ -45,11 +33,9 @@ class Store extends BaseModel
      */
     public static function scopeSearch(Builder $query, string $search): void
     {
-        $like = '%' . $search . '%';
-
-        $query->where(static function (Builder $query) use ($like): void {
-            $query->where('name', 'like', $like)->getQuery()
-                ->orWhere('address', 'like', $like);
+        $query->where(static function (Builder $query) use ($search): void {
+            $query->where('name', 'like', '%' . $search . '%')->getQuery()
+                ->orWhere('address', 'like', '%' . $search . '%');
         });
     }
 
@@ -57,6 +43,8 @@ class Store extends BaseModel
      * Restrict the query to a curated set of columns for list views.
      *
      * @param Builder<Store> $query
+     *
+     * @return Builder<Store>
      */
     public static function querySelect(Builder $query): Builder
     {
@@ -122,6 +110,48 @@ class Store extends BaseModel
     {
         return $this->belongsToMany(Item::class, 'store_items', 'store_id', 'item_id')
             ->withPivot(['quantity']);
+    }
+
+    /**
+     * Loaded or queried stock movements.
+     *
+     * @return Collection<array-key, StockMovement>
+     */
+    public function getStockMovements(): Collection
+    {
+        if ($this->relationLoaded('stockMovements')) {
+            return $this->assertRelationshipCollection('stockMovements', StockMovement::class);
+        }
+
+        return $this->stockMovements()->get();
+    }
+
+    /**
+     * Loaded or queried per-item stock rows.
+     *
+     * @return Collection<array-key, StoreItem>
+     */
+    public function getStoreItems(): Collection
+    {
+        if ($this->relationLoaded('storeItems')) {
+            return $this->assertRelationshipCollection('storeItems', StoreItem::class);
+        }
+
+        return $this->storeItems()->get();
+    }
+
+    /**
+     * Loaded or queried items stocked at this store.
+     *
+     * @return Collection<array-key, Item>
+     */
+    public function getItems(): Collection
+    {
+        if ($this->relationLoaded('items')) {
+            return $this->assertRelationshipCollection('items', Item::class);
+        }
+
+        return $this->items()->get();
     }
 
     /**

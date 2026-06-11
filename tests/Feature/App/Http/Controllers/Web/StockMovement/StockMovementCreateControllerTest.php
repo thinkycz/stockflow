@@ -7,24 +7,6 @@ use App\Models\Store;
 use App\Models\StoreItem;
 use App\Services\StockMovementService;
 
-\test('guest is redirected from stock-movements to login', function (): void {
-    $this->get('/stock-movements')->assertRedirect('/login');
-});
-
-\test('authenticated user can view stock movement index', function (): void {
-    [$user] = \createIsolatedUserWithWarehouse();
-    StockMovement::factory()->count(2)->incoming()->create([
-        'user_id' => $user->getKey(),
-        'created_by' => $user->getKey(),
-    ]);
-
-    $response = $this->be($user, 'users')->get('/stock-movements', $this->inertiaHeaders());
-
-    $response->assertOk();
-    $response->assertJsonPath('component', 'stock-movements/Index');
-    $response->assertJsonCount(2, 'props.movements');
-});
-
 \test('user can create an incoming stock movement to warehouse', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $item = App\Models\Item::factory()->create([

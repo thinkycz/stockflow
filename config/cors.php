@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+use Thinkycz\LaravelCore\Support\Env;
+
+$env = Env::inject();
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -20,7 +24,10 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => [
+        $env->mustParseString('APP_URL'),
+        $env->parseNullableString('CORS_ALLOWED_ORIGIN'),
+    ],
 
     'allowed_origins_patterns' => [],
 

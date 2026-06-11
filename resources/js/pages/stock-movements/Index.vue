@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowLeftRight, Plus, Search, Filter } from '@lucide/vue';
+import { Plus, Search, Filter } from '@lucide/vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -13,7 +13,7 @@ import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
-import { formatDateTime, formatMoney, formatNumber } from '@/lib/format';
+import { formatMoney, formatNumber } from '@/lib/format';
 
 type MovementRow = {
     id: number;

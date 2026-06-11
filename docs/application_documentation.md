@@ -35,7 +35,8 @@
     - `/login`, `/register`, `/forgot-password`, `/reset-password`
     - `/dashboard`
     - `/verify-email`
-    - `/settings/profile`, `/settings/password`
+    - `/settings`
+    - POST form actions: `/settings/profile`, `/settings/password`
 - Minimal API compatibility:
     - `/api/v1/auth/*`
     - `/api/v1/me/*`

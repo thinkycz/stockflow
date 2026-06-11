@@ -6,6 +6,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Typer;
 
 return new class extends Migration {
     /**
@@ -47,14 +48,16 @@ return new class extends Migration {
             $table->index('user_id');
         });
 
-        $defaultUserId = DB::table('users')->orderBy('id')->value('id');
+        $rawDefaultUserId = DB::table('users')->orderBy('id')->value('id');
+        $defaultUserId = \is_int($rawDefaultUserId) || \is_string($rawDefaultUserId) ? $rawDefaultUserId : null;
 
         if ($defaultUserId !== null) {
             DB::table('stores')->whereNull('user_id')->update(['user_id' => $defaultUserId]);
             DB::table('items')->whereNull('user_id')->update(['user_id' => $defaultUserId]);
-            DB::table('stock_movements')->whereNull('user_id')->update([
-                'user_id' => DB::raw('COALESCE(created_by, ' . (int) $defaultUserId . ')'),
-            ]);
+            DB::update(
+                'UPDATE stock_movements SET user_id = COALESCE(created_by, ?) WHERE user_id IS NULL',
+                [\is_int($defaultUserId) ? $defaultUserId : (int) $defaultUserId],
+            );
         }
 
         $warehouseId = DB::table('stores')
@@ -103,10 +106,12 @@ return new class extends Migration {
             $items = DB::table('items')->select(['id', 'current_quantity'])->get();
 
             foreach ($items as $item) {
+                $itemValues = (array) $item;
+
                 DB::table('store_items')->insert([
                     'store_id' => $warehouseId,
-                    'item_id' => $item->id,
-                    'quantity' => $item->current_quantity ?? 0,
+                    'item_id' => Typer::assertInt($itemValues['id'] ?? null),
+                    'quantity' => Typer::parseFloat($itemValues['current_quantity'] ?? null),
                 ]);
             }
         }

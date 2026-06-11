@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Auth;
 
+use App\Enums\GuardEnum;
 use App\Http\Controllers\Web\Concerns\ThrottlesWebRequests;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Services\EmailBrokerService;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -41,7 +43,7 @@ class EmailVerificationConfirmController
         $authValidity = AuthValidity::inject();
 
         $validated = $this->validateRequest($request, [
-            'guard' => $authValidity->baseValidity->make()->varchar()->required()->toArray(),
+            'guard' => $authValidity->baseValidity->mode(GuardEnum::values())->required()->toArray(),
             'email' => $authValidity->email()->required()->toArray(),
             'token' => $authValidity->emailVerificationToken()->required()->toArray(),
         ]);
@@ -70,9 +72,11 @@ class EmailVerificationConfirmController
             return $this->redirectWithError('/login', \__('The verification link is invalid or has expired.'));
         }
 
-        $user->markEmailAsVerified();
+        DB::transaction(static function () use ($user, $guard, $email): void {
+            $user->markEmailAsVerified();
 
-        EmailBrokerService::inject()->confirm($guard, $email);
+            EmailBrokerService::inject()->confirm($guard, $email);
+        });
 
         Resolver::resolveEventDispatcher()->dispatch(new Verified($user));
 

@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Store;
 
+use App\Enums\StockMovementTypeEnum;
 use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Models\StoreItem;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection as SupportCollection;
 use Inertia\Inertia;
 use Inertia\Response;
+use Thinkycz\LaravelCore\Support\Typer;
 
 class StoreShowController
 {
@@ -19,9 +23,10 @@ class StoreShowController
      */
     public function __invoke(Store $store): Response
     {
-        $movements = StockMovement::query()
-            ->forUser($store->getUserId())
-            ->where(static function ($query) use ($store): void {
+        $movementsQuery = StockMovement::query();
+        StockMovement::scopeForUser($movementsQuery, $store->getUserId());
+        $movements = $movementsQuery
+            ->where(static function (Builder $query) use ($store): void {
                 $query->where('store_id', $store->getKey())
                     ->orWhere('source_store_id', $store->getKey());
             })
@@ -31,10 +36,10 @@ class StoreShowController
             ->get();
 
         $movementsDto = $movements->map(static function (StockMovement $movement): array {
-            $items = $movement->movementItems->map(static fn(StockMovementItem $row): array => [
-                'item_id' => $row->item_id,
-                'item_title' => $row->item?->getTitle(),
-                'item_sku' => $row->item?->getSku(),
+            $items = $movement->getMovementItems()->map(static fn(StockMovementItem $row): array => [
+                'item_id' => $row->getItemId(),
+                'item_title' => $row->getItem()->getTitle(),
+                'item_sku' => $row->getItem()->getSku(),
                 'quantity' => $row->getQuantity(),
                 'total' => $row->getTotal(),
             ])->all();
@@ -46,7 +51,7 @@ class StoreShowController
                 'note' => $movement->getNote(),
                 'total_quantity' => $movement->getTotalQuantity(),
                 'total_value' => $movement->getTotalValue(),
-                'created_by' => $movement->creator?->getEmail(),
+                'created_by' => $movement->getCreator()?->getEmail(),
                 'items' => $items,
             ];
         })->all();
@@ -55,35 +60,40 @@ class StoreShowController
             ->with('item')
             ->where('quantity', '>', 0)
             ->get()
-            ->map(static fn(StoreItem $row): array => [
-                'item_id' => $row->item_id,
-                'item_title' => $row->item?->getTitle() ?? '',
-                'item_sku' => $row->item?->getSku(),
-                'quantity' => $row->getQuantity(),
-                'unit' => $row->item?->getUnit(),
-                'purchase_price' => $row->item?->getPurchasePrice() ?? 0,
-                'total_value' => $row->getQuantity() * ($row->item?->getPurchasePrice() ?? 0),
-            ])
+            ->map(static function (StoreItem $row): array {
+                $item = $row->getItem();
+
+                return [
+                    'item_id' => $row->getItemId(),
+                    'item_title' => $item->getTitle(),
+                    'item_sku' => $item->getSku(),
+                    'quantity' => $row->getQuantity(),
+                    'unit' => $item->getUnit(),
+                    'purchase_price' => $item->getPurchasePrice(),
+                    'total_value' => $row->getQuantity() * $item->getPurchasePrice(),
+                ];
+            })
             ->all();
 
-        /** @var \Illuminate\Database\Eloquent\Collection<array-key, StockMovementItem> $itemRows */
+        /** @var SupportCollection<array-key, SupportCollection<array-key, StockMovementItem>> $itemRows */
         $itemRows = StockMovementItem::query()
-            ->whereHas('stockMovement', static function ($query) use ($store): void {
-                $query->forUser($store->getUserId())
+            ->whereHas('stockMovement', static function (Builder $query) use ($store): void {
+                $query->where('user_id', $store->getUserId())
                     ->where('store_id', $store->getKey());
             })
             ->with('item')
             ->get()
+            ->toBase()
             ->groupBy('item_id');
 
-        $itemsReceived = $itemRows->map(static function ($rows, $itemId): array {
+        $itemsReceived = $itemRows->map(static function (SupportCollection $rows, int $itemId): array {
             $first = $rows->first();
-            $item = $first?->item;
+            $item = $first instanceof StockMovementItem ? $first->getItem() : null;
             if (!$item instanceof Item) {
                 return [];
             }
 
-            $totalQuantity = $rows->sum(static fn(StockMovementItem $row): float => (float) ($row->getQuantity() ?? 0));
+            $totalQuantity = $rows->sum(static fn(StockMovementItem $row): float => Typer::parseFloat($row->getQuantity() ?? 0));
             $totalValue = $rows->sum(static fn(StockMovementItem $row): float => $row->getTotal());
 
             return [
@@ -96,10 +106,15 @@ class StoreShowController
             ];
         })->values()->all();
 
-        $outgoingMovements = $movements->where('type', 'outgoing');
+        $outgoingMovements = $movements->filter(
+            static fn(StockMovement $movement): bool => $movement->getType() === StockMovementTypeEnum::OUTGOING,
+        );
         $totalOutgoingValue = $outgoingMovements->sum(static fn(StockMovement $m): float => $m->getTotalValue());
-        $totalReceivedQuantity = $movements->where('type', 'incoming')->sum(static fn(StockMovement $m): float => $m->getTotalQuantity());
-        $totalReceivedValue = $movements->where('type', 'incoming')->sum(static fn(StockMovement $m): float => $m->getTotalValue());
+        $incomingMovements = $movements->filter(
+            static fn(StockMovement $movement): bool => $movement->getType() === StockMovementTypeEnum::INCOMING,
+        );
+        $totalReceivedQuantity = $incomingMovements->sum(static fn(StockMovement $m): float => $m->getTotalQuantity());
+        $totalReceivedValue = $incomingMovements->sum(static fn(StockMovement $m): float => $m->getTotalValue());
 
         return Inertia::render('stores/Show', [
             'store' => [

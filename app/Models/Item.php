@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\ItemStockStatusEnum;
 use App\Models\Concerns\BelongsToUser;
+use Database\Factories\ItemFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,24 +15,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Thinkycz\LaravelCore\Models\BaseModel;
 use Thinkycz\LaravelCore\Support\Typer;
 
-/**
- * @property int $id
- * @property int $user_id
- * @property string $title
- * @property string|null $sku
- * @property string|null $unit
- * @property string $purchase_price
- * @property string|null $description
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
- * @property Collection<array-key, StockMovementItem> $stockMovementItems
- * @property Collection<array-key, StockMovement> $stockMovements
- * @property Collection<array-key, StoreItem> $storeItems
- * @property Collection<array-key, Store> $stores
- */
 class Item extends BaseModel
 {
     use BelongsToUser;
+    /** @use HasFactory<ItemFactory> */
     use HasFactory;
 
     /**
@@ -51,11 +38,9 @@ class Item extends BaseModel
      */
     public static function scopeSearch(Builder $query, string $search): void
     {
-        $like = '%' . $search . '%';
-
-        $query->where(static function (Builder $query) use ($like): void {
-            $query->where('title', 'like', $like)->getQuery()
-                ->orWhere('sku', 'like', $like);
+        $query->where(static function (Builder $query) use ($search): void {
+            $query->where('title', 'like', '%' . $search . '%')->getQuery()
+                ->orWhere('sku', 'like', '%' . $search . '%');
         });
     }
 
@@ -63,6 +48,8 @@ class Item extends BaseModel
      * Restrict the query to a curated set of columns for list views.
      *
      * @param Builder<Item> $query
+     *
+     * @return Builder<Item>
      */
     public static function querySelect(Builder $query): Builder
     {
@@ -120,6 +107,62 @@ class Item extends BaseModel
     }
 
     /**
+     * Loaded or queried stock movement items.
+     *
+     * @return Collection<array-key, StockMovementItem>
+     */
+    public function getStockMovementItems(): Collection
+    {
+        if ($this->relationLoaded('stockMovementItems')) {
+            return $this->assertRelationshipCollection('stockMovementItems', StockMovementItem::class);
+        }
+
+        return $this->stockMovementItems()->get();
+    }
+
+    /**
+     * Loaded or queried stock movements.
+     *
+     * @return Collection<array-key, StockMovement>
+     */
+    public function getStockMovements(): Collection
+    {
+        if ($this->relationLoaded('stockMovements')) {
+            return $this->assertRelationshipCollection('stockMovements', StockMovement::class);
+        }
+
+        return $this->stockMovements()->get();
+    }
+
+    /**
+     * Loaded or queried per-store stock rows.
+     *
+     * @return Collection<array-key, StoreItem>
+     */
+    public function getStoreItems(): Collection
+    {
+        if ($this->relationLoaded('storeItems')) {
+            return $this->assertRelationshipCollection('storeItems', StoreItem::class);
+        }
+
+        return $this->storeItems()->get();
+    }
+
+    /**
+     * Loaded or queried stores holding this item.
+     *
+     * @return Collection<array-key, Store>
+     */
+    public function getStores(): Collection
+    {
+        if ($this->relationLoaded('stores')) {
+            return $this->assertRelationshipCollection('stores', Store::class);
+        }
+
+        return $this->stores()->get();
+    }
+
+    /**
      * Title getter.
      */
     public function getTitle(): string
@@ -154,8 +197,10 @@ class Item extends BaseModel
             return Typer::parseFloat($cached);
         }
 
-        $warehouseIds = Store::query()
-            ->forUser($this->assertInt('user_id'))
+        $storeQuery = Store::query();
+        Store::scopeForUser($storeQuery, $this->getUserId());
+
+        $warehouseIds = $storeQuery
             ->where('is_warehouse', true)
             ->pluck('id');
 

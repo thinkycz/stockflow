@@ -78,8 +78,7 @@ return Application::configure(basePath: \dirname(__DIR__))
                 'forgot-password' => 'auth/ForgotPassword',
                 'reset-password' => 'auth/ResetPassword',
                 'register' => 'auth/Register',
-                'settings/profile' => 'settings/Profile',
-                'settings/password' => 'settings/Password',
+                'settings/profile', 'settings/password' => 'settings/Index',
                 default => 'auth/Login',
             };
 

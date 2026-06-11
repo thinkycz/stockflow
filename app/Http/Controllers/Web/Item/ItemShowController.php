@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Web\Item;
 use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\StoreItem;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,8 +18,7 @@ class ItemShowController
      */
     public function __invoke(Item $item): Response
     {
-        $item->loadMissing(['stockMovements' => static function ($query): void {
-            // @var \Illuminate\Database\Eloquent\Builder<StockMovement> $query
+        $item->loadMissing(['stockMovements' => static function (BelongsToMany $query): void {
             $query->select([
                 'stock_movements.id',
                 'stock_movements.number',
@@ -33,9 +33,7 @@ class ItemShowController
                 ->limit(50);
         }, 'storeItems.store']);
 
-        $movements = $item->stockMovements->map(static function (StockMovement $movement): array {
-            $pivot = $movement->pivot;
-
+        $movements = $item->getStockMovements()->map(static function (StockMovement $movement): array {
             return [
                 'id' => $movement->getKey(),
                 'number' => $movement->getNumber(),
@@ -43,20 +41,24 @@ class ItemShowController
                 'store_id' => $movement->getStoreId(),
                 'total_quantity' => $movement->getTotalQuantity(),
                 'total_value' => $movement->getTotalValue(),
-                'quantity' => $pivot ? (float) $pivot->quantity : null,
-                'quantity_before' => $pivot && $pivot->quantity_before !== null ? (float) $pivot->quantity_before : null,
-                'quantity_after' => $pivot && $pivot->quantity_after !== null ? (float) $pivot->quantity_after : null,
-                'quantity_difference' => $pivot && $pivot->quantity_difference !== null ? (float) $pivot->quantity_difference : null,
-                'adjustment_reason' => $pivot?->adjustment_reason,
+                'quantity' => $movement->getPivotQuantity(),
+                'quantity_before' => $movement->getPivotQuantityBefore(),
+                'quantity_after' => $movement->getPivotQuantityAfter(),
+                'quantity_difference' => $movement->getPivotQuantityDifference(),
+                'adjustment_reason' => $movement->getPivotAdjustmentReason(),
             ];
         })->all();
 
-        $storeQuantities = $item->storeItems->map(static fn(StoreItem $row): array => [
-            'store_id' => $row->store_id,
-            'store_name' => $row->store?->getName() ?? '',
-            'is_warehouse' => $row->store?->isWarehouse() ?? false,
-            'quantity' => $row->getQuantity(),
-        ])->all();
+        $storeQuantities = $item->getStoreItems()->map(static function (StoreItem $row): array {
+            $store = $row->getStore();
+
+            return [
+                'store_id' => $row->getStoreId(),
+                'store_name' => $store->getName(),
+                'is_warehouse' => $store->isWarehouse(),
+                'quantity' => $row->getQuantity(),
+            ];
+        })->all();
 
         return Inertia::render('items/Show', [
             'item' => [

@@ -6,37 +6,21 @@ namespace App\Models;
 
 use App\Enums\StockMovementTypeEnum;
 use App\Models\Concerns\BelongsToUser;
+use Database\Factories\StockMovementFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Thinkycz\LaravelCore\Models\BaseModel;
 use Thinkycz\LaravelCore\Support\Typer;
 
-/**
- * @property int $id
- * @property int $user_id
- * @property string $number
- * @property string $type
- * @property int|null $store_id
- * @property int|null $source_store_id
- * @property string|null $note
- * @property int|null $created_by
- * @property string $total_quantity
- * @property string $total_value
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
- * @property Store|null $store
- * @property Store|null $sourceStore
- * @property User|null $creator
- * @property Collection<array-key, StockMovementItem> $movementItems
- * @property Collection<array-key, Item> $items
- */
 class StockMovement extends BaseModel
 {
     use BelongsToUser;
+    /** @use HasFactory<StockMovementFactory> */
     use HasFactory;
 
     /**
@@ -51,15 +35,15 @@ class StockMovement extends BaseModel
      */
     public static function scopeSearch(Builder $query, string $search): void
     {
-        $like = '%' . $search . '%';
-
-        $query->where('number', 'like', $like);
+        $query->where('number', 'like', '%' . $search . '%');
     }
 
     /**
      * Restrict the query to a curated set of columns for list views.
      *
      * @param Builder<StockMovement> $query
+     *
+     * @return Builder<StockMovement>
      */
     public static function querySelect(Builder $query): Builder
     {
@@ -155,6 +139,110 @@ class StockMovement extends BaseModel
     {
         return $this->belongsToMany(Item::class, 'stock_movement_items', 'stock_movement_id', 'item_id')
             ->withPivot(['quantity', 'total', 'quantity_before', 'quantity_after', 'quantity_difference', 'adjustment_reason']);
+    }
+
+    /**
+     * Loaded or queried destination store.
+     */
+    public function getStore(): Store|null
+    {
+        if ($this->relationLoaded('store')) {
+            return $this->assertNullableRelation('store', Store::class);
+        }
+
+        return $this->store()->first();
+    }
+
+    /**
+     * Loaded or queried source store.
+     */
+    public function getSourceStore(): Store|null
+    {
+        if ($this->relationLoaded('sourceStore')) {
+            return $this->assertNullableRelation('sourceStore', Store::class);
+        }
+
+        return $this->sourceStore()->first();
+    }
+
+    /**
+     * Loaded or queried creator.
+     */
+    public function getCreator(): User|null
+    {
+        if ($this->relationLoaded('creator')) {
+            return $this->assertNullableRelation('creator', User::class);
+        }
+
+        return $this->creator()->first();
+    }
+
+    /**
+     * Loaded or queried movement rows.
+     *
+     * @return Collection<array-key, StockMovementItem>
+     */
+    public function getMovementItems(): Collection
+    {
+        if ($this->relationLoaded('movementItems')) {
+            return $this->assertRelationshipCollection('movementItems', StockMovementItem::class);
+        }
+
+        return $this->movementItems()->get();
+    }
+
+    /**
+     * Loaded or queried movement items.
+     *
+     * @return Collection<array-key, Item>
+     */
+    public function getItems(): Collection
+    {
+        if ($this->relationLoaded('items')) {
+            return $this->assertRelationshipCollection('items', Item::class);
+        }
+
+        return $this->items()->get();
+    }
+
+    /**
+     * Pivot quantity getter for item detail movement rows.
+     */
+    public function getPivotQuantity(): float|null
+    {
+        return Typer::parseNullableFloat($this->readPivotAttribute('quantity'));
+    }
+
+    /**
+     * Pivot quantity-before getter for adjustment rows.
+     */
+    public function getPivotQuantityBefore(): float|null
+    {
+        return Typer::parseNullableFloat($this->readPivotAttribute('quantity_before'));
+    }
+
+    /**
+     * Pivot quantity-after getter for adjustment rows.
+     */
+    public function getPivotQuantityAfter(): float|null
+    {
+        return Typer::parseNullableFloat($this->readPivotAttribute('quantity_after'));
+    }
+
+    /**
+     * Pivot quantity-difference getter for movement rows.
+     */
+    public function getPivotQuantityDifference(): float|null
+    {
+        return Typer::parseNullableFloat($this->readPivotAttribute('quantity_difference'));
+    }
+
+    /**
+     * Pivot adjustment reason getter.
+     */
+    public function getPivotAdjustmentReason(): string|null
+    {
+        return Typer::assertNullableString($this->readPivotAttribute('adjustment_reason'));
     }
 
     /**
@@ -306,5 +394,19 @@ class StockMovement extends BaseModel
         $userId = Typer::assertInt($this->getAttribute('user_id'));
 
         return Store::query()->where('user_id', $userId)->find($sourceId);
+    }
+
+    /**
+     * Read a belongs-to-many pivot attribute without triggering Eloquent accessors.
+     */
+    private function readPivotAttribute(string $key): mixed
+    {
+        $pivot = $this->getAttribute('pivot');
+
+        if (!$pivot instanceof Pivot) {
+            return null;
+        }
+
+        return $pivot->getAttribute($key);
     }
 }

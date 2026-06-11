@@ -154,10 +154,23 @@ class Thrower
     /**
      * Add message to validator.
      *
+     * The message may be a translated string or an array of
+     * translated strings (for pluralization). Laravel's validator
+     * accepts both, and `__()` returns `array|string`, so widening
+     * here avoids a runtime `assertString` cast at every call site.
+     * We coerce the array case to its JSON form because the
+     * underlying `MessageBag::add` only accepts `string`.
+     *
+     * @param array<array-key, mixed>|string $message
+     *
      * @return $this
      */
-    public function message(string $attribute, string $message): static
+    public function message(string $attribute, array|string $message): static
     {
+        if (\is_array($message)) {
+            $message = \json_encode($message, \JSON_THROW_ON_ERROR);
+        }
+
         $this->validator->errors()->add($attribute, $message);
 
         return $this;

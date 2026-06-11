@@ -18,12 +18,12 @@ class StockMovementShowController
     {
         $stockMovement->loadMissing(['store', 'sourceStore', 'creator', 'movementItems.item']);
 
-        $rows = $stockMovement->movementItems->map(static function (StockMovementItem $row): array {
+        $rows = $stockMovement->getMovementItems()->map(static function (StockMovementItem $row): array {
             return [
                 'id' => $row->getKey(),
-                'item_id' => $row->item_id,
-                'item_title' => $row->item?->getTitle(),
-                'item_sku' => $row->item?->getSku(),
+                'item_id' => $row->getItemId(),
+                'item_title' => $row->getItem()->getTitle(),
+                'item_sku' => $row->getItem()->getSku(),
                 'quantity' => $row->getQuantity(),
                 'total' => $row->getTotal(),
                 'quantity_before' => $row->getQuantityBefore(),
@@ -41,12 +41,12 @@ class StockMovementShowController
                 'display_label_key' => $stockMovement->getDisplayLabelKey(),
                 'note' => $stockMovement->getNote(),
                 'store_id' => $stockMovement->getStoreId(),
-                'store_name' => $stockMovement->store?->getName(),
+                'store_name' => $stockMovement->getStore()?->getName(),
                 'source_store_id' => $stockMovement->getSourceStoreId(),
-                'source_store_name' => $stockMovement->sourceStore?->getName(),
+                'source_store_name' => $stockMovement->getSourceStore()?->getName(),
                 'total_quantity' => $stockMovement->getTotalQuantity(),
                 'total_value' => $stockMovement->getTotalValue(),
-                'created_by' => $stockMovement->creator?->getEmail(),
+                'created_by' => $stockMovement->getCreator()?->getEmail(),
                 'created_at' => $stockMovement->getCreatedAt()->toJSON(),
             ],
             'rows' => $rows,

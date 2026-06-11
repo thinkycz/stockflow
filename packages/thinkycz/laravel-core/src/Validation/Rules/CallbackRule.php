@@ -45,6 +45,6 @@ class CallbackRule implements ValidationRule
             return;
         }
 
-        $fail($trans->assertString((string) $this->message));
+        $fail($trans->assertString($this->message));
     }
 }

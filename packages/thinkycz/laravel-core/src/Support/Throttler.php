@@ -6,7 +6,6 @@ namespace Thinkycz\LaravelCore\Support;
 
 use Closure;
 use Illuminate\Cache\RateLimiter;
-use Illuminate\Cache\RateLimiting\Limit as IlluminateLimit;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,7 +21,7 @@ class Throttler
     /**
      * Constructor.
      */
-    public function __construct(public IlluminateLimit $limit)
+    public function __construct(public Limit $limit)
     {
         $this->limiter = Resolver::resolveRateLimiter();
     }
@@ -95,7 +94,7 @@ class Throttler
             throw new HttpResponseException(Typer::assertInstance($callback($this->availableIn()), Response::class));
         }
 
-        $responseCallback = $this->limit->responseCallback;
+        $responseCallback = $this->limit->getResponseCallback();
 
         if ($responseCallback !== null) {
             throw new HttpResponseException(Typer::assertInstance($responseCallback($this->availableIn()), Response::class));

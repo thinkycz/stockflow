@@ -12,7 +12,7 @@ test.describe('Protected routes', () => {
     test('guest is redirected to login when accessing settings', async ({
         page,
     }) => {
-        await page.goto('/settings/profile');
+        await page.goto('/settings');
 
         await expect(page).toHaveURL(/\/login/);
     });

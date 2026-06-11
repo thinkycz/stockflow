@@ -7,17 +7,13 @@ namespace App\Models;
 use App\Enums\StoreStatusEnum;
 use App\Http\Resources\UserResource;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 use Illuminate\Support\Carbon;
+use RuntimeException;
 use Thinkycz\LaravelCore\Models\BaseUser;
 
-/**
- * @property Collection<array-key, Store> $stores
- * @property Collection<array-key, Item> $items
- * @property Collection<array-key, StockMovement> $stockMovements
- */
 class User extends BaseUser implements MustVerifyEmail
 {
     /**
@@ -52,6 +48,14 @@ class User extends BaseUser implements MustVerifyEmail
 
     /**
      * Ensure this user has at least one warehouse store and return the first.
+     *
+     * `updateOrCreate` is keyed on `(user_id, is_warehouse = true)`. The
+     * `(user_id, is_warehouse)` unique constraint added in
+     * `2026_06_10_000010_enforce_single_warehouse_per_user` guarantees
+     * that two concurrent callers cannot both insert a fresh row. If a
+     * unique-key violation still leaks through (e.g. the constraint is
+     * removed in a future schema change), the second caller falls back
+     * to the existing row.
      */
     public function provisionWarehouse(): Store
     {
@@ -61,12 +65,26 @@ class User extends BaseUser implements MustVerifyEmail
             return $warehouse;
         }
 
-        return Store::query()->create([
-            'user_id' => $this->getKey(),
-            'name' => 'Warehouse',
-            'status' => StoreStatusEnum::ACTIVE->value,
-            'is_warehouse' => true,
-        ]);
+        try {
+            return Store::query()->updateOrCreate(
+                [
+                    'user_id' => $this->getKey(),
+                    'is_warehouse' => true,
+                ],
+                [
+                    'name' => 'Warehouse',
+                    'status' => StoreStatusEnum::ACTIVE->value,
+                ],
+            );
+        } catch (UniqueConstraintViolationException) {
+            $existing = $this->stores()->where('is_warehouse', true)->first();
+
+            if ($existing instanceof Store) {
+                return $existing;
+            }
+
+            throw new RuntimeException('Warehouse provisioning race could not be resolved.');
+        }
     }
 
     /**

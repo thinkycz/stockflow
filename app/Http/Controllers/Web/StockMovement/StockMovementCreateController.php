@@ -12,6 +12,7 @@ use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
 use App\Services\StockMovementService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -31,7 +32,10 @@ class StockMovementCreateController
         $user = User::mustAuth();
         $mode = $request->query('mode') === 'adjustment' ? 'adjustment' : 'transfer';
 
-        $stores = Store::querySelect(Store::query()->forUser($user)->active())
+        $storesQuery = Store::query();
+        Store::scopeForUser($storesQuery, $user);
+        Store::scopeActive($storesQuery);
+        $stores = Store::querySelect($storesQuery)
             ->orderBy('name')
             ->get()
             ->map(static fn(Store $store): array => [
@@ -44,19 +48,22 @@ class StockMovementCreateController
         /** @var array<int, array<string, float>> $storeQuantitiesByItem */
         $storeQuantitiesByItem = [];
         $storeItemRows = StoreItem::query()
-            ->whereHas('store', static function ($query) use ($user): void {
-                $query->forUser($user);
+            ->select(['id', 'store_id', 'item_id', 'quantity'])
+            ->whereHas('store', static function (Builder $query) use ($user): void {
+                $query->where('user_id', $user->getKey());
             })
             ->get();
 
         foreach ($storeItemRows as $storeItemRow) {
-            $storeQuantitiesByItem[$storeItemRow->item_id][(string) $storeItemRow->store_id]
+            $storeQuantitiesByItem[$storeItemRow->getItemId()][(string) $storeItemRow->getStoreId()]
                 = $storeItemRow->getQuantity();
         }
 
         $defaultWarehouse = $user->warehouse();
 
-        $items = Item::querySelect(Item::query()->forUser($user))
+        $itemsQuery = Item::query();
+        Item::scopeForUser($itemsQuery, $user);
+        $items = Item::querySelect($itemsQuery)
             ->orderBy('title')
             ->get()
             ->map(static function (Item $item) use ($defaultWarehouse, $storeQuantitiesByItem): array {

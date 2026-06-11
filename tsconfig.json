@@ -5,6 +5,8 @@
         "baseUrl": ".",
         "module": "ESNext",
         "moduleResolution": "Bundler",
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
         "paths": {
             "@/*": ["resources/js/*"]
         },

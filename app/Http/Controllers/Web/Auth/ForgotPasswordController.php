@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\Concerns\ThrottlesWebRequests;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -53,11 +54,13 @@ class ForgotPasswordController
 
         $password = Str::password(16);
 
-        $user->update([
-            'password' => $password,
-        ]);
+        DB::transaction(static function () use ($user, $password): void {
+            $user->update([
+                'password' => $password,
+            ]);
 
-        $user->databaseTokens()->getQuery()->delete();
+            $user->databaseTokens()->getQuery()->delete();
+        });
 
         $user->sendPasswordNewPasswordSettedNotification($password);
 

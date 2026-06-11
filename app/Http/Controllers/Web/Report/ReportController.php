@@ -10,10 +10,12 @@ use App\Models\StockMovement;
 use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use stdClass;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class ReportController
@@ -24,8 +26,7 @@ class ReportController
     public function __invoke(): Response
     {
         $user = User::mustAuth();
-        $now = Carbon::now();
-        $startOfMonth = $now->copy()->startOfMonth();
+        $startOfMonth = Carbon::now()->startOfMonth();
         $userId = $user->getKey();
 
         $currentInventoryValue = (float) DB::table('store_items')
@@ -33,36 +34,43 @@ class ReportController
             ->where('items.user_id', $userId)
             ->sum(DB::raw('store_items.quantity * items.purchase_price'));
 
-        $monthlyIncomingValue = (float) StockMovement::query()
-            ->forUser($user)
-            ->ofType(StockMovementTypeEnum::INCOMING)
+        $incomingQuery = StockMovement::query();
+        StockMovement::scopeForUser($incomingQuery, $user);
+        StockMovement::scopeOfType($incomingQuery, StockMovementTypeEnum::INCOMING);
+        $monthlyIncomingValue = (float) $incomingQuery
             ->where('created_at', '>=', $startOfMonth->toDateString())
             ->sum('total_value');
 
-        $monthlyOutgoingValue = (float) StockMovement::query()
-            ->forUser($user)
-            ->ofType(StockMovementTypeEnum::OUTGOING)
+        $outgoingQuery = StockMovement::query();
+        StockMovement::scopeForUser($outgoingQuery, $user);
+        StockMovement::scopeOfType($outgoingQuery, StockMovementTypeEnum::OUTGOING);
+        $monthlyOutgoingValue = (float) $outgoingQuery
             ->where('created_at', '>=', $startOfMonth->toDateString())
             ->sum('total_value');
 
         $startOfMonthString = $startOfMonth->toDateString();
 
-        $storeConsumption = Store::querySelect(Store::query()->forUser($user)->retail())
+        $storeConsumptionQuery = Store::query();
+        Store::scopeForUser($storeConsumptionQuery, $user);
+        Store::scopeRetail($storeConsumptionQuery);
+        $storeConsumption = Store::querySelect($storeConsumptionQuery)
             ->get()
             ->map(function (Store $store) use ($startOfMonthString): array {
+                /** @var stdClass|null $row */
                 $row = DB::table('stock_movements')
-                    ->where('store_id', $store->getKey())
+                    ->where('source_store_id', $store->getKey())
                     ->where('type', StockMovementTypeEnum::OUTGOING->value)
                     ->where('created_at', '>=', $startOfMonthString)
-                    ->selectRaw('COUNT(*) as movimientos_count, SUM(total_quantity) as total_quantity, SUM(total_value) as total_value')
+                    ->selectRaw('COUNT(*) as movements_count, SUM(total_quantity) as total_quantity, SUM(total_value) as total_value')
                     ->first();
+                $rowValues = (array) $row;
 
                 return [
                     'store_id' => $store->getKey(),
                     'store_name' => $store->getName(),
-                    'movements_count' => (int) ($row->movements_count ?? 0),
-                    'total_quantity' => (float) ($row->total_quantity ?? 0),
-                    'total_value' => (float) ($row->total_value ?? 0),
+                    'movements_count' => Typer::parseInt($rowValues['movements_count'] ?? null),
+                    'total_quantity' => Typer::parseFloat($rowValues['total_quantity'] ?? null),
+                    'total_value' => Typer::parseFloat($rowValues['total_value'] ?? null),
                 ];
             })
             ->sortByDesc(static fn(array $row): float => $row['total_value'])
@@ -85,29 +93,32 @@ class ReportController
             ->orderByDesc('total_quantity')
             ->limit(10)
             ->get()
-            ->map(static fn($row): array => [
-                'item_id' => Typer::assertInt($row->id),
-                'item_title' => $row->title,
-                'item_sku' => $row->sku,
-                'total_quantity' => Typer::parseFloat($row->total_quantity),
-                'total_value' => Typer::parseFloat($row->total_value),
-                'rows_count' => Typer::assertInt($row->rows_count),
-            ])
+            ->map(static function (stdClass $row): array {
+                $rowValues = (array) $row;
+
+                return [
+                    'item_id' => Typer::assertInt($rowValues['id'] ?? null),
+                    'item_title' => Typer::assertString($rowValues['title'] ?? null),
+                    'item_sku' => Typer::assertNullableString($rowValues['sku'] ?? null),
+                    'total_quantity' => Typer::parseFloat($rowValues['total_quantity'] ?? null),
+                    'total_value' => Typer::parseFloat($rowValues['total_value'] ?? null),
+                    'rows_count' => Typer::assertInt($rowValues['rows_count'] ?? null),
+                ];
+            })
             ->all();
 
         $adjustments = StockMovementItem::query()
-            ->whereHas('stockMovement', static function ($query) use ($user): void {
-                // @var \Illuminate\Database\Eloquent\Builder<\App\Models\StockMovement> $query
-                $query->forUser($user);
+            ->whereHas('stockMovement', static function (Builder $query) use ($user): void {
+                $query->where('user_id', $user->getKey());
             })
             ->whereNotNull('adjustment_reason')
             ->select('adjustment_reason', DB::raw('COUNT(*) as rows_count'), DB::raw('SUM(ABS(quantity_difference)) as total_quantity'))
             ->groupBy('adjustment_reason')
             ->get()
             ->map(static fn(StockMovementItem $row): array => [
-                'reason' => $row->adjustment_reason,
-                'rows_count' => (int) $row->rows_count,
-                'total_quantity' => (float) $row->total_quantity,
+                'reason' => $row->getAdjustmentReason()?->value,
+                'rows_count' => $row->getRowsCount(),
+                'total_quantity' => $row->getAggregatedTotalQuantity(),
             ])
             ->all();
 

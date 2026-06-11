@@ -12,12 +12,7 @@ import CardTitle from '@/components/ui/CardTitle.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
-import {
-    formatDate,
-    formatDateTime,
-    formatMoney,
-    formatNumber,
-} from '@/lib/format';
+import { formatDate, formatMoney, formatNumber } from '@/lib/format';
 
 type Row = {
     id: number;

@@ -13,8 +13,10 @@ use App\Models\StockMovementSequence;
 use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -99,8 +101,9 @@ class StockMovementService
 
             foreach ($rows as $row) {
                 $rowPayload = $this->normaliseRow($type, Typer::assertArray($row));
-                $item = Item::query()
-                    ->forUser($user)
+                $itemQuery = Item::query();
+                Item::scopeForUser($itemQuery, $user);
+                $item = $itemQuery
                     ->whereKey(Typer::parseInt($rowPayload['item_id']))
                     ->lockForUpdate()
                     ->first();
@@ -139,8 +142,8 @@ class StockMovementService
                     'adjustment_reason' => $result['adjustment_reason'],
                 ]);
 
-                $totals['quantity'] += \abs($result['quantity_difference'] ?? $result['row_quantity'] ?? 0.0);
-                $totals['value'] += $result['total'];
+                $totals['quantity'] += \abs(Typer::parseFloat($result['quantity_difference'] ?? $result['row_quantity'] ?? 0.0));
+                $totals['value'] += Typer::parseFloat($result['total']);
             }
 
             $movement->update([
@@ -157,8 +160,9 @@ class StockMovementService
      */
     private function resolveStore(User $user, int $storeId, string $field): Store
     {
-        $store = Store::query()
-            ->forUser($user)
+        $storeQuery = Store::query();
+        Store::scopeForUser($storeQuery, $user);
+        $store = $storeQuery
             ->whereKey($storeId)
             ->first();
 
@@ -170,7 +174,7 @@ class StockMovementService
     }
 
     /**
-     * @param array<string, string> $messages
+     * @param array<string, array<array-key, mixed>|string> $messages
      */
     private function fail(array $messages): never
     {
@@ -185,7 +189,7 @@ class StockMovementService
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param array<array-key, mixed> $row
      *
      * @return array<string, mixed>
      */
@@ -204,7 +208,7 @@ class StockMovementService
             ],
             StockMovementTypeEnum::ADJUSTMENT => [
                 'item_id' => $itemId,
-                'quantity_after' => (float) ($row['quantity_after'] ?? 0),
+                'quantity_after' => Typer::parseFloat($row['quantity_after'] ?? 0),
                 'adjustment_reason' => Typer::assertString($row['adjustment_reason'] ?? AdjustmentReasonEnum::OTHER->value),
             ],
         };
@@ -217,7 +221,7 @@ class StockMovementService
      */
     private function applyIncoming(Store $destination, Item $item, array $row): array
     {
-        $quantity = (float) $row['quantity'];
+        $quantity = Typer::parseFloat($row['quantity']);
         $unitPrice = $item->getPurchasePrice();
         $storeItem = $this->lockStoreItem($destination, $item);
         $before = $storeItem->getQuantity();
@@ -242,7 +246,7 @@ class StockMovementService
      */
     private function applyOutgoing(Store $source, Store $destination, Item $item, array $row): array
     {
-        $quantity = (float) $row['quantity'];
+        $quantity = Typer::parseFloat($row['quantity']);
         $unitPrice = $item->getPurchasePrice();
         $sourceItem = $this->lockStoreItem($source, $item);
         $current = $sourceItem->getQuantity();
@@ -281,7 +285,7 @@ class StockMovementService
      */
     private function applyAdjustment(Store $store, Item $item, array $row): array
     {
-        $after = (float) $row['quantity_after'];
+        $after = Typer::parseFloat($row['quantity_after']);
         $storeItem = $this->lockStoreItem($store, $item);
         $before = $storeItem->getQuantity();
         $difference = $after - $before;
@@ -294,12 +298,18 @@ class StockMovementService
             'quantity_before' => $before,
             'quantity_after' => $after,
             'quantity_difference' => $difference,
-            'adjustment_reason' => (string) $row['adjustment_reason'],
+            'adjustment_reason' => Typer::assertString($row['adjustment_reason']),
         ];
     }
 
     /**
      * Lock or create a store_items row for the given store and item.
+     *
+     * Two concurrent first-time callers could both see "no row" and
+     * both `create()`, with the second hitting the unique-key
+     * constraint. We retry the lookup once after a duplicate-key
+     * failure; the first caller's `create()` is now visible inside
+     * the same transaction.
      */
     private function lockStoreItem(Store $store, Item $item): StoreItem
     {
@@ -313,10 +323,24 @@ class StockMovementService
             return $existing;
         }
 
-        return StoreItem::query()->create([
-            'store_id' => $store->getKey(),
-            'item_id' => $item->getKey(),
-            'quantity' => 0,
-        ]);
+        try {
+            return StoreItem::query()->create([
+                'store_id' => $store->getKey(),
+                'item_id' => $item->getKey(),
+                'quantity' => 0,
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            $existing = StoreItem::query()
+                ->where('store_id', $store->getKey())
+                ->where('item_id', $item->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($existing instanceof StoreItem) {
+                return $existing;
+            }
+
+            throw new RuntimeException('Store item race could not be resolved.');
+        }
     }
 }

@@ -10,9 +10,10 @@ both. Items that apply only to one surface are tagged **[Web]** or **[API]**.
   validation: `make local|testing|development|staging|production`, `make fix`,
   `make check`.
 - Before each commit, run `make fix` then `make check`.
-- PHPStan is the source of truth for type errors. Do not lower PHPStan
-  levels or suppress errors in the codebase — extend the baseline only as a
-  last resort, with a comment explaining why.
+- PHPStan is the source of truth for type errors. It must stay at
+  `level: max` and pass without `phpstan-baseline.neon`. Do not lower
+  strictness, reintroduce a baseline, add broad ignores, or suppress errors
+  in code; fix the underlying type or API contract issue.
 - Frontend type checks: `npm run type-check`; build: `npm run build`.
 
 ## Consistency
@@ -22,6 +23,32 @@ both. Items that apply only to one surface are tagged **[Web]** or **[API]**.
 - Follow existing project conventions for naming, imports, and
   control flow. When you find a violation, fix it before adding the new
   feature.
+- Import every PHP class/interface/trait/enum reference with a `use`
+  statement. Inline fully qualified class names are not allowed in
+  signatures, route definitions, PHPDoc, catches, callbacks, or method
+  bodies when the symbol can be imported. Global function calls such as
+  `\array_map()` may remain fully qualified when used deliberately.
+- Do not use model `@property`, `@method`, or `@phpstan-method` PHPDoc
+  as a substitute for real APIs. Eloquent attributes are read through
+  explicit getters that use `assertString`, `assertInt`,
+  `assertNullableString`, `Typer::*`, or the closest precise assertion.
+- Relations are accessed through explicit relationship methods for query
+  building or through typed relation getters such as `getStore()` and
+  `getMovementItems()`. Application code does not read
+  `$model->relation` properties.
+- Local scopes are called directly, for example
+  `Item::scopeSearch($query, $search)` or from a `tap()` callback that
+  calls the static scope method. Do not rely on magic builder methods
+  such as `$query->search()` or `$query->forUser()`.
+- PHPDoc remains appropriate for real generic contracts, including
+  relationship return types, `@param Builder<Model>`, and
+  `@use HasFactory<Factory>`.
+- Avoid single-use temporary variables for obvious expressions. Inline
+  trivial values such as `'%' . $search . '%'`, and remove unused
+  locals immediately.
+- TypeScript must keep `noUnusedLocals` and `noUnusedParameters`
+  enabled. Remove confirmed unused imports, locals, and dependencies
+  instead of leaving dead frontend code behind.
 
 ## Architecture Tests
 
@@ -43,6 +70,9 @@ the fastest way to learn the rules. Common enforced conventions:
 - Strict equality only (`===`/`!==`), no `==`/`!=`.
 - No `env()`, `config()`, `dd()`, `var_dump()`, `unserialize()`, etc.
   outside config files.
+- Do not call `env()` or `\env()` directly, including in config files.
+  Read environment values through `$env = Env::inject();` and use the
+  appropriate typed parser/assertion method.
 
 When in doubt, read the test that enforces the rule.
 

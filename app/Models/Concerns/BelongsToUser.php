@@ -60,9 +60,10 @@ trait BelongsToUser
     public function resolveRouteBinding($value, $field = null): Model|null
     {
         $user = User::mustAuth();
+        $query = static::query();
+        static::scopeForUser($query, $user);
 
-        return static::query()
-            ->forUser($user)
+        return $query
             ->where($field ?? $this->getRouteKeyName(), $value)
             ->first();
     }

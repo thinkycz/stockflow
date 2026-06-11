@@ -109,3 +109,22 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $response->assertStatus(422);
 });
+
+\test('guard field is whitelisted to known guards', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->unverified()->createOne([
+        'email' => 'unverified@example.com',
+    ]), User::class);
+
+    $token = EmailBrokerService::inject()->store($user->getTable(), $user->getEmailForVerification());
+
+    // A bogus guard must be rejected by the validator (it was a
+    // free-form varchar in the original implementation; the fix
+    // narrows it to GuardEnum::values()).
+    $response = $this->get('/email/verify?' . \http_build_query([
+        'guard' => 'something-rogue',
+        'email' => $user->getEmailForVerification(),
+        'token' => $token,
+    ]));
+
+    $response->assertStatus(422);
+});

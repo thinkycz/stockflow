@@ -96,3 +96,34 @@ use Thinkycz\LaravelCore\Support\Typer;
         ])
         ->assertStatus(422);
 });
+
+\test('validation failure on profile re-renders the unified settings page', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->createOne([
+        'email' => 'me@example.com',
+    ]), User::class);
+
+    // A duplicate email must trigger a 422 with the Inertia component
+    // pointing back at the actual settings page (settings/Index), not
+    // the legacy settings/Profile component the bootstrap match
+    // expression used to map to.
+    $response = $this->be($user, 'users')
+        ->post('/settings/profile', [
+            'email' => 'taken@example.com',
+        ], $this->inertiaHeaders())
+        ->assertStatus(422);
+
+    $response->assertJsonPath('component', 'settings/Index');
+});
+
+\test('validation failure on password re-renders the unified settings page', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+
+    $response = $this->be($user, 'users')
+        ->post('/settings/password', [
+            'password' => 'not-the-current-password',
+            'new_password' => 'whatever',
+        ], $this->inertiaHeaders())
+        ->assertStatus(422);
+
+    $response->assertJsonPath('component', 'settings/Index');
+});

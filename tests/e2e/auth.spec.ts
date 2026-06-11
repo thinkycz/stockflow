@@ -6,7 +6,9 @@ test.describe('Auth flow', () => {
 
         await expect(page).toHaveTitle(/Log in/);
         await expect(page.getByLabel('Email')).toBeVisible();
-        await expect(page.getByLabel('Password')).toBeVisible();
+        await expect(
+            page.getByLabel('Password', { exact: true }),
+        ).toBeVisible();
         await expect(
             page.getByRole('button', { name: 'Log in' }),
         ).toBeVisible();
@@ -17,7 +19,10 @@ test.describe('Auth flow', () => {
 
         await expect(page).toHaveTitle(/Create account/);
         await expect(page.getByLabel('Email')).toBeVisible();
-        await expect(page.getByLabel('Password')).toBeVisible();
+        await expect(
+            page.getByLabel('Password', { exact: true }),
+        ).toBeVisible();
+        await expect(page.getByLabel('Confirm password')).toBeVisible();
         await expect(page.getByLabel('Locale')).toBeVisible();
         await expect(
             page.getByRole('button', { name: 'Register' }),

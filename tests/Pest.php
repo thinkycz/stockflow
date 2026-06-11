@@ -10,7 +10,7 @@ use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 use Thinkycz\LaravelCore\Support\Typer;
 
-\pest()->extend(TestCase::class)->use(RefreshDatabase::class)->in('Architecture', 'Feature');
+\pest()->extend(TestCase::class)->use(RefreshDatabase::class)->in('Architecture', 'Feature', 'Unit');
 
 /**
  * @return array{0: User, 1: Store}

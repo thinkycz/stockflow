@@ -11,6 +11,7 @@ use App\Models\StoreItem;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -45,20 +46,26 @@ class ItemCreateController
             'description' => $itemValidity->description()->nullable()->toArray(),
         ]);
 
-        $item = Item::query()->create([
-            'user_id' => $user->getKey(),
-            'title' => $validated->assertString('title'),
-            'sku' => $validated->assertNullableString('sku'),
-            'unit' => $validated->assertNullableString('unit'),
-            'purchase_price' => $validated->assertString('purchase_price'),
-            'description' => $validated->assertNullableString('description'),
-        ]);
+        $warehouseId = $user->warehouse()->getKey();
 
-        StoreItem::query()->create([
-            'store_id' => $user->warehouse()->getKey(),
-            'item_id' => $item->getKey(),
-            'quantity' => 0,
-        ]);
+        $item = DB::transaction(function () use ($user, $validated, $warehouseId): Item {
+            $item = Item::query()->create([
+                'user_id' => $user->getKey(),
+                'title' => $validated->assertString('title'),
+                'sku' => $validated->assertNullableString('sku'),
+                'unit' => $validated->assertNullableString('unit'),
+                'purchase_price' => $validated->assertString('purchase_price'),
+                'description' => $validated->assertNullableString('description'),
+            ]);
+
+            StoreItem::query()->create([
+                'store_id' => $warehouseId,
+                'item_id' => $item->getKey(),
+                'quantity' => 0,
+            ]);
+
+            return $item;
+        });
 
         Inertia::flash('success', \__('Item created.'));
 

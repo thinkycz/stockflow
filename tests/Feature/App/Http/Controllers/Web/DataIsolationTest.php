@@ -203,3 +203,15 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $this->be($userA, 'users')->get("/stores/{$foreign->getKey()}/edit", $this->inertiaHeaders())->assertNotFound();
 });
+
+\test('provisionWarehouse is idempotent when called twice', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+
+    \expect(Store::query()->where('user_id', $user->getKey())->where('is_warehouse', true)->count())->toBe(0);
+
+    $first = $user->provisionWarehouse();
+    $second = $user->provisionWarehouse();
+
+    \expect($first->getKey())->toBe($second->getKey());
+    \expect(Store::query()->where('user_id', $user->getKey())->where('is_warehouse', true)->count())->toBe(1);
+});

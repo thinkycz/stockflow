@@ -19,12 +19,24 @@ return new class extends Migration {
 
             $table->string('type');
 
+            $table->foreignId('user_id')
+                ->nullable()
+                ->after('id')
+                ->constrained('users')
+                ->cascadeOnDelete();
+
             $table->foreignId('store_id')
                 ->nullable()
                 ->constrained('stores')
                 ->nullOnDelete();
 
-            $table->date('movement_date');
+            $table->foreignId('source_store_id')
+                ->nullable()
+                ->after('store_id')
+                ->constrained('stores')
+                ->nullOnDelete();
+
+            $table->index('source_store_id');
 
             $table->text('note')->nullable();
 
@@ -40,8 +52,6 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->unique('number');
-
-            $table->index(['type', 'movement_date']);
 
             $table->index('store_id');
         });

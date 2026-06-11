@@ -15,6 +15,14 @@ return new class extends Migration {
         Resolver::resolveSchemaBuilder()->create('stores', static function (Blueprint $table): void {
             $table->id();
 
+            $table->foreignId('user_id')
+                ->nullable()
+                ->after('id')
+                ->constrained('users')
+                ->cascadeOnDelete();
+
+            $table->boolean('is_warehouse')->default(false)->after('status');
+
             $table->string('name');
 
             $table->text('address')->nullable();
@@ -26,6 +34,23 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->index('status');
+        });
+
+        Resolver::resolveSchemaBuilder()->create('store_items', static function (Blueprint $table): void {
+            $table->id();
+
+            $table->foreignId('store_id')
+                ->constrained('stores')
+                ->cascadeOnDelete();
+
+            $table->foreignId('item_id')
+                ->constrained('items')
+                ->restrictOnDelete();
+
+            $table->decimal('quantity', 12, 3)->default(0);
+
+            $table->unique(['store_id', 'item_id']);
+            $table->index('item_id');
         });
     }
 

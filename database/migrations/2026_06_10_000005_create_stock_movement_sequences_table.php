@@ -13,13 +13,17 @@ return new class extends Migration {
     public function up(): void
     {
         Resolver::resolveSchemaBuilder()->create('stock_movement_sequences', static function (Blueprint $table): void {
+            $table->foreignId('user_id')
+                ->constrained('users')
+                ->cascadeOnDelete();
+
             $table->string('type');
 
             $table->smallInteger('year');
 
             $table->unsignedInteger('last_number')->default(0);
 
-            $table->primary(['type', 'year']);
+            $table->primary(['user_id', 'type', 'year']);
         });
     }
 

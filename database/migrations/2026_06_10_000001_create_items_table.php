@@ -15,6 +15,12 @@ return new class extends Migration {
         Resolver::resolveSchemaBuilder()->create('items', static function (Blueprint $table): void {
             $table->id();
 
+            $table->foreignId('user_id')
+                ->nullable()
+                ->after('id')
+                ->constrained('users')
+                ->cascadeOnDelete();
+
             $table->string('title');
 
             $table->string('sku')->nullable();

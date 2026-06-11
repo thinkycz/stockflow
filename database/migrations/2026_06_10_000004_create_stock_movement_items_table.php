@@ -25,8 +25,6 @@ return new class extends Migration {
 
             $table->decimal('quantity', 12, 3)->nullable();
 
-            $table->decimal('unit_price', 12, 2)->default(0);
-
             $table->decimal('total', 14, 2)->default(0);
 
             $table->decimal('quantity_before', 12, 3)->nullable();

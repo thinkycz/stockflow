@@ -27,9 +27,9 @@ enum ItemStockStatusEnum: string
     /**
      * Compute status from a quantity value.
      */
-    public static function fromQuantity(float $quantity): self
+    public static function fromQuantity(int $quantity): self
     {
-        if ($quantity <= 0.0) {
+        if ($quantity <= 0) {
             return self::OUT_OF_STOCK;
         }
 

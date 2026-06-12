@@ -69,7 +69,7 @@ class StoreIndexController
                 'status' => $store->getStatus()->value,
                 'is_warehouse' => $store->isWarehouse(),
                 'movements_count' => Typer::assertNullableInt($metrics->movements_count ?? null),
-                'total_received_quantity' => Typer::parseFloat($metrics->total_received_quantity ?? null),
+                'total_received_quantity' => Typer::parseInt($metrics->total_received_quantity ?? null),
                 'total_received_value' => Typer::parseFloat($metrics->total_received_value ?? null),
                 'total_outgoing_value' => Typer::parseFloat($metrics->total_outgoing_value ?? null),
             ];

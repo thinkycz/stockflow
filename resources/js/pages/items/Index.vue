@@ -27,7 +27,7 @@ type ItemRow = {
     status: 'in_stock' | 'low_stock' | 'out_of_stock';
 };
 
-defineProps<{
+const props = defineProps<{
     items: ItemRow[];
     search: string;
     pagination: {
@@ -42,7 +42,7 @@ const { t } = useI18n();
 
 useBoundLocale();
 
-const searchTerm = ref<string>('');
+const searchTerm = ref<string>(props.search || '');
 const submitting = ref<boolean>(false);
 
 function performSearch(event?: Event): void {

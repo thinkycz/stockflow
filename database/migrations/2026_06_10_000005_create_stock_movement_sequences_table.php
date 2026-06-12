@@ -26,12 +26,4 @@ return new class extends Migration {
             $table->primary(['user_id', 'type', 'year']);
         });
     }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Resolver::resolveSchemaBuilder()->dropIfExists('stock_movement_sequences');
-    }
 };

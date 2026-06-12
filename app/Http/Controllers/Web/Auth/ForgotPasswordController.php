@@ -36,13 +36,13 @@ class ForgotPasswordController
      */
     public function store(Request $request): Response
     {
-        $this->hit($this->limit());
-
         $authValidity = AuthValidity::inject();
 
         $validated = $this->validateRequest($request, [
             'email' => $authValidity->email()->required()->toArray(),
         ]);
+
+        $this->hit($this->limit());
 
         $user = Typer::assertNullableInstance(Resolver::resolveEloquentUserProvider('users')->retrieveByCredentials([
             'email' => $validated->assertString('email'),

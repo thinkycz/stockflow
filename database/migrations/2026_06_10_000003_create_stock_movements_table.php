@@ -45,7 +45,7 @@ return new class extends Migration {
                 ->constrained('users')
                 ->nullOnDelete();
 
-            $table->decimal('total_quantity', 14, 3)->default(0);
+            $table->integer('total_quantity')->default(0);
 
             $table->decimal('total_value', 14, 2)->default(0);
 
@@ -55,13 +55,5 @@ return new class extends Migration {
 
             $table->index('store_id');
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Resolver::resolveSchemaBuilder()->dropIfExists('stock_movements');
     }
 };

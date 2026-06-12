@@ -69,7 +69,7 @@ class ReportController
                     'store_id' => $store->getKey(),
                     'store_name' => $store->getName(),
                     'movements_count' => Typer::parseInt($rowValues['movements_count'] ?? null),
-                    'total_quantity' => Typer::parseFloat($rowValues['total_quantity'] ?? null),
+                    'total_quantity' => Typer::parseInt($rowValues['total_quantity'] ?? null),
                     'total_value' => Typer::parseFloat($rowValues['total_value'] ?? null),
                 ];
             })
@@ -100,7 +100,7 @@ class ReportController
                     'item_id' => Typer::assertInt($rowValues['id'] ?? null),
                     'item_title' => Typer::assertString($rowValues['title'] ?? null),
                     'item_sku' => Typer::assertNullableString($rowValues['sku'] ?? null),
-                    'total_quantity' => Typer::parseFloat($rowValues['total_quantity'] ?? null),
+                    'total_quantity' => Typer::parseInt($rowValues['total_quantity'] ?? null),
                     'total_value' => Typer::parseFloat($rowValues['total_value'] ?? null),
                     'rows_count' => Typer::assertInt($rowValues['rows_count'] ?? null),
                 ];

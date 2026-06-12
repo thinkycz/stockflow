@@ -39,7 +39,7 @@ class Item extends BaseModel
     public static function scopeSearch(Builder $query, string $search): void
     {
         $query->where(static function (Builder $query) use ($search): void {
-            $query->where('title', 'like', '%' . $search . '%')->getQuery()
+            $query->where('title', 'like', '%' . $search . '%')
                 ->orWhere('sku', 'like', '%' . $search . '%');
         });
     }
@@ -189,12 +189,12 @@ class Item extends BaseModel
     /**
      * Total quantity across all of the owner's warehouse stores.
      */
-    public function getWarehouseQuantity(): float
+    public function getWarehouseQuantity(): int
     {
         $cached = $this->getAttribute('warehouse_quantity_sum');
 
         if ($cached !== null) {
-            return Typer::parseFloat($cached);
+            return Typer::parseInt($cached);
         }
 
         $storeQuery = Store::query();
@@ -205,10 +205,10 @@ class Item extends BaseModel
             ->pluck('id');
 
         if ($warehouseIds->isEmpty()) {
-            return 0.0;
+            return 0;
         }
 
-        return Typer::parseFloat($this->storeItems()
+        return Typer::parseInt($this->storeItems()
             ->whereIn('store_id', $warehouseIds)
             ->sum('quantity'));
     }
@@ -216,15 +216,15 @@ class Item extends BaseModel
     /**
      * Total quantity across all of the owner's stores.
      */
-    public function getTotalQuantity(): float
+    public function getTotalQuantity(): int
     {
         $cached = $this->getAttribute('total_quantity_sum');
 
         if ($cached !== null) {
-            return Typer::parseFloat($cached);
+            return Typer::parseInt($cached);
         }
 
-        return Typer::parseFloat($this->storeItems()->sum('quantity'));
+        return Typer::parseInt($this->storeItems()->sum('quantity'));
     }
 
     /**

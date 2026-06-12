@@ -83,7 +83,7 @@ class StockMovementService
             $number = StockMovementSequence::next($type, $year, $user->getKey());
 
             $totals = [
-                'quantity' => 0.0,
+                'quantity' => 0,
                 'value' => 0.0,
             ];
 
@@ -142,12 +142,12 @@ class StockMovementService
                     'adjustment_reason' => $result['adjustment_reason'],
                 ]);
 
-                $totals['quantity'] += \abs(Typer::parseFloat($result['quantity_difference'] ?? $result['row_quantity'] ?? 0.0));
+                $totals['quantity'] += \abs(Typer::parseInt($result['quantity_difference'] ?? $result['row_quantity'] ?? 0));
                 $totals['value'] += Typer::parseFloat($result['total']);
             }
 
             $movement->update([
-                'total_quantity' => \round($totals['quantity'], 3),
+                'total_quantity' => $totals['quantity'],
                 'total_value' => \round($totals['value'], 2),
             ]);
 
@@ -204,11 +204,11 @@ class StockMovementService
         return match ($type) {
             StockMovementTypeEnum::INCOMING, StockMovementTypeEnum::OUTGOING => [
                 'item_id' => $itemId,
-                'quantity' => (float) Typer::assertScalar($row['quantity'] ?? 0),
+                'quantity' => (int) Typer::assertScalar($row['quantity'] ?? 0),
             ],
             StockMovementTypeEnum::ADJUSTMENT => [
                 'item_id' => $itemId,
-                'quantity_after' => Typer::parseFloat($row['quantity_after'] ?? 0),
+                'quantity_after' => Typer::parseInt($row['quantity_after'] ?? 0),
                 'adjustment_reason' => Typer::assertString($row['adjustment_reason'] ?? AdjustmentReasonEnum::OTHER->value),
             ],
         };
@@ -221,7 +221,7 @@ class StockMovementService
      */
     private function applyIncoming(Store $destination, Item $item, array $row): array
     {
-        $quantity = Typer::parseFloat($row['quantity']);
+        $quantity = Typer::parseInt($row['quantity']);
         $unitPrice = $item->getPurchasePrice();
         $storeItem = $this->lockStoreItem($destination, $item);
         $before = $storeItem->getQuantity();
@@ -246,7 +246,7 @@ class StockMovementService
      */
     private function applyOutgoing(Store $source, Store $destination, Item $item, array $row): array
     {
-        $quantity = Typer::parseFloat($row['quantity']);
+        $quantity = Typer::parseInt($row['quantity']);
         $unitPrice = $item->getPurchasePrice();
         $sourceItem = $this->lockStoreItem($source, $item);
         $current = $sourceItem->getQuantity();
@@ -285,7 +285,7 @@ class StockMovementService
      */
     private function applyAdjustment(Store $store, Item $item, array $row): array
     {
-        $after = Typer::parseFloat($row['quantity_after']);
+        $after = Typer::parseInt($row['quantity_after']);
         $storeItem = $this->lockStoreItem($store, $item);
         $before = $storeItem->getQuantity();
         $difference = $after - $before;

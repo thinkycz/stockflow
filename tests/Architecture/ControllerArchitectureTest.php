@@ -50,7 +50,10 @@ declare(strict_types=1);
 });
 
 \arch('web index controllers declare a TAKE constant', function (): void {
-    foreach (\glob(\base_path('app/Http/Controllers/Web/**/*IndexController.php')) as $file) {
+    foreach (\arch_php_files(\base_path('app/Http/Controllers/Web')) as $file) {
+        if (!\str_ends_with($file, 'IndexController.php')) {
+            continue;
+        }
         $contents = (string) \file_get_contents($file);
 
         \expect($contents)->toMatch('/public const int TAKE/');

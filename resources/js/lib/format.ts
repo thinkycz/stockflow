@@ -7,7 +7,7 @@ export function formatMoney(value: number): string {
     }).format(value);
 }
 
-export function formatNumber(value: number, fractionDigits = 3): string {
+export function formatNumber(value: number, fractionDigits = 0): string {
     return new Intl.NumberFormat(undefined, {
         minimumFractionDigits: fractionDigits,
         maximumFractionDigits: fractionDigits,

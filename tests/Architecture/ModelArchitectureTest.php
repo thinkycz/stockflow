@@ -29,10 +29,6 @@ declare(strict_types=1);
     foreach (\glob(\base_path('app/Models/*.php')) as $file) {
         $contents = (string) \file_get_contents($file);
 
-        if (\str_contains($contents, 'class Category')) {
-            continue;
-        }
-
         \expect($contents)
             ->toMatch('/protected function casts\\(\\): array/');
     }

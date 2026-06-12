@@ -40,14 +40,14 @@ class LoginController
      */
     public function store(Request $request): SymfonyResponse
     {
-        $this->hit($this->limit());
-
         $authValidity = AuthValidity::inject();
 
         $validated = $this->validateRequest($request, [
             'email' => $authValidity->email()->required()->toArray(),
             'password' => $authValidity->password()->required()->toArray(),
         ]);
+
+        $this->hit($this->limit());
 
         $email = $validated->assertString('email');
         $password = $validated->assertString('password');

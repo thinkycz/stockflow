@@ -40,8 +40,6 @@ class ResetPasswordController
      */
     public function store(Request $request): SymfonyResponse
     {
-        $this->hit($this->limit());
-
         $authValidity = AuthValidity::inject();
 
         $validated = $this->validateRequest($request, [
@@ -49,6 +47,8 @@ class ResetPasswordController
             'password' => $authValidity->password()->required()->toArray(),
             'token' => $authValidity->passwordResetToken()->required()->toArray(),
         ]);
+
+        $this->hit($this->limit());
 
         $user = Typer::assertNullableInstance(Resolver::resolveEloquentUserProvider('users')->retrieveByCredentials([
             'email' => $validated->assertString('email'),

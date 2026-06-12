@@ -208,33 +208,33 @@ class StockMovement extends BaseModel
     /**
      * Pivot quantity getter for item detail movement rows.
      */
-    public function getPivotQuantity(): float|null
+    public function getPivotQuantity(): int|null
     {
-        return Typer::parseNullableFloat($this->readPivotAttribute('quantity'));
+        return Typer::parseNullableInt($this->readPivotAttribute('quantity'));
     }
 
     /**
      * Pivot quantity-before getter for adjustment rows.
      */
-    public function getPivotQuantityBefore(): float|null
+    public function getPivotQuantityBefore(): int|null
     {
-        return Typer::parseNullableFloat($this->readPivotAttribute('quantity_before'));
+        return Typer::parseNullableInt($this->readPivotAttribute('quantity_before'));
     }
 
     /**
      * Pivot quantity-after getter for adjustment rows.
      */
-    public function getPivotQuantityAfter(): float|null
+    public function getPivotQuantityAfter(): int|null
     {
-        return Typer::parseNullableFloat($this->readPivotAttribute('quantity_after'));
+        return Typer::parseNullableInt($this->readPivotAttribute('quantity_after'));
     }
 
     /**
      * Pivot quantity-difference getter for movement rows.
      */
-    public function getPivotQuantityDifference(): float|null
+    public function getPivotQuantityDifference(): int|null
     {
-        return Typer::parseNullableFloat($this->readPivotAttribute('quantity_difference'));
+        return Typer::parseNullableInt($this->readPivotAttribute('quantity_difference'));
     }
 
     /**
@@ -334,9 +334,9 @@ class StockMovement extends BaseModel
     /**
      * Total quantity getter.
      */
-    public function getTotalQuantity(): float
+    public function getTotalQuantity(): int
     {
-        return (float) Typer::assertString($this->getAttribute('total_quantity'));
+        return Typer::assertInt($this->getAttribute('total_quantity'));
     }
 
     /**
@@ -369,7 +369,7 @@ class StockMovement extends BaseModel
     protected function casts(): array
     {
         return [
-            'total_quantity' => 'decimal:3',
+            'total_quantity' => 'integer',
             'total_value' => 'decimal:2',
         ];
     }

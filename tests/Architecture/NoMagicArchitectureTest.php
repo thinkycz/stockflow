@@ -58,7 +58,7 @@ declare(strict_types=1);
         'use Illuminate\\Foundation\\Events\\Dispatchable;',
     ];
 
-    foreach (\glob(\base_path('app/**/*.php'), \GLOB_BRACE) as $file) {
+    foreach (\arch_php_files(\base_path('app')) as $file) {
         $contents = (string) \file_get_contents($file);
 
         foreach ($forbidden as $use) {

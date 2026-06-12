@@ -149,9 +149,7 @@ useBoundLocale();
                                 <td
                                     class="text-right font-semibold text-on-surface"
                                 >
-                                    {{
-                                        formatNumber(movement.total_quantity, 3)
-                                    }}
+                                    {{ formatNumber(movement.total_quantity) }}
                                 </td>
                                 <td class="text-right text-on-surface-variant">
                                     {{ formatMoney(movement.total_value) }}

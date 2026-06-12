@@ -34,7 +34,7 @@ class StoreItem extends BaseModel
     public static function scopeSearch(Builder $query, string $search): void
     {
         $query->whereHas('item', static function (Builder $query) use ($search): void {
-            $query->where('title', 'like', '%' . $search . '%')->getQuery()
+            $query->where('title', 'like', '%' . $search . '%')
                 ->orWhere('sku', 'like', '%' . $search . '%');
         });
     }
@@ -114,9 +114,9 @@ class StoreItem extends BaseModel
     /**
      * Quantity getter.
      */
-    public function getQuantity(): float
+    public function getQuantity(): int
     {
-        return (float) Typer::assertString($this->getAttribute('quantity'));
+        return Typer::assertInt($this->getAttribute('quantity'));
     }
 
     /**
@@ -127,7 +127,7 @@ class StoreItem extends BaseModel
     protected function casts(): array
     {
         return [
-            'quantity' => 'decimal:3',
+            'quantity' => 'integer',
         ];
     }
 }

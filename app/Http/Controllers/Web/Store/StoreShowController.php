@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection as SupportCollection;
 use Inertia\Inertia;
 use Inertia\Response;
-use Thinkycz\LaravelCore\Support\Typer;
 
 class StoreShowController
 {
@@ -93,7 +92,7 @@ class StoreShowController
                 return [];
             }
 
-            $totalQuantity = $rows->sum(static fn(StockMovementItem $row): float => Typer::parseFloat($row->getQuantity() ?? 0));
+            $totalQuantity = $rows->sum(static fn(StockMovementItem $row): int => $row->getQuantity() ?? 0);
             $totalValue = $rows->sum(static fn(StockMovementItem $row): float => $row->getTotal());
 
             return [
@@ -113,7 +112,7 @@ class StoreShowController
         $incomingMovements = $movements->filter(
             static fn(StockMovement $movement): bool => $movement->getType() === StockMovementTypeEnum::INCOMING,
         );
-        $totalReceivedQuantity = $incomingMovements->sum(static fn(StockMovement $m): float => $m->getTotalQuantity());
+        $totalReceivedQuantity = $incomingMovements->sum(static fn(StockMovement $m): int => $m->getTotalQuantity());
         $totalReceivedValue = $incomingMovements->sum(static fn(StockMovement $m): float => $m->getTotalValue());
 
         return Inertia::render('stores/Show', [

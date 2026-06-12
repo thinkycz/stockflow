@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\Password\PasswordForgotController;
+use App\Models\User;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Facades\Notification;
 use Thinkycz\LaravelCore\Notifications\PasswordNewPasswordSettedNotification;
@@ -14,7 +15,7 @@ use Thinkycz\LaravelCore\Support\Resolver;
     $user = UserFactory::new()->createOne([
         'email' => 'forgot@example.com',
     ]);
-    \expect($user)->toBeInstanceOf(App\Models\User::class);
+    \expect($user)->toBeInstanceOf(User::class);
 
     $response = $this->postJson(Resolver::resolveUrlGenerator()->action(PasswordForgotController::class), [
         'email' => $user->getEmail(),
@@ -32,7 +33,7 @@ use Thinkycz\LaravelCore\Support\Resolver;
     $user = UserFactory::new()->createOne([
         'email' => 'forgot@example.com',
     ]);
-    \expect($user)->toBeInstanceOf(App\Models\User::class);
+    \expect($user)->toBeInstanceOf(User::class);
 
     $response = $this->postJson(Resolver::resolveUrlGenerator()->action(PasswordForgotController::class), [
         'email' => $user->getEmail(),
@@ -52,7 +53,7 @@ use Thinkycz\LaravelCore\Support\Resolver;
     $user = UserFactory::new()->createOne([
         'email' => 'forgot@example.com',
     ]);
-    \expect($user)->toBeInstanceOf(App\Models\User::class);
+    \expect($user)->toBeInstanceOf(User::class);
 
     $response = $this->postJson(Resolver::resolveUrlGenerator()->action(PasswordForgotController::class), [
         'email' => $user->getEmail(),

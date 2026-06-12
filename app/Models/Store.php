@@ -34,7 +34,7 @@ class Store extends BaseModel
     public static function scopeSearch(Builder $query, string $search): void
     {
         $query->where(static function (Builder $query) use ($search): void {
-            $query->where('name', 'like', '%' . $search . '%')->getQuery()
+            $query->where('name', 'like', '%' . $search . '%')
                 ->orWhere('address', 'like', '%' . $search . '%');
         });
     }

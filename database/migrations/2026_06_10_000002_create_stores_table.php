@@ -47,18 +47,10 @@ return new class extends Migration {
                 ->constrained('items')
                 ->restrictOnDelete();
 
-            $table->decimal('quantity', 12, 3)->default(0);
+            $table->integer('quantity')->default(0);
 
             $table->unique(['store_id', 'item_id']);
             $table->index('item_id');
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Resolver::resolveSchemaBuilder()->dropIfExists('stores');
     }
 };

@@ -20,6 +20,6 @@ use App\Models\StoreItem;
     $item = Item::query()->where('title', 'Test Item')->first();
     \expect($item)->not->toBeNull();
     \expect($item->getSku())->toBe('TEST-001');
-    \expect($item->getWarehouseQuantity())->toBe(0.0);
+    \expect($item->getWarehouseQuantity())->toBe(0);
     \expect(StoreItem::query()->where('store_id', $warehouse->getKey())->where('item_id', $item->getKey())->exists())->toBeTrue();
 });

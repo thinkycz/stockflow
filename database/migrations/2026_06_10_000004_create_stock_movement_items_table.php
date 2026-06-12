@@ -23,27 +23,19 @@ return new class extends Migration {
                 ->constrained('items')
                 ->restrictOnDelete();
 
-            $table->decimal('quantity', 12, 3)->nullable();
+            $table->integer('quantity')->nullable();
 
             $table->decimal('total', 14, 2)->default(0);
 
-            $table->decimal('quantity_before', 12, 3)->nullable();
+            $table->integer('quantity_before')->nullable();
 
-            $table->decimal('quantity_after', 12, 3)->nullable();
+            $table->integer('quantity_after')->nullable();
 
-            $table->decimal('quantity_difference', 12, 3)->nullable();
+            $table->integer('quantity_difference')->nullable();
 
             $table->string('adjustment_reason')->nullable();
 
             $table->index(['stock_movement_id', 'item_id']);
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Resolver::resolveSchemaBuilder()->dropIfExists('stock_movement_items');
     }
 };

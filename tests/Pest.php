@@ -13,6 +13,23 @@ use Thinkycz\LaravelCore\Support\Typer;
 \pest()->extend(TestCase::class)->use(RefreshDatabase::class)->in('Architecture', 'Feature', 'Unit');
 
 /**
+ * Recursively iterate every .php file under a directory.
+ *
+ * @return iterable<string>
+ */
+function arch_php_files(string $dir): iterable
+{
+    $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS));
+
+    foreach ($rii as $file) {
+        /** @var SplFileInfo $file */
+        if ($file->isFile() && $file->getExtension() === 'php') {
+            yield $file->getPathname();
+        }
+    }
+}
+
+/**
  * @return array{0: User, 1: Store}
  */
 function createIsolatedUserWithWarehouse(): array

@@ -30,11 +30,11 @@ if (\is_dir(\dirname(__DIR__, 2) . '/app/Http/Validation')) {
         foreach (\glob(\base_path('app/Http/Validation/*.php')) as $file) {
             $contents = (string) \file_get_contents($file);
 
-            if (\preg_match('/public function id\\(\\): Validity\\s*\\{[^}]*exists\\(\'([^\']+)\',\\s*\'id\'\\)/', $contents, $matches) === 1) {
+            if (\preg_match('/public function id\\(\\): Validity\\s*\\{[^}]*exists\\(\'([^\']+)\',\\s*\'id\'(?:,\\s*[^)]+)?\\)/', $contents, $matches) === 1) {
                 $table = $matches[1];
 
                 \expect($contents)
-                    ->toMatch('/public function id\\(\\): Validity\\s*\\{[^}]*exists\\(\'' . \preg_quote($table, '/') . '\',\\s*\'id\'\\)/');
+                    ->toMatch('/public function id\\(\\): Validity\\s*\\{[^}]*exists\\(\'' . \preg_quote($table, '/') . '\',\\s*\'id\'(?:,\\s*[^)]+)?\\)/');
             }
         }
     });

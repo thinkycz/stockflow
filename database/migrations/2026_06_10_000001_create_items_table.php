@@ -27,7 +27,7 @@ return new class extends Migration {
 
             $table->string('unit')->nullable();
 
-            $table->decimal('current_quantity', 12, 3)->default(0);
+            $table->integer('current_quantity')->default(0);
 
             $table->decimal('purchase_price', 12, 2)->default(0);
 
@@ -39,13 +39,5 @@ return new class extends Migration {
 
             $table->index('title');
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Resolver::resolveSchemaBuilder()->dropIfExists('items');
     }
 };

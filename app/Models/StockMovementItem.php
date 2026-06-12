@@ -122,11 +122,9 @@ class StockMovementItem extends BaseModel
     /**
      * Quantity getter.
      */
-    public function getQuantity(): float|null
+    public function getQuantity(): int|null
     {
-        $value = $this->getAttribute('quantity');
-
-        return $value === null ? null : (float) Typer::assertString($value);
+        return Typer::assertNullableInt($this->getAttribute('quantity'));
     }
 
     /**
@@ -140,31 +138,25 @@ class StockMovementItem extends BaseModel
     /**
      * Quantity before getter.
      */
-    public function getQuantityBefore(): float|null
+    public function getQuantityBefore(): int|null
     {
-        $value = $this->getAttribute('quantity_before');
-
-        return $value === null ? null : (float) Typer::assertString($value);
+        return Typer::assertNullableInt($this->getAttribute('quantity_before'));
     }
 
     /**
      * Quantity after getter.
      */
-    public function getQuantityAfter(): float|null
+    public function getQuantityAfter(): int|null
     {
-        $value = $this->getAttribute('quantity_after');
-
-        return $value === null ? null : (float) Typer::assertString($value);
+        return Typer::assertNullableInt($this->getAttribute('quantity_after'));
     }
 
     /**
      * Quantity difference getter.
      */
-    public function getQuantityDifference(): float|null
+    public function getQuantityDifference(): int|null
     {
-        $value = $this->getAttribute('quantity_difference');
-
-        return $value === null ? null : (float) Typer::assertString($value);
+        return Typer::assertNullableInt($this->getAttribute('quantity_difference'));
     }
 
     /**
@@ -192,9 +184,9 @@ class StockMovementItem extends BaseModel
     /**
      * Aggregate total quantity getter.
      */
-    public function getAggregatedTotalQuantity(): float
+    public function getAggregatedTotalQuantity(): int
     {
-        return Typer::parseFloat($this->getAttribute('total_quantity'));
+        return Typer::parseInt($this->getAttribute('total_quantity'));
     }
 
     /**
@@ -205,11 +197,11 @@ class StockMovementItem extends BaseModel
     protected function casts(): array
     {
         return [
-            'quantity' => 'decimal:3',
+            'quantity' => 'integer',
             'total' => 'decimal:2',
-            'quantity_before' => 'decimal:3',
-            'quantity_after' => 'decimal:3',
-            'quantity_difference' => 'decimal:3',
+            'quantity_before' => 'integer',
+            'quantity_after' => 'integer',
+            'quantity_difference' => 'integer',
         ];
     }
 }

@@ -31,7 +31,7 @@ type MovementRow = {
 
 type StoreOption = { id: number; name: string };
 
-defineProps<{
+const props = defineProps<{
     movements: MovementRow[];
     stores: StoreOption[];
     filters: {
@@ -53,11 +53,13 @@ const { t } = useI18n();
 
 useBoundLocale();
 
-const formSearch = ref<string>('');
-const formType = ref<string>('');
-const formStoreId = ref<string>('');
-const formDateFrom = ref<string>('');
-const formDateTo = ref<string>('');
+const formSearch = ref<string>(props.filters.search || '');
+const formType = ref<string>(props.filters.type || '');
+const formStoreId = ref<string>(
+    props.filters.store_id ? String(props.filters.store_id) : '',
+);
+const formDateFrom = ref<string>(props.filters.date_from || '');
+const formDateTo = ref<string>(props.filters.date_to || '');
 const submitting = ref<boolean>(false);
 
 function applyFilters(): void {

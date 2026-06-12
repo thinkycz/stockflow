@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\Item;
 use App\Models\StockMovement;
+use App\Models\StockMovementItem;
 
 \test('cannot delete an item with stock movement history', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
@@ -13,7 +14,7 @@ use App\Models\StockMovement;
         'created_by' => $user->getKey(),
     ]);
 
-    App\Models\StockMovementItem::query()->create([
+    StockMovementItem::query()->create([
         'stock_movement_id' => $movement->getKey(),
         'item_id' => $item->getKey(),
         'quantity' => 10,

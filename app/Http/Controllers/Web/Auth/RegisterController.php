@@ -38,8 +38,6 @@ class RegisterController
      */
     public function store(Request $request): SymfonyResponse
     {
-        $this->hit($this->limit());
-
         $authValidity = AuthValidity::inject();
 
         $validated = $this->validateRequest($request, [
@@ -47,6 +45,8 @@ class RegisterController
             'password' => $authValidity->password()->required()->confirmed()->toArray(),
             'locale' => $authValidity->locale()->required()->toArray(),
         ]);
+
+        $this->hit($this->limit());
 
         $user = DB::transaction(function () use ($validated): User {
             $user = User::create([

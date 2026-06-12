@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Item;
+use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
@@ -104,7 +105,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->where('item_id', $item->getKey())
         ->value('quantity');
 
-    \expect((float) $quantity)->toBe(12.0);
+    \expect((int) $quantity)->toBe(12);
 });
 
 \test('warehouse is provisioned for users created without one', function (): void {
@@ -144,24 +145,24 @@ use Thinkycz\LaravelCore\Support\Typer;
         ]],
     ])->assertRedirect();
 
-    $warehouseQty = (float) StoreItem::query()
+    $warehouseQty = (int) StoreItem::query()
         ->where('store_id', $warehouse->getKey())
         ->where('item_id', $item->getKey())
         ->value('quantity');
 
-    $destinationQty = (float) StoreItem::query()
+    $destinationQty = (int) StoreItem::query()
         ->where('store_id', $destination->getKey())
         ->where('item_id', $item->getKey())
         ->value('quantity');
 
-    \expect($warehouseQty)->toBe(13.0);
-    \expect($destinationQty)->toBe(7.0);
+    \expect($warehouseQty)->toBe(13);
+    \expect($destinationQty)->toBe(7);
 });
 
 \test('stock movement index excludes other users movements', function (): void {
     [$userA] = \createIsolatedUserWithWarehouse();
     [$userB] = \createIsolatedUserWithWarehouse();
-    App\Models\StockMovement::factory()->incoming()->byUser($userB)->create(['user_id' => $userB->getKey()]);
+    StockMovement::factory()->incoming()->byUser($userB)->create(['user_id' => $userB->getKey()]);
 
     $response = $this->be($userA, 'users')->get('/stock-movements', $this->inertiaHeaders());
 
@@ -171,7 +172,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 \test('stock movement show 404s for another user', function (): void {
     [$userA] = \createIsolatedUserWithWarehouse();
     [$userB] = \createIsolatedUserWithWarehouse();
-    $foreign = App\Models\StockMovement::factory()->incoming()->byUser($userB)->create(['user_id' => $userB->getKey()]);
+    $foreign = StockMovement::factory()->incoming()->byUser($userB)->create(['user_id' => $userB->getKey()]);
 
     $this->be($userA, 'users')->get("/stock-movements/{$foreign->getKey()}")->assertNotFound();
 });
@@ -179,7 +180,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 \test('reports only show own data', function (): void {
     [$userA] = \createIsolatedUserWithWarehouse();
     [$userB] = \createIsolatedUserWithWarehouse();
-    App\Models\StockMovement::factory()->incoming()->byUser($userB)->create(['user_id' => $userB->getKey()]);
+    StockMovement::factory()->incoming()->byUser($userB)->create(['user_id' => $userB->getKey()]);
 
     $response = $this->be($userA, 'users')->get('/reports', $this->inertiaHeaders());
 

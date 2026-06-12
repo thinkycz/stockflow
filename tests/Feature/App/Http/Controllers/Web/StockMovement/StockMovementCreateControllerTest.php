@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\StoreItem;
@@ -9,7 +10,7 @@ use App\Services\StockMovementService;
 
 \test('user can create an incoming stock movement to warehouse', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
-    $item = App\Models\Item::factory()->create([
+    $item = Item::factory()->create([
         'user_id' => $user->getKey(),
         'title' => 'Matcha',
         'purchase_price' => '5.50',
@@ -36,11 +37,11 @@ use App\Services\StockMovementService;
 
     $response->assertRedirect();
     $item->refresh();
-    \expect($item->getWarehouseQuantity())->toBe(10.0);
+    \expect($item->getWarehouseQuantity())->toBe(10);
     $movement = StockMovement::query()->where('type', 'incoming')->latest('id')->first();
     \expect($movement)->not->toBeNull();
     \expect($movement->getNumber())->toStartWith('IN-');
-    \expect($movement->getTotalQuantity())->toBe(10.0);
+    \expect($movement->getTotalQuantity())->toBe(10);
     \expect($movement->getTotalValue())->toBe(55.0);
 });
 
@@ -50,7 +51,7 @@ use App\Services\StockMovementService;
         'user_id' => $user->getKey(),
         'is_warehouse' => false,
     ]);
-    $item = App\Models\Item::factory()->create([
+    $item = Item::factory()->create([
         'user_id' => $user->getKey(),
         'purchase_price' => '2.00',
     ]);
@@ -72,19 +73,19 @@ use App\Services\StockMovementService;
         ])
         ->assertRedirect();
 
-    $qty = (float) StoreItem::query()
+    $qty = (int) StoreItem::query()
         ->where('store_id', $retail->getKey())
         ->where('item_id', $item->getKey())
         ->value('quantity');
 
-    \expect($qty)->toBe(4.0);
+    \expect($qty)->toBe(4);
     $movement = StockMovement::query()->latest('id')->first();
     \expect($movement?->getType()->value)->toBe('incoming');
 });
 
 \test('transfer stock movement requires a destination store', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
-    $item = App\Models\Item::factory()->create(['user_id' => $user->getKey()]);
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
     StoreItem::query()->create([
         'store_id' => $warehouse->getKey(),
         'item_id' => $item->getKey(),
@@ -113,7 +114,7 @@ use App\Services\StockMovementService;
 
 \test('transfer rejects identical source and destination stores', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
-    $item = App\Models\Item::factory()->create(['user_id' => $user->getKey()]);
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
     StoreItem::query()->create([
         'store_id' => $warehouse->getKey(),
         'item_id' => $item->getKey(),
@@ -143,7 +144,7 @@ use App\Services\StockMovementService;
         'user_id' => $user->getKey(),
         'is_warehouse' => false,
     ]);
-    $item = App\Models\Item::factory()->create(['user_id' => $user->getKey()]);
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
     StoreItem::query()->create([
         'store_id' => $warehouse->getKey(),
         'item_id' => $item->getKey(),
@@ -172,7 +173,7 @@ use App\Services\StockMovementService;
 
 \test('user can create an adjustment stock movement', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
-    $item = App\Models\Item::factory()->create([
+    $item = Item::factory()->create([
         'user_id' => $user->getKey(),
         'purchase_price' => '3.00',
     ]);
@@ -199,7 +200,7 @@ use App\Services\StockMovementService;
 
     $response->assertRedirect();
     $item->refresh();
-    \expect($item->getWarehouseQuantity())->toBe(40.0);
+    \expect($item->getWarehouseQuantity())->toBe(40);
     $movement = StockMovement::query()
         ->with(['movementItems'])
         ->where('type', 'adjustment')
@@ -207,15 +208,15 @@ use App\Services\StockMovementService;
         ->first();
     \expect($movement->getNumber())->toStartWith('ADJ-');
     $row = $movement->movementItems->first();
-    \expect($row->getQuantityBefore())->toBe(50.0);
-    \expect($row->getQuantityAfter())->toBe(40.0);
-    \expect($row->getQuantityDifference())->toBe(-10.0);
+    \expect($row->getQuantityBefore())->toBe(50);
+    \expect($row->getQuantityAfter())->toBe(40);
+    \expect($row->getQuantityDifference())->toBe(-10);
     \expect($row->getAdjustmentReason()?->value)->toBe('damaged');
 });
 
 \test('sequential numbers are generated per user per type per year', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
-    $item = App\Models\Item::factory()->create(['user_id' => $user->getKey()]);
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
     StoreItem::query()->create([
         'store_id' => $warehouse->getKey(),
         'item_id' => $item->getKey(),
@@ -262,7 +263,7 @@ use App\Services\StockMovementService;
         'user_id' => $user->getKey(),
         'name' => 'East Warehouse',
     ]);
-    $item = App\Models\Item::factory()->create([
+    $item = Item::factory()->create([
         'user_id' => $user->getKey(),
         'purchase_price' => '2.00',
     ]);
@@ -279,18 +280,18 @@ use App\Services\StockMovementService;
         ])
         ->assertRedirect();
 
-    $defaultQty = (float) StoreItem::query()
+    $defaultQty = (int) StoreItem::query()
         ->where('store_id', $defaultWarehouse->getKey())
         ->where('item_id', $item->getKey())
         ->value('quantity');
 
-    $secondQty = (float) StoreItem::query()
+    $secondQty = (int) StoreItem::query()
         ->where('store_id', $secondWarehouse->getKey())
         ->where('item_id', $item->getKey())
         ->value('quantity');
 
-    \expect($defaultQty)->toBe(0.0);
-    \expect($secondQty)->toBe(8.0);
+    \expect($defaultQty)->toBe(0);
+    \expect($secondQty)->toBe(8);
 });
 
 \test('outgoing stock can transfer between two warehouses', function (): void {
@@ -299,7 +300,7 @@ use App\Services\StockMovementService;
         'user_id' => $user->getKey(),
         'name' => 'Regional Warehouse',
     ]);
-    $item = App\Models\Item::factory()->create([
+    $item = Item::factory()->create([
         'user_id' => $user->getKey(),
         'purchase_price' => '4.00',
     ]);
@@ -322,18 +323,18 @@ use App\Services\StockMovementService;
         ])
         ->assertRedirect();
 
-    $sourceQty = (float) StoreItem::query()
+    $sourceQty = (int) StoreItem::query()
         ->where('store_id', $sourceWarehouse->getKey())
         ->where('item_id', $item->getKey())
         ->value('quantity');
 
-    $destinationQty = (float) StoreItem::query()
+    $destinationQty = (int) StoreItem::query()
         ->where('store_id', $destinationWarehouse->getKey())
         ->where('item_id', $item->getKey())
         ->value('quantity');
 
-    \expect($sourceQty)->toBe(9.0);
-    \expect($destinationQty)->toBe(6.0);
+    \expect($sourceQty)->toBe(9);
+    \expect($destinationQty)->toBe(6);
 });
 
 \test('retail to retail transfer is stored as outgoing with transfer label', function (): void {
@@ -348,7 +349,7 @@ use App\Services\StockMovementService;
         'name' => 'Destination Branch',
         'is_warehouse' => false,
     ]);
-    $item = App\Models\Item::factory()->create([
+    $item = Item::factory()->create([
         'user_id' => $user->getKey(),
         'purchase_price' => '1.00',
     ]);
@@ -379,23 +380,23 @@ use App\Services\StockMovementService;
     \expect($movement?->getType()->value)->toBe('outgoing');
     \expect($movement?->getDisplayLabelKey())->toBe('transfer');
 
-    $sourceQty = (float) StoreItem::query()
+    $sourceQty = (int) StoreItem::query()
         ->where('store_id', $source->getKey())
         ->where('item_id', $item->getKey())
         ->value('quantity');
 
-    $destinationQty = (float) StoreItem::query()
+    $destinationQty = (int) StoreItem::query()
         ->where('store_id', $destination->getKey())
         ->where('item_id', $item->getKey())
         ->value('quantity');
 
-    \expect($sourceQty)->toBe(9.0);
-    \expect($destinationQty)->toBe(3.0);
+    \expect($sourceQty)->toBe(9);
+    \expect($destinationQty)->toBe(3);
 });
 
 \test('transfer mode ignores client-sent type and infers incoming', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
-    $item = App\Models\Item::factory()->create([
+    $item = Item::factory()->create([
         'user_id' => $user->getKey(),
         'purchase_price' => '1.00',
     ]);

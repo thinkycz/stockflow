@@ -11,7 +11,7 @@ use App\Models\StoreItem;
     StoreItem::query()->create([
         'store_id' => $warehouse->getKey(),
         'item_id' => $item->getKey(),
-        'quantity' => 42.5,
+        'quantity' => 42,
     ]);
 
     $this->be($user, 'users')->put("/items/{$item->getKey()}", [
@@ -24,5 +24,5 @@ use App\Models\StoreItem;
 
     $item->refresh();
     \expect($item->getTitle())->toBe('Updated Title');
-    \expect($item->getWarehouseQuantity())->toBe(42.5);
+    \expect($item->getWarehouseQuantity())->toBe(42);
 });

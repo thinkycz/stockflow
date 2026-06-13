@@ -133,7 +133,7 @@ const localeOptions = computed(() =>
         </Form>
 
         <p class="mt-6 text-center text-xs font-medium text-on-surface-variant">
-            {{ t('auth.register.login_link') }}
+            {{ t('auth.register.login_prompt') }}
             <Link
                 href="/login"
                 class="ml-1 font-bold text-primary hover:text-primary-container"

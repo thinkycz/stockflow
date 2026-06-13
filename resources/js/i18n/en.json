@@ -34,13 +34,15 @@
             "subtitle": "Enter your credentials to continue.",
             "submit": "Log in",
             "forgot_link": "Forgot password?",
-            "back_link": "Back to login"
+            "back_link": "Back to login",
+            "register_prompt": "Don't have an account?"
         },
         "register": {
             "title": "Create account",
             "subtitle": "Start with an authenticated Inertia workspace.",
             "submit": "Register",
-            "login_link": "Log in"
+            "login_link": "Log in",
+            "login_prompt": "Already have an account?"
         },
         "forgot": {
             "title": "Forgot password",

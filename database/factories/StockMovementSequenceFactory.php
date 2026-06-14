@@ -5,16 +5,14 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Enums\StockMovementTypeEnum;
-use App\Models\StockMovement;
-use App\Models\Store;
+use App\Models\StockMovementSequence;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Carbon;
 
 /**
- * @extends Factory<StockMovement>
+ * @extends Factory<StockMovementSequence>
  */
-class StockMovementFactory extends Factory
+class StockMovementSequenceFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -25,19 +23,14 @@ class StockMovementFactory extends Factory
     {
         return [
             'user_id' => static fn(): int => UserFactory::new()->createOne()->getKey(),
-            'number' => 'IN-' . Carbon::now()->year . '-' . \mb_str_pad((string) $this->faker->unique()->numberBetween(1, 9999), 4, '0', \STR_PAD_LEFT),
             'type' => StockMovementTypeEnum::INCOMING->value,
-            'store_id' => null,
-            'source_store_id' => null,
-            'note' => null,
-            'created_by' => null,
-            'total_quantity' => 0,
-            'total_value' => 0,
+            'year' => (int) \date('Y'),
+            'last_number' => 0,
         ];
     }
 
     /**
-     * Indicate that the movement is incoming.
+     * Indicate the sequence is for incoming movements.
      */
     public function incoming(): self
     {
@@ -47,18 +40,17 @@ class StockMovementFactory extends Factory
     }
 
     /**
-     * Indicate that the movement is outgoing for a given store.
+     * Indicate the sequence is for outgoing movements.
      */
-    public function outgoing(Store $store): self
+    public function outgoing(): self
     {
         return $this->state(fn(): array => [
             'type' => StockMovementTypeEnum::OUTGOING->value,
-            'store_id' => $store->getKey(),
         ]);
     }
 
     /**
-     * Indicate that the movement is an adjustment.
+     * Indicate the sequence is for adjustment movements.
      */
     public function adjustment(): self
     {
@@ -68,12 +60,12 @@ class StockMovementFactory extends Factory
     }
 
     /**
-     * Indicate that the movement is created by the given user.
+     * Indicate the sequence is for a specific user.
      */
-    public function byUser(User|null $user): self
+    public function byUser(User $user): self
     {
         return $this->state(fn(): array => [
-            'created_by' => $user?->getKey(),
+            'user_id' => $user->getKey(),
         ]);
     }
 }

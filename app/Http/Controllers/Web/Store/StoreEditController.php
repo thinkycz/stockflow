@@ -40,7 +40,8 @@ class StoreEditController
      */
     public function update(Request $request, Store $store): RedirectResponse
     {
-        $storeValidity = StoreValidity::inject(User::mustAuth()->getKey());
+        $user = User::mustAuth();
+        $storeValidity = StoreValidity::inject($user->getKey());
 
         $validated = $this->validateRequest($request, [
             'name' => $storeValidity->name()->required()->toArray(),

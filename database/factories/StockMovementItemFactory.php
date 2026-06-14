@@ -40,8 +40,8 @@ class StockMovementItemFactory extends Factory
     public function adjustment(AdjustmentReasonEnum $reason = AdjustmentReasonEnum::OTHER): self
     {
         return $this->state(function () use ($reason): array {
-            $before = $this->faker->randomFloat(3, 0, 100);
-            $after = $this->faker->randomFloat(3, 0, 100);
+            $before = $this->faker->numberBetween(0, 100);
+            $after = $this->faker->numberBetween(0, 100);
 
             return [
                 'quantity' => null,

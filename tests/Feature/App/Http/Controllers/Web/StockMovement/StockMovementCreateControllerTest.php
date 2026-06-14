@@ -257,11 +257,11 @@ use App\Services\StockMovementService;
     ]);
 });
 
-\test('incoming stock can be added to a selected warehouse', function (): void {
+\test('incoming stock can be added to a retail store', function (): void {
     [$user, $defaultWarehouse] = \createIsolatedUserWithWarehouse();
-    $secondWarehouse = Store::factory()->warehouse()->create([
+    $retailStore = Store::factory()->create([
         'user_id' => $user->getKey(),
-        'name' => 'East Warehouse',
+        'name' => 'East Outlet',
     ]);
     $item = Item::factory()->create([
         'user_id' => $user->getKey(),
@@ -272,7 +272,7 @@ use App\Services\StockMovementService;
         ->withHeaders($this->inertiaHeaders())
         ->post('/stock-movements', [
             'mode' => 'transfer',
-            'store_id' => $secondWarehouse->getKey(),
+            'store_id' => $retailStore->getKey(),
             'items' => [[
                 'item_id' => $item->getKey(),
                 'quantity' => 8,
@@ -285,20 +285,20 @@ use App\Services\StockMovementService;
         ->where('item_id', $item->getKey())
         ->value('quantity');
 
-    $secondQty = (int) StoreItem::query()
-        ->where('store_id', $secondWarehouse->getKey())
+    $retailQty = (int) StoreItem::query()
+        ->where('store_id', $retailStore->getKey())
         ->where('item_id', $item->getKey())
         ->value('quantity');
 
     \expect($defaultQty)->toBe(0);
-    \expect($secondQty)->toBe(8);
+    \expect($retailQty)->toBe(8);
 });
 
-\test('outgoing stock can transfer between two warehouses', function (): void {
+\test('outgoing stock can transfer from a warehouse to a retail store', function (): void {
     [$user, $sourceWarehouse] = \createIsolatedUserWithWarehouse();
-    $destinationWarehouse = Store::factory()->warehouse()->create([
+    $destinationStore = Store::factory()->create([
         'user_id' => $user->getKey(),
-        'name' => 'Regional Warehouse',
+        'name' => 'Regional Outlet',
     ]);
     $item = Item::factory()->create([
         'user_id' => $user->getKey(),
@@ -315,7 +315,7 @@ use App\Services\StockMovementService;
         ->post('/stock-movements', [
             'mode' => 'transfer',
             'source_store_id' => $sourceWarehouse->getKey(),
-            'store_id' => $destinationWarehouse->getKey(),
+            'store_id' => $destinationStore->getKey(),
             'items' => [[
                 'item_id' => $item->getKey(),
                 'quantity' => 6,
@@ -329,7 +329,7 @@ use App\Services\StockMovementService;
         ->value('quantity');
 
     $destinationQty = (int) StoreItem::query()
-        ->where('store_id', $destinationWarehouse->getKey())
+        ->where('store_id', $destinationStore->getKey())
         ->where('item_id', $item->getKey())
         ->value('quantity');
 

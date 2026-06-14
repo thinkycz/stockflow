@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\StockMovementTypeEnum;
-use Database\Factories\StockMovementFactory;
+use Database\Factories\StockMovementSequenceFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -16,7 +16,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 class StockMovementSequence extends BaseModel
 {
-    /** @use HasFactory<StockMovementFactory> */
+    /** @use HasFactory<StockMovementSequenceFactory> */
     use HasFactory;
 
     /**

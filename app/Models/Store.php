@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\StoreStatusEnum;
 use App\Models\Concerns\BelongsToUser;
+use App\Models\Concerns\HasWarehouseOwner;
 use Database\Factories\StoreFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -20,6 +21,7 @@ class Store extends BaseModel
     use BelongsToUser;
     /** @use HasFactory<StoreFactory> */
     use HasFactory;
+    use HasWarehouseOwner;
 
     /**
      * The table associated with the model.
@@ -214,19 +216,6 @@ class Store extends BaseModel
     public function getUserId(): int
     {
         return $this->assertInt('user_id');
-    }
-
-    /**
-     * Mirror the `is_warehouse` flag into the `warehouse_owner_id`
-     * unique-key column. Setting it on `creating` keeps the value
-     * in sync regardless of which code path creates a store.
-     */
-    protected static function booted(): void
-    {
-        static::creating(static function (self $store): void {
-            $ownerId = $store->isWarehouse() ? $store->getUserId() : null;
-            $store->setAttribute('warehouse_owner_id', $ownerId);
-        });
     }
 
     /**

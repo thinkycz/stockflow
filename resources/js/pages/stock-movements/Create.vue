@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Plus, Trash2 } from '@lucide/vue';
 import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -40,6 +40,13 @@ type Row = {
     adjustment_reason: string;
 };
 
+type FormState = {
+    mode: 'transfer' | 'adjustment';
+    store_id: string;
+    source_store_id: string;
+    note: string;
+};
+
 const props = defineProps<{
     stores: StoreOption[];
     items: ItemOption[];
@@ -57,13 +64,14 @@ useBoundLocale();
 
 const defaultWarehouseId = String(props.defaults.warehouse_id ?? '');
 
-const form = reactive({
+const form = useForm<FormState>({
     mode: props.defaults.mode || 'transfer',
     store_id: defaultWarehouseId,
     source_store_id: '',
     note: '',
-    rows: [] as Row[],
 });
+
+const rows = reactive<Row[]>([]);
 
 const isAdjustmentMode = computed((): boolean => form.mode === 'adjustment');
 
@@ -112,7 +120,6 @@ const isOutgoingTransfer = computed(
         form.store_id !== '',
 );
 
-const submitting = ref<boolean>(false);
 const serverError = ref<string | null>(null);
 
 function makeRow(): Row {
@@ -126,21 +133,22 @@ function makeRow(): Row {
 }
 
 function ensureFirstRow(): void {
-    if (form.rows.length === 0) {
-        form.rows.push(makeRow());
+    if (rows.length === 0) {
+        rows.push(makeRow());
     }
 }
 
 ensureFirstRow();
 
 function addRow(): void {
-    form.rows.push(makeRow());
+    rows.push(makeRow());
 }
 
 function removeRow(id: string): void {
-    form.rows = form.rows.filter((row) => row.id !== id);
-    if (form.rows.length === 0) {
-        form.rows.push(makeRow());
+    const filtered = rows.filter((row) => row.id !== id);
+    rows.splice(0, rows.length, ...filtered);
+    if (rows.length === 0) {
+        rows.push(makeRow());
     }
 }
 
@@ -231,7 +239,7 @@ function difference(row: Row): number {
 const totals = computed(() => {
     let quantity = 0;
     let value = 0;
-    for (const row of form.rows) {
+    for (const row of rows) {
         if (isAdjustmentMode.value) {
             quantity += Math.abs(difference(row));
             value += lineTotal(row);
@@ -250,9 +258,9 @@ function isOutOfStockError(row: Row): boolean {
     return Number(row.quantity || 0) > displayedQuantity(row);
 }
 
-const hasOutOfStockErrors = computed(() => form.rows.some(isOutOfStockError));
+const hasOutOfStockErrors = computed(() => rows.some(isOutOfStockError));
 
-const outOfStockRows = computed(() => form.rows.filter(isOutOfStockError));
+const outOfStockRows = computed(() => rows.filter(isOutOfStockError));
 
 type StockMovementPayload = {
     mode: 'transfer' | 'adjustment';
@@ -267,8 +275,8 @@ type StockMovementPayload = {
     }>;
 };
 
-function buildPayload(): StockMovementPayload {
-    const items = form.rows.map((row) => {
+function buildPayload(data: FormState): StockMovementPayload {
+    const items = rows.map((row) => {
         if (isAdjustmentMode.value) {
             return {
                 item_id: row.item_id,
@@ -285,32 +293,27 @@ function buildPayload(): StockMovementPayload {
     if (isAdjustmentMode.value) {
         return {
             mode: 'adjustment',
-            store_id: form.store_id || null,
-            note: form.note || null,
+            store_id: data.store_id || null,
+            note: data.note || null,
             items,
         };
     }
 
     return {
         mode: 'transfer',
-        store_id: form.store_id || null,
-        source_store_id: form.source_store_id || null,
-        note: form.note || null,
+        store_id: data.store_id || null,
+        source_store_id: data.source_store_id || null,
+        note: data.note || null,
         items,
     };
 }
 
-function submit(event: Event): void {
-    event.preventDefault();
+function submit(): void {
     if (hasOutOfStockErrors.value) {
         return;
     }
-    submitting.value = true;
     serverError.value = null;
-    router.post('/stock-movements', buildPayload(), {
-        onFinish: (): void => {
-            submitting.value = false;
-        },
+    form.transform((data) => buildPayload(data)).post('/stock-movements', {
         onError: (errors): void => {
             const firstKey = Object.keys(errors)[0];
             if (firstKey) {
@@ -390,7 +393,7 @@ watch(
                 {{ serverError }}
             </Alert>
 
-            <form class="flex flex-col gap-6" @submit="submit">
+            <form class="flex flex-col gap-6" @submit.prevent="submit">
                 <Card padded>
                     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <template v-if="!isAdjustmentMode">
@@ -498,13 +501,13 @@ watch(
                             <div
                                 class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-on-surface-variant"
                             >
-                                <span>
-                                    <span
-                                        class="font-semibold text-on-surface"
-                                        >{{ form.rows.length }}</span
-                                    >
-                                    {{ t('stock_movements.summary.rows') }}
-                                </span>
+                                    <span>
+                                        <span
+                                            class="font-semibold text-on-surface"
+                                            >{{ rows.length }}</span
+                                        >
+                                        {{ t('stock_movements.summary.rows') }}
+                                    </span>
                                 <span class="text-outline-glass">·</span>
                                 <span>
                                     <span
@@ -594,7 +597,7 @@ watch(
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="row in form.rows" :key="row.id">
+                                <tr v-for="row in rows" :key="row.id">
                                     <td>
                                         <Select
                                             v-model="row.item_id"
@@ -718,7 +721,7 @@ watch(
                             </Link>
                             <Button
                                 type="submit"
-                                :disabled="submitting || hasOutOfStockErrors"
+                                :disabled="form.processing || hasOutOfStockErrors"
                             >
                                 {{ t('stock_movements.form.save') }}
                             </Button>

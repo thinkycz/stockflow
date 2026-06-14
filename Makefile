@@ -23,9 +23,9 @@ help:
 	@echo "  make frontend     - run npm run type-check and npm run build"
 	@echo "  make test-unit    - run the vitest unit suite"
 	@echo "  make test-coverage - run PHPUnit with coverage"
-	@echo "  make clean        - delete node_modules, vendor, and lockfiles"
+	@echo "  make clean        - delete node_modules and vendor (keeps lockfiles)"
 	@echo "  make serve        - serve the app on 0.0.0.0:8000"
-	@echo "  make local|testing|development|staging|production"
+	@echo "  make local|development|staging|production"
 	@echo "                    - provision the named environment"
 
 .PHONY: check
@@ -64,12 +64,6 @@ fix: ./node_modules/.bin/prettier ./vendor/bin/pint
 .PHONY: test
 test: ./vendor/bin/phpunit ./.env
 	${MAKE_ARTISAN} optimize:clear
-	${MAKE_ARTISAN} cache:clear
-	${MAKE_ARTISAN} config:clear
-	${MAKE_ARTISAN} event:clear
-	${MAKE_ARTISAN} route:clear
-	${MAKE_ARTISAN} view:clear
-	${MAKE_ARTISAN} clear-compiled
 	${MAKE_ARTISAN} test
 
 .PHONY: e2e
@@ -79,8 +73,6 @@ e2e: ./node_modules/.bin/playwright ./.env
 .PHONY: test-coverage
 test-coverage: ./vendor/bin/phpunit ./.env
 	${MAKE_ARTISAN} optimize:clear
-	${MAKE_ARTISAN} cache:clear
-	${MAKE_ARTISAN} config:clear
 	@mkdir -p build/coverage
 	XDEBUG_MODE=coverage php -dxdebug.mode=coverage ./vendor/bin/phpunit --coverage-text --coverage-clover=build/coverage/clover.xml --coverage-html=build/coverage/html
 	@echo "Coverage report: build/coverage/html/index.html"
@@ -88,9 +80,7 @@ test-coverage: ./vendor/bin/phpunit ./.env
 .PHONY: clean
 clean:
 	rm -rf ./node_modules
-	rm -rf ./package-lock.json
 	rm -rf ./vendor
-	rm -rf ./composer.lock
 
 # Deploy / Release
 .PHONY: local
@@ -109,9 +99,6 @@ local: ./.env
 	${MAKE_ARTISAN} storage:link --force
 	${MAKE_ARTISAN} queue:restart
 	${MAKE_ARTISAN} up
-
-.PHONY: testing
-testing: local
 
 .PHONY: development
 development: ./.env

@@ -27,3 +27,4 @@ parameters:
     - ./routes
   excludePaths:
     - ./tests
+    - ./packages/thinkycz/laravel-core/tests

@@ -35,59 +35,59 @@ Resolver::resolveRouteRegistrar()->get('/', static function () {
     }
 
     return Resolver::resolveRedirector()->to('/login');
-});
+})->name('home');
 
 Resolver::resolveRouteRegistrar()
     ->middleware('guest:users')
     ->group(static function (Router $router): void {
-        $router->get('login', [LoginController::class, 'create']);
-        $router->post('login', [LoginController::class, 'store']);
-        $router->get('register', [RegisterController::class, 'create']);
-        $router->post('register', [RegisterController::class, 'store']);
-        $router->get('forgot-password', [ForgotPasswordController::class, 'create']);
-        $router->post('forgot-password', [ForgotPasswordController::class, 'store']);
-        $router->get('reset-password', [ResetPasswordController::class, 'create']);
-        $router->post('reset-password', [ResetPasswordController::class, 'store']);
+        $router->get('login', [LoginController::class, 'create'])->name('login.show');
+        $router->post('login', [LoginController::class, 'store'])->name('login.store');
+        $router->get('register', [RegisterController::class, 'create'])->name('register.show');
+        $router->post('register', [RegisterController::class, 'store'])->name('register.store');
+        $router->get('forgot-password', [ForgotPasswordController::class, 'create'])->name('forgot-password.show');
+        $router->post('forgot-password', [ForgotPasswordController::class, 'store'])->name('forgot-password.store');
+        $router->get('reset-password', [ResetPasswordController::class, 'create'])->name('reset-password.show');
+        $router->post('reset-password', [ResetPasswordController::class, 'store'])->name('reset-password.store');
     });
 
-Resolver::resolveRouteRegistrar()->get('email/verify', EmailVerificationConfirmController::class);
+Resolver::resolveRouteRegistrar()->get('email/verify', EmailVerificationConfirmController::class)->name('email.verify');
 
 Resolver::resolveRouteRegistrar()
     ->middleware(EnsureInertiaUserIsAuthenticated::class)
     ->group(static function (Router $router): void {
-        $router->post('logout', LogoutController::class);
-        $router->get('dashboard', DashboardController::class);
+        $router->post('logout', LogoutController::class)->name('logout');
+        $router->get('dashboard', DashboardController::class)->name('dashboard');
 
         // Items
-        $router->get('items', ItemIndexController::class);
-        $router->get('items/create', [ItemCreateController::class, 'create']);
-        $router->post('items', [ItemCreateController::class, 'store']);
-        $router->get('items/{item}', ItemShowController::class)->whereNumber('item');
-        $router->get('items/{item}/edit', [ItemEditController::class, 'edit'])->whereNumber('item');
-        $router->put('items/{item}', [ItemEditController::class, 'update'])->whereNumber('item');
-        $router->delete('items/{item}', ItemDestroyController::class)->whereNumber('item');
+        $router->get('items', ItemIndexController::class)->name('items.index');
+        $router->get('items/create', [ItemCreateController::class, 'create'])->name('items.create');
+        $router->post('items', [ItemCreateController::class, 'store'])->name('items.store');
+        $router->get('items/{item}', ItemShowController::class)->whereNumber('item')->name('items.show');
+        $router->get('items/{item}/edit', [ItemEditController::class, 'edit'])->whereNumber('item')->name('items.edit');
+        $router->put('items/{item}', [ItemEditController::class, 'update'])->whereNumber('item')->name('items.update');
+        $router->delete('items/{item}', ItemDestroyController::class)->whereNumber('item')->name('items.destroy');
 
         // Stores
-        $router->get('stores', StoreIndexController::class);
-        $router->get('stores/create', [StoreCreateController::class, 'create']);
-        $router->post('stores', [StoreCreateController::class, 'store']);
-        $router->get('stores/{store}', StoreShowController::class)->whereNumber('store');
-        $router->get('stores/{store}/edit', [StoreEditController::class, 'edit'])->whereNumber('store');
-        $router->put('stores/{store}', [StoreEditController::class, 'update'])->whereNumber('store');
+        $router->get('stores', StoreIndexController::class)->name('stores.index');
+        $router->get('stores/create', [StoreCreateController::class, 'create'])->name('stores.create');
+        $router->post('stores', [StoreCreateController::class, 'store'])->name('stores.store');
+        $router->get('stores/{store}', StoreShowController::class)->whereNumber('store')->name('stores.show');
+        $router->get('stores/{store}/edit', [StoreEditController::class, 'edit'])->whereNumber('store')->name('stores.edit');
+        $router->put('stores/{store}', [StoreEditController::class, 'update'])->whereNumber('store')->name('stores.update');
 
         // Stock movements
-        $router->get('stock-movements', StockMovementIndexController::class);
-        $router->get('stock-movements/create', [StockMovementCreateController::class, 'create']);
-        $router->post('stock-movements', [StockMovementCreateController::class, 'store']);
-        $router->get('stock-movements/{stockMovement}', StockMovementShowController::class)->whereNumber('stockMovement');
+        $router->get('stock-movements', StockMovementIndexController::class)->name('stock-movements.index');
+        $router->get('stock-movements/create', [StockMovementCreateController::class, 'create'])->name('stock-movements.create');
+        $router->post('stock-movements', [StockMovementCreateController::class, 'store'])->name('stock-movements.store');
+        $router->get('stock-movements/{stockMovement}', StockMovementShowController::class)->whereNumber('stockMovement')->name('stock-movements.show');
 
         // Reports
-        $router->get('reports', ReportController::class);
+        $router->get('reports', ReportController::class)->name('reports.index');
 
         // Settings
-        $router->get('verify-email', [VerifyEmailController::class, 'create']);
-        $router->post('verify-email', [VerifyEmailController::class, 'store']);
-        $router->get('settings', [SettingsController::class, 'edit']);
-        $router->post('settings/profile', [SettingsController::class, 'updateProfile']);
-        $router->post('settings/password', [SettingsController::class, 'updatePassword']);
+        $router->get('verify-email', [VerifyEmailController::class, 'create'])->name('verify-email.show');
+        $router->post('verify-email', [VerifyEmailController::class, 'store'])->name('verify-email.store');
+        $router->get('settings', [SettingsController::class, 'edit'])->name('settings.show');
+        $router->post('settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
+        $router->post('settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
     });

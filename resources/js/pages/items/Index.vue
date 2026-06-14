@@ -68,6 +68,10 @@ function destroyItem(id: number): void {
     }
     router.delete(`/items/${id}`);
 }
+import { useRoute } from '@/composables/useRoute';
+
+const route = useRoute();
+void route; // referenced from the <template>
 </script>
 
 <template>
@@ -89,7 +93,7 @@ function destroyItem(id: number): void {
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <Link href="/items/create">
+                    <Link href="route('items.create')">
                         <Button>
                             <Plus :size="14" />
                             {{ t('items.add_item') }}
@@ -143,7 +147,7 @@ function destroyItem(id: number): void {
                     :description="t('items.empty.description')"
                 >
                     <template #action>
-                        <Link href="/items/create">
+                        <Link href="route('items.create')">
                             <Button>
                                 <Plus :size="14" />
                                 {{ t('items.add_item') }}

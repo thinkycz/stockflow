@@ -25,6 +25,10 @@ defineProps<{
 const { t } = useI18n();
 
 useBoundLocale();
+import { useRoute } from '@/composables/useRoute';
+
+const route = useRoute();
+void route; // referenced from the <template>
 </script>
 
 <template>
@@ -46,7 +50,7 @@ useBoundLocale();
             <Card padded>
                 <Form
                     v-slot="{ errors, processing }"
-                    action="/items"
+                    :action="route('items.store')"
                     method="post"
                     class="space-y-5"
                 >
@@ -152,7 +156,7 @@ useBoundLocale();
                     <div
                         class="flex items-center justify-end gap-3 border-t border-outline-glass pt-4"
                     >
-                        <Link href="/items">
+                        <Link href="route('items.index')">
                             <Button variant="secondary" type="button">
                                 {{ t('common.cancel') }}
                             </Button>

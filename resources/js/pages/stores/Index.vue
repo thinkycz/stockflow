@@ -46,6 +46,10 @@ function performSearch(event: Event): void {
         { preserveState: true },
     );
 }
+import { useRoute } from '@/composables/useRoute';
+
+const route = useRoute();
+void route; // referenced from the <template>
 </script>
 
 <template>
@@ -67,7 +71,7 @@ function performSearch(event: Event): void {
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <Link href="/stores/create">
+                    <Link href="route('stores.create')">
                         <Button>
                             <Plus :size="14" />
                             {{ t('stores.add_store') }}
@@ -108,7 +112,7 @@ function performSearch(event: Event): void {
                     :description="t('stores.empty.description')"
                 >
                     <template #action>
-                        <Link href="/stores/create">
+                        <Link href="route('stores.create')">
                             <Button>
                                 <Plus :size="14" />
                                 {{ t('stores.add_store') }}

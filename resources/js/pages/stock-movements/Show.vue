@@ -48,6 +48,10 @@ defineProps<{
 const { t } = useI18n();
 
 useBoundLocale();
+import { useRoute } from '@/composables/useRoute';
+
+const route = useRoute();
+void route; // referenced from the <template>
 </script>
 
 <template>
@@ -57,7 +61,7 @@ useBoundLocale();
         <div class="flex flex-col gap-6">
             <div>
                 <Link
-                    href="/stock-movements"
+                    href="route('stock-movements.index')"
                     class="inline-flex items-center gap-1 text-xs font-semibold text-on-surface-variant hover:text-primary"
                 >
                     <ArrowLeft :size="12" />

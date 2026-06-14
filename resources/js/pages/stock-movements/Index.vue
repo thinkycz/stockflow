@@ -87,6 +87,10 @@ function applyFilters(): void {
         },
     });
 }
+import { useRoute } from '@/composables/useRoute';
+
+const route = useRoute();
+void route; // referenced from the <template>
 </script>
 
 <template>
@@ -108,7 +112,7 @@ function applyFilters(): void {
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <Link href="/stock-movements/create">
+                    <Link href="route('stock-movements.create')">
                         <Button>
                             <Plus :size="14" />
                             {{ t('stock_movements.create_new') }}
@@ -212,7 +216,7 @@ function applyFilters(): void {
                     :description="t('stock_movements.empty.description')"
                 >
                     <template #action>
-                        <Link href="/stock-movements/create">
+                        <Link href="route('stock-movements.create')">
                             <Button>
                                 <Plus :size="14" />
                                 {{ t('stock_movements.create_new') }}

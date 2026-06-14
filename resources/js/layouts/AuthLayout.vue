@@ -7,6 +7,10 @@ defineProps<{
     title: string;
     subtitle: string;
 }>();
+import { useRoute } from '@/composables/useRoute';
+
+const route = useRoute();
+void route; // referenced from the <template>
 </script>
 
 <template>
@@ -22,7 +26,7 @@ defineProps<{
             >
                 <!-- Brand Header -->
                 <div class="flex flex-col items-center gap-4 text-center">
-                    <Brand href="/login" />
+                    <Brand href="route('login.show')" />
 
                     <div class="mt-2 space-y-1.5">
                         <h2

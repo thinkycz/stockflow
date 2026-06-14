@@ -35,6 +35,10 @@ const localeOptions = computed(() =>
         label: te(`locale.${value}`) ? (t(`locale.${value}`) as string) : value,
     })),
 );
+import { useRoute } from '@/composables/useRoute';
+
+const route = useRoute();
+void route; // referenced from the <template>
 </script>
 
 <template>
@@ -59,7 +63,7 @@ const localeOptions = computed(() =>
                 </CardHeader>
                 <Form
                     v-slot="{ errors, processing }"
-                    action="/settings/profile"
+                    :action="route('settings.profile.update')"
                     method="post"
                     class="space-y-5"
                 >
@@ -116,7 +120,7 @@ const localeOptions = computed(() =>
                 </CardHeader>
                 <Form
                     v-slot="{ errors, processing }"
-                    action="/settings/password"
+                    :action="route('settings.password.update')"
                     method="post"
                     :reset-on-success="['password', 'new_password']"
                     class="space-y-5"

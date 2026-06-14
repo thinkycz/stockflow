@@ -31,6 +31,10 @@ const localeOptions = computed(() =>
         label: te(`locale.${value}`) ? (t(`locale.${value}`) as string) : value,
     })),
 );
+import { useRoute } from '@/composables/useRoute';
+
+const route = useRoute();
+void route; // referenced from the <template>
 </script>
 
 <template>
@@ -40,7 +44,7 @@ const localeOptions = computed(() =>
     >
         <Form
             v-slot="{ errors, processing }"
-            action="/register"
+            :action="route('register.store')"
             method="post"
             :reset-on-error="['password', 'password_confirmation']"
             class="space-y-5"
@@ -127,7 +131,7 @@ const localeOptions = computed(() =>
         <p class="mt-6 text-center text-xs font-medium text-on-surface-variant">
             {{ t('auth.register.login_prompt') }}
             <Link
-                href="/login"
+                href="route('login.show')"
                 class="ml-1 font-bold text-primary hover:text-primary-container"
                 >{{ t('auth.login.title') }}</Link
             >

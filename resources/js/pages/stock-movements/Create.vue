@@ -334,6 +334,10 @@ watch(
         }
     },
 );
+import { useRoute } from '@/composables/useRoute';
+
+const route = useRoute();
+void route; // referenced from the <template>
 </script>
 
 <template>
@@ -343,7 +347,7 @@ watch(
         <div class="flex flex-col gap-6">
             <div>
                 <Link
-                    href="/stock-movements"
+                    href="route('stock-movements.index')"
                     class="inline-flex items-center gap-1 text-xs font-semibold text-on-surface-variant hover:text-primary"
                 >
                     <ArrowLeft :size="12" />
@@ -375,7 +379,7 @@ watch(
                 <div class="flex items-center gap-2">
                     <Link
                         v-if="isAdjustmentMode"
-                        href="/stock-movements/create"
+                        href="route('stock-movements.create')"
                     >
                         <Button variant="secondary" type="button">
                             {{ t('stock_movements.back_to_transfer') }}
@@ -714,7 +718,7 @@ watch(
                             {{ t('stock_movements.form.add_row') }}
                         </Button>
                         <div class="flex items-center gap-3">
-                            <Link href="/stock-movements">
+                            <Link href="route('stock-movements.index')">
                                 <Button variant="secondary" type="button">
                                     {{ t('common.cancel') }}
                                 </Button>

@@ -78,6 +78,10 @@ const userInitials = computed(() => {
 function logout(): void {
     router.post('/logout');
 }
+import { useRoute } from '@/composables/useRoute';
+
+const route = useRoute();
+void route; // referenced from the <template>
 </script>
 
 <template>
@@ -91,7 +95,7 @@ function logout(): void {
             class="sticky top-0 z-20 hidden h-screen w-64 flex-col border-r border-outline-glass bg-surface-container px-4 py-6 text-left md:flex"
         >
             <div class="mb-8 flex cursor-default items-center gap-3 px-2">
-                <Brand href="/dashboard" />
+                <Brand href="route('dashboard')" />
             </div>
 
             <nav class="flex-1 space-y-1">
@@ -141,7 +145,7 @@ function logout(): void {
                 <div class="flex shrink-0 items-center gap-1">
                     <Link
                         v-if="auth.user"
-                        href="/settings"
+                        href="route('settings.edit')"
                         :class="[
                             'rounded-lg p-1.5 transition-colors',
                             settingsActive
@@ -170,7 +174,7 @@ function logout(): void {
             class="glass-panel sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-outline-glass px-4 shadow-sm md:hidden"
         >
             <div class="flex items-center gap-2">
-                <Brand href="/dashboard" />
+                <Brand href="route('dashboard')" />
             </div>
             <div class="flex items-center gap-1">
                 <Link
@@ -188,7 +192,7 @@ function logout(): void {
                 </Link>
                 <Link
                     v-if="auth.user"
-                    href="/settings"
+                    href="route('settings.edit')"
                     :class="[
                         'rounded-lg p-2 transition',
                         settingsActive

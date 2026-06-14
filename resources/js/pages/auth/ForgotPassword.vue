@@ -15,6 +15,10 @@ type ForgotPasswordFields = {
 const { t } = useI18n();
 
 useBoundLocale();
+import { useRoute } from '@/composables/useRoute';
+
+const route = useRoute();
+void route; // referenced from the <template>
 </script>
 
 <template>
@@ -24,7 +28,7 @@ useBoundLocale();
     >
         <Form
             v-slot="{ errors, processing }"
-            action="/forgot-password"
+            :action="route('forgot-password.store')"
             method="post"
             class="space-y-5"
         >
@@ -53,7 +57,7 @@ useBoundLocale();
 
         <p class="mt-6 text-center text-xs font-medium text-on-surface-variant">
             <Link
-                href="/login"
+                href="route('login.show')"
                 class="font-bold text-primary hover:text-primary-container"
                 >{{ t('auth.login.back_link') }}</Link
             >

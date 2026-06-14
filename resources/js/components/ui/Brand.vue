@@ -1,24 +1,29 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { useRoute } from '@/composables/useRoute';
 import { useSharedProps } from '@/composables/useSharedProps';
 
-withDefaults(
+const props = withDefaults(
     defineProps<{
         href?: string;
         class?: string;
     }>(),
     {
-        href: '/',
+        href: undefined,
         class: '',
     },
 );
 
+const route = useRoute();
 const { app } = useSharedProps();
+
+const resolvedHref = computed(() => props.href ?? route('dashboard'));
 </script>
 
 <template>
     <Link
-        :href="href"
+        :href="resolvedHref"
         :class="[
             'flex items-center gap-3 font-medium select-none',
             $props.class,

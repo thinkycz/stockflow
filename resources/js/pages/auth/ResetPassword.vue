@@ -22,6 +22,10 @@ defineProps<{
 const { t } = useI18n();
 
 useBoundLocale();
+import { useRoute } from '@/composables/useRoute';
+
+const route = useRoute();
+void route; // referenced from the <template>
 </script>
 
 <template>
@@ -31,7 +35,7 @@ useBoundLocale();
     >
         <Form
             v-slot="{ errors, processing }"
-            action="/reset-password"
+            :action="route('reset-password.store')"
             method="post"
             :reset-on-error="['password']"
             class="space-y-5"

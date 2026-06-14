@@ -75,12 +75,18 @@ return Application::configure(basePath: \dirname(__DIR__))
             static fn(ModelNotFoundException $exception): NotFoundHttpException => new NotFoundHttpException($exception->getMessage(), $exception),
         );
 
-        $exceptions->render(static function (ValidationException $exception, Request $request): mixed {
-            if ($request->header('X-Inertia') !== 'true') {
-                return null;
+        $exceptions->render(static function (ValidationException $exception) {
+            // No $request parameter: the Laravel test framework's own
+            // render callback references an Illuminate\Contracts\Http\Request
+            // type that doesn't exist in this Laravel version, and having
+            // our closure also typed as Illuminate\Http\Request confuses
+            // the handler's reflection-based dispatch. The request() helper
+            // returns the same instance.
+            if (\request()->header('X-Inertia') !== 'true') {
+                return;
             }
 
-            $component = $request->header('X-Inertia-Partial-Component') ?: match ($request->path()) {
+            $component = \request()->header('X-Inertia-Partial-Component') ?: match (\request()->path()) {
                 'verify-email' => 'auth/VerifyEmail',
                 'forgot-password' => 'auth/ForgotPassword',
                 'reset-password' => 'auth/ResetPassword',
@@ -91,7 +97,7 @@ return Application::configure(basePath: \dirname(__DIR__))
 
             $page = Inertia::render($component, [
                 'errors' => (object) $exception->errors(),
-            ])->toResponse($request);
+            ])->toResponse(\request());
 
             return $page->setStatusCode(422);
         });

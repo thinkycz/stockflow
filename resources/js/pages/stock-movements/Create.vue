@@ -254,7 +254,20 @@ const hasOutOfStockErrors = computed(() => form.rows.some(isOutOfStockError));
 
 const outOfStockRows = computed(() => form.rows.filter(isOutOfStockError));
 
-function buildPayload(): Record<string, unknown> {
+type StockMovementPayload = {
+    mode: 'transfer' | 'adjustment';
+    store_id: number | string | null;
+    source_store_id?: number | string | null;
+    note: string | null;
+    items: Array<{
+        item_id: string;
+        quantity?: number;
+        quantity_after?: number;
+        adjustment_reason?: string;
+    }>;
+};
+
+function buildPayload(): StockMovementPayload {
     const items = form.rows.map((row) => {
         if (isAdjustmentMode.value) {
             return {
@@ -294,7 +307,7 @@ function submit(event: Event): void {
     }
     submitting.value = true;
     serverError.value = null;
-    router.post('/stock-movements', buildPayload() as never, {
+    router.post('/stock-movements', buildPayload(), {
         onFinish: (): void => {
             submitting.value = false;
         },

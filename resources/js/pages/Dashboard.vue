@@ -59,7 +59,6 @@ useBoundLocale();
                 <MetricCard
                     :title="t('dashboard.metrics.total_inventory_value')"
                     :value="formatMoney(metrics.total_inventory_value)"
-                    icon="value"
                 >
                     <template #icon>
                         <Layers :size="14" />
@@ -68,7 +67,6 @@ useBoundLocale();
                 <MetricCard
                     :title="t('dashboard.metrics.total_items')"
                     :value="formatNumber(metrics.total_items)"
-                    icon="items"
                 >
                     <template #icon>
                         <Boxes :size="14" />
@@ -77,7 +75,6 @@ useBoundLocale();
                 <MetricCard
                     :title="t('dashboard.metrics.low_stock')"
                     :value="formatNumber(metrics.low_stock_items)"
-                    icon="low"
                 >
                     <template #icon>
                         <TrendingDown :size="14" />
@@ -86,7 +83,6 @@ useBoundLocale();
                 <MetricCard
                     :title="t('dashboard.metrics.today_movements')"
                     :value="formatNumber(metrics.today_movements)"
-                    icon="movements"
                 >
                     <template #icon>
                         <ArrowLeftRight :size="14" />

@@ -4,10 +4,17 @@ declare(strict_types=1);
 
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Thinkycz\LaravelCore\Exceptions\Handler;
 use Thinkycz\LaravelCore\Http\Middleware\AuthShouldUseMiddleware;
 use Thinkycz\LaravelCore\Http\Middleware\SetPreferredLanguageMiddleware;
 use Thinkycz\LaravelCore\Http\Middleware\SetRequestFormatMiddleware;
@@ -43,7 +50,7 @@ return Application::configure(basePath: \dirname(__DIR__))
         ]);
     })
     ->withSingletons([
-        Illuminate\Contracts\Debug\ExceptionHandler::class => Thinkycz\LaravelCore\Exceptions\Handler::class,
+        ExceptionHandler::class => Handler::class,
     ])
     ->withSchedule(static function (Schedule $schedule): void {
         $config = Config::inject();
@@ -64,11 +71,11 @@ return Application::configure(basePath: \dirname(__DIR__))
     })
     ->withExceptions(static function (Exceptions $exceptions): void {
         $exceptions->map(
-            Illuminate\Database\Eloquent\ModelNotFoundException::class,
-            static fn(Illuminate\Database\Eloquent\ModelNotFoundException $exception): Symfony\Component\HttpKernel\Exception\NotFoundHttpException => new Symfony\Component\HttpKernel\Exception\NotFoundHttpException($exception->getMessage(), $exception),
+            ModelNotFoundException::class,
+            static fn(ModelNotFoundException $exception): NotFoundHttpException => new NotFoundHttpException($exception->getMessage(), $exception),
         );
 
-        $exceptions->render(static function (Illuminate\Validation\ValidationException $exception, Illuminate\Http\Request $request): mixed {
+        $exceptions->render(static function (ValidationException $exception, Request $request): mixed {
             if ($request->header('X-Inertia') !== 'true') {
                 return null;
             }
@@ -82,7 +89,7 @@ return Application::configure(basePath: \dirname(__DIR__))
                 default => 'auth/Login',
             };
 
-            $page = Inertia\Inertia::render($component, [
+            $page = Inertia::render($component, [
                 'errors' => (object) $exception->errors(),
             ])->toResponse($request);
 

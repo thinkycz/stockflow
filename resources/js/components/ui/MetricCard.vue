@@ -1,20 +1,10 @@
 <script setup lang="ts">
 import { cn } from '@/lib/utils';
 
-const props = withDefaults(
-    defineProps<{
-        title: string;
-        value: string | number;
-        delta?: string;
-        deltaTrend?: 'up' | 'down' | 'neutral';
-        hint?: string;
-    }>(),
-    {
-        delta: '',
-        deltaTrend: 'neutral',
-        hint: '',
-    },
-);
+defineProps<{
+    title: string;
+    value: string | number;
+}>();
 </script>
 
 <template>
@@ -40,22 +30,5 @@ const props = withDefaults(
         >
             {{ value }}
         </dd>
-        <div class="mt-2 flex items-center gap-2 text-xs font-medium">
-            <span
-                v-if="delta"
-                :class="
-                    cn(
-                        'inline-flex items-center gap-1',
-                        props.deltaTrend === 'up' && 'text-emerald-600',
-                        props.deltaTrend === 'down' && 'text-rose-600',
-                        props.deltaTrend === 'neutral' &&
-                            'text-on-surface-variant',
-                    )
-                "
-            >
-                {{ delta }}
-            </span>
-            <span v-if="hint" class="text-on-surface-variant">{{ hint }}</span>
-        </div>
     </dl>
 </template>

@@ -201,7 +201,7 @@ $message)` helper asserts Inertia flash messages for both
 
 - Authorization and validation in the controller, not in request
   classes.
-- **[Web]** Validation rules live in `App\Http\Validity\*Validity`
+- **[Web]** Validation rules live in `App\Http\Validation\*Validity`
   classes; inject with `*Validity::inject($user->getKey())` (or
   `$model->getUserId()` for edit flows) and use
   `$this->validateRequest($request, $rules)` to obtain a typed

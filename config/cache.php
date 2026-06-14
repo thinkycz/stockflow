@@ -19,7 +19,7 @@ return [
     |
     */
 
-    'default' => $env->parseNullableString('CACHE_DRIVER') ?? $env->appEnvMap([
+    'default' => $env->parseNullableString('CACHE_STORE') ?? $env->appEnvMap([
         'local' => 'file',
         'testing' => 'array',
         'development' => 'redis',

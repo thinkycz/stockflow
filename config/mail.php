@@ -8,7 +8,7 @@ use Thinkycz\LaravelCore\Support\Resolver;
 $env = Env::inject();
 $app = Resolver::resolveApp();
 
-$driver = $env->parseNullableString('MAIL_DRIVER') ?? $env->appEnvMap([
+$driver = $env->parseNullableString('MAIL_MAILER') ?? $env->appEnvMap([
     'local' => 'log',
     'testing' => 'array',
     'development' => 'smtp',

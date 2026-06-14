@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
@@ -21,6 +22,13 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         $this->withoutVite();
+
+        // CSRF is exercised by the framework's own test suite; our
+        // feature tests authenticate via `$this->be(...)` and do not
+        // spin up a real session, so the CSRF check would 419 every
+        // POST. Disabling it here keeps the suite focused on the
+        // behaviour we actually want to assert.
+        $this->withoutMiddleware(VerifyCsrfToken::class);
     }
 
     /**

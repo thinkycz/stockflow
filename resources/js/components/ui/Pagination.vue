@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { ChevronLeft, ChevronRight } from '@lucide/vue';
+import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
 import { cn } from '@/lib/utils';
+
+const { t } = useI18n();
 
 const props = defineProps<{
     currentPage: number;
@@ -49,14 +52,14 @@ const window = computed<number[]>(() => {
         class="flex flex-col items-center justify-between gap-3 border-t border-outline-glass pt-4 sm:flex-row"
     >
         <p class="text-xs font-medium text-on-surface-variant">
-            {{ total }} {{ $t('common.results') }}
+            {{ total }} {{ t('common.results') }}
         </p>
         <div class="flex items-center gap-1.5">
             <Link
                 v-if="currentPage > 1"
                 :href="buildHref(currentPage - 1)"
                 :class="cn(linkClass)"
-                :aria-label="$t('common.previous')"
+                :aria-label="t('common.previous')"
             >
                 <ChevronLeft :size="14" />
             </Link>
@@ -80,7 +83,7 @@ const window = computed<number[]>(() => {
                 v-if="currentPage < lastPage"
                 :href="buildHref(currentPage + 1)"
                 :class="cn(linkClass)"
-                :aria-label="$t('common.next')"
+                :aria-label="t('common.next')"
             >
                 <ChevronRight :size="14" />
             </Link>

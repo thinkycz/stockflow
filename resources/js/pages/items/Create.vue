@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Form, Head, Link } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
-import { computed, reactive, ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
@@ -11,10 +10,6 @@ import Label from '@/components/ui/Label.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 
-defineProps<{
-    units: string[];
-}>();
-
 type ItemFields = {
     title: string;
     sku: string;
@@ -23,37 +18,13 @@ type ItemFields = {
     description: string;
 };
 
+defineProps<{
+    units: string[];
+}>();
+
 const { t } = useI18n();
 
 useBoundLocale();
-
-const form = reactive({
-    title: '',
-    sku: '',
-    unit: '',
-    purchase_price: '0.00',
-    description: '',
-});
-
-const processing = ref(false);
-const page = usePage<{ errors?: Partial<Record<keyof ItemFields, string>> }>();
-const errors = computed<Partial<Record<keyof ItemFields, string>>>(
-    () =>
-        (page.props.errors ?? {}) as Partial<Record<keyof ItemFields, string>>,
-);
-
-function submit(): void {
-    processing.value = true;
-    router.post(
-        '/items',
-        { ...form },
-        {
-            onFinish: () => {
-                processing.value = false;
-            },
-        },
-    );
-}
 </script>
 
 <template>
@@ -73,18 +44,26 @@ function submit(): void {
             </header>
 
             <Card padded>
-                <form @submit.prevent="submit" class="space-y-5">
+                <Form
+                    v-slot="{ errors, processing }"
+                    action="/items"
+                    method="post"
+                    class="space-y-5"
+                >
                     <div class="space-y-2">
                         <Label for="title" :required="true">{{
                             t('items.columns.title')
                         }}</Label>
-                        <Input
-                            id="title"
-                            v-model="form.title"
-                            type="text"
-                            required
+                        <Input id="title" name="title" type="text" required />
+                        <FieldError
+                            :message="
+                                (
+                                    errors as ItemFields extends object
+                                        ? ItemFields
+                                        : never
+                                )['title']
+                            "
                         />
-                        <FieldError :message="errors.title" />
                     </div>
 
                     <div class="grid gap-4 sm:grid-cols-2">
@@ -92,8 +71,16 @@ function submit(): void {
                             <Label for="sku">{{
                                 t('items.columns.sku')
                             }}</Label>
-                            <Input id="sku" v-model="form.sku" type="text" />
-                            <FieldError :message="errors.sku" />
+                            <Input id="sku" name="sku" type="text" />
+                            <FieldError
+                                :message="
+                                    (
+                                        errors as ItemFields extends object
+                                            ? ItemFields
+                                            : never
+                                    )['sku']
+                                "
+                            />
                         </div>
                         <div class="space-y-2">
                             <Label for="unit">{{
@@ -101,7 +88,7 @@ function submit(): void {
                             }}</Label>
                             <Select
                                 id="unit"
-                                v-model="form.unit"
+                                name="unit"
                                 :options="[
                                     { value: '', label: t('items.unit_none') },
                                     ...units.map((u) => ({
@@ -110,7 +97,15 @@ function submit(): void {
                                     })),
                                 ]"
                             />
-                            <FieldError :message="errors.unit" />
+                            <FieldError
+                                :message="
+                                    (
+                                        errors as ItemFields extends object
+                                            ? ItemFields
+                                            : never
+                                    )['unit']
+                                "
+                            />
                         </div>
                     </div>
 
@@ -120,13 +115,21 @@ function submit(): void {
                         }}</Label>
                         <Input
                             id="purchase_price"
-                            v-model="form.purchase_price"
+                            name="purchase_price"
                             type="number"
                             step="0.01"
                             min="0"
                             required
                         />
-                        <FieldError :message="errors.purchase_price" />
+                        <FieldError
+                            :message="
+                                (
+                                    errors as ItemFields extends object
+                                        ? ItemFields
+                                        : never
+                                )['purchase_price']
+                            "
+                        />
                     </div>
 
                     <div class="space-y-2">
@@ -135,11 +138,19 @@ function submit(): void {
                         }}</Label>
                         <textarea
                             id="description"
-                            v-model="form.description"
+                            name="description"
                             rows="4"
                             class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-xs text-on-surface outline-none transition placeholder:text-on-surface-variant/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                         ></textarea>
-                        <FieldError :message="errors.description" />
+                        <FieldError
+                            :message="
+                                (
+                                    errors as ItemFields extends object
+                                        ? ItemFields
+                                        : never
+                                )['description']
+                            "
+                        />
                     </div>
 
                     <div
@@ -160,7 +171,7 @@ function submit(): void {
                             {{ t('common.save') }}
                         </Button>
                     </div>
-                </form>
+                </Form>
             </Card>
         </div>
     </AppLayout>

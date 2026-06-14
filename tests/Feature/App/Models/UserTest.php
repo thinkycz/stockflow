@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\Store;
 use App\Models\User;
 use Database\Factories\UserFactory;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -56,4 +57,27 @@ use Thinkycz\LaravelCore\Support\Typer;
     $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
 
     $this->assertDatabaseCount('database_tokens', 0);
+});
+
+\test('provisionWarehouse creates exactly one warehouse per user', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+
+    $first = $user->provisionWarehouse();
+    $second = $user->provisionWarehouse();
+
+    \expect($first->getKey())->toBe($second->getKey());
+    \expect(Store::query()->where('user_id', $user->getKey())->where('is_warehouse', true)->count())->toBe(1);
+    \expect($first->getWarehouseOwnerId())->toBe($user->getKey());
+});
+
+\test('provisionWarehouse keeps a non-warehouse store from getting a warehouse owner id', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+    $retail = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
+
+    \expect($retail->getWarehouseOwnerId())->toBeNull();
+
+    $user->provisionWarehouse();
+
+    $retail->refresh();
+    \expect($retail->getWarehouseOwnerId())->toBeNull();
 });

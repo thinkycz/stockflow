@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Form, Head, Link } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
-import { computed, reactive, ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
@@ -16,40 +15,11 @@ type StoreFields = {
     address: string;
     status: string;
     notes: string;
-    is_warehouse: boolean;
 };
 
 const { t } = useI18n();
 
 useBoundLocale();
-
-const form = reactive({
-    name: '',
-    address: '',
-    status: 'active',
-    notes: '',
-    is_warehouse: false,
-});
-
-const processing = ref(false);
-const page = usePage<{ errors?: Partial<Record<keyof StoreFields, string>> }>();
-const errors = computed<Partial<Record<keyof StoreFields, string>>>(
-    () =>
-        (page.props.errors ?? {}) as Partial<Record<keyof StoreFields, string>>,
-);
-
-function submit(): void {
-    processing.value = true;
-    router.post(
-        '/stores',
-        { ...form },
-        {
-            onFinish: () => {
-                processing.value = false;
-            },
-        },
-    );
-}
 </script>
 
 <template>
@@ -69,30 +39,42 @@ function submit(): void {
             </header>
 
             <Card padded>
-                <form @submit.prevent="submit" class="space-y-5">
+                <Form
+                    v-slot="{ errors, processing }"
+                    action="/stores"
+                    method="post"
+                    class="space-y-5"
+                >
                     <div class="space-y-2">
                         <Label for="name" :required="true">{{
                             t('stores.columns.name')
                         }}</Label>
-                        <Input
-                            id="name"
-                            v-model="form.name"
-                            type="text"
-                            required
+                        <Input id="name" name="name" type="text" required />
+                        <FieldError
+                            :message="
+                                (
+                                    errors as StoreFields extends object
+                                        ? StoreFields
+                                        : never
+                                )['name']
+                            "
                         />
-                        <FieldError :message="errors.name" />
                     </div>
 
                     <div class="space-y-2">
                         <Label for="address">{{
                             t('stores.columns.address')
                         }}</Label>
-                        <Input
-                            id="address"
-                            v-model="form.address"
-                            type="text"
+                        <Input id="address" name="address" type="text" />
+                        <FieldError
+                            :message="
+                                (
+                                    errors as StoreFields extends object
+                                        ? StoreFields
+                                        : never
+                                )['address']
+                            "
                         />
-                        <FieldError :message="errors.address" />
                     </div>
 
                     <div class="space-y-2">
@@ -101,7 +83,7 @@ function submit(): void {
                         }}</Label>
                         <Select
                             id="status"
-                            v-model="form.status"
+                            name="status"
                             :options="[
                                 {
                                     value: 'active',
@@ -113,7 +95,15 @@ function submit(): void {
                                 },
                             ]"
                         />
-                        <FieldError :message="errors.status" />
+                        <FieldError
+                            :message="
+                                (
+                                    errors as StoreFields extends object
+                                        ? StoreFields
+                                        : never
+                                )['status']
+                            "
+                        />
                     </div>
 
                     <div class="space-y-2">
@@ -122,25 +112,40 @@ function submit(): void {
                         }}</Label>
                         <textarea
                             id="notes"
-                            v-model="form.notes"
+                            name="notes"
                             rows="4"
                             class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-xs text-on-surface outline-none transition placeholder:text-on-surface-variant/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                         ></textarea>
-                        <FieldError :message="errors.notes" />
+                        <FieldError
+                            :message="
+                                (
+                                    errors as StoreFields extends object
+                                        ? StoreFields
+                                        : never
+                                )['notes']
+                            "
+                        />
                     </div>
 
                     <div class="flex items-center gap-2">
                         <input
                             id="is_warehouse"
-                            v-model="form.is_warehouse"
+                            name="is_warehouse"
                             type="checkbox"
+                            value="1"
                             class="size-4 rounded border-outline-glass text-primary focus:ring-primary/20"
                         />
                         <Label for="is_warehouse">{{
                             t('stores.columns.is_warehouse')
                         }}</Label>
                     </div>
-                    <FieldError :message="errors.is_warehouse" />
+                    <FieldError
+                        :message="
+                            (errors as Partial<Record<string, string>>)[
+                                'is_warehouse'
+                            ]
+                        "
+                    />
 
                     <div
                         class="flex items-center justify-end gap-3 border-t border-outline-glass pt-4"
@@ -154,7 +159,7 @@ function submit(): void {
                             {{ t('common.save') }}
                         </Button>
                     </div>
-                </form>
+                </Form>
             </Card>
         </div>
     </AppLayout>

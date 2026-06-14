@@ -7,9 +7,27 @@ MAKE_COMPOSER ?= composer
 MAKE_ARTISAN ?= ${MAKE_PHP} ./artisan
 
 # Default goal
-.DEFAULT_GOAL := panic
+.DEFAULT_GOAL := help
 
 # Goals
+.PHONY: help
+help:
+	@echo "Available targets:"
+	@echo "  make check        - run stan, lint, audit, frontend build/type-check, and unit tests"
+	@echo "  make fix          - run prettier -w and pint to format the codebase"
+	@echo "  make test         - run the PHP test suite"
+	@echo "  make e2e          - run the Playwright e2e suite"
+	@echo "  make audit        - run composer/npm audit and composer validate"
+	@echo "  make stan         - run PHPStan"
+	@echo "  make lint         - run prettier --check and pint --test"
+	@echo "  make frontend     - run npm run type-check and npm run build"
+	@echo "  make test-unit    - run the vitest unit suite"
+	@echo "  make test-coverage - run PHPUnit with coverage"
+	@echo "  make clean        - delete node_modules, vendor, and lockfiles"
+	@echo "  make serve        - serve the app on 0.0.0.0:8000"
+	@echo "  make local|testing|development|staging|production"
+	@echo "                    - provision the named environment"
+
 .PHONY: check
 check: stan lint audit frontend test-unit test
 

@@ -16,13 +16,16 @@ use App\Models\Store;
 \test('user can create a new store', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
 
-    $response = $this->be($user, 'users')->post('/stores', [
-        'name' => 'My Store',
-        'address' => '123 Main St',
-        'status' => StoreStatusEnum::ACTIVE->value,
-        'notes' => null,
-        'is_warehouse' => false,
-    ]);
+    $response = $this->be($user, 'users')
+        ->withSession(['_token' => 'test'])
+        ->withHeaders(['X-CSRF-TOKEN' => 'test'])
+        ->post('/stores', [
+            'name' => 'My Store',
+            'address' => '123 Main St',
+            'status' => StoreStatusEnum::ACTIVE->value,
+            'notes' => null,
+            'is_warehouse' => false,
+        ], $this->inertiaHeaders());
 
     $response->assertRedirect();
     $store = Store::query()->where('name', 'My Store')->first();
@@ -31,26 +34,30 @@ use App\Models\Store;
     \assertInertiaFlash($response, 'success', \__('Store created.'));
 });
 
-\test('user can create an additional warehouse store', function (): void {
+\test('user cannot create a second warehouse store', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
 
-    $response = $this->be($user, 'users')->post('/stores', [
-        'name' => 'Aux Warehouse',
-        'address' => null,
-        'status' => StoreStatusEnum::ACTIVE->value,
-        'notes' => null,
-        'is_warehouse' => true,
-    ]);
-
-    $response->assertRedirect();
-    \expect(Store::query()->where('name', 'Aux Warehouse')->where('is_warehouse', true)->exists())->toBeTrue();
+    $this->be($user, 'users')
+        ->withSession(['_token' => 'test'])
+        ->withHeaders(['X-CSRF-TOKEN' => 'test'])
+        ->post('/stores', [
+            'name' => 'Aux Warehouse',
+            'address' => null,
+            'status' => StoreStatusEnum::ACTIVE->value,
+            'notes' => null,
+            'is_warehouse' => true,
+        ], ['Accept' => 'application/json'])->assertStatus(422)
+        ->assertJsonValidationErrors(['is_warehouse']);
 });
 
 \test('store create validates required name', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
 
-    $this->be($user, 'users')->post('/stores', [
-        'name' => '',
-        'status' => StoreStatusEnum::ACTIVE->value,
-    ])->assertStatus(422);
+    $this->be($user, 'users')
+        ->withSession(['_token' => 'test'])
+        ->withHeaders(['X-CSRF-TOKEN' => 'test'])
+        ->post('/stores', [
+            'name' => '',
+            'status' => StoreStatusEnum::ACTIVE->value,
+        ], $this->inertiaHeaders())->assertStatus(422);
 });

@@ -18,7 +18,7 @@ return [
     |
     */
 
-    'default' => $env->parseNullableString('QUEUE_DRIVER') ?? $env->appEnvMap([
+    'default' => $env->parseNullableString('QUEUE_CONNECTION') ?? $env->appEnvMap([
         'local' => 'sync',
         'testing' => 'sync',
         'development' => 'redis',

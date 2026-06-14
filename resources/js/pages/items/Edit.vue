@@ -153,10 +153,19 @@ useBoundLocale();
                             id="description"
                             name="description"
                             rows="4"
+                            :aria-invalid="
+                                (
+                                    errors as ItemFields
+                                )['description']
+                                    ? 'true'
+                                    : undefined
+                            "
+                            aria-describedby="description-error"
                             class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-xs text-on-surface outline-none transition placeholder:text-on-surface-variant/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                             :value="item.description ?? ''"
                         ></textarea>
                         <FieldError
+                            id="description-error"
                             :message="
                                 (
                                     errors as ItemFields

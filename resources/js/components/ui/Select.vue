@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, useId } from 'vue';
 import { cn } from '@/lib/utils';
 
 const model = defineModel<string | number | null>();
@@ -30,9 +30,9 @@ const props = withDefaults(
     },
 );
 
-const selectId = computed(
-    () => props.id ?? `select-${Math.random().toString(36).slice(2, 9)}`,
-);
+const generatedId = useId();
+
+const selectId = computed(() => props.id ?? `select-${generatedId}`);
 </script>
 
 <template>

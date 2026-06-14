@@ -122,9 +122,13 @@ const isOutgoingTransfer = computed(
 
 const serverError = ref<string | null>(null);
 
+let rowCounter = 0;
+
 function makeRow(): Row {
+    rowCounter += 1;
+
     return {
-        id: Math.random().toString(36).slice(2, 9),
+        id: `row-${rowCounter}`,
         item_id: props.defaults.item_id ? String(props.defaults.item_id) : '',
         quantity: 0,
         quantity_after: 0,

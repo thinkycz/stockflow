@@ -112,9 +112,18 @@ void route; // referenced from the <template>
                             id="notes"
                             name="notes"
                             rows="4"
+                            :aria-invalid="
+                                (
+                                    errors as StoreFields
+                                )['notes']
+                                    ? 'true'
+                                    : undefined
+                            "
+                            aria-describedby="notes-error"
                             class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-xs text-on-surface outline-none transition placeholder:text-on-surface-variant/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                         ></textarea>
                         <FieldError
+                            id="notes-error"
                             :message="
                                 (
                                     errors as StoreFields

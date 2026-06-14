@@ -49,9 +49,7 @@ useBoundLocale();
                 <FieldError
                     :message="
                         (
-                            errors as ResetPasswordFields extends object
-                                ? ResetPasswordFields
-                                : never
+                            errors as ResetPasswordFields
                         )['email']
                     "
                 />
@@ -69,9 +67,7 @@ useBoundLocale();
                 <FieldError
                     :message="
                         (
-                            errors as ResetPasswordFields extends object
-                                ? ResetPasswordFields
-                                : never
+                            errors as ResetPasswordFields
                         )['token']
                     "
                 />
@@ -91,9 +87,7 @@ useBoundLocale();
                 <FieldError
                     :message="
                         (
-                            errors as ResetPasswordFields extends object
-                                ? ResetPasswordFields
-                                : never
+                            errors as ResetPasswordFields
                         )['password']
                     "
                 />

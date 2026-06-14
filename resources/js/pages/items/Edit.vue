@@ -72,9 +72,7 @@ useBoundLocale();
                         <FieldError
                             :message="
                                 (
-                                    errors as ItemFields extends object
-                                        ? ItemFields
-                                        : never
+                                    errors as ItemFields
                                 )['title']
                             "
                         />
@@ -94,9 +92,7 @@ useBoundLocale();
                             <FieldError
                                 :message="
                                     (
-                                        errors as ItemFields extends object
-                                            ? ItemFields
-                                            : never
+                                        errors as ItemFields
                                     )['sku']
                                 "
                             />
@@ -120,9 +116,7 @@ useBoundLocale();
                             <FieldError
                                 :message="
                                     (
-                                        errors as ItemFields extends object
-                                            ? ItemFields
-                                            : never
+                                        errors as ItemFields
                                     )['unit']
                                 "
                             />
@@ -145,9 +139,7 @@ useBoundLocale();
                         <FieldError
                             :message="
                                 (
-                                    errors as ItemFields extends object
-                                        ? ItemFields
-                                        : never
+                                    errors as ItemFields
                                 )['purchase_price']
                             "
                         />
@@ -167,9 +159,7 @@ useBoundLocale();
                         <FieldError
                             :message="
                                 (
-                                    errors as ItemFields extends object
-                                        ? ItemFields
-                                        : never
+                                    errors as ItemFields
                                 )['description']
                             "
                         />

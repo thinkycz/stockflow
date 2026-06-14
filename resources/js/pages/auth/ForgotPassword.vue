@@ -40,9 +40,7 @@ useBoundLocale();
                 <FieldError
                     :message="
                         (
-                            errors as ForgotPasswordFields extends object
-                                ? ForgotPasswordFields
-                                : never
+                            errors as ForgotPasswordFields
                         )['email']
                     "
                 />

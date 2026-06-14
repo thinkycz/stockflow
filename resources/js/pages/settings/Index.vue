@@ -76,9 +76,7 @@ const localeOptions = computed(() =>
                         <FieldError
                             :message="
                                 (
-                                    errors as ProfileFields extends object
-                                        ? ProfileFields
-                                        : never
+                                    errors as ProfileFields
                                 )['email']
                             "
                         />
@@ -96,9 +94,7 @@ const localeOptions = computed(() =>
                         <FieldError
                             :message="
                                 (
-                                    errors as ProfileFields extends object
-                                        ? ProfileFields
-                                        : never
+                                    errors as ProfileFields
                                 )['locale']
                             "
                         />
@@ -139,9 +135,7 @@ const localeOptions = computed(() =>
                         <FieldError
                             :message="
                                 (
-                                    errors as PasswordFields extends object
-                                        ? PasswordFields
-                                        : never
+                                    errors as PasswordFields
                                 )['password']
                             "
                         />
@@ -161,9 +155,7 @@ const localeOptions = computed(() =>
                         <FieldError
                             :message="
                                 (
-                                    errors as PasswordFields extends object
-                                        ? PasswordFields
-                                        : never
+                                    errors as PasswordFields
                                 )['new_password']
                             "
                         />

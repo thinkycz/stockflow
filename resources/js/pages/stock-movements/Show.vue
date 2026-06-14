@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft, Printer, FileDown, ArrowLeftRight } from '@lucide/vue';
+import { ArrowLeft, ArrowLeftRight } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
-import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import CardContent from '@/components/ui/CardContent.vue';
 import CardDescription from '@/components/ui/CardDescription.vue';
@@ -98,16 +97,6 @@ useBoundLocale();
                             movement.created_by
                         }}</span>
                     </p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <Button variant="secondary" type="button" disabled>
-                        <FileDown :size="14" />
-                        {{ t('stock_movements.detail.export_pdf') }}
-                    </Button>
-                    <Button variant="secondary" type="button" disabled>
-                        <Printer :size="14" />
-                        {{ t('stock_movements.detail.print') }}
-                    </Button>
                 </div>
             </div>
 

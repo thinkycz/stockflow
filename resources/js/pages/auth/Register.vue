@@ -57,9 +57,7 @@ const localeOptions = computed(() =>
                 <FieldError
                     :message="
                         (
-                            errors as RegisterFields extends object
-                                ? RegisterFields
-                                : never
+                            errors as RegisterFields
                         )['email']
                     "
                 />
@@ -77,9 +75,7 @@ const localeOptions = computed(() =>
                 <FieldError
                     :message="
                         (
-                            errors as RegisterFields extends object
-                                ? RegisterFields
-                                : never
+                            errors as RegisterFields
                         )['password']
                     "
                 />
@@ -99,9 +95,7 @@ const localeOptions = computed(() =>
                 <FieldError
                     :message="
                         (
-                            errors as RegisterFields extends object
-                                ? RegisterFields
-                                : never
+                            errors as RegisterFields
                         )['password_confirmation']
                     "
                 />
@@ -119,9 +113,7 @@ const localeOptions = computed(() =>
                 <FieldError
                     :message="
                         (
-                            errors as RegisterFields extends object
-                                ? RegisterFields
-                                : never
+                            errors as RegisterFields
                         )['locale']
                     "
                 />

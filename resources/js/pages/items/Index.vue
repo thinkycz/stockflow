@@ -89,9 +89,6 @@ function destroyItem(id: number): void {
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <Button variant="secondary" type="button" disabled>
-                        {{ t('common.export') }}
-                    </Button>
                     <Link href="/items/create">
                         <Button>
                             <Plus :size="14" />

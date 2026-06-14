@@ -41,9 +41,7 @@ useBoundLocale();
                 <FieldError
                     :message="
                         (
-                            errors as LoginFields extends object
-                                ? LoginFields
-                                : never
+                            errors as LoginFields
                         )['email']
                     "
                 />
@@ -68,9 +66,7 @@ useBoundLocale();
                 <FieldError
                     :message="
                         (
-                            errors as LoginFields extends object
-                                ? LoginFields
-                                : never
+                            errors as LoginFields
                         )['password']
                     "
                 />

@@ -70,9 +70,7 @@ useBoundLocale();
                         <FieldError
                             :message="
                                 (
-                                    errors as StoreFields extends object
-                                        ? StoreFields
-                                        : never
+                                    errors as StoreFields
                                 )['name']
                             "
                         />
@@ -91,9 +89,7 @@ useBoundLocale();
                         <FieldError
                             :message="
                                 (
-                                    errors as StoreFields extends object
-                                        ? StoreFields
-                                        : never
+                                    errors as StoreFields
                                 )['address']
                             "
                         />
@@ -121,9 +117,7 @@ useBoundLocale();
                         <FieldError
                             :message="
                                 (
-                                    errors as StoreFields extends object
-                                        ? StoreFields
-                                        : never
+                                    errors as StoreFields
                                 )['status']
                             "
                         />
@@ -143,9 +137,7 @@ useBoundLocale();
                         <FieldError
                             :message="
                                 (
-                                    errors as StoreFields extends object
-                                        ? StoreFields
-                                        : never
+                                    errors as StoreFields
                                 )['notes']
                             "
                         />

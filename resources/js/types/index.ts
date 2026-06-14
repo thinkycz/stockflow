@@ -1,3 +1,5 @@
+import type { Config as ZiggyConfig } from 'ziggy-js';
+
 export interface AuthUser {
     id: number;
     email: string;
@@ -25,4 +27,18 @@ export interface SharedProps {
     };
     flash: FlashProps;
     errors: Record<string, string>;
+    ziggy: ZiggyConfig & { location: string };
+}
+
+declare global {
+    interface Window {
+        // The params type is intentionally permissive: ziggy's
+        // RouteParams is generic over the route name and we want
+        // call sites to stay free of casts.
+        route: (
+            name: string,
+            params?: Record<string, string | number | boolean | null>,
+            absolute?: boolean,
+        ) => string;
+    }
 }

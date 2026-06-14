@@ -4,6 +4,7 @@ import '../css/app.css';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { createApp, h } from 'vue';
 import type { DefineComponent } from 'vue';
+import { route as ziggyRoute } from 'ziggy-js';
 import { createAppI18n, isSupportedLocale } from './i18n';
 import type { SharedProps } from './types';
 
@@ -27,6 +28,18 @@ createInertiaApp({
         const requested = userLocale ?? appLocale ?? 'en';
         const locale = isSupportedLocale(requested) ? requested : 'en';
 
+        // Make Ziggy's route() available globally with the shared
+        // route data, so every page can call route('items.index')
+        // instead of hardcoding '/items' (which silently breaks when
+        // the route URI changes).
+        if (initial.ziggy) {
+            window.route = (
+                name: string,
+                params?: Record<string, string | number | boolean | null>,
+                absolute?: boolean,
+            ): string => ziggyRoute(name, params, absolute, initial.ziggy);
+        }
+
         const i18n = createAppI18n(locale);
 
         createApp({ render: () => h(App, props) })
@@ -38,3 +51,4 @@ createInertiaApp({
         color: '#2563eb',
     },
 });
+

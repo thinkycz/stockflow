@@ -11,6 +11,7 @@ use Inertia\Middleware;
 use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
+use Tightenco\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -47,6 +48,10 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => static fn(): string|null => self::flashMessage($request, 'success'),
                 'error' => static fn(): string|null => self::flashMessage($request, 'error'),
+            ],
+            'ziggy' => fn(): array => [
+                ...(new Ziggy)->toArray(),
+                'location' => $request->url(),
             ],
         ];
     }

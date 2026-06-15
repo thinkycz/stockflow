@@ -72,3 +72,37 @@ use App\Models\StockMovementSequence;
     \expect($next)->toBe('IN-2026-0002');
     \expect(StockMovementSequence::query()->count())->toBe(1);
 });
+\test('next() seeds the sequence from existing stock_movements when the counter is missing', function (): void {
+    $user = Database\Factories\UserFactory::new()->createOne();
+
+    // Simulate stock_movements that were created without going
+    // through the sequence (seeders, migrations, older code).
+    DB::table('stock_movements')->insert([
+        ['user_id' => $user->getKey(), 'number' => 'IN-2026-0001', 'type' => 'incoming', 'total_quantity' => 0, 'total_value' => 0, 'created_at' => '2026-01-01 00:00:00', 'updated_at' => '2026-01-01 00:00:00'],
+        ['user_id' => $user->getKey(), 'number' => 'IN-2026-0002', 'type' => 'incoming', 'total_quantity' => 0, 'total_value' => 0, 'created_at' => '2026-01-01 00:00:00', 'updated_at' => '2026-01-01 00:00:00'],
+    ]);
+
+    $next = StockMovementSequence::next(App\Enums\StockMovementTypeEnum::INCOMING, 2026, $user->getKey());
+
+    \expect($next)->toBe('IN-2026-0003');
+});
+
+\test('next() advances the sequence when it is behind the actual data', function (): void {
+    $user = Database\Factories\UserFactory::new()->createOne();
+
+    // Sequence thinks it is at 1, but the actual data already has
+    // numbers up to 0005.
+    StockMovementSequence::query()->create([
+        'user_id' => $user->getKey(),
+        'type' => App\Enums\StockMovementTypeEnum::INCOMING->value,
+        'year' => 2026,
+        'last_number' => 1,
+    ]);
+    DB::table('stock_movements')->insert([
+        ['user_id' => $user->getKey(), 'number' => 'IN-2026-0005', 'type' => 'incoming', 'total_quantity' => 0, 'total_value' => 0, 'created_at' => '2026-01-01 00:00:00', 'updated_at' => '2026-01-01 00:00:00'],
+    ]);
+
+    $next = StockMovementSequence::next(App\Enums\StockMovementTypeEnum::INCOMING, 2026, $user->getKey());
+
+    \expect($next)->toBe('IN-2026-0006');
+});

@@ -6,19 +6,21 @@ declare module '*.vue' {
     export default component;
 }
 
-interface Window {
-    axios: import('axios').AxiosInstance;
-    route: (
-        name: string,
-        params?:
-            | Record<string, string | number | boolean | null>
-            | string
-            | number,
-        absolute?: boolean,
-    ) => string;
-}
-
 export {};
+
+declare global {
+    interface Window {
+        axios: import('axios').AxiosInstance;
+        route: (
+            name: string,
+            params?:
+                | Record<string, string | number | boolean | null>
+                | string
+                | number,
+            absolute?: boolean,
+        ) => string;
+    }
+}
 
 declare module 'vue' {
     interface ComponentCustomProperties {

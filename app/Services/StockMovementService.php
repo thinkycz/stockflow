@@ -156,6 +156,49 @@ class StockMovementService
     }
 
     /**
+     * Delete a movement and reverse its effect on store inventory.
+     */
+    public function deleteMovement(StockMovement $movement): void
+    {
+        DB::transaction(function () use ($movement): void {
+            $movement->loadMissing(['movementItems.item', 'store', 'sourceStore']);
+
+            $type = $movement->getType();
+            $destinationStore = $movement->getStore();
+            $sourceStore = $movement->getSourceStore();
+
+            if ($destinationStore === null) {
+                $this->fail([
+                    'stock_movement' => \__('Cannot delete this movement because the destination store no longer exists.'),
+                ]);
+            }
+
+            if ($type === StockMovementTypeEnum::OUTGOING && $sourceStore === null) {
+                $this->fail([
+                    'stock_movement' => \__('Cannot delete this movement because the source store no longer exists.'),
+                ]);
+            }
+
+            foreach ($movement->getMovementItems() as $movementItem) {
+                $item = $movementItem->getItem();
+
+                match ($type) {
+                    StockMovementTypeEnum::INCOMING => $this->reverseIncoming($destinationStore, $item, $movementItem),
+                    StockMovementTypeEnum::OUTGOING => $this->reverseOutgoing(
+                        Typer::assertInstance($sourceStore, Store::class),
+                        $destinationStore,
+                        $item,
+                        $movementItem,
+                    ),
+                    StockMovementTypeEnum::ADJUSTMENT => $this->reverseAdjustment($destinationStore, $item, $movementItem),
+                };
+            }
+
+            $movement->delete();
+        });
+    }
+
+    /**
      * Resolve an owned store by id.
      */
     private function resolveStore(User $user, int $storeId, string $field): Store
@@ -342,5 +385,85 @@ class StockMovementService
 
             throw new RuntimeException('Store item race could not be resolved.');
         }
+    }
+
+    /**
+     * Lock an existing store_items row, failing if it does not exist.
+     */
+    private function findStoreItem(Store $store, Item $item): StoreItem
+    {
+        $existing = StoreItem::query()
+            ->where('store_id', $store->getKey())
+            ->where('item_id', $item->getKey())
+            ->lockForUpdate()
+            ->first();
+
+        if (!$existing instanceof StoreItem) {
+            $this->fail([
+                'stock_movement' => \__(
+                    'Cannot delete this movement because the inventory row for ":title" at ":store" is missing.',
+                    ['title' => $item->getTitle(), 'store' => $store->getName()],
+                ),
+            ]);
+        }
+
+        return $existing;
+    }
+
+    /**
+     * Reverse an incoming movement row.
+     */
+    private function reverseIncoming(Store $destination, Item $item, StockMovementItem $movementItem): void
+    {
+        $quantity = Typer::assertInt($movementItem->getQuantity());
+        $storeItem = $this->findStoreItem($destination, $item);
+        $current = $storeItem->getQuantity();
+
+        if ($quantity > $current) {
+            $this->fail([
+                'stock_movement' => \__(
+                    'Cannot delete this movement because it would make ":title" negative at ":store".',
+                    ['title' => $item->getTitle(), 'store' => $destination->getName()],
+                ),
+            ]);
+        }
+
+        $storeItem->update(['quantity' => $current - $quantity]);
+    }
+
+    /**
+     * Reverse an outgoing movement row.
+     */
+    private function reverseOutgoing(Store $source, Store $destination, Item $item, StockMovementItem $movementItem): void
+    {
+        $quantity = Typer::assertInt($movementItem->getQuantity());
+
+        $sourceItem = $this->findStoreItem($source, $item);
+        $destinationItem = $this->findStoreItem($destination, $item);
+
+        $destinationCurrent = $destinationItem->getQuantity();
+
+        if ($quantity > $destinationCurrent) {
+            $this->fail([
+                'stock_movement' => \__(
+                    'Cannot delete this movement because it would make ":title" negative at ":store".',
+                    ['title' => $item->getTitle(), 'store' => $destination->getName()],
+                ),
+            ]);
+        }
+
+        $sourceItem->update(['quantity' => $sourceItem->getQuantity() + $quantity]);
+        $destinationItem->update(['quantity' => $destinationCurrent - $quantity]);
+    }
+
+    /**
+     * Reverse an adjustment movement row.
+     */
+    private function reverseAdjustment(Store $destination, Item $item, StockMovementItem $movementItem): void
+    {
+        $before = Typer::assertInt($movementItem->getQuantityBefore());
+        $storeItem = $this->findStoreItem($destination, $item);
+
+        $storeItem->update(['quantity' => $before]);
     }
 }

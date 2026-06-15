@@ -190,8 +190,10 @@
             "description": "There are no stock movements linked to this store."
         },
         "errors": {
-            "warehouse_unique": "You already have a warehouse store."
+            "warehouse_unique": "You already have a warehouse store.",
+            "has_history": "Cannot delete a store that has inventory or stock movement history."
         },
+        "confirm_delete": "Are you sure you want to delete this store?",
         "metrics": {
             "outgoing_movements": "Outgoing movements",
             "received_quantity": "Total received",
@@ -209,7 +211,8 @@
             "item": "Item",
             "sku": "SKU",
             "total_quantity": "Total qty",
-            "total_value": "Total value"
+            "total_value": "Total value",
+            "actions": "Actions"
         }
     },
     "stock_movements": {
@@ -284,8 +287,13 @@
             "other": "Other"
         },
         "errors": {
-            "out_of_stock": "Quantity exceeds current stock. Reduce the quantity or create an adjustment movement first."
+            "out_of_stock": "Quantity exceeds current stock. Reduce the quantity or create an adjustment movement first.",
+            "missing_store": "Cannot delete this movement because the destination store no longer exists.",
+            "missing_source_store": "Cannot delete this movement because the source store no longer exists.",
+            "missing_store_item": "Cannot delete this movement because the inventory row for \":title\" at \":store\" is missing.",
+            "would_be_negative": "Cannot delete this movement because it would make \":title\" negative at \":store\"."
         },
+        "confirm_delete": "Are you sure you want to delete this stock movement?",
         "detail": {
             "title": "Movement",
             "items": "Movement items",
@@ -312,7 +320,8 @@
             "quantity": "Quantity",
             "value": "Value",
             "date": "Date",
-            "created_by": "Created by"
+            "created_by": "Created by",
+            "actions": "Actions"
         }
     },
     "reports": {

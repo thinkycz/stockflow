@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft, ArrowLeftRight } from '@lucide/vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { ArrowLeft, ArrowLeftRight, Trash2 } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import CardContent from '@/components/ui/CardContent.vue';
 import CardDescription from '@/components/ui/CardDescription.vue';
@@ -11,6 +12,7 @@ import CardTitle from '@/components/ui/CardTitle.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { useRoute } from '@/composables/useRoute';
 import { formatDate, formatMoney, formatNumber } from '@/lib/format';
 
 type Row = {
@@ -48,6 +50,15 @@ defineProps<{
 const { t } = useI18n();
 
 useBoundLocale();
+
+const route = useRoute();
+
+function destroyMovement(id: number): void {
+    if (!window.confirm(t('stock_movements.confirm_delete'))) {
+        return;
+    }
+    router.delete(route('stock-movements.destroy', id));
+}
 </script>
 
 <template>
@@ -97,6 +108,16 @@ useBoundLocale();
                             movement.created_by
                         }}</span>
                     </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <Button
+                        variant="danger"
+                        type="button"
+                        @click="destroyMovement(movement.id)"
+                    >
+                        <Trash2 :size="14" />
+                        {{ t('common.delete') }}
+                    </Button>
                 </div>
             </div>
 

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import {
     ArrowLeft,
+    Package,
     Pencil,
     Store as StoreIcon,
+    Trash2,
     History,
-    Package,
 } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -20,6 +21,7 @@ import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { useRoute } from '@/composables/useRoute';
 import { formatDateTime, formatMoney } from '@/lib/format';
 
 type MovementRow = {
@@ -82,6 +84,15 @@ defineProps<{
 const { t } = useI18n();
 
 useBoundLocale();
+
+const route = useRoute();
+
+function destroyStore(id: number): void {
+    if (!window.confirm(t('stores.confirm_delete'))) {
+        return;
+    }
+    router.delete(route('stores.destroy', id));
+}
 </script>
 
 <template>
@@ -144,6 +155,14 @@ useBoundLocale();
                             {{ t('common.edit') }}
                         </Button>
                     </Link>
+                    <Button
+                        variant="danger"
+                        type="button"
+                        @click="destroyStore(store.id)"
+                    >
+                        <Trash2 :size="14" />
+                        {{ t('common.delete') }}
+                    </Button>
                 </div>
             </div>
 

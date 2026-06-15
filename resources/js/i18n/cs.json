@@ -190,8 +190,10 @@
             "description": "K této prodejně nejsou připojeny žádné pohyby."
         },
         "errors": {
-            "warehouse_unique": "Již máte skladovou prodejnu."
+            "warehouse_unique": "Již máte skladovou prodejnu.",
+            "has_history": "Nelze smazat prodejnu, která má zásoby nebo historii skladových pohybů."
         },
+        "confirm_delete": "Opravdu chcete smazat tuto prodejnu?",
         "metrics": {
             "outgoing_movements": "Výdejové pohyby",
             "received_quantity": "Celkem přijato",
@@ -209,7 +211,8 @@
             "item": "Položka",
             "sku": "SKU",
             "total_quantity": "Celkem množství",
-            "total_value": "Celková hodnota"
+            "total_value": "Celková hodnota",
+            "actions": "Akce"
         }
     },
     "stock_movements": {
@@ -284,8 +287,13 @@
             "other": "Jiné"
         },
         "errors": {
-            "out_of_stock": "Množství přesahuje aktuální zásobu. Snižte množství nebo nejprve vytvořte úpravu."
+            "out_of_stock": "Množství přesahuje aktuální zásobu. Snižte množství nebo nejprve vytvořte úpravu.",
+            "missing_store": "Tento pohyb nelze smazat, protože cílová prodejna již neexistuje.",
+            "missing_source_store": "Tento pohyb nelze smazat, protože zdrojová prodejna již neexistuje.",
+            "missing_store_item": "Tento pohyb nelze smazat, protože chybí záznam zásob pro \":title\" v \":store\".",
+            "would_be_negative": "Tento pohyb nelze smazat, protože by množství \":title\" v \":store\" kleslo pod nulu."
         },
+        "confirm_delete": "Opravdu chcete smazat tento skladový pohyb?",
         "detail": {
             "title": "Pohyb č.",
             "items": "Položky pohybu",
@@ -312,7 +320,8 @@
             "quantity": "Množství",
             "value": "Hodnota",
             "date": "Datum",
-            "created_by": "Vytvořil"
+            "created_by": "Vytvořil",
+            "actions": "Akce"
         }
     },
     "reports": {

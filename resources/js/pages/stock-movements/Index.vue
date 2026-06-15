@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Plus, Search, Filter } from '@lucide/vue';
+import { Plus, Search, Filter, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -89,6 +89,13 @@ function applyFilters(): void {
             submitting.value = false;
         },
     });
+}
+
+function destroyMovement(id: number): void {
+    if (!window.confirm(t('stock_movements.confirm_delete'))) {
+        return;
+    }
+    router.delete(route('stock-movements.destroy', id));
 }
 </script>
 
@@ -251,6 +258,9 @@ function applyFilters(): void {
                                         t('stock_movements.columns.created_by')
                                     }}
                                 </th>
+                                <th class="w-0">
+                                    {{ t('stock_movements.columns.actions') }}
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -298,6 +308,16 @@ function applyFilters(): void {
                                 </td>
                                 <td class="text-xs text-on-surface-variant">
                                     {{ movement.created_by ?? '—' }}
+                                </td>
+                                <td>
+                                    <Button
+                                        variant="ghost"
+                                        type="button"
+                                        :aria-label="t('common.delete')"
+                                        @click="destroyMovement(movement.id)"
+                                    >
+                                        <Trash2 :size="14" />
+                                    </Button>
                                 </td>
                             </tr>
                         </tbody>

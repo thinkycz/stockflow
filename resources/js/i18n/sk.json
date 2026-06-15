@@ -190,8 +190,10 @@
             "description": "K tejto predajni nie sú pripojené žiadne pohyby."
         },
         "errors": {
-            "warehouse_unique": "Už máte skladovú predajňu."
+            "warehouse_unique": "Už máte skladovú predajňu.",
+            "has_history": "Predajňu, ktorá má zásoby alebo históriu skladových pohybov, nie je možné zmazať."
         },
+        "confirm_delete": "Naozaj chcete zmazať túto predajňu?",
         "metrics": {
             "outgoing_movements": "Výdajové pohyby",
             "received_quantity": "Celkom prijaté",
@@ -209,7 +211,8 @@
             "item": "Položka",
             "sku": "SKU",
             "total_quantity": "Celkom množstvo",
-            "total_value": "Celková hodnota"
+            "total_value": "Celková hodnota",
+            "actions": "Akcie"
         }
     },
     "stock_movements": {
@@ -284,8 +287,13 @@
             "other": "Iné"
         },
         "errors": {
-            "out_of_stock": "Množstvo prekračuje aktuálne zásoby. Znížte množstvo alebo najprv vytvorte úpravu."
+            "out_of_stock": "Množstvo prekračuje aktuálne zásoby. Znížte množstvo alebo najprv vytvorte úpravu.",
+            "missing_store": "Tento pohyb nie je možné zmazať, pretože cieľová predajňa už neexistuje.",
+            "missing_source_store": "Tento pohyb nie je možné zmazať, pretože zdrojová predajňa už neexistuje.",
+            "missing_store_item": "Tento pohyb nie je možné zmazať, pretože chýba záznam zásob pre \":title\" v \":store\".",
+            "would_be_negative": "Tento pohyb nie je možné zmazať, pretože by množstvo \":title\" v \":store\" kleslo pod nulu."
         },
+        "confirm_delete": "Naozaj chcete zmazať tento skladový pohyb?",
         "detail": {
             "title": "Pohyb č.",
             "items": "Položky pohybu",
@@ -312,7 +320,8 @@
             "quantity": "Množstvo",
             "value": "Hodnota",
             "date": "Dátum",
-            "created_by": "Vytvoril"
+            "created_by": "Vytvoril",
+            "actions": "Akcie"
         }
     },
     "reports": {

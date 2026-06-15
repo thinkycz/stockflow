@@ -60,26 +60,27 @@ class StockMovementCreateController
         }
 
         $defaultWarehouse = $user->warehouse();
+        $defaultItemId = Typer::parseNullableInt($request->query('item_id'));
 
-        $itemsQuery = Item::query();
-        Item::scopeForUser($itemsQuery, $user);
-        $items = Item::querySelect($itemsQuery)
-            ->orderBy('title')
-            ->get()
-            ->map(static function (Item $item) use ($defaultWarehouse, $storeQuantitiesByItem): array {
-                $byStore = $storeQuantitiesByItem[$item->getKey()] ?? [];
+        $items = [];
+        if ($defaultItemId !== null) {
+            $defaultItemQuery = Item::query();
+            Item::scopeForUser($defaultItemQuery, $user);
+            $defaultItem = $defaultItemQuery->whereKey($defaultItemId)->first();
 
-                return [
-                    'id' => $item->getKey(),
-                    'title' => $item->getTitle(),
-                    'sku' => $item->getSku(),
-                    'unit' => $item->getUnit(),
+            if ($defaultItem instanceof Item) {
+                $byStore = $storeQuantitiesByItem[$defaultItem->getKey()] ?? [];
+                $items = [[
+                    'id' => $defaultItem->getKey(),
+                    'title' => $defaultItem->getTitle(),
+                    'sku' => $defaultItem->getSku(),
+                    'unit' => $defaultItem->getUnit(),
                     'warehouse_quantity' => (float) ($byStore[(string) $defaultWarehouse->getKey()] ?? 0),
                     'quantities_by_store' => $byStore,
-                    'purchase_price' => $item->getPurchasePrice(),
-                ];
-            })
-            ->all();
+                    'purchase_price' => $defaultItem->getPurchasePrice(),
+                ]];
+            }
+        }
 
         return Inertia::render('stock-movements/Create', [
             'stores' => $stores,

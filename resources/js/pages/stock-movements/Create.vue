@@ -9,12 +9,14 @@ import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import CardHeader from '@/components/ui/CardHeader.vue';
 import CardTitle from '@/components/ui/CardTitle.vue';
+import Combobox from '@/components/ui/Combobox.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { useRoute } from '@/composables/useRoute';
 import { formatMoney, formatNumber } from '@/lib/format';
 
 type StoreOption = {
@@ -61,6 +63,8 @@ const props = defineProps<{
 const { t } = useI18n();
 
 useBoundLocale();
+
+const route = useRoute();
 
 const defaultWarehouseId = String(props.defaults.warehouse_id ?? '');
 
@@ -158,22 +162,98 @@ function removeRow(id: string): void {
 
 const itemMap = computed(() => {
     const map: Record<number, ItemOption> = {};
+    for (const item of selectedItemsCache.value) {
+        map[item.id] = item;
+    }
+    for (const item of searchResults.value) {
+        map[item.id] = item;
+    }
     for (const item of props.items) {
         map[item.id] = item;
     }
     return map;
 });
 
-const itemOptions = computed(() => [
-    {
-        value: '',
-        label: t('stock_movements.form.select_item'),
-    },
-    ...props.items.map((i) => ({
-        value: String(i.id),
-        label: i.title,
-    })),
-]);
+const searchResults = ref<ItemOption[]>([]);
+const searchLoading = ref<boolean>(false);
+const selectedItemsCache = ref<ItemOption[]>([]);
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let searchAbortController: AbortController | null = null;
+
+function searchItems(term: string): void {
+    if (searchDebounceTimer !== null) {
+        clearTimeout(searchDebounceTimer);
+    }
+    if (term.trim() === '') {
+        searchResults.value = [];
+        searchLoading.value = false;
+        return;
+    }
+    searchLoading.value = true;
+    searchDebounceTimer = setTimeout(() => {
+        if (searchAbortController !== null) {
+            searchAbortController.abort();
+        }
+        searchAbortController = new AbortController();
+        const signal = searchAbortController.signal;
+        window.axios
+            .get(route('items.search', { q: term }), { signal })
+            .then((response: { data: { items: ItemOption[] } }) => {
+                if (!signal.aborted) {
+                    searchResults.value = response.data.items;
+                }
+            })
+            .catch(() => {
+                if (!signal.aborted) {
+                    searchResults.value = [];
+                }
+            })
+            .finally(() => {
+                if (!signal.aborted) {
+                    searchLoading.value = false;
+                }
+            });
+    }, 200);
+}
+
+const availableItems = computed((): ItemOption[] => {
+    const seen = new Set<number>();
+    const result: ItemOption[] = [];
+    for (const item of selectedItemsCache.value) {
+        if (!seen.has(item.id)) {
+            seen.add(item.id);
+            result.push(item);
+        }
+    }
+    for (const item of searchResults.value) {
+        if (!seen.has(item.id)) {
+            seen.add(item.id);
+            result.push(item);
+        }
+    }
+    for (const item of props.items) {
+        if (!seen.has(item.id)) {
+            seen.add(item.id);
+            result.push(item);
+        }
+    }
+    return result;
+});
+
+function onItemSelect(row: Row, item: ItemOption | null): void {
+    if (item === null || item.id === 0) {
+        return;
+    }
+    const existing = selectedItemsCache.value.findIndex(
+        (i) => i.id === item.id,
+    );
+    if (existing === -1) {
+        selectedItemsCache.value.push(item);
+    } else {
+        selectedItemsCache.value[existing] = item;
+    }
+    onItemChange(row);
+}
 
 const reasonOptions = computed(() =>
     props.reasons.map((r) => ({
@@ -610,12 +690,23 @@ watch(
                             <tbody>
                                 <tr v-for="row in rows" :key="row.id">
                                     <td>
-                                        <Select
+                                        <Combobox
                                             v-model="row.item_id"
-                                            :options="itemOptions"
+                                            :items="availableItems"
+                                            :loading="searchLoading"
+                                            :placeholder="
+                                                t(
+                                                    'stock_movements.form.select_item',
+                                                )
+                                            "
                                             required
-                                            @update:model-value="
-                                                onItemChange(row)
+                                            @search="searchItems"
+                                            @select="
+                                                (item) =>
+                                                    onItemSelect(
+                                                        row,
+                                                        item as unknown as ItemOption,
+                                                    )
                                             "
                                         />
                                     </td>

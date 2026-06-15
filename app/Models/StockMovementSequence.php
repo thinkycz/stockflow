@@ -77,6 +77,12 @@ class StockMovementSequence extends BaseModel
      * primary key. We catch the unique-key violation and retry the
      * locked read+update path, which is now guaranteed to find the row
      * the first caller just inserted.
+     *
+     * When the sequence row is missing we seed it from the actual
+     * maximum number already present in `stock_movements` for this
+     * (user_id, type, year). Numbers inserted by seeders, migrations,
+     * or older code paths do not go through this counter, and starting
+     * at 1 would collide with the unique index on `stock_movements.number`.
      */
     public static function next(StockMovementTypeEnum $type, int $year, int $userId): string
     {
@@ -89,15 +95,30 @@ class StockMovementSequence extends BaseModel
                 ->first();
 
             if ($existing instanceof StockMovementSequence) {
+                $actualMax = self::maxActualNumber($type, $year, $userId);
+                if ($actualMax > $existing->getLastNumber()) {
+                    static::query()
+                        ->where('user_id', $userId)
+                        ->where('type', $type->value)
+                        ->where('year', $year)
+                        ->update(['last_number' => $actualMax]);
+                    $existing->setRawAttributes(
+                        \array_merge($existing->getAttributes(), ['last_number' => $actualMax]),
+                        true,
+                    );
+                }
+
                 return self::bump($type, $year, $userId, $existing);
             }
+
+            $startingNumber = \max(1, self::maxActualNumber($type, $year, $userId) + 1);
 
             try {
                 return StockMovementSequence::query()->create([
                     'user_id' => $userId,
                     'type' => $type->value,
                     'year' => $year,
-                    'last_number' => 1,
+                    'last_number' => $startingNumber,
                 ]);
             } catch (UniqueConstraintViolationException) {
                 $existing = static::query()
@@ -166,6 +187,29 @@ class StockMovementSequence extends BaseModel
         }
 
         return $query;
+    }
+
+    /**
+     * Highest number actually present in `stock_movements` for this
+     * (user_id, type, year), parsed from the trailing 4-digit segment.
+     */
+    private static function maxActualNumber(StockMovementTypeEnum $type, int $year, int $userId): int
+    {
+        $prefix = $type->prefix() . '-' . $year . '-';
+        $row = DB::table('stock_movements')
+            ->where('user_id', $userId)
+            ->where('type', $type->value)
+            ->where('number', 'like', $prefix . '%')
+            ->selectRaw('MAX(CAST(SUBSTR(number, ?) AS INTEGER)) as max_number', [\mb_strlen($prefix) + 1])
+            ->first();
+
+        if ($row === null) {
+            return 0;
+        }
+
+        $value = Typer::parseNullableInt($row->max_number);
+
+        return $value ?? 0;
     }
 
     /**

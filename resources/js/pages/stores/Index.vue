@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Store as StoreIcon, Search, Plus } from '@lucide/vue';
+import { Store as StoreIcon, Search, Plus, Pencil, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -53,6 +53,13 @@ function performSearch(event: Event): void {
             },
         },
     );
+}
+
+function destroyStore(id: number): void {
+    if (!window.confirm(t('stores.confirm_delete'))) {
+        return;
+    }
+    router.delete(route('stores.destroy', id));
 }
 </script>
 
@@ -141,6 +148,9 @@ function performSearch(event: Event): void {
                                 <th class="text-right">
                                     {{ t('stores.columns.outgoing_value') }}
                                 </th>
+                                <th class="w-0">
+                                    {{ t('stores.columns.actions') }}
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -204,6 +214,31 @@ function performSearch(event: Event): void {
                                     {{
                                         formatMoney(store.total_outgoing_value)
                                     }}
+                                </td>
+                                <td>
+                                    <div class="flex items-center gap-1">
+                                        <Link
+                                            :href="
+                                                route('stores.edit', store.id)
+                                            "
+                                        >
+                                            <Button
+                                                variant="ghost"
+                                                type="button"
+                                                :aria-label="t('common.edit')"
+                                            >
+                                                <Pencil :size="14" />
+                                            </Button>
+                                        </Link>
+                                        <Button
+                                            variant="ghost"
+                                            type="button"
+                                            :aria-label="t('common.delete')"
+                                            @click="destroyStore(store.id)"
+                                        >
+                                            <Trash2 :size="14" />
+                                        </Button>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>

@@ -34,8 +34,6 @@ return new class extends Migration {
             $table->integer('quantity_difference')->nullable();
 
             $table->string('adjustment_reason')->nullable();
-
-            $table->index(['stock_movement_id', 'item_id']);
         });
     }
 };

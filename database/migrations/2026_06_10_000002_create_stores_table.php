@@ -17,23 +17,20 @@ return new class extends Migration {
 
             $table->foreignId('user_id')
                 ->nullable()
-                ->after('id')
                 ->constrained('users')
                 ->cascadeOnDelete();
 
-            $table->boolean('is_warehouse')->default(false)->after('status');
+            $table->boolean('is_warehouse')->default(false);
 
             $table->string('name');
 
             $table->text('address')->nullable();
 
-            $table->string('status')->default('active');
+            $table->string('status')->default('active')->index();
 
             $table->text('notes')->nullable();
 
             $table->timestamps();
-
-            $table->index('status');
         });
 
         Resolver::resolveSchemaBuilder()->create('store_items', static function (Blueprint $table): void {
@@ -50,7 +47,6 @@ return new class extends Migration {
             $table->integer('quantity')->default(0);
 
             $table->unique(['store_id', 'item_id']);
-            $table->index('item_id');
         });
     }
 };

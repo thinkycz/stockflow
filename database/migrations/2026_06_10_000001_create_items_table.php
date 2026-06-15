@@ -17,13 +17,12 @@ return new class extends Migration {
 
             $table->foreignId('user_id')
                 ->nullable()
-                ->after('id')
                 ->constrained('users')
                 ->cascadeOnDelete();
 
-            $table->string('title');
+            $table->string('title')->index();
 
-            $table->string('sku')->nullable();
+            $table->string('sku')->nullable()->unique();
 
             $table->string('unit')->nullable();
 
@@ -34,10 +33,6 @@ return new class extends Migration {
             $table->text('description')->nullable();
 
             $table->timestamps();
-
-            $table->unique('sku');
-
-            $table->index('title');
         });
     }
 };

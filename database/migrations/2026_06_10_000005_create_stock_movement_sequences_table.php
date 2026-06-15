@@ -22,8 +22,6 @@ return new class extends Migration {
             $table->smallInteger('year');
 
             $table->unsignedInteger('last_number')->default(0);
-
-            $table->primary(['user_id', 'type', 'year']);
         });
     }
 };

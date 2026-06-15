@@ -46,18 +46,14 @@ createInertiaApp({
 
         const i18n = createAppI18n(locale);
 
-        // Expose route() to every component's <script setup> via a
-        // mixin so the template can call route('items.index')
-        // without each page having to import useRoute() and destructure.
+        // Expose route() to every component's template via
+        // globalProperties so slots rendered by layouts still have
+        // access to Ziggy's named-route helper.
         const app = createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(i18n);
 
-        app.mixin({
-            setup() {
-                return { route: window.route };
-            },
-        });
+        app.config.globalProperties.route = window.route;
 
         app.mount(el);
     },

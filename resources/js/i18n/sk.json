@@ -190,7 +190,6 @@
             "description": "K tejto predajni nie sú pripojené žiadne pohyby."
         },
         "errors": {
-            "warehouse_unique": "Už máte skladovú predajňu.",
             "has_history": "Predajňu, ktorá má zásoby alebo históriu skladových pohybov, nie je možné zmazať."
         },
         "confirm_delete": "Naozaj chcete zmazať túto predajňu?",

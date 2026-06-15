@@ -190,7 +190,6 @@
             "description": "There are no stock movements linked to this store."
         },
         "errors": {
-            "warehouse_unique": "You already have a warehouse store.",
             "has_history": "Cannot delete a store that has inventory or stock movement history."
         },
         "confirm_delete": "Are you sure you want to delete this store?",

@@ -6,7 +6,6 @@ namespace App\Models;
 
 use App\Enums\StoreStatusEnum;
 use App\Models\Concerns\BelongsToUser;
-use App\Models\Concerns\HasWarehouseOwner;
 use Database\Factories\StoreFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -21,7 +20,6 @@ class Store extends BaseModel
     use BelongsToUser;
     /** @use HasFactory<StoreFactory> */
     use HasFactory;
-    use HasWarehouseOwner;
 
     /**
      * The table associated with the model.
@@ -192,14 +190,6 @@ class Store extends BaseModel
     public function isWarehouse(): bool
     {
         return (bool) $this->getAttribute('is_warehouse');
-    }
-
-    /**
-     * Warehouse owner id getter.
-     */
-    public function getWarehouseOwnerId(): int|null
-    {
-        return $this->assertNullableInt('warehouse_owner_id');
     }
 
     /**

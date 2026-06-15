@@ -12,7 +12,6 @@ use App\Models\StoreItem;
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create([
         'user_id' => $user->getKey(),
-        'warehouse_owner_id' => $warehouse->getKey(),
     ]);
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
 
@@ -33,7 +32,6 @@ use App\Models\StoreItem;
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create([
         'user_id' => $user->getKey(),
-        'warehouse_owner_id' => $warehouse->getKey(),
     ]);
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
 
@@ -65,11 +63,9 @@ use App\Models\StoreItem;
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $sourceStore = Store::factory()->create([
         'user_id' => $user->getKey(),
-        'warehouse_owner_id' => $warehouse->getKey(),
     ]);
     $destinationStore = Store::factory()->create([
         'user_id' => $user->getKey(),
-        'warehouse_owner_id' => $warehouse->getKey(),
     ]);
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
 
@@ -101,7 +97,6 @@ use App\Models\StoreItem;
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create([
         'user_id' => $user->getKey(),
-        'warehouse_owner_id' => $warehouse->getKey(),
     ]);
 
     $this->be($user, 'users')

@@ -26,7 +26,6 @@ class StoreFactory extends Factory
             'address' => $this->faker->streetAddress() . ', ' . $this->faker->city(),
             'status' => StoreStatusEnum::ACTIVE->value,
             'is_warehouse' => false,
-            'warehouse_owner_id' => null,
             'notes' => null,
         ];
     }

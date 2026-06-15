@@ -8,13 +8,11 @@ use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\StoreValidity;
 use App\Models\Store;
 use App\Models\User;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Thinkycz\LaravelCore\Support\Resolver;
-use Thinkycz\LaravelCore\Support\Thrower;
 
 class StoreCreateController
 {
@@ -44,31 +42,14 @@ class StoreCreateController
             'is_warehouse' => $storeValidity->isWarehouse()->nullable()->toArray(),
         ]);
 
-        $isWarehouse = $validated->parseBool('is_warehouse');
-
-        if ($isWarehouse && Store::query()
-            ->where('user_id', $user->getKey())
-            ->where('is_warehouse', true)
-            ->exists()) {
-            $thrower = new Thrower(Resolver::resolveValidatorFactory()->make([], []));
-            $thrower->message('is_warehouse', \__('stores.errors.warehouse_unique'));
-            $thrower->throw();
-        }
-
-        try {
-            $store = Store::query()->create([
-                'user_id' => $user->getKey(),
-                'name' => $validated->assertString('name'),
-                'address' => $validated->assertNullableString('address'),
-                'status' => $validated->assertString('status'),
-                'notes' => $validated->assertNullableString('notes'),
-                'is_warehouse' => $isWarehouse,
-            ]);
-        } catch (UniqueConstraintViolationException) {
-            $thrower = new Thrower(Resolver::resolveValidatorFactory()->make([], []));
-            $thrower->message('is_warehouse', \__('stores.errors.warehouse_unique'));
-            $thrower->throw();
-        }
+        $store = Store::query()->create([
+            'user_id' => $user->getKey(),
+            'name' => $validated->assertString('name'),
+            'address' => $validated->assertNullableString('address'),
+            'status' => $validated->assertString('status'),
+            'notes' => $validated->assertNullableString('notes'),
+            'is_warehouse' => $validated->parseBool('is_warehouse'),
+        ]);
 
         Inertia::flash('success', \__('Store created.'));
 

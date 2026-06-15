@@ -49,13 +49,9 @@ class User extends BaseUser implements MustVerifyEmail
     /**
      * Ensure this user has at least one warehouse store and return the first.
      *
-     * `updateOrCreate` is keyed on `(user_id, is_warehouse = true)`. The
-     * `warehouse_owner_id` unique constraint added in
-     * `2026_06_10_000006_enforce_single_warehouse_per_user` guarantees
-     * that two concurrent callers cannot both insert a fresh row. If a
-     * unique-key violation still leaks through (e.g. the constraint is
-     * removed in a future schema change), the second caller falls back
-     * to the existing row.
+     * `updateOrCreate` is keyed on `(user_id, is_warehouse = true)`. A
+     * unique-key violation fallback is kept for the rare race where two
+     * concurrent callers both observe a missing row and try to insert.
      */
     public function provisionWarehouse(): Store
     {

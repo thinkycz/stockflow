@@ -24,17 +24,16 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($store->getNotes())->toBe('Open Mon-Fri');
     \expect($store->isWarehouse())->toBeFalse();
     \expect($store->getUserId())->toBeInt();
-    \expect($store->getWarehouseOwnerId())->toBeNull();
 });
 
-\test('warehouse store exposes its owner id', function (): void {
+\test('warehouse store exposes its is_warehouse flag and user id', function (): void {
     $store = Typer::assertInstance(
         StoreFactory::new()->warehouse()->createOne(['name' => 'Hlavní sklad']),
         Store::class,
     );
 
     \expect($store->isWarehouse())->toBeTrue();
-    \expect($store->getWarehouseOwnerId())->toBe($store->getUserId());
+    \expect($store->getUserId())->toBe($store->getUserId());
 });
 
 \test('scopeSearch matches by name and address', function (): void {

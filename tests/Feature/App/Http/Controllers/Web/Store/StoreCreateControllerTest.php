@@ -34,7 +34,7 @@ use App\Models\Store;
     \assertInertiaFlash($response, 'success', \__('Store created.'));
 });
 
-\test('user cannot create a second warehouse store', function (): void {
+\test('user can create a second warehouse store', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
 
     $this->be($user, 'users')
@@ -46,8 +46,13 @@ use App\Models\Store;
             'status' => StoreStatusEnum::ACTIVE->value,
             'notes' => null,
             'is_warehouse' => true,
-        ], ['Accept' => 'application/json'])->assertStatus(422)
-        ->assertJsonValidationErrors(['is_warehouse']);
+        ], ['Accept' => 'application/json'])
+        ->assertRedirect();
+
+    \expect(Store::query()
+        ->where('user_id', $user->getKey())
+        ->where('is_warehouse', true)
+        ->count())->toBe(2);
 });
 
 \test('store create validates required name', function (): void {

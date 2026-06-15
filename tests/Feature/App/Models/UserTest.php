@@ -67,17 +67,15 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     \expect($first->getKey())->toBe($second->getKey());
     \expect(Store::query()->where('user_id', $user->getKey())->where('is_warehouse', true)->count())->toBe(1);
-    \expect($first->getWarehouseOwnerId())->toBe($user->getKey());
+    \expect($first->getUserId())->toBe($user->getKey());
 });
 
-\test('provisionWarehouse keeps a non-warehouse store from getting a warehouse owner id', function (): void {
+\test('provisionWarehouse keeps a non-warehouse store untouched', function (): void {
     $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
     $retail = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
-
-    \expect($retail->getWarehouseOwnerId())->toBeNull();
 
     $user->provisionWarehouse();
 
     $retail->refresh();
-    \expect($retail->getWarehouseOwnerId())->toBeNull();
+    \expect($retail->isWarehouse())->toBeFalse();
 });

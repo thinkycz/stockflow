@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
@@ -9,21 +9,33 @@ import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { useRoute } from '@/composables/useRoute';
 
 type StoreFields = {
     name: string;
     address: string;
     status: string;
     notes: string;
+    is_warehouse: boolean;
 };
 
 const { t } = useI18n();
 
 useBoundLocale();
-import { useRoute } from '@/composables/useRoute';
 
 const route = useRoute();
-void route; // referenced from the <template>
+
+const form = useForm<StoreFields>({
+    name: '',
+    address: '',
+    status: 'active',
+    notes: '',
+    is_warehouse: false,
+});
+
+function submit(): void {
+    form.post(route('stores.store'));
+}
 </script>
 
 <template>
@@ -43,30 +55,30 @@ void route; // referenced from the <template>
             </header>
 
             <Card padded>
-                <Form
-                    v-slot="{ errors, processing }"
-                    :action="route('stores.store')"
-                    method="post"
-                    class="space-y-5"
-                >
+                <form class="space-y-5" @submit.prevent="submit">
                     <div class="space-y-2">
                         <Label for="name" :required="true">{{
                             t('stores.columns.name')
                         }}</Label>
-                        <Input id="name" name="name" type="text" required />
-                        <FieldError
-                            :message="(errors as StoreFields)['name']"
+                        <Input
+                            id="name"
+                            v-model="form.name"
+                            type="text"
+                            required
                         />
+                        <FieldError :message="form.errors.name" />
                     </div>
 
                     <div class="space-y-2">
                         <Label for="address">{{
                             t('stores.columns.address')
                         }}</Label>
-                        <Input id="address" name="address" type="text" />
-                        <FieldError
-                            :message="(errors as StoreFields)['address']"
+                        <Input
+                            id="address"
+                            v-model="form.address"
+                            type="text"
                         />
+                        <FieldError :message="form.errors.address" />
                     </div>
 
                     <div class="space-y-2">
@@ -75,7 +87,7 @@ void route; // referenced from the <template>
                         }}</Label>
                         <Select
                             id="status"
-                            name="status"
+                            v-model="form.status"
                             :options="[
                                 {
                                     value: 'active',
@@ -87,9 +99,7 @@ void route; // referenced from the <template>
                                 },
                             ]"
                         />
-                        <FieldError
-                            :message="(errors as StoreFields)['status']"
-                        />
+                        <FieldError :message="form.errors.status" />
                     </div>
 
                     <div class="space-y-2">
@@ -98,55 +108,52 @@ void route; // referenced from the <template>
                         }}</Label>
                         <textarea
                             id="notes"
-                            name="notes"
+                            v-model="form.notes"
                             rows="4"
                             :aria-invalid="
-                                (errors as StoreFields)['notes']
-                                    ? 'true'
-                                    : undefined
+                                form.errors.notes ? 'true' : undefined
                             "
                             aria-describedby="notes-error"
                             class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-xs text-on-surface outline-none transition placeholder:text-on-surface-variant/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                         ></textarea>
                         <FieldError
                             id="notes-error"
-                            :message="(errors as StoreFields)['notes']"
+                            :message="form.errors.notes"
                         />
                     </div>
 
                     <div class="flex items-center gap-2">
                         <input
                             id="is_warehouse"
-                            name="is_warehouse"
                             type="checkbox"
                             value="1"
+                            :checked="form.is_warehouse"
                             class="size-4 rounded border-outline-glass text-primary focus:ring-primary/20"
+                            @change="
+                                form.is_warehouse = (
+                                    $event.target as HTMLInputElement
+                                ).checked
+                            "
                         />
                         <Label for="is_warehouse">{{
                             t('stores.columns.is_warehouse')
                         }}</Label>
                     </div>
-                    <FieldError
-                        :message="
-                            (errors as Partial<Record<string, string>>)[
-                                'is_warehouse'
-                            ]
-                        "
-                    />
+                    <FieldError :message="form.errors.is_warehouse" />
 
                     <div
                         class="flex items-center justify-end gap-3 border-t border-outline-glass pt-4"
                     >
-                        <Link href="route('stores.index')">
+                        <Link :href="route('stores.index')">
                             <Button variant="secondary" type="button">
                                 {{ t('common.cancel') }}
                             </Button>
                         </Link>
-                        <Button type="submit" :disabled="processing">
+                        <Button type="submit" :disabled="form.processing">
                             {{ t('common.save') }}
                         </Button>
                     </div>
-                </Form>
+                </form>
             </Card>
         </div>
     </AppLayout>

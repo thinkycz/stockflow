@@ -35,9 +35,13 @@ createInertiaApp({
         if (initial.ziggy) {
             window.route = (
                 name: string,
-                params?: Record<string, string | number | boolean | null>,
+                params?:
+                    | Record<string, string | number | boolean | null>
+                    | string
+                    | number,
                 absolute?: boolean,
-            ): string => ziggyRoute(name, params, absolute, initial.ziggy);
+            ): string =>
+                ziggyRoute(name, params as any, absolute, initial.ziggy);
         }
 
         const i18n = createAppI18n(locale);

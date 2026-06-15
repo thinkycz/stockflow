@@ -15,7 +15,7 @@ import EmptyState from '@/components/ui/EmptyState.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
-import { formatMoney, formatNumber } from '@/lib/format';
+import { formatDateTime, formatMoney, formatNumber } from '@/lib/format';
 
 type MovementRow = {
     id: number;
@@ -29,6 +29,7 @@ type MovementRow = {
     quantity_after: number | null;
     quantity_difference: number | null;
     adjustment_reason: string | null;
+    created_at: string;
 };
 
 type StoreQuantityRow = {
@@ -59,10 +60,6 @@ const props = defineProps<{
 const { t } = useI18n();
 
 useBoundLocale();
-import { useRoute } from '@/composables/useRoute';
-
-const route = useRoute();
-void route; // referenced from the <template>
 </script>
 
 <template>
@@ -72,7 +69,7 @@ void route; // referenced from the <template>
         <div class="flex flex-col gap-6">
             <div>
                 <Link
-                    href="route('items.index')"
+                    :href="route('items.index')"
                     class="inline-flex items-center gap-1 text-xs font-semibold text-on-surface-variant hover:text-primary"
                 >
                     <ArrowLeft :size="12" />
@@ -110,14 +107,19 @@ void route; // referenced from the <template>
                 </div>
                 <div class="flex items-center gap-2">
                     <Link
-                        :href="`/stock-movements/create?type=adjustment&item_id=${item.id}`"
+                        :href="
+                            route('stock-movements.create', {
+                                type: 'adjustment',
+                                item_id: item.id,
+                            })
+                        "
                     >
                         <Button variant="secondary">
                             <FileText :size="14" />
                             {{ t('items.adjust_stock') }}
                         </Button>
                     </Link>
-                    <Link :href="`/items/${item.id}/edit`">
+                    <Link :href="route('items.edit', item.id)">
                         <Button>
                             <Pencil :size="14" />
                             {{ t('common.edit') }}
@@ -225,13 +227,13 @@ void route; // referenced from the <template>
             <Card padded>
                 <CardHeader>
                     <CardTitle>
-                        <div class="flex items-center gap-2">
+                        <span class="flex items-center gap-2">
                             <History
                                 :size="14"
                                 class="text-on-surface-variant"
                             />
                             {{ t('items.movement_history') }}
-                        </div>
+                        </span>
                     </CardTitle>
                     <CardDescription>
                         {{ t('items.movement_history_subtitle') }}
@@ -266,7 +268,12 @@ void route; // referenced from the <template>
                             >
                                 <td>
                                     <Link
-                                        :href="`/stock-movements/${movement.id}`"
+                                        :href="
+                                            route(
+                                                'stock-movements.show',
+                                                movement.id,
+                                            )
+                                        "
                                         class="font-mono text-xs font-semibold text-on-surface hover:text-primary"
                                     >
                                         {{ movement.number }}
@@ -291,6 +298,9 @@ void route; // referenced from the <template>
                                 </td>
                                 <td class="text-right text-on-surface-variant">
                                     {{ formatMoney(movement.total_value) }}
+                                </td>
+                                <td class="text-xs text-on-surface-variant">
+                                    {{ formatDateTime(movement.created_at) }}
                                 </td>
                             </tr>
                         </tbody>

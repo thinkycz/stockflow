@@ -56,12 +56,12 @@ class StoreCreateController
         } catch (UniqueConstraintViolationException) {
             $validator = Resolver::resolveValidatorFactory()->make([], []);
             $thrower = new Thrower($validator);
-            $thrower->message('is_warehouse', \__('You already have a warehouse store.'));
+            $thrower->message('is_warehouse', \__('stores.errors.warehouse_unique'));
             $thrower->throw();
         }
 
         Inertia::flash('success', \__('Store created.'));
 
-        return Resolver::resolveRedirector()->to('/stores/' . $store->getKey());
+        return Resolver::resolveRedirector()->route('stores.show', $store->getKey());
     }
 }

@@ -51,6 +51,19 @@ class StockMovementValidity
     }
 
     /**
+     * Active store id validation rules (owned and active).
+     */
+    public function activeStoreId(): Validity
+    {
+        return $this->baseValidity->id()->exists('stores', 'id', [
+            'user_id',
+            (string) $this->userId,
+            'status',
+            'active',
+        ]);
+    }
+
+    /**
      * Retail destination store id validation rules.
      */
     public function retailStoreId(): Validity

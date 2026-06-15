@@ -22,9 +22,21 @@ trait HasWarehouseOwner
     public static function bootHasWarehouseOwner(): void
     {
         static::creating(static function (Model $model): void {
-            $isWarehouse = (bool) $model->getAttribute('is_warehouse');
-            $ownerId = $model->getAttribute('user_id');
-            $model->setAttribute('warehouse_owner_id', $isWarehouse && $ownerId !== null ? $ownerId : null);
+            self::syncWarehouseOwner($model);
         });
+
+        static::updating(static function (Model $model): void {
+            self::syncWarehouseOwner($model);
+        });
+    }
+
+    /**
+     * Mirror the `is_warehouse` flag into the unique `warehouse_owner_id` column.
+     */
+    private static function syncWarehouseOwner(Model $model): void
+    {
+        $isWarehouse = (bool) $model->getAttribute('is_warehouse');
+        $ownerId = $model->getAttribute('user_id');
+        $model->setAttribute('warehouse_owner_id', $isWarehouse && $ownerId !== null ? $ownerId : null);
     }
 }

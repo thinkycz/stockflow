@@ -60,7 +60,7 @@ class SettingsController
 
         $validated = $this->validateRequest($request, [
             'password' => $authValidity->password()->required()->toArray(),
-            'new_password' => $authValidity->password()->required()->toArray(),
+            'new_password' => $authValidity->password()->required()->confirmed()->toArray(),
         ]);
 
         $hasher = Resolver::resolveHasher();

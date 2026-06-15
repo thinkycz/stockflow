@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
@@ -9,6 +9,7 @@ import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { useRoute } from '@/composables/useRoute';
 
 type ItemFields = {
     title: string;
@@ -25,10 +26,20 @@ defineProps<{
 const { t } = useI18n();
 
 useBoundLocale();
-import { useRoute } from '@/composables/useRoute';
 
 const route = useRoute();
-void route; // referenced from the <template>
+
+const form = useForm<ItemFields>({
+    title: '',
+    sku: '',
+    unit: '',
+    purchase_price: '',
+    description: '',
+});
+
+function submit(): void {
+    form.post(route('items.store'));
+}
 </script>
 
 <template>
@@ -48,20 +59,18 @@ void route; // referenced from the <template>
             </header>
 
             <Card padded>
-                <Form
-                    v-slot="{ errors, processing }"
-                    :action="route('items.store')"
-                    method="post"
-                    class="space-y-5"
-                >
+                <form class="space-y-5" @submit.prevent="submit">
                     <div class="space-y-2">
                         <Label for="title" :required="true">{{
                             t('items.columns.title')
                         }}</Label>
-                        <Input id="title" name="title" type="text" required />
-                        <FieldError
-                            :message="(errors as ItemFields)['title']"
+                        <Input
+                            id="title"
+                            v-model="form.title"
+                            type="text"
+                            required
                         />
+                        <FieldError :message="form.errors.title" />
                     </div>
 
                     <div class="grid gap-4 sm:grid-cols-2">
@@ -69,10 +78,8 @@ void route; // referenced from the <template>
                             <Label for="sku">{{
                                 t('items.columns.sku')
                             }}</Label>
-                            <Input id="sku" name="sku" type="text" />
-                            <FieldError
-                                :message="(errors as ItemFields)['sku']"
-                            />
+                            <Input id="sku" v-model="form.sku" type="text" />
+                            <FieldError :message="form.errors.sku" />
                         </div>
                         <div class="space-y-2">
                             <Label for="unit">{{
@@ -80,7 +87,7 @@ void route; // referenced from the <template>
                             }}</Label>
                             <Select
                                 id="unit"
-                                name="unit"
+                                v-model="form.unit"
                                 :options="[
                                     { value: '', label: t('items.unit_none') },
                                     ...units.map((u) => ({
@@ -89,9 +96,7 @@ void route; // referenced from the <template>
                                     })),
                                 ]"
                             />
-                            <FieldError
-                                :message="(errors as ItemFields)['unit']"
-                            />
+                            <FieldError :message="form.errors.unit" />
                         </div>
                     </div>
 
@@ -101,15 +106,13 @@ void route; // referenced from the <template>
                         }}</Label>
                         <Input
                             id="purchase_price"
-                            name="purchase_price"
+                            v-model="form.purchase_price"
                             type="number"
                             step="0.01"
                             min="0"
                             required
                         />
-                        <FieldError
-                            :message="(errors as ItemFields)['purchase_price']"
-                        />
+                        <FieldError :message="form.errors.purchase_price" />
                     </div>
 
                     <div class="space-y-2">
@@ -118,19 +121,17 @@ void route; // referenced from the <template>
                         }}</Label>
                         <textarea
                             id="description"
-                            name="description"
+                            v-model="form.description"
                             rows="4"
                             :aria-invalid="
-                                (errors as ItemFields)['description']
-                                    ? 'true'
-                                    : undefined
+                                form.errors.description ? 'true' : undefined
                             "
                             aria-describedby="description-error"
                             class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-xs text-on-surface outline-none transition placeholder:text-on-surface-variant/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                         ></textarea>
                         <FieldError
                             id="description-error"
-                            :message="(errors as ItemFields)['description']"
+                            :message="form.errors.description"
                         />
                     </div>
 
@@ -143,16 +144,16 @@ void route; // referenced from the <template>
                     <div
                         class="flex items-center justify-end gap-3 border-t border-outline-glass pt-4"
                     >
-                        <Link href="route('items.index')">
+                        <Link :href="route('items.index')">
                             <Button variant="secondary" type="button">
                                 {{ t('common.cancel') }}
                             </Button>
                         </Link>
-                        <Button type="submit" :disabled="processing">
+                        <Button type="submit" :disabled="form.processing">
                             {{ t('common.save') }}
                         </Button>
                     </div>
-                </Form>
+                </form>
             </Card>
         </div>
     </AppLayout>

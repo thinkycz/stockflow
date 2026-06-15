@@ -1,6 +1,7 @@
 {
     "app": {
-        "name": "StockFlow"
+        "name": "StockFlow",
+        "tagline": "Správa inventára"
     },
     "nav": {
         "dashboard": "Nástenka",
@@ -188,6 +189,9 @@
             "title": "Zatiaľ žiadne pohyby",
             "description": "K tejto predajni nie sú pripojené žiadne pohyby."
         },
+        "errors": {
+            "warehouse_unique": "Už máte skladovú predajňu."
+        },
         "metrics": {
             "outgoing_movements": "Výdajové pohyby",
             "received_quantity": "Celkom prijaté",
@@ -343,6 +347,7 @@
         "password_confirmation": "Potvrdenie hesla",
         "current_password": "Súčasné heslo",
         "new_password": "Nové heslo",
+        "new_password_confirmation": "Potvrdenie nového hesla",
         "locale": "Jazyk"
     },
     "locale": {

@@ -27,7 +27,7 @@ class RegisterController
     public function create(): RedirectResponse|Response
     {
         if (User::auth() instanceof User) {
-            return Resolver::resolveRedirector()->to('/dashboard');
+            return Resolver::resolveRedirector()->route('dashboard');
         }
 
         return Inertia::render('auth/Register');
@@ -64,6 +64,6 @@ class RegisterController
 
         $request->session()->regenerate();
 
-        return Resolver::resolveRedirector()->to('/dashboard');
+        return Resolver::resolveRedirector()->route('dashboard');
     }
 }

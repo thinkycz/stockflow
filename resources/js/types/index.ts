@@ -37,7 +37,10 @@ declare global {
         // call sites to stay free of casts.
         route: (
             name: string,
-            params?: Record<string, string | number | boolean | null>,
+            params?:
+                | Record<string, string | number | boolean | null>
+                | string
+                | number,
             absolute?: boolean,
         ) => string;
     }

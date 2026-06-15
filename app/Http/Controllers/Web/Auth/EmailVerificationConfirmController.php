@@ -59,7 +59,7 @@ class EmailVerificationConfirmController
         ]), User::class);
 
         if ($user instanceof User === false) {
-            return $this->redirectWithError('/login', \__('We can\'t find a user with that email address.'));
+            return $this->redirectWithError(\route('login.show'), \__('We can\'t find a user with that email address.'));
         }
 
         if ($user->hasVerifiedEmail()) {
@@ -69,7 +69,7 @@ class EmailVerificationConfirmController
         $tokenValid = EmailBrokerService::inject()->validate($guard, $email, $token);
 
         if ($tokenValid === false) {
-            return $this->redirectWithError('/login', \__('The verification link is invalid or has expired.'));
+            return $this->redirectWithError(\route('login.show'), \__('The verification link is invalid or has expired.'));
         }
 
         DB::transaction(static function () use ($user, $guard, $email): void {
@@ -97,12 +97,12 @@ class EmailVerificationConfirmController
         if ($authUser instanceof User && $authUser->getKey() === $user->getKey()) {
             Inertia::flash('success', $message);
 
-            return Resolver::resolveRedirector()->to('/dashboard');
+            return Resolver::resolveRedirector()->route('dashboard');
         }
 
         Inertia::flash('success', $message);
 
-        return Resolver::resolveRedirector()->to('/login');
+        return Resolver::resolveRedirector()->route('login.show');
     }
 
     /**

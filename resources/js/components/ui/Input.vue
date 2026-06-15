@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { cn } from '@/lib/utils';
 
+const model = defineModel<string | number>();
+
 withDefaults(
     defineProps<{
         id?: string;
@@ -32,7 +34,7 @@ withDefaults(
 <template>
     <input
         :id="$props.id"
-        :value="$props.defaultValue"
+        :value="model ?? $props.defaultValue"
         :name="$props.name"
         :type="$props.type"
         :autocomplete="$props.autocomplete"
@@ -49,5 +51,6 @@ withDefaults(
                 $props.class,
             )
         "
+        @input="model = ($event.target as HTMLInputElement).value"
     />
 </template>

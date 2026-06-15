@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import Button from '@/components/ui/Button.vue';
@@ -7,6 +7,7 @@ import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { useRoute } from '@/composables/useRoute';
 
 type ResetPasswordFields = {
     email: string;
@@ -14,7 +15,7 @@ type ResetPasswordFields = {
     password: string;
 };
 
-defineProps<{
+const props = defineProps<{
     email: string;
     token: string;
 }>();
@@ -22,10 +23,22 @@ defineProps<{
 const { t } = useI18n();
 
 useBoundLocale();
-import { useRoute } from '@/composables/useRoute';
 
 const route = useRoute();
-void route; // referenced from the <template>
+
+const form = useForm<ResetPasswordFields>({
+    email: props.email,
+    token: props.token,
+    password: '',
+});
+
+function submit(): void {
+    form.post(route('reset-password.store'), {
+        onError: (): void => {
+            form.reset('password');
+        },
+    });
+}
 </script>
 
 <template>
@@ -33,40 +46,28 @@ void route; // referenced from the <template>
         :title="t('auth.reset.title')"
         :subtitle="t('auth.reset.subtitle')"
     >
-        <Form
-            v-slot="{ errors, processing }"
-            :action="route('reset-password.store')"
-            method="post"
-            :reset-on-error="['password']"
-            class="space-y-5"
-        >
+        <form class="space-y-5" @submit.prevent="submit">
             <div class="space-y-2">
                 <Label for="email">{{ t('auth.reset.labels.email') }}</Label>
                 <Input
                     id="email"
-                    name="email"
+                    v-model="form.email"
                     type="email"
                     autocomplete="email"
-                    :default-value="email"
                     required
                 />
-                <FieldError
-                    :message="(errors as ResetPasswordFields)['email']"
-                />
+                <FieldError :message="form.errors.email" />
             </div>
 
             <div class="space-y-2">
                 <Label for="token">{{ t('auth.reset.labels.token') }}</Label>
                 <Input
                     id="token"
-                    name="token"
+                    v-model="form.token"
                     autocomplete="one-time-code"
-                    :default-value="token"
                     required
                 />
-                <FieldError
-                    :message="(errors as ResetPasswordFields)['token']"
-                />
+                <FieldError :message="form.errors.token" />
             </div>
 
             <div class="space-y-2">
@@ -75,19 +76,17 @@ void route; // referenced from the <template>
                 }}</Label>
                 <Input
                     id="password"
-                    name="password"
+                    v-model="form.password"
                     type="password"
                     autocomplete="new-password"
                     required
                 />
-                <FieldError
-                    :message="(errors as ResetPasswordFields)['password']"
-                />
+                <FieldError :message="form.errors.password" />
             </div>
 
-            <Button type="submit" class="w-full" :disabled="processing">{{
+            <Button type="submit" class="w-full" :disabled="form.processing">{{
                 t('auth.reset.submit')
             }}</Button>
-        </Form>
+        </form>
     </AuthLayout>
 </template>

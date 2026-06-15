@@ -2,7 +2,7 @@
 SHELL := /bin/bash
 
 # Variables
-MAKE_PHP ?= php -d zend.assertions=1
+MAKE_PHP ?= php -d zend.assertions=1 -d memory_limit=512M
 MAKE_COMPOSER ?= composer
 MAKE_ARTISAN ?= ${MAKE_PHP} ./artisan
 
@@ -62,9 +62,9 @@ fix: ./node_modules/.bin/prettier ./vendor/bin/pint
 	${MAKE_PHP} ./vendor/bin/pint
 
 .PHONY: test
-test: ./vendor/bin/phpunit ./.env
+test: ./vendor/bin/pest ./.env
 	${MAKE_ARTISAN} optimize:clear
-	${MAKE_ARTISAN} test
+	${MAKE_PHP} ./vendor/bin/pest
 
 .PHONY: e2e
 e2e: ./node_modules/.bin/playwright ./.env
@@ -135,7 +135,7 @@ serve: ./vendor ./.env
 	${MAKE_ARTISAN} serve --host=0.0.0.0 --port=8000
 
 # Dependencies
-./vendor ./composer.lock ./vendor/bin/phpstan ./vendor/bin/pint ./vendor/bin/phpunit:
+./vendor ./composer.lock ./vendor/bin/phpstan ./vendor/bin/pint ./vendor/bin/phpunit ./vendor/bin/pest:
 	${MAKE_COMPOSER} install
 
 ./node_modules ./package-lock.json ./node_modules/.bin/prettier ./node_modules/.bin/playwright:

@@ -1,6 +1,7 @@
 {
     "app": {
-        "name": "StockFlow"
+        "name": "StockFlow",
+        "tagline": "Inventory Management"
     },
     "nav": {
         "dashboard": "Dashboard",
@@ -188,6 +189,9 @@
             "title": "No movements yet",
             "description": "There are no stock movements linked to this store."
         },
+        "errors": {
+            "warehouse_unique": "You already have a warehouse store."
+        },
         "metrics": {
             "outgoing_movements": "Outgoing movements",
             "received_quantity": "Total received",
@@ -343,6 +347,7 @@
         "password_confirmation": "Confirm password",
         "current_password": "Current password",
         "new_password": "New password",
+        "new_password_confirmation": "Confirm new password",
         "locale": "Locale"
     },
     "locale": {

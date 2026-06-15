@@ -114,13 +114,13 @@ class StockMovementCreateController
 
         if ($isAdjustment) {
             $rules['mode'] = $validity->baseValidity->mode(['adjustment'])->nullable()->toArray();
-            $rules['store_id'] = $validity->storeId()->required()->toArray();
+            $rules['store_id'] = $validity->activeStoreId()->required()->toArray();
             $rules['items.*.quantity_after'] = $validity->rowQuantityAfter()->required()->toArray();
             $rules['items.*.adjustment_reason'] = $validity->rowAdjustmentReason()->required()->toArray();
         } else {
             $rules['mode'] = $validity->baseValidity->mode(['transfer'])->nullable()->toArray();
-            $rules['source_store_id'] = $validity->storeId()->nullable()->toArray();
-            $rules['store_id'] = $validity->storeId()->required()->toArray();
+            $rules['source_store_id'] = $validity->activeStoreId()->nullable()->toArray();
+            $rules['store_id'] = $validity->activeStoreId()->required()->toArray();
             $rules['items.*.quantity'] = $validity->rowQuantity()->required()->toArray();
         }
 
@@ -138,6 +138,6 @@ class StockMovementCreateController
 
         Inertia::flash('success', \__('Stock movement created.'));
 
-        return Resolver::resolveRedirector()->to('/stock-movements/' . $movement->getKey());
+        return Resolver::resolveRedirector()->route('stock-movements.show', $movement->getKey());
     }
 }

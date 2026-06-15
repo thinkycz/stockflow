@@ -69,6 +69,6 @@ class ItemCreateController
 
         Inertia::flash('success', \__('Item created.'));
 
-        return Resolver::resolveRedirector()->to('/items/' . $item->getKey());
+        return Resolver::resolveRedirector()->route('items.show', $item->getKey());
     }
 }

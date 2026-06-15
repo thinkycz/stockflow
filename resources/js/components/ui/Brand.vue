@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute } from '@/composables/useRoute';
 import { useSharedProps } from '@/composables/useSharedProps';
 
@@ -16,6 +17,7 @@ const props = withDefaults(
 );
 
 const route = useRoute();
+const { t } = useI18n();
 const { app } = useSharedProps();
 
 const resolvedHref = computed(() => props.href ?? route('dashboard'));
@@ -43,7 +45,7 @@ const resolvedHref = computed(() => props.href ?? route('dashboard'));
             <p
                 class="font-mono text-[9px] font-semibold tracking-wider text-on-surface-variant uppercase opacity-75 leading-none"
             >
-                Inventory Management
+                {{ t('app.tagline') }}
             </p>
         </div>
     </Link>

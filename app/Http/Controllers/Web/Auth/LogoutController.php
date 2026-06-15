@@ -20,6 +20,6 @@ class LogoutController
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return Resolver::resolveRedirector()->to('/login');
+        return Resolver::resolveRedirector()->route('login.show');
     }
 }

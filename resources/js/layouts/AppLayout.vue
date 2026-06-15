@@ -14,6 +14,7 @@ import { useI18n } from 'vue-i18n';
 import Brand from '@/components/ui/Brand.vue';
 import FlashAlerts from '@/components/ui/FlashAlerts.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { useRoute } from '@/composables/useRoute';
 import { useSharedProps } from '@/composables/useSharedProps';
 
 defineProps<{
@@ -25,12 +26,14 @@ const { t } = useI18n();
 
 useBoundLocale();
 
+const route = useRoute();
+
 const activeUrl = computed(() => usePage().url);
 
 const navItems = computed(() => [
     {
         key: 'dashboard',
-        href: '/dashboard',
+        href: route('dashboard'),
         label: t('nav.dashboard'),
         icon: LayoutDashboard,
         active:
@@ -39,28 +42,28 @@ const navItems = computed(() => [
     },
     {
         key: 'items',
-        href: '/items',
+        href: route('items.index'),
         label: t('nav.inventory'),
         icon: Boxes,
         active: activeUrl.value.startsWith('/items'),
     },
     {
         key: 'stock_movements',
-        href: '/stock-movements',
+        href: route('stock-movements.index'),
         label: t('nav.stock_movements'),
         icon: ArrowLeftRight,
         active: activeUrl.value.startsWith('/stock-movements'),
     },
     {
         key: 'stores',
-        href: '/stores',
+        href: route('stores.index'),
         label: t('nav.stores'),
         icon: StoreIcon,
         active: activeUrl.value.startsWith('/stores'),
     },
     {
         key: 'reports',
-        href: '/reports',
+        href: route('reports.index'),
         label: t('nav.reports'),
         icon: BarChart3,
         active: activeUrl.value.startsWith('/reports'),
@@ -76,12 +79,8 @@ const userInitials = computed(() => {
 });
 
 function logout(): void {
-    router.post('/logout');
+    router.post(route('logout'));
 }
-import { useRoute } from '@/composables/useRoute';
-
-const route = useRoute();
-void route; // referenced from the <template>
 </script>
 
 <template>
@@ -95,7 +94,7 @@ void route; // referenced from the <template>
             class="sticky top-0 z-20 hidden h-screen w-64 flex-col border-r border-outline-glass bg-surface-container px-4 py-6 text-left md:flex"
         >
             <div class="mb-8 flex cursor-default items-center gap-3 px-2">
-                <Brand href="route('dashboard')" />
+                <Brand :href="route('dashboard')" />
             </div>
 
             <nav class="flex-1 space-y-1">
@@ -145,7 +144,7 @@ void route; // referenced from the <template>
                 <div class="flex shrink-0 items-center gap-1">
                     <Link
                         v-if="auth.user"
-                        href="route('settings.edit')"
+                        :href="route('settings.show')"
                         :class="[
                             'rounded-lg p-1.5 transition-colors',
                             settingsActive
@@ -174,7 +173,7 @@ void route; // referenced from the <template>
             class="glass-panel sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-outline-glass px-4 shadow-sm md:hidden"
         >
             <div class="flex items-center gap-2">
-                <Brand href="route('dashboard')" />
+                <Brand :href="route('dashboard')" />
             </div>
             <div class="flex items-center gap-1">
                 <Link
@@ -187,12 +186,14 @@ void route; // referenced from the <template>
                             ? 'bg-surface-container-lowest text-primary'
                             : 'text-on-surface-variant',
                     ]"
+                    :title="item.label"
+                    :aria-label="item.label"
                 >
                     <component :is="item.icon" :size="16" />
                 </Link>
                 <Link
                     v-if="auth.user"
-                    href="route('settings.edit')"
+                    :href="route('settings.show')"
                     :class="[
                         'rounded-lg p-2 transition',
                         settingsActive
@@ -207,6 +208,8 @@ void route; // referenced from the <template>
                 <button
                     @click="logout"
                     class="rounded-lg p-2 text-on-surface-variant transition hover:text-error-red"
+                    :title="t('nav.logout')"
+                    :aria-label="t('nav.logout')"
                 >
                     <LogOut :size="16" />
                 </button>

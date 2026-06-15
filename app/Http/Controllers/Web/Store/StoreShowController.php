@@ -78,7 +78,8 @@ class StoreShowController
         $itemRows = StockMovementItem::query()
             ->whereHas('stockMovement', static function (Builder $query) use ($store): void {
                 $query->where('user_id', $store->getUserId())
-                    ->where('store_id', $store->getKey());
+                    ->where('store_id', $store->getKey())
+                    ->where('type', StockMovementTypeEnum::INCOMING->value);
             })
             ->with('item')
             ->get()

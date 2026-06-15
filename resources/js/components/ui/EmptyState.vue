@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { Package } from '@lucide/vue';
+import { Inbox, Package, TrendingUp } from '@lucide/vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-withDefaults(
+const props = withDefaults(
     defineProps<{
         title: string;
         description?: string;
@@ -15,6 +16,18 @@ withDefaults(
 );
 
 const { t } = useI18n();
+
+const iconComponent = computed(() => {
+    switch (props.icon) {
+        case 'inbox':
+            return Inbox;
+        case 'trending':
+            return TrendingUp;
+        case 'package':
+        default:
+            return Package;
+    }
+});
 </script>
 
 <template>
@@ -25,7 +38,7 @@ const { t } = useI18n();
             aria-hidden="true"
             class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-container text-on-surface-variant"
         >
-            <Package :size="20" />
+            <component :is="iconComponent" :size="20" />
         </div>
         <div>
             <p class="font-heading text-sm font-semibold text-on-surface">

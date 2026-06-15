@@ -29,7 +29,7 @@ class LoginController
     public function create(): RedirectResponse|Response
     {
         if (User::auth() instanceof User) {
-            return Resolver::resolveRedirector()->to('/dashboard');
+            return Resolver::resolveRedirector()->route('dashboard');
         }
 
         return Inertia::render('auth/Login');
@@ -72,6 +72,6 @@ class LoginController
 
         $request->session()->regenerate();
 
-        return Resolver::resolveRedirector()->intended('/dashboard');
+        return Resolver::resolveRedirector()->intended(\route('dashboard'));
     }
 }

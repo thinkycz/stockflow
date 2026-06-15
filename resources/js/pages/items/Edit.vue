@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
@@ -9,6 +9,7 @@ import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { useRoute } from '@/composables/useRoute';
 
 type ItemFields = {
     title: string;
@@ -18,7 +19,7 @@ type ItemFields = {
     description: string;
 };
 
-defineProps<{
+const props = defineProps<{
     item: {
         id: number;
         title: string;
@@ -33,6 +34,20 @@ defineProps<{
 const { t } = useI18n();
 
 useBoundLocale();
+
+const route = useRoute();
+
+const form = useForm<ItemFields>({
+    title: props.item.title,
+    sku: props.item.sku ?? '',
+    unit: props.item.unit ?? '',
+    purchase_price: props.item.purchase_price.toFixed(2),
+    description: props.item.description ?? '',
+});
+
+function submit(): void {
+    form.put(route('items.update', props.item.id));
+}
 </script>
 
 <template>
@@ -52,26 +67,18 @@ useBoundLocale();
             </header>
 
             <Card padded>
-                <Form
-                    v-slot="{ errors, processing }"
-                    :action="`/items/${item.id}`"
-                    method="put"
-                    class="space-y-5"
-                >
+                <form class="space-y-5" @submit.prevent="submit">
                     <div class="space-y-2">
                         <Label for="title" :required="true">{{
                             t('items.columns.title')
                         }}</Label>
                         <Input
                             id="title"
-                            name="title"
+                            v-model="form.title"
                             type="text"
-                            :default-value="item.title"
                             required
                         />
-                        <FieldError
-                            :message="(errors as ItemFields)['title']"
-                        />
+                        <FieldError :message="form.errors.title" />
                     </div>
 
                     <div class="grid gap-4 sm:grid-cols-2">
@@ -79,15 +86,8 @@ useBoundLocale();
                             <Label for="sku">{{
                                 t('items.columns.sku')
                             }}</Label>
-                            <Input
-                                id="sku"
-                                name="sku"
-                                type="text"
-                                :default-value="item.sku ?? ''"
-                            />
-                            <FieldError
-                                :message="(errors as ItemFields)['sku']"
-                            />
+                            <Input id="sku" v-model="form.sku" type="text" />
+                            <FieldError :message="form.errors.sku" />
                         </div>
                         <div class="space-y-2">
                             <Label for="unit">{{
@@ -95,7 +95,7 @@ useBoundLocale();
                             }}</Label>
                             <Select
                                 id="unit"
-                                name="unit"
+                                v-model="form.unit"
                                 :options="[
                                     { value: '', label: t('items.unit_none') },
                                     ...units.map((u) => ({
@@ -103,11 +103,8 @@ useBoundLocale();
                                         label: u,
                                     })),
                                 ]"
-                                :default-value="item.unit ?? ''"
                             />
-                            <FieldError
-                                :message="(errors as ItemFields)['unit']"
-                            />
+                            <FieldError :message="form.errors.unit" />
                         </div>
                     </div>
 
@@ -117,16 +114,13 @@ useBoundLocale();
                         }}</Label>
                         <Input
                             id="purchase_price"
-                            name="purchase_price"
+                            v-model="form.purchase_price"
                             type="number"
                             step="0.01"
                             min="0"
-                            :default-value="item.purchase_price.toFixed(2)"
                             required
                         />
-                        <FieldError
-                            :message="(errors as ItemFields)['purchase_price']"
-                        />
+                        <FieldError :message="form.errors.purchase_price" />
                     </div>
 
                     <div class="space-y-2">
@@ -135,20 +129,17 @@ useBoundLocale();
                         }}</Label>
                         <textarea
                             id="description"
-                            name="description"
+                            v-model="form.description"
                             rows="4"
                             :aria-invalid="
-                                (errors as ItemFields)['description']
-                                    ? 'true'
-                                    : undefined
+                                form.errors.description ? 'true' : undefined
                             "
                             aria-describedby="description-error"
                             class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-xs text-on-surface outline-none transition placeholder:text-on-surface-variant/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
-                            :value="item.description ?? ''"
                         ></textarea>
                         <FieldError
                             id="description-error"
-                            :message="(errors as ItemFields)['description']"
+                            :message="form.errors.description"
                         />
                     </div>
 
@@ -161,16 +152,16 @@ useBoundLocale();
                     <div
                         class="flex items-center justify-end gap-3 border-t border-outline-glass pt-4"
                     >
-                        <Link :href="`/items/${item.id}`">
+                        <Link :href="route('items.show', item.id)">
                             <Button variant="secondary" type="button">
                                 {{ t('common.cancel') }}
                             </Button>
                         </Link>
-                        <Button type="submit" :disabled="processing">
+                        <Button type="submit" :disabled="form.processing">
                             {{ t('common.save') }}
                         </Button>
                     </div>
-                </Form>
+                </form>
             </Card>
         </div>
     </AppLayout>

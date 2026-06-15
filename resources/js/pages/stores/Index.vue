@@ -11,6 +11,7 @@ import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Input from '@/components/ui/Input.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { useRoute } from '@/composables/useRoute';
 import { formatMoney } from '@/lib/format';
 
 type StoreRow = {
@@ -34,6 +35,8 @@ const { t } = useI18n();
 
 useBoundLocale();
 
+const route = useRoute();
+
 const searchTerm = ref<string>(props.search || '');
 const submitting = ref<boolean>(false);
 
@@ -41,15 +44,16 @@ function performSearch(event: Event): void {
     event.preventDefault();
     submitting.value = true;
     router.get(
-        '/stores',
+        route('stores.index'),
         { search: searchTerm.value },
-        { preserveState: true },
+        {
+            preserveState: true,
+            onFinish: (): void => {
+                submitting.value = false;
+            },
+        },
     );
 }
-import { useRoute } from '@/composables/useRoute';
-
-const route = useRoute();
-void route; // referenced from the <template>
 </script>
 
 <template>
@@ -71,7 +75,7 @@ void route; // referenced from the <template>
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <Link href="route('stores.create')">
+                    <Link :href="route('stores.create')">
                         <Button>
                             <Plus :size="14" />
                             {{ t('stores.add_store') }}
@@ -112,7 +116,7 @@ void route; // referenced from the <template>
                     :description="t('stores.empty.description')"
                 >
                     <template #action>
-                        <Link href="route('stores.create')">
+                        <Link :href="route('stores.create')">
                             <Button>
                                 <Plus :size="14" />
                                 {{ t('stores.add_store') }}
@@ -151,7 +155,9 @@ void route; // referenced from the <template>
                                 <td>
                                     <div class="flex items-center gap-2">
                                         <Link
-                                            :href="`/stores/${store.id}`"
+                                            :href="
+                                                route('stores.show', store.id)
+                                            "
                                             class="font-semibold text-on-surface hover:text-primary"
                                         >
                                             {{ store.name }}

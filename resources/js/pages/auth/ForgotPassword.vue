@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Link } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import Button from '@/components/ui/Button.vue';
@@ -7,6 +7,7 @@ import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { useRoute } from '@/composables/useRoute';
 
 type ForgotPasswordFields = {
     email: string;
@@ -15,10 +16,16 @@ type ForgotPasswordFields = {
 const { t } = useI18n();
 
 useBoundLocale();
-import { useRoute } from '@/composables/useRoute';
 
 const route = useRoute();
-void route; // referenced from the <template>
+
+const form = useForm<ForgotPasswordFields>({
+    email: '',
+});
+
+function submit(): void {
+    form.post(route('forgot-password.store'));
+}
 </script>
 
 <template>
@@ -26,34 +33,27 @@ void route; // referenced from the <template>
         :title="t('auth.forgot.title')"
         :subtitle="t('auth.forgot.subtitle')"
     >
-        <Form
-            v-slot="{ errors, processing }"
-            :action="route('forgot-password.store')"
-            method="post"
-            class="space-y-5"
-        >
+        <form class="space-y-5" @submit.prevent="submit">
             <div class="space-y-2">
                 <Label for="email">{{ t('fields.email') }}</Label>
                 <Input
                     id="email"
-                    name="email"
+                    v-model="form.email"
                     type="email"
                     autocomplete="email"
                     required
                 />
-                <FieldError
-                    :message="(errors as ForgotPasswordFields)['email']"
-                />
+                <FieldError :message="form.errors.email" />
             </div>
 
-            <Button type="submit" class="w-full" :disabled="processing">{{
+            <Button type="submit" class="w-full" :disabled="form.processing">{{
                 t('auth.forgot.submit')
             }}</Button>
-        </Form>
+        </form>
 
         <p class="mt-6 text-center text-xs font-medium text-on-surface-variant">
             <Link
-                href="route('login.show')"
+                :href="route('login.show')"
                 class="font-bold text-primary hover:text-primary-container"
                 >{{ t('auth.login.back_link') }}</Link
             >

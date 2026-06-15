@@ -13,7 +13,8 @@ import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
-import { formatMoney, formatNumber } from '@/lib/format';
+import { useRoute } from '@/composables/useRoute';
+import { formatDate, formatMoney, formatNumber } from '@/lib/format';
 
 type MovementRow = {
     id: number;
@@ -53,6 +54,8 @@ const { t } = useI18n();
 
 useBoundLocale();
 
+const route = useRoute();
+
 const formSearch = ref<string>(props.filters.search || '');
 const formType = ref<string>(props.filters.type || '');
 const formStoreId = ref<string>(
@@ -80,17 +83,13 @@ function applyFilters(): void {
         params.date_to = formDateTo.value;
     }
     submitting.value = true;
-    router.get('/stock-movements', params, {
+    router.get(route('stock-movements.index'), params, {
         preserveState: true,
         onFinish: (): void => {
             submitting.value = false;
         },
     });
 }
-import { useRoute } from '@/composables/useRoute';
-
-const route = useRoute();
-void route; // referenced from the <template>
 </script>
 
 <template>
@@ -112,7 +111,7 @@ void route; // referenced from the <template>
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <Link href="route('stock-movements.create')">
+                    <Link :href="route('stock-movements.create')">
                         <Button>
                             <Plus :size="14" />
                             {{ t('stock_movements.create_new') }}
@@ -216,7 +215,7 @@ void route; // referenced from the <template>
                     :description="t('stock_movements.empty.description')"
                 >
                     <template #action>
-                        <Link href="route('stock-movements.create')">
+                        <Link :href="route('stock-movements.create')">
                             <Button>
                                 <Plus :size="14" />
                                 {{ t('stock_movements.create_new') }}
@@ -261,7 +260,12 @@ void route; // referenced from the <template>
                             >
                                 <td>
                                     <Link
-                                        :href="`/stock-movements/${movement.id}`"
+                                        :href="
+                                            route(
+                                                'stock-movements.show',
+                                                movement.id,
+                                            )
+                                        "
                                         class="font-mono text-xs font-semibold text-on-surface hover:text-primary"
                                     >
                                         {{ movement.number }}
@@ -290,6 +294,9 @@ void route; // referenced from the <template>
                                     {{ formatMoney(movement.total_value) }}
                                 </td>
                                 <td class="text-xs text-on-surface-variant">
+                                    {{ formatDate(movement.created_at) }}
+                                </td>
+                                <td class="text-xs text-on-surface-variant">
                                     {{ movement.created_by ?? '—' }}
                                 </td>
                             </tr>
@@ -303,7 +310,7 @@ void route; // referenced from the <template>
                     :last-page="pagination.last_page"
                     :total="pagination.total"
                     :per-page="pagination.per_page"
-                    base-url="/stock-movements"
+                    :base-url="route('stock-movements.index')"
                     :query-params="{
                         search: filters.search,
                         type: filters.type ?? undefined,

@@ -124,7 +124,12 @@ useBoundLocale();
                             >
                                 <td>
                                     <Link
-                                        :href="`/stock-movements/${movement.id}`"
+                                        :href="
+                                            route(
+                                                'stock-movements.show',
+                                                movement.id,
+                                            )
+                                        "
                                         class="font-mono text-xs font-semibold text-on-surface hover:text-primary"
                                     >
                                         {{ movement.number }}

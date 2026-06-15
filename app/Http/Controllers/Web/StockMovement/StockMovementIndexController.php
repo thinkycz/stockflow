@@ -62,7 +62,10 @@ class StockMovementIndexController
         }
 
         if ($storeId !== null) {
-            $query->where('store_id', $storeId);
+            $query->where(static function ($query) use ($storeId): void {
+                $query->where('store_id', $storeId)
+                    ->orWhere('source_store_id', $storeId);
+            });
         }
 
         if ($dateFrom !== null) {
@@ -70,7 +73,7 @@ class StockMovementIndexController
         }
 
         if ($dateTo !== null) {
-            $query->where('created_at', '<=', $dateTo);
+            $query->whereDate('created_at', '<=', $dateTo);
         }
 
         $paginator = $query->paginate(self::TAKE)->withQueryString();

@@ -82,10 +82,6 @@ defineProps<{
 const { t } = useI18n();
 
 useBoundLocale();
-import { useRoute } from '@/composables/useRoute';
-
-const route = useRoute();
-void route; // referenced from the <template>
 </script>
 
 <template>
@@ -95,7 +91,7 @@ void route; // referenced from the <template>
         <div class="flex flex-col gap-6">
             <div>
                 <Link
-                    href="route('stores.index')"
+                    :href="route('stores.index')"
                     class="inline-flex items-center gap-1 text-xs font-semibold text-on-surface-variant hover:text-primary"
                 >
                     <ArrowLeft :size="12" />
@@ -142,7 +138,7 @@ void route; // referenced from the <template>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <Link :href="`/stores/${store.id}/edit`">
+                    <Link :href="route('stores.edit', store.id)">
                         <Button>
                             <Pencil :size="14" />
                             {{ t('common.edit') }}
@@ -242,13 +238,13 @@ void route; // referenced from the <template>
             <Card padded>
                 <CardHeader>
                     <CardTitle>
-                        <div class="flex items-center gap-2">
+                        <span class="flex items-center gap-2">
                             <Package
                                 :size="14"
                                 class="text-on-surface-variant"
                             />
                             {{ t('stores.items_received') }}
-                        </div>
+                        </span>
                     </CardTitle>
                     <CardDescription>
                         {{ t('stores.items_received_subtitle') }}
@@ -311,13 +307,13 @@ void route; // referenced from the <template>
             <Card padded>
                 <CardHeader>
                     <CardTitle>
-                        <div class="flex items-center gap-2">
+                        <span class="flex items-center gap-2">
                             <History
                                 :size="14"
                                 class="text-on-surface-variant"
                             />
                             {{ t('stores.movement_history') }}
-                        </div>
+                        </span>
                     </CardTitle>
                 </CardHeader>
                 <EmptyState
@@ -349,7 +345,12 @@ void route; // referenced from the <template>
                             >
                                 <td>
                                     <Link
-                                        :href="`/stock-movements/${movement.id}`"
+                                        :href="
+                                            route(
+                                                'stock-movements.show',
+                                                movement.id,
+                                            )
+                                        "
                                         class="font-mono text-xs font-semibold text-on-surface hover:text-primary"
                                     >
                                         {{ movement.number }}

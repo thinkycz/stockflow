@@ -31,10 +31,10 @@ use Thinkycz\LaravelCore\Support\Resolver;
 
 Resolver::resolveRouteRegistrar()->get('/', static function () {
     if (User::auth() instanceof User) {
-        return Resolver::resolveRedirector()->to('/dashboard');
+        return Resolver::resolveRedirector()->route('dashboard');
     }
 
-    return Resolver::resolveRedirector()->to('/login');
+    return Resolver::resolveRedirector()->route('login.show');
 })->name('home');
 
 Resolver::resolveRouteRegistrar()

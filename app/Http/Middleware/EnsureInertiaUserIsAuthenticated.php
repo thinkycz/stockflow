@@ -28,6 +28,6 @@ class EnsureInertiaUserIsAuthenticated
             throw new AuthenticationException();
         }
 
-        return Resolver::resolveRedirector()->to('/login');
+        return Resolver::resolveRedirector()->route('login.show');
     }
 }

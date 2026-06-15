@@ -79,6 +79,6 @@ class ResetPasswordController
 
         Resolver::resolveDatabaseTokenGuard('users')->login($user);
 
-        return Resolver::resolveRedirector()->to('/dashboard');
+        return Resolver::resolveRedirector()->route('dashboard');
     }
 }

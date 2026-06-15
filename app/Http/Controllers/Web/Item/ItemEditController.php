@@ -61,6 +61,6 @@ class ItemEditController
 
         Inertia::flash('success', \__('Item updated.'));
 
-        return Resolver::resolveRedirector()->to('/items/' . $item->getKey());
+        return Resolver::resolveRedirector()->route('items.show', $item->getKey());
     }
 }

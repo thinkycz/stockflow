@@ -8,11 +8,13 @@ use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\StoreValidity;
 use App\Models\Store;
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Thrower;
 
 class StoreEditController
 {
@@ -51,16 +53,22 @@ class StoreEditController
             'is_warehouse' => $storeValidity->isWarehouse()->nullable()->toArray(),
         ]);
 
-        $store->update([
-            'name' => $validated->assertString('name'),
-            'address' => $validated->assertNullableString('address'),
-            'status' => $validated->assertString('status'),
-            'notes' => $validated->assertNullableString('notes'),
-            'is_warehouse' => $validated->parseBool('is_warehouse'),
-        ]);
+        try {
+            $store->update([
+                'name' => $validated->assertString('name'),
+                'address' => $validated->assertNullableString('address'),
+                'status' => $validated->assertString('status'),
+                'notes' => $validated->assertNullableString('notes'),
+                'is_warehouse' => $validated->parseBool('is_warehouse'),
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            $thrower = new Thrower(Resolver::resolveValidatorFactory()->make([], []));
+            $thrower->message('is_warehouse', \__('stores.errors.warehouse_unique'));
+            $thrower->throw();
+        }
 
         Inertia::flash('success', \__('Store updated.'));
 
-        return Resolver::resolveRedirector()->to('/stores/' . $store->getKey());
+        return Resolver::resolveRedirector()->route('stores.show', $store->getKey());
     }
 }

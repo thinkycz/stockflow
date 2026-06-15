@@ -127,13 +127,13 @@ useBoundLocale();
             <Card padded>
                 <CardHeader>
                     <CardTitle>
-                        <div class="flex items-center gap-2">
+                        <span class="flex items-center gap-2">
                             <Building2
                                 :size="14"
                                 class="text-on-surface-variant"
                             />
                             {{ t('reports.store_consumption') }}
-                        </div>
+                        </span>
                     </CardTitle>
                     <CardDescription>{{
                         t('reports.store_consumption_subtitle')
@@ -189,10 +189,10 @@ useBoundLocale();
             <Card padded>
                 <CardHeader>
                     <CardTitle>
-                        <div class="flex items-center gap-2">
+                        <span class="flex items-center gap-2">
                             <Boxes :size="14" class="text-on-surface-variant" />
                             {{ t('reports.most_moved') }}
-                        </div>
+                        </span>
                     </CardTitle>
                     <CardDescription>{{
                         t('reports.most_moved_subtitle')
@@ -251,13 +251,13 @@ useBoundLocale();
             <Card padded>
                 <CardHeader>
                     <CardTitle>
-                        <div class="flex items-center gap-2">
+                        <span class="flex items-center gap-2">
                             <Sliders
                                 :size="14"
                                 class="text-on-surface-variant"
                             />
                             {{ t('reports.adjustments_by_reason') }}
-                        </div>
+                        </span>
                     </CardTitle>
                     <CardDescription>{{
                         t('reports.adjustments_by_reason_subtitle')

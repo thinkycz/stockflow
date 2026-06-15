@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
@@ -9,15 +9,17 @@ import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { useRoute } from '@/composables/useRoute';
 
 type StoreFields = {
     name: string;
     address: string;
     status: string;
     notes: string;
+    is_warehouse: boolean;
 };
 
-defineProps<{
+const props = defineProps<{
     store: {
         id: number;
         name: string;
@@ -31,6 +33,20 @@ defineProps<{
 const { t } = useI18n();
 
 useBoundLocale();
+
+const route = useRoute();
+
+const form = useForm<StoreFields>({
+    name: props.store.name,
+    address: props.store.address ?? '',
+    status: props.store.status,
+    notes: props.store.notes ?? '',
+    is_warehouse: props.store.is_warehouse,
+});
+
+function submit(): void {
+    form.put(route('stores.update', props.store.id));
+}
 </script>
 
 <template>
@@ -50,26 +66,18 @@ useBoundLocale();
             </header>
 
             <Card padded>
-                <Form
-                    v-slot="{ errors, processing }"
-                    :action="`/stores/${store.id}`"
-                    method="put"
-                    class="space-y-5"
-                >
+                <form class="space-y-5" @submit.prevent="submit">
                     <div class="space-y-2">
                         <Label for="name" :required="true">{{
                             t('stores.columns.name')
                         }}</Label>
                         <Input
                             id="name"
-                            name="name"
+                            v-model="form.name"
                             type="text"
-                            :default-value="store.name"
                             required
                         />
-                        <FieldError
-                            :message="(errors as StoreFields)['name']"
-                        />
+                        <FieldError :message="form.errors.name" />
                     </div>
 
                     <div class="space-y-2">
@@ -78,13 +86,10 @@ useBoundLocale();
                         }}</Label>
                         <Input
                             id="address"
-                            name="address"
+                            v-model="form.address"
                             type="text"
-                            :default-value="store.address ?? ''"
                         />
-                        <FieldError
-                            :message="(errors as StoreFields)['address']"
-                        />
+                        <FieldError :message="form.errors.address" />
                     </div>
 
                     <div class="space-y-2">
@@ -93,7 +98,7 @@ useBoundLocale();
                         }}</Label>
                         <Select
                             id="status"
-                            name="status"
+                            v-model="form.status"
                             :options="[
                                 {
                                     value: 'active',
@@ -104,11 +109,8 @@ useBoundLocale();
                                     label: t('stores.status.inactive'),
                                 },
                             ]"
-                            :default-value="store.status"
                         />
-                        <FieldError
-                            :message="(errors as StoreFields)['status']"
-                        />
+                        <FieldError :message="form.errors.status" />
                     </div>
 
                     <div class="space-y-2">
@@ -117,57 +119,52 @@ useBoundLocale();
                         }}</Label>
                         <textarea
                             id="notes"
-                            name="notes"
+                            v-model="form.notes"
                             rows="4"
                             :aria-invalid="
-                                (errors as StoreFields)['notes']
-                                    ? 'true'
-                                    : undefined
+                                form.errors.notes ? 'true' : undefined
                             "
                             aria-describedby="notes-error"
                             class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-xs text-on-surface outline-none transition placeholder:text-on-surface-variant/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
-                            :value="store.notes ?? ''"
                         ></textarea>
                         <FieldError
                             id="notes-error"
-                            :message="(errors as StoreFields)['notes']"
+                            :message="form.errors.notes"
                         />
                     </div>
 
                     <div class="flex items-center gap-2">
                         <input
                             id="is_warehouse"
-                            name="is_warehouse"
                             type="checkbox"
                             value="1"
-                            :checked="store.is_warehouse"
+                            :checked="form.is_warehouse"
                             class="size-4 rounded border-outline-glass text-primary focus:ring-primary/20"
+                            @change="
+                                form.is_warehouse = (
+                                    $event.target as HTMLInputElement
+                                ).checked
+                            "
                         />
                         <Label for="is_warehouse">{{
                             t('stores.columns.is_warehouse')
                         }}</Label>
                     </div>
-                    <FieldError
-                        :message="
-                            (errors as Partial<Record<string, string>>)[
-                                'is_warehouse'
-                            ]
-                        "
-                    />
+                    <FieldError :message="form.errors.is_warehouse" />
 
                     <div
                         class="flex items-center justify-end gap-3 border-t border-outline-glass pt-4"
                     >
-                        <Link :href="`/stores/${store.id}`">
+                        <Link :href="route('stores.show', store.id)">
                             <Button variant="secondary" type="button">
                                 {{ t('common.cancel') }}
                             </Button>
                         </Link>
-                        <Button type="submit" :disabled="processing">
+                        <Button type="submit" :disabled="form.processing">
                             {{ t('common.save') }}
                         </Button>
                     </div>
-                </Form>
+                </form>
             </Card>
         </div>
     </AppLayout>

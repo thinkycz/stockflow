@@ -4,14 +4,17 @@ import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { useRoute } from '@/composables/useRoute';
 
 const form = useForm({});
 const { t } = useI18n();
 
 useBoundLocale();
 
+const route = useRoute();
+
 function submit(): void {
-    form.post('/verify-email');
+    form.post(route('verify-email.store'));
 }
 </script>
 <template>

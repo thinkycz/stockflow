@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -12,6 +12,7 @@ import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { useRoute } from '@/composables/useRoute';
 import { useSharedProps } from '@/composables/useSharedProps';
 
 type ProfileFields = {
@@ -22,6 +23,7 @@ type ProfileFields = {
 type PasswordFields = {
     password: string;
     new_password: string;
+    new_password_confirmation: string;
 };
 
 const { user, app } = useSharedProps();
@@ -29,16 +31,41 @@ const { t, te } = useI18n();
 
 useBoundLocale();
 
+const route = useRoute();
+
 const localeOptions = computed(() =>
     app.value.locales.map((value: string) => ({
         value,
         label: te(`locale.${value}`) ? (t(`locale.${value}`) as string) : value,
     })),
 );
-import { useRoute } from '@/composables/useRoute';
 
-const route = useRoute();
-void route; // referenced from the <template>
+const profileForm = useForm<ProfileFields>({
+    email: user?.value?.email ?? '',
+    locale: user?.value?.locale ?? app.value.locale ?? 'en',
+});
+
+const passwordForm = useForm<PasswordFields>({
+    password: '',
+    new_password: '',
+    new_password_confirmation: '',
+});
+
+function submitProfile(): void {
+    profileForm.post(route('settings.profile.update'));
+}
+
+function submitPassword(): void {
+    passwordForm.post(route('settings.password.update'), {
+        onSuccess: (): void => {
+            passwordForm.reset(
+                'password',
+                'new_password',
+                'new_password_confirmation',
+            );
+        },
+    });
+}
 </script>
 
 <template>
@@ -61,76 +88,60 @@ void route; // referenced from the <template>
                 <CardHeader>
                     <CardTitle>{{ t('settings.profile.title') }}</CardTitle>
                 </CardHeader>
-                <Form
-                    v-slot="{ errors, processing }"
-                    :action="route('settings.profile.update')"
-                    method="post"
-                    class="space-y-5"
-                >
+                <form class="space-y-5" @submit.prevent="submitProfile">
                     <div class="space-y-2">
                         <Label for="email">{{ t('fields.email') }}</Label>
                         <Input
                             id="email"
-                            name="email"
+                            v-model="profileForm.email"
                             type="email"
                             autocomplete="email"
-                            :default-value="user?.email ?? ''"
                             required
                         />
-                        <FieldError
-                            :message="(errors as ProfileFields)['email']"
-                        />
+                        <FieldError :message="profileForm.errors.email" />
                     </div>
 
                     <div class="space-y-2">
                         <Label for="locale">{{ t('fields.locale') }}</Label>
                         <Select
                             id="locale"
-                            name="locale"
+                            v-model="profileForm.locale"
                             :options="localeOptions"
-                            :default-value="user?.locale ?? app.locale"
                             required
                         />
-                        <FieldError
-                            :message="(errors as ProfileFields)['locale']"
-                        />
+                        <FieldError :message="profileForm.errors.locale" />
                     </div>
 
                     <div
                         class="flex items-center justify-end border-t border-outline-glass pt-4"
                     >
-                        <Button type="submit" :disabled="processing">
+                        <Button
+                            type="submit"
+                            :disabled="profileForm.processing"
+                        >
                             {{ t('settings.profile.submit') }}
                         </Button>
                     </div>
-                </Form>
+                </form>
             </Card>
 
             <Card padded>
                 <CardHeader>
                     <CardTitle>{{ t('settings.password.title') }}</CardTitle>
                 </CardHeader>
-                <Form
-                    v-slot="{ errors, processing }"
-                    :action="route('settings.password.update')"
-                    method="post"
-                    :reset-on-success="['password', 'new_password']"
-                    class="space-y-5"
-                >
+                <form class="space-y-5" @submit.prevent="submitPassword">
                     <div class="space-y-2">
                         <Label for="password">{{
                             t('fields.current_password')
                         }}</Label>
                         <Input
                             id="password"
-                            name="password"
+                            v-model="passwordForm.password"
                             type="password"
                             autocomplete="current-password"
                             required
                         />
-                        <FieldError
-                            :message="(errors as PasswordFields)['password']"
-                        />
+                        <FieldError :message="passwordForm.errors.password" />
                     </div>
 
                     <div class="space-y-2">
@@ -139,14 +150,30 @@ void route; // referenced from the <template>
                         }}</Label>
                         <Input
                             id="new_password"
-                            name="new_password"
+                            v-model="passwordForm.new_password"
+                            type="password"
+                            autocomplete="new-password"
+                            required
+                        />
+                        <FieldError
+                            :message="passwordForm.errors.new_password"
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <Label for="new_password_confirmation">{{
+                            t('fields.new_password_confirmation')
+                        }}</Label>
+                        <Input
+                            id="new_password_confirmation"
+                            v-model="passwordForm.new_password_confirmation"
                             type="password"
                             autocomplete="new-password"
                             required
                         />
                         <FieldError
                             :message="
-                                (errors as PasswordFields)['new_password']
+                                passwordForm.errors.new_password_confirmation
                             "
                         />
                     </div>
@@ -154,11 +181,14 @@ void route; // referenced from the <template>
                     <div
                         class="flex items-center justify-end border-t border-outline-glass pt-4"
                     >
-                        <Button type="submit" :disabled="processing">
+                        <Button
+                            type="submit"
+                            :disabled="passwordForm.processing"
+                        >
                             {{ t('settings.password.submit') }}
                         </Button>
                     </div>
-                </Form>
+                </form>
             </Card>
         </div>
     </AppLayout>

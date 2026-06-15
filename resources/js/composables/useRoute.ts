@@ -14,12 +14,12 @@ import type { SharedProps } from '@/types';
  */
 export function useRoute(): (
     name: string,
-    params?: Record<string, string | number | boolean | null>,
+    params?: Record<string, string | number | boolean | null> | string | number,
     absolute?: boolean,
 ) => string {
     const page = usePage<SharedProps>();
     const ziggy = page.props.ziggy;
 
     return (name, params, absolute) =>
-        ziggyRoute(name, params, absolute, ziggy);
+        ziggyRoute(name, params as any, absolute, ziggy);
 }

@@ -48,10 +48,6 @@ defineProps<{
 const { t } = useI18n();
 
 useBoundLocale();
-import { useRoute } from '@/composables/useRoute';
-
-const route = useRoute();
-void route; // referenced from the <template>
 </script>
 
 <template>
@@ -61,7 +57,7 @@ void route; // referenced from the <template>
         <div class="flex flex-col gap-6">
             <div>
                 <Link
-                    href="route('stock-movements.index')"
+                    :href="route('stock-movements.index')"
                     class="inline-flex items-center gap-1 text-xs font-semibold text-on-surface-variant hover:text-primary"
                 >
                     <ArrowLeft :size="12" />
@@ -152,13 +148,13 @@ void route; // referenced from the <template>
             <Card padded>
                 <CardHeader>
                     <CardTitle>
-                        <div class="flex items-center gap-2">
+                        <span class="flex items-center gap-2">
                             <ArrowLeftRight
                                 :size="14"
                                 class="text-on-surface-variant"
                             />
                             {{ t('stock_movements.detail.items') }}
-                        </div>
+                        </span>
                     </CardTitle>
                 </CardHeader>
                 <div class="overflow-x-auto">

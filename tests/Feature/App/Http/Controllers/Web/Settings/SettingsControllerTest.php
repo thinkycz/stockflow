@@ -60,6 +60,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response = $this->be($user, 'users')->post('/settings/password', [
         'password' => UserFactory::$password,
         'new_password' => 'new-password',
+        'new_password_confirmation' => 'new-password',
     ], $this->inertiaHeaders());
 
     $response->assertOk();
@@ -81,6 +82,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $this->be($user, 'users')->post('/settings/password', [
         'password' => UserFactory::$password,
         'new_password' => 'new-password',
+        'new_password_confirmation' => 'new-password',
     ]);
 
     $this->assertDatabaseCount('database_tokens', 0);
@@ -93,6 +95,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->post('/settings/password', [
             'password' => 'wrong-password',
             'new_password' => 'new-password',
+            'new_password_confirmation' => 'new-password',
         ])
         ->assertStatus(422);
 });
@@ -122,6 +125,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->post('/settings/password', [
             'password' => 'not-the-current-password',
             'new_password' => 'whatever',
+            'new_password_confirmation' => 'whatever',
         ], $this->inertiaHeaders())
         ->assertStatus(422);
 

@@ -2,15 +2,14 @@
 import { Head } from '@inertiajs/vue3';
 import Brand from '@/components/ui/Brand.vue';
 import FlashAlerts from '@/components/ui/FlashAlerts.vue';
+import { useRoute } from '@/composables/useRoute';
 
 defineProps<{
     title: string;
     subtitle: string;
 }>();
-import { useRoute } from '@/composables/useRoute';
 
 const route = useRoute();
-void route; // referenced from the <template>
 </script>
 
 <template>
@@ -26,7 +25,7 @@ void route; // referenced from the <template>
             >
                 <!-- Brand Header -->
                 <div class="flex flex-col items-center gap-4 text-center">
-                    <Brand href="route('login.show')" />
+                    <Brand :href="route('login.show')" />
 
                     <div class="mt-2 space-y-1.5">
                         <h2

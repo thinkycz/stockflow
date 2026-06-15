@@ -14,6 +14,7 @@ import LoadingState from '@/components/ui/LoadingState.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { useRoute } from '@/composables/useRoute';
 import { formatMoney, formatNumber } from '@/lib/format';
 
 type ItemRow = {
@@ -42,6 +43,8 @@ const { t } = useI18n();
 
 useBoundLocale();
 
+const route = useRoute();
+
 const searchTerm = ref<string>(props.search || '');
 const submitting = ref<boolean>(false);
 
@@ -51,7 +54,7 @@ function performSearch(event?: Event): void {
     }
     submitting.value = true;
     router.get(
-        '/items',
+        route('items.index'),
         { search: searchTerm.value || undefined },
         {
             preserveState: true,
@@ -66,12 +69,8 @@ function destroyItem(id: number): void {
     if (!window.confirm(t('items.confirm_delete'))) {
         return;
     }
-    router.delete(`/items/${id}`);
+    router.delete(route('items.destroy', id));
 }
-import { useRoute } from '@/composables/useRoute';
-
-const route = useRoute();
-void route; // referenced from the <template>
 </script>
 
 <template>
@@ -93,7 +92,7 @@ void route; // referenced from the <template>
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <Link href="route('items.create')">
+                    <Link :href="route('items.create')">
                         <Button>
                             <Plus :size="14" />
                             {{ t('items.add_item') }}
@@ -147,7 +146,7 @@ void route; // referenced from the <template>
                     :description="t('items.empty.description')"
                 >
                     <template #action>
-                        <Link href="route('items.create')">
+                        <Link :href="route('items.create')">
                             <Button>
                                 <Plus :size="14" />
                                 {{ t('items.add_item') }}
@@ -188,7 +187,7 @@ void route; // referenced from the <template>
                                 </td>
                                 <td>
                                     <Link
-                                        :href="`/items/${item.id}`"
+                                        :href="route('items.show', item.id)"
                                         class="font-semibold text-on-surface hover:text-primary"
                                     >
                                         {{ item.title }}
@@ -225,7 +224,9 @@ void route; // referenced from the <template>
                                     <div
                                         class="flex items-center justify-end gap-1"
                                     >
-                                        <Link :href="`/items/${item.id}/edit`">
+                                        <Link
+                                            :href="route('items.edit', item.id)"
+                                        >
                                             <Button
                                                 variant="ghost"
                                                 type="button"
@@ -255,7 +256,7 @@ void route; // referenced from the <template>
                     :last-page="pagination.last_page"
                     :total="pagination.total"
                     :per-page="pagination.per_page"
-                    base-url="/items"
+                    :base-url="route('items.index')"
                     :query-params="{ search: search }"
                     class="mt-4"
                 />

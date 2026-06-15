@@ -47,20 +47,40 @@ class StoreIndexController
             Store::scopeSearch($query, $search);
         }
 
-        $stores = $query->get()->map(function (Store $store): array {
-            /** @var stdClass|null $metrics */
-            $metrics = DB::table('stock_movements')
-                ->where(function (QueryBuilder $q) use ($store): void {
-                    $q->where('store_id', $store->getKey())
-                        ->orWhere('source_store_id', $store->getKey());
+        $stores = $query->get();
+
+        $storeIds = $stores->pluck('id')->all();
+
+        /** @var array<int, stdClass> $metricsRows */
+        $metricsRows = $storeIds === []
+            ? []
+            : DB::table('stock_movements')
+                ->where(function (QueryBuilder $q) use ($storeIds): void {
+                    $q->whereIn('store_id', $storeIds)
+                        ->orWhereIn('source_store_id', $storeIds);
                 })
                 ->selectRaw('
+                    source_store_id,
+                    store_id,
+                    type,
                     SUM(CASE WHEN type = \'incoming\' THEN total_quantity ELSE 0 END) as total_received_quantity,
                     SUM(CASE WHEN type = \'incoming\' THEN total_value ELSE 0 END) as total_received_value,
                     SUM(CASE WHEN type = \'outgoing\' THEN total_value ELSE 0 END) as total_outgoing_value,
-                    COUNT(*) as movimientos_count
+                    COUNT(*) as movements_count
                 ')
-                ->first();
+                ->groupBy('source_store_id', 'store_id', 'type')
+                ->get()
+                ->all();
+
+        $aggregated = $this->aggregateStoreMetrics($metricsRows);
+
+        $rows = $stores->map(function (Store $store) use ($aggregated): array {
+            $metrics = $aggregated[$store->getKey()] ?? [
+                'movements_count' => 0,
+                'total_received_quantity' => 0,
+                'total_received_value' => 0.0,
+                'total_outgoing_value' => 0.0,
+            ];
 
             return [
                 'id' => $store->getKey(),
@@ -68,16 +88,58 @@ class StoreIndexController
                 'address' => $store->getAddress(),
                 'status' => $store->getStatus()->value,
                 'is_warehouse' => $store->isWarehouse(),
-                'movements_count' => Typer::assertNullableInt($metrics->movements_count ?? null),
-                'total_received_quantity' => Typer::parseInt($metrics->total_received_quantity ?? null),
-                'total_received_value' => Typer::parseFloat($metrics->total_received_value ?? null),
-                'total_outgoing_value' => Typer::parseFloat($metrics->total_outgoing_value ?? null),
+                'movements_count' => $metrics['movements_count'],
+                'total_received_quantity' => $metrics['total_received_quantity'],
+                'total_received_value' => $metrics['total_received_value'],
+                'total_outgoing_value' => $metrics['total_outgoing_value'],
             ];
         })->all();
 
         return Inertia::render('stores/Index', [
-            'stores' => $stores,
+            'stores' => $rows,
             'search' => $search,
         ]);
+    }
+
+    /**
+     * Aggregate the per-store metrics from a single grouped query.
+     *
+     * Each movement row contributes to one of two buckets per store:
+     *  - incoming movements count for the destination store (store_id)
+     *  - outgoing movements count for the source store (source_store_id)
+     *
+     * @param array<int, stdClass> $rows
+     *
+     * @return array<int, array<string, float|int>>
+     */
+    private function aggregateStoreMetrics(array $rows): array
+    {
+        $aggregated = [];
+
+        foreach ($rows as $row) {
+            $rowValues = (array) $row;
+            $storeId = Typer::parseInt($rowValues['store_id'] ?? null);
+            $sourceStoreId = Typer::parseInt($rowValues['source_store_id'] ?? null);
+            $type = Typer::assertString($rowValues['type'] ?? null);
+
+            $bucketId = $type === 'incoming' ? $storeId : $sourceStoreId;
+            if ($bucketId === 0) {
+                continue;
+            }
+
+            $bucket = $aggregated[$bucketId] ?? [
+                'movements_count' => 0,
+                'total_received_quantity' => 0,
+                'total_received_value' => 0.0,
+                'total_outgoing_value' => 0.0,
+            ];
+            $bucket['movements_count'] += Typer::parseInt($rowValues['movements_count'] ?? null);
+            $bucket['total_received_quantity'] += Typer::parseInt($rowValues['total_received_quantity'] ?? null);
+            $bucket['total_received_value'] += Typer::parseFloat($rowValues['total_received_value'] ?? null);
+            $bucket['total_outgoing_value'] += Typer::parseFloat($rowValues['total_outgoing_value'] ?? null);
+            $aggregated[$bucketId] = $bucket;
+        }
+
+        return $aggregated;
     }
 }

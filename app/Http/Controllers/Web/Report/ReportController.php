@@ -53,17 +53,26 @@ class ReportController
         $storeConsumptionQuery = Store::query();
         Store::scopeForUser($storeConsumptionQuery, $user);
         Store::scopeRetail($storeConsumptionQuery);
-        $storeConsumption = Store::querySelect($storeConsumptionQuery)
-            ->get()
-            ->map(function (Store $store) use ($startOfMonthString): array {
-                /** @var stdClass|null $row */
-                $row = DB::table('stock_movements')
-                    ->where('source_store_id', $store->getKey())
-                    ->where('type', StockMovementTypeEnum::OUTGOING->value)
-                    ->where('created_at', '>=', $startOfMonthString)
-                    ->selectRaw('COUNT(*) as movements_count, SUM(total_quantity) as total_quantity, SUM(total_value) as total_value')
-                    ->first();
-                $rowValues = (array) $row;
+        $stores = Store::querySelect($storeConsumptionQuery)->get();
+
+        $storeIds = $stores->pluck('id')->all();
+
+        /** @var array<int, stdClass> $consumptionRows */
+        $consumptionRows = $storeIds === []
+            ? []
+            : DB::table('stock_movements')
+                ->whereIn('source_store_id', $storeIds)
+                ->where('type', StockMovementTypeEnum::OUTGOING->value)
+                ->where('created_at', '>=', $startOfMonthString)
+                ->selectRaw('source_store_id, COUNT(*) as movements_count, SUM(total_quantity) as total_quantity, SUM(total_value) as total_value')
+                ->groupBy('source_store_id')
+                ->get()
+                ->keyBy('source_store_id')
+                ->all();
+
+        $storeConsumption = $stores
+            ->map(function (Store $store) use ($consumptionRows): array {
+                $rowValues = (array) ($consumptionRows[$store->getKey()] ?? null);
 
                 return [
                     'store_id' => $store->getKey(),

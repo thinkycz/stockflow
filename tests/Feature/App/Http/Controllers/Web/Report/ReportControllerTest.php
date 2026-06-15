@@ -141,3 +141,54 @@ use App\Models\StoreItem;
     \expect((float) $row['total_quantity'])->toBe(0.0);
     \expect((float) $row['total_value'])->toBe(0.0);
 });
+
+\test('store consumption aggregates multiple retail stores in a single grouped query', function (): void {
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+    $retailA = Store::factory()->create([
+        'user_id' => $user->getKey(),
+        'is_warehouse' => false,
+        'name' => 'Branch A',
+    ]);
+    $retailB = Store::factory()->create([
+        'user_id' => $user->getKey(),
+        'is_warehouse' => false,
+        'name' => 'Branch B',
+    ]);
+    $item = Item::factory()->create([
+        'user_id' => $user->getKey(),
+        'purchase_price' => '2.00',
+    ]);
+
+    // Seed both retail stores with stock so they can each ship an outgoing
+    // movement back to the warehouse.
+    StoreItem::query()->create(['store_id' => $retailA->getKey(), 'item_id' => $item->getKey(), 'quantity' => 10]);
+    StoreItem::query()->create(['store_id' => $retailB->getKey(), 'item_id' => $item->getKey(), 'quantity' => 10]);
+
+    $this->be($user, 'users')->post('/stock-movements', [
+        'mode' => 'transfer',
+        'source_store_id' => $retailA->getKey(),
+        'store_id' => $warehouse->getKey(),
+        'items' => [['item_id' => $item->getKey(), 'quantity' => 3]],
+    ])->assertRedirect();
+    $this->be($user, 'users')->post('/stock-movements', [
+        'mode' => 'transfer',
+        'source_store_id' => $retailB->getKey(),
+        'store_id' => $warehouse->getKey(),
+        'items' => [['item_id' => $item->getKey(), 'quantity' => 5]],
+    ])->assertRedirect();
+
+    $response = $this->be($user, 'users')->get('/reports', $this->inertiaHeaders());
+
+    $byStore = [];
+    foreach ($response->json('props.store_consumption') as $row) {
+        $byStore[$row['store_id']] = $row;
+    }
+
+    \expect($byStore[$retailA->getKey()]['movements_count'])->toBe(1);
+    \expect((float) $byStore[$retailA->getKey()]['total_quantity'])->toBe(3.0);
+    \expect((float) $byStore[$retailA->getKey()]['total_value'])->toBe(6.0);
+
+    \expect($byStore[$retailB->getKey()]['movements_count'])->toBe(1);
+    \expect((float) $byStore[$retailB->getKey()]['total_quantity'])->toBe(5.0);
+    \expect((float) $byStore[$retailB->getKey()]['total_value'])->toBe(10.0);
+});

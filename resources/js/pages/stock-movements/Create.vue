@@ -389,7 +389,7 @@ void route; // referenced from the <template>
                             {{ t('stock_movements.back_to_transfer') }}
                         </Button>
                     </Link>
-                    <Link v-else href="/stock-movements/create?mode=adjustment">
+                    <Link v-else :href="route('stock-movements.create', { mode: 'adjustment' })">
                         <Button variant="secondary" type="button">
                             {{ t('stock_movements.open_adjustment') }}
                         </Button>

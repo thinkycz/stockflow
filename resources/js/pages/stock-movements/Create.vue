@@ -389,7 +389,14 @@ void route; // referenced from the <template>
                             {{ t('stock_movements.back_to_transfer') }}
                         </Button>
                     </Link>
-                    <Link v-else :href="route('stock-movements.create', { mode: 'adjustment' })">
+                    <Link
+                        v-else
+                        :href="
+                            route('stock-movements.create', {
+                                mode: 'adjustment',
+                            })
+                        "
+                    >
                         <Button variant="secondary" type="button">
                             {{ t('stock_movements.open_adjustment') }}
                         </Button>
@@ -509,13 +516,13 @@ void route; // referenced from the <template>
                             <div
                                 class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-on-surface-variant"
                             >
-                                    <span>
-                                        <span
-                                            class="font-semibold text-on-surface"
-                                            >{{ rows.length }}</span
-                                        >
-                                        {{ t('stock_movements.summary.rows') }}
-                                    </span>
+                                <span>
+                                    <span
+                                        class="font-semibold text-on-surface"
+                                        >{{ rows.length }}</span
+                                    >
+                                    {{ t('stock_movements.summary.rows') }}
+                                </span>
                                 <span class="text-outline-glass">·</span>
                                 <span>
                                     <span
@@ -729,7 +736,9 @@ void route; // referenced from the <template>
                             </Link>
                             <Button
                                 type="submit"
-                                :disabled="form.processing || hasOutOfStockErrors"
+                                :disabled="
+                                    form.processing || hasOutOfStockErrors
+                                "
                             >
                                 {{ t('stock_movements.form.save') }}
                             </Button>

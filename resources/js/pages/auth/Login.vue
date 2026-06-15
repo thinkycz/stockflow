@@ -42,13 +42,7 @@ void route; // referenced from the <template>
                     autocomplete="email"
                     required
                 />
-                <FieldError
-                    :message="
-                        (
-                            errors as LoginFields
-                        )['email']
-                    "
-                />
+                <FieldError :message="(errors as LoginFields)['email']" />
             </div>
 
             <div class="space-y-2">
@@ -67,13 +61,7 @@ void route; // referenced from the <template>
                     autocomplete="current-password"
                     required
                 />
-                <FieldError
-                    :message="
-                        (
-                            errors as LoginFields
-                        )['password']
-                    "
-                />
+                <FieldError :message="(errors as LoginFields)['password']" />
             </div>
 
             <Button type="submit" class="w-full" :disabled="processing">{{

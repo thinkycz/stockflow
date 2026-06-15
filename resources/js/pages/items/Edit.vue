@@ -70,11 +70,7 @@ useBoundLocale();
                             required
                         />
                         <FieldError
-                            :message="
-                                (
-                                    errors as ItemFields
-                                )['title']
-                            "
+                            :message="(errors as ItemFields)['title']"
                         />
                     </div>
 
@@ -90,11 +86,7 @@ useBoundLocale();
                                 :default-value="item.sku ?? ''"
                             />
                             <FieldError
-                                :message="
-                                    (
-                                        errors as ItemFields
-                                    )['sku']
-                                "
+                                :message="(errors as ItemFields)['sku']"
                             />
                         </div>
                         <div class="space-y-2">
@@ -114,11 +106,7 @@ useBoundLocale();
                                 :default-value="item.unit ?? ''"
                             />
                             <FieldError
-                                :message="
-                                    (
-                                        errors as ItemFields
-                                    )['unit']
-                                "
+                                :message="(errors as ItemFields)['unit']"
                             />
                         </div>
                     </div>
@@ -137,11 +125,7 @@ useBoundLocale();
                             required
                         />
                         <FieldError
-                            :message="
-                                (
-                                    errors as ItemFields
-                                )['purchase_price']
-                            "
+                            :message="(errors as ItemFields)['purchase_price']"
                         />
                     </div>
 
@@ -154,9 +138,7 @@ useBoundLocale();
                             name="description"
                             rows="4"
                             :aria-invalid="
-                                (
-                                    errors as ItemFields
-                                )['description']
+                                (errors as ItemFields)['description']
                                     ? 'true'
                                     : undefined
                             "
@@ -166,11 +148,7 @@ useBoundLocale();
                         ></textarea>
                         <FieldError
                             id="description-error"
-                            :message="
-                                (
-                                    errors as ItemFields
-                                )['description']
-                            "
+                            :message="(errors as ItemFields)['description']"
                         />
                     </div>
 

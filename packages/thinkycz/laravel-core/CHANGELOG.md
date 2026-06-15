@@ -5,6 +5,7 @@ All notable changes to `thinkycz/laravel-core` are documented here.
 ## [Unreleased]
 
 ### Added
+
 - `tests/` directory with a Pest suite covering `Env`, `Config`, `Typer`,
   `Thrower`, and `Parser`.
 - `README.md` describing the public API and conventions.

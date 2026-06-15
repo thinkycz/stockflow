@@ -42,11 +42,7 @@ void route; // referenced from the <template>
                     required
                 />
                 <FieldError
-                    :message="
-                        (
-                            errors as ForgotPasswordFields
-                        )['email']
-                    "
+                    :message="(errors as ForgotPasswordFields)['email']"
                 />
             </div>
 

@@ -68,11 +68,7 @@ useBoundLocale();
                             required
                         />
                         <FieldError
-                            :message="
-                                (
-                                    errors as StoreFields
-                                )['name']
-                            "
+                            :message="(errors as StoreFields)['name']"
                         />
                     </div>
 
@@ -87,11 +83,7 @@ useBoundLocale();
                             :default-value="store.address ?? ''"
                         />
                         <FieldError
-                            :message="
-                                (
-                                    errors as StoreFields
-                                )['address']
-                            "
+                            :message="(errors as StoreFields)['address']"
                         />
                     </div>
 
@@ -115,11 +107,7 @@ useBoundLocale();
                             :default-value="store.status"
                         />
                         <FieldError
-                            :message="
-                                (
-                                    errors as StoreFields
-                                )['status']
-                            "
+                            :message="(errors as StoreFields)['status']"
                         />
                     </div>
 
@@ -132,9 +120,7 @@ useBoundLocale();
                             name="notes"
                             rows="4"
                             :aria-invalid="
-                                (
-                                    errors as StoreFields
-                                )['notes']
+                                (errors as StoreFields)['notes']
                                     ? 'true'
                                     : undefined
                             "
@@ -144,11 +130,7 @@ useBoundLocale();
                         ></textarea>
                         <FieldError
                             id="notes-error"
-                            :message="
-                                (
-                                    errors as StoreFields
-                                )['notes']
-                            "
+                            :message="(errors as StoreFields)['notes']"
                         />
                     </div>
 

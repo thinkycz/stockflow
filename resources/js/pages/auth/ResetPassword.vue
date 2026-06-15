@@ -51,11 +51,7 @@ void route; // referenced from the <template>
                     required
                 />
                 <FieldError
-                    :message="
-                        (
-                            errors as ResetPasswordFields
-                        )['email']
-                    "
+                    :message="(errors as ResetPasswordFields)['email']"
                 />
             </div>
 
@@ -69,11 +65,7 @@ void route; // referenced from the <template>
                     required
                 />
                 <FieldError
-                    :message="
-                        (
-                            errors as ResetPasswordFields
-                        )['token']
-                    "
+                    :message="(errors as ResetPasswordFields)['token']"
                 />
             </div>
 
@@ -89,11 +81,7 @@ void route; // referenced from the <template>
                     required
                 />
                 <FieldError
-                    :message="
-                        (
-                            errors as ResetPasswordFields
-                        )['password']
-                    "
+                    :message="(errors as ResetPasswordFields)['password']"
                 />
             </div>
 

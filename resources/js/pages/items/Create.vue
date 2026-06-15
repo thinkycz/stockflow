@@ -60,11 +60,7 @@ void route; // referenced from the <template>
                         }}</Label>
                         <Input id="title" name="title" type="text" required />
                         <FieldError
-                            :message="
-                                (
-                                    errors as ItemFields
-                                )['title']
-                            "
+                            :message="(errors as ItemFields)['title']"
                         />
                     </div>
 
@@ -75,11 +71,7 @@ void route; // referenced from the <template>
                             }}</Label>
                             <Input id="sku" name="sku" type="text" />
                             <FieldError
-                                :message="
-                                    (
-                                        errors as ItemFields
-                                    )['sku']
-                                "
+                                :message="(errors as ItemFields)['sku']"
                             />
                         </div>
                         <div class="space-y-2">
@@ -98,11 +90,7 @@ void route; // referenced from the <template>
                                 ]"
                             />
                             <FieldError
-                                :message="
-                                    (
-                                        errors as ItemFields
-                                    )['unit']
-                                "
+                                :message="(errors as ItemFields)['unit']"
                             />
                         </div>
                     </div>
@@ -120,11 +108,7 @@ void route; // referenced from the <template>
                             required
                         />
                         <FieldError
-                            :message="
-                                (
-                                    errors as ItemFields
-                                )['purchase_price']
-                            "
+                            :message="(errors as ItemFields)['purchase_price']"
                         />
                     </div>
 
@@ -137,9 +121,7 @@ void route; // referenced from the <template>
                             name="description"
                             rows="4"
                             :aria-invalid="
-                                (
-                                    errors as ItemFields
-                                )['description']
+                                (errors as ItemFields)['description']
                                     ? 'true'
                                     : undefined
                             "
@@ -148,11 +130,7 @@ void route; // referenced from the <template>
                         ></textarea>
                         <FieldError
                             id="description-error"
-                            :message="
-                                (
-                                    errors as ItemFields
-                                )['description']
-                            "
+                            :message="(errors as ItemFields)['description']"
                         />
                     </div>
 

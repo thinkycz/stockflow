@@ -78,11 +78,7 @@ void route; // referenced from the <template>
                             required
                         />
                         <FieldError
-                            :message="
-                                (
-                                    errors as ProfileFields
-                                )['email']
-                            "
+                            :message="(errors as ProfileFields)['email']"
                         />
                     </div>
 
@@ -96,11 +92,7 @@ void route; // referenced from the <template>
                             required
                         />
                         <FieldError
-                            :message="
-                                (
-                                    errors as ProfileFields
-                                )['locale']
-                            "
+                            :message="(errors as ProfileFields)['locale']"
                         />
                     </div>
 
@@ -137,11 +129,7 @@ void route; // referenced from the <template>
                             required
                         />
                         <FieldError
-                            :message="
-                                (
-                                    errors as PasswordFields
-                                )['password']
-                            "
+                            :message="(errors as PasswordFields)['password']"
                         />
                     </div>
 
@@ -158,9 +146,7 @@ void route; // referenced from the <template>
                         />
                         <FieldError
                             :message="
-                                (
-                                    errors as PasswordFields
-                                )['new_password']
+                                (errors as PasswordFields)['new_password']
                             "
                         />
                     </div>

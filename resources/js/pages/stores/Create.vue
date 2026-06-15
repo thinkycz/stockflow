@@ -55,11 +55,7 @@ void route; // referenced from the <template>
                         }}</Label>
                         <Input id="name" name="name" type="text" required />
                         <FieldError
-                            :message="
-                                (
-                                    errors as StoreFields
-                                )['name']
-                            "
+                            :message="(errors as StoreFields)['name']"
                         />
                     </div>
 
@@ -69,11 +65,7 @@ void route; // referenced from the <template>
                         }}</Label>
                         <Input id="address" name="address" type="text" />
                         <FieldError
-                            :message="
-                                (
-                                    errors as StoreFields
-                                )['address']
-                            "
+                            :message="(errors as StoreFields)['address']"
                         />
                     </div>
 
@@ -96,11 +88,7 @@ void route; // referenced from the <template>
                             ]"
                         />
                         <FieldError
-                            :message="
-                                (
-                                    errors as StoreFields
-                                )['status']
-                            "
+                            :message="(errors as StoreFields)['status']"
                         />
                     </div>
 
@@ -113,9 +101,7 @@ void route; // referenced from the <template>
                             name="notes"
                             rows="4"
                             :aria-invalid="
-                                (
-                                    errors as StoreFields
-                                )['notes']
+                                (errors as StoreFields)['notes']
                                     ? 'true'
                                     : undefined
                             "
@@ -124,11 +110,7 @@ void route; // referenced from the <template>
                         ></textarea>
                         <FieldError
                             id="notes-error"
-                            :message="
-                                (
-                                    errors as StoreFields
-                                )['notes']
-                            "
+                            :message="(errors as StoreFields)['notes']"
                         />
                     </div>
 

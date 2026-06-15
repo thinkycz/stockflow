@@ -58,13 +58,7 @@ void route; // referenced from the <template>
                     autocomplete="email"
                     required
                 />
-                <FieldError
-                    :message="
-                        (
-                            errors as RegisterFields
-                        )['email']
-                    "
-                />
+                <FieldError :message="(errors as RegisterFields)['email']" />
             </div>
 
             <div class="space-y-2">
@@ -76,13 +70,7 @@ void route; // referenced from the <template>
                     autocomplete="new-password"
                     required
                 />
-                <FieldError
-                    :message="
-                        (
-                            errors as RegisterFields
-                        )['password']
-                    "
-                />
+                <FieldError :message="(errors as RegisterFields)['password']" />
             </div>
 
             <div class="space-y-2">
@@ -98,9 +86,7 @@ void route; // referenced from the <template>
                 />
                 <FieldError
                     :message="
-                        (
-                            errors as RegisterFields
-                        )['password_confirmation']
+                        (errors as RegisterFields)['password_confirmation']
                     "
                 />
             </div>
@@ -114,13 +100,7 @@ void route; // referenced from the <template>
                     :options="localeOptions"
                     required
                 />
-                <FieldError
-                    :message="
-                        (
-                            errors as RegisterFields
-                        )['locale']
-                    "
-                />
+                <FieldError :message="(errors as RegisterFields)['locale']" />
             </div>
 
             <Button type="submit" class="w-full" :disabled="processing">{{

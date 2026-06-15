@@ -46,6 +46,7 @@ class ItemShowController
                 'quantity_after' => $movement->getPivotQuantityAfter(),
                 'quantity_difference' => $movement->getPivotQuantityDifference(),
                 'adjustment_reason' => $movement->getPivotAdjustmentReason(),
+                'created_at' => $movement->getCreatedAt()->toJSON(),
             ];
         })->all();
 

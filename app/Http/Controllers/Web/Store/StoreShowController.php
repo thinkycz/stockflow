@@ -51,6 +51,7 @@ class StoreShowController
                 'total_quantity' => $movement->getTotalQuantity(),
                 'total_value' => $movement->getTotalValue(),
                 'created_by' => $movement->getCreator()?->getEmail(),
+                'created_at' => $movement->getCreatedAt()->toJSON(),
                 'items' => $items,
             ];
         })->all();

@@ -6,11 +6,14 @@ namespace App\Http\Controllers\Web\Report;
 
 use App\Enums\AdjustmentReasonEnum;
 use App\Enums\StockMovementTypeEnum;
+use App\Models\Statement;
 use App\Models\StockMovement;
 use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\StatementService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -23,11 +26,34 @@ class ReportController
     /**
      * Render the reports page.
      */
-    public function __invoke(): Response
+    public function __invoke(Request $request, StatementService $statementService): Response
     {
         $user = User::mustAuth();
-        $startOfMonth = Carbon::now()->startOfMonth();
+        $now = Carbon::now();
+        $startOfMonth = $now->copy()->startOfMonth();
         $userId = $user->getKey();
+
+        // Statement filter
+        $allTime = $request->query('all_time') === '1' || $request->query('period') === 'all';
+        $requestedStoreId = Typer::parseNullableInt($request->query('store_id'));
+        $year = $allTime ? null : (Typer::parseNullableInt($request->query('year')) ?? $now->year);
+        $month = $allTime ? null : (Typer::parseNullableInt($request->query('month')) ?? $now->month);
+
+        // All stores for the statement filter
+        $storeListQuery = Store::query();
+        Store::scopeForUser($storeListQuery, $user);
+        $storesForFilter = Store::querySelect($storeListQuery)
+            ->orderBy('name')
+            ->get()
+            ->all();
+
+        $storeId = $requestedStoreId;
+        $validIds = \array_map(static fn(Store $store): int => $store->getKey(), $storesForFilter);
+        if ($storeId !== null && !\in_array($storeId, $validIds, true)) {
+            $storeId = null;
+        }
+
+        $statementReport = $statementService->buildReport($user, $storeId, $year, $month);
 
         $currentInventoryValue = (float) DB::table('store_items')
             ->join('items', 'items.id', '=', 'store_items.item_id')
@@ -144,6 +170,17 @@ class ReportController
                 static fn(AdjustmentReasonEnum $r): string => $r->value,
                 AdjustmentReasonEnum::cases(),
             ),
+            'statement_report' => $statementReport,
+            'statement_filter' => [
+                'all_time' => $allTime,
+                'store_id' => $storeId,
+                'year' => $year,
+                'month' => $month,
+            ],
+            'statement_stores' => \array_map(static fn(Store $store): array => [
+                'id' => $store->getKey(),
+                'name' => $store->getName(),
+            ], $storesForFilter),
         ]);
     }
 }

@@ -8,6 +8,7 @@
         "inventory": "Inventář",
         "stock_movements": "Skladové pohyby",
         "stores": "Prodejny",
+        "statements": "Výkazy",
         "reports": "Reporty",
         "settings": "Nastavení",
         "profile": "Profil",
@@ -347,7 +348,31 @@
         "movements": "Pohyby",
         "quantity": "Množství",
         "value": "Hodnota",
-        "adjustment_count": "Počet úprav"
+        "adjustment_count": "Počet úprav",
+        "statements": {
+            "title": "Statistika výkazů",
+            "subtitle": "Agregované tržby, provize, investice a marže z výkazů pro vybraný obchod a období.",
+            "store": "Prodejna",
+            "month": "Měsíc",
+            "all_stores": "Všechny prodejny",
+            "all_time": "ALL TIME",
+            "period_all_time": "Celé období",
+            "empty": "Vyberte obchod a období, aby se zobrazila data.",
+            "total_revenue": "Celkové tržby",
+            "investment": "Investice do zboží",
+            "provisions": "Provize plateb",
+            "card_provision": "karta (1 %)",
+            "marketplace_provision": "marketplace (30 %)",
+            "gross_margin": "Hrubá marže",
+            "margin_percent": "Procentuální marže",
+            "daily_average": "Denní průměr",
+            "days_with_revenue": "Dnů s tržbami",
+            "cash_share": "Podíl hotovosti",
+            "cash_share_subtitle": "Hotovost je bez provize",
+            "daily_revenue": "Denní průběh tržeb",
+            "channel_pie": "Podíl platebních kanálů",
+            "channel_bars": "Tržby podle kanálů"
+        }
     },
     "fields": {
         "email": "E-mail",
@@ -363,5 +388,35 @@
         "en": "Angličtina",
         "cs": "Čeština",
         "sk": "Slovenčina"
+    },
+    "statements": {
+        "title": "Výkazy",
+        "subtitle": "Zapisujte denní tržby v jednotlivých prodejnách a sledujte marži.",
+        "store": "Prodejna",
+        "month": "Měsíc",
+        "select_store": "Vyberte prodejnu",
+        "columns": {
+            "day": "Den",
+            "cash": "Hotovost",
+            "card": "Karta",
+            "wolt": "Wolt",
+            "bolt": "Bolt",
+            "bolt_cash": "Bolt hotově",
+            "foodora": "Foodora",
+            "total": "Celkem"
+        },
+        "actions": {
+            "save": "Uložit výkaz",
+            "clear": "Vymazat výkaz",
+            "clear_confirm": "Opravdu chcete vynulovat všechny tržby v tomto výkazu?"
+        },
+        "empty": {
+            "title": "Žádné prodejny",
+            "description": "Nejprve vytvořte prodejnu, abyste mohli zapisovat výkazy."
+        },
+        "flash": {
+            "saved": "Výkaz byl uložen.",
+            "cleared": "Výkaz byl vynulován."
+        }
     }
 }

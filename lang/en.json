@@ -29,5 +29,7 @@
     "Item deleted.": "Item deleted.",
     "Item updated.": "Item updated.",
     "Store created.": "Store created.",
-    "Store updated.": "Store updated."
+    "Store updated.": "Store updated.",
+    "Statement saved.": "Statement saved.",
+    "Statement cleared.": "Statement cleared."
 }

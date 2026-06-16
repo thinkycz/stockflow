@@ -26,3 +26,15 @@ export function formatDateTime(date: string): string {
         timeStyle: 'short',
     }).format(new Date(date));
 }
+
+/**
+ * Format a year/month pair (e.g. 2026, 6) as a localized month name like
+ * "červen 2026". Uses the caller-supplied locale so the rendering matches
+ * the active i18n locale instead of the browser default.
+ */
+export function formatMonth(year: number, month: number, locale: string): string {
+    return new Intl.DateTimeFormat(locale, {
+        year: 'numeric',
+        month: 'long',
+    }).format(new Date(year, month - 1, 1));
+}

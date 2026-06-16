@@ -6,6 +6,7 @@ import {
     Boxes,
     LayoutDashboard,
     LogOut,
+    Receipt,
     Settings as SettingsIcon,
     Store as StoreIcon,
 } from '@lucide/vue';
@@ -60,6 +61,13 @@ const navItems = computed(() => [
         label: t('nav.stores'),
         icon: StoreIcon,
         active: activeUrl.value.startsWith('/stores'),
+    },
+    {
+        key: 'statements',
+        href: route('statements.index'),
+        label: t('nav.statements'),
+        icon: Receipt,
+        active: activeUrl.value.startsWith('/statements'),
     },
     {
         key: 'reports',

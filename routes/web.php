@@ -18,6 +18,9 @@ use App\Http\Controllers\Web\Item\ItemSearchController;
 use App\Http\Controllers\Web\Item\ItemShowController;
 use App\Http\Controllers\Web\Report\ReportController;
 use App\Http\Controllers\Web\Settings\SettingsController;
+use App\Http\Controllers\Web\Statement\StatementClearController;
+use App\Http\Controllers\Web\Statement\StatementIndexController;
+use App\Http\Controllers\Web\Statement\StatementUpdateController;
 use App\Http\Controllers\Web\StockMovement\StockMovementCreateController;
 use App\Http\Controllers\Web\StockMovement\StockMovementDestroyController;
 use App\Http\Controllers\Web\StockMovement\StockMovementIndexController;
@@ -86,6 +89,11 @@ Resolver::resolveRouteRegistrar()
         $router->post('stock-movements', [StockMovementCreateController::class, 'store'])->name('stock-movements.store');
         $router->get('stock-movements/{stockMovement}', StockMovementShowController::class)->whereNumber('stockMovement')->name('stock-movements.show');
         $router->delete('stock-movements/{stockMovement}', StockMovementDestroyController::class)->whereNumber('stockMovement')->name('stock-movements.destroy');
+
+        // Statements
+        $router->get('statements', StatementIndexController::class)->name('statements.index');
+        $router->put('statements/{statement}', StatementUpdateController::class)->whereNumber('statement')->name('statements.update');
+        $router->post('statements/{statement}/clear', StatementClearController::class)->whereNumber('statement')->name('statements.clear');
 
         // Reports
         $router->get('reports', ReportController::class)->name('reports.index');

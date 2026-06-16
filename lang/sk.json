@@ -29,5 +29,7 @@
     "Item deleted.": "Položka bola zmazaná.",
     "Item updated.": "Položka bola aktualizovaná.",
     "Store created.": "Predajňa bola vytvorená.",
-    "Store updated.": "Predajňa bola aktualizovaná."
+    "Store updated.": "Predajňa bola aktualizovaná.",
+    "Statement saved.": "Výkaz bol uložený.",
+    "Statement cleared.": "Výkaz bol vynulovaný."
 }

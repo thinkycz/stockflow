@@ -6,14 +6,20 @@
     "nav": {
         "dashboard": "Dashboard",
         "inventory": "Inventory",
-        "stock_movements": "Stock Movements",
+        "stock_movements": "Stock movements",
         "stores": "Stores",
         "statements": "Statements",
+        "inventory_counts": "Inventory counts",
         "reports": "Reports",
+        "statistics": "Statistics",
+        "users": "Users",
         "settings": "Settings",
         "profile": "Profile",
         "password": "Password",
         "logout": "Log out"
+    },
+    "flash": {
+        "no_permission": "You do not have permission for this section."
     },
     "common": {
         "save": "Save",
@@ -36,15 +42,7 @@
             "subtitle": "Enter your credentials to continue.",
             "submit": "Log in",
             "forgot_link": "Forgot password?",
-            "back_link": "Back to login",
-            "register_prompt": "Don't have an account?"
-        },
-        "register": {
-            "title": "Create account",
-            "subtitle": "Start with an authenticated Inertia workspace.",
-            "submit": "Register",
-            "login_link": "Log in",
-            "login_prompt": "Already have an account?"
+            "back_link": "Back to login"
         },
         "forgot": {
             "title": "Forgot password",
@@ -372,6 +370,50 @@
             "daily_revenue": "Daily revenue trend",
             "channel_pie": "Payment channel share",
             "channel_bars": "Revenue by channel"
+        },
+        "statistics": {
+            "title": "Branch statistics",
+            "subtitle": "Sales, incoming, outgoing, inventory value and restock prediction for the selected branch.",
+            "store": "Branch",
+            "period": "Period (days)",
+            "apply": "Apply",
+            "sales": {
+                "title": "Sales (from statements)",
+                "total": "Total revenue",
+                "count": "Days with revenue"
+            },
+            "incoming": {
+                "title": "Incoming stock",
+                "total": "Incoming value",
+                "quantity": "Incoming quantity",
+                "movements": "Movements"
+            },
+            "outgoing": {
+                "title": "Outgoing stock (consumption)",
+                "total": "Outgoing value",
+                "quantity": "Outgoing quantity",
+                "movements": "Movements"
+            },
+            "current_inventory": {
+                "title": "Current inventory",
+                "value": "Inventory value",
+                "items": "Items on hand"
+            },
+            "top_consumed": {
+                "title": "Top consumed items",
+                "subtitle": "Items with the largest absolute stock change in the period.",
+                "item": "Item",
+                "sku": "SKU",
+                "quantity": "Quantity",
+                "value": "Value",
+                "rows": "Rows"
+            },
+            "charts": {
+                "daily": "Daily incoming vs. outgoing",
+                "incoming": "Incoming",
+                "outgoing": "Outgoing"
+            },
+            "empty": "Select a branch to view statistics."
         }
     },
     "fields": {
@@ -417,6 +459,116 @@
         "flash": {
             "saved": "Statement saved.",
             "cleared": "Statement cleared."
+        }
+    },
+    "inventory_counts": {
+        "title": "Stock count",
+        "subtitle": "Record the current on-hand quantities at the selected branch. The app derives average consumption and predicts when to restock.",
+        "store": "Store",
+        "select_store": "Select a store",
+        "columns": {
+            "item": "Item",
+            "sku": "SKU",
+            "unit": "Unit",
+            "current": "On hand",
+            "last_count": "Last counted",
+            "avg_daily_consumption": "Avg. daily consumption",
+            "days_until_restock": "Days left",
+            "status": "Status",
+            "note": "Note"
+        },
+        "actions": {
+            "save": "Save stock count"
+        },
+        "status": {
+            "ok": "OK",
+            "soon": "Low",
+            "out": "Out",
+            "no_data": "No data"
+        },
+        "empty": {
+            "title": "No stores yet",
+            "description": "Create a store first to record stock counts.",
+            "no_items": "There are no catalog items yet."
+        },
+        "flash": {
+            "saved": "Stock count saved."
+        },
+        "totals": {
+            "current_quantity": "Total on hand",
+            "needs_restock": "Items needing restock"
+        },
+        "history": {
+            "title": "Stock count history",
+            "subtitle": "Complete record of stock counts over time — who, when, and how much.",
+            "columns": {
+                "counted_at": "Counted at",
+                "item": "Item",
+                "quantity": "Quantity",
+                "note": "Note",
+                "created_by": "Recorded by"
+            },
+            "tabs": {
+                "current": "Current state",
+                "history": "History"
+            },
+            "sparkline_label": "Trend (30 days)",
+            "empty": {
+                "title": "No history yet",
+                "description": "History will fill up as soon as employees record their first stock counts."
+            },
+            "filter": {
+                "from": "From",
+                "to": "To",
+                "item": "Item",
+                "all_items": "All items",
+                "apply": "Apply"
+            },
+            "flash": {
+                "deleted": "Stock count record deleted."
+            }
+        }
+    },
+    "users": {
+        "title": "Users",
+        "subtitle": "Manage user accounts and store assignments.",
+        "columns": {
+            "email": "Email",
+            "role": "Role",
+            "store": "Store",
+            "created": "Created"
+        },
+        "role": {
+            "admin": "Administrator",
+            "limited": "Limited"
+        },
+        "create": {
+            "title": "Add user",
+            "submit": "Create user"
+        },
+        "edit": {
+            "title": "Edit user",
+            "submit": "Save changes"
+        },
+        "fields": {
+            "email": "Email",
+            "password": "Password",
+            "password_optional": "New password (leave blank to keep current)",
+            "password_confirmation": "Password confirmation",
+            "assigned_store": "Assigned store",
+            "select_store": "Select a store"
+        },
+        "actions": {
+            "delete": "Delete"
+        },
+        "confirm_delete": "Are you sure you want to delete this user?",
+        "confirm_delete_with_data": "Are you sure you want to delete this user? All their records (statements, stock counts) will also be deleted.",
+        "flash": {
+            "created": "User created.",
+            "updated": "User updated.",
+            "deleted": "User deleted.",
+            "cannot_delete_admin": "The main administrator cannot be deleted.",
+            "cannot_modify_admin_role": "The main administrator is always an administrator."
         }
     }
 }

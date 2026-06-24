@@ -107,7 +107,10 @@ useBoundLocale();
 const route = useRoute();
 
 const monthValue = computed((): string => {
-    if (props.statement_filter.year === null || props.statement_filter.month === null) {
+    if (
+        props.statement_filter.year === null ||
+        props.statement_filter.month === null
+    ) {
         return '';
     }
     const month = String(props.statement_filter.month).padStart(2, '0');
@@ -118,7 +121,10 @@ const periodLabel = computed((): string => {
     if (props.statement_filter.all_time) {
         return t('reports.statements.period_all_time');
     }
-    if (props.statement_filter.year !== null && props.statement_filter.month !== null) {
+    if (
+        props.statement_filter.year !== null &&
+        props.statement_filter.month !== null
+    ) {
         return formatMonth(
             props.statement_filter.year,
             props.statement_filter.month,
@@ -152,19 +158,47 @@ const months = computed(() => {
 });
 
 const channelData = computed(() => [
-    { key: 'cash', label: t('statements.columns.cash'), value: props.statement_report.channels.cash, color: '#16a34a' },
-    { key: 'card', label: t('statements.columns.card'), value: props.statement_report.channels.card, color: '#1f6feb' },
-    { key: 'wolt', label: t('statements.columns.wolt'), value: props.statement_report.channels.wolt, color: '#f59e0b' },
-    { key: 'bolt', label: t('statements.columns.bolt'), value: props.statement_report.channels.bolt, color: '#7c3aed' },
-    { key: 'bolt_cash', label: t('statements.columns.bolt_cash'), value: props.statement_report.channels.bolt_cash, color: '#db2777' },
-    { key: 'foodora', label: t('statements.columns.foodora'), value: props.statement_report.channels.foodora, color: '#0891b2' },
+    {
+        key: 'cash',
+        label: t('statements.columns.cash'),
+        value: props.statement_report.channels.cash,
+        color: '#16a34a',
+    },
+    {
+        key: 'card',
+        label: t('statements.columns.card'),
+        value: props.statement_report.channels.card,
+        color: '#1f6feb',
+    },
+    {
+        key: 'wolt',
+        label: t('statements.columns.wolt'),
+        value: props.statement_report.channels.wolt,
+        color: '#f59e0b',
+    },
+    {
+        key: 'bolt',
+        label: t('statements.columns.bolt'),
+        value: props.statement_report.channels.bolt,
+        color: '#7c3aed',
+    },
+    {
+        key: 'bolt_cash',
+        label: t('statements.columns.bolt_cash'),
+        value: props.statement_report.channels.bolt_cash,
+        color: '#db2777',
+    },
+    {
+        key: 'foodora',
+        label: t('statements.columns.foodora'),
+        value: props.statement_report.channels.foodora,
+        color: '#0891b2',
+    },
 ]);
 
 const dailyRevenueData = computed(() => props.statement_report.daily);
 
-function applyFilter(
-    payload: Record<string, string | number | null>,
-): void {
+function applyFilter(payload: Record<string, string | number | null>): void {
     router.get(route('reports.index'), payload, {
         preserveState: true,
         preserveScroll: true,
@@ -172,7 +206,10 @@ function applyFilter(
 }
 
 function selectStore(value: string | number | null | undefined): void {
-    const storeId = value === null || value === undefined || value === '' ? null : Number(value);
+    const storeId =
+        value === null || value === undefined || value === ''
+            ? null
+            : Number(value);
     applyFilter({
         store_id: storeId,
         all_time: props.statement_filter.all_time ? '1' : '0',
@@ -273,7 +310,10 @@ function toggleAllTime(): void {
                 <CardHeader>
                     <CardTitle>
                         <span class="flex items-center gap-2">
-                            <Receipt :size="14" class="text-on-surface-variant" />
+                            <Receipt
+                                :size="14"
+                                class="text-on-surface-variant"
+                            />
                             {{ t('reports.statements.title') }}
                         </span>
                     </CardTitle>
@@ -297,7 +337,9 @@ function toggleAllTime(): void {
                                 id="statement_store_filter"
                                 :model-value="
                                     props.statement_filter.store_id !== null
-                                        ? String(props.statement_filter.store_id)
+                                        ? String(
+                                              props.statement_filter.store_id,
+                                          )
                                         : ''
                                 "
                                 :options="[
@@ -364,7 +406,11 @@ function toggleAllTime(): void {
                         <p
                             class="mt-1 font-heading text-lg font-bold text-on-surface"
                         >
-                            {{ formatMoney(props.statement_report.totals.total_revenue) }}
+                            {{
+                                formatMoney(
+                                    props.statement_report.totals.total_revenue,
+                                )
+                            }}
                         </p>
                     </div>
                     <div
@@ -378,7 +424,11 @@ function toggleAllTime(): void {
                         <p
                             class="mt-1 font-heading text-lg font-bold text-on-surface"
                         >
-                            {{ formatMoney(props.statement_report.totals.investment) }}
+                            {{
+                                formatMoney(
+                                    props.statement_report.totals.investment,
+                                )
+                            }}
                         </p>
                     </div>
                     <div
@@ -392,19 +442,33 @@ function toggleAllTime(): void {
                         <p
                             class="mt-1 font-heading text-lg font-bold text-on-surface"
                         >
-                            {{ formatMoney(props.statement_report.totals.provisions) }}
+                            {{
+                                formatMoney(
+                                    props.statement_report.totals.provisions,
+                                )
+                            }}
                         </p>
                         <p
                             class="mt-0.5 text-[10px] font-mono text-on-surface-variant"
                         >
                             {{ t('reports.statements.card_provision') }}:
-                            {{ formatMoney(props.statement_report.totals.card_provision) }}
+                            {{
+                                formatMoney(
+                                    props.statement_report.totals
+                                        .card_provision,
+                                )
+                            }}
                         </p>
                         <p
                             class="text-[10px] font-mono text-on-surface-variant"
                         >
                             {{ t('reports.statements.marketplace_provision') }}:
-                            {{ formatMoney(props.statement_report.totals.marketplace_provision) }}
+                            {{
+                                formatMoney(
+                                    props.statement_report.totals
+                                        .marketplace_provision,
+                                )
+                            }}
                         </p>
                     </div>
                     <div
@@ -423,7 +487,11 @@ function toggleAllTime(): void {
                                     : 'text-rose-600'
                             "
                         >
-                            {{ formatMoney(props.statement_report.totals.gross_margin) }}
+                            {{
+                                formatMoney(
+                                    props.statement_report.totals.gross_margin,
+                                )
+                            }}
                         </p>
                     </div>
                     <div
@@ -437,7 +505,8 @@ function toggleAllTime(): void {
                         <p
                             class="mt-1 font-heading text-lg font-bold"
                             :class="
-                                props.statement_report.totals.margin_percent >= 0
+                                props.statement_report.totals.margin_percent >=
+                                0
                                     ? 'text-emerald-600'
                                     : 'text-rose-600'
                             "
@@ -456,7 +525,11 @@ function toggleAllTime(): void {
                         <p
                             class="mt-1 font-heading text-lg font-bold text-on-surface"
                         >
-                            {{ formatMoney(props.statement_report.totals.daily_average) }}
+                            {{
+                                formatMoney(
+                                    props.statement_report.totals.daily_average,
+                                )
+                            }}
                         </p>
                         <p
                             class="mt-0.5 text-[10px] font-mono text-on-surface-variant"
@@ -479,12 +552,15 @@ function toggleAllTime(): void {
                             {{
                                 props.statement_report.totals.total_revenue > 0
                                     ? (
-                                          (props.statement_report.channels.cash /
-                                              props.statement_report.totals.total_revenue) *
+                                          (props.statement_report.channels
+                                              .cash /
+                                              props.statement_report.totals
+                                                  .total_revenue) *
                                           100
                                       ).toFixed(1)
                                     : '0.0'
-                            }} %
+                            }}
+                            %
                         </p>
                         <p
                             class="mt-0.5 text-[10px] font-mono text-on-surface-variant"
@@ -494,10 +570,7 @@ function toggleAllTime(): void {
                     </div>
                 </div>
 
-                <div
-                    v-if="!props.statement_filter.all_time"
-                    class="mb-4"
-                >
+                <div v-if="!props.statement_filter.all_time" class="mb-4">
                     <Chart
                         type="line"
                         :title="t('reports.statements.daily_revenue')"

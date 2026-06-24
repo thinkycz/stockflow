@@ -31,5 +31,13 @@
     "Store created.": "Predajňa bola vytvorená.",
     "Store updated.": "Predajňa bola aktualizovaná.",
     "Statement saved.": "Výkaz bol uložený.",
-    "Statement cleared.": "Výkaz bol vynulovaný."
+    "Inventory count saved.": "Inventúra bola uložená.",
+    "Statement cleared.": "Výkaz bol vynulovaný.",
+    "User created.": "Používateľ bol vytvorený.",
+    "User updated.": "Používateľ bol aktualizovaný.",
+    "User deleted.": "Používateľ bol zmazaný.",
+    "You cannot delete the main admin.": "Hlavného administrátora nie je možné zmazať.",
+    "You do not have permission for this section.": "Nemáte oprávnenie k tejto sekcii.",
+    "You cannot change the role of the main admin.": "Hlavnému administrátorovi nie je možné zmeniť rolu.",
+    "Inventory count record deleted.": "Záznam inventúry bol zmazaný."
 }

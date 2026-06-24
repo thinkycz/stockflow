@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
@@ -33,6 +34,10 @@ return Application::configure(basePath: \dirname(__DIR__))
         $middleware->trustProxies(at: Env::inject()->parseNullableString('TRUSTED_PROXIES'));
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/dashboard');
+
+        $middleware->alias([
+            'admin' => EnsureUserIsAdmin::class,
+        ]);
 
         $middleware->web(append: [
             AuthShouldUseMiddleware::class,
@@ -90,7 +95,6 @@ return Application::configure(basePath: \dirname(__DIR__))
                 'verify-email' => 'auth/VerifyEmail',
                 'forgot-password' => 'auth/ForgotPassword',
                 'reset-password' => 'auth/ResetPassword',
-                'register' => 'auth/Register',
                 'settings/profile', 'settings/password' => 'settings/Index',
                 default => 'auth/Login',
             };

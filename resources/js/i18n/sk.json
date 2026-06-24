@@ -9,11 +9,17 @@
         "stock_movements": "Skladové pohyby",
         "stores": "Predajne",
         "statements": "Výkazy",
+        "inventory_counts": "Inventúra",
         "reports": "Reporty",
+        "statistics": "Štatistika",
+        "users": "Používatelia",
         "settings": "Nastavenia",
         "profile": "Profil",
         "password": "Heslo",
         "logout": "Odhlásiť sa"
+    },
+    "flash": {
+        "no_permission": "Nemáte oprávnenie k tejto sekcii."
     },
     "common": {
         "save": "Uložiť",
@@ -36,15 +42,7 @@
             "subtitle": "Pre pokračovanie zadajte svoje prihlasovacie údaje.",
             "submit": "Prihlásiť sa",
             "forgot_link": "Zabudli ste heslo?",
-            "back_link": "Späť na prihlásenie",
-            "register_prompt": "Nemáte ešte účet?"
-        },
-        "register": {
-            "title": "Vytvoriť účet",
-            "subtitle": "Začnite s autentizovaným Inertia pracovným priestorom.",
-            "submit": "Registrovať",
-            "login_link": "Prihlásiť sa",
-            "login_prompt": "Máte už účet?"
+            "back_link": "Späť na prihlásenie"
         },
         "forgot": {
             "title": "Zabudnuté heslo",
@@ -372,6 +370,50 @@
             "daily_revenue": "Denný priebeh tržieb",
             "channel_pie": "Podiel platobných kanálov",
             "channel_bars": "Tržby podľa kanálov"
+        },
+        "statistics": {
+            "title": "Štatistika pobočky",
+            "subtitle": "Predaj, príjem, výdaj, stav zásob a predikcia naskladnenia pre vybranú pobočku.",
+            "store": "Pobočka",
+            "period": "Obdobie (dní)",
+            "apply": "Použiť",
+            "sales": {
+                "title": "Predaj (z výkazov)",
+                "total": "Celkové tržby",
+                "count": "Dní s tržbami"
+            },
+            "incoming": {
+                "title": "Príjem tovaru",
+                "total": "Celková hodnota príjmu",
+                "quantity": "Celkové množstvo",
+                "movements": "Počet príjmov"
+            },
+            "outgoing": {
+                "title": "Výdaj tovaru (spotreba)",
+                "total": "Celková hodnota výdaja",
+                "quantity": "Celkové množstvo",
+                "movements": "Počet výdajov"
+            },
+            "current_inventory": {
+                "title": "Aktuálne zásoby",
+                "value": "Hodnota zásob",
+                "items": "Položiek na sklade"
+            },
+            "top_consumed": {
+                "title": "Najviac spotrebované položky",
+                "subtitle": "Položky s najväčšou absolútnou zmenou v období.",
+                "item": "Položka",
+                "sku": "SKU",
+                "quantity": "Množstvo",
+                "value": "Hodnota",
+                "rows": "Riadkov"
+            },
+            "charts": {
+                "daily": "Denný príjem vs. výdaj",
+                "incoming": "Príjem",
+                "outgoing": "Výdaj"
+            },
+            "empty": "Vyberte pobočku na zobrazenie štatistík."
         }
     },
     "fields": {
@@ -417,6 +459,116 @@
         "flash": {
             "saved": "Výkaz bol uložený.",
             "cleared": "Výkaz bol vynulovaný."
+        }
+    },
+    "inventory_counts": {
+        "title": "Inventúra",
+        "subtitle": "Zapíšte aktuálne počty zásob na vybranej pobočke. Aplikácia z nich dopočíta priemernú spotrebu a odhadne, kedy bude potrebné naskladniť.",
+        "store": "Predajňa",
+        "select_store": "Vyberte predajňu",
+        "columns": {
+            "item": "Položka",
+            "sku": "SKU",
+            "unit": "Jedn.",
+            "current": "Aktuálne množstvo",
+            "last_count": "Naposledy napočítané",
+            "avg_daily_consumption": "Priem. spotreba / deň",
+            "days_until_restock": "Dní do vypredania",
+            "status": "Stav",
+            "note": "Poznámka"
+        },
+        "actions": {
+            "save": "Uložiť inventúru"
+        },
+        "status": {
+            "ok": "OK",
+            "soon": "Čoskoro dôjde",
+            "out": "Vypredané",
+            "no_data": "Bez dát"
+        },
+        "empty": {
+            "title": "Žiadne predajne",
+            "description": "Najprv vytvorte predajňu, aby ste mohli viesť inventúru.",
+            "no_items": "V katalógu zatiaľ nie sú žiadne položky."
+        },
+        "flash": {
+            "saved": "Inventúra bola uložená."
+        },
+        "totals": {
+            "current_quantity": "Celkom na sklade",
+            "needs_restock": "Položiek na naskladnenie"
+        },
+        "history": {
+            "title": "História inventúry",
+            "subtitle": "Kompletný prehľad záznamov inventúry v čase — kto, kedy a koľko napočítal.",
+            "columns": {
+                "counted_at": "Dátum inventúry",
+                "item": "Položka",
+                "quantity": "Množstvo",
+                "note": "Poznámka",
+                "created_by": "Zapísal"
+            },
+            "tabs": {
+                "current": "Aktuálny stav",
+                "history": "História"
+            },
+            "sparkline_label": "Vývoj (30 dní)",
+            "empty": {
+                "title": "Zatiaľ žiadne záznamy",
+                "description": "História inventúry sa začne plniť, hneď ako zamestnanci zadajú prvé počty."
+            },
+            "filter": {
+                "from": "Od",
+                "to": "Do",
+                "item": "Položka",
+                "all_items": "Všetky položky",
+                "apply": "Použiť"
+            },
+            "flash": {
+                "deleted": "Záznam inventúry bol zmazaný."
+            }
+        }
+    },
+    "users": {
+        "title": "Používatelia",
+        "subtitle": "Spravujte používateľské účty a priradenie k predajniam.",
+        "columns": {
+            "email": "E-mail",
+            "role": "Rola",
+            "store": "Predajňa",
+            "created": "Vytvorený"
+        },
+        "role": {
+            "admin": "Administrátor",
+            "limited": "Obmedzená"
+        },
+        "create": {
+            "title": "Pridať používateľa",
+            "submit": "Vytvoriť používateľa"
+        },
+        "edit": {
+            "title": "Upraviť používateľa",
+            "submit": "Uložiť zmeny"
+        },
+        "fields": {
+            "email": "E-mail",
+            "password": "Heslo",
+            "password_optional": "Nové heslo (nechajte prázdne pre zachovanie)",
+            "password_confirmation": "Potvrdenie hesla",
+            "assigned_store": "Priradená predajňa",
+            "select_store": "Vyberte predajňu"
+        },
+        "actions": {
+            "delete": "Zmazať"
+        },
+        "confirm_delete": "Naozaj zmazať tohto používateľa?",
+        "confirm_delete_with_data": "Naozaj zmazať tohto používateľa? Budú zmazané aj všetky jeho záznamy (výkazy, inventúry).",
+        "flash": {
+            "created": "Používateľ bol vytvorený.",
+            "updated": "Používateľ bol aktualizovaný.",
+            "deleted": "Používateľ bol zmazaný.",
+            "cannot_delete_admin": "Hlavného administrátora nie je možné zmazať.",
+            "cannot_modify_admin_role": "Hlavný administrátor má vždy rolu administrátora."
         }
     }
 }

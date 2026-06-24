@@ -31,5 +31,13 @@
     "Store created.": "Store created.",
     "Store updated.": "Store updated.",
     "Statement saved.": "Statement saved.",
-    "Statement cleared.": "Statement cleared."
+    "Inventory count saved.": "Inventory count saved.",
+    "Statement cleared.": "Statement cleared.",
+    "User created.": "User created.",
+    "User updated.": "User updated.",
+    "User deleted.": "User deleted.",
+    "You cannot delete the main admin.": "You cannot delete the main admin.",
+    "You do not have permission for this section.": "You do not have permission for this section.",
+    "You cannot change the role of the main admin.": "You cannot change the role of the main admin.",
+    "Inventory count record deleted.": "Inventory count record deleted."
 }

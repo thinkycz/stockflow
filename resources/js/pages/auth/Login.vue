@@ -71,14 +71,5 @@ function submit(): void {
                 t('auth.login.submit')
             }}</Button>
         </form>
-
-        <p class="mt-6 text-center text-xs font-medium text-on-surface-variant">
-            {{ t('auth.login.register_prompt') }}
-            <Link
-                :href="route('register.show')"
-                class="ml-1 font-bold text-primary hover:text-primary-container"
-                >{{ t('auth.register.title') }}</Link
-            >
-        </p>
     </AuthLayout>
 </template>

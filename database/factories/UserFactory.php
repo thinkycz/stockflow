@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Models\Store;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
@@ -34,6 +35,9 @@ class UserFactory extends Factory
             'password' => static::$password ??= 'password',
             'remember_token' => Str::random(10),
             'locale' => Config::inject()->assertString('app.locale'),
+            'is_admin' => false,
+            'parent_user_id' => null,
+            'assigned_store_id' => null,
         ];
     }
 
@@ -44,6 +48,30 @@ class UserFactory extends Factory
     {
         return $this->state([
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the model is the main admin.
+     */
+    public function admin(): static
+    {
+        return $this->state([
+            'is_admin' => true,
+            'parent_user_id' => null,
+            'assigned_store_id' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the model is a limited user assigned to the given store.
+     */
+    public function limited(Store $store): static
+    {
+        return $this->state([
+            'is_admin' => false,
+            'parent_user_id' => $store->getUserId(),
+            'assigned_store_id' => $store->getKey(),
         ]);
     }
 

@@ -28,8 +28,10 @@ class UserSeeder extends Seeder
             return;
         }
 
-        UserFactory::new()
+        $admin = UserFactory::new()
             ->password()
             ->createOne(['email' => 'test@test.com']);
+
+        $admin->update(['is_admin' => true, 'parent_user_id' => null]);
     }
 }

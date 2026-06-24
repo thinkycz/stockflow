@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Thinkycz\LaravelCore\Models\BaseModel;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -110,6 +111,16 @@ class Store extends BaseModel
     {
         return $this->belongsToMany(Item::class, 'store_items', 'store_id', 'item_id')
             ->withPivot(['quantity']);
+    }
+
+    /**
+     * Limited user assigned to this store (at most one).
+     *
+     * @return HasOne<User, $this>
+     */
+    public function assignedUser(): HasOne
+    {
+        return $this->hasOne(User::class, 'assigned_store_id');
     }
 
     /**

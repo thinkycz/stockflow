@@ -67,85 +67,109 @@ const max = computed((): number => {
 
 const isEmpty = computed((): boolean => total.value === 0);
 
-const pieSlices = computed((): Array<{ label: string; value: number; percent: number; color: string }> => {
-    if (total.value === 0) {
-        return [];
-    }
-    return props.data.map((point, index) => ({
-        label: point.label,
-        value: point.value,
-        percent: (point.value / total.value) * 100,
-        color: colorFor(index, props.series[index]?.color),
-    }));
-});
-
-const barGeometry = computed((): Array<{ x: number; y: number; width: number; height: number; color: string; label: string; value: number }> => {
-    const padding = { top: 10, right: 12, bottom: 28, left: 44 };
-    const width = 720;
-    const height = props.height;
-    const innerW = width - padding.left - padding.right;
-    const innerH = height - padding.top - padding.bottom;
-    const count = props.data.length;
-    if (count === 0 || max.value === 0) {
-        return [];
-    }
-    const barWidth = (innerW / count) * 0.7;
-    const gap = (innerW / count) * 0.3;
-    return props.data.map((point, index) => {
-        const valueHeight = (point.value / max.value) * innerH;
-        const x = padding.left + index * (barWidth + gap) + gap / 2;
-        const y = padding.top + (innerH - valueHeight);
-        return {
-            x,
-            y,
-            width: barWidth,
-            height: valueHeight,
-            color: colorFor(index, props.series[index]?.color),
+const pieSlices = computed(
+    (): Array<{
+        label: string;
+        value: number;
+        percent: number;
+        color: string;
+    }> => {
+        if (total.value === 0) {
+            return [];
+        }
+        return props.data.map((point, index) => ({
             label: point.label,
             value: point.value,
-        };
-    });
-});
+            percent: (point.value / total.value) * 100,
+            color: colorFor(index, props.series[index]?.color),
+        }));
+    },
+);
 
-const lineGeometry = computed((): {
-    path: string;
-    area: string;
-    points: Array<{ x: number; y: number; label: string; value: number }>;
-    yTicks: Array<{ y: number; label: string }>;
-} => {
-    const padding = { top: 16, right: 12, bottom: 28, left: 56 };
-    const width = 720;
-    const height = props.height;
-    const innerW = width - padding.left - padding.right;
-    const innerH = height - padding.top - padding.bottom;
-    const count = props.data.length;
-    if (count === 0) {
-        return { path: '', area: '', points: [], yTicks: [] };
-    }
-    const effectiveMax = max.value > 0 ? max.value : 1;
-    const stepX = count > 1 ? innerW / (count - 1) : 0;
-    const points = props.data.map((point, index) => {
-        const x = padding.left + index * stepX;
-        const y = padding.top + innerH - (point.value / effectiveMax) * innerH;
-        return { x, y, label: point.label, value: point.value };
-    });
-    const path = points
-        .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
-        .join(' ');
-    const first = points[0];
-    const last = points[points.length - 1];
-    const area = first && last
-        ? `${path} L ${last.x.toFixed(2)} ${(padding.top + innerH).toFixed(2)} L ${first.x.toFixed(2)} ${(padding.top + innerH).toFixed(2)} Z`
-        : '';
-    const yTicks = [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
-        const y = padding.top + innerH - ratio * innerH;
-        const labelValue = (effectiveMax * ratio).toLocaleString('cs-CZ', {
-            maximumFractionDigits: 0,
+const barGeometry = computed(
+    (): Array<{
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        color: string;
+        label: string;
+        value: number;
+    }> => {
+        const padding = { top: 10, right: 12, bottom: 28, left: 44 };
+        const width = 720;
+        const height = props.height;
+        const innerW = width - padding.left - padding.right;
+        const innerH = height - padding.top - padding.bottom;
+        const count = props.data.length;
+        if (count === 0 || max.value === 0) {
+            return [];
+        }
+        const barWidth = (innerW / count) * 0.7;
+        const gap = (innerW / count) * 0.3;
+        return props.data.map((point, index) => {
+            const valueHeight = (point.value / max.value) * innerH;
+            const x = padding.left + index * (barWidth + gap) + gap / 2;
+            const y = padding.top + (innerH - valueHeight);
+            return {
+                x,
+                y,
+                width: barWidth,
+                height: valueHeight,
+                color: colorFor(index, props.series[index]?.color),
+                label: point.label,
+                value: point.value,
+            };
         });
-        return { y, label: labelValue };
-    });
-    return { path, area, points, yTicks };
-});
+    },
+);
+
+const lineGeometry = computed(
+    (): {
+        path: string;
+        area: string;
+        points: Array<{ x: number; y: number; label: string; value: number }>;
+        yTicks: Array<{ y: number; label: string }>;
+    } => {
+        const padding = { top: 16, right: 12, bottom: 28, left: 56 };
+        const width = 720;
+        const height = props.height;
+        const innerW = width - padding.left - padding.right;
+        const innerH = height - padding.top - padding.bottom;
+        const count = props.data.length;
+        if (count === 0) {
+            return { path: '', area: '', points: [], yTicks: [] };
+        }
+        const effectiveMax = max.value > 0 ? max.value : 1;
+        const stepX = count > 1 ? innerW / (count - 1) : 0;
+        const points = props.data.map((point, index) => {
+            const x = padding.left + index * stepX;
+            const y =
+                padding.top + innerH - (point.value / effectiveMax) * innerH;
+            return { x, y, label: point.label, value: point.value };
+        });
+        const path = points
+            .map(
+                (point, index) =>
+                    `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`,
+            )
+            .join(' ');
+        const first = points[0];
+        const last = points[points.length - 1];
+        const area =
+            first && last
+                ? `${path} L ${last.x.toFixed(2)} ${(padding.top + innerH).toFixed(2)} L ${first.x.toFixed(2)} ${(padding.top + innerH).toFixed(2)} Z`
+                : '';
+        const yTicks = [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+            const y = padding.top + innerH - ratio * innerH;
+            const labelValue = (effectiveMax * ratio).toLocaleString('cs-CZ', {
+                maximumFractionDigits: 0,
+            });
+            return { y, label: labelValue };
+        });
+        return { path, area, points, yTicks };
+    },
+);
 
 const chartWidth = 720;
 </script>
@@ -174,8 +198,18 @@ const chartWidth = 720;
             <line
                 v-for="tick in [
                     { y: props.height - 28, label: '0' },
-                    { y: (props.height - 28) * 0.5, label: (max / 2).toLocaleString('cs-CZ', { maximumFractionDigits: 0 }) },
-                    { y: 16, label: max.toLocaleString('cs-CZ', { maximumFractionDigits: 0 }) },
+                    {
+                        y: (props.height - 28) * 0.5,
+                        label: (max / 2).toLocaleString('cs-CZ', {
+                            maximumFractionDigits: 0,
+                        }),
+                    },
+                    {
+                        y: 16,
+                        label: max.toLocaleString('cs-CZ', {
+                            maximumFractionDigits: 0,
+                        }),
+                    },
                 ]"
                 :key="tick.label"
                 :x1="44"
@@ -189,8 +223,18 @@ const chartWidth = 720;
             <text
                 v-for="tick in [
                     { y: props.height - 28, label: '0' },
-                    { y: (props.height - 28) * 0.5, label: (max / 2).toLocaleString('cs-CZ', { maximumFractionDigits: 0 }) },
-                    { y: 16, label: max.toLocaleString('cs-CZ', { maximumFractionDigits: 0 }) },
+                    {
+                        y: (props.height - 28) * 0.5,
+                        label: (max / 2).toLocaleString('cs-CZ', {
+                            maximumFractionDigits: 0,
+                        }),
+                    },
+                    {
+                        y: 16,
+                        label: max.toLocaleString('cs-CZ', {
+                            maximumFractionDigits: 0,
+                        }),
+                    },
                 ]"
                 :key="`label-${tick.label}`"
                 :x="6"
@@ -215,13 +259,21 @@ const chartWidth = 720;
                     class="fill-current text-[9px] opacity-70"
                     text-anchor="middle"
                 >
-                    {{ bar.value.toLocaleString('cs-CZ', { maximumFractionDigits: 0 }) }}
+                    {{
+                        bar.value.toLocaleString('cs-CZ', {
+                            maximumFractionDigits: 0,
+                        })
+                    }}
                 </text>
             </g>
             <text
                 v-for="(point, index) in props.data"
                 :key="`bar-label-${index}`"
-                :x="44 + (index * ((chartWidth - 56) / props.data.length)) + ((chartWidth - 56) / props.data.length) / 2"
+                :x="
+                    44 +
+                    index * ((chartWidth - 56) / props.data.length) +
+                    (chartWidth - 56) / props.data.length / 2
+                "
                 :y="props.height - 8"
                 class="fill-current text-[9px] opacity-60"
                 text-anchor="middle"
@@ -295,13 +347,16 @@ const chartWidth = 720;
                 {{ point.label }}
             </text>
         </svg>
-        <div v-else class="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center">
-            <svg
-                :viewBox="`0 0 200 200`"
-                class="h-44 w-44 shrink-0"
-            >
+        <div
+            v-else
+            class="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center"
+        >
+            <svg :viewBox="`0 0 200 200`" class="h-44 w-44 shrink-0">
                 <g transform="translate(100, 100)">
-                    <template v-for="(slice, index) in pieSlices" :key="`pie-${index}`">
+                    <template
+                        v-for="(slice, index) in pieSlices"
+                        :key="`pie-${index}`"
+                    >
                         <path
                             v-if="pieSlices.length === 1"
                             d="M 0 -80 A 80 80 0 1 1 0 80 L 0 0 Z"
@@ -309,24 +364,39 @@ const chartWidth = 720;
                         />
                         <path
                             v-else
-                            :d="((): string => {
-                                const startAngle = pieSlices
-                                    .slice(0, index)
-                                    .reduce((sum, s) => sum + (s.percent * 3.6), 0);
-                                const endAngle = startAngle + slice.percent * 3.6;
-                                const rad = (deg: number): number => ((deg - 90) * Math.PI) / 180;
-                                const x1 = 80 * Math.cos(rad(startAngle));
-                                const y1 = 80 * Math.sin(rad(startAngle));
-                                const x2 = 80 * Math.cos(rad(endAngle));
-                                const y2 = 80 * Math.sin(rad(endAngle));
-                                const largeArc = slice.percent > 50 ? 1 : 0;
-                                return `M 0 0 L ${x1} ${y1} A 80 80 0 ${largeArc} 1 ${x2} ${y2} Z`;
-                            })()"
+                            :d="
+                                ((): string => {
+                                    const startAngle = pieSlices
+                                        .slice(0, index)
+                                        .reduce(
+                                            (sum, s) => sum + s.percent * 3.6,
+                                            0,
+                                        );
+                                    const endAngle =
+                                        startAngle + slice.percent * 3.6;
+                                    const rad = (deg: number): number =>
+                                        ((deg - 90) * Math.PI) / 180;
+                                    const x1 = 80 * Math.cos(rad(startAngle));
+                                    const y1 = 80 * Math.sin(rad(startAngle));
+                                    const x2 = 80 * Math.cos(rad(endAngle));
+                                    const y2 = 80 * Math.sin(rad(endAngle));
+                                    const largeArc = slice.percent > 50 ? 1 : 0;
+                                    return `M 0 0 L ${x1} ${y1} A 80 80 0 ${largeArc} 1 ${x2} ${y2} Z`;
+                                })()
+                            "
                             :fill="slice.color"
                         />
                     </template>
-                    <circle r="36" fill="rgb(252, 252, 252)" class="dark:hidden" />
-                    <circle r="36" fill="rgb(20, 20, 24)" class="hidden dark:inline" />
+                    <circle
+                        r="36"
+                        fill="rgb(252, 252, 252)"
+                        class="dark:hidden"
+                    />
+                    <circle
+                        r="36"
+                        fill="rgb(20, 20, 24)"
+                        class="hidden dark:inline"
+                    />
                 </g>
             </svg>
             <ul class="flex-1 space-y-1.5">

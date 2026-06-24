@@ -4,11 +4,14 @@ import {
     ArrowLeftRight,
     BarChart3,
     Boxes,
+    ClipboardList,
     LayoutDashboard,
     LogOut,
     Receipt,
     Settings as SettingsIcon,
     Store as StoreIcon,
+    TrendingUp,
+    Users,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -31,7 +34,9 @@ const route = useRoute();
 
 const activeUrl = computed(() => usePage().url);
 
-const navItems = computed(() => [
+const isAdmin = computed(() => auth.value.user?.is_admin === true);
+
+const adminNavItems = computed(() => [
     {
         key: 'dashboard',
         href: route('dashboard'),
@@ -70,13 +75,66 @@ const navItems = computed(() => [
         active: activeUrl.value.startsWith('/statements'),
     },
     {
+        key: 'inventory_counts',
+        href: route('inventory-counts.index'),
+        label: t('nav.inventory_counts'),
+        icon: ClipboardList,
+        active: activeUrl.value.startsWith('/inventory-counts'),
+    },
+    {
         key: 'reports',
         href: route('reports.index'),
         label: t('nav.reports'),
         icon: BarChart3,
-        active: activeUrl.value.startsWith('/reports'),
+        active:
+            activeUrl.value === '/reports' ||
+            activeUrl.value.startsWith('/reports?'),
+    },
+    {
+        key: 'statistics',
+        href: route('reports.statistics'),
+        label: t('nav.statistics'),
+        icon: TrendingUp,
+        active: activeUrl.value.startsWith('/reports/statistics'),
+    },
+    {
+        key: 'users',
+        href: route('users.index'),
+        label: t('nav.users'),
+        icon: Users,
+        active: activeUrl.value.startsWith('/users'),
     },
 ]);
+
+const limitedNavItems = computed(() => [
+    {
+        key: 'dashboard',
+        href: route('dashboard'),
+        label: t('nav.dashboard'),
+        icon: LayoutDashboard,
+        active:
+            activeUrl.value === '/dashboard' ||
+            activeUrl.value.startsWith('/dashboard?'),
+    },
+    {
+        key: 'statements',
+        href: route('statements.index'),
+        label: t('nav.statements'),
+        icon: Receipt,
+        active: activeUrl.value.startsWith('/statements'),
+    },
+    {
+        key: 'inventory_counts',
+        href: route('inventory-counts.index'),
+        label: t('nav.inventory_counts'),
+        icon: ClipboardList,
+        active: activeUrl.value.startsWith('/inventory-counts'),
+    },
+]);
+
+const navItems = computed(() =>
+    isAdmin.value ? adminNavItems.value : limitedNavItems.value,
+);
 
 const settingsActive = computed(() => activeUrl.value.startsWith('/settings'));
 

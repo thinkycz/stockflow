@@ -59,28 +59,6 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($response->json('props.items'))->toHaveCount(0);
 });
 
-\test('register creates a warehouse store for the new user', function (): void {
-    $response = $this->post('/register', [
-        'email' => 'isolated-user@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-        'locale' => 'en',
-    ]);
-
-    $response->assertRedirect('/dashboard');
-
-    $user = User::query()->where('email', 'isolated-user@example.com')->firstOrFail();
-
-    $warehouse = Store::query()
-        ->where('user_id', $user->getKey())
-        ->where('is_warehouse', true)
-        ->first();
-
-    \expect($warehouse)->not->toBeNull();
-    \expect($warehouse->getName())->toBe('Warehouse');
-    \expect(Store::query()->where('user_id', $user->getKey())->count())->toBe(1);
-});
-
 \test('incoming movement increases warehouse store item quantity', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $item = Item::factory()->create(['user_id' => $user->getKey()]);

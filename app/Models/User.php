@@ -7,6 +7,8 @@ namespace App\Models;
 use App\Enums\StoreStatusEnum;
 use App\Http\Resources\UserResource;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
@@ -16,6 +18,53 @@ use Thinkycz\LaravelCore\Models\BaseUser;
 
 class User extends BaseUser implements MustVerifyEmail
 {
+    /**
+     * Scope a query to admin users only.
+     *
+     * @param Builder<User> $query
+     */
+    public static function scopeAdmin(Builder $query): void
+    {
+        $query->where('is_admin', true);
+    }
+
+    /**
+     * Scope a query to limited (non-admin) users only.
+     *
+     * @param Builder<User> $query
+     */
+    public static function scopeLimited(Builder $query): void
+    {
+        $query->where('is_admin', false);
+    }
+
+    /**
+     * Scope a query to users managed by the given admin (the admin
+     * themselves plus their limited users).
+     *
+     * @param Builder<User> $query
+     */
+    public static function scopeForAdmin(Builder $query, self $admin): void
+    {
+        $query->where(static function (Builder $query) use ($admin): void {
+            $query->whereKey($admin->getKey())
+                ->orWhere('parent_user_id', $admin->getKey());
+        });
+    }
+
+    /**
+     * Scope a query to users whose assigned store matches the given store.
+     *
+     * Used by data-access controllers that need to limit rows to the
+     * assigned store of a limited user (e.g. inventory counts).
+     *
+     * @param Builder<User> $query
+     */
+    public static function scopeForAssignedStore(Builder $query, int $storeId): void
+    {
+        $query->where('assigned_store_id', $storeId);
+    }
+
     /**
      * Stores owned by this user.
      *
@@ -44,6 +93,26 @@ class User extends BaseUser implements MustVerifyEmail
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class, 'user_id');
+    }
+
+    /**
+     * Subordinate (limited) users created by this admin.
+     *
+     * @return HasMany<User, $this>
+     */
+    public function subordinateUsers(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_user_id');
+    }
+
+    /**
+     * Store assigned to this limited user.
+     *
+     * @return BelongsTo<Store, $this>
+     */
+    public function assignedStore(): BelongsTo
+    {
+        return $this->belongsTo(Store::class, 'assigned_store_id');
     }
 
     /**
@@ -89,6 +158,42 @@ class User extends BaseUser implements MustVerifyEmail
     public function warehouse(): Store
     {
         return $this->provisionWarehouse();
+    }
+
+    /**
+     * Whether this user is the main admin.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->assertBool('is_admin');
+    }
+
+    /**
+     * Loaded or queried assigned store (may be null for admins).
+     */
+    public function getAssignedStore(): Store|null
+    {
+        if ($this->relationLoaded('assignedStore')) {
+            return $this->assertNullableRelation('assignedStore', Store::class);
+        }
+
+        return $this->assignedStore()->first();
+    }
+
+    /**
+     * Assigned store id getter.
+     */
+    public function getAssignedStoreId(): int|null
+    {
+        return $this->assertNullableInt('assigned_store_id');
+    }
+
+    /**
+     * Parent user id getter.
+     */
+    public function getParentUserId(): int|null
+    {
+        return $this->assertNullableInt('parent_user_id');
     }
 
     /**
@@ -141,6 +246,7 @@ class User extends BaseUser implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_admin' => 'boolean',
         ];
     }
 }

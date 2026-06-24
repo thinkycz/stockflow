@@ -195,7 +195,7 @@ class StatementService
             $totals['foodora'] += $row->getFoodora();
             $totals['total_revenue'] += $row->getTotal();
             $daily[] = [
-                'label' => \substr($row->getDate(), -2),
+                'label' => \mb_substr($row->getDate(), -2),
                 'value' => $row->getTotal(),
             ];
             if ($row->getTotal() > 0) {
@@ -241,38 +241,6 @@ class StatementService
             'daily' => $daily,
             'days_with_revenue' => $daysWithRevenue,
         ];
-    }
-
-    /**
-     * Sum stock movement totals for outgoing movements whose source
-     * store matches the filter. Used by `buildReport()` to compute the
-     * cost of goods leaving the selected scope.
-     */
-    private function calculateReportInvestment(
-        User $user,
-        int|null $storeId,
-        int|null $year,
-        int|null $month,
-    ): float {
-        $query = StockMovement::query();
-        StockMovement::scopeForUser($query, $user);
-        StockMovement::scopeOfType($query, StockMovementTypeEnum::OUTGOING);
-
-        if ($storeId !== null) {
-            $query->where('source_store_id', $storeId);
-        }
-        if ($year !== null && $month !== null) {
-            $start = Carbon::createFromDate($year, $month, 1)->startOfMonth();
-            $end = Carbon::createFromDate($year, $month, 1)->endOfMonth();
-            StockMovement::scopeFromDate($query, $start->toDateTimeString());
-            StockMovement::scopeUntilDate($query, $end->toDateTimeString());
-        }
-
-        $rows = $query
-            ->withSum('movementItems as investment_total', 'total')
-            ->get();
-
-        return Typer::parseFloat($rows->sum(static fn(StockMovement $m): float => Typer::parseFloat($m->getAttribute('investment_total'))));
     }
 
     /**
@@ -363,5 +331,37 @@ class StatementService
                 'foodora' => \round($foodoraTotal, 2),
             ],
         ];
+    }
+
+    /**
+     * Sum stock movement totals for outgoing movements whose source
+     * store matches the filter. Used by `buildReport()` to compute the
+     * cost of goods leaving the selected scope.
+     */
+    private function calculateReportInvestment(
+        User $user,
+        int|null $storeId,
+        int|null $year,
+        int|null $month,
+    ): float {
+        $query = StockMovement::query();
+        StockMovement::scopeForUser($query, $user);
+        StockMovement::scopeOfType($query, StockMovementTypeEnum::OUTGOING);
+
+        if ($storeId !== null) {
+            $query->where('source_store_id', $storeId);
+        }
+        if ($year !== null && $month !== null) {
+            $start = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+            $end = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+            StockMovement::scopeFromDate($query, $start->toDateTimeString());
+            StockMovement::scopeUntilDate($query, $end->toDateTimeString());
+        }
+
+        $rows = $query
+            ->withSum('movementItems as investment_total', 'total')
+            ->get();
+
+        return Typer::parseFloat($rows->sum(static fn(StockMovement $m): float => Typer::parseFloat($m->getAttribute('investment_total'))));
     }
 }

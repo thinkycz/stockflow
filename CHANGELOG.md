@@ -118,6 +118,93 @@ flashError, errors}` with strict TypeScript types.
   translation points at it; the new controller consumes the token,
   marks the user verified, and redirects.
 
+### Added (inventory)
+
+- `/inventory-counts` page and `inventory-counts.update` POST endpoint.
+  The index shows a per-store grid of every catalog item with the
+  current quantity, the last counted timestamp, the average daily
+  consumption (from outgoing `stock_movements` in the last 30 days), the
+  predicted number of days until the branch runs out, and a status
+  badge (`out` / `soon` / `ok` / `no_data`). Saving the form writes a
+  snapshot row to the new `inventory_counts` table and upserts the
+  matching `store_items.quantity`.
+- `/reports/statistics` page (under `Reports`) that aggregates sales
+  from `StatementDay` plus incoming / outgoing stock movements and the
+  current inventory value for the selected branch and period
+  (7–365 days, default 30). Renders metric cards, daily incoming vs.
+  outgoing bar charts, a top-consumed items table, and a channel pie.
+- `App\Models\InventoryCount`, `InventoryCountFactory`,
+  `InventoryCountValidity`, `InventoryCountService`,
+  `InventoryCountIndexController`, `InventoryCountUpdateController`,
+  `StatisticsController`, and migration
+  `2026_06_24_000001_create_inventory_counts_table.php`.
+- i18n keys `nav.inventory_counts`, `nav.statistics`,
+  `inventory_counts.*` and `reports.statistics.*` in cs/en/sk
+  (including backend `Inventory count saved.` flashes).
+- 23 new feature tests (model, service, controllers, statistics).
+
+### Added (users & roles)
+
+- Role-based access control with a single main admin (`test@test.com`) plus
+  isolated limited users. Limited users are pinned to exactly one store and
+  may only access Dashboard, Výkazy (Statements), Inventura, and Settings.
+- `is_admin`, `parent_user_id`, `assigned_store_id` columns on `users`
+  (migration `2026_06_24_000002_add_role_and_store_to_users_table.php`).
+- `/users` admin CRUD under middleware `EnsureUserIsAdmin` (alias `admin`):
+  list, create, edit, destroy. Limited users attempting to hit any of
+  these routes are redirected to the dashboard with an Inertia flash.
+- `User` model scopes `scopeAdmin`, `scopeLimited`, `scopeForAdmin`,
+  `scopeForAssignedStore`; relation `assignedStore`, `subordinateUsers`;
+  getters `isAdmin`, `getAssignedStoreId`, `getParentUserId`,
+  `getAssignedStore`.
+- `Statement*` and `InventoryCount*` controllers resolve the store / item
+  scope through the parent admin for limited users, so the limited user
+  only sees (and writes to) their assigned store. Cross-store access
+  returns 403; the store select on `/statements` and `/inventory-counts`
+  is fixed to a single entry.
+- `UserFactory` states `admin()` and `limited(Store $store)`.
+- i18n keys `nav.users`, `users.*` (title, columns, role, create, edit,
+  fields, actions, confirm_delete), `flash.no_permission`,
+  `flash.cannot_delete_admin`, `flash.cannot_modify_admin_role` in
+  cs/en/sk.
+- 4 new user controller test classes plus `UserRoleTest` and
+  `EnsureUserIsAdminTest`.
+
+### Added (inventory history)
+
+- `/inventory-counts/history` page listing every snapshot with filters
+  for store, item, and date range (default window 90 days). Czech
+  timestamps via `useCzechDate()`. Limited users are pinned to their
+  assigned store; access without `assigned_store_id` returns 403.
+- Sparkline column on `/inventory-counts` index rendering the 30-day
+  per-item quantity trend as inline SVG
+  (`resources/js/components/ui/Sparkline.vue`, no chart library).
+- `InventoryCountService::historyForUser` and `::sparklineForItem` plus
+  the `InventoryCountHistoryController` (under standard auth middleware,
+  accessible to both admin and limited roles).
+- i18n keys `inventory_counts.history.*` in cs/en/sk.
+
+### Added (dates)
+
+- All UI dates are now rendered in Czech `dd.MM.yyyy` (and
+  `dd.MM.yyyy HH:mm` for timestamps) via the new `useCzechDate()`
+  composable. The backend still emits ISO 8601 strings; formatting lives
+  on the client.
+- `resources/js/lib/format.ts` switched to `Intl.DateTimeFormat('cs-CZ', …)`
+  so the project never relies on the browser locale.
+
+### Removed (auth)
+
+- `/register` GET/POST routes, the `Web\Auth\RegisterController`, the
+  `Register.vue` page, and the `Web\Auth\RegisterControllerTest`. New
+  accounts can only be provisioned by the main admin via
+  `/users/create`. The only admin is the seeded `test@test.com` account.
+- i18n keys `auth.register.*` and `auth.login.register_prompt` removed
+  from cs/en/sk.
+- `User::provisionWarehouse()` no longer provisions the default
+  `Warehouse` store for users created by an admin (admin-owned stores
+  remain unaffected).
+
 ## [0.1.0] - 2026-06-07
 
 Initial snapshot captured in `docs/verification/baseline-2026-06-07.md`.

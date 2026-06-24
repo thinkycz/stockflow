@@ -9,11 +9,17 @@
         "stock_movements": "Skladové pohyby",
         "stores": "Prodejny",
         "statements": "Výkazy",
+        "inventory_counts": "Inventura",
         "reports": "Reporty",
+        "statistics": "Statistika",
+        "users": "Uživatelé",
         "settings": "Nastavení",
         "profile": "Profil",
         "password": "Heslo",
         "logout": "Odhlásit se"
+    },
+    "flash": {
+        "no_permission": "Nemáte oprávnění k této sekci."
     },
     "common": {
         "save": "Uložit",
@@ -36,15 +42,7 @@
             "subtitle": "Pro pokračování zadejte své přihlašovací údaje.",
             "submit": "Přihlásit se",
             "forgot_link": "Zapomněli jste heslo?",
-            "back_link": "Zpět na přihlášení",
-            "register_prompt": "Nemáte ještě účet?"
-        },
-        "register": {
-            "title": "Vytvořit účet",
-            "subtitle": "Začněte s autentizovaným Inertia pracovním prostorem.",
-            "submit": "Registrovat",
-            "login_link": "Přihlásit se",
-            "login_prompt": "Máte již účet?"
+            "back_link": "Zpět na přihlášení"
         },
         "forgot": {
             "title": "Zapomenuté heslo",
@@ -372,6 +370,50 @@
             "daily_revenue": "Denní průběh tržeb",
             "channel_pie": "Podíl platebních kanálů",
             "channel_bars": "Tržby podle kanálů"
+        },
+        "statistics": {
+            "title": "Statistika pobočky",
+            "subtitle": "Prodej, příjem, výdej, stav zásob a predikce naskladnění pro vybranou pobočku.",
+            "store": "Pobočka",
+            "period": "Období (dní)",
+            "apply": "Použít",
+            "sales": {
+                "title": "Prodej (z výkazů)",
+                "total": "Celkové tržby",
+                "count": "Počet dní s tržbami"
+            },
+            "incoming": {
+                "title": "Příjem zboží",
+                "total": "Celková hodnota příjmu",
+                "quantity": "Celkové množství",
+                "movements": "Počet příjmů"
+            },
+            "outgoing": {
+                "title": "Výdej zboží (spotřeba)",
+                "total": "Celková hodnota výdeje",
+                "quantity": "Celkové množství",
+                "movements": "Počet výdejů"
+            },
+            "current_inventory": {
+                "title": "Aktuální zásoby",
+                "value": "Hodnota zásob",
+                "items": "Položek na skladě"
+            },
+            "top_consumed": {
+                "title": "Nejvíce spotřebované položky",
+                "subtitle": "Položky s největší absolutní změnou v období.",
+                "item": "Položka",
+                "sku": "SKU",
+                "quantity": "Množství",
+                "value": "Hodnota",
+                "rows": "Řádků"
+            },
+            "charts": {
+                "daily": "Denní příjem vs. výdej",
+                "incoming": "Příjem",
+                "outgoing": "Výdej"
+            },
+            "empty": "Vyberte pobočku pro zobrazení statistik."
         }
     },
     "fields": {
@@ -417,6 +459,116 @@
         "flash": {
             "saved": "Výkaz byl uložen.",
             "cleared": "Výkaz byl vynulován."
+        }
+    },
+    "inventory_counts": {
+        "title": "Inventura",
+        "subtitle": "Zapište aktuální počty zásob na vybrané pobočce. Aplikace podle nich dopočítá průměrnou spotřebu a odhadne, kdy bude potřeba naskladnit.",
+        "store": "Prodejna",
+        "select_store": "Vyberte prodejnu",
+        "columns": {
+            "item": "Položka",
+            "sku": "SKU",
+            "unit": "Jedn.",
+            "current": "Aktuální množství",
+            "last_count": "Naposledy napočítáno",
+            "avg_daily_consumption": "Prům. spotřeba / den",
+            "days_until_restock": "Dnů do vyprodání",
+            "status": "Stav",
+            "note": "Poznámka"
+        },
+        "actions": {
+            "save": "Uložit inventuru"
+        },
+        "status": {
+            "ok": "OK",
+            "soon": "Brzy dojde",
+            "out": "Vyprodáno",
+            "no_data": "Bez dat"
+        },
+        "empty": {
+            "title": "Žádné prodejny",
+            "description": "Nejprve vytvořte prodejnu, abyste mohli vést inventuru.",
+            "no_items": "V katalogu zatím nejsou žádné položky."
+        },
+        "flash": {
+            "saved": "Inventura byla uložena."
+        },
+        "totals": {
+            "current_quantity": "Celkem na skladě",
+            "needs_restock": "Položek k naskladnění"
+        },
+        "history": {
+            "title": "Historie inventury",
+            "subtitle": "Kompletní přehled záznamů inventury v čase — kdo, kdy a kolik napočítal.",
+            "columns": {
+                "counted_at": "Datum inventury",
+                "item": "Položka",
+                "quantity": "Množství",
+                "note": "Poznámka",
+                "created_by": "Zapsal"
+            },
+            "tabs": {
+                "current": "Aktuální stav",
+                "history": "Historie"
+            },
+            "sparkline_label": "Vývoj (30 dní)",
+            "empty": {
+                "title": "Zatím žádné záznamy",
+                "description": "Historie inventury se začne plnit, jakmile zaměstnanci zadají první počty."
+            },
+            "filter": {
+                "from": "Od",
+                "to": "Do",
+                "item": "Položka",
+                "all_items": "Všechny položky",
+                "apply": "Použít"
+            },
+            "flash": {
+                "deleted": "Záznam inventury byl smazán."
+            }
+        }
+    },
+    "users": {
+        "title": "Uživatelé",
+        "subtitle": "Spravujte uživatelské účty a přiřazení k prodejnám.",
+        "columns": {
+            "email": "E-mail",
+            "role": "Role",
+            "store": "Prodejna",
+            "created": "Vytvořen"
+        },
+        "role": {
+            "admin": "Administrátor",
+            "limited": "Omezená"
+        },
+        "create": {
+            "title": "Přidat uživatele",
+            "submit": "Vytvořit uživatele"
+        },
+        "edit": {
+            "title": "Upravit uživatele",
+            "submit": "Uložit změny"
+        },
+        "fields": {
+            "email": "E-mail",
+            "password": "Heslo",
+            "password_optional": "Nové heslo (nechte prázdné pro zachování)",
+            "password_confirmation": "Potvrzení hesla",
+            "assigned_store": "Přiřazená prodejna",
+            "select_store": "Vyberte prodejnu"
+        },
+        "actions": {
+            "delete": "Smazat"
+        },
+        "confirm_delete": "Opravdu smazat tohoto uživatele?",
+        "confirm_delete_with_data": "Opravdu smazat tohoto uživatele? Budou smazány i všechny jeho záznamy (výkazy, inventury).",
+        "flash": {
+            "created": "Uživatel byl vytvořen.",
+            "updated": "Uživatel byl aktualizován.",
+            "deleted": "Uživatel byl smazán.",
+            "cannot_delete_admin": "Hlavního administrátora nelze smazat.",
+            "cannot_modify_admin_role": "Hlavní administrátor má vždy roli administrátora."
         }
     }
 }

@@ -18,6 +18,35 @@ The backend ships with two HTTP surfaces and one framework helper package; the
 frontend is a Vite-built Vue 3 app that consumes Inertia pages from the
 backend.
 
+### Inventory counts and branch statistics
+
+`/inventory-counts` is a per-store editor that lets staff type the on-hand
+quantity of every catalog item; saving the form writes a snapshot row to
+`inventory_counts` (preserving the history of physical counts) and
+upserts the matching `store_items` row, so the single source of truth for
+"what is on the shelf right now" stays on `store_items`. The page also
+renders a 30-day per-item sparkline (inline SVG via
+`resources/js/components/ui/Sparkline.vue`, no chart library) so the
+operator can read the trend at a glance.
+
+`/inventory-counts/history` is the audit view: a paginated list of every
+`inventory_counts` snapshot with filters for store, item, and date range
+(default window 90 days). The page is accessible to both the main admin
+and limited users; limited users are pinned to their assigned store, and
+visitors without an `assigned_store_id` are refused (403).
+
+`/reports/statistics` aggregates three data sources for the selected
+branch over a configurable window (default 30 days):
+
+- `StatementDay` rows for revenue, channel breakdown, and daily totals.
+- `StockMovement` rows for incoming (received) and outgoing (consumed /
+  transferred) volume and value.
+- `store_items` joined with `items` for the current inventory value.
+
+The same `/inventory-counts` page computes per-item average daily
+consumption from outgoing movements in the window and predicts when the
+branch will run out, so the operator can plan restocking.
+
 ```mermaid
 flowchart LR
     Browser -->|HTTP| Laravel
@@ -151,3 +180,49 @@ declared in `composer.json` / `docker-compose.yml` (when present).
 ## Internationalization (i18n)
 
 The backend (`lang/*.json`) and frontend (`resources/js/i18n/*.json`) translation files are separate but mirrored. This duplication is a deliberate design tradeoff to keep the frontend independent of API calls for localizing core UI shells during bootstrap. In the long term, they can be consolidated by either exposing a backend localization API endpoint or generating the client JSON files from the server JSON files during a build step.
+
+## Role-based access control
+
+There is exactly one **main admin** per deployment, seeded as
+`test@test.com` (`is_admin = true`, `parent_user_id = null`). The admin
+provisions **limited users** (`is_admin = false`,
+`parent_user_id = admin.id`, `assigned_store_id = one-of-admin-stores`)
+from the `/users` section.
+
+- Limited users are pinned to one store and only see Dashboard, Výkazy
+  (Statements), Inventura, and Settings in `AppLayout.vue`. The store
+  select on `/statements` and `/inventory-counts` is fixed; cross-store
+  access returns 403.
+- All other routes (`/items`, `/stock-movements`, `/stores`, `/reports`,
+  `/users`) are wrapped by the `EnsureUserIsAdmin` middleware
+  (alias `admin`) which redirects to the dashboard with an Inertia flash
+  when the visitor is not the main admin.
+- `User::scopeForAdmin(Builder, User $admin)` returns the admin plus
+  their subordinate users for listing pages, and
+  `User::scopeForAssignedStore(Builder, Store $store)` returns the
+  limited user pinned to a given store.
+- Limited-user data is scoped to the parent admin: `Statement*` and
+  `InventoryCount*` controllers resolve stores, items, and snapshots
+  through the parent admin, so a limited user only ever sees and writes
+  to their assigned store while the admin keeps a single owner of the
+  underlying data.
+
+## Inventory history
+
+`InventoryCount` rows are an append-only audit log of physical counts.
+The `/inventory-counts/history` page lists every snapshot with store /
+item / date-range filters (default window 90 days) and Czech-formatted
+timestamps. The `/inventory-counts` index additionally renders a
+30-day sparkline (`resources/js/components/ui/Sparkline.vue`, pure SVG)
+next to each catalog item, giving the operator a quick visual trend.
+`InventoryCountService::historyForUser` and `::sparklineForItem` build
+the per-row and per-user view models.
+
+## Date formatting
+
+All UI dates use the `useCzechDate()` composable
+(`resources/js/composables/useCzechDate.ts`) and are rendered in
+`dd.MM.yyyy` (or `dd.MM.yyyy HH:mm` for timestamps) regardless of the
+active UI locale. The backend always returns ISO 8601 strings; the
+frontend formats on the client. `resources/js/lib/format.ts` also uses
+`Intl.DateTimeFormat('cs-CZ', …)` so legacy call sites stay consistent.

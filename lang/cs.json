@@ -31,5 +31,13 @@
     "Store created.": "Prodejna byla vytvořena.",
     "Store updated.": "Prodejna byla aktualizována.",
     "Statement saved.": "Výkaz byl uložen.",
-    "Statement cleared.": "Výkaz byl vynulován."
+    "Inventory count saved.": "Inventura byla uložena.",
+    "Statement cleared.": "Výkaz byl vynulován.",
+    "User created.": "Uživatel byl vytvořen.",
+    "User updated.": "Uživatel byl aktualizován.",
+    "User deleted.": "Uživatel byl smazán.",
+    "You cannot delete the main admin.": "Hlavního administrátora nelze smazat.",
+    "You do not have permission for this section.": "Nemáte oprávnění k této sekci.",
+    "You cannot change the role of the main admin.": "Hlavnímu administrátorovi nelze změnit roli.",
+    "Inventory count record deleted.": "Záznam inventury byl smazán."
 }

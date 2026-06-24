@@ -5,6 +5,9 @@ declare(strict_types=1);
 use App\Models\Statement;
 use App\Models\StatementDay;
 use App\Models\Store;
+use App\Models\User;
+use Database\Factories\UserFactory;
+use Thinkycz\LaravelCore\Support\Typer;
 
 \test('guest is redirected from statements to login', function (): void {
     $this->get('/statements')->assertRedirect('/login');
@@ -91,4 +94,34 @@ use App\Models\Store;
 
     $response->assertOk();
     \expect($response->json('props.statement'))->toBeNull();
+});
+
+\test('limited user is pinned to their assigned store', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $admin->update(['is_admin' => true, 'parent_user_id' => null, 'assigned_store_id' => null]);
+
+    $own = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $other = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $limited = Typer::assertInstance(UserFactory::new()->limited($own)->createOne(), User::class);
+
+    $response = $this->be($limited, 'users')->get('/statements', $this->inertiaHeaders());
+
+    $response->assertOk();
+    $response->assertJsonPath('props.filters.store_id', $own->getKey());
+    $response->assertJsonPath('props.is_admin', false);
+    // Stores select exposes only the assigned store.
+    $response->assertJsonCount(1, 'props.stores');
+
+    // Requesting a non-assigned store is forbidden.
+    $this->be($limited, 'users')
+        ->get('/statements?store_id=' . $other->getKey(), $this->inertiaHeaders())
+        ->assertForbidden();
+});
+
+\test('limited user without an assigned store is refused', function (): void {
+    $limited = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+
+    $this->be($limited, 'users')
+        ->get('/statements', $this->inertiaHeaders())
+        ->assertForbidden();
 });

@@ -10,6 +10,7 @@ import DataTable from '@/components/ui/DataTable.vue';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { formatCzechDate } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
 import { formatMoney, formatMonth } from '@/lib/format';
 
@@ -235,10 +236,12 @@ const hasNoStores = computed(() => props.stores.length === 0);
                                     ? String(props.filters.store_id)
                                     : null
                             "
-                            :options="props.stores.map((s) => ({
-                                value: String(s.id),
-                                label: s.name,
-                            }))"
+                            :options="
+                                props.stores.map((s) => ({
+                                    value: String(s.id),
+                                    label: s.name,
+                                }))
+                            "
                             :placeholder="t('statements.select_store')"
                             :disabled="hasNoStores"
                             @update:model-value="selectStore"
@@ -313,13 +316,11 @@ const hasNoStores = computed(() => props.stores.length === 0);
                                     <td
                                         class="font-mono text-xs text-on-surface-variant"
                                     >
-                                        {{ day.date }}
+                                        {{ formatCzechDate(day.date) }}
                                     </td>
                                     <td class="text-right">
                                         <Input
-                                            :model-value="
-                                                String(day.cash || 0)
-                                            "
+                                            :model-value="String(day.cash || 0)"
                                             type="number"
                                             step="0.01"
                                             min="0"
@@ -336,9 +337,7 @@ const hasNoStores = computed(() => props.stores.length === 0);
                                     </td>
                                     <td class="text-right">
                                         <Input
-                                            :model-value="
-                                                String(day.card || 0)
-                                            "
+                                            :model-value="String(day.card || 0)"
                                             type="number"
                                             step="0.01"
                                             min="0"
@@ -355,9 +354,7 @@ const hasNoStores = computed(() => props.stores.length === 0);
                                     </td>
                                     <td class="text-right">
                                         <Input
-                                            :model-value="
-                                                String(day.wolt || 0)
-                                            "
+                                            :model-value="String(day.wolt || 0)"
                                             type="number"
                                             step="0.01"
                                             min="0"
@@ -374,9 +371,7 @@ const hasNoStores = computed(() => props.stores.length === 0);
                                     </td>
                                     <td class="text-right">
                                         <Input
-                                            :model-value="
-                                                String(day.bolt || 0)
-                                            "
+                                            :model-value="String(day.bolt || 0)"
                                             type="number"
                                             step="0.01"
                                             min="0"

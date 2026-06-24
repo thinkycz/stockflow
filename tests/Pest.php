@@ -34,7 +34,7 @@ function arch_php_files(string $dir): iterable
  */
 function createIsolatedUserWithWarehouse(): array
 {
-    $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+    $user = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
     $warehouse = Store::factory()->warehouse()->create([
         'user_id' => $user->getKey(),
     ]);

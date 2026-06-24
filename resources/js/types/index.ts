@@ -5,6 +5,8 @@ export interface AuthUser {
     email: string;
     locale: string;
     email_verified_at: string | null;
+    is_admin: boolean;
+    assigned_store_id: number | null;
 }
 
 export interface AppMeta {

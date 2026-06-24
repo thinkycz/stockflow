@@ -32,8 +32,16 @@
 ## HTTP surfaces
 
 - Inertia web app:
-    - `/login`, `/register`, `/forgot-password`, `/reset-password`
+    - `/login`, `/forgot-password`, `/reset-password`
     - `/dashboard`
+    - `/inventory`, `/stock-movements`, `/stores`
+    - `/statements` (POST `/statements/{statement}` and `/statements/{statement}/clear`)
+    - `/inventory-counts` (POST `/inventory-counts` to persist counts)
+    - `/inventory-counts/history` (admin + limited, default 90-day window)
+    - `/reports`, `/reports/statistics`
+    - `/users` admin CRUD (GET index, GET `/create`, POST store, GET `/users/{id}/edit`,
+      PUT `/users/{id}`, DELETE `/users/{id}`) — wrapped by the
+      `EnsureUserIsAdmin` middleware (alias `admin`).
     - `/verify-email`
     - `/settings`
     - POST form actions: `/settings/profile`, `/settings/password`
@@ -43,13 +51,20 @@
     - `/api/v1/password/*`
     - `/api/v1/email_verification/*`
 
-## Authentication
+## Authentication & roles
 
 - Default guard: `users`.
 - Guard driver: `database_token`.
-- Login/register issue an HTTP-only bearer cookie through `Thinkycz\LaravelCore\Guards\DatabaseTokenGuard`.
-- Inertia pages receive the current user through `HandleInertiaRequests` shared props.
+- Login issues an HTTP-only bearer cookie through `Thinkycz\LaravelCore\Guards\DatabaseTokenGuard`.
+- Inertia pages receive the current user through `HandleInertiaRequests` shared props
+  (`auth.user.is_admin`, `auth.user.assigned_store_id`).
 - Web form submissions use Laravel redirects, validation errors, and flash messages.
+- Registration has been removed. The single main admin account (`test@test.com`)
+  is seeded by `UserSeeder` and provisions additional limited accounts from the
+  `/users` section. Limited users are pinned to exactly one store
+  (`assigned_store_id`) and may only see Dashboard, Výkazy (Statements),
+  Inventura, and Settings — the store select is fixed and any cross-store
+  access returns 403.
 
 ## Cookies
 

@@ -12,20 +12,16 @@ import EmptyState from '@/components/ui/EmptyState.vue';
 import Input from '@/components/ui/Input.vue';
 import LoadingState from '@/components/ui/LoadingState.vue';
 import Pagination from '@/components/ui/Pagination.vue';
-import StatusBadge from '@/components/ui/StatusBadge.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
-import { formatMoney, formatNumber } from '@/lib/format';
+import { formatMoney } from '@/lib/format';
 
 type ItemRow = {
     id: number;
     title: string;
     sku: string | null;
     unit: string | null;
-    warehouse_quantity: number;
     purchase_price: number;
-    total_value: number;
-    status: 'in_stock' | 'low_stock' | 'out_of_stock';
 };
 
 const props = defineProps<{
@@ -162,15 +158,8 @@ function destroyItem(id: number): void {
                                 <th>{{ t('items.columns.title') }}</th>
                                 <th>{{ t('items.columns.sku') }}</th>
                                 <th class="text-right">
-                                    {{ t('items.columns.quantity') }}
-                                </th>
-                                <th class="text-right">
                                     {{ t('items.columns.price') }}
                                 </th>
-                                <th class="text-right">
-                                    {{ t('items.columns.total_value') }}
-                                </th>
-                                <th>{{ t('items.columns.status') }}</th>
                                 <th class="text-right">
                                     {{ t('items.columns.actions') }}
                                 </th>
@@ -204,21 +193,8 @@ function destroyItem(id: number): void {
                                 >
                                     {{ item.sku ?? '—' }}
                                 </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ formatNumber(item.warehouse_quantity) }}
-                                </td>
                                 <td class="text-right text-on-surface-variant">
                                     {{ formatMoney(item.purchase_price) }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ formatMoney(item.total_value) }}
-                                </td>
-                                <td>
-                                    <StatusBadge :status="item.status" />
                                 </td>
                                 <td>
                                     <div

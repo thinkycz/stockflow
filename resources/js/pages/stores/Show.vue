@@ -20,9 +20,12 @@ import CardTitle from '@/components/ui/CardTitle.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
+import Sparkline from '@/components/ui/Sparkline.vue';
+import StatusBadge from '@/components/ui/StatusBadge.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { formatCzechDateTime } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
-import { formatDateTime, formatMoney } from '@/lib/format';
+import { formatDateTime, formatMoney, formatNumber } from '@/lib/format';
 
 type MovementRow = {
     id: number;
@@ -51,6 +54,13 @@ type ItemSummary = {
     total_value: number;
 };
 
+type SparklinePoint = {
+    label: string;
+    value: number | null;
+};
+
+type InventoryStatus = 'in_stock' | 'low_stock' | 'out_of_stock';
+
 type InventoryRow = {
     item_id: number;
     item_title: string;
@@ -59,6 +69,11 @@ type InventoryRow = {
     unit: string | null;
     purchase_price: number;
     total_value: number;
+    status: InventoryStatus;
+    sparkline: SparklinePoint[];
+    last_count_at: string | null;
+    avg_daily_consumption: number;
+    days_until_restock: number | null;
 };
 
 defineProps<{
@@ -79,6 +94,7 @@ defineProps<{
     };
     movements: MovementRow[];
     items_received: ItemSummary[];
+    now: string;
 }>();
 
 const { t } = useI18n();
@@ -234,6 +250,19 @@ function destroyStore(id: number): void {
                                 <th class="text-right">
                                     {{ t('stores.columns.total_value') }}
                                 </th>
+                                <th>{{ t('stores.columns.status') }}</th>
+                                <th>{{ t('stores.columns.sparkline') }}</th>
+                                <th>{{ t('stores.columns.last_count') }}</th>
+                                <th class="text-right">
+                                    {{
+                                        t(
+                                            'stores.columns.avg_daily_consumption',
+                                        )
+                                    }}
+                                </th>
+                                <th class="text-right">
+                                    {{ t('stores.columns.days_until_restock') }}
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -247,6 +276,40 @@ function destroyStore(id: number): void {
                                 </td>
                                 <td class="text-right">
                                     {{ formatMoney(row.total_value) }}
+                                </td>
+                                <td>
+                                    <StatusBadge :status="row.status" />
+                                </td>
+                                <td>
+                                    <Sparkline
+                                        :data="row.sparkline"
+                                        :width="120"
+                                        :height="32"
+                                    />
+                                </td>
+                                <td class="text-xs text-on-surface-variant">
+                                    {{ formatCzechDateTime(row.last_count_at) }}
+                                </td>
+                                <td
+                                    class="text-right text-xs text-on-surface-variant"
+                                >
+                                    {{
+                                        row.avg_daily_consumption > 0
+                                            ? formatNumber(
+                                                  row.avg_daily_consumption,
+                                                  2,
+                                              )
+                                            : '—'
+                                    }}
+                                </td>
+                                <td
+                                    class="text-right text-xs text-on-surface-variant"
+                                >
+                                    {{
+                                        row.days_until_restock !== null
+                                            ? `${row.days_until_restock} d`
+                                            : '—'
+                                    }}
                                 </td>
                             </tr>
                         </tbody>

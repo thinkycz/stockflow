@@ -15,23 +15,20 @@ import {
 } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
 
-type Row = {
+type Session = {
     id: number;
-    item_id: number;
-    item_title: string | null;
-    store_id: number;
-    quantity: number;
     counted_at: string;
     note: string | null;
     created_by: number | null;
     created_by_email: string | null;
+    item_count: number;
 };
 
 const props = defineProps<{
     store: { id: number; name: string } | null;
     stores: Array<{ id: number; name: string }>;
     items: Array<{ id: number; title: string }>;
-    rows: Row[];
+    rows: Session[];
     filters: {
         store_id: number | null;
         item_id: number | null;
@@ -93,13 +90,9 @@ function applyRange(): void {
     );
 }
 
-const totals = computed(() => {
-    let quantity = 0;
-    for (const row of props.rows) {
-        quantity += row.quantity;
-    }
-    return { quantity, count: props.rows.length };
-});
+const totals = computed(() => ({
+    count: props.rows.length,
+}));
 </script>
 
 <template>
@@ -232,7 +225,8 @@ const totals = computed(() => {
                         <strong class="font-semibold text-on-surface">{{
                             totals.count
                         }}</strong>
-                        záznamů · {{ formatCzechDate(props.filters.from) }} –
+                        {{ t('inventory_counts.history.sessions_label') }} ·
+                        {{ formatCzechDate(props.filters.from) }} –
                         {{ formatCzechDate(props.filters.to) }}
                     </span>
                     <span v-if="props.store">
@@ -259,17 +253,10 @@ const totals = computed(() => {
                                         )
                                     }}
                                 </th>
-                                <th class="min-w-[14rem] text-left">
-                                    {{
-                                        t(
-                                            'inventory_counts.history.columns.item',
-                                        )
-                                    }}
-                                </th>
                                 <th class="min-w-[8rem] text-right">
                                     {{
                                         t(
-                                            'inventory_counts.history.columns.quantity',
+                                            'inventory_counts.history.columns.item_count',
                                         )
                                     }}
                                 </th>
@@ -287,6 +274,13 @@ const totals = computed(() => {
                                         )
                                     }}
                                 </th>
+                                <th class="min-w-[8rem] text-right">
+                                    {{
+                                        t(
+                                            'inventory_counts.history.columns.open',
+                                        )
+                                    }}
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -300,19 +294,37 @@ const totals = computed(() => {
                                 >
                                     {{ formatCzechDateTime(row.counted_at) }}
                                 </td>
-                                <td class="font-semibold text-on-surface">
-                                    {{ row.item_title ?? '—' }}
-                                </td>
                                 <td
                                     class="text-right font-semibold text-on-surface"
                                 >
-                                    {{ row.quantity }}
+                                    {{ row.item_count }}
                                 </td>
                                 <td class="text-xs text-on-surface-variant">
                                     {{ row.note ?? '—' }}
                                 </td>
                                 <td class="text-xs text-on-surface-variant">
                                     {{ row.created_by_email ?? '—' }}
+                                </td>
+                                <td class="text-right">
+                                    <Link
+                                        :href="
+                                            route('inventory-counts.show', {
+                                                session: row.id,
+                                            })
+                                        "
+                                    >
+                                        <button
+                                            type="button"
+                                            class="rounded-xl border border-outline-glass bg-surface-container-lowest px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/5"
+                                        >
+                                            {{
+                                                t(
+                                                    'inventory_counts.history.open',
+                                                )
+                                            }}
+                                            →
+                                        </button>
+                                    </Link>
                                 </td>
                             </tr>
                         </tbody>

@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\InventoryCount;
-use App\Models\Item;
+use App\Models\InventorySession;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 
 /**
- * @extends Factory<InventoryCount>
+ * @extends Factory<InventorySession>
  */
-class InventoryCountFactory extends Factory
+class InventorySessionFactory extends Factory
 {
+    protected $model = InventorySession::class;
+
     /**
      * Define the model's default state.
      *
@@ -26,16 +27,14 @@ class InventoryCountFactory extends Factory
         return [
             'user_id' => static fn(): int => UserFactory::new()->createOne()->getKey(),
             'store_id' => static fn(): int => Store::factory()->createOne()->getKey(),
-            'item_id' => static fn(): int => Item::factory()->createOne()->getKey(),
-            'quantity' => $this->faker->numberBetween(0, 100),
-            'counted_at' => Carbon::now(),
             'created_by' => null,
+            'counted_at' => Carbon::now(),
             'note' => null,
         ];
     }
 
     /**
-     * Indicate the count belongs to the given user.
+     * Indicate the session belongs to the given user.
      */
     public function byUser(User $user): self
     {
@@ -45,7 +44,7 @@ class InventoryCountFactory extends Factory
     }
 
     /**
-     * Indicate the count is for the given store.
+     * Indicate the session is for the given store.
      */
     public function forStore(Store $store): self
     {
@@ -56,18 +55,17 @@ class InventoryCountFactory extends Factory
     }
 
     /**
-     * Indicate the count is for the given item.
+     * Indicate the session was created by the given user.
      */
-    public function forItem(Item $item): self
+    public function byCreator(User $user): self
     {
         return $this->state(fn(): array => [
-            'item_id' => $item->getKey(),
-            'user_id' => $item->getUserId(),
+            'created_by' => $user->getKey(),
         ]);
     }
 
     /**
-     * Indicate the count was taken within the last N days.
+     * Indicate the session was taken within the last N days.
      */
     public function recent(int $days = 30): self
     {

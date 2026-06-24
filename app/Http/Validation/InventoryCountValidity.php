@@ -49,11 +49,11 @@ class InventoryCountValidity
     }
 
     /**
-     * Inventory count id validation rules.
+     * Inventory session id validation rules.
      */
     public function id(): Validity
     {
-        return $this->baseValidity->id()->exists('inventory_counts', 'id', ['user_id', (string) $this->userId]);
+        return $this->baseValidity->id()->exists('inventory_sessions', 'id', ['user_id', (string) $this->userId]);
     }
 
     /**

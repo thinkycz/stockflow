@@ -32,3 +32,22 @@ use App\Models\Item;
     \expect($items)->toHaveCount(1);
     \expect($items[0]['title'])->toBe('Matcha Powder');
 });
+
+\test('items index does not expose per-store quantity, value or status', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
+
+    $response = $this->be($user, 'users')->get('/items', $this->inertiaHeaders());
+
+    $response->assertOk();
+    $row = $response->json('props.items.0');
+    \expect($row)->toHaveKey('id', $item->getKey());
+    \expect($row)->toHaveKey('title');
+    \expect($row)->toHaveKey('sku');
+    \expect($row)->toHaveKey('unit');
+    \expect($row)->toHaveKey('purchase_price');
+    \expect($row)->not->toHaveKey('warehouse_quantity');
+    \expect($row)->not->toHaveKey('total_quantity');
+    \expect($row)->not->toHaveKey('total_value');
+    \expect($row)->not->toHaveKey('status');
+});

@@ -20,20 +20,31 @@ backend.
 
 ### Inventory counts and branch statistics
 
-`/inventory-counts` is a per-store editor that lets staff type the on-hand
-quantity of every catalog item; saving the form writes a snapshot row to
-`inventory_counts` (preserving the history of physical counts) and
-upserts the matching `store_items` row, so the single source of truth for
-"what is on the shelf right now" stays on `store_items`. The page also
-renders a 30-day per-item sparkline (inline SVG via
-`resources/js/components/ui/Sparkline.vue`, no chart library) so the
-operator can read the trend at a glance.
+`/inventory-counts` is a per-store editor focused on data entry. Each
+row is one catalog item with three quantity columns: **Aktuální
+množství** (read-only — the current on-hand value in `store_items`),
+**Poslední množství** (read-only — the value recorded in the previous
+inventory session for the same store/item) and **Nové množství** (the
+input — what becomes the new on-hand value when the form is saved).
+Saving the form creates a new `inventory_sessions` header and one
+`inventory_session_items` row per recorded item inside a single
+transaction; the matching `store_items` row is upserted so the single
+source of truth for "what is on the shelf right now" stays on
+`store_items`. Statistical columns (average consumption, days until
+restock, status, sparkline, last count) live on the store detail page
+instead.
 
-`/inventory-counts/history` is the audit view: a paginated list of every
-`inventory_counts` snapshot with filters for store, item, and date range
-(default window 90 days). The page is accessible to both the main admin
-and limited users; limited users are pinned to their assigned store, and
-visitors without an `assigned_store_id` are refused (403).
+`/inventory-counts/{session}` is the read-only detail of one inventory
+session. It lists every item in alphabetical order with the value
+recorded in this session and the value from the previous one, so the
+operator can compare day-over-day without re-filtering the history.
+
+`/inventory-counts/history` is the audit view: a list of every
+`inventory_sessions` header with filters for store, item, and date
+range (default window 90 days). Each row links to the matching show
+page. The page is accessible to both the main admin and limited users;
+limited users are pinned to their assigned store, and visitors without
+an `assigned_store_id` are refused (403).
 
 `/reports/statistics` aggregates three data sources for the selected
 branch over a configurable window (default 30 days):
@@ -43,9 +54,9 @@ branch over a configurable window (default 30 days):
   transferred) volume and value.
 - `store_items` joined with `items` for the current inventory value.
 
-The same `/inventory-counts` page computes per-item average daily
-consumption from outgoing movements in the window and predicts when the
-branch will run out, so the operator can plan restocking.
+The store detail page computes per-item average daily consumption from
+outgoing movements in the window and predicts when the branch will
+run out, so the operator can plan restocking.
 
 ```mermaid
 flowchart LR
@@ -202,21 +213,55 @@ from the `/users` section.
   `User::scopeForAssignedStore(Builder, Store $store)` returns the
   limited user pinned to a given store.
 - Limited-user data is scoped to the parent admin: `Statement*` and
-  `InventoryCount*` controllers resolve stores, items, and snapshots
+  `InventoryCount*` controllers resolve stores, items, and sessions
   through the parent admin, so a limited user only ever sees and writes
   to their assigned store while the admin keeps a single owner of the
   underlying data.
 
 ## Inventory history
 
-`InventoryCount` rows are an append-only audit log of physical counts.
-The `/inventory-counts/history` page lists every snapshot with store /
-item / date-range filters (default window 90 days) and Czech-formatted
-timestamps. The `/inventory-counts` index additionally renders a
-30-day sparkline (`resources/js/components/ui/Sparkline.vue`, pure SVG)
-next to each catalog item, giving the operator a quick visual trend.
-`InventoryCountService::historyForUser` and `::sparklineForItem` build
-the per-row and per-user view models.
+`inventory_sessions` is the header of one physical count: it records
+`user_id` (the admin / parent), `store_id`, `created_by` (the user
+who actually entered the values), `counted_at` and a free-form `note`.
+Each recorded item lives in `inventory_session_items` with
+`(session_id, item_id, quantity, note)`. Sessions are read-only after
+creation — the editor and history pages only ever insert new sessions
+or upsert `store_items`, never edit past rows.
+
+`/inventory-counts/history` lists every session with store / item /
+date-range filters (default window 90 days) and Czech-formatted
+timestamps; each row links to the matching show page. The
+`/inventory-counts/{session}` show page renders the items in
+alphabetical order (catalog order) and exposes the new value and the
+previous session's value, so the operator can spot day-over-day
+deltas without a join. The store detail page also renders a 30-day
+sparkline (`resources/js/components/ui/Sparkline.vue`, pure SVG) for
+each item, built from the
+`InventorySessionService::sparklineForItem` service call.
+
+`InventorySessionService::createSession`, `::previousQuantity`,
+`::buildStoreView` (alphabetical), `::buildSessionView` (alphabetical,
+read-only), `::historyForUser`, `::consumptionLastDays`,
+`::predictedRunOut`, and `::sparklineForItem` are the single source of
+truth for these views.
+
+## Store detail inventory
+
+`/stores/{id}` (`StoreShowController`) is the only place that exposes
+the current per-store stock snapshot and its per-item statistics. The
+inventory table on that page renders the per-item Množství
+(`store_items.quantity`), Hodnota (`quantity × items.purchase_price`),
+Stav (`ItemStockStatusEnum::fromQuantity($quantity)` — in_stock /
+low_stock / out_of_stock), Vývoj (30 dní)
+(`InventorySessionService::sparklineForItem` reading the
+`inventory_session_items` history), Naposledy napočítáno (timestamp of
+the most recent `inventory_sessions` row that contains the item for
+this store), Prům. spotřeba / den (average daily consumption computed
+from outgoing movements in the configured window) and Dnů do
+vyprodání (predicted days of stock left based on current quantity
+and average consumption). The `/items` index never carries these
+columns because they belong to the `store_items` link, not the item
+catalog.
 
 ## Date formatting
 

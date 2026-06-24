@@ -200,7 +200,7 @@ class StockMovementSequence extends BaseModel
             ->where('user_id', $userId)
             ->where('type', $type->value)
             ->where('number', 'like', $prefix . '%')
-            ->selectRaw('MAX(CAST(SUBSTR(number, ?) AS INTEGER)) as max_number', [\mb_strlen($prefix) + 1])
+            ->selectRaw('MAX(CAST(SUBSTR(number, ?) AS UNSIGNED)) as max_number', [\mb_strlen($prefix) + 1])
             ->first();
 
         if ($row === null) {

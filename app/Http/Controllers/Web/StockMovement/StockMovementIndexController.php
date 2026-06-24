@@ -41,7 +41,7 @@ class StockMovementIndexController
 
         $search = $validated->assertNullableString('search') ?? '';
         $type = $validated->assertNullableString('type');
-        $storeId = $validated->assertNullableInt('store_id');
+        $storeId = $validated->parseNullableInt('store_id');
         $dateFrom = $validated->assertNullableString('date_from');
         $dateTo = $validated->assertNullableString('date_to');
 

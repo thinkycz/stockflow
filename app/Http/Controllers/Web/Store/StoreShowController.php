@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Store;
 
+use App\Enums\ItemStockStatusEnum;
 use App\Enums\StockMovementTypeEnum;
+use App\Models\InventorySession;
 use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Models\StoreItem;
+use App\Models\User;
+use App\Services\InventorySessionService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection as SupportCollection;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,7 +25,7 @@ class StoreShowController
     /**
      * Show the store detail page with movement history and inventory.
      */
-    public function __invoke(Store $store): Response
+    public function __invoke(Store $store, InventorySessionService $counts): Response
     {
         $movementsQuery = StockMovement::query();
         StockMovement::scopeForUser($movementsQuery, $store->getUserId());
@@ -56,21 +61,36 @@ class StoreShowController
             ];
         })->all();
 
+        $owner = User::query()->whereKey($store->getUserId())->first() ?? User::mustAuth();
         $inventory = $store->storeItems()
             ->with('item')
-            ->where('quantity', '>', 0)
             ->get()
-            ->map(static function (StoreItem $row): array {
+            ->map(static function (StoreItem $row) use ($counts, $owner, $store): array {
                 $item = $row->getItem();
+                $quantity = $row->getQuantity();
+                $lastSession = InventorySession::query()
+                    ->where('store_id', $store->getKey())
+                    ->whereHas('items', static function (Builder $query) use ($item): void {
+                        $query->where('item_id', $item->getKey());
+                    })
+                    ->orderByDesc('counted_at')
+                    ->orderByDesc('id')
+                    ->first();
+                $prediction = $counts->predictedRunOut($store, $item);
 
                 return [
                     'item_id' => $row->getItemId(),
                     'item_title' => $item->getTitle(),
                     'item_sku' => $item->getSku(),
-                    'quantity' => $row->getQuantity(),
+                    'quantity' => $quantity,
                     'unit' => $item->getUnit(),
                     'purchase_price' => $item->getPurchasePrice(),
-                    'total_value' => $row->getQuantity() * $item->getPurchasePrice(),
+                    'total_value' => $quantity * $item->getPurchasePrice(),
+                    'status' => ItemStockStatusEnum::fromQuantity($quantity)->value,
+                    'sparkline' => $counts->sparklineForItem($owner, $store, $item, 30),
+                    'last_count_at' => $lastSession?->getCountedAt()?->toJSON(),
+                    'avg_daily_consumption' => $prediction['per_day'],
+                    'days_until_restock' => $prediction['days_left'],
                 ];
             })
             ->all();
@@ -135,6 +155,7 @@ class StoreShowController
             'inventory' => $inventory,
             'movements' => $movementsDto,
             'items_received' => $itemsReceived,
+            'now' => Carbon::now()->toJSON(),
         ]);
     }
 }

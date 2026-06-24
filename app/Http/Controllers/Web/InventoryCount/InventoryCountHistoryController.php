@@ -7,7 +7,7 @@ namespace App\Http\Controllers\Web\InventoryCount;
 use App\Models\Item;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\InventoryCountService;
+use App\Services\InventorySessionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
@@ -32,7 +32,7 @@ class InventoryCountHistoryController
     /**
      * Render the stock-count history page.
      */
-    public function __invoke(Request $request, InventoryCountService $service): Response
+    public function __invoke(Request $request, InventorySessionService $service): Response
     {
         $user = User::mustAuth();
 

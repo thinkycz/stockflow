@@ -36,8 +36,9 @@
     - `/dashboard`
     - `/inventory`, `/stock-movements`, `/stores`
     - `/statements` (POST `/statements/{statement}` and `/statements/{statement}/clear`)
-    - `/inventory-counts` (POST `/inventory-counts` to persist counts)
+    - `/inventory-counts` (POST `/inventory-counts` to persist a new session)
     - `/inventory-counts/history` (admin + limited, default 90-day window)
+    - `/inventory-counts/{session}` (read-only session detail)
     - `/reports`, `/reports/statistics`
     - `/users` admin CRUD (GET index, GET `/create`, POST store, GET `/users/{id}/edit`,
       PUT `/users/{id}`, DELETE `/users/{id}`) — wrapped by the
@@ -104,3 +105,51 @@ Copy `.env.example` to `.env` and set:
 - Inertia SSR is intentionally not enabled in v1.
 - OpenAPI demo generation from the reference project is intentionally omitted.
 - Catalog/order sample entities from the reference project are intentionally omitted.
+
+## Inventory semantics
+
+- Items are the catalog (`items` table): name, SKU, unit, purchase price.
+  They do not carry stock on their own.
+- Per-store stock lives on `store_items` (`store_id`, `item_id`, `quantity`).
+  Quantity is the single source of truth for "what is on the shelf right
+  now" and is updated transactionally by `InventorySessionService` and
+  `StockMovementService`.
+- `/items` (Inventář) is a pure catalog list — it never exposes
+  per-store quantity, value, or status. Those are properties of the
+  `store_items` link, so they only render inside a store context.
+- `/stores/{id}` is the only place where the current stock snapshot makes
+  sense. The inventory table there exposes:
+    - **Množství** (current `store_items.quantity`)
+    - **Hodnota** (`quantity × items.purchase_price`)
+    - **Stav** (`ItemStockStatusEnum::fromQuantity($quantity)` — in_stock /
+      low_stock / out_of_stock)
+    - **Vývoj (30 dní)** (30-day sparkline via
+      `InventorySessionService::sparklineForItem`, sourced from
+      `inventory_session_items`)
+    - **Naposledy napočítáno** (timestamp of the most recent
+      `inventory_sessions` row that contains the item for this store,
+      formatted via `useCzechDate`).
+    - **Prům. spotřeba / den** (average daily consumption computed from
+      outgoing movements in the configured window).
+    - **Dnů do vyprodání** (predicted days of stock left, derived from
+      current quantity and average consumption).
+- `/inventory-counts` is the focused data-entry surface. Each row is one
+  catalog item with three quantity columns:
+    - **Aktuální množství** — read-only, the current on-hand value from
+      `store_items`.
+    - **Poslední množství** — read-only, the quantity recorded in the
+      previous inventory session for the same store/item (or `—` when
+      there is none).
+    - **Nové množství** — the input that becomes the new on-hand value
+      when the form is saved.
+  Saving creates a new `inventory_sessions` header plus its
+  `inventory_session_items` rows and upserts the matching
+  `store_items.quantity`, all in one transaction. Statistical columns
+  are not rendered on this page — they live on the store detail page.
+- `/inventory-counts/{session}` is the read-only detail of one
+  inventory session. It lists every recorded item in alphabetical
+  order with the new value and the previous value, so the operator can
+  spot day-over-day deltas without a join.
+- `/inventory-counts/history` is the audit log of inventory sessions
+  (one row per save). Each row links to the matching show page; the
+  page exposes store, item, and date-range filters (default 90 days).

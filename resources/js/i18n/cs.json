@@ -210,7 +210,11 @@
             "sku": "SKU",
             "total_quantity": "Celkem množství",
             "total_value": "Celková hodnota",
-            "actions": "Akce"
+            "actions": "Akce",
+            "sparkline": "Vývoj (30 dní)",
+            "last_count": "Naposledy napočítáno",
+            "avg_daily_consumption": "Prům. spotřeba / den",
+            "days_until_restock": "Dnů do vyprodání"
         }
     },
     "stock_movements": {
@@ -463,18 +467,17 @@
     },
     "inventory_counts": {
         "title": "Inventura",
-        "subtitle": "Zapište aktuální počty zásob na vybrané pobočce. Aplikace podle nich dopočítá průměrnou spotřebu a odhadne, kdy bude potřeba naskladnit.",
+        "subtitle": "Zapište nové počty zásob na vybrané pobočce. Aplikace vytvoří inventuru a aktualizuje sklad.",
         "store": "Prodejna",
         "select_store": "Vyberte prodejnu",
+        "back_to_list": "Zpět na inventuru",
         "columns": {
             "item": "Položka",
             "sku": "SKU",
             "unit": "Jedn.",
             "current": "Aktuální množství",
-            "last_count": "Naposledy napočítáno",
-            "avg_daily_consumption": "Prům. spotřeba / den",
-            "days_until_restock": "Dnů do vyprodání",
-            "status": "Stav",
+            "previous": "Poslední inventura",
+            "new_quantity": "Nové množství",
             "note": "Poznámka"
         },
         "actions": {
@@ -498,15 +501,20 @@
             "current_quantity": "Celkem na skladě",
             "needs_restock": "Položek k naskladnění"
         },
+        "session": {
+            "title": "Inventura"
+        },
         "history": {
-            "title": "Historie inventury",
-            "subtitle": "Kompletní přehled záznamů inventury v čase — kdo, kdy a kolik napočítal.",
+            "title": "Historie inventur",
+            "subtitle": "Přehled provedených inventur. Otevřete libovolný den a prohlédněte si zapsané počty.",
+            "open": "Otevřít",
+            "sessions_label": "inventur",
             "columns": {
                 "counted_at": "Datum inventury",
-                "item": "Položka",
-                "quantity": "Množství",
+                "item_count": "Počet položek",
                 "note": "Poznámka",
-                "created_by": "Zapsal"
+                "created_by": "Zapsal",
+                "open": ""
             },
             "tabs": {
                 "current": "Aktuální stav",

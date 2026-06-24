@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\StockMovementTypeEnum;
-use App\Models\InventoryCount;
+use App\Models\InventorySession;
+use App\Models\InventorySessionItem;
 use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\StockMovementItem;
@@ -16,7 +17,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Thinkycz\LaravelCore\Support\Typer;
 
-class InventoryCountService
+class InventorySessionService
 {
     /**
      * Window (in days) used when computing average daily consumption.
@@ -29,7 +30,7 @@ class InventoryCountService
     public const int SOON_THRESHOLD_DAYS = 7;
 
     /**
-     * Possible status values for predictedRunOut and the per-row view.
+     * Possible status values for predictedRunOut.
      */
     public const string STATUS_OK = 'ok';
 
@@ -40,29 +41,38 @@ class InventoryCountService
     public const string STATUS_NO_DATA = 'no_data';
 
     /**
-     * Record a batch of inventory counts for the given store.
+     * Create a new inventory session for the given store.
      *
-     * Persists a snapshot row per item to `inventory_counts` and
-     * upserts the matching `store_items` row so the application
-     * keeps a single source of truth for the current quantity.
+     * Persists a session header in `inventory_sessions`, one row per
+     * item in `inventory_session_items`, and upserts the matching
+     * `store_items` row so the application keeps a single source of
+     * truth for the current quantity.
      *
-     * For limited users, the snapshot is attributed to the parent
+     * For limited users, the session is attributed to the parent
      * (admin) account so the row appears in the data the admin owns.
      * `created_by` keeps the actual user who entered the count.
      *
      * @param array<int, array<string, mixed>> $rows
      */
-    public function recordCounts(User $user, Store $store, array $rows): void
+    public function createSession(User $user, Store $store, array $rows, string|null $note = null): InventorySession
     {
         $now = Carbon::now();
         $owner = $user->isAdmin() ? $user : $this->resolveOwner($user);
 
-        DB::transaction(function () use ($user, $owner, $store, $rows, $now): void {
+        return DB::transaction(function () use ($user, $owner, $store, $rows, $note, $now): InventorySession {
+            $session = InventorySession::query()->create([
+                'user_id' => $owner->getKey(),
+                'store_id' => $store->getKey(),
+                'created_by' => $user->getKey(),
+                'counted_at' => $now,
+                'note' => $note,
+            ]);
+
             foreach ($rows as $row) {
                 $payload = Typer::assertArray($row);
                 $itemId = Typer::parseInt($payload['item_id'] ?? 0);
                 $quantity = Typer::parseInt($payload['quantity'] ?? 0);
-                $note = Typer::parseNullableString($payload['note'] ?? null);
+                $rowNote = Typer::parseNullableString($payload['note'] ?? null);
 
                 if ($itemId <= 0) {
                     continue;
@@ -76,14 +86,11 @@ class InventoryCountService
                     continue;
                 }
 
-                InventoryCount::query()->create([
-                    'user_id' => $owner->getKey(),
-                    'store_id' => $store->getKey(),
+                InventorySessionItem::query()->create([
+                    'session_id' => $session->getKey(),
                     'item_id' => $item->getKey(),
                     'quantity' => $quantity,
-                    'counted_at' => $now,
-                    'created_by' => $user->getKey(),
-                    'note' => $note,
+                    'note' => $rowNote,
                 ]);
 
                 StoreItem::query()->updateOrCreate(
@@ -91,19 +98,9 @@ class InventoryCountService
                     ['quantity' => $quantity],
                 );
             }
+
+            return $session;
         });
-    }
-
-    /**
-     * Latest count for a given store and item, if any.
-     */
-    public function latestCountForItem(Store $store, Item $item): InventoryCount|null
-    {
-        $query = InventoryCount::query();
-        InventoryCount::scopeForStore($query, $store->getKey());
-        InventoryCount::scopeForItem($query, $item->getKey());
-
-        return $query->orderByDesc('counted_at')->orderByDesc('id')->first();
     }
 
     /**
@@ -121,6 +118,29 @@ class InventoryCountService
         }
 
         return $row->getQuantity();
+    }
+
+    /**
+     * Quantity from the most recent prior inventory session for the
+     * given store and item. Returns null when no prior session exists.
+     */
+    public function previousQuantity(Store $store, Item $item, Carbon|null $before = null): int|null
+    {
+        $query = InventorySessionItem::query()
+            ->join('inventory_sessions', 'inventory_sessions.id', '=', 'inventory_session_items.session_id')
+            ->where('inventory_sessions.store_id', $store->getKey())
+            ->where('inventory_session_items.item_id', $item->getKey())
+            ->orderByDesc('inventory_sessions.counted_at')
+            ->orderByDesc('inventory_session_items.id')
+            ->select('inventory_session_items.quantity');
+
+        if ($before instanceof Carbon) {
+            $query->where('inventory_sessions.counted_at', '<', $before->toDateTimeString());
+        }
+
+        $value = $query->value('inventory_session_items.quantity');
+
+        return $value === null ? null : Typer::parseInt($value);
     }
 
     /**
@@ -196,9 +216,8 @@ class InventoryCountService
     }
 
     /**
-     * Build a per-item view of the selected store's inventory,
-     * including the current count, average daily consumption, and a
-     * predicted status used by the UI.
+     * Build a per-item view of the selected store's inventory for the
+     * inventory editor. Rows are sorted alphabetically by item title.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -210,24 +229,10 @@ class InventoryCountService
             ->orderBy('title')
             ->get();
 
-        $latestCounts = InventoryCount::query()
-            ->where('store_id', $store->getKey())
-            ->orderByDesc('counted_at')
-            ->orderByDesc('id')
-            ->get()
-            ->keyBy(static fn(InventoryCount $count): int => $count->getItemId());
-
         $currentByItem = StoreItem::query()
             ->where('store_id', $store->getKey())
             ->get()
             ->keyBy(static fn(StoreItem $row): int => $row->getItemId());
-
-        $statusOrder = [
-            self::STATUS_OUT => 0,
-            self::STATUS_SOON => 1,
-            self::STATUS_OK => 2,
-            self::STATUS_NO_DATA => 3,
-        ];
 
         $rows = [];
 
@@ -235,114 +240,123 @@ class InventoryCountService
             $itemId = $item->getKey();
             $storeItem = $currentByItem->get($itemId);
             $current = $storeItem instanceof StoreItem ? $storeItem->getQuantity() : 0;
-            $consumption = $this->consumptionLastDays($store, $item);
-            $perDay = $consumption['per_day'];
-            $daysLeft = null;
-            $status = self::STATUS_NO_DATA;
+            $previous = $this->previousQuantity($store, $item);
 
-            if ($current <= 0) {
-                $daysLeft = 0;
-                $status = self::STATUS_OUT;
-            } elseif ($perDay > 0.0) {
-                $daysLeft = (int) \floor($current / $perDay);
-                $status = $daysLeft <= self::SOON_THRESHOLD_DAYS ? self::STATUS_SOON : self::STATUS_OK;
-            }
-
-            $latest = $latestCounts->get($itemId);
             $rows[] = [
                 'item_id' => $itemId,
                 'title' => $item->getTitle(),
                 'sku' => $item->getSku(),
                 'unit' => $item->getUnit(),
                 'current' => $current,
-                'latest_count_at' => $latest instanceof InventoryCount ? $latest->getCountedAt()->toDateTimeString() : null,
-                'avg_daily_consumption' => $perDay,
-                'days_until_restock' => $daysLeft,
-                'status' => $status,
+                'previous' => $previous,
             ];
-        }
-
-        \usort($rows, static function (array $a, array $b) use ($statusOrder): int {
-            $aRank = $statusOrder[$a['status']];
-            $bRank = $statusOrder[$b['status']];
-
-            if ($aRank !== $bRank) {
-                return $aRank <=> $bRank;
-            }
-
-            $aDays = $a['days_until_restock'] ?? \PHP_INT_MAX;
-            $bDays = $b['days_until_restock'] ?? \PHP_INT_MAX;
-
-            return $aDays <=> $bDays;
-        });
-
-        // Attach per-item sparkline for the chart column.
-        foreach ($rows as $index => $row) {
-            $rows[$index]['sparkline'] = $this->sparklineForItem($user, $store, Item::query()->whereKey($row['item_id'])->firstOrFail(), 30);
         }
 
         return $rows;
     }
 
     /**
-     * Build a chronological list of stock-count snapshots for the user,
-     * optionally restricted to a single store and/or item.
+     * Build a chronological list of inventory sessions for the given
+     * store in the given date range. When an item is provided, only
+     * sessions that contain a row for that item are returned.
      *
      * @return array<int, array<string, mixed>>
      */
     public function historyForUser(User $user, Store $store, Item|null $item, Carbon $from, Carbon $to, int $limit): array
     {
-        $query = InventoryCount::query();
-        InventoryCount::scopeForUser($query, $user);
-        InventoryCount::scopeForStore($query, $store->getKey());
-        InventoryCount::scopeBetween($query, $from, $to);
+        $query = InventorySession::query();
+        InventorySession::scopeForUser($query, $user);
+        InventorySession::scopeForStore($query, $store->getKey());
+        InventorySession::scopeBetween($query, $from, $to);
 
         if ($item instanceof Item) {
-            InventoryCount::scopeForItem($query, $item->getKey());
+            $query->whereHas('items', static function ($q) use ($item): void {
+                $q->where('item_id', $item->getKey());
+            });
         }
 
-        $counts = $query
+        $sessions = $query
+            ->withCount('items')
             ->orderByDesc('counted_at')
             ->orderByDesc('id')
             ->take($limit)
             ->get();
 
-        $creatorIds = $counts->pluck('created_by')->unique()->all();
-        $itemIds = $counts->pluck('item_id')->unique()->all();
+        $creatorIds = $sessions->pluck('created_by')->filter()->unique()->values()->all();
 
         $creators = User::query()
             ->whereIn('id', $creatorIds)
             ->get()
             ->keyBy(static fn(User $u): int => $u->getKey());
 
-        $items = Item::query()
-            ->whereIn('id', $itemIds)
-            ->get()
-            ->keyBy(static fn(Item $i): int => $i->getKey());
+        return $sessions->map(static function (InventorySession $session) use ($creators): array {
+            $createdBy = $session->getCreatedBy();
+            $creator = $createdBy !== null ? $creators->get($createdBy) : null;
 
-        return $counts->map(static function (InventoryCount $count) use ($creators, $items): array {
-            $item = $items->get($count->getItemId());
-            $creator = $creators->get($count->getCreatedBy());
+            $itemsCount = $session->getAttribute('items_count');
+            $itemCount = $itemsCount === null ? 0 : Typer::parseInt($itemsCount);
 
             return [
-                'id' => $count->getKey(),
-                'item_id' => $count->getItemId(),
-                'item_title' => $item instanceof Item ? $item->getTitle() : null,
-                'store_id' => $count->getStoreId(),
-                'quantity' => $count->getQuantity(),
-                'counted_at' => $count->getCountedAt()->toJSON(),
-                'note' => $count->getNote(),
-                'created_by' => $count->getCreatedBy(),
+                'id' => $session->getKey(),
+                'counted_at' => $session->getCountedAt()->toJSON(),
+                'note' => $session->getNote(),
+                'created_by' => $createdBy,
                 'created_by_email' => $creator instanceof User ? $creator->getEmail() : null,
+                'item_count' => $itemCount,
             ];
         })->all();
     }
 
     /**
-     * Build a dense day-by-day sparkline of stock counts for the given
-     * store/item pair over the last `$days` days.
+     * Build the read-only item list for a single inventory session.
+     * Items appear in alphabetical order. Each row exposes the new
+     * quantity recorded in the session and the previous quantity from
+     * the prior session for the same store/item (null if none).
      *
-     * Days without a recorded snapshot are returned as `null` so the UI
+     * @return array<int, array<string, mixed>>
+     */
+    public function buildSessionView(User $user, InventorySession $session): array
+    {
+        $itemsQuery = Item::query();
+        Item::scopeForUser($itemsQuery, $user);
+        $items = $itemsQuery
+            ->orderBy('title')
+            ->get()
+            ->keyBy(static fn(Item $item): int => $item->getKey());
+
+        $sessionItems = $session->items()->get()->keyBy(
+            static fn(InventorySessionItem $row): int => $row->getItemId(),
+        );
+
+        $rows = [];
+
+        foreach ($items as $item) {
+            $itemId = $item->getKey();
+            $sessionItem = $sessionItems->get($itemId);
+
+            if (!$sessionItem instanceof InventorySessionItem) {
+                continue;
+            }
+
+            $rows[] = [
+                'item_id' => $itemId,
+                'title' => $item->getTitle(),
+                'sku' => $item->getSku(),
+                'unit' => $item->getUnit(),
+                'current' => $sessionItem->getQuantity(),
+                'previous' => $this->previousQuantity($session->getStore(), $item, $session->getCountedAt()),
+                'note' => $sessionItem->getNote(),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Build a dense day-by-day sparkline of session quantities for the
+     * given store/item pair over the last `$days` days.
+     *
+     * Days without a recorded session are returned as `null` so the UI
      * can render a gap (the count is unknown for that day).
      *
      * @return array<int, array{label: string, value: int|null}>
@@ -352,17 +366,20 @@ class InventoryCountService
         $today = Carbon::now()->endOfDay();
         $from = Carbon::now()->subDays($days - 1)->startOfDay();
 
-        $query = InventoryCount::query();
-        InventoryCount::scopeForUser($query, $user);
-        InventoryCount::scopeForStore($query, $store->getKey());
-        InventoryCount::scopeForItem($query, $item->getKey());
-        InventoryCount::scopeSince($query, $from);
+        $records = DB::table('inventory_session_items')
+            ->join('inventory_sessions', 'inventory_sessions.id', '=', 'inventory_session_items.session_id')
+            ->where('inventory_sessions.user_id', $user->getKey())
+            ->where('inventory_sessions.store_id', $store->getKey())
+            ->where('inventory_session_items.item_id', $item->getKey())
+            ->where('inventory_sessions.counted_at', '>=', $from->toDateTimeString())
+            ->orderBy('inventory_sessions.counted_at')
+            ->get(['inventory_sessions.counted_at', 'inventory_session_items.quantity']);
 
         $byDay = [];
 
-        foreach ($query->orderBy('counted_at')->get() as $count) {
-            // Latest count of the day wins.
-            $byDay[$count->getCountedAt()->toDateString()] = $count->getQuantity();
+        foreach ($records as $record) {
+            $countedAt = Carbon::parse(Typer::assertString($record->counted_at));
+            $byDay[$countedAt->toDateString()] = Typer::parseInt($record->quantity);
         }
 
         $sparkline = [];

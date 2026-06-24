@@ -11,6 +11,7 @@ use App\Http\Controllers\Web\Auth\VerifyEmailController;
 use App\Http\Controllers\Web\Dashboard\DashboardController;
 use App\Http\Controllers\Web\InventoryCount\InventoryCountHistoryController;
 use App\Http\Controllers\Web\InventoryCount\InventoryCountIndexController;
+use App\Http\Controllers\Web\InventoryCount\InventoryCountShowController;
 use App\Http\Controllers\Web\InventoryCount\InventoryCountUpdateController;
 use App\Http\Controllers\Web\Item\ItemCreateController;
 use App\Http\Controllers\Web\Item\ItemDestroyController;
@@ -78,6 +79,7 @@ Resolver::resolveRouteRegistrar()
         $router->get('inventory-counts', InventoryCountIndexController::class)->name('inventory-counts.index');
         $router->post('inventory-counts', InventoryCountUpdateController::class)->name('inventory-counts.update');
         $router->get('inventory-counts/history', InventoryCountHistoryController::class)->name('inventory-counts.history');
+        $router->get('inventory-counts/{session}', InventoryCountShowController::class)->whereNumber('session')->name('inventory-counts.show');
 
         // Settings
         $router->get('verify-email', [VerifyEmailController::class, 'create'])->name('verify-email.show');

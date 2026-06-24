@@ -118,6 +118,53 @@ flashError, errors}` with strict TypeScript types.
   translation points at it; the new controller consumes the token,
   marks the user verified, and redirects.
 
+### Added (inventory sessions)
+
+- New `inventory_sessions` and `inventory_session_items` tables. Saving
+  the `/inventory-counts` form now creates an `inventory_session`
+  header (one row per save) plus its `inventory_session_items` rows
+  inside a single transaction. The matching `store_items.quantity` is
+  upserted so the on-hand value stays in sync.
+- New `/inventory-counts/{session}` read-only page. Lists every item
+  recorded in the chosen session in alphabetical order with the value
+  entered in this session ("Nové množství") and the value from the
+  previous session ("Poslední množství").
+- New `App\Models\InventorySession`, `InventorySessionItem`,
+  `InventorySessionFactory`, `InventorySessionItemFactory`,
+  `InventorySessionService`, and `InventoryCountShowController`.
+- `InventorySessionService::createSession`, `previousQuantity`,
+  `buildStoreView` (alphabetical), `buildSessionView` (alphabetical,
+  read-only), `historyForUser`, `consumptionLastDays`,
+  `predictedRunOut`, `sparklineForItem`.
+- The store detail page now also exposes "Prům. spotřeba / den" and
+  "Dnů do vyprodání" per row alongside the existing sparkline and
+  last-count timestamp.
+
+### Changed (inventory sessions)
+
+- The `/inventory-counts` editor is now a focused per-item data-entry
+  surface. Statistical columns (average consumption, days until
+  restock, status, sparkline, last count) moved to the store detail
+  page. The editor exposes `Aktuální množství` (read-only current
+  on-hand), `Poslední množství` (read-only previous session) and
+  `Nové množství` (the input that becomes the new on-hand value).
+- After save, the editor redirects to the new
+  `/inventory-counts/{session}` show page instead of staying on the
+  index.
+- `/inventory-counts/history` now lists session headers (date,
+  recorder, item count) with a link to the show page; filtering by
+  store / item / date range is preserved.
+
+### Removed (inventory counts)
+
+- The `inventory_counts` table, `App\Models\InventoryCount`,
+  `InventoryCountFactory`, and `InventoryCountService` are gone. They
+  were replaced by the normalized session + items schema.
+- The legacy `current` / `last_count` / `avg_daily_consumption` /
+  `days_until_restock` / `status` / `sparkline` columns are no longer
+  rendered in the inventory editor; they live on the store detail
+  page now.
+
 ### Added (inventory)
 
 - `/inventory-counts` page and `inventory-counts.update` POST endpoint.
@@ -192,6 +239,39 @@ flashError, errors}` with strict TypeScript types.
   on the client.
 - `resources/js/lib/format.ts` switched to `Intl.DateTimeFormat('cs-CZ', …)`
   so the project never relies on the browser locale.
+
+### Added (store detail inventory)
+
+- The `/stores/{id}` inventory table now exposes per-item **Množství / Hodnota
+  / Stav / Sparkline (30 dní) / Naposledy napočítáno** columns.
+- The status badge uses `ItemStockStatusEnum::fromQuantity($quantity)` so it
+  reflects the same in_stock / low_stock / out_of_stock buckets as the rest
+  of the application. The sparkline reuses
+  `InventoryCountService::sparklineForItem($owner, $store, $item, 30)` and
+  the last-count timestamp is the most recent `inventory_counts` snapshot
+  for the `(store, item)` pair (rendered via `formatCzechDateTime`).
+- The controller now also publishes `now` (ISO 8601) as a top-level prop so
+  the page can compare timestamps against a stable server-side reference.
+- i18n keys `stores.columns.sparkline` and `stores.columns.last_count` in
+  cs/en/sk (the existing `stores.columns.status` key is reused).
+- 3 new feature tests in `StoreShowControllerTest` covering the new
+  inventory payload and the `now` prop.
+
+### Removed (items columns)
+
+- `/items` (Inventář) no longer exposes per-store quantity, total value, or
+  stock-status columns. Those are properties of the `store_items` link, not
+  the item catalog, so they make sense only in a store context.
+- `ItemIndexController` now returns `id, title, sku, unit, purchase_price`
+  per row; the Inertia page (`pages/items/Index.vue`) renders the same five
+  columns.
+- i18n keys `items.columns.quantity`, `items.columns.total_value`, and
+  `items.columns.status` remain in cs/en/sk because the same labels are
+  reused by other item-detail surfaces (e.g. the per-store quantities list
+  on the item detail page).
+- New regression test in `ItemIndexControllerTest` that asserts the items
+  index payload does not contain `warehouse_quantity`, `total_quantity`,
+  `total_value`, or `status`.
 
 ### Removed (auth)
 

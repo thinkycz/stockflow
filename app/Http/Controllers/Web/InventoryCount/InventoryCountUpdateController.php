@@ -8,7 +8,7 @@ use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\InventoryCountValidity;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\InventoryCountService;
+use App\Services\InventorySessionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -21,7 +21,7 @@ class InventoryCountUpdateController
     /**
      * Persist a batch of inventory counts for the selected store.
      */
-    public function __invoke(Request $request, InventoryCountService $service): RedirectResponse
+    public function __invoke(Request $request, InventorySessionService $service): RedirectResponse
     {
         $user = User::mustAuth();
         $scopeUser = $user->isAdmin() ? $user : $this->resolveScopeUser($user);
@@ -35,7 +35,7 @@ class InventoryCountUpdateController
             'rows.*.note' => $validity->rowNote()->nullable()->toArray(),
         ]);
 
-        $storeId = $validated->assertInt('store_id');
+        $storeId = $validated->parseInt('store_id');
         /** @var array<int, array<string, mixed>> $rows */
         $rows = $validated->assertArray('rows');
 
@@ -55,12 +55,12 @@ class InventoryCountUpdateController
             }
         }
 
-        $service->recordCounts($user, $store, $rows);
+        $session = $service->createSession($user, $store, $rows);
 
         Inertia::flash('success', \__('Inventory count saved.'));
 
-        return Resolver::resolveRedirector()->route('inventory-counts.index', [
-            'store_id' => $store->getKey(),
+        return Resolver::resolveRedirector()->route('inventory-counts.show', [
+            'session' => $session->getKey(),
         ]);
     }
 

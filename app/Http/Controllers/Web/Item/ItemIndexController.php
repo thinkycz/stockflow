@@ -51,11 +51,7 @@ class ItemIndexController
             'title' => $item->getTitle(),
             'sku' => $item->getSku(),
             'unit' => $item->getUnit(),
-            'warehouse_quantity' => $item->getWarehouseQuantity(),
-            'total_quantity' => $item->getTotalQuantity(),
             'purchase_price' => $item->getPurchasePrice(),
-            'total_value' => $item->getTotalValue(),
-            'status' => $item->getStockStatus()->value,
         ])->all();
 
         return Inertia::render('items/Index', [

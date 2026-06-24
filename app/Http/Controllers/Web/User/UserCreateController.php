@@ -53,7 +53,7 @@ class UserCreateController
                 'locale' => $admin->getLocale(),
                 'is_admin' => false,
                 'parent_user_id' => $admin->getKey(),
-                'assigned_store_id' => $validated->assertInt('assigned_store_id'),
+                'assigned_store_id' => $validated->parseInt('assigned_store_id'),
             ]);
         });
 

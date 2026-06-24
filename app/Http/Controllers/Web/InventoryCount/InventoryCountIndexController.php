@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Web\InventoryCount;
 
 use App\Models\Store;
 use App\Models\User;
-use App\Services\InventoryCountService;
+use App\Services\InventorySessionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,7 +25,7 @@ class InventoryCountIndexController
     /**
      * Render the inventory editor for the selected store.
      */
-    public function __invoke(Request $request, InventoryCountService $service): Response
+    public function __invoke(Request $request, InventorySessionService $service): Response
     {
         $user = User::mustAuth();
         $isLimited = !$user->isAdmin();

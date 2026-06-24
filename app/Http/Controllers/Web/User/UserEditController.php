@@ -78,7 +78,7 @@ class UserEditController
             }
 
             if (!$isSelf) {
-                $attributes['assigned_store_id'] = $validated->assertInt('assigned_store_id');
+                $attributes['assigned_store_id'] = $validated->parseInt('assigned_store_id');
             }
 
             // Guard: an admin can never demote themselves.

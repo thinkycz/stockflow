@@ -210,7 +210,11 @@
             "sku": "SKU",
             "total_quantity": "Total qty",
             "total_value": "Total value",
-            "actions": "Actions"
+            "actions": "Actions",
+            "sparkline": "Trend (30 days)",
+            "last_count": "Last counted",
+            "avg_daily_consumption": "Avg. daily consumption",
+            "days_until_restock": "Days left"
         }
     },
     "stock_movements": {
@@ -463,18 +467,17 @@
     },
     "inventory_counts": {
         "title": "Stock count",
-        "subtitle": "Record the current on-hand quantities at the selected branch. The app derives average consumption and predicts when to restock.",
+        "subtitle": "Record the new on-hand quantities at the selected branch. The app creates an inventory session and updates the on-hand stock.",
         "store": "Store",
         "select_store": "Select a store",
+        "back_to_list": "Back to stock count",
         "columns": {
             "item": "Item",
             "sku": "SKU",
             "unit": "Unit",
             "current": "On hand",
-            "last_count": "Last counted",
-            "avg_daily_consumption": "Avg. daily consumption",
-            "days_until_restock": "Days left",
-            "status": "Status",
+            "previous": "Last inventory",
+            "new_quantity": "New quantity",
             "note": "Note"
         },
         "actions": {
@@ -498,15 +501,20 @@
             "current_quantity": "Total on hand",
             "needs_restock": "Items needing restock"
         },
+        "session": {
+            "title": "Stock count"
+        },
         "history": {
             "title": "Stock count history",
-            "subtitle": "Complete record of stock counts over time — who, when, and how much.",
+            "subtitle": "Overview of all recorded stock-count sessions. Open any day to see the entered quantities.",
+            "open": "Open",
+            "sessions_label": "sessions",
             "columns": {
                 "counted_at": "Counted at",
-                "item": "Item",
-                "quantity": "Quantity",
+                "item_count": "Items",
                 "note": "Note",
-                "created_by": "Recorded by"
+                "created_by": "Recorded by",
+                "open": ""
             },
             "tabs": {
                 "current": "Current state",

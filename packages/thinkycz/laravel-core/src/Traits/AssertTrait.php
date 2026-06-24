@@ -167,9 +167,11 @@ trait AssertTrait
     {
         $value = $this->mixed($key);
 
-        \assert($value instanceof Carbon, Panicker::message(__METHOD__, 'assertion failed', \compact('key', 'value')));
+        if ($value instanceof Carbon) {
+            return $value;
+        }
 
-        return $value;
+        Panicker::panic(__METHOD__, 'assertion failed', \compact('key', 'value'));
     }
 
     /**

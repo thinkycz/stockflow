@@ -12,6 +12,7 @@ use App\Services\InventorySessionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use RuntimeException;
 use Thinkycz\LaravelCore\Support\Resolver;
 
 class InventoryCountUpdateController
@@ -74,14 +75,16 @@ class InventoryCountUpdateController
     {
         $parentId = $user->getParentUserId();
 
-        if ($parentId !== null) {
-            $parent = User::query()->whereKey($parentId)->first();
-
-            if ($parent instanceof User) {
-                return $parent;
-            }
+        if ($parentId === null) {
+            throw new RuntimeException('Limited user #' . $user->getKey() . ' has no parent_user_id.');
         }
 
-        return $user;
+        $parent = User::query()->whereKey($parentId)->first();
+
+        if (!$parent instanceof User) {
+            throw new RuntimeException('Parent user #' . $parentId . ' referenced by user #' . $user->getKey() . ' does not exist.');
+        }
+
+        return $parent;
     }
 }

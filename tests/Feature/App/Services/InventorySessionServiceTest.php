@@ -10,6 +10,7 @@ use App\Models\Store;
 use App\Models\StoreItem;
 use App\Services\InventorySessionService;
 use Illuminate\Support\Carbon;
+use Thinkycz\LaravelCore\Exceptions\ValidationException;
 use Thinkycz\LaravelCore\Support\Typer;
 
 \beforeEach(function (): void {
@@ -46,18 +47,19 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($row->getQuantity())->toBe(12);
 });
 
-\test('createSession ignores items owned by another user', function (): void {
+\test('createSession rejects items owned by another user', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
     [$other] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $user->getKey()]);
     $foreign = Item::factory()->create(['user_id' => $other->getKey()]);
 
     $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
-    $session = $service->createSession($user, $store, [
-        ['item_id' => $foreign->getKey(), 'quantity' => 5],
-    ]);
 
-    \expect(InventorySessionItem::query()->where('session_id', $session->getKey())->count())->toBe(0);
+    \expect(fn() => $service->createSession($user, $store, [
+        ['item_id' => $foreign->getKey(), 'quantity' => 5],
+    ]))->toThrow(ValidationException::class);
+
+    \expect(InventorySessionItem::query()->count())->toBe(0);
     \expect(StoreItem::query()->where('item_id', $foreign->getKey())->count())->toBe(0);
 });
 

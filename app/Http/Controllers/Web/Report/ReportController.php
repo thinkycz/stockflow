@@ -177,10 +177,7 @@ class ReportController
                 'year' => $year,
                 'month' => $month,
             ],
-            'statement_stores' => \array_map(static fn(Store $store): array => [
-                'id' => $store->getKey(),
-                'name' => $store->getName(),
-            ], $storesForFilter),
+            'statement_stores' => \array_map(static fn(Store $store): array => $store->toSelectOption(), $storesForFilter),
         ]);
     }
 }

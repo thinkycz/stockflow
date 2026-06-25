@@ -59,19 +59,7 @@ class ItemSearchController
         $defaultWarehouse = $user->warehouse();
         $defaultWarehouseId = (string) $defaultWarehouse->getKey();
 
-        $storeQuantitiesByItem = [];
-        $storeItemRows = StoreItem::query()
-            ->select(['id', 'store_id', 'item_id', 'quantity'])
-            ->whereIn('item_id', $itemIds)
-            ->whereHas('store', static function (Builder $query) use ($user): void {
-                $query->where('user_id', $user->getKey());
-            })
-            ->get();
-
-        foreach ($storeItemRows as $storeItemRow) {
-            $storeQuantitiesByItem[$storeItemRow->getItemId()][(string) $storeItemRow->getStoreId()]
-                = (float) $storeItemRow->getQuantity();
-        }
+        $storeQuantitiesByItem = StoreItem::quantitiesByItemForUser($user, $itemIds);
 
         return $items->map(static function (Item $item) use ($storeQuantitiesByItem, $defaultWarehouseId): array {
             $byStore = $storeQuantitiesByItem[$item->getKey()] ?? [];

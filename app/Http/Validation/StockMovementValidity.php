@@ -6,34 +6,10 @@ namespace App\Http\Validation;
 
 use App\Enums\AdjustmentReasonEnum;
 use App\Enums\StockMovementTypeEnum;
-use App\Models\User;
-use Thinkycz\LaravelCore\Validation\BaseValidity;
 use Thinkycz\LaravelCore\Validation\Validity;
 
-class StockMovementValidity
+class StockMovementValidity extends AppValidity
 {
-    /**
-     * Base validity.
-     */
-    public BaseValidity $baseValidity;
-
-    /**
-     * Constructor.
-     */
-    public function __construct(
-        private readonly int|null $userId = null,
-    ) {
-        $this->baseValidity = new BaseValidity();
-    }
-
-    /**
-     * Inject.
-     */
-    public static function inject(int|null $userId = null): self
-    {
-        return new self($userId ?? User::mustAuth()->getKey());
-    }
-
     /**
      * Type validation rules.
      */

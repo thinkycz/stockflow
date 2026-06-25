@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Item;
 
+use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Models\Item;
 use App\Models\StockMovementItem;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
-use Thinkycz\LaravelCore\Support\Thrower;
 
 class ItemDestroyController
 {
+    use ValidatesWebRequests;
+
     /**
      * Delete an item. Blocked when the item is referenced by any stock movement row.
      */
@@ -27,9 +29,7 @@ class ItemDestroyController
             ->exists();
 
         if ($hasMovements) {
-            $thrower = new Thrower(Resolver::resolveValidatorFactory()->make([], []));
-            $thrower->message('item', \__('Cannot delete an item that has stock movement history.'));
-            $thrower->throw();
+            $this->throwValidationError('item', \__('Cannot delete an item that has stock movement history.'));
         }
 
         $item->storeItems()->delete();

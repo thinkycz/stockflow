@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\InventoryCount;
 
+use App\Http\Controllers\Web\Concerns\ResolvesUserScope;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\InventoryCountValidity;
 use App\Models\Store;
@@ -16,6 +17,7 @@ use Thinkycz\LaravelCore\Support\Resolver;
 
 class InventoryCountUpdateController
 {
+    use ResolvesUserScope;
     use ValidatesWebRequests;
 
     /**
@@ -62,26 +64,5 @@ class InventoryCountUpdateController
         return Resolver::resolveRedirector()->route('inventory-counts.show', [
             'session' => $session->getKey(),
         ]);
-    }
-
-    /**
-     * The owner used for store / item scoping.
-     *
-     * For a limited user this is the admin (parent) so that the limited
-     * user can write inventory counts against stores the admin owns.
-     */
-    private function resolveScopeUser(User $user): User
-    {
-        $parentId = $user->getParentUserId();
-
-        if ($parentId !== null) {
-            $parent = User::query()->whereKey($parentId)->first();
-
-            if ($parent instanceof User) {
-                return $parent;
-            }
-        }
-
-        return $user;
     }
 }

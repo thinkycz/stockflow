@@ -80,10 +80,7 @@ class StatisticsController
                 'id' => $store->getKey(),
                 'name' => $store->getName(),
             ] : null,
-            'stores' => \array_map(static fn(Store $row): array => [
-                'id' => $row->getKey(),
-                'name' => $row->getName(),
-            ], $stores),
+            'stores' => \array_map(static fn(Store $row): array => $row->toSelectOption(), $stores),
             'period_days' => $periodDays,
             'sales' => $sales,
             'incoming' => $incoming,

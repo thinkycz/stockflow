@@ -25,7 +25,7 @@ class UserCreateController
     public function create(): Response
     {
         $admin = User::mustAuth();
-        $stores = $this->loadAdminStores($admin);
+        $stores = Store::selectListForUser($admin);
 
         return Inertia::render('users/Create', [
             'stores' => $stores,
@@ -60,24 +60,5 @@ class UserCreateController
         Inertia::flash('success', \__('User created.'));
 
         return Resolver::resolveRedirector()->route('users.index');
-    }
-
-    /**
-     * Load admin's stores for the assignment select.
-     *
-     * @return array<int, array{id: int, name: string}>
-     */
-    private function loadAdminStores(User $admin): array
-    {
-        $query = Store::query();
-        Store::scopeForUser($query, $admin);
-
-        return $query->orderBy('name')
-            ->get()
-            ->map(static fn(Store $store): array => [
-                'id' => $store->getKey(),
-                'name' => $store->getName(),
-            ])
-            ->all();
     }
 }

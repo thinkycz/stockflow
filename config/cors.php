@@ -24,10 +24,10 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
+    'allowed_origins' => \array_values(\array_filter([
         $env->mustParseString('APP_URL'),
         $env->parseNullableString('CORS_ALLOWED_ORIGIN'),
-    ],
+    ], static fn(string|null $v): bool => $v !== null && $v !== '')),
 
     'allowed_origins_patterns' => [],
 

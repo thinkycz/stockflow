@@ -27,7 +27,7 @@ class UserEditController
         $admin = User::mustAuth();
         $this->ensureManaged($admin, $user);
 
-        $stores = $this->loadAdminStores($admin);
+        $stores = Store::selectListForUser($admin);
 
         return Inertia::render('users/Edit', [
             'user' => [
@@ -110,24 +110,5 @@ class UserEditController
         }
 
         \abort(403);
-    }
-
-    /**
-     * Load admin's stores for the assignment select.
-     *
-     * @return array<int, array{id: int, name: string}>
-     */
-    private function loadAdminStores(User $admin): array
-    {
-        $query = Store::query();
-        Store::scopeForUser($query, $admin);
-
-        return $query->orderBy('name')
-            ->get()
-            ->map(static fn(Store $store): array => [
-                'id' => $store->getKey(),
-                'name' => $store->getName(),
-            ])
-            ->all();
     }
 }

@@ -83,6 +83,23 @@ class Store extends BaseModel
     }
 
     /**
+     * Load stores owned by the given user as select options.
+     *
+     * @return array<int, array{id: int, name: string}>
+     */
+    public static function selectListForUser(User $user): array
+    {
+        $query = self::query();
+        self::scopeForUser($query, $user);
+
+        return self::querySelect($query)
+            ->orderBy('name')
+            ->get()
+            ->map(static fn(self $store): array => $store->toSelectOption())
+            ->all();
+    }
+
+    /**
      * Stock movements relationship.
      *
      * @return HasMany<StockMovement, $this>
@@ -217,6 +234,19 @@ class Store extends BaseModel
     public function getUserId(): int
     {
         return $this->assertInt('user_id');
+    }
+
+    /**
+     * Map this store to a compact array suitable for select inputs.
+     *
+     * @return array{id: int, name: string}
+     */
+    public function toSelectOption(): array
+    {
+        return [
+            'id' => $this->getKey(),
+            'name' => $this->getName(),
+        ];
     }
 
     /**

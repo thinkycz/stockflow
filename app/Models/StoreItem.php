@@ -52,6 +52,34 @@ class StoreItem extends BaseModel
     }
 
     /**
+     * Load per-store quantities grouped by item for the given user.
+     *
+     * @param array<int, int>|null $itemIds
+     *
+     * @return array<int, array<string, float>>
+     */
+    public static function quantitiesByItemForUser(User $user, array|null $itemIds = null): array
+    {
+        $query = self::query()
+            ->select(['id', 'store_id', 'item_id', 'quantity'])
+            ->whereHas('store', static function (Builder $storeQuery) use ($user): void {
+                $storeQuery->where('user_id', $user->getKey());
+            });
+
+        if ($itemIds !== null) {
+            $query->whereIn('item_id', $itemIds);
+        }
+
+        $result = [];
+
+        foreach ($query->get() as $row) {
+            $result[$row->getItemId()][(string) $row->getStoreId()] = (float) $row->getQuantity();
+        }
+
+        return $result;
+    }
+
+    /**
      * Store relationship.
      *
      * @return BelongsTo<Store, $this>

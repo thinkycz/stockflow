@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\InventoryCount;
 
+use App\Http\Controllers\Web\Concerns\ResolvesDefaultStore;
+use App\Http\Controllers\Web\Concerns\ResolvesUserScope;
 use App\Models\Store;
 use App\Models\User;
 use App\Services\InventorySessionService;
@@ -14,6 +16,9 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 class InventoryCountIndexController
 {
+    use ResolvesDefaultStore;
+    use ResolvesUserScope;
+
     /**
      * Page size hint required by the web index controller architecture test.
      * The inventory page renders every catalog item in a single grid, so
@@ -64,10 +69,7 @@ class InventoryCountIndexController
             $rows = $service->buildStoreView($scopeUser, $store);
         }
 
-        $storesForSelect = \array_map(static fn(Store $row): array => [
-            'id' => $row->getKey(),
-            'name' => $row->getName(),
-        ], $isLimited ? \array_values(\array_filter($stores, static fn(Store $row): bool => $assignedStoreId === $row->getKey())) : $stores);
+        $storesForSelect = \array_map(static fn(Store $row): array => $row->toSelectOption(), $isLimited ? \array_values(\array_filter($stores, static fn(Store $row): bool => $assignedStoreId === $row->getKey())) : $stores);
 
         return Inertia::render('inventory-counts/Index', [
             'store' => $store instanceof Store ? [
@@ -81,62 +83,5 @@ class InventoryCountIndexController
             ],
             'is_admin' => $user->isAdmin(),
         ]);
-    }
-
-    /**
-     * The owner used for store scoping.
-     *
-     * For a limited user this is the admin (parent) so that the limited
-     * user can browse the same stores that the admin owns.
-     */
-    private function resolveScopeUser(User $user): User
-    {
-        if ($user->isAdmin()) {
-            return $user;
-        }
-
-        $parentId = $user->getParentUserId();
-
-        if ($parentId !== null) {
-            $parent = User::query()->whereKey($parentId)->first();
-
-            if ($parent instanceof User) {
-                return $parent;
-            }
-        }
-
-        return $user;
-    }
-
-    /**
-     * Pick the first owned store as the default selection, preferring
-     * non-warehouse retail stores when one is available. Limited users
-     * are pinned to their assigned store.
-     *
-     * @param array<int, Store> $stores
-     */
-    private function resolveDefaultStore(array $stores, User $user): Store|null
-    {
-        if (!$user->isAdmin()) {
-            $assignedId = $user->getAssignedStoreId();
-
-            if ($assignedId !== null) {
-                foreach ($stores as $store) {
-                    if ($assignedId === $store->getKey()) {
-                        return $store;
-                    }
-                }
-            }
-
-            return $stores[0] ?? null;
-        }
-
-        foreach ($stores as $store) {
-            if (!$store->isWarehouse()) {
-                return $store;
-            }
-        }
-
-        return $stores[0] ?? null;
     }
 }

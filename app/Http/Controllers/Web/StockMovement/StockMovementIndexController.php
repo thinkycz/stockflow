@@ -94,16 +94,7 @@ class StockMovementIndexController
             ];
         })->all();
 
-        $storesQuery = Store::query();
-        Store::scopeForUser($storesQuery, $user);
-        $stores = Store::querySelect($storesQuery)
-            ->orderBy('name')
-            ->get()
-            ->map(static fn(Store $store): array => [
-                'id' => $store->getKey(),
-                'name' => $store->getName(),
-            ])
-            ->all();
+        $stores = Store::selectListForUser($user);
 
         return Inertia::render('stock-movements/Index', [
             'movements' => $movements,
@@ -115,12 +106,7 @@ class StockMovementIndexController
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
             ],
-            'pagination' => [
-                'current_page' => $paginator->currentPage(),
-                'last_page' => $paginator->lastPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-            ],
+            'pagination' => $this->paginationMeta($paginator),
         ]);
     }
 }

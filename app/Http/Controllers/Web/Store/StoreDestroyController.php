@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Store;
 
+use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Models\StockMovement;
 use App\Models\Store;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
-use Thinkycz\LaravelCore\Support\Thrower;
 
 class StoreDestroyController
 {
+    use ValidatesWebRequests;
+
     /**
      * Delete a store. Blocked when the store has inventory or stock movement history.
      */
@@ -30,9 +32,7 @@ class StoreDestroyController
             ->exists();
 
         if ($hasInventory || $hasMovements) {
-            $thrower = new Thrower(Resolver::resolveValidatorFactory()->make([], []));
-            $thrower->message('store', \__('Cannot delete a store that has inventory or stock movement history.'));
-            $thrower->throw();
+            $this->throwValidationError('store', \__('Cannot delete a store that has inventory or stock movement history.'));
         }
 
         $store->delete();

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Statement;
 
+use App\Http\Controllers\Web\Concerns\ResolvesDefaultStore;
+use App\Http\Controllers\Web\Concerns\ResolvesUserScope;
 use App\Models\Statement;
 use App\Models\StatementDay;
 use App\Models\Store;
@@ -16,6 +18,9 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 class StatementIndexController
 {
+    use ResolvesDefaultStore;
+    use ResolvesUserScope;
+
     /**
      * Page size hint required by the web index controller architecture test.
      * Statements render every day in a single month, so the list is always
@@ -83,10 +88,7 @@ class StatementIndexController
             )->all();
         }
 
-        $storesForSelect = \array_map(static fn(Store $store): array => [
-            'id' => $store->getKey(),
-            'name' => $store->getName(),
-        ], $isLimited ? \array_values(\array_filter($stores, static fn(Store $store): bool => $assignedStoreId === $store->getKey())) : $stores);
+        $storesForSelect = \array_map(static fn(Store $store): array => $store->toSelectOption(), $isLimited ? \array_values(\array_filter($stores, static fn(Store $store): bool => $assignedStoreId === $store->getKey())) : $stores);
 
         return Inertia::render('statements/Index', [
             'statement' => $statement instanceof Statement ? [
@@ -104,63 +106,5 @@ class StatementIndexController
             ],
             'is_admin' => $user->isAdmin(),
         ]);
-    }
-
-    /**
-     * The owner used for store scoping.
-     *
-     * For a limited user this is the admin (parent) so that the limited
-     * user can browse the same stores and statements that the admin owns.
-     */
-    private function resolveScopeUser(User $user): User
-    {
-        if ($user->isAdmin()) {
-            return $user;
-        }
-
-        $parentId = $user->getParentUserId();
-
-        if ($parentId !== null) {
-            $parent = User::query()->whereKey($parentId)->first();
-
-            if ($parent instanceof User) {
-                return $parent;
-            }
-        }
-
-        return $user;
-    }
-
-    /**
-     * Pick the first owned store as the default selection, preferring
-     * non-warehouse retail stores when one is available.
-     *
-     * Limited users are pinned to their assigned store.
-     *
-     * @param array<int, Store> $stores
-     */
-    private function resolveDefaultStore(array $stores, User $user): Store|null
-    {
-        if (!$user->isAdmin()) {
-            $assignedId = $user->getAssignedStoreId();
-
-            if ($assignedId !== null) {
-                foreach ($stores as $store) {
-                    if ($assignedId === $store->getKey()) {
-                        return $store;
-                    }
-                }
-            }
-
-            return $stores[0] ?? null;
-        }
-
-        foreach ($stores as $store) {
-            if (!$store->isWarehouse()) {
-                return $store;
-            }
-        }
-
-        return $stores[0] ?? null;
     }
 }

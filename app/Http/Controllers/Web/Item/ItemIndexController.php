@@ -57,12 +57,7 @@ class ItemIndexController
         return Inertia::render('items/Index', [
             'items' => $items,
             'search' => $search,
-            'pagination' => [
-                'current_page' => $paginator->currentPage(),
-                'last_page' => $paginator->lastPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-            ],
+            'pagination' => $this->paginationMeta($paginator),
         ]);
     }
 }

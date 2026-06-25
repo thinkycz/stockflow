@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\InventoryCount;
 
+use App\Http\Controllers\Web\Concerns\ResolvesDefaultStore;
+use App\Http\Controllers\Web\Concerns\ResolvesUserScope;
 use App\Models\Item;
 use App\Models\Store;
 use App\Models\User;
@@ -16,6 +18,9 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 class InventoryCountHistoryController
 {
+    use ResolvesDefaultStore;
+    use ResolvesUserScope;
+
     /**
      * Page size hint required by the web index controller architecture test.
      *
@@ -48,7 +53,7 @@ class InventoryCountHistoryController
         Item::scopeForUser($itemsQuery, $this->resolveScopeUser($user));
         $items = $itemsQuery->orderBy('title')->get()->all();
 
-        $defaultStore = $this->resolveDefaultStore($stores);
+        $defaultStore = $this->resolveDefaultStore($stores, $user);
         $requestedStoreId = Typer::parseNullableInt($request->query('store_id'));
         $storeId = $requestedStoreId ?? $defaultStore?->getKey();
 
@@ -89,10 +94,7 @@ class InventoryCountHistoryController
                 'id' => $store->getKey(),
                 'name' => $store->getName(),
             ] : null,
-            'stores' => \array_map(static fn(Store $store): array => [
-                'id' => $store->getKey(),
-                'name' => $store->getName(),
-            ], $stores),
+            'stores' => \array_map(static fn(Store $store): array => $store->toSelectOption(), $stores),
             'items' => \array_map(static fn(Item $item): array => [
                 'id' => $item->getKey(),
                 'title' => $item->getTitle(),
@@ -106,31 +108,6 @@ class InventoryCountHistoryController
             ],
             'is_admin' => $user->isAdmin(),
         ]);
-    }
-
-    /**
-     * The owner used for store / item scoping.
-     *
-     * For a limited user this is the admin (parent) so that the limited
-     * user can browse the same inventory that the admin created.
-     */
-    private function resolveScopeUser(User $user): User
-    {
-        if ($user->isAdmin()) {
-            return $user;
-        }
-
-        $parentId = $user->getParentUserId();
-
-        if ($parentId !== null) {
-            $parent = User::query()->whereKey($parentId)->first();
-
-            if ($parent instanceof User) {
-                return $parent;
-            }
-        }
-
-        return $user;
     }
 
     /**
@@ -155,41 +132,5 @@ class InventoryCountHistoryController
         }
 
         \abort(403);
-    }
-
-    /**
-     * Pick the first owned store as the default selection, preferring
-     * non-warehouse retail stores when one is available.
-     *
-     * @param array<int, Store> $stores
-     */
-    private function resolveDefaultStore(array $stores): Store|null
-    {
-        $authUser = User::auth();
-        if ($authUser === null) {
-            return $stores[0] ?? null;
-        }
-
-        if (!$authUser->isAdmin()) {
-            $assignedId = $authUser->getAssignedStoreId();
-
-            if ($assignedId !== null) {
-                foreach ($stores as $store) {
-                    if ($assignedId === $store->getKey()) {
-                        return $store;
-                    }
-                }
-            }
-
-            return $stores[0] ?? null;
-        }
-
-        foreach ($stores as $store) {
-            if (!$store->isWarehouse()) {
-                return $store;
-            }
-        }
-
-        return $stores[0] ?? null;
     }
 }

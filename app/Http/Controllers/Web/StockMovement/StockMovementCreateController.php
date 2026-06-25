@@ -12,7 +12,6 @@ use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
 use App\Services\StockMovementService;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -45,19 +44,7 @@ class StockMovementCreateController
             ])
             ->all();
 
-        /** @var array<int, array<string, float>> $storeQuantitiesByItem */
-        $storeQuantitiesByItem = [];
-        $storeItemRows = StoreItem::query()
-            ->select(['id', 'store_id', 'item_id', 'quantity'])
-            ->whereHas('store', static function (Builder $query) use ($user): void {
-                $query->where('user_id', $user->getKey());
-            })
-            ->get();
-
-        foreach ($storeItemRows as $storeItemRow) {
-            $storeQuantitiesByItem[$storeItemRow->getItemId()][(string) $storeItemRow->getStoreId()]
-                = $storeItemRow->getQuantity();
-        }
+        $storeQuantitiesByItem = StoreItem::quantitiesByItemForUser($user);
 
         $defaultWarehouse = $user->warehouse();
         $defaultItemId = Typer::parseNullableInt($request->query('item_id'));

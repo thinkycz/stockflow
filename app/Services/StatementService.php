@@ -12,6 +12,8 @@ use App\Models\Store;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class StatementService
@@ -93,7 +95,7 @@ class StatementService
                 $day = $existing->get($date);
 
                 if (!$day instanceof StatementDay) {
-                    continue;
+                    $this->fail(['days' => \__('Date :date does not belong to this statement.', ['date' => $date])]);
                 }
 
                 $seen[$date] = true;
@@ -363,5 +365,20 @@ class StatementService
             ->get();
 
         return Typer::parseFloat($rows->sum(static fn(StockMovement $m): float => Typer::parseFloat($m->getAttribute('investment_total'))));
+    }
+
+    /**
+     * @param array<string, array<array-key, mixed>|string> $messages
+     */
+    private function fail(array $messages): never
+    {
+        $validator = Resolver::resolveValidatorFactory()->make([], []);
+        $thrower = new Thrower($validator);
+
+        foreach ($messages as $key => $message) {
+            $thrower->message($key, $message);
+        }
+
+        $thrower->throw();
     }
 }

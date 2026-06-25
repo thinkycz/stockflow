@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class InventoryCountHistoryController
@@ -122,15 +123,17 @@ class InventoryCountHistoryController
 
         $parentId = $user->getParentUserId();
 
-        if ($parentId !== null) {
-            $parent = User::query()->whereKey($parentId)->first();
-
-            if ($parent instanceof User) {
-                return $parent;
-            }
+        if ($parentId === null) {
+            throw new RuntimeException('Limited user #' . $user->getKey() . ' has no parent_user_id.');
         }
 
-        return $user;
+        $parent = User::query()->whereKey($parentId)->first();
+
+        if (!$parent instanceof User) {
+            throw new RuntimeException('Parent user #' . $parentId . ' referenced by user #' . $user->getKey() . ' does not exist.');
+        }
+
+        return $parent;
     }
 
     /**

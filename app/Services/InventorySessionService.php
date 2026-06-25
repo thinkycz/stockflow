@@ -15,6 +15,9 @@ use App\Models\StoreItem;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
+use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class InventorySessionService
@@ -75,7 +78,7 @@ class InventorySessionService
                 $rowNote = Typer::parseNullableString($payload['note'] ?? null);
 
                 if ($itemId <= 0) {
-                    continue;
+                    $this->fail(['rows' => \__('Each row must reference a valid item.')]);
                 }
 
                 $itemQuery = Item::query();
@@ -83,7 +86,7 @@ class InventorySessionService
                 $item = $itemQuery->whereKey($itemId)->first();
 
                 if (!$item instanceof Item) {
-                    continue;
+                    $this->fail(['rows' => \__('Item not found.')]);
                 }
 
                 InventorySessionItem::query()->create([
@@ -399,21 +402,37 @@ class InventorySessionService
 
     /**
      * The admin (parent) account that owns the inventory data for a
-     * limited user. Falls back to the user itself when the parent is
-     * missing.
+     * limited user.
      */
     private function resolveOwner(User $user): User
     {
         $parentId = $user->getParentUserId();
 
-        if ($parentId !== null) {
-            $parent = User::query()->whereKey($parentId)->first();
-
-            if ($parent instanceof User) {
-                return $parent;
-            }
+        if ($parentId === null) {
+            throw new RuntimeException('Limited user #' . $user->getKey() . ' has no parent_user_id.');
         }
 
-        return $user;
+        $parent = User::query()->whereKey($parentId)->first();
+
+        if (!$parent instanceof User) {
+            throw new RuntimeException('Parent user #' . $parentId . ' referenced by user #' . $user->getKey() . ' does not exist.');
+        }
+
+        return $parent;
+    }
+
+    /**
+     * @param array<string, array<array-key, mixed>|string> $messages
+     */
+    private function fail(array $messages): never
+    {
+        $validator = Resolver::resolveValidatorFactory()->make([], []);
+        $thrower = new Thrower($validator);
+
+        foreach ($messages as $key => $message) {
+            $thrower->message($key, $message);
+        }
+
+        $thrower->throw();
     }
 }

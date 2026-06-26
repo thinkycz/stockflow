@@ -92,20 +92,47 @@
     },
     "dashboard": {
         "title": "Nástěnka",
-        "subtitle": "Přehled o aktuálním stavu zásob a nedávné aktivitě.",
+        "subtitle": "Přehled o aktuálním stavu zásob a nedávné aktivitě pro vybranou prodejnu.",
         "welcome": "Přihlášený uživatel",
         "settings_heading": "Nastavení",
         "settings_description": "Aplikace používá referenční database-token cookie guard.",
         "manage_profile": "Spravovat profil",
+        "no_store": {
+            "title": "Vyberte prodejnu",
+            "description": "Nástěnka zobrazuje data vždy jen pro jednu prodejnu. Vyberte aktivní prodejnu v sidebaru."
+        },
         "metrics": {
-            "total_inventory_value": "Celková hodnota zásob",
-            "total_items": "Celkem položek",
+            "inventory_value": "Hodnota zásob",
+            "items_count": "Položek v prodejně",
             "low_stock": "Nízké zásoby",
             "today_movements": "Dnešní pohyby"
         },
+        "month_flow": {
+            "title": "Měsíční pohyb",
+            "subtitle": "Součet hodnot příjmů a výdejů za aktuální měsíc.",
+            "incoming": "Příjem",
+            "outgoing": "Výdej"
+        },
+        "stock_status": {
+            "title": "Stav zásob",
+            "subtitle": "Rozložení položek v této prodejně podle dostupnosti."
+        },
+        "top_consumed": {
+            "title": "Nejvíce odebírané",
+            "subtitle": "Top 5 položek podle množství za posledních 30 dní.",
+            "item": "Položka",
+            "quantity": "Množství",
+            "value": "Hodnota",
+            "empty": "Za posledních 30 dní nebyly žádné výdeje."
+        },
+        "statements": {
+            "title": "Poslední výkazy",
+            "subtitle": "Nejnovější uzavřené výkazy pro tuto prodejnu.",
+            "empty": "Zatím žádné výkazy."
+        },
         "recent": {
             "title": "Nedávné skladové pohyby",
-            "subtitle": "Posledních 10 pohybů v systému.",
+            "subtitle": "Posledních 10 pohybů v této prodejně.",
             "empty": "Zatím žádné skladové pohyby.",
             "number": "Číslo",
             "type": "Typ",

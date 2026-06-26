@@ -92,20 +92,47 @@
     },
     "dashboard": {
         "title": "Dashboard",
-        "subtitle": "Overview of current inventory health and recent activity.",
+        "subtitle": "Overview of current inventory health and recent activity for the selected store.",
         "welcome": "Authenticated user",
         "settings_heading": "Settings",
         "settings_description": "The app is using the reference database-token cookie guard.",
         "manage_profile": "Manage profile",
+        "no_store": {
+            "title": "Select a store",
+            "description": "The dashboard always shows data for a single store. Pick an active store from the sidebar."
+        },
         "metrics": {
-            "total_inventory_value": "Total Inventory Value",
-            "total_items": "Total Items",
-            "low_stock": "Low Stock Items",
-            "today_movements": "Today's Movements"
+            "inventory_value": "Inventory Value",
+            "items_count": "Items in store",
+            "low_stock": "Low stock items",
+            "today_movements": "Today's movements"
+        },
+        "month_flow": {
+            "title": "Monthly Flow",
+            "subtitle": "Sum of incoming and outgoing values for the current month.",
+            "incoming": "Incoming",
+            "outgoing": "Outgoing"
+        },
+        "stock_status": {
+            "title": "Stock Status",
+            "subtitle": "Breakdown of items in this store by availability."
+        },
+        "top_consumed": {
+            "title": "Most Consumed",
+            "subtitle": "Top 5 items by quantity over the last 30 days.",
+            "item": "Item",
+            "quantity": "Quantity",
+            "value": "Value",
+            "empty": "No outgoing movements in the last 30 days."
+        },
+        "statements": {
+            "title": "Recent Statements",
+            "subtitle": "Latest statements for this store.",
+            "empty": "No statements yet."
         },
         "recent": {
             "title": "Recent Stock Movements",
-            "subtitle": "The last 10 movements across the system.",
+            "subtitle": "The last 10 movements in this store.",
             "empty": "No stock movements yet.",
             "number": "Number",
             "type": "Type",

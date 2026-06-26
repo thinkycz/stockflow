@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { Save } from '@lucide/vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { Minus, Plus, Save } from '@lucide/vue';
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -8,7 +8,6 @@ import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import Input from '@/components/ui/Input.vue';
-import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 
@@ -23,13 +22,17 @@ type InventoryRow = {
 
 type EditableRow = {
     item_id: number;
-    quantity: number;
+    /**
+     * Quantity being entered by the user. An empty string means the
+     * user has not entered anything for this row and the existing
+     * on-hand quantity must stay untouched on save.
+     */
+    quantity: string;
     note: string;
 };
 
 const props = defineProps<{
     store: { id: number; name: string } | null;
-    stores: Array<{ id: number; name: string }>;
     rows: InventoryRow[];
     filters: { store_id: number | null };
     is_admin: boolean;
@@ -47,24 +50,15 @@ const editing = reactive<Record<number, EditableRow>>(
             row.item_id,
             {
                 item_id: row.item_id,
-                quantity: row.current,
+                quantity: '',
                 note: '',
             },
         ]),
     ),
 );
 
-const form = useForm<{
-    store_id: number | null;
-    rows: EditableRow[];
-}>({
-    store_id: props.filters.store_id,
-    rows: Object.values(editing),
-});
-
 const submitting = ref(false);
 
-const hasNoStores = computed(() => props.stores.length === 0);
 const hasNoItems = computed(() => props.rows.length === 0);
 
 const totals = computed(() => {
@@ -77,54 +71,84 @@ const totals = computed(() => {
     return { quantity };
 });
 
-function selectStore(value: string | number | null | undefined): void {
-    const storeId =
-        value === null || value === undefined ? null : String(value);
-    router.get(
-        route('inventory-counts.index'),
-        { store_id: storeId },
-        { preserveState: true, preserveScroll: true },
-    );
-}
+const hasAnyValue = computed(() =>
+    Object.values(editing).some((row) => row.quantity !== ''),
+);
 
-function updateEditing(
-    itemId: number,
-    field: keyof EditableRow,
-    value: string,
-): void {
+function setQuantity(itemId: number, value: string | number | undefined): void {
     const row = editing[itemId];
     if (!row) {
         return;
     }
-    if (field === 'quantity') {
-        const numeric = Number(value);
-        row.quantity =
-            Number.isFinite(numeric) && numeric >= 0 ? Math.floor(numeric) : 0;
-    } else {
-        row.note = value;
+    const next = value === null || value === undefined ? '' : String(value);
+    if (next === '') {
+        row.quantity = '';
+        return;
     }
+    const numeric = Number(next);
+    if (!Number.isFinite(numeric) || numeric < 0) {
+        return;
+    }
+    row.quantity = String(Math.floor(numeric));
+}
+
+function adjustQuantity(itemId: number, delta: number): void {
+    const row = editing[itemId];
+    if (!row) {
+        return;
+    }
+    const current = row.quantity === '' ? 0 : Number(row.quantity);
+    const next = Math.max(0, current + delta);
+    row.quantity = String(next);
+}
+
+function setNote(itemId: number, value: string | number | undefined): void {
+    const row = editing[itemId];
+    if (!row) {
+        return;
+    }
+    row.note = value === null || value === undefined ? '' : String(value);
 }
 
 function formatNumber(value: number, fractionDigits = 0): string {
-    return value.toLocaleString(undefined, {
+    return value.toLocaleString('cs-CZ', {
         minimumFractionDigits: fractionDigits,
         maximumFractionDigits: fractionDigits,
     });
 }
 
+function formatWithUnit(value: number | null, unit: string | null): string {
+    const base = value === null ? '–' : formatNumber(value);
+    return unit !== null ? `${base} ${unit}` : base;
+}
+
 function save(): void {
-    if (!props.store) {
+    if (!props.store || !hasAnyValue.value) {
         return;
     }
+
+    const rowsToSave = Object.values(editing)
+        .filter((row) => row.quantity !== '')
+        .map((row) => ({
+            item_id: row.item_id,
+            quantity: Number(row.quantity),
+            note: row.note,
+        }));
+
     submitting.value = true;
-    form.store_id = props.store.id;
-    form.rows = Object.values(editing);
-    form.post(route('inventory-counts.update'), {
-        preserveScroll: true,
-        onFinish: () => {
-            submitting.value = false;
+    router.post(
+        route('inventory-counts.update'),
+        {
+            store_id: props.store.id,
+            rows: rowsToSave,
         },
-    });
+        {
+            preserveScroll: true,
+            onFinish: (): void => {
+                submitting.value = false;
+            },
+        },
+    );
 }
 </script>
 
@@ -154,46 +178,6 @@ function save(): void {
                 </Link>
             </div>
 
-            <Card padded>
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div v-if="is_admin" class="w-full max-w-sm space-y-2">
-                        <label
-                            for="inventory_store_id"
-                            class="text-xs font-semibold text-on-surface-variant"
-                        >
-                            {{ t('inventory_counts.store') }}
-                        </label>
-                        <Select
-                            id="inventory_store_id"
-                            :model-value="
-                                props.filters.store_id !== null
-                                    ? String(props.filters.store_id)
-                                    : null
-                            "
-                            :options="
-                                props.stores.map((s) => ({
-                                    value: String(s.id),
-                                    label: s.name,
-                                }))
-                            "
-                            :placeholder="t('inventory_counts.select_store')"
-                            :disabled="hasNoStores"
-                            @update:model-value="selectStore"
-                        />
-                    </div>
-                    <div v-else-if="props.store" class="text-sm">
-                        <p
-                            class="text-xs font-semibold text-on-surface-variant"
-                        >
-                            {{ t('inventory_counts.store') }}
-                        </p>
-                        <p class="font-semibold text-on-surface">
-                            {{ props.store.name }}
-                        </p>
-                    </div>
-                </div>
-            </Card>
-
             <div
                 v-if="!props.store"
                 class="rounded-2xl border border-outline-glass bg-surface-container-lowest p-8 text-center"
@@ -220,22 +204,20 @@ function save(): void {
                     <DataTable class="[&_td]:px-2 [&_th]:px-2">
                         <thead>
                             <tr>
-                                <th class="min-w-[12rem] text-left">
+                                <th class="min-w-[16rem] text-left">
                                     {{ t('inventory_counts.columns.item') }}
                                 </th>
-                                <th class="min-w-[8rem] text-left">
-                                    {{ t('inventory_counts.columns.sku') }}
-                                </th>
-                                <th class="min-w-[5rem] text-left">
-                                    {{ t('inventory_counts.columns.unit') }}
+                                <th class="min-w-[8rem] text-right">
+                                    {{
+                                        t('inventory_counts.columns.current')
+                                    }}
                                 </th>
                                 <th class="min-w-[8rem] text-right">
-                                    {{ t('inventory_counts.columns.current') }}
+                                    {{
+                                        t('inventory_counts.columns.previous')
+                                    }}
                                 </th>
-                                <th class="min-w-[8rem] text-right">
-                                    {{ t('inventory_counts.columns.previous') }}
-                                </th>
-                                <th class="min-w-[9rem] text-right">
+                                <th class="min-w-[16rem] text-right">
                                     {{
                                         t(
                                             'inventory_counts.columns.new_quantity',
@@ -249,48 +231,84 @@ function save(): void {
                         </thead>
                         <tbody>
                             <tr v-for="row in props.rows" :key="row.item_id">
-                                <td class="font-semibold text-on-surface">
-                                    {{ row.title }}
-                                </td>
-                                <td
-                                    class="font-mono text-xs text-on-surface-variant"
-                                >
-                                    {{ row.sku ?? '–' }}
-                                </td>
-                                <td class="text-xs text-on-surface-variant">
-                                    {{ row.unit ?? '–' }}
+                                <td>
+                                    <div
+                                        class="font-semibold text-on-surface"
+                                    >
+                                        {{ row.title }}
+                                    </div>
+                                    <div
+                                        v-if="row.sku"
+                                        class="font-mono text-xs text-on-surface-variant"
+                                    >
+                                        {{ row.sku }}
+                                    </div>
                                 </td>
                                 <td
                                     class="text-right font-semibold text-on-surface"
                                 >
-                                    {{ row.current }}
+                                    {{ formatWithUnit(row.current, row.unit) }}
                                 </td>
                                 <td
                                     class="text-right text-xs text-on-surface-variant"
                                 >
-                                    {{ row.previous ?? '–' }}
+                                    {{
+                                        formatWithUnit(row.previous, row.unit)
+                                    }}
                                 </td>
                                 <td class="text-right">
-                                    <Input
-                                        :model-value="
-                                            String(
+                                    <div
+                                        class="inline-flex items-center justify-end gap-1"
+                                    >
+                                        <button
+                                            type="button"
+                                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-outline-glass bg-surface-container-lowest text-on-surface-variant transition hover:bg-primary/5 hover:text-primary active:scale-95"
+                                            :aria-label="
+                                                t('common.decrease')
+                                            "
+                                            :data-testid="`dec-${row.item_id}`"
+                                            @click="
+                                                adjustQuantity(row.item_id, -1)
+                                            "
+                                        >
+                                            <Minus :size="14" />
+                                        </button>
+                                        <Input
+                                            :model-value="
                                                 editing[row.item_id]
-                                                    ?.quantity ?? 0,
-                                            )
-                                        "
-                                        type="number"
-                                        step="1"
-                                        min="0"
-                                        class="text-right"
-                                        @update:model-value="
-                                            (value) =>
-                                                updateEditing(
-                                                    row.item_id,
-                                                    'quantity',
-                                                    String(value),
-                                                )
-                                        "
-                                    />
+                                                    ?.quantity ?? ''
+                                            "
+                                            type="number"
+                                            inputmode="numeric"
+                                            step="1"
+                                            min="0"
+                                            :placeholder="
+                                                String(row.current)
+                                            "
+                                            :data-testid="`qty-${row.item_id}`"
+                                            class="w-24 text-center"
+                                            @update:model-value="
+                                                (value) =>
+                                                    setQuantity(
+                                                        row.item_id,
+                                                        value,
+                                                    )
+                                            "
+                                        />
+                                        <button
+                                            type="button"
+                                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-outline-glass bg-surface-container-lowest text-on-surface-variant transition hover:bg-primary/5 hover:text-primary active:scale-95"
+                                            :aria-label="
+                                                t('common.increase')
+                                            "
+                                            :data-testid="`inc-${row.item_id}`"
+                                            @click="
+                                                adjustQuantity(row.item_id, 1)
+                                            "
+                                        >
+                                            <Plus :size="14" />
+                                        </button>
+                                    </div>
                                 </td>
                                 <td>
                                     <Input
@@ -300,11 +318,7 @@ function save(): void {
                                         type="text"
                                         @update:model-value="
                                             (value) =>
-                                                updateEditing(
-                                                    row.item_id,
-                                                    'note',
-                                                    String(value),
-                                                )
+                                                setNote(row.item_id, value)
                                         "
                                     />
                                 </td>
@@ -313,7 +327,7 @@ function save(): void {
                         <tfoot>
                             <tr>
                                 <th
-                                    colspan="3"
+                                    colspan="1"
                                     class="border-t border-outline-glass pt-2 text-left text-xs font-semibold text-on-surface-variant"
                                 >
                                     {{
@@ -339,7 +353,11 @@ function save(): void {
                 <div
                     class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end"
                 >
-                    <Button type="button" :disabled="submitting" @click="save">
+                    <Button
+                        type="button"
+                        :disabled="submitting || !hasAnyValue"
+                        @click="save"
+                    >
                         <Save :size="14" />
                         {{ t('inventory_counts.actions.save') }}
                     </Button>

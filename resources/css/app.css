@@ -63,6 +63,22 @@
     textarea {
         font: inherit;
     }
+
+    /*
+     * Hide native number input spinner buttons. Each form supplies its
+     * own stepper controls (e.g. inventory count) so the browser's
+     * built-in up/down arrows are redundant and visually noisy.
+     */
+    input[type='number']::-webkit-inner-spin-button,
+    input[type='number']::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type='number'] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
 }
 
 .glass-panel {

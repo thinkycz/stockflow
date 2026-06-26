@@ -68,10 +68,11 @@ use Thinkycz\LaravelCore\Support\Typer;
         'quantity' => 11,
     ]);
 
-    // Requesting store B as the limited user must be refused.
-    $this->actingAs($limited)
-        ->get(\route('inventory-counts.history', ['store_id' => $storeB->getKey()]))
-        ->assertForbidden();
+    // Requesting store B as the limited user falls back to the assigned store.
+    $overrideResponse = $this->actingAs($limited)
+        ->get(\route('inventory-counts.history', ['store_id' => $storeB->getKey()]));
+    $overrideResponse->assertOk();
+    $overrideResponse->assertInertia(static fn($page) => $page->where('store.id', $storeA->getKey()));
 
     $response = $this->actingAs($limited)->get(\route('inventory-counts.history'));
 

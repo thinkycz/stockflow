@@ -9,10 +9,11 @@ use App\Models\StockMovement;
 });
 
 \test('authenticated user can view stock movement index', function (): void {
-    [$user] = \createIsolatedUserWithWarehouse();
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     StockMovement::factory()->count(2)->incoming()->create([
         'user_id' => $user->getKey(),
         'created_by' => $user->getKey(),
+        'store_id' => $warehouse->getKey(),
     ]);
 
     $response = $this->be($user, 'users')->get('/stock-movements', $this->inertiaHeaders());

@@ -9,6 +9,12 @@ export interface AuthUser {
     assigned_store_id: number | null;
 }
 
+export interface StoreOption {
+    id: number;
+    name: string;
+    is_warehouse: boolean;
+}
+
 export interface AppMeta {
     name: string;
     locale: string;
@@ -27,6 +33,8 @@ export interface SharedProps {
     auth: {
         user: AuthUser | null;
     };
+    active_store: StoreOption | null;
+    available_stores: StoreOption[];
     flash: FlashProps;
     errors: Record<string, string>;
     ziggy: ZiggyConfig & { location: string };

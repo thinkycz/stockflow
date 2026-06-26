@@ -4,6 +4,10 @@
         "tagline": "Správa inventára"
     },
     "nav": {
+        "section": {
+            "store": "Predajňa",
+            "management": "Správa"
+        },
         "dashboard": "Nástenka",
         "inventory": "Inventár",
         "stock_movements": "Skladové pohyby",
@@ -17,6 +21,10 @@
         "profile": "Profil",
         "password": "Heslo",
         "logout": "Odhlásiť sa"
+    },
+    "store_switcher": {
+        "label": "Aktívna predajňa",
+        "warehouse": "Sklad"
     },
     "flash": {
         "no_permission": "Nemáte oprávnenie k tejto sekcii."
@@ -34,7 +42,9 @@
         "results": "výsledkov",
         "searching_for": "Hľadať",
         "previous": "Predchádzajúce",
-        "next": "Ďalej"
+        "next": "Ďalej",
+        "decrease": "Znížiť",
+        "increase": "Zvýšiť"
     },
     "auth": {
         "login": {
@@ -454,15 +464,40 @@
         "actions": {
             "save": "Uložiť výkaz",
             "clear": "Vymazať výkaz",
-            "clear_confirm": "Naozaj chcete vynulovať všetky tržby v tomto výkaze?"
+            "clear_confirm": "Naozaj chcete vynulovať všetky tržby v tomto výkaze?",
+            "history": "História verzií"
         },
         "empty": {
             "title": "Žiadne predajne",
             "description": "Najprv vytvorte predajňu, aby ste mohli zapisovať výkazy."
         },
+        "session": {
+            "title": "Verzia výkazu"
+        },
+        "history": {
+            "title": "História verzií",
+            "subtitle": "Prehľad všetkých uložených verzií tohto výkazu. Otvorte ľubovoľnú verziu a prípadne obnovte jej dáta.",
+            "open": "Otvoriť",
+            "versions_label": "verzií",
+            "confirm_restore": "Naozaj chcete obnoviť výkaz z tejto verzie? Aktuálny stav bude pred obnovením zálohovaný ako nová verzia.",
+            "restore": "Obnoviť výkaz",
+            "back": "Späť na výkaz",
+            "columns": {
+                "snapshot_at": "Dátum verzie",
+                "day_count": "Počet dní",
+                "note": "Poznámka",
+                "created_by": "Vytvoril",
+                "open": ""
+            },
+            "empty": {
+                "title": "Zatiaľ žiadne verzie",
+                "description": "História verzií sa začne plniť po každom uložení výkazu."
+            }
+        },
         "flash": {
             "saved": "Výkaz bol uložený.",
-            "cleared": "Výkaz bol vynulovaný."
+            "cleared": "Výkaz bol vynulovaný.",
+            "restored": "Výkaz bol obnovený z vybranej verzie."
         }
     },
     "inventory_counts": {

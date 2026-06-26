@@ -46,12 +46,14 @@ use App\Models\StoreItem;
 });
 
 \test('inventory count index excludes foreign stores from the list', function (): void {
-    [$user] = \createIsolatedUserWithWarehouse();
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     [$other] = \createIsolatedUserWithWarehouse();
-    $store = Store::factory()->create(['user_id' => $other->getKey()]);
+    $foreignStore = Store::factory()->create(['user_id' => $other->getKey()]);
 
     $response = $this->be($user, 'users')
-        ->get('/inventory-counts?store_id=' . $store->getKey(), $this->inertiaHeaders());
+        ->get('/inventory-counts?store_id=' . $foreignStore->getKey(), $this->inertiaHeaders());
 
-    \expect($response->json('props.store'))->toBeNull();
+    // The resolver rejects the foreign store id and falls back to the
+    // user's first owned retail store (the warehouse).
+    \expect($response->json('props.store.id'))->toBe($warehouse->getKey());
 });

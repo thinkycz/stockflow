@@ -26,7 +26,6 @@ type Session = {
 
 const props = defineProps<{
     store: { id: number; name: string } | null;
-    stores: Array<{ id: number; name: string }>;
     items: Array<{ id: number; title: string }>;
     rows: Session[];
     filters: {
@@ -46,20 +45,6 @@ useBoundLocale();
 const fromInput = ref<string>(props.filters.from);
 const toInput = ref<string>(props.filters.to);
 
-function selectStore(value: string | number | null | undefined): void {
-    const storeId = value === null || value === undefined ? '' : String(value);
-    router.get(
-        route('inventory-counts.history'),
-        {
-            store_id: storeId,
-            item_id: props.filters.item_id,
-            from: props.filters.from,
-            to: props.filters.to,
-        },
-        { preserveState: true, preserveScroll: true },
-    );
-}
-
 function selectItem(value: string | number | null | undefined): void {
     const itemId =
         value === null || value === undefined || value === ''
@@ -68,7 +53,6 @@ function selectItem(value: string | number | null | undefined): void {
     router.get(
         route('inventory-counts.history'),
         {
-            store_id: props.filters.store_id,
             item_id: itemId,
             from: props.filters.from,
             to: props.filters.to,
@@ -81,7 +65,6 @@ function applyRange(): void {
     router.get(
         route('inventory-counts.history'),
         {
-            store_id: props.filters.store_id,
             item_id: props.filters.item_id,
             from: fromInput.value,
             to: toInput.value,
@@ -122,32 +105,7 @@ const totals = computed(() => ({
             </div>
 
             <Card padded>
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div v-if="is_admin" class="space-y-2">
-                        <label
-                            for="history_store_id"
-                            class="text-xs font-semibold text-on-surface-variant"
-                        >
-                            {{ t('inventory_counts.store') }}
-                        </label>
-                        <Select
-                            id="history_store_id"
-                            :model-value="
-                                props.filters.store_id !== null
-                                    ? String(props.filters.store_id)
-                                    : null
-                            "
-                            :options="
-                                props.stores.map((s) => ({
-                                    value: String(s.id),
-                                    label: s.name,
-                                }))
-                            "
-                            :placeholder="t('inventory_counts.select_store')"
-                            @update:model-value="selectStore"
-                        />
-                    </div>
-
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div class="space-y-2">
                         <label
                             for="history_item_id"
@@ -228,9 +186,6 @@ const totals = computed(() => ({
                         {{ t('inventory_counts.history.sessions_label') }} ·
                         {{ formatCzechDate(props.filters.from) }} –
                         {{ formatCzechDate(props.filters.to) }}
-                    </span>
-                    <span v-if="props.store">
-                        {{ props.store.name }}
                     </span>
                 </div>
 

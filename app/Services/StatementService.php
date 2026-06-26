@@ -7,6 +7,8 @@ namespace App\Services;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\Statement;
 use App\Models\StatementDay;
+use App\Models\StatementVersion;
+use App\Models\StatementVersionDay;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
@@ -26,6 +28,11 @@ class StatementService
      * Wolt, Foodora). Only pure cash is exempt.
      */
     public const float MARKETPLACE_PROVISION_RATE = 0.30;
+
+    /**
+     * Upper bound for the number of versions shown in history lists.
+     */
+    public const int HISTORY_LIMIT = 200;
 
     /**
      * Find an existing statement for the given store/month, or create a new one
@@ -77,11 +84,13 @@ class StatementService
     }
 
     /**
-     * Update all daily amounts on the statement in one transaction.
+     * Update all daily amounts on the statement in one transaction and
+     * record an immutable version snapshot afterwards so the previous
+     * state can be restored from history.
      *
      * @param array<int, array<string, mixed>> $rows
      */
-    public function updateDays(Statement $statement, array $rows): void
+    public function updateDays(Statement $statement, array $rows, User $user): void
     {
         DB::transaction(function () use ($statement, $rows): void {
             $existing = $statement->days()->get()->keyBy(static fn(StatementDay $day): string => $day->getDate());
@@ -115,12 +124,16 @@ class StatementService
                 ]);
             }
         });
+
+        $this->snapshot($statement, $user);
     }
 
     /**
-     * Reset all daily amounts to zero without deleting the statement.
+     * Reset all daily amounts to zero without deleting the statement and
+     * record an immutable version snapshot afterwards so the previous
+     * state can be restored from history.
      */
-    public function clear(Statement $statement): void
+    public function clear(Statement $statement, User $user): void
     {
         DB::transaction(function () use ($statement): void {
             $statement->days()->update([
@@ -133,6 +146,137 @@ class StatementService
                 'total' => 0,
             ]);
         });
+
+        $this->snapshot($statement, $user);
+    }
+
+    /**
+     * Capture an immutable snapshot of the statement's daily rows. Used
+     * after every successful save (update or clear) so the user can
+     * restore the previous state later. Also called by `restoreVersion`
+     * before overwriting the data, so the user can revert the restore
+     * itself.
+     */
+    public function snapshot(Statement $statement, User $user): StatementVersion
+    {
+        return DB::transaction(function () use ($statement, $user): StatementVersion {
+            $version = StatementVersion::query()->create([
+                'user_id' => $statement->getUserId(),
+                'statement_id' => $statement->getKey(),
+                'created_by' => $user->getKey(),
+                'snapshot_at' => Carbon::now(),
+                'note' => null,
+            ]);
+
+            $versionId = $version->getKey();
+            $rows = [];
+            $now = Carbon::now();
+
+            foreach ($statement->days()->orderBy('date')->get() as $day) {
+                $rows[] = [
+                    'version_id' => $versionId,
+                    'date' => $day->getDate(),
+                    'cash' => $day->getCash(),
+                    'card' => $day->getCard(),
+                    'wolt' => $day->getWolt(),
+                    'bolt' => $day->getBolt(),
+                    'bolt_cash' => $day->getBoltCash(),
+                    'foodora' => $day->getFoodora(),
+                    'total' => $day->getTotal(),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            if ($rows !== []) {
+                StatementVersionDay::query()->insert($rows);
+            }
+
+            return $version->fresh(['days']) ?? $version;
+        });
+    }
+
+    /**
+     * Restore the statement's daily amounts from the given version. A
+     * backup snapshot of the current state is taken first so the user
+     * can revert the restore itself if it was a mistake.
+     */
+    public function restoreVersion(StatementVersion $version, User $user): void
+    {
+        DB::transaction(function () use ($version, $user): void {
+            $statement = $version->getStatement();
+
+            $this->snapshot($statement, $user);
+
+            $existing = $statement->days()->get()->keyBy(static fn(StatementDay $day): string => $day->getDate());
+
+            foreach ($version->days()->orderBy('date')->get() as $versionDay) {
+                $day = $existing->get($versionDay->getDate());
+
+                if (!$day instanceof StatementDay) {
+                    continue;
+                }
+
+                $day->update([
+                    'cash' => $versionDay->getCash(),
+                    'card' => $versionDay->getCard(),
+                    'wolt' => $versionDay->getWolt(),
+                    'bolt' => $versionDay->getBolt(),
+                    'bolt_cash' => $versionDay->getBoltCash(),
+                    'foodora' => $versionDay->getFoodora(),
+                    'total' => $versionDay->getTotal(),
+                ]);
+            }
+        });
+    }
+
+    /**
+     * Return the version history for the given statement, newest first.
+     * Each row exposes `created_by_email` for display purposes.
+     *
+     * @return array<int, array{
+     *     id: int,
+     *     snapshot_at: string,
+     *     note: string|null,
+     *     created_by: int|null,
+     *     created_by_email: string|null,
+     *     day_count: int,
+     * }>
+     */
+    public function historyForStatement(Statement $statement, int $limit): array
+    {
+        $query = StatementVersion::query();
+        StatementVersion::scopeForUser($query, $statement->getUserId());
+        StatementVersion::scopeForStatement($query, $statement);
+        $query->withCount('days');
+        $query->orderByDesc('snapshot_at');
+        $query->orderByDesc('id');
+        $query->limit($limit);
+
+        /** @var \Illuminate\Database\Eloquent\Collection<int, StatementVersion> $versions */
+        $versions = $query->get();
+
+        $creators = User::query()
+            ->whereIn('id', $versions->pluck('created_by')->filter()->unique()->values()->all())
+            ->get()
+            ->keyBy(static fn(User $user): int => $user->getKey());
+
+        $rows = [];
+        foreach ($versions as $version) {
+            $creatorId = $version->getCreatedBy();
+            $creator = $creatorId !== null ? $creators->get($creatorId) : null;
+
+            $rows[] = [
+                'id' => $version->getKey(),
+                'snapshot_at' => $version->getSnapshotAt()->toIso8601String(),
+                'note' => $version->getNote(),
+                'created_by' => $creatorId,
+                'created_by_email' => $creator instanceof User ? $creator->getEmail() : null,
+                'day_count' => Typer::assertInt($version->getAttribute('days_count')),
+            ];
+        }
+
+        return $rows;
     }
 
     /**

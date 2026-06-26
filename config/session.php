@@ -178,7 +178,7 @@ return [
     |
     */
 
-    'secure' => $env->parseNullableString('SESSION_SECURE_COOKIE') ?? true,
+    'secure' => $env->parseNullableString('SESSION_SECURE_COOKIE') ?? false,
 
     /*
     |--------------------------------------------------------------------------

@@ -9,6 +9,7 @@ use App\Http\Validation\StockMovementValidity;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
+use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -44,6 +45,14 @@ class StockMovementIndexController
         $storeId = $validated->parseNullableInt('store_id');
         $dateFrom = $validated->assertNullableString('date_from');
         $dateTo = $validated->assertNullableString('date_to');
+
+        if ($storeId === null) {
+            $activeStore = ActiveStoreResolver::resolve($request, $user);
+
+            if ($activeStore instanceof Store) {
+                $storeId = $activeStore->getKey();
+            }
+        }
 
         $baseQuery = StockMovement::query();
         StockMovement::scopeForUser($baseQuery, $user);
@@ -94,20 +103,8 @@ class StockMovementIndexController
             ];
         })->all();
 
-        $storesQuery = Store::query();
-        Store::scopeForUser($storesQuery, $user);
-        $stores = Store::querySelect($storesQuery)
-            ->orderBy('name')
-            ->get()
-            ->map(static fn(Store $store): array => [
-                'id' => $store->getKey(),
-                'name' => $store->getName(),
-            ])
-            ->all();
-
         return Inertia::render('stock-movements/Index', [
             'movements' => $movements,
-            'stores' => $stores,
             'filters' => [
                 'search' => $search,
                 'type' => $type,

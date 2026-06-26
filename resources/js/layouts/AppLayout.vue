@@ -17,6 +17,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Brand from '@/components/ui/Brand.vue';
 import FlashAlerts from '@/components/ui/FlashAlerts.vue';
+import StoreSwitcher from '@/components/ui/StoreSwitcher.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { useSharedProps } from '@/composables/useSharedProps';
@@ -36,36 +37,21 @@ const activeUrl = computed(() => usePage().url);
 
 const isAdmin = computed(() => auth.value.user?.is_admin === true);
 
-const adminNavItems = computed(() => [
-    {
-        key: 'dashboard',
-        href: route('dashboard'),
-        label: t('nav.dashboard'),
-        icon: LayoutDashboard,
-        active:
-            activeUrl.value === '/dashboard' ||
-            activeUrl.value.startsWith('/dashboard?'),
-    },
-    {
-        key: 'items',
-        href: route('items.index'),
-        label: t('nav.inventory'),
-        icon: Boxes,
-        active: activeUrl.value.startsWith('/items'),
-    },
+type NavItem = {
+    key: string;
+    href: string;
+    label: string;
+    icon: typeof LayoutDashboard;
+    active: boolean;
+};
+
+const adminStoreNavItems = computed<NavItem[]>(() => [
     {
         key: 'stock_movements',
         href: route('stock-movements.index'),
         label: t('nav.stock_movements'),
         icon: ArrowLeftRight,
         active: activeUrl.value.startsWith('/stock-movements'),
-    },
-    {
-        key: 'stores',
-        href: route('stores.index'),
-        label: t('nav.stores'),
-        icon: StoreIcon,
-        active: activeUrl.value.startsWith('/stores'),
     },
     {
         key: 'statements',
@@ -97,6 +83,23 @@ const adminNavItems = computed(() => [
         icon: TrendingUp,
         active: activeUrl.value.startsWith('/reports/statistics'),
     },
+]);
+
+const adminManagementNavItems = computed<NavItem[]>(() => [
+    {
+        key: 'items',
+        href: route('items.index'),
+        label: t('nav.inventory'),
+        icon: Boxes,
+        active: activeUrl.value.startsWith('/items'),
+    },
+    {
+        key: 'stores',
+        href: route('stores.index'),
+        label: t('nav.stores'),
+        icon: StoreIcon,
+        active: activeUrl.value.startsWith('/stores'),
+    },
     {
         key: 'users',
         href: route('users.index'),
@@ -106,16 +109,17 @@ const adminNavItems = computed(() => [
     },
 ]);
 
-const limitedNavItems = computed(() => [
-    {
-        key: 'dashboard',
-        href: route('dashboard'),
-        label: t('nav.dashboard'),
-        icon: LayoutDashboard,
-        active:
-            activeUrl.value === '/dashboard' ||
-            activeUrl.value.startsWith('/dashboard?'),
-    },
+const dashboardNavItem = computed<NavItem>(() => ({
+    key: 'dashboard',
+    href: route('dashboard'),
+    label: t('nav.dashboard'),
+    icon: LayoutDashboard,
+    active:
+        activeUrl.value === '/dashboard' ||
+        activeUrl.value.startsWith('/dashboard?'),
+}));
+
+const limitedStoreNavItems = computed<NavItem[]>(() => [
     {
         key: 'statements',
         href: route('statements.index'),
@@ -132,9 +136,41 @@ const limitedNavItems = computed(() => [
     },
 ]);
 
-const navItems = computed(() =>
-    isAdmin.value ? adminNavItems.value : limitedNavItems.value,
-);
+type NavSection = {
+    key: string;
+    label: string | null;
+    items: NavItem[];
+    showStoreSwitcher?: boolean;
+};
+
+const navSections = computed<NavSection[]>(() => {
+    if (isAdmin.value) {
+        return [
+            {
+                key: 'management',
+                label: t('nav.section.management'),
+                items: adminManagementNavItems.value,
+            },
+            {
+                key: 'store',
+                label: t('nav.section.store'),
+                items: adminStoreNavItems.value,
+                showStoreSwitcher: true,
+            },
+        ];
+    }
+
+    return [
+        {
+            key: 'store',
+            label: t('nav.section.store'),
+            items: limitedStoreNavItems.value,
+            showStoreSwitcher: true,
+        },
+    ];
+});
+
+const navItems = computed<NavItem[]>(() => navSections.value.flatMap((section) => section.items));
 
 const settingsActive = computed(() => activeUrl.value.startsWith('/settings'));
 
@@ -163,21 +199,51 @@ function logout(): void {
                 <Brand :href="route('dashboard')" />
             </div>
 
-            <nav class="flex-1 space-y-1">
+            <nav class="flex-1 space-y-4 overflow-y-auto">
                 <Link
-                    v-for="item in navItems"
-                    :key="item.key"
-                    :href="item.href"
+                    :key="dashboardNavItem.key"
+                    :href="dashboardNavItem.href"
                     :class="[
                         'flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold transition',
-                        item.active
+                        dashboardNavItem.active
                             ? 'bg-surface-container-lowest text-primary shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)]'
                             : 'text-on-surface-variant hover:bg-surface-container-low',
                     ]"
                 >
-                    <component :is="item.icon" :size="16" />
-                    {{ item.label }}
+                    <component :is="dashboardNavItem.icon" :size="16" />
+                    {{ dashboardNavItem.label }}
                 </Link>
+
+                <div
+                    v-for="section in navSections"
+                    :key="section.key"
+                    class="space-y-1"
+                >
+                    <p
+                        class="px-3 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/70"
+                    >
+                        {{ section.label }}
+                    </p>
+                    <StoreSwitcher
+                        v-if="section.showStoreSwitcher === true"
+                        integrated
+                        class="mb-1"
+                    />
+                    <Link
+                        v-for="item in section.items"
+                        :key="item.key"
+                        :href="item.href"
+                        :class="[
+                            'flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold transition',
+                            item.active
+                                ? 'bg-surface-container-lowest text-primary shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)]'
+                                : 'text-on-surface-variant hover:bg-surface-container-low',
+                        ]"
+                    >
+                        <component :is="item.icon" :size="16" />
+                        {{ item.label }}
+                    </Link>
+                </div>
             </nav>
 
             <div
@@ -236,12 +302,15 @@ function logout(): void {
 
         <!-- Mobile Top Nav -->
         <header
-            class="glass-panel sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-outline-glass px-4 shadow-sm md:hidden"
+            class="glass-panel sticky top-0 z-30 flex h-16 w-full items-center justify-between gap-2 border-b border-outline-glass px-4 shadow-sm md:hidden"
         >
-            <div class="flex items-center gap-2">
+            <div class="flex min-w-0 items-center gap-2">
                 <Brand :href="route('dashboard')" />
+                <div class="min-w-0 flex-1">
+                    <StoreSwitcher compact />
+                </div>
             </div>
-            <div class="flex items-center gap-1">
+            <div class="flex shrink-0 items-center gap-1">
                 <Link
                     v-for="item in navItems"
                     :key="item.key"

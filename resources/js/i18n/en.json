@@ -4,6 +4,10 @@
         "tagline": "Inventory Management"
     },
     "nav": {
+        "section": {
+            "store": "Store",
+            "management": "Management"
+        },
         "dashboard": "Dashboard",
         "inventory": "Inventory",
         "stock_movements": "Stock movements",
@@ -17,6 +21,10 @@
         "profile": "Profile",
         "password": "Password",
         "logout": "Log out"
+    },
+    "store_switcher": {
+        "label": "Active store",
+        "warehouse": "Warehouse"
     },
     "flash": {
         "no_permission": "You do not have permission for this section."
@@ -34,7 +42,9 @@
         "results": "results",
         "searching_for": "Searching for",
         "previous": "Previous",
-        "next": "Next"
+        "next": "Next",
+        "decrease": "Decrease",
+        "increase": "Increase"
     },
     "auth": {
         "login": {
@@ -454,15 +464,40 @@
         "actions": {
             "save": "Save statement",
             "clear": "Clear statement",
-            "clear_confirm": "Are you sure you want to zero out all sales in this statement?"
+            "clear_confirm": "Are you sure you want to zero out all sales in this statement?",
+            "history": "Version history"
         },
         "empty": {
             "title": "No stores yet",
             "description": "Create a store first to start recording statements."
         },
+        "session": {
+            "title": "Statement version"
+        },
+        "history": {
+            "title": "Version history",
+            "subtitle": "Overview of all saved versions of this statement. Open any version and restore its data if needed.",
+            "open": "Open",
+            "versions_label": "versions",
+            "confirm_restore": "Restore this version? The current state will be saved as a new version first.",
+            "restore": "Restore statement",
+            "back": "Back to statement",
+            "columns": {
+                "snapshot_at": "Snapshot at",
+                "day_count": "Day count",
+                "note": "Note",
+                "created_by": "Created by",
+                "open": ""
+            },
+            "empty": {
+                "title": "No versions yet",
+                "description": "Version history will fill up as soon as you save a statement."
+            }
+        },
         "flash": {
             "saved": "Statement saved.",
-            "cleared": "Statement cleared."
+            "cleared": "Statement cleared.",
+            "restored": "Statement restored from the selected version."
         }
     },
     "inventory_counts": {

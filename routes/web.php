@@ -23,8 +23,11 @@ use App\Http\Controllers\Web\Report\ReportController;
 use App\Http\Controllers\Web\Report\StatisticsController;
 use App\Http\Controllers\Web\Settings\SettingsController;
 use App\Http\Controllers\Web\Statement\StatementClearController;
+use App\Http\Controllers\Web\Statement\StatementHistoryController;
 use App\Http\Controllers\Web\Statement\StatementIndexController;
 use App\Http\Controllers\Web\Statement\StatementUpdateController;
+use App\Http\Controllers\Web\Statement\StatementVersionRestoreController;
+use App\Http\Controllers\Web\Statement\StatementVersionShowController;
 use App\Http\Controllers\Web\StockMovement\StockMovementCreateController;
 use App\Http\Controllers\Web\StockMovement\StockMovementDestroyController;
 use App\Http\Controllers\Web\StockMovement\StockMovementIndexController;
@@ -34,6 +37,7 @@ use App\Http\Controllers\Web\Store\StoreDestroyController;
 use App\Http\Controllers\Web\Store\StoreEditController;
 use App\Http\Controllers\Web\Store\StoreIndexController;
 use App\Http\Controllers\Web\Store\StoreShowController;
+use App\Http\Controllers\Web\Store\StoreSwitchController;
 use App\Http\Controllers\Web\User\UserCreateController;
 use App\Http\Controllers\Web\User\UserDestroyController;
 use App\Http\Controllers\Web\User\UserEditController;
@@ -74,6 +78,9 @@ Resolver::resolveRouteRegistrar()
         $router->get('statements', StatementIndexController::class)->name('statements.index');
         $router->put('statements/{statement}', StatementUpdateController::class)->whereNumber('statement')->name('statements.update');
         $router->post('statements/{statement}/clear', StatementClearController::class)->whereNumber('statement')->name('statements.clear');
+        $router->get('statements/{statement}/history', StatementHistoryController::class)->whereNumber('statement')->name('statements.history');
+        $router->get('statements/versions/{version}', StatementVersionShowController::class)->whereNumber('version')->name('statements.versions.show');
+        $router->post('statements/versions/{version}/restore', StatementVersionRestoreController::class)->whereNumber('version')->name('statements.versions.restore');
 
         // Inventory counts (admin + limited)
         $router->get('inventory-counts', InventoryCountIndexController::class)->name('inventory-counts.index');
@@ -104,6 +111,7 @@ Resolver::resolveRouteRegistrar()
 
         // Stores
         $router->get('stores', StoreIndexController::class)->name('stores.index');
+        $router->post('stores/switch', StoreSwitchController::class)->name('stores.switch');
         $router->get('stores/create', [StoreCreateController::class, 'create'])->name('stores.create');
         $router->post('stores', [StoreCreateController::class, 'store'])->name('stores.store');
         $router->get('stores/{store}', StoreShowController::class)->whereNumber('store')->name('stores.show');

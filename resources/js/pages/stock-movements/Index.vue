@@ -58,9 +58,6 @@ const route = useRoute();
 
 const formSearch = ref<string>(props.filters.search || '');
 const formType = ref<string>(props.filters.type || '');
-const formStoreId = ref<string>(
-    props.filters.store_id ? String(props.filters.store_id) : '',
-);
 const formDateFrom = ref<string>(props.filters.date_from || '');
 const formDateTo = ref<string>(props.filters.date_to || '');
 const submitting = ref<boolean>(false);
@@ -72,9 +69,6 @@ function applyFilters(): void {
     }
     if (formType.value) {
         params.type = formType.value;
-    }
-    if (formStoreId.value) {
-        params.store_id = Number(formStoreId.value);
     }
     if (formDateFrom.value) {
         params.date_from = formDateFrom.value;
@@ -170,23 +164,6 @@ function destroyMovement(id: number): void {
                                         'stock_movements.types.adjustment',
                                     ),
                                 },
-                            ]"
-                        />
-                    </div>
-                    <div class="lg:w-40">
-                        <Select
-                            v-model="formStoreId"
-                            :options="[
-                                {
-                                    value: '',
-                                    label: t(
-                                        'stock_movements.filter.all_stores',
-                                    ),
-                                },
-                                ...stores.map((s) => ({
-                                    value: String(s.id),
-                                    label: s.name,
-                                })),
                             ]"
                         />
                     </div>
@@ -334,7 +311,6 @@ function destroyMovement(id: number): void {
                     :query-params="{
                         search: filters.search,
                         type: filters.type ?? undefined,
-                        store_id: filters.store_id ?? undefined,
                         date_from: filters.date_from ?? undefined,
                         date_to: filters.date_to ?? undefined,
                     }"

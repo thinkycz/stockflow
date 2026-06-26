@@ -31,7 +31,7 @@ class InventoryCountUpdateController
             'store_id' => $validity->storeId()->required()->toArray(),
             'rows' => $validity->rows()->required()->toArray(),
             'rows.*.item_id' => $validity->itemId()->required()->toArray(),
-            'rows.*.quantity' => $validity->rowQuantity()->required()->toArray(),
+            'rows.*.quantity' => $validity->rowQuantity()->nullable()->toArray(),
             'rows.*.note' => $validity->rowNote()->nullable()->toArray(),
         ]);
 

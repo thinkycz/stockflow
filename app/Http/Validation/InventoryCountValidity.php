@@ -65,7 +65,13 @@ class InventoryCountValidity
     }
 
     /**
-     * Per-row quantity validation rules (integer, 0..999999).
+     * Per-row quantity validation rules (integer, 0..999999, optional).
+     *
+     * A null quantity means "do not touch the existing on-hand quantity
+     * for this row" and is filtered out before persistence by the
+     * session service. The `nullable` presence flag is applied at the
+     * controller level so this method stays purely about type and
+     * range.
      */
     public function rowQuantity(): Validity
     {

@@ -54,7 +54,7 @@ use App\Services\StatementService;
             'bolt' => 5,
             'foodora' => 5,
         ],
-    ]);
+    ], $user);
 
     $firstDay->refresh();
     \expect($firstDay->getTotal())->toBe(70.0);
@@ -71,7 +71,7 @@ use App\Services\StatementService;
 
     $firstDay->update(['cash' => 100, 'total' => 100]);
 
-    $service->clear($statement);
+    $service->clear($statement, $user);
 
     $firstDay->refresh();
     \expect($firstDay->getCash())->toBe(0.0);

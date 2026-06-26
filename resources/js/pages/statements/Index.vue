@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { Eraser, Save } from '@lucide/vue';
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -33,7 +33,6 @@ const props = defineProps<{
         year: number;
         month: number;
     } | null;
-    stores: Array<{ id: number; name: string }>;
     days: DayRow[];
     filters: {
         store_id: number | null;
@@ -88,23 +87,8 @@ function selectMonth(value: string | number | null | undefined): void {
     router.get(
         route('statements.index'),
         {
-            store_id: props.filters.store_id,
             year,
             month,
-        },
-        { preserveState: true, preserveScroll: true },
-    );
-}
-
-function selectStore(value: string | number | null | undefined): void {
-    const storeId =
-        value === null || value === undefined ? null : String(value);
-    router.get(
-        route('statements.index'),
-        {
-            store_id: storeId,
-            year: props.filters.year,
-            month: props.filters.month,
         },
         { preserveState: true, preserveScroll: true },
     );
@@ -200,8 +184,6 @@ function clearStatement(): void {
         },
     );
 }
-
-const hasNoStores = computed(() => props.stores.length === 0);
 </script>
 
 <template>
@@ -209,44 +191,36 @@ const hasNoStores = computed(() => props.stores.length === 0);
         <Head :title="t('statements.title')" />
 
         <div class="flex flex-col gap-6">
-            <div>
-                <h1
-                    class="font-heading text-2xl font-bold tracking-tight text-on-surface"
+            <div class="flex items-end justify-between gap-3">
+                <div>
+                    <h1
+                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
+                    >
+                        {{ t('statements.title') }}
+                    </h1>
+                    <p class="mt-1 text-sm text-on-surface-variant">
+                        {{ t('statements.subtitle') }}
+                    </p>
+                </div>
+                <Link
+                    v-if="props.statement"
+                    :href="
+                        route('statements.history', {
+                            statement: props.statement.id,
+                        })
+                    "
                 >
-                    {{ t('statements.title') }}
-                </h1>
-                <p class="mt-1 text-sm text-on-surface-variant">
-                    {{ t('statements.subtitle') }}
-                </p>
+                    <button
+                        type="button"
+                        class="rounded-xl border border-outline-glass bg-surface-container-lowest px-3 py-2 text-xs font-semibold text-primary transition hover:bg-primary/5"
+                    >
+                        {{ t('statements.actions.history') }} →
+                    </button>
+                </Link>
             </div>
 
             <Card padded>
                 <div class="grid gap-4 sm:grid-cols-2 lg:max-w-2xl">
-                    <div class="space-y-2">
-                        <label
-                            for="statement_store_id"
-                            class="text-xs font-semibold text-on-surface-variant"
-                        >
-                            {{ t('statements.store') }}
-                        </label>
-                        <Select
-                            id="statement_store_id"
-                            :model-value="
-                                props.filters.store_id !== null
-                                    ? String(props.filters.store_id)
-                                    : null
-                            "
-                            :options="
-                                props.stores.map((s) => ({
-                                    value: String(s.id),
-                                    label: s.name,
-                                }))
-                            "
-                            :placeholder="t('statements.select_store')"
-                            :disabled="hasNoStores"
-                            @update:model-value="selectStore"
-                        />
-                    </div>
                     <div class="space-y-2">
                         <label
                             for="statement_month"

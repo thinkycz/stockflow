@@ -17,7 +17,6 @@ import CardDescription from '@/components/ui/CardDescription.vue';
 import Chart from '@/components/ui/Chart.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import MetricCard from '@/components/ui/MetricCard.vue';
-import Select from '@/components/ui/Select.vue';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
@@ -68,7 +67,6 @@ type DailyPoint = {
 
 const props = defineProps<{
     store: { id: number; name: string } | null;
-    stores: Array<{ id: number; name: string }>;
     period_days: number;
     sales: SalesSummary;
     incoming: MovementSummary;
@@ -84,8 +82,6 @@ const { t } = useI18n();
 useBoundLocale();
 
 const route = useRoute();
-
-const hasNoStores = computed(() => props.stores.length === 0);
 
 const incomingSeries = computed(() =>
     props.daily_series.map((point) => ({
@@ -114,16 +110,6 @@ const channelSlices = computed(() => {
 });
 
 const periodValue = computed(() => String(props.filters.period_days));
-
-function selectStore(value: string | number | null | undefined): void {
-    const storeId =
-        value === null || value === undefined ? null : String(value);
-    router.get(
-        route('reports.statistics'),
-        { store_id: storeId, period_days: props.filters.period_days },
-        { preserveState: true, preserveScroll: true },
-    );
-}
 
 function applyPeriod(event: Event): void {
     const target = event.target as HTMLInputElement;
@@ -157,36 +143,7 @@ function formatCount(value: number): string {
             </div>
 
             <Card padded>
-                <div class="grid gap-4 sm:grid-cols-2 lg:max-w-2xl">
-                    <div class="space-y-2">
-                        <label
-                            for="statistics_store_id"
-                            class="text-xs font-semibold text-on-surface-variant"
-                        >
-                            {{ t('reports.statistics.store') }}
-                        </label>
-                        <Select
-                            id="statistics_store_id"
-                            :model-value="
-                                props.filters.store_id !== null
-                                    ? String(props.filters.store_id)
-                                    : null
-                            "
-                            :options="
-                                props.stores.map((s) => ({
-                                    value: String(s.id),
-                                    label: s.name,
-                                }))
-                            "
-                            :placeholder="
-                                t('reports.statistics.select_store', [
-                                    t('reports.statistics.store'),
-                                ])
-                            "
-                            :disabled="hasNoStores"
-                            @update:model-value="selectStore"
-                        />
-                    </div>
+                <div class="grid gap-4 lg:max-w-md">
                     <div class="space-y-2">
                         <label
                             for="statistics_period"

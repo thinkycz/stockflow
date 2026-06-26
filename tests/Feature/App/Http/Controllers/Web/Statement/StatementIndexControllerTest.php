@@ -24,7 +24,6 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $response->assertOk();
     $response->assertJsonPath('component', 'statements/Index');
-    $response->assertJsonCount(2, 'props.stores');
     $response->assertJsonPath('props.filters.store_id', $retail->getKey());
     $response->assertJsonCount(30, 'props.days');
     \expect($response->json('props.statement.id'))->toBeInt();
@@ -83,17 +82,19 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('statements index is isolated per user', function (): void {
-    [$user] = \createIsolatedUserWithWarehouse();
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     [$other] = \createIsolatedUserWithWarehouse();
-    $store = Store::factory()->create(['user_id' => $other->getKey()]);
+    $foreignStore = Store::factory()->create(['user_id' => $other->getKey()]);
 
     $response = $this->be($user, 'users')->get(
-        '/statements?store_id=' . $store->getKey(),
+        '/statements?store_id=' . $foreignStore->getKey(),
         $this->inertiaHeaders(),
     );
 
     $response->assertOk();
-    \expect($response->json('props.statement'))->toBeNull();
+    // The foreign store id is rejected by the resolver, which falls back
+    // to the requesting user's first owned retail store (the warehouse).
+    \expect($response->json('props.filters.store_id'))->toBe($warehouse->getKey());
 });
 
 \test('limited user is pinned to their assigned store', function (): void {
@@ -109,13 +110,14 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response->assertOk();
     $response->assertJsonPath('props.filters.store_id', $own->getKey());
     $response->assertJsonPath('props.is_admin', false);
-    // Stores select exposes only the assigned store.
-    $response->assertJsonCount(1, 'props.stores');
 
-    // Requesting a non-assigned store is forbidden.
-    $this->be($limited, 'users')
-        ->get('/statements?store_id=' . $other->getKey(), $this->inertiaHeaders())
-        ->assertForbidden();
+    // A `?store_id=` override for a non-assigned store is silently
+    // ignored — the resolver always pins limited users to their
+    // assigned store.
+    $overrideResponse = $this->be($limited, 'users')
+        ->get('/statements?store_id=' . $other->getKey(), $this->inertiaHeaders());
+    $overrideResponse->assertOk();
+    $overrideResponse->assertJsonPath('props.filters.store_id', $own->getKey());
 });
 
 \test('limited user without an assigned store is refused', function (): void {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Web\Statement;
 
 use App\Models\Statement;
+use App\Models\User;
 use App\Services\StatementService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -17,7 +18,7 @@ class StatementClearController
      */
     public function __invoke(Statement $statement, StatementService $service): RedirectResponse
     {
-        $service->clear($statement);
+        $service->clear($statement, User::mustAuth());
 
         Inertia::flash('success', \__('Statement cleared.'));
 

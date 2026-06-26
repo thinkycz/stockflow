@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\ResolveActiveStore;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -42,6 +43,7 @@ return Application::configure(basePath: \dirname(__DIR__))
         $middleware->web(append: [
             AuthShouldUseMiddleware::class,
             SetPreferredLanguageMiddleware::class,
+            ResolveActiveStore::class,
             HandleInertiaRequests::class,
         ]);
 

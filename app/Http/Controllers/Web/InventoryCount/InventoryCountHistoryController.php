@@ -8,6 +8,7 @@ use App\Models\Item;
 use App\Models\Store;
 use App\Models\User;
 use App\Services\InventorySessionService;
+use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
@@ -40,34 +41,20 @@ class InventoryCountHistoryController
             \abort(403);
         }
 
-        $storesQuery = Store::query();
-        Store::scopeForUser($storesQuery, $this->resolveScopeUser($user));
-        $stores = $storesQuery->orderBy('name')->get()->all();
+        $scopeUser = $this->resolveScopeUser($user);
 
         $itemsQuery = Item::query();
-        Item::scopeForUser($itemsQuery, $this->resolveScopeUser($user));
+        Item::scopeForUser($itemsQuery, $scopeUser);
         $items = $itemsQuery->orderBy('title')->get()->all();
 
-        $defaultStore = $this->resolveDefaultStore($stores);
-        $requestedStoreId = Typer::parseNullableInt($request->query('store_id'));
-        $storeId = $requestedStoreId ?? $defaultStore?->getKey();
-
-        $this->enforceStoreScope($user, $storeId, $stores);
-
-        $store = null;
-
-        if ($storeId !== null) {
-            $storeLookup = Store::query();
-            Store::scopeForUser($storeLookup, $this->resolveScopeUser($user));
-            $store = $storeLookup->whereKey($storeId)->first();
-        }
+        $store = ActiveStoreResolver::resolve($request, $user);
 
         $itemId = Typer::parseNullableInt($request->query('item_id'));
         $item = null;
 
         if ($itemId !== null) {
             $itemLookup = Item::query();
-            Item::scopeForUser($itemLookup, $this->resolveScopeUser($user));
+            Item::scopeForUser($itemLookup, $scopeUser);
             $item = $itemLookup->whereKey($itemId)->first();
         }
 
@@ -81,7 +68,7 @@ class InventoryCountHistoryController
         $rows = [];
 
         if ($store instanceof Store) {
-            $rows = $service->historyForUser($this->resolveScopeUser($user), $store, $item, $from, $to, self::TAKE);
+            $rows = $service->historyForUser($scopeUser, $store, $item, $from, $to, self::TAKE);
         }
 
         return Inertia::render('inventory-counts/History', [
@@ -89,10 +76,6 @@ class InventoryCountHistoryController
                 'id' => $store->getKey(),
                 'name' => $store->getName(),
             ] : null,
-            'stores' => \array_map(static fn(Store $store): array => [
-                'id' => $store->getKey(),
-                'name' => $store->getName(),
-            ], $stores),
             'items' => \array_map(static fn(Item $item): array => [
                 'id' => $item->getKey(),
                 'title' => $item->getTitle(),
@@ -131,65 +114,5 @@ class InventoryCountHistoryController
         }
 
         return $user;
-    }
-
-    /**
-     * Block access to a store the user is not entitled to view.
-     *
-     * @param array<int, Store> $stores
-     */
-    private function enforceStoreScope(User $user, int|null $storeId, array $stores): void
-    {
-        if ($storeId === null) {
-            return;
-        }
-
-        if ($user->isAdmin()) {
-            return;
-        }
-
-        $assignedStoreId = $user->getAssignedStoreId();
-
-        if ($assignedStoreId !== null && $assignedStoreId === $storeId) {
-            return;
-        }
-
-        \abort(403);
-    }
-
-    /**
-     * Pick the first owned store as the default selection, preferring
-     * non-warehouse retail stores when one is available.
-     *
-     * @param array<int, Store> $stores
-     */
-    private function resolveDefaultStore(array $stores): Store|null
-    {
-        $authUser = User::auth();
-        if ($authUser === null) {
-            return $stores[0] ?? null;
-        }
-
-        if (!$authUser->isAdmin()) {
-            $assignedId = $authUser->getAssignedStoreId();
-
-            if ($assignedId !== null) {
-                foreach ($stores as $store) {
-                    if ($assignedId === $store->getKey()) {
-                        return $store;
-                    }
-                }
-            }
-
-            return $stores[0] ?? null;
-        }
-
-        foreach ($stores as $store) {
-            if (!$store->isWarehouse()) {
-                return $store;
-            }
-        }
-
-        return $stores[0] ?? null;
     }
 }

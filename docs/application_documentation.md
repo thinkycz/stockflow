@@ -142,10 +142,10 @@ Copy `.env.example` to `.env` and set:
       there is none).
     - **Nové množství** — the input that becomes the new on-hand value
       when the form is saved.
-  Saving creates a new `inventory_sessions` header plus its
-  `inventory_session_items` rows and upserts the matching
-  `store_items.quantity`, all in one transaction. Statistical columns
-  are not rendered on this page — they live on the store detail page.
+      Saving creates a new `inventory_sessions` header plus its
+      `inventory_session_items` rows and upserts the matching
+      `store_items.quantity`, all in one transaction. Statistical columns
+      are not rendered on this page — they live on the store detail page.
 - `/inventory-counts/{session}` is the read-only detail of one
   inventory session. It lists every recorded item in alphabetical
   order with the new value and the previous value, so the operator can

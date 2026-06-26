@@ -12,6 +12,7 @@ use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Models\User;
 use App\Services\StatementService;
+use App\Support\ActiveStoreResolver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -35,7 +36,6 @@ class ReportController
 
         // Statement filter
         $allTime = $request->query('all_time') === '1' || $request->query('period') === 'all';
-        $requestedStoreId = Typer::parseNullableInt($request->query('store_id'));
         $year = $allTime ? null : (Typer::parseNullableInt($request->query('year')) ?? $now->year);
         $month = $allTime ? null : (Typer::parseNullableInt($request->query('month')) ?? $now->month);
 
@@ -47,7 +47,14 @@ class ReportController
             ->get()
             ->all();
 
-        $storeId = $requestedStoreId;
+        $storeId = null;
+
+        $activeStore = ActiveStoreResolver::resolve($request, $user);
+
+        if ($activeStore instanceof Store) {
+            $storeId = $activeStore->getKey();
+        }
+
         $validIds = \array_map(static fn(Store $store): int => $store->getKey(), $storesForFilter);
         if ($storeId !== null && !\in_array($storeId, $validIds, true)) {
             $storeId = null;
@@ -177,10 +184,6 @@ class ReportController
                 'year' => $year,
                 'month' => $month,
             ],
-            'statement_stores' => \array_map(static fn(Store $store): array => [
-                'id' => $store->getKey(),
-                'name' => $store->getName(),
-            ], $storesForFilter),
         ]);
     }
 }

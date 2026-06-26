@@ -48,6 +48,12 @@ class InventorySessionService
      * `store_items` row so the application keeps a single source of
      * truth for the current quantity.
      *
+     * Rows whose `quantity` is `null` are skipped entirely: no
+     * `inventory_session_items` row is written and the existing
+     * `store_items.quantity` is left untouched. A row with `quantity`
+     * of `0` (or any other integer) is persisted as recorded and
+     * applied to the on-hand count.
+     *
      * For limited users, the session is attributed to the parent
      * (admin) account so the row appears in the data the admin owns.
      * `created_by` keeps the actual user who entered the count.
@@ -71,12 +77,17 @@ class InventorySessionService
             foreach ($rows as $row) {
                 $payload = Typer::assertArray($row);
                 $itemId = Typer::parseInt($payload['item_id'] ?? 0);
-                $quantity = Typer::parseInt($payload['quantity'] ?? 0);
-                $rowNote = Typer::parseNullableString($payload['note'] ?? null);
 
                 if ($itemId <= 0) {
                     continue;
                 }
+
+                if (!\array_key_exists('quantity', $payload) || $payload['quantity'] === null) {
+                    continue;
+                }
+
+                $quantity = Typer::parseInt($payload['quantity']);
+                $rowNote = Typer::parseNullableString($payload['note'] ?? null);
 
                 $itemQuery = Item::query();
                 Item::scopeForUser($itemQuery, $owner);

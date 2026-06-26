@@ -12,7 +12,7 @@ prochází, žádná statická analýza nehlásí chyby.
 - [x] Všechny testy projdou (`php artisan test` — 373 passed, 0 failures).
 - [x] `make fix` čistý (Pint OK, Prettier OK).
 - [x] `make check` čistý pro PHPStan, Pint, Prettier (audit hlásí
-  pre-existing Guzzle advisories nesouvisející s touto změnou).
+      pre-existing Guzzle advisories nesouvisející s touto změnou).
 - [x] `npm run build` čistý.
 - [ ] `php artisan migrate:fresh` + seed projde (vyžaduje ruční běh).
 - [ ] Manuální kontrola UI (CS/EN/SK) — toky:
@@ -67,16 +67,16 @@ prochází, žádná statická analýza nehlásí chyby.
 
 ## Splnění požadavků ze specifikace
 
-| Požadavek (spec)                                          | Stav |
-| --------------------------------------------------------- | ---- |
-| Po uložení se vytvoří entita Inventura s řádky           | ✅   |
-| V historii lze otevřít inventuru daného dne               | ✅   |
-| Při otevření jsou položky seřazeny abecedně               | ✅   |
-| Sloupec Poslední množství z poslední inventury             | ✅   |
-| Přejmenování "Aktuální množství" → "Nové množství" (input) | ✅   |
-| "Aktuální množství" zobrazuje skutečné aktuální množství    | ✅   |
-| Statistiky (prům. spotřeba, dnů do vyprodání) na detailu prodejny | ✅ |
-| Read-only historie (Show page je neměnná)                  | ✅   |
+| Požadavek (spec)                                                  | Stav |
+| ----------------------------------------------------------------- | ---- |
+| Po uložení se vytvoří entita Inventura s řádky                    | ✅   |
+| V historii lze otevřít inventuru daného dne                       | ✅   |
+| Při otevření jsou položky seřazeny abecedně                       | ✅   |
+| Sloupec Poslední množství z poslední inventury                    | ✅   |
+| Přejmenování "Aktuální množství" → "Nové množství" (input)        | ✅   |
+| "Aktuální množství" zobrazuje skutečné aktuální množství          | ✅   |
+| Statistiky (prům. spotřeba, dnů do vyprodání) na detailu prodejny | ✅   |
+| Read-only historie (Show page je neměnná)                         | ✅   |
 
 ## Datum dokončení
 

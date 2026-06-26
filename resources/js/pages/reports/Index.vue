@@ -23,6 +23,7 @@ import EmptyState from '@/components/ui/EmptyState.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
+import { useSharedProps } from '@/composables/useSharedProps';
 import { formatMoney, formatMonth, formatNumber } from '@/lib/format';
 
 type StoreConsumption = {
@@ -97,7 +98,6 @@ const props = defineProps<{
         year: number | null;
         month: number | null;
     };
-    statement_stores: Array<{ id: number; name: string }>;
 }>();
 
 const { t, locale } = useI18n();
@@ -105,6 +105,7 @@ const { t, locale } = useI18n();
 useBoundLocale();
 
 const route = useRoute();
+const { activeStore } = useSharedProps();
 
 const monthValue = computed((): string => {
     if (
@@ -135,13 +136,10 @@ const periodLabel = computed((): string => {
 });
 
 const storeLabel = computed((): string => {
-    if (props.statement_filter.store_id === null) {
-        return t('reports.statements.all_stores');
+    if (activeStore.value !== null) {
+        return activeStore.value.name;
     }
-    const found = props.statement_stores.find(
-        (s) => s.id === props.statement_filter.store_id,
-    );
-    return found?.name ?? '—';
+    return t('reports.statements.all_stores');
 });
 
 const months = computed(() => {
@@ -205,19 +203,6 @@ function applyFilter(payload: Record<string, string | number | null>): void {
     });
 }
 
-function selectStore(value: string | number | null | undefined): void {
-    const storeId =
-        value === null || value === undefined || value === ''
-            ? null
-            : Number(value);
-    applyFilter({
-        store_id: storeId,
-        all_time: props.statement_filter.all_time ? '1' : '0',
-        year: props.statement_filter.year,
-        month: props.statement_filter.month,
-    });
-}
-
 function selectMonth(value: string | number | null | undefined): void {
     const raw = value === null || value === undefined ? '' : String(value);
     const [year, month] = raw.split('-').map((part: string) => Number(part));
@@ -225,7 +210,6 @@ function selectMonth(value: string | number | null | undefined): void {
         return;
     }
     applyFilter({
-        store_id: props.statement_filter.store_id,
         all_time: '0',
         year,
         month,
@@ -234,7 +218,6 @@ function selectMonth(value: string | number | null | undefined): void {
 
 function toggleAllTime(): void {
     applyFilter({
-        store_id: props.statement_filter.store_id,
         all_time: props.statement_filter.all_time ? '0' : '1',
         year: props.statement_filter.year,
         month: props.statement_filter.month,
@@ -325,53 +308,20 @@ function toggleAllTime(): void {
                 <div
                     class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
                 >
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
-                        <div class="space-y-2 sm:min-w-[14rem]">
-                            <label
-                                for="statement_store_filter"
-                                class="text-xs font-semibold text-on-surface-variant"
-                            >
-                                {{ t('reports.statements.store') }}
-                            </label>
-                            <Select
-                                id="statement_store_filter"
-                                :model-value="
-                                    props.statement_filter.store_id !== null
-                                        ? String(
-                                              props.statement_filter.store_id,
-                                          )
-                                        : ''
-                                "
-                                :options="[
-                                    {
-                                        value: '',
-                                        label: t(
-                                            'reports.statements.all_stores',
-                                        ),
-                                    },
-                                    ...props.statement_stores.map((s) => ({
-                                        value: String(s.id),
-                                        label: s.name,
-                                    })),
-                                ]"
-                                @update:model-value="selectStore"
-                            />
-                        </div>
-                        <div class="space-y-2 sm:min-w-[12rem]">
-                            <label
-                                for="statement_month_filter"
-                                class="text-xs font-semibold text-on-surface-variant"
-                            >
-                                {{ t('reports.statements.month') }}
-                            </label>
-                            <Select
-                                id="statement_month_filter"
-                                :model-value="monthValue"
-                                :options="months"
-                                :disabled="props.statement_filter.all_time"
-                                @update:model-value="selectMonth"
-                            />
-                        </div>
+                    <div class="space-y-2 sm:min-w-[12rem]">
+                        <label
+                            for="statement_month_filter"
+                            class="text-xs font-semibold text-on-surface-variant"
+                        >
+                            {{ t('reports.statements.month') }}
+                        </label>
+                        <Select
+                            id="statement_month_filter"
+                            :model-value="monthValue"
+                            :options="months"
+                            :disabled="props.statement_filter.all_time"
+                            @update:model-value="selectMonth"
+                        />
                     </div>
                     <label
                         class="inline-flex cursor-pointer items-center gap-2 self-start rounded-lg border border-outline-glass bg-surface-container-lowest px-3 py-2 text-xs font-semibold text-on-surface"

@@ -65,6 +65,22 @@ class StatementValidity
     }
 
     /**
+     * Statement version id validation rules.
+     */
+    public function versionId(): Validity
+    {
+        return $this->baseValidity->id()->exists('statement_versions', 'id', ['user_id', (string) $this->userId]);
+    }
+
+    /**
+     * Optional note validation rules.
+     */
+    public function note(): Validity
+    {
+        return $this->baseValidity->make()->text();
+    }
+
+    /**
      * Days array validation rules.
      */
     public function days(): Validity

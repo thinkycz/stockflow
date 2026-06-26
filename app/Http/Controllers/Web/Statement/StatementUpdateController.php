@@ -42,7 +42,7 @@ class StatementUpdateController
 
         /** @var array<int, array<string, mixed>> $rows */
         $rows = Typer::assertArray($validated->assertArray('days'));
-        $service->updateDays($statement, $rows);
+        $service->updateDays($statement, $rows, $user);
 
         Inertia::flash('success', \__('Statement saved.'));
 

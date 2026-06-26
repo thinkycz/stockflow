@@ -8,6 +8,7 @@ use App\Enums\StockMovementTypeEnum;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
+use App\Support\ActiveStoreResolver;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -42,15 +43,7 @@ class StatisticsController
         $user = User::mustAuth();
         $userId = $user->getKey();
 
-        $storesQuery = Store::query();
-        Store::scopeForUser($storesQuery, $user);
-        $stores = Store::querySelect($storesQuery)
-            ->orderBy('name')
-            ->get()
-            ->all();
-
-        $requestedStoreId = Typer::parseNullableInt($request->query('store_id'));
-        $store = $this->resolveStore($user, $stores, $requestedStoreId);
+        $store = ActiveStoreResolver::resolve($request, $user);
 
         $periodDays = $this->resolvePeriodDays($request);
         $since = Carbon::now()->subDays($periodDays)->startOfDay();
@@ -80,10 +73,6 @@ class StatisticsController
                 'id' => $store->getKey(),
                 'name' => $store->getName(),
             ] : null,
-            'stores' => \array_map(static fn(Store $row): array => [
-                'id' => $row->getKey(),
-                'name' => $row->getName(),
-            ], $stores),
             'period_days' => $periodDays,
             'sales' => $sales,
             'incoming' => $incoming,
@@ -96,33 +85,6 @@ class StatisticsController
                 'period_days' => $periodDays,
             ],
         ]);
-    }
-
-    /**
-     * Resolve the requested store, falling back to the first owned retail
-     * store, then to the first owned store, then to null.
-     *
-     * @param array<int, Store> $stores
-     */
-    private function resolveStore(User $user, array $stores, int|null $requestedStoreId): Store|null
-    {
-        if ($requestedStoreId !== null) {
-            $lookup = Store::query();
-            Store::scopeForUser($lookup, $user);
-            $match = $lookup->whereKey($requestedStoreId)->first();
-
-            if ($match instanceof Store) {
-                return $match;
-            }
-        }
-
-        foreach ($stores as $store) {
-            if (!$store->isWarehouse()) {
-                return $store;
-            }
-        }
-
-        return $stores[0] ?? null;
     }
 
     /**

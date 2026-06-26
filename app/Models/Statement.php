@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Thinkycz\LaravelCore\Models\BaseModel;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -88,6 +89,26 @@ class Statement extends BaseModel
     public function days(): HasMany
     {
         return $this->hasMany(StatementDay::class, 'statement_id');
+    }
+
+    /**
+     * Version snapshots relationship.
+     *
+     * @return HasMany<StatementVersion, $this>
+     */
+    public function versions(): HasMany
+    {
+        return $this->hasMany(StatementVersion::class, 'statement_id');
+    }
+
+    /**
+     * Version day rows through versions.
+     *
+     * @return HasManyThrough<StatementVersionDay, StatementVersion, $this>
+     */
+    public function versionDays(): HasManyThrough
+    {
+        return $this->hasManyThrough(StatementVersionDay::class, StatementVersion::class, 'statement_id', 'version_id');
     }
 
     /**

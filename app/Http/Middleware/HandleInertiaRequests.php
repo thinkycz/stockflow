@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Models\Store;
 use App\Models\User;
+use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Middleware;
@@ -45,6 +47,8 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => fn(): array|null => $this->user(),
             ],
+            'active_store' => fn(): array|null => $this->activeStore(),
+            'available_stores' => fn(): array => $this->availableStores(),
             'flash' => [
                 'success' => static fn(): string|null => self::flashMessage($request, 'success'),
                 'error' => static fn(): string|null => self::flashMessage($request, 'error'),
@@ -102,5 +106,77 @@ class HandleInertiaRequests extends Middleware
             'is_admin' => $user->isAdmin(),
             'assigned_store_id' => $user->getAssignedStoreId(),
         ];
+    }
+
+    /**
+     * Resolve the active store payload for Inertia clients.
+     *
+     * Mirrors {@see ActiveStoreResolver::resolve()} so the sidebar can
+     * render the current selection consistently with what controllers
+     * see in `$request->attributes->get(ActiveStoreResolver::ATTRIBUTE)`.
+     *
+     * @return array{id: int, name: string, is_warehouse: bool}|null
+     */
+    protected function activeStore(): array|null
+    {
+        $user = Resolver::resolveAuthManager()->guard('users')->user();
+
+        if (!$user instanceof User) {
+            return null;
+        }
+
+        $store = ActiveStoreResolver::resolve(\request(), $user);
+
+        if (!$store instanceof Store) {
+            return null;
+        }
+
+        return [
+            'id' => $store->getKey(),
+            'name' => $store->getName(),
+            'is_warehouse' => $store->isWarehouse(),
+        ];
+    }
+
+    /**
+     * Resolve the list of stores the current user can switch between.
+     *
+     * Admins see all stores they own (warehouse first, then retail by
+     * name); limited users get only their assigned store.
+     *
+     * @return array<int, array{id: int, name: string, is_warehouse: bool}>
+     */
+    protected function availableStores(): array
+    {
+        $user = Resolver::resolveAuthManager()->guard('users')->user();
+
+        if (!$user instanceof User) {
+            return [];
+        }
+
+        $query = Store::query();
+        Store::scopeForUser($query, $user);
+
+        if (!$user->isAdmin()) {
+            $assignedId = $user->getAssignedStoreId();
+
+            if ($assignedId === null) {
+                return [];
+            }
+
+            $query->whereKey($assignedId);
+        }
+
+        $stores = $query
+            ->orderByDesc('is_warehouse')
+            ->orderBy('name')
+            ->get()
+            ->all();
+
+        return \array_map(static fn(Store $store): array => [
+            'id' => $store->getKey(),
+            'name' => $store->getName(),
+            'is_warehouse' => $store->isWarehouse(),
+        ], $stores);
     }
 }

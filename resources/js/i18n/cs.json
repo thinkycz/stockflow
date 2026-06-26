@@ -4,6 +4,10 @@
         "tagline": "Správa inventáře"
     },
     "nav": {
+        "section": {
+            "store": "Prodejna",
+            "management": "Správa"
+        },
         "dashboard": "Nástěnka",
         "inventory": "Inventář",
         "stock_movements": "Skladové pohyby",
@@ -17,6 +21,10 @@
         "profile": "Profil",
         "password": "Heslo",
         "logout": "Odhlásit se"
+    },
+    "store_switcher": {
+        "label": "Aktivní prodejna",
+        "warehouse": "Sklad"
     },
     "flash": {
         "no_permission": "Nemáte oprávnění k této sekci."
@@ -34,7 +42,9 @@
         "results": "výsledků",
         "searching_for": "Hledat",
         "previous": "Předchozí",
-        "next": "Další"
+        "next": "Další",
+        "decrease": "Snížit",
+        "increase": "Zvýšit"
     },
     "auth": {
         "login": {
@@ -454,15 +464,40 @@
         "actions": {
             "save": "Uložit výkaz",
             "clear": "Vymazat výkaz",
-            "clear_confirm": "Opravdu chcete vynulovat všechny tržby v tomto výkazu?"
+            "clear_confirm": "Opravdu chcete vynulovat všechny tržby v tomto výkazu?",
+            "history": "Historie verzí"
         },
         "empty": {
             "title": "Žádné prodejny",
             "description": "Nejprve vytvořte prodejnu, abyste mohli zapisovat výkazy."
         },
+        "session": {
+            "title": "Verze výkazu"
+        },
+        "history": {
+            "title": "Historie verzí",
+            "subtitle": "Přehled všech uložených verzí tohoto výkazu. Otevřete libovolnou verzi a případně obnovte její data.",
+            "open": "Otevřít",
+            "versions_label": "verzí",
+            "confirm_restore": "Opravdu chcete obnovit výkaz z této verze? Aktuální stav bude před obnovením zálohován jako nová verze.",
+            "restore": "Obnovit výkaz",
+            "back": "Zpět na výkaz",
+            "columns": {
+                "snapshot_at": "Datum verze",
+                "day_count": "Počet dní",
+                "note": "Poznámka",
+                "created_by": "Vytvořil",
+                "open": ""
+            },
+            "empty": {
+                "title": "Zatím žádné verze",
+                "description": "Historie verzí se začne plnit po každém uložení výkazu."
+            }
+        },
         "flash": {
             "saved": "Výkaz byl uložen.",
-            "cleared": "Výkaz byl vynulován."
+            "cleared": "Výkaz byl vynulován.",
+            "restored": "Výkaz byl obnoven z vybrané verze."
         }
     },
     "inventory_counts": {

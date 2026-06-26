@@ -16,6 +16,7 @@ import CardTitle from '@/components/ui/CardTitle.vue';
 import CardDescription from '@/components/ui/CardDescription.vue';
 import Chart from '@/components/ui/Chart.vue';
 import DataTable from '@/components/ui/DataTable.vue';
+import EmptyState from '@/components/ui/EmptyState.vue';
 import MetricCard from '@/components/ui/MetricCard.vue';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
@@ -164,14 +165,11 @@ function formatCount(value: number): string {
                 </div>
             </Card>
 
-            <div
+            <EmptyState
                 v-if="!props.store"
-                class="rounded-2xl border border-outline-glass bg-surface-container-lowest p-8 text-center"
-            >
-                <p class="text-sm font-semibold text-on-surface">
-                    {{ t('reports.statistics.empty') }}
-                </p>
-            </div>
+                :title="t('reports.no_store.title')"
+                :description="t('reports.no_store.description')"
+            />
 
             <template v-else>
                 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

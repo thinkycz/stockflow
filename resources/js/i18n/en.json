@@ -338,18 +338,19 @@
     },
     "reports": {
         "title": "Reports",
-        "subtitle": "Quick overview of inventory health and movement trends.",
+        "subtitle": "Quick overview of inventory value and movement trends.",
         "inventory_value": "Current inventory value",
         "monthly_incoming": "Incoming this month",
         "monthly_outgoing": "Outgoing this month",
-        "store_consumption": "Store consumption",
-        "store_consumption_subtitle": "Total outgoing quantity and value per store for the current month.",
         "most_moved": "Most moved items",
-        "most_moved_subtitle": "Items with the highest cumulative movement across all types.",
+        "most_moved_subtitle": "Items with the largest cumulative stock change in this store.",
         "adjustments_by_reason": "Adjustments by reason",
-        "adjustments_by_reason_subtitle": "How many adjustment rows have been recorded per reason.",
+        "adjustments_by_reason_subtitle": "Number of adjustment rows recorded by reason in this store.",
+        "no_store": {
+            "title": "Select a store",
+            "description": "Reports always display data for a single store. Pick an active store in the sidebar."
+        },
         "empty": {
-            "stores": "No store consumption yet.",
             "movements": "No movement data yet.",
             "adjustments": "No adjustments yet."
         },

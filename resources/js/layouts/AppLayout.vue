@@ -170,7 +170,9 @@ const navSections = computed<NavSection[]>(() => {
     ];
 });
 
-const navItems = computed<NavItem[]>(() => navSections.value.flatMap((section) => section.items));
+const navItems = computed<NavItem[]>(() =>
+    navSections.value.flatMap((section) => section.items),
+);
 
 const settingsActive = computed(() => activeUrl.value.startsWith('/settings'));
 

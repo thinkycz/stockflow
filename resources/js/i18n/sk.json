@@ -342,15 +342,16 @@
         "inventory_value": "Aktuálna hodnota zásob",
         "monthly_incoming": "Príjem tento mesiac",
         "monthly_outgoing": "Výdaj tento mesiac",
-        "store_consumption": "Spotreba predajní",
-        "store_consumption_subtitle": "Celkové množstvo a hodnota výdajov za predajňu v aktuálnom mesiaci.",
         "most_moved": "Najpohybovanejšie položky",
-        "most_moved_subtitle": "Položky s najväčšou kumulatívnou zmenou zásob naprieč typmi.",
+        "most_moved_subtitle": "Položky s najväčšou kumulatívnou zmenou zásob v tejto predajni.",
         "adjustments_by_reason": "Úpravy podľa dôvodu",
-        "adjustments_by_reason_subtitle": "Počet riadkov úprav zaznamenaných podľa dôvodu.",
+        "adjustments_by_reason_subtitle": "Počet riadkov úprav zaznamenaných podľa dôvodu v tejto predajni.",
+        "no_store": {
+            "title": "Vyberte predajňu",
+            "description": "Reporty sa zobrazujú vždy len pre jednu predajňu. Vyberte aktívnu predajňu v sidebare."
+        },
         "empty": {
-            "stores": "Zatiaľ žiadne údaje o spotrebe predajní.",
-            "movements": "Zatiaľ žiadne údaje o pohyboch.",
+            "movements": "Zatiaľ žiadne dáta o pohyboch.",
             "adjustments": "Zatiaľ žiadne úpravy."
         },
         "store": "Predajňa",

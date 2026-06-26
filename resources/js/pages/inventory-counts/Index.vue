@@ -208,14 +208,10 @@ function save(): void {
                                     {{ t('inventory_counts.columns.item') }}
                                 </th>
                                 <th class="min-w-[8rem] text-right">
-                                    {{
-                                        t('inventory_counts.columns.current')
-                                    }}
+                                    {{ t('inventory_counts.columns.current') }}
                                 </th>
                                 <th class="min-w-[8rem] text-right">
-                                    {{
-                                        t('inventory_counts.columns.previous')
-                                    }}
+                                    {{ t('inventory_counts.columns.previous') }}
                                 </th>
                                 <th class="min-w-[16rem] text-right">
                                     {{
@@ -232,9 +228,7 @@ function save(): void {
                         <tbody>
                             <tr v-for="row in props.rows" :key="row.item_id">
                                 <td>
-                                    <div
-                                        class="font-semibold text-on-surface"
-                                    >
+                                    <div class="font-semibold text-on-surface">
                                         {{ row.title }}
                                     </div>
                                     <div
@@ -252,9 +246,7 @@ function save(): void {
                                 <td
                                     class="text-right text-xs text-on-surface-variant"
                                 >
-                                    {{
-                                        formatWithUnit(row.previous, row.unit)
-                                    }}
+                                    {{ formatWithUnit(row.previous, row.unit) }}
                                 </td>
                                 <td class="text-right">
                                     <div
@@ -263,9 +255,7 @@ function save(): void {
                                         <button
                                             type="button"
                                             class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-outline-glass bg-surface-container-lowest text-on-surface-variant transition hover:bg-primary/5 hover:text-primary active:scale-95"
-                                            :aria-label="
-                                                t('common.decrease')
-                                            "
+                                            :aria-label="t('common.decrease')"
                                             :data-testid="`dec-${row.item_id}`"
                                             @click="
                                                 adjustQuantity(row.item_id, -1)
@@ -282,9 +272,7 @@ function save(): void {
                                             inputmode="numeric"
                                             step="1"
                                             min="0"
-                                            :placeholder="
-                                                String(row.current)
-                                            "
+                                            :placeholder="String(row.current)"
                                             :data-testid="`qty-${row.item_id}`"
                                             class="w-24 text-center"
                                             @update:model-value="
@@ -298,9 +286,7 @@ function save(): void {
                                         <button
                                             type="button"
                                             class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-outline-glass bg-surface-container-lowest text-on-surface-variant transition hover:bg-primary/5 hover:text-primary active:scale-95"
-                                            :aria-label="
-                                                t('common.increase')
-                                            "
+                                            :aria-label="t('common.increase')"
                                             :data-testid="`inc-${row.item_id}`"
                                             @click="
                                                 adjustQuantity(row.item_id, 1)

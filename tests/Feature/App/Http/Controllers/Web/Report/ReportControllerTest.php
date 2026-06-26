@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Enums\AdjustmentReasonEnum;
 use App\Models\Item;
 use App\Models\StockMovement;
+use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Models\StoreItem;
+use Database\Factories\UserFactory;
 
 \test('guest is redirected from reports to login', function (): void {
     $this->get('/reports')->assertRedirect('/login');
@@ -20,12 +23,14 @@ use App\Models\StoreItem;
     $response->assertJsonPath('component', 'reports/Index');
     $response->assertJsonStructure([
         'props' => [
+            'active_store',
             'inventory_value',
             'monthly' => ['incoming', 'outgoing'],
-            'store_consumption',
             'most_moved',
             'adjustments',
             'reasons',
+            'statement_report',
+            'statement_filter',
         ],
     ]);
 });
@@ -40,155 +45,167 @@ use App\Models\StoreItem;
     \expect((float) $response->json('props.inventory_value'))->toBe(0.0);
 });
 
-\test('store consumption counts outgoing movements from a retail source store', function (): void {
+\test('reports scope inventory value to the active store', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
-    $retail = Store::factory()->create([
-        'user_id' => $user->getKey(),
-        'is_warehouse' => false,
-        'name' => 'Branch North',
-    ]);
-    $destination = Store::factory()->create([
-        'user_id' => $user->getKey(),
-        'is_warehouse' => false,
-        'name' => 'Branch East',
+    $other = Store::factory()->create(['user_id' => $user->getKey()]);
+
+    $itemA = Item::factory()->create(['user_id' => $user->getKey(), 'purchase_price' => '10.00']);
+    $itemB = Item::factory()->create(['user_id' => $user->getKey(), 'purchase_price' => '20.00']);
+
+    StoreItem::factory()->create(['store_id' => $warehouse->getKey(), 'item_id' => $itemA->getKey(), 'quantity' => 4]);
+    StoreItem::factory()->create(['store_id' => $other->getKey(), 'item_id' => $itemB->getKey(), 'quantity' => 3]);
+
+    $response = $this->be($user, 'users')
+        ->get('/reports?store_id=' . $warehouse->getKey(), $this->inertiaHeaders());
+
+    \expect((float) $response->json('props.inventory_value'))->toBe(40.0);
+    \expect($response->json('props.active_store.id'))->toBe($warehouse->getKey());
+});
+
+\test('reports scope monthly incoming and outgoing to the active store', function (): void {
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+    $other = Store::factory()->create(['user_id' => $user->getKey()]);
+
+    $item = Item::factory()->create(['user_id' => $user->getKey(), 'purchase_price' => '5.00']);
+    StoreItem::factory()->create(['store_id' => $warehouse->getKey(), 'item_id' => $item->getKey(), 'quantity' => 50]);
+    StoreItem::factory()->create(['store_id' => $other->getKey(), 'item_id' => $item->getKey(), 'quantity' => 50]);
+
+    StockMovement::factory()
+        ->incoming()
+        ->byUser($user)
+        ->create([
+            'user_id' => $user->getKey(),
+            'store_id' => $warehouse->getKey(),
+            'total_value' => 100.0,
+            'created_at' => \now(),
+        ]);
+
+    StockMovement::factory()
+        ->incoming()
+        ->byUser($user)
+        ->create([
+            'user_id' => $user->getKey(),
+            'store_id' => $other->getKey(),
+            'total_value' => 999.0,
+            'created_at' => \now(),
+        ]);
+
+    StockMovement::factory()
+        ->outgoing($warehouse)
+        ->byUser($user)
+        ->create([
+            'user_id' => $user->getKey(),
+            'source_store_id' => $warehouse->getKey(),
+            'total_value' => 30.0,
+            'created_at' => \now(),
+        ]);
+
+    StockMovement::factory()
+        ->outgoing($other)
+        ->byUser($user)
+        ->create([
+            'user_id' => $user->getKey(),
+            'source_store_id' => $other->getKey(),
+            'total_value' => 999.0,
+            'created_at' => \now(),
+        ]);
+
+    $response = $this->be($user, 'users')
+        ->get('/reports?store_id=' . $warehouse->getKey(), $this->inertiaHeaders());
+
+    \expect((float) $response->json('props.monthly.incoming'))->toBe(100.0);
+    \expect((float) $response->json('props.monthly.outgoing'))->toBe(30.0);
+});
+
+\test('reports scope most moved items to the active store', function (): void {
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+    $other = Store::factory()->create(['user_id' => $user->getKey()]);
+
+    $itemLocal = Item::factory()->create(['user_id' => $user->getKey(), 'title' => 'Local favorite']);
+    $itemOther = Item::factory()->create(['user_id' => $user->getKey(), 'title' => 'Other-store item']);
+
+    $localMovement = StockMovement::factory()
+        ->incoming()
+        ->byUser($user)
+        ->create(['user_id' => $user->getKey(), 'store_id' => $warehouse->getKey()]);
+    StockMovementItem::factory()->create([
+        'stock_movement_id' => $localMovement->getKey(),
+        'item_id' => $itemLocal->getKey(),
+        'quantity_difference' => 8,
+        'total' => 80.0,
     ]);
 
-    $item = Item::factory()->create([
-        'user_id' => $user->getKey(),
-        'purchase_price' => '5.00',
+    $otherMovement = StockMovement::factory()
+        ->incoming()
+        ->byUser($user)
+        ->create(['user_id' => $user->getKey(), 'store_id' => $other->getKey()]);
+    StockMovementItem::factory()->create([
+        'stock_movement_id' => $otherMovement->getKey(),
+        'item_id' => $itemOther->getKey(),
+        'quantity_difference' => 999,
+        'total' => 9999.0,
     ]);
 
-    StoreItem::query()->create([
-        'store_id' => $retail->getKey(),
+    $response = $this->be($user, 'users')
+        ->get('/reports?store_id=' . $warehouse->getKey(), $this->inertiaHeaders());
+
+    $mostMoved = $response->json('props.most_moved');
+    \expect($mostMoved)->toHaveCount(1);
+    \expect($mostMoved[0]['item_id'])->toBe($itemLocal->getKey());
+    \expect((float) $mostMoved[0]['total_quantity'])->toBe(8.0);
+    \expect((float) $mostMoved[0]['total_value'])->toBe(80.0);
+});
+
+\test('reports scope adjustments to the active store', function (): void {
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+    $other = Store::factory()->create(['user_id' => $user->getKey()]);
+
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
+
+    $localMovement = StockMovement::factory()
+        ->incoming()
+        ->byUser($user)
+        ->create(['user_id' => $user->getKey(), 'store_id' => $warehouse->getKey()]);
+    StockMovementItem::factory()->create([
+        'stock_movement_id' => $localMovement->getKey(),
         'item_id' => $item->getKey(),
-        'quantity' => 10,
+        'quantity_difference' => 2,
+        'adjustment_reason' => AdjustmentReasonEnum::DAMAGED,
     ]);
 
-    $this->be($user, 'users')->post('/stock-movements', [
-        'mode' => 'transfer',
-        'source_store_id' => $retail->getKey(),
-        'store_id' => $destination->getKey(),
-        'items' => [[
-            'item_id' => $item->getKey(),
-            'quantity' => 4,
-        ]],
-    ])->assertRedirect();
+    $otherMovement = StockMovement::factory()
+        ->incoming()
+        ->byUser($user)
+        ->create(['user_id' => $user->getKey(), 'store_id' => $other->getKey()]);
+    StockMovementItem::factory()->create([
+        'stock_movement_id' => $otherMovement->getKey(),
+        'item_id' => $item->getKey(),
+        'quantity_difference' => 99,
+        'adjustment_reason' => AdjustmentReasonEnum::DAMAGED,
+    ]);
+
+    $response = $this->be($user, 'users')
+        ->get('/reports?store_id=' . $warehouse->getKey(), $this->inertiaHeaders());
+
+    $adjustments = $response->json('props.adjustments');
+    \expect($adjustments)->toHaveCount(1);
+    \expect($adjustments[0]['reason'])->toBe(AdjustmentReasonEnum::DAMAGED->value);
+    \expect($adjustments[0]['rows_count'])->toBe(1);
+    \expect($adjustments[0]['total_quantity'])->toBe(2);
+});
+
+\test('reports returns empty payload without an active store', function (): void {
+    // Admin without any warehouses/retail stores — ActiveStoreResolver
+    // returns null and the page should render with an empty payload.
+    $user = UserFactory::new()->admin()->createOne();
 
     $response = $this->be($user, 'users')->get('/reports', $this->inertiaHeaders());
 
     $response->assertOk();
-
-    $consumption = $response->json('props.store_consumption');
-
-    $row = \array_values(\array_filter(
-        $consumption,
-        static fn(array $row): bool => $row['store_id'] === $retail->getKey(),
-    ))[0] ?? null;
-
-    \expect($row)->not->toBeNull();
-    \expect($row['movements_count'])->toBe(1);
-    \expect((float) $row['total_quantity'])->toBe(4.0);
-    \expect((float) $row['total_value'])->toBe(20.0);
-});
-
-\test('store consumption ignores outgoing movements where the source is a warehouse', function (): void {
-    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
-    $retail = Store::factory()->create([
-        'user_id' => $user->getKey(),
-        'is_warehouse' => false,
-        'name' => 'Branch West',
-    ]);
-
-    $item = Item::factory()->create([
-        'user_id' => $user->getKey(),
-        'purchase_price' => '3.00',
-    ]);
-
-    StoreItem::query()->create([
-        'store_id' => $warehouse->getKey(),
-        'item_id' => $item->getKey(),
-        'quantity' => 10,
-    ]);
-
-    // Outgoing from the warehouse to the retail store. The retail
-    // store is the `store_id` (destination) on this movement, not
-    // the `source_store_id`. The pre-fix report controller would have
-    // counted this as the retail store's "consumption".
-    $this->be($user, 'users')->post('/stock-movements', [
-        'mode' => 'transfer',
-        'source_store_id' => $warehouse->getKey(),
-        'store_id' => $retail->getKey(),
-        'items' => [[
-            'item_id' => $item->getKey(),
-            'quantity' => 5,
-        ]],
-    ])->assertRedirect();
-
-    $response = $this->be($user, 'users')->get('/reports', $this->inertiaHeaders());
-
-    $response->assertOk();
-
-    $consumption = $response->json('props.store_consumption');
-
-    $row = \array_values(\array_filter(
-        $consumption,
-        static fn(array $row): bool => $row['store_id'] === $retail->getKey(),
-    ))[0] ?? null;
-
-    // The retail store sent nothing out, so its consumption is zero.
-    \expect($row)->not->toBeNull();
-    \expect($row['movements_count'])->toBe(0);
-    \expect((float) $row['total_quantity'])->toBe(0.0);
-    \expect((float) $row['total_value'])->toBe(0.0);
-});
-
-\test('store consumption aggregates multiple retail stores in a single grouped query', function (): void {
-    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
-    $retailA = Store::factory()->create([
-        'user_id' => $user->getKey(),
-        'is_warehouse' => false,
-        'name' => 'Branch A',
-    ]);
-    $retailB = Store::factory()->create([
-        'user_id' => $user->getKey(),
-        'is_warehouse' => false,
-        'name' => 'Branch B',
-    ]);
-    $item = Item::factory()->create([
-        'user_id' => $user->getKey(),
-        'purchase_price' => '2.00',
-    ]);
-
-    // Seed both retail stores with stock so they can each ship an outgoing
-    // movement back to the warehouse.
-    StoreItem::query()->create(['store_id' => $retailA->getKey(), 'item_id' => $item->getKey(), 'quantity' => 10]);
-    StoreItem::query()->create(['store_id' => $retailB->getKey(), 'item_id' => $item->getKey(), 'quantity' => 10]);
-
-    $this->be($user, 'users')->post('/stock-movements', [
-        'mode' => 'transfer',
-        'source_store_id' => $retailA->getKey(),
-        'store_id' => $warehouse->getKey(),
-        'items' => [['item_id' => $item->getKey(), 'quantity' => 3]],
-    ])->assertRedirect();
-    $this->be($user, 'users')->post('/stock-movements', [
-        'mode' => 'transfer',
-        'source_store_id' => $retailB->getKey(),
-        'store_id' => $warehouse->getKey(),
-        'items' => [['item_id' => $item->getKey(), 'quantity' => 5]],
-    ])->assertRedirect();
-
-    $response = $this->be($user, 'users')->get('/reports', $this->inertiaHeaders());
-
-    $byStore = [];
-    foreach ($response->json('props.store_consumption') as $row) {
-        $byStore[$row['store_id']] = $row;
-    }
-
-    \expect($byStore[$retailA->getKey()]['movements_count'])->toBe(1);
-    \expect((float) $byStore[$retailA->getKey()]['total_quantity'])->toBe(3.0);
-    \expect((float) $byStore[$retailA->getKey()]['total_value'])->toBe(6.0);
-
-    \expect($byStore[$retailB->getKey()]['movements_count'])->toBe(1);
-    \expect((float) $byStore[$retailB->getKey()]['total_quantity'])->toBe(5.0);
-    \expect((float) $byStore[$retailB->getKey()]['total_value'])->toBe(10.0);
+    \expect($response->json('props.active_store'))->toBeNull();
+    \expect((float) $response->json('props.inventory_value'))->toBe(0.0);
+    \expect($response->json('props.most_moved'))->toBe([]);
+    \expect($response->json('props.adjustments'))->toBe([]);
+    \expect((float) $response->json('props.monthly.incoming'))->toBe(0.0);
+    \expect((float) $response->json('props.monthly.outgoing'))->toBe(0.0);
 });

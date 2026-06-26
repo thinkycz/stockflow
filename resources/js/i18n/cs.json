@@ -342,14 +342,15 @@
         "inventory_value": "Aktuální hodnota zásob",
         "monthly_incoming": "Příjem tento měsíc",
         "monthly_outgoing": "Výdej tento měsíc",
-        "store_consumption": "Spotřeba prodejen",
-        "store_consumption_subtitle": "Celkové množství a hodnota výdejů za prodejnu v aktuálním měsíci.",
         "most_moved": "Nejpohybovanější položky",
-        "most_moved_subtitle": "Položky s největší kumulativní změnou zásob napříč typy.",
+        "most_moved_subtitle": "Položky s největší kumulativní změnou zásob v této prodejně.",
         "adjustments_by_reason": "Úpravy podle důvodu",
-        "adjustments_by_reason_subtitle": "Počet řádků úprav zaznamenaných podle důvodu.",
+        "adjustments_by_reason_subtitle": "Počet řádků úprav zaznamenaných podle důvodu v této prodejně.",
+        "no_store": {
+            "title": "Vyberte prodejnu",
+            "description": "Reporty se zobrazují vždy jen pro jednu prodejnu. Vyberte aktivní prodejnu v sidebaru."
+        },
         "empty": {
-            "stores": "Zatím žádná data o spotřebě prodejen.",
             "movements": "Zatím žádná data o pohybech.",
             "adjustments": "Zatím žádné úpravy."
         },

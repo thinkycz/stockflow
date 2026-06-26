@@ -9,6 +9,7 @@
 
 @theme {
     --color-primary: #0f172a;
+    --color-on-primary: #ffffff;
     --color-primary-container: #1e293b;
     --color-primary-fixed: #f1f5f9;
     --color-primary-fixed-dim: #cbd5e1;

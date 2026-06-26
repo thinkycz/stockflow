@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { Eraser, Save } from '@lucide/vue';
-import { computed, reactive, ref } from 'vue';
+import { Save } from '@lucide/vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
@@ -51,14 +51,34 @@ const form = useForm<{ days: DayRow[] }>({
     days: props.days.map((day) => ({ ...day })),
 });
 
-const editing = reactive<Record<number, DayRow>>(
-    Object.fromEntries(
-        props.days.map((day) => [day.id ?? day.date, { ...day }]),
-    ),
+const editing = reactive<Record<string, DayRow>>({});
+
+function syncEditing(days: DayRow[]): void {
+    for (const key of Object.keys(editing)) {
+        delete editing[key];
+    }
+    for (const day of days) {
+        editing[day.id !== null ? String(day.id) : day.date] = { ...day };
+    }
+}
+
+syncEditing(props.days);
+
+// Keep `editing` aligned with `props.days` so that re-mounts, redirects
+// after save and other Inertia-driven prop refreshes re-seed the form
+// with the latest values from the server.
+watch(
+    () => props.days,
+    (newDays) => {
+        syncEditing(newDays);
+    },
+);
+
+const editingRows = computed(() =>
+    Object.values(editing).sort((a, b) => a.date.localeCompare(b.date)),
 );
 
 const submitting = ref(false);
-const clearing = ref(false);
 
 const months = computed(() => {
     const now = new Date();
@@ -113,7 +133,7 @@ const totals = computed(() => {
     let boltCash = 0;
     let foodora = 0;
     let total = 0;
-    for (const day of props.days) {
+    for (const day of editingRows.value) {
         cash += Number(day.cash || 0);
         card += Number(day.card || 0);
         wolt += Number(day.wolt || 0);
@@ -133,7 +153,7 @@ const totals = computed(() => {
     };
 });
 
-function updateEditing(key: number, field: keyof DayRow, value: string): void {
+function updateEditing(key: string, field: keyof DayRow, value: string): void {
     const day = editing[key];
     if (!day) {
         return;
@@ -151,38 +171,22 @@ function updateEditing(key: number, field: keyof DayRow, value: string): void {
     day.total = rowTotal(day);
 }
 
+function editingKey(day: DayRow): string {
+    return day.id !== null ? String(day.id) : day.date;
+}
+
 function save(): void {
     if (!props.statement) {
         return;
     }
     submitting.value = true;
-    form.days = Object.values(editing);
+    form.days = editingRows.value;
     form.put(route('statements.update', { statement: props.statement.id }), {
         preserveScroll: true,
         onFinish: () => {
             submitting.value = false;
         },
     });
-}
-
-function clearStatement(): void {
-    if (!props.statement) {
-        return;
-    }
-    if (!window.confirm(t('statements.actions.clear_confirm'))) {
-        return;
-    }
-    clearing.value = true;
-    router.post(
-        route('statements.clear', { statement: props.statement.id }),
-        {},
-        {
-            preserveScroll: true,
-            onFinish: () => {
-                clearing.value = false;
-            },
-        },
-    );
 }
 </script>
 
@@ -284,8 +288,8 @@ function clearStatement(): void {
                             </thead>
                             <tbody>
                                 <tr
-                                    v-for="day in props.days"
-                                    :key="day.id ?? day.date"
+                                    v-for="day in editingRows"
+                                    :key="editingKey(day)"
                                 >
                                     <td
                                         class="font-mono text-xs text-on-surface-variant"
@@ -302,7 +306,7 @@ function clearStatement(): void {
                                             @update:model-value="
                                                 (value) =>
                                                     updateEditing(
-                                                        day.id ?? 0,
+                                                        editingKey(day),
                                                         'cash',
                                                         String(value),
                                                     )
@@ -319,7 +323,7 @@ function clearStatement(): void {
                                             @update:model-value="
                                                 (value) =>
                                                     updateEditing(
-                                                        day.id ?? 0,
+                                                        editingKey(day),
                                                         'card',
                                                         String(value),
                                                     )
@@ -336,7 +340,7 @@ function clearStatement(): void {
                                             @update:model-value="
                                                 (value) =>
                                                     updateEditing(
-                                                        day.id ?? 0,
+                                                        editingKey(day),
                                                         'wolt',
                                                         String(value),
                                                     )
@@ -353,7 +357,7 @@ function clearStatement(): void {
                                             @update:model-value="
                                                 (value) =>
                                                     updateEditing(
-                                                        day.id ?? 0,
+                                                        editingKey(day),
                                                         'bolt',
                                                         String(value),
                                                     )
@@ -372,7 +376,7 @@ function clearStatement(): void {
                                             @update:model-value="
                                                 (value) =>
                                                     updateEditing(
-                                                        day.id ?? 0,
+                                                        editingKey(day),
                                                         'bolt_cash',
                                                         String(value),
                                                     )
@@ -391,7 +395,7 @@ function clearStatement(): void {
                                             @update:model-value="
                                                 (value) =>
                                                     updateEditing(
-                                                        day.id ?? 0,
+                                                        editingKey(day),
                                                         'foodora',
                                                         String(value),
                                                     )
@@ -455,15 +459,6 @@ function clearStatement(): void {
                     <div
                         class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end"
                     >
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            :disabled="clearing"
-                            @click="clearStatement"
-                        >
-                            <Eraser :size="14" />
-                            {{ t('statements.actions.clear') }}
-                        </Button>
                         <Button
                             type="button"
                             :disabled="submitting"

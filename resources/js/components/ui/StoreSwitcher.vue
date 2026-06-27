@@ -72,10 +72,26 @@ function onChange(event: Event): void {
         {
             preserveScroll: true,
             preserveState: true,
+            onSuccess: () => {
+                // Reconcile with the server-confirmed store. The watch
+                // may also fire, but onSuccess is the reliable reset path
+                // when preserveState keeps the component alive across the
+                // POST → 302 → GET redirect chain.
+                const confirmedId =
+                    activeStore.value !== null
+                        ? String(activeStore.value.id)
+                        : '';
+                selectedId.value = confirmedId;
+                switching.value = false;
+            },
             onError: () => {
-                // Revert to the last server-confirmed store; the watch will
-                // also reset `switching` once the prop updates.
                 selectedId.value = previous;
+                switching.value = false;
+            },
+            onFinish: () => {
+                // Safety net: ensure switching never gets stuck true even
+                // if neither onSuccess nor onError fires (e.g. cancelled
+                // visit, network timeout, or edge-case redirect handling).
                 switching.value = false;
             },
         },

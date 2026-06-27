@@ -1,7 +1,17 @@
+<script lang="ts">
+import { ref } from 'vue';
+
+// Module-level ref so the drawer state survives Inertia re-mounts caused
+// by POST requests without preserveState (e.g. the store switch). When the
+// layout component is re-created after a re-mount, it reads the same ref
+// instead of resetting to false and snapping the drawer shut.
+const mobileNavOpen = ref(false);
+</script>
+
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { Menu, X } from '@lucide/vue';
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppSidebar from '@/components/ui/AppSidebar.vue';
 import Brand from '@/components/ui/Brand.vue';
@@ -18,8 +28,6 @@ const { t } = useI18n();
 useBoundLocale();
 
 const route = useRoute();
-
-const mobileNavOpen = ref(false);
 
 function closeMobileNav(): void {
     mobileNavOpen.value = false;

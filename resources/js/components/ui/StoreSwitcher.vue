@@ -66,32 +66,20 @@ function onChange(event: Event): void {
     selectedId.value = next;
     switching.value = true;
 
+    // Let Inertia follow the POST → 302 → GET redirect chain normally.
+    // The component re-mounts with fresh props (the new active_store),
+    // and selectedId is initialized from the updated prop on re-mount.
+    // The watch also reconciles if the component is preserved.
     router.post(
         route('stores.switch'),
         { store_id: Number(next) },
         {
             preserveScroll: true,
-            preserveState: true,
-            onSuccess: () => {
-                // Reconcile with the server-confirmed store. The watch
-                // may also fire, but onSuccess is the reliable reset path
-                // when preserveState keeps the component alive across the
-                // POST → 302 → GET redirect chain.
-                const confirmedId =
-                    activeStore.value !== null
-                        ? String(activeStore.value.id)
-                        : '';
-                selectedId.value = confirmedId;
-                switching.value = false;
-            },
             onError: () => {
                 selectedId.value = previous;
                 switching.value = false;
             },
             onFinish: () => {
-                // Safety net: ensure switching never gets stuck true even
-                // if neither onSuccess nor onError fires (e.g. cancelled
-                // visit, network timeout, or edge-case redirect handling).
                 switching.value = false;
             },
         },

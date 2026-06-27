@@ -6,34 +6,57 @@ namespace App\Http\Controllers\Web\Item;
 
 use App\Models\Item;
 use App\Models\StockMovement;
+use App\Models\Store;
 use App\Models\StoreItem;
+use App\Models\User;
+use App\Support\ActiveStoreResolver;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Thinkycz\LaravelCore\Support\Typer;
 
 class ItemShowController
 {
     /**
      * Show item details + movement history.
+     *
+     * Movements are filtered to the active store when one is resolved,
+     * so the user sees only the movements that affected the currently
+     * selected store. The active store's quantity is highlighted in the
+     * store quantities table.
      */
-    public function __invoke(Item $item): Response
+    public function __invoke(Request $request, Item $item): Response
     {
-        $item->loadMissing(['stockMovements' => static function (BelongsToMany $query): void {
-            $query->select([
-                'stock_movements.id',
-                'stock_movements.number',
-                'stock_movements.type',
-                'stock_movements.store_id',
-                'stock_movements.total_quantity',
-                'stock_movements.total_value',
-                'stock_movements.created_at',
-            ])
-                ->orderByDesc('stock_movements.created_at')
-                ->orderByDesc('stock_movements.id')
-                ->limit(50);
-        }, 'storeItems.store']);
+        $user = User::mustAuth();
+        $activeStore = ActiveStoreResolver::resolve($request, $user);
 
-        $movements = $item->getStockMovements()->map(static function (StockMovement $movement): array {
+        $item->loadMissing(['storeItems.store']);
+
+        $movementsQuery = $item->stockMovements();
+
+        if ($activeStore instanceof Store) {
+            $storeId = $activeStore->getKey();
+            $movementsQuery->where(static function ($query) use ($storeId): void {
+                $query->where('store_id', $storeId)
+                    ->orWhere('source_store_id', $storeId);
+            });
+        }
+
+        $movementsQuery->select([
+            'stock_movements.id',
+            'stock_movements.number',
+            'stock_movements.type',
+            'stock_movements.store_id',
+            'stock_movements.total_quantity',
+            'stock_movements.total_value',
+            'stock_movements.created_at',
+        ])
+            ->orderByDesc('stock_movements.created_at')
+            ->orderByDesc('stock_movements.id')
+            ->limit(50);
+
+        $movements = $movementsQuery->get()->map(static function (StockMovement $movement): array {
             return [
                 'id' => $movement->getKey(),
                 'number' => $movement->getNumber(),
@@ -61,6 +84,15 @@ class ItemShowController
             ];
         })->all();
 
+        $activeStoreQuantity = null;
+        if ($activeStore instanceof Store) {
+            $raw = StoreItem::query()
+                ->where('item_id', $item->getKey())
+                ->where('store_id', $activeStore->getKey())
+                ->value('quantity');
+            $activeStoreQuantity = $raw !== null ? Typer::parseInt($raw) : 0;
+        }
+
         return Inertia::render('items/Show', [
             'item' => [
                 'id' => $item->getKey(),
@@ -77,6 +109,13 @@ class ItemShowController
             ],
             'store_quantities' => $storeQuantities,
             'movements' => $movements,
+            'active_store' => $activeStore instanceof Store
+                ? [
+                    'id' => $activeStore->getKey(),
+                    'name' => $activeStore->getName(),
+                    'quantity' => $activeStoreQuantity,
+                ]
+                : null,
         ]);
     }
 }

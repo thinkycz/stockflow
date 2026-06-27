@@ -22,11 +22,13 @@ type ItemRow = {
     sku: string | null;
     unit: string | null;
     purchase_price: number;
+    store_quantity: number | null;
 };
 
 const props = defineProps<{
     items: ItemRow[];
     search: string;
+    store: { id: number; name: string } | null;
     pagination: {
         current_page: number;
         last_page: number;
@@ -151,6 +153,9 @@ function destroyItem(id: number): void {
                                 <th class="w-10"></th>
                                 <th>{{ t('items.columns.title') }}</th>
                                 <th>{{ t('items.columns.sku') }}</th>
+                                <th v-if="store" class="text-right">
+                                    {{ store.name }}
+                                </th>
                                 <th class="text-right">
                                     {{ t('items.columns.price') }}
                                 </th>
@@ -186,6 +191,12 @@ function destroyItem(id: number): void {
                                     class="font-mono text-xs text-on-surface-variant"
                                 >
                                     {{ item.sku ?? '—' }}
+                                </td>
+                                <td
+                                    v-if="store"
+                                    class="text-right font-semibold text-on-surface"
+                                >
+                                    {{ item.store_quantity ?? 0 }}
                                 </td>
                                 <td class="text-right text-on-surface-variant">
                                     {{ formatMoney(item.purchase_price) }}

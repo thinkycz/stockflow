@@ -189,6 +189,23 @@ class User extends BaseUser implements MustVerifyEmail
     }
 
     /**
+     * Active store id getter (the admin's last-selected store).
+     */
+    public function getActiveStoreId(): int|null
+    {
+        return $this->assertNullableInt('active_store_id');
+    }
+
+    /**
+     * Persist the admin's active store choice onto the model.
+     */
+    public function setActiveStoreId(int $storeId): void
+    {
+        $this->setAttribute('active_store_id', $storeId);
+        $this->save();
+    }
+
+    /**
      * Parent user id getter.
      */
     public function getParentUserId(): int|null

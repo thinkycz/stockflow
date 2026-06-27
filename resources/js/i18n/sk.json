@@ -192,7 +192,8 @@
             "quantity": "Množstvo vo sklade",
             "unit_price": "Jednotková cena",
             "total_value": "Celková hodnota"
-        }
+        },
+        "active_store": "Aktívna pobočka"
     },
     "stores": {
         "title": "Predajne",

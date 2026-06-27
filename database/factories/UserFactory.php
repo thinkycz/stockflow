@@ -38,6 +38,7 @@ class UserFactory extends Factory
             'is_admin' => false,
             'parent_user_id' => null,
             'assigned_store_id' => null,
+            'active_store_id' => null,
         ];
     }
 

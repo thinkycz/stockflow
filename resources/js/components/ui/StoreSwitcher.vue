@@ -42,8 +42,6 @@ const options = computed(() =>
 
 const isAdmin = computed(() => options.value.length > 0);
 
-// Guards against the snap-back / double-submit race that made the switcher
-// feel unreliable on slow or cold-cache sessions (e.g. anonymous windows).
 const switching = ref(false);
 
 function onChange(event: Event): void {
@@ -55,35 +53,39 @@ function onChange(event: Event): void {
     const previous =
         activeStore.value !== null ? String(activeStore.value.id) : '';
     if (next === '' || next === previous || switching.value) {
-        // Keep the rendered value in sync with the server-confirmed state.
         selectedId.value = previous;
         return;
     }
 
-    // Optimistically reflect the user's choice immediately so the native
-    // select never snaps back to the previous value while the request is
-    // in flight.
+    // Optimistically reflect the user's choice immediately.
     selectedId.value = next;
     switching.value = true;
 
-    // Let Inertia follow the POST → 302 → GET redirect chain normally.
-    // The component re-mounts with fresh props (the new active_store),
-    // and selectedId is initialized from the updated prop on re-mount.
-    // The watch also reconciles if the component is preserved.
-    router.post(
-        route('stores.switch'),
-        { store_id: Number(next) },
-        {
-            preserveScroll: true,
-            onError: () => {
-                selectedId.value = previous;
-                switching.value = false;
-            },
-            onFinish: () => {
-                switching.value = false;
-            },
-        },
-    );
+    // Use a plain axios POST instead of router.post so we avoid the
+    // Inertia re-mount / preserveState race that caused the select to
+    // revert to the old store on mobile. The controller returns JSON
+    // with the confirmed active store; we then reload the Inertia page
+    // to refresh all props (active_store + page-specific data like
+    // items, movements, metrics, etc.) so the page reflects the new
+    // active store immediately.
+    window.axios
+        .post(route('stores.switch'), { store_id: Number(next) })
+        .then(() => {
+            // Reload the current page to pick up the updated shared
+            // props and page-specific data. preserveState keeps the
+            // component tree alive so the drawer stays open on mobile.
+            router.reload({
+                preserveScroll: true,
+                preserveState: true,
+            });
+        })
+        .catch(() => {
+            // Revert to the previous store on error.
+            selectedId.value = previous;
+        })
+        .finally(() => {
+            switching.value = false;
+        });
 }
 </script>
 

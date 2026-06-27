@@ -1,17 +1,7 @@
-<script lang="ts">
-import { ref } from 'vue';
-
-// Module-level ref so the drawer state survives Inertia re-mounts caused
-// by POST requests without preserveState (e.g. the store switch). When the
-// layout component is re-created after a re-mount, it reads the same ref
-// instead of resetting to false and snapping the drawer shut.
-const mobileNavOpen = ref(false);
-</script>
-
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { Menu, X } from '@lucide/vue';
-import { onMounted, onUnmounted, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppSidebar from '@/components/ui/AppSidebar.vue';
 import Brand from '@/components/ui/Brand.vue';
@@ -29,14 +19,16 @@ useBoundLocale();
 
 const route = useRoute();
 
+const mobileNavOpen = ref(false);
+
 function closeMobileNav(): void {
     mobileNavOpen.value = false;
 }
 
 // Close the drawer on real page navigation (Link clicks that change the
-// URL) but NOT on same-URL redirects such as a store switch, which posts
-// and redirects back to the current page. Without this guard the drawer
-// slams shut mid-switch and the StoreSwitcher's local state is lost.
+// URL). The store switcher uses axios + router.reload() (not a full
+// Inertia visit), so it does not trigger a navigate event and the drawer
+// stays open during a store switch.
 let lastUrl: string = typeof window !== 'undefined' ? window.location.href : '';
 
 const navigateHandler = (): void => {

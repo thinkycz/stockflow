@@ -116,3 +116,32 @@ use App\Models\StoreItem;
     \expect((float) $data['warehouse_quantity'])->toBe(12.0);
     \expect((float) $data['quantities_by_store'][(string) $retail->getKey()])->toBe(3.0);
 });
+
+\test('search includes active store quantity when a store is active', function (): void {
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+    $retail = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
+    $item = Item::factory()->create([
+        'user_id' => $user->getKey(),
+        'title' => 'Tracked widget',
+    ]);
+
+    StoreItem::query()->create([
+        'store_id' => $warehouse->getKey(),
+        'item_id' => $item->getKey(),
+        'quantity' => 12,
+    ]);
+    StoreItem::query()->create([
+        'store_id' => $retail->getKey(),
+        'item_id' => $item->getKey(),
+        'quantity' => 3,
+    ]);
+
+    $user->setActiveStoreId($retail->getKey());
+
+    $response = $this->be($user, 'users')->get('/items/search?q=tracked');
+
+    $response->assertOk();
+    $data = $response->json('items.0');
+    \expect($data)->toHaveKey('store_quantity');
+    \expect((float) $data['store_quantity'])->toBe(3.0);
+});

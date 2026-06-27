@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Web\Item;
 
 use App\Models\Item;
+use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
+use App\Support\ActiveStoreResolver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,7 +30,10 @@ class ItemSearchController
         $term = Typer::parseNullableString($request->query('q')) ?? '';
         $term = \trim($term);
 
-        $items = $term === '' ? [] : $this->search($user, $term);
+        $activeStore = ActiveStoreResolver::resolve($request, $user);
+        $activeStoreId = $activeStore instanceof Store ? $activeStore->getKey() : null;
+
+        $items = $term === '' ? [] : $this->search($user, $term, $activeStoreId);
 
         return new JsonResponse(['items' => $items]);
     }
@@ -36,7 +41,7 @@ class ItemSearchController
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function search(User $user, string $term): array
+    private function search(User $user, string $term, int|null $activeStoreId): array
     {
         $itemsQuery = Item::query();
         Item::scopeForUser($itemsQuery, $user);
@@ -73,7 +78,7 @@ class ItemSearchController
                 = (float) $storeItemRow->getQuantity();
         }
 
-        return $items->map(static function (Item $item) use ($storeQuantitiesByItem, $defaultWarehouseId): array {
+        return $items->map(static function (Item $item) use ($storeQuantitiesByItem, $defaultWarehouseId, $activeStoreId): array {
             $byStore = $storeQuantitiesByItem[$item->getKey()] ?? [];
 
             return [
@@ -82,6 +87,9 @@ class ItemSearchController
                 'sku' => $item->getSku(),
                 'unit' => $item->getUnit(),
                 'warehouse_quantity' => $byStore[$defaultWarehouseId] ?? 0,
+                'store_quantity' => $activeStoreId !== null
+                    ? ($byStore[(string) $activeStoreId] ?? 0)
+                    : null,
                 'quantities_by_store' => $byStore,
                 'purchase_price' => $item->getPurchasePrice(),
             ];

@@ -22,20 +22,38 @@ use Thinkycz\LaravelCore\Support\Typer;
         ], $this->inertiaHeaders());
 
     $response->assertRedirect();
-    $this->assertSame($retail->getKey(), $this->app['session.store']->get('active_store_id'));
+    $this->assertSame($retail->getKey(), $user->fresh()->getActiveStoreId());
 });
 
-\test('statements index picks up the session-persisted active store', function (): void {
+\test('admin store switch returns JSON when requested', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $retail = Store::factory()->create([
+        'user_id' => $user->getKey(),
+        'is_warehouse' => false,
+    ]);
+
+    $response = $this->be($user, 'users')
+        ->withSession(['_token' => 'test'])
+        ->withHeaders(['X-CSRF-TOKEN' => 'test', 'Accept' => 'application/json'])
+        ->post('/stores/switch', [
+            'store_id' => $retail->getKey(),
+        ]);
+
+    $response->assertOk();
+    $response->assertJsonPath('active_store.id', $retail->getKey());
+    $this->assertSame($retail->getKey(), $user->fresh()->getActiveStoreId());
+});
+
+\test('statements index picks up the persisted active store', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $retail = Store::factory()->create([
         'user_id' => $user->getKey(),
         'is_warehouse' => false,
     ]);
 
+    $user->setActiveStoreId($retail->getKey());
+
     $this->be($user, 'users')
-        ->withSession([
-            'active_store_id' => $retail->getKey(),
-        ])
         ->get('/statements', $this->inertiaHeaders())
         ->assertOk()
         ->assertJsonPath('props.filters.store_id', $retail->getKey());
@@ -78,20 +96,25 @@ use Thinkycz\LaravelCore\Support\Typer;
         ], $this->inertiaHeaders())
         ->assertRedirect('/dashboard');
 
-    $this->assertNull($this->app['session.store']->get('active_store_id'));
+    $this->assertNull($limited->fresh()->getActiveStoreId());
 });
 
-\test('statements index ignores a stale session value pointing at a deleted store', function (): void {
+\test('statements index ignores a stale active store pointing at a deleted store', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $retail = Store::factory()->create([
         'user_id' => $user->getKey(),
         'is_warehouse' => false,
     ]);
+    $doomed = Store::factory()->create([
+        'user_id' => $user->getKey(),
+        'is_warehouse' => false,
+    ]);
+
+    // Point the user at the doomed store, then delete it.
+    $user->setActiveStoreId($doomed->getKey());
+    $doomed->delete();
 
     $response = $this->be($user, 'users')
-        ->withSession([
-            'active_store_id' => 99999,
-        ])
         ->get('/statements', $this->inertiaHeaders());
 
     $response->assertOk();

@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft, Pencil, Boxes, FileText, History } from '@lucide/vue';
+import {
+    ArrowLeft,
+    Pencil,
+    Boxes,
+    FileText,
+    History,
+    Store as StoreIcon,
+} from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Badge from '@/components/ui/Badge.vue';
@@ -55,6 +62,11 @@ const props = defineProps<{
     };
     store_quantities: StoreQuantityRow[];
     movements: MovementRow[];
+    active_store: {
+        id: number;
+        name: string;
+        quantity: number | null;
+    } | null;
 }>();
 
 const { t } = useI18n();
@@ -132,14 +144,22 @@ useBoundLocale();
                 <Card padded>
                     <CardHeader>
                         <CardDescription>{{
-                            t('items.metrics.quantity')
+                            active_store
+                                ? active_store.name
+                                : t('items.metrics.quantity')
                         }}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <p
                             class="font-heading text-2xl font-bold tracking-tight text-on-surface"
                         >
-                            {{ formatNumber(item.warehouse_quantity) }}
+                            {{
+                                formatNumber(
+                                    active_store
+                                        ? (active_store.quantity ?? 0)
+                                        : item.warehouse_quantity,
+                                )
+                            }}
                         </p>
                         <p
                             v-if="item.unit"
@@ -205,16 +225,44 @@ useBoundLocale();
                                 <tr
                                     v-for="row in store_quantities"
                                     :key="row.store_id"
+                                    :class="
+                                        active_store &&
+                                        row.store_id === active_store.id
+                                            ? 'bg-primary/5'
+                                            : ''
+                                    "
                                 >
                                     <td>
-                                        {{ row.store_name }}
-                                        <Badge
-                                            v-if="row.is_warehouse"
-                                            variant="neutral"
-                                            class="ml-2"
-                                        >
-                                            {{ t('stores.warehouse') }}
-                                        </Badge>
+                                        <span class="flex items-center gap-2">
+                                            <StoreIcon
+                                                v-if="
+                                                    active_store &&
+                                                    row.store_id ===
+                                                        active_store.id
+                                                "
+                                                :size="12"
+                                                class="text-primary"
+                                            />
+                                            {{ row.store_name }}
+                                            <Badge
+                                                v-if="row.is_warehouse"
+                                                variant="neutral"
+                                                class="ml-1"
+                                            >
+                                                {{ t('stores.warehouse') }}
+                                            </Badge>
+                                            <Badge
+                                                v-if="
+                                                    active_store &&
+                                                    row.store_id ===
+                                                        active_store.id
+                                                "
+                                                variant="success"
+                                                class="ml-1"
+                                            >
+                                                {{ t('items.active_store') }}
+                                            </Badge>
+                                        </span>
                                     </td>
                                     <td class="text-right font-semibold">
                                         {{ formatNumber(row.quantity) }}

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Plus, Search, Filter, Trash2 } from '@lucide/vue';
-import { ref } from 'vue';
+import { Plus, Search, Trash2 } from '@lucide/vue';
+import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
@@ -60,7 +60,7 @@ const formSearch = ref<string>(props.filters.search || '');
 const formType = ref<string>(props.filters.type || '');
 const formDateFrom = ref<string>(props.filters.date_from || '');
 const formDateTo = ref<string>(props.filters.date_to || '');
-const submitting = ref<boolean>(false);
+let filterTimer: ReturnType<typeof setTimeout> | null = null;
 
 function applyFilters(): void {
     const params: Record<string, string | number> = {};
@@ -76,14 +76,18 @@ function applyFilters(): void {
     if (formDateTo.value) {
         params.date_to = formDateTo.value;
     }
-    submitting.value = true;
     router.get(route('stock-movements.index'), params, {
         preserveState: true,
-        onFinish: (): void => {
-            submitting.value = false;
-        },
+        preserveScroll: true,
     });
 }
+
+watch([formSearch, formType, formDateFrom, formDateTo], () => {
+    if (filterTimer !== null) {
+        clearTimeout(filterTimer);
+    }
+    filterTimer = setTimeout(applyFilters, 300);
+});
 
 function destroyMovement(id: number): void {
     if (!window.confirm(t('stock_movements.confirm_delete'))) {
@@ -122,10 +126,7 @@ function destroyMovement(id: number): void {
             </header>
 
             <Card padded>
-                <form
-                    class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end"
-                    @submit.prevent="applyFilters"
-                >
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-end">
                     <div class="relative lg:flex-1">
                         <Search
                             :size="14"
@@ -181,18 +182,10 @@ function destroyMovement(id: number): void {
                             :aria-label="t('stock_movements.filter.date_to')"
                         />
                     </div>
-                    <div>
-                        <Button
-                            type="submit"
-                            variant="secondary"
-                            :disabled="submitting"
-                        >
-                            <Filter :size="14" />
-                            {{ t('common.apply') }}
-                        </Button>
-                    </div>
-                </form>
+                </div>
+            </Card>
 
+            <Card padded>
                 <EmptyState
                     v-if="movements.length === 0"
                     :title="t('stock_movements.empty.title')"

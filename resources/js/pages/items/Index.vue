@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Pencil, Plus, Search, Trash2, Boxes } from '@lucide/vue';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Badge from '@/components/ui/Badge.vue';
@@ -43,23 +43,27 @@ const route = useRoute();
 
 const searchTerm = ref<string>(props.search || '');
 const submitting = ref<boolean>(false);
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
-function performSearch(event?: Event): void {
-    if (event) {
-        event.preventDefault();
+watch(searchTerm, (value) => {
+    if (searchTimer !== null) {
+        clearTimeout(searchTimer);
     }
-    submitting.value = true;
-    router.get(
-        route('items.index'),
-        { search: searchTerm.value || undefined },
-        {
-            preserveState: true,
-            onFinish: (): void => {
-                submitting.value = false;
+    searchTimer = setTimeout(() => {
+        submitting.value = true;
+        router.get(
+            route('items.index'),
+            { search: value || undefined },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onFinish: (): void => {
+                    submitting.value = false;
+                },
             },
-        },
-    );
-}
+        );
+    }, 300);
+});
 
 function destroyItem(id: number): void {
     if (!window.confirm(t('items.confirm_delete'))) {
@@ -98,39 +102,29 @@ function destroyItem(id: number): void {
             </header>
 
             <Card padded>
-                <form
-                    class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center"
-                    @submit.prevent="performSearch"
-                >
-                    <div class="relative flex-1">
-                        <Search
-                            :size="14"
-                            class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
-                        />
-                        <Input
-                            v-model="searchTerm"
-                            type="search"
-                            :placeholder="t('items.search_placeholder')"
-                            class="pl-9"
-                        />
-                    </div>
-                    <Button
-                        type="submit"
-                        variant="secondary"
-                        :disabled="submitting"
-                    >
-                        {{ t('common.search') }}
-                    </Button>
-                </form>
+                <div class="relative flex-1">
+                    <Search
+                        :size="14"
+                        class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
+                    />
+                    <Input
+                        v-model="searchTerm"
+                        type="search"
+                        :placeholder="t('items.search_placeholder')"
+                        class="pl-9"
+                    />
+                </div>
 
                 <div
                     v-if="search"
-                    class="mb-3 flex items-center gap-2 text-xs text-on-surface-variant"
+                    class="mt-3 flex items-center gap-2 text-xs text-on-surface-variant"
                 >
                     <span>{{ t('common.searching_for') }}:</span>
                     <Badge variant="neutral">{{ search }}</Badge>
                 </div>
+            </Card>
 
+            <Card padded>
                 <LoadingState
                     v-if="submitting"
                     :label="t('common.loading')"

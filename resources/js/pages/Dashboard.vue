@@ -110,7 +110,9 @@ function statementPeriodLabel(statement: RecentStatement): string {
         <Head :title="t('dashboard.title')" />
 
         <div class="flex flex-col gap-6">
-            <div class="flex items-end justify-between gap-3">
+            <header
+                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            >
                 <div>
                     <h1
                         class="font-heading text-2xl font-bold tracking-tight text-on-surface"
@@ -128,7 +130,7 @@ function statementPeriodLabel(statement: RecentStatement): string {
                 >
                     {{ props.active_store.name }}
                 </p>
-            </div>
+            </header>
 
             <EmptyState
                 v-if="!props.active_store"

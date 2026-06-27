@@ -20,7 +20,9 @@
         "settings": "Settings",
         "profile": "Profile",
         "password": "Password",
-        "logout": "Log out"
+        "logout": "Log out",
+        "menu": "Menu",
+        "close": "Close"
     },
     "store_switcher": {
         "label": "Active store",

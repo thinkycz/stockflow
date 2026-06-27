@@ -191,36 +191,38 @@ useBoundLocale();
                         v-if="store_quantities.length === 0"
                         :title="t('items.no_store_stock')"
                     />
-                    <DataTable v-else>
-                        <thead>
-                            <tr>
-                                <th>{{ t('stores.columns.name') }}</th>
-                                <th class="text-right">
-                                    {{ t('items.metrics.quantity') }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="row in store_quantities"
-                                :key="row.store_id"
-                            >
-                                <td>
-                                    {{ row.store_name }}
-                                    <Badge
-                                        v-if="row.is_warehouse"
-                                        variant="neutral"
-                                        class="ml-2"
-                                    >
-                                        {{ t('stores.warehouse') }}
-                                    </Badge>
-                                </td>
-                                <td class="text-right font-semibold">
-                                    {{ formatNumber(row.quantity) }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </DataTable>
+                    <div v-else class="overflow-x-auto">
+                        <DataTable>
+                            <thead>
+                                <tr>
+                                    <th>{{ t('stores.columns.name') }}</th>
+                                    <th class="text-right">
+                                        {{ t('items.metrics.quantity') }}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="row in store_quantities"
+                                    :key="row.store_id"
+                                >
+                                    <td>
+                                        {{ row.store_name }}
+                                        <Badge
+                                            v-if="row.is_warehouse"
+                                            variant="neutral"
+                                            class="ml-2"
+                                        >
+                                            {{ t('stores.warehouse') }}
+                                        </Badge>
+                                    </td>
+                                    <td class="text-right font-semibold">
+                                        {{ formatNumber(row.quantity) }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </DataTable>
+                    </div>
                 </CardContent>
             </Card>
 

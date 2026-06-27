@@ -7,7 +7,7 @@ import {
     CircleDollarSign,
     ShoppingCart,
 } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Card from '@/components/ui/Card.vue';
@@ -18,7 +18,6 @@ import Chart from '@/components/ui/Chart.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import MetricCard from '@/components/ui/MetricCard.vue';
-import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
@@ -110,17 +109,22 @@ const channelSlices = computed(() => {
     ];
 });
 
-const periodValue = computed(() => String(props.filters.period_days));
+const periodInput = ref<string>(String(props.filters.period_days));
+let periodTimer: ReturnType<typeof setTimeout> | null = null;
 
-function applyPeriod(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    const period = Math.max(7, Math.min(365, Number(target.value) || 30));
-    router.get(
-        route('reports.statistics'),
-        { store_id: props.filters.store_id, period_days: period },
-        { preserveState: true, preserveScroll: true },
-    );
-}
+watch(periodInput, (value) => {
+    if (periodTimer !== null) {
+        clearTimeout(periodTimer);
+    }
+    periodTimer = setTimeout(() => {
+        const period = Math.max(7, Math.min(365, Number(value) || 30));
+        router.get(
+            route('reports.statistics'),
+            { store_id: props.filters.store_id, period_days: period },
+            { preserveState: true, preserveScroll: true },
+        );
+    }, 400);
+});
 
 function formatCount(value: number): string {
     return value.toLocaleString('cs-CZ', { maximumFractionDigits: 0 });
@@ -132,7 +136,7 @@ function formatCount(value: number): string {
         <Head :title="t('reports.statistics.title')" />
 
         <div class="flex flex-col gap-6">
-            <div>
+            <header>
                 <h1
                     class="font-heading text-2xl font-bold tracking-tight text-on-surface"
                 >
@@ -141,7 +145,7 @@ function formatCount(value: number): string {
                 <p class="mt-1 text-sm text-on-surface-variant">
                     {{ t('reports.statistics.subtitle') }}
                 </p>
-            </div>
+            </header>
 
             <Card padded>
                 <div class="grid gap-4 lg:max-w-md">
@@ -154,12 +158,11 @@ function formatCount(value: number): string {
                         </label>
                         <Input
                             id="statistics_period"
+                            v-model="periodInput"
                             type="number"
                             min="7"
                             max="365"
                             step="1"
-                            :model-value="periodValue"
-                            @change="applyPeriod"
                         />
                     </div>
                 </div>
@@ -351,21 +354,6 @@ function formatCount(value: number): string {
                         :empty-text="t('reports.statistics.sales.title')"
                     />
                 </Card>
-
-                <div class="flex justify-end">
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        @click="
-                            router.get(
-                                route('reports.statistics'),
-                                props.filters,
-                            )
-                        "
-                    >
-                        {{ t('reports.statistics.apply') }}
-                    </Button>
-                </div>
             </template>
         </div>
     </AppLayout>

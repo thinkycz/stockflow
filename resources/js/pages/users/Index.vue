@@ -53,7 +53,9 @@ const currentUserId = (): number | null => page.props.auth?.user?.id ?? null;
         <Head :title="t('users.title')" />
 
         <div class="mx-auto flex w-full max-w-5xl flex-col gap-6">
-            <header class="flex items-end justify-between gap-3">
+            <header
+                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            >
                 <div>
                     <h1
                         class="font-heading text-2xl font-bold tracking-tight text-on-surface"

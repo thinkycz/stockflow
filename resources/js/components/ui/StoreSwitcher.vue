@@ -20,10 +20,14 @@ const selectedId = ref<string>(
     activeStore.value !== null ? String(activeStore.value.id) : '',
 );
 
+// Reconcile the local selection with the server-confirmed active store
+// whenever the shared prop changes (e.g. after a successful switch, after
+// navigation, or when the resolver falls back to a different store).
 watch(
     () => activeStore.value?.id,
     (id) => {
         selectedId.value = id === undefined ? '' : String(id);
+        switching.value = false;
     },
 );
 
@@ -38,6 +42,10 @@ const options = computed(() =>
 
 const isAdmin = computed(() => options.value.length > 0);
 
+// Guards against the snap-back / double-submit race that made the switcher
+// feel unreliable on slow or cold-cache sessions (e.g. anonymous windows).
+const switching = ref(false);
+
 function onChange(event: Event): void {
     const target = event.target as HTMLSelectElement | null;
     if (target === null) {
@@ -46,13 +54,30 @@ function onChange(event: Event): void {
     const next = target.value;
     const previous =
         activeStore.value !== null ? String(activeStore.value.id) : '';
-    if (next === '' || next === previous) {
+    if (next === '' || next === previous || switching.value) {
+        // Keep the rendered value in sync with the server-confirmed state.
+        selectedId.value = previous;
         return;
     }
+
+    // Optimistically reflect the user's choice immediately so the native
+    // select never snaps back to the previous value while the request is
+    // in flight.
+    selectedId.value = next;
+    switching.value = true;
+
     router.post(
         route('stores.switch'),
         { store_id: Number(next) },
-        { preserveScroll: true },
+        {
+            preserveScroll: true,
+            onError: () => {
+                // Revert to the last server-confirmed store; the watch will
+                // also reset `switching` once the prop updates.
+                selectedId.value = previous;
+                switching.value = false;
+            },
+        },
     );
 }
 </script>
@@ -73,8 +98,10 @@ function onChange(event: Event): void {
         <select
             v-if="props.compact"
             :value="selectedId"
+            :disabled="switching"
             :aria-label="t('store_switcher.label')"
-            class="min-w-0 flex-1 cursor-pointer bg-transparent text-xs font-semibold text-on-surface outline-none"
+            :aria-busy="switching"
+            class="min-w-0 flex-1 cursor-pointer bg-transparent text-xs font-semibold text-on-surface outline-none disabled:cursor-wait disabled:opacity-60"
             @change="onChange"
         >
             <option
@@ -88,13 +115,20 @@ function onChange(event: Event): void {
         <div
             v-else-if="props.integrated"
             :title="t('store_switcher.label')"
-            class="group relative flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg border border-outline-glass bg-surface-container-lowest px-2.5 py-1.5 text-xs font-semibold text-on-surface transition hover:border-primary/40 hover:bg-surface-container-low hover:shadow-[0_1px_3px_rgba(15,23,42,0.06)] focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(15,23,42,0.04)]"
+            :class="
+                cn(
+                    'group relative flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg border border-outline-glass bg-surface-container-lowest px-2.5 py-1.5 text-xs font-semibold text-on-surface transition hover:border-primary/40 hover:bg-surface-container-low hover:shadow-[0_1px_3px_rgba(15,23,42,0.06)] focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(15,23,42,0.04)]',
+                    switching && 'cursor-wait opacity-60',
+                )
+            "
         >
             <select
                 :value="selectedId"
+                :disabled="switching"
                 :title="t('store_switcher.label')"
                 :aria-label="t('store_switcher.label')"
-                class="min-w-0 flex-1 cursor-pointer appearance-none bg-transparent pr-5 text-xs font-semibold text-on-surface outline-none"
+                :aria-busy="switching"
+                class="min-w-0 flex-1 cursor-pointer appearance-none bg-transparent pr-5 text-xs font-semibold text-on-surface outline-none disabled:cursor-wait"
                 @change="onChange"
             >
                 <option
@@ -118,8 +152,10 @@ function onChange(event: Event): void {
             </span>
             <select
                 :value="selectedId"
+                :disabled="switching"
                 :aria-label="t('store_switcher.label')"
-                class="min-w-0 cursor-pointer truncate bg-transparent text-xs font-semibold text-on-surface outline-none"
+                :aria-busy="switching"
+                class="min-w-0 cursor-pointer truncate bg-transparent text-xs font-semibold text-on-surface outline-none disabled:cursor-wait disabled:opacity-60"
                 @change="onChange"
             >
                 <option

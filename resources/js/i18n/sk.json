@@ -20,7 +20,9 @@
         "settings": "Nastavenia",
         "profile": "Profil",
         "password": "Heslo",
-        "logout": "Odhlásiť sa"
+        "logout": "Odhlásiť sa",
+        "menu": "Menu",
+        "close": "Zavrieť"
     },
     "store_switcher": {
         "label": "Aktívna predajňa",

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
@@ -44,6 +45,7 @@ useBoundLocale();
 
 const fromInput = ref<string>(props.filters.from);
 const toInput = ref<string>(props.filters.to);
+let dateTimer: ReturnType<typeof setTimeout> | null = null;
 
 function selectItem(value: string | number | null | undefined): void {
     const itemId =
@@ -54,8 +56,8 @@ function selectItem(value: string | number | null | undefined): void {
         route('inventory-counts.history'),
         {
             item_id: itemId,
-            from: props.filters.from,
-            to: props.filters.to,
+            from: fromInput.value,
+            to: toInput.value,
         },
         { preserveState: true, preserveScroll: true },
     );
@@ -73,6 +75,13 @@ function applyRange(): void {
     );
 }
 
+watch([fromInput, toInput], () => {
+    if (dateTimer !== null) {
+        clearTimeout(dateTimer);
+    }
+    dateTimer = setTimeout(applyRange, 300);
+});
+
 const totals = computed(() => ({
     count: props.rows.length,
 }));
@@ -83,7 +92,9 @@ const totals = computed(() => ({
         <Head :title="t('inventory_counts.history.title')" />
 
         <div class="flex flex-col gap-6">
-            <div class="flex items-end justify-between gap-3">
+            <header
+                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            >
                 <div>
                     <h1
                         class="font-heading text-2xl font-bold tracking-tight text-on-surface"
@@ -95,14 +106,11 @@ const totals = computed(() => ({
                     </p>
                 </div>
                 <Link :href="route('inventory-counts.index')">
-                    <button
-                        type="button"
-                        class="rounded-xl border border-outline-glass bg-surface-container-lowest px-3 py-2 text-xs font-semibold text-on-surface-variant transition hover:text-primary"
-                    >
+                    <Button variant="secondary">
                         ← {{ t('inventory_counts.title') }}
-                    </button>
+                    </Button>
                 </Link>
-            </div>
+            </header>
 
             <Card padded>
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -156,21 +164,7 @@ const totals = computed(() => ({
                         >
                             {{ t('inventory_counts.history.filter.to') }}
                         </label>
-                        <div class="flex gap-2">
-                            <Input
-                                id="history_to"
-                                v-model="toInput"
-                                type="date"
-                                class="flex-1"
-                            />
-                            <button
-                                type="button"
-                                class="rounded-xl border border-outline-glass bg-surface-container-lowest px-3 py-2 text-xs font-semibold text-primary transition hover:bg-primary/5"
-                                @click="applyRange"
-                            >
-                                {{ t('inventory_counts.history.filter.apply') }}
-                            </button>
-                        </div>
+                        <Input id="history_to" v-model="toInput" type="date" />
                     </div>
                 </div>
             </Card>
@@ -268,17 +262,14 @@ const totals = computed(() => ({
                                             })
                                         "
                                     >
-                                        <button
-                                            type="button"
-                                            class="rounded-xl border border-outline-glass bg-surface-container-lowest px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/5"
-                                        >
+                                        <Button variant="secondary">
                                             {{
                                                 t(
                                                     'inventory_counts.history.open',
                                                 )
                                             }}
                                             →
-                                        </button>
+                                        </Button>
                                     </Link>
                                 </td>
                             </tr>

@@ -157,7 +157,9 @@ function save(): void {
         <Head :title="t('inventory_counts.title')" />
 
         <div class="flex flex-col gap-6">
-            <div class="flex items-end justify-between gap-3">
+            <header
+                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            >
                 <div>
                     <h1
                         class="font-heading text-2xl font-bold tracking-tight text-on-surface"
@@ -169,14 +171,11 @@ function save(): void {
                     </p>
                 </div>
                 <Link :href="route('inventory-counts.history')">
-                    <button
-                        type="button"
-                        class="rounded-xl border border-outline-glass bg-surface-container-lowest px-3 py-2 text-xs font-semibold text-primary transition hover:bg-primary/5"
-                    >
+                    <Button variant="secondary">
                         {{ t('inventory_counts.history.title') }} →
-                    </button>
+                    </Button>
                 </Link>
-            </div>
+            </header>
 
             <div
                 v-if="!props.store"

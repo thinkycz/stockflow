@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Store as StoreIcon, Search, Plus, Pencil, Trash2 } from '@lucide/vue';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Badge from '@/components/ui/Badge.vue';
@@ -38,22 +38,20 @@ useBoundLocale();
 const route = useRoute();
 
 const searchTerm = ref<string>(props.search || '');
-const submitting = ref<boolean>(false);
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
-function performSearch(event: Event): void {
-    event.preventDefault();
-    submitting.value = true;
-    router.get(
-        route('stores.index'),
-        { search: searchTerm.value },
-        {
-            preserveState: true,
-            onFinish: (): void => {
-                submitting.value = false;
-            },
-        },
-    );
-}
+watch(searchTerm, (value) => {
+    if (searchTimer !== null) {
+        clearTimeout(searchTimer);
+    }
+    searchTimer = setTimeout(() => {
+        router.get(
+            route('stores.index'),
+            { search: value || undefined },
+            { preserveState: true, preserveScroll: true },
+        );
+    }, 300);
+});
 
 function destroyStore(id: number): void {
     if (!window.confirm(t('stores.confirm_delete'))) {
@@ -92,31 +90,21 @@ function destroyStore(id: number): void {
             </header>
 
             <Card padded>
-                <form
-                    class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center"
-                    @submit.prevent="performSearch"
-                >
-                    <div class="relative flex-1">
-                        <Search
-                            :size="14"
-                            class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
-                        />
-                        <Input
-                            v-model="searchTerm"
-                            type="search"
-                            :placeholder="t('stores.search_placeholder')"
-                            class="pl-9"
-                        />
-                    </div>
-                    <Button
-                        type="submit"
-                        variant="secondary"
-                        :disabled="submitting"
-                    >
-                        {{ t('common.search') }}
-                    </Button>
-                </form>
+                <div class="relative flex-1">
+                    <Search
+                        :size="14"
+                        class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
+                    />
+                    <Input
+                        v-model="searchTerm"
+                        type="search"
+                        :placeholder="t('stores.search_placeholder')"
+                        class="pl-9"
+                    />
+                </div>
+            </Card>
 
+            <Card padded>
                 <EmptyState
                     v-if="stores.length === 0"
                     :title="t('stores.empty.title')"

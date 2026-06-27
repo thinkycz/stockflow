@@ -212,7 +212,9 @@ function toggleAllTime(): void {
         <Head :title="t('reports.title')" />
 
         <div class="flex flex-col gap-6">
-            <div class="flex items-end justify-between gap-3">
+            <header
+                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            >
                 <div>
                     <h1
                         class="font-heading text-2xl font-bold tracking-tight text-on-surface"
@@ -230,7 +232,7 @@ function toggleAllTime(): void {
                 >
                     {{ props.active_store.name }}
                 </p>
-            </div>
+            </header>
 
             <EmptyState
                 v-if="!props.active_store"
@@ -288,23 +290,8 @@ function toggleAllTime(): void {
                 </div>
 
                 <Card padded>
-                    <CardHeader>
-                        <CardTitle>
-                            <span class="flex items-center gap-2">
-                                <Receipt
-                                    :size="14"
-                                    class="text-on-surface-variant"
-                                />
-                                {{ t('reports.statements.title') }}
-                            </span>
-                        </CardTitle>
-                        <CardDescription>
-                            {{ t('reports.statements.subtitle') }}
-                        </CardDescription>
-                    </CardHeader>
-
                     <div
-                        class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+                        class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
                     >
                         <div class="space-y-2 sm:min-w-[12rem]">
                             <label
@@ -333,6 +320,23 @@ function toggleAllTime(): void {
                             {{ t('reports.statements.all_time') }}
                         </label>
                     </div>
+                </Card>
+
+                <Card padded>
+                    <CardHeader>
+                        <CardTitle>
+                            <span class="flex items-center gap-2">
+                                <Receipt
+                                    :size="14"
+                                    class="text-on-surface-variant"
+                                />
+                                {{ t('reports.statements.title') }}
+                            </span>
+                        </CardTitle>
+                        <CardDescription>
+                            {{ t('reports.statements.subtitle') }}
+                        </CardDescription>
+                    </CardHeader>
 
                     <p
                         class="mb-4 text-xs font-semibold uppercase tracking-wider text-on-surface-variant"

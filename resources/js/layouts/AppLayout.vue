@@ -25,11 +25,18 @@ function closeMobileNav(): void {
     mobileNavOpen.value = false;
 }
 
-// Close the drawer on any Inertia navigation (page visits, including the
-// redirect that follows a store switch) so a tap on a nav entry always
-// dismisses the overlay.
+// Close the drawer on real page navigation (Link clicks that change the
+// URL) but NOT on same-URL redirects such as a store switch, which posts
+// and redirects back to the current page. Without this guard the drawer
+// slams shut mid-switch and the StoreSwitcher's local state is lost.
+let lastUrl: string = typeof window !== 'undefined' ? window.location.href : '';
+
 const navigateHandler = (): void => {
-    closeMobileNav();
+    const currentUrl = window.location.href;
+    if (currentUrl !== lastUrl) {
+        closeMobileNav();
+    }
+    lastUrl = currentUrl;
 };
 
 let unsubscribeNavigate: (() => void) | null = null;

@@ -71,6 +71,7 @@ function onChange(event: Event): void {
         { store_id: Number(next) },
         {
             preserveScroll: true,
+            preserveState: true,
             onError: () => {
                 // Revert to the last server-confirmed store; the watch will
                 // also reset `switching` once the prop updates.

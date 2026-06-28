@@ -120,6 +120,11 @@ watch(isOpen, async (open) => {
     if (open) {
         await nextTick();
         updatePosition();
+        // Mobile browsers scroll the focused input into view asynchronously
+        // (and the keyboard animates in), so the first measurement is often
+        // stale. Re-measure on the following frames and after a short delay.
+        requestAnimationFrame(() => requestAnimationFrame(updatePosition));
+        window.setTimeout(updatePosition, 120);
     }
 });
 
@@ -140,13 +145,20 @@ watch(highlightedIndex, (index) => {
     el?.scrollIntoView({ block: 'nearest' });
 });
 
+function getViewportHeight(): number {
+    // `visualViewport` accounts for the mobile keyboard and browser chrome,
+    // which `window.innerHeight` does not.
+    return window.visualViewport?.height ?? window.innerHeight;
+}
+
 function updatePosition(): void {
     const input = inputRef.value;
     if (input === null) {
         return;
     }
     const rect = input.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const viewportHeight = getViewportHeight();
+    const spaceBelow = viewportHeight - rect.bottom - 8;
     const spaceAbove = rect.top - 8;
     const maxDropdownHeight = 240;
     const gap = 4;
@@ -156,17 +168,18 @@ function updatePosition(): void {
             top: String(rect.bottom + gap) + 'px',
             left: String(rect.left) + 'px',
             width: String(rect.width) + 'px',
-            maxHeight: String(Math.min(spaceBelow, maxDropdownHeight)) + 'px',
+            maxHeight:
+                String(Math.max(Math.min(spaceBelow, maxDropdownHeight), 0)) +
+                'px',
         };
     } else {
+        const height = Math.max(Math.min(spaceAbove, maxDropdownHeight), 0);
         dropdownStyle.value = {
-            top:
-                String(
-                    rect.top - gap - Math.min(spaceAbove, maxDropdownHeight),
-                ) + 'px',
+            // Clamp so the dropdown never renders above the visible viewport.
+            top: String(Math.max(rect.top - gap - height, 8)) + 'px',
             left: String(rect.left) + 'px',
             width: String(rect.width) + 'px',
-            maxHeight: String(Math.min(spaceAbove, maxDropdownHeight)) + 'px',
+            maxHeight: String(height) + 'px',
         };
     }
 }
@@ -239,22 +252,45 @@ function onDocumentClick(event: MouseEvent): void {
     }
 }
 
-function onScrollOrResize(): void {
-    if (isOpen.value) {
-        isOpen.value = false;
+function isInputVisible(): boolean {
+    const input = inputRef.value;
+    if (input === null) {
+        return false;
     }
+    const rect = input.getBoundingClientRect();
+    const viewportHeight = getViewportHeight();
+    return rect.bottom > 0 && rect.top < viewportHeight;
+}
+
+function onScrollOrResize(): void {
+    if (!isOpen.value) {
+        return;
+    }
+    // Reposition the dropdown to follow the input instead of closing it.
+    // This is essential on mobile, where the user often needs to scroll to
+    // reach a dropdown that opened above the input. Only close when the input
+    // itself has scrolled completely out of the viewport.
+    if (!isInputVisible()) {
+        isOpen.value = false;
+        return;
+    }
+    updatePosition();
 }
 
 onMounted(() => {
     document.addEventListener('mousedown', onDocumentClick);
     window.addEventListener('scroll', onScrollOrResize, true);
     window.addEventListener('resize', onScrollOrResize);
+    window.visualViewport?.addEventListener('resize', onScrollOrResize);
+    window.visualViewport?.addEventListener('scroll', onScrollOrResize);
 });
 
 onBeforeUnmount(() => {
     document.removeEventListener('mousedown', onDocumentClick);
     window.removeEventListener('scroll', onScrollOrResize, true);
     window.removeEventListener('resize', onScrollOrResize);
+    window.visualViewport?.removeEventListener('resize', onScrollOrResize);
+    window.visualViewport?.removeEventListener('scroll', onScrollOrResize);
 });
 
 const showDropdown = computed((): boolean => {

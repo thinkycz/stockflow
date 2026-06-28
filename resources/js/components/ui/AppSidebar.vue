@@ -48,13 +48,6 @@ type NavItem = {
 
 const adminStoreNavItems = computed<NavItem[]>(() => [
     {
-        key: 'stock_movements',
-        href: route('stock-movements.index'),
-        label: t('nav.stock_movements'),
-        icon: ArrowLeftRight,
-        active: activeUrl.value.startsWith('/stock-movements'),
-    },
-    {
         key: 'statements',
         href: route('statements.index'),
         label: t('nav.statements'),
@@ -93,6 +86,13 @@ const adminManagementNavItems = computed<NavItem[]>(() => [
         label: t('nav.inventory'),
         icon: Boxes,
         active: activeUrl.value.startsWith('/items'),
+    },
+    {
+        key: 'stock_movements',
+        href: route('stock-movements.index'),
+        label: t('nav.stock_movements'),
+        icon: ArrowLeftRight,
+        active: activeUrl.value.startsWith('/stock-movements'),
     },
     {
         key: 'stores',

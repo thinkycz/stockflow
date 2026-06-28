@@ -357,6 +357,8 @@
         "columns": {
             "number": "Číslo",
             "type": "Typ",
+            "source": "Zdroj",
+            "destination": "Cieľ",
             "store": "Prodejna",
             "items_count": "Položek",
             "quantity": "Množství",

@@ -357,6 +357,8 @@
         "columns": {
             "number": "Number",
             "type": "Type",
+            "source": "Source",
+            "destination": "Destination",
             "store": "Store",
             "items_count": "Items",
             "quantity": "Quantity",

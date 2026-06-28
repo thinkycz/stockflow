@@ -7,9 +7,7 @@ namespace App\Http\Controllers\Web\StockMovement;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\StockMovementValidity;
 use App\Models\StockMovement;
-use App\Models\Store;
 use App\Models\User;
-use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -45,14 +43,6 @@ class StockMovementIndexController
         $storeId = $validated->parseNullableInt('store_id');
         $dateFrom = $validated->assertNullableString('date_from');
         $dateTo = $validated->assertNullableString('date_to');
-
-        if ($storeId === null) {
-            $activeStore = ActiveStoreResolver::resolve($request, $user);
-
-            if ($activeStore instanceof Store) {
-                $storeId = $activeStore->getKey();
-            }
-        }
 
         $baseQuery = StockMovement::query();
         StockMovement::scopeForUser($baseQuery, $user);
@@ -95,6 +85,8 @@ class StockMovementIndexController
                 'display_label_key' => $movement->getDisplayLabelKey(),
                 'store_id' => $movement->getStoreId(),
                 'store_name' => $movement->getStore()?->getName(),
+                'source_store_id' => $movement->getSourceStoreId(),
+                'source_store_name' => $movement->getSourceStore()?->getName(),
                 'created_at' => $movement->getCreatedAt()->toJSON(),
                 'total_quantity' => $movement->getTotalQuantity(),
                 'total_value' => $movement->getTotalValue(),

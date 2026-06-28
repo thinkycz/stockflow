@@ -23,6 +23,8 @@ type MovementRow = {
     display_label_key: 'incoming' | 'outgoing' | 'transfer' | 'adjustment';
     store_id: number | null;
     store_name: string | null;
+    source_store_id: number | null;
+    source_store_name: string | null;
     created_at: string;
     total_quantity: number;
     total_value: number;
@@ -30,11 +32,8 @@ type MovementRow = {
     created_by: string | null;
 };
 
-type StoreOption = { id: number; name: string };
-
 const props = defineProps<{
     movements: MovementRow[];
-    stores: StoreOption[];
     filters: {
         search: string;
         type: string | null;
@@ -209,7 +208,12 @@ function destroyMovement(id: number): void {
                                 </th>
                                 <th>{{ t('stock_movements.columns.type') }}</th>
                                 <th>
-                                    {{ t('stock_movements.columns.store') }}
+                                    {{ t('stock_movements.columns.source') }}
+                                </th>
+                                <th>
+                                    {{
+                                        t('stock_movements.columns.destination')
+                                    }}
                                 </th>
                                 <th class="text-right">
                                     {{
@@ -256,6 +260,9 @@ function destroyMovement(id: number): void {
                                         :type="movement.type"
                                         :label-key="movement.display_label_key"
                                     />
+                                </td>
+                                <td class="text-xs text-on-surface-variant">
+                                    {{ movement.source_store_name ?? '—' }}
                                 </td>
                                 <td class="text-xs text-on-surface-variant">
                                     {{ movement.store_name ?? '—' }}

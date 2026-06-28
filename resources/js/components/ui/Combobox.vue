@@ -160,7 +160,10 @@ function updatePosition(): void {
         };
     } else {
         dropdownStyle.value = {
-            top: String(rect.top - gap - Math.min(spaceAbove, maxDropdownHeight)) + 'px',
+            top:
+                String(
+                    rect.top - gap - Math.min(spaceAbove, maxDropdownHeight),
+                ) + 'px',
             left: String(rect.left) + 'px',
             width: String(rect.width) + 'px',
             maxHeight: String(Math.min(spaceAbove, maxDropdownHeight)) + 'px',

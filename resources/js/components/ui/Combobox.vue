@@ -169,13 +169,24 @@ function updatePosition(): void {
                 'px',
         };
     } else {
-        const height = Math.max(Math.min(spaceAbove, maxDropdownHeight), 0);
+        const availableHeight = Math.max(
+            Math.min(spaceAbove, maxDropdownHeight),
+            0,
+        );
+        // Use the dropdown's actual rendered height (not the available space)
+        // so it sits flush above the input even when there are only a few
+        // options. Falls back to availableHeight on the first frame before
+        // the dropdown has measured.
+        const renderedHeight = dropdownRef.value?.offsetHeight ?? null;
+        const actualHeight =
+            renderedHeight !== null
+                ? Math.min(renderedHeight, availableHeight)
+                : availableHeight;
         dropdownStyle.value = {
-            // Clamp so the dropdown never renders above the visible viewport.
-            top: String(Math.max(rect.top - gap - height, 8)) + 'px',
+            top: String(Math.max(rect.top - gap - actualHeight, 8)) + 'px',
             left: String(rect.left) + 'px',
             width: String(rect.width) + 'px',
-            maxHeight: String(height) + 'px',
+            maxHeight: String(availableHeight) + 'px',
         };
     }
 }
@@ -190,23 +201,8 @@ function updatePosition(): void {
 // does, and lets the user scroll freely without the dropdown disappearing.
 let rafId: number | null = null;
 
-function isInputVisible(): boolean {
-    const input = inputRef.value;
-    if (input === null) {
-        return false;
-    }
-    const rect = input.getBoundingClientRect();
-    const viewportHeight = getViewportHeight();
-    return rect.bottom > 0 && rect.top < viewportHeight;
-}
-
 function trackingFrame(): void {
     if (!isOpen.value) {
-        rafId = null;
-        return;
-    }
-    if (!isInputVisible()) {
-        isOpen.value = false;
         rafId = null;
         return;
     }

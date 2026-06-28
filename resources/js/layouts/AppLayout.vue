@@ -125,11 +125,13 @@ function onBackdropKeydown(event: KeyboardEvent): void {
             </div>
         </Transition>
 
-        <main class="flex flex-1 flex-col overflow-x-clip">
+        <main class="flex flex-1 flex-col">
             <div class="relative flex flex-1 flex-col p-4 md:p-8">
-                <div
-                    class="pointer-events-none absolute top-1/2 left-1/2 h-[70vw] w-[70vw] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-[100px]"
-                ></div>
+                <div class="absolute inset-0 overflow-hidden">
+                    <div
+                        class="pointer-events-none absolute top-1/2 left-1/2 h-[70vw] w-[70vw] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-[100px]"
+                    ></div>
+                </div>
 
                 <div class="z-10 flex flex-1 flex-col max-w-7xl w-full mx-auto">
                     <FlashAlerts />

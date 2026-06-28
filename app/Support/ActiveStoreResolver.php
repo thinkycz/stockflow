@@ -14,12 +14,12 @@ use Thinkycz\LaravelCore\Support\Typer;
  *
  *   1. `?store_id=` query override (lets shared links jump straight to a store).
  *   2. `active_store` request attribute set by the ResolveActiveStore
- *      middleware (read from the session).
+ *      middleware (read from the `active_store_id` column on the user model).
  *   3. The first non-warehouse store the user owns; for limited users
  *      this is their assigned store.
  *
- * Limited users are pinned to their assigned store; the session and query
- * override are ignored for them.
+ * Limited users are pinned to their assigned store; the query override
+ * is ignored for them.
  */
 final class ActiveStoreResolver
 {
@@ -85,21 +85,7 @@ final class ActiveStoreResolver
      */
     private static function resolveScopeUser(User $user): User
     {
-        if ($user->isAdmin()) {
-            return $user;
-        }
-
-        $parentId = $user->getParentUserId();
-
-        if ($parentId !== null) {
-            $parent = User::query()->whereKey($parentId)->first();
-
-            if ($parent instanceof User) {
-                return $parent;
-            }
-        }
-
-        return $user;
+        return $user->resolveScopeUser();
     }
 
     /**

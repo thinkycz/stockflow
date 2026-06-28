@@ -30,7 +30,7 @@ class StatementHistoryController
     public function __invoke(int $statement, StatementService $service): Response
     {
         $user = User::mustAuth();
-        $scopeUser = $this->resolveScopeUser($user);
+        $scopeUser = $user->resolveScopeUser();
 
         $statementModel = Statement::query()
             ->where('user_id', $scopeUser->getKey())
@@ -67,28 +67,5 @@ class StatementHistoryController
             ],
             'is_admin' => $user->isAdmin(),
         ]);
-    }
-
-    /**
-     * The owner used to scope statement lookups. Limited users resolve
-     * to their parent (admin) so they can browse the admin's statements.
-     */
-    private function resolveScopeUser(User $user): User
-    {
-        if ($user->isAdmin()) {
-            return $user;
-        }
-
-        $parentId = $user->getParentUserId();
-
-        if ($parentId !== null) {
-            $parent = User::query()->whereKey($parentId)->first();
-
-            if ($parent instanceof User) {
-                return $parent;
-            }
-        }
-
-        return $user;
     }
 }

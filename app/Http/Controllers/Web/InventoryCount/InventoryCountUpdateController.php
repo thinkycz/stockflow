@@ -24,7 +24,7 @@ class InventoryCountUpdateController
     public function __invoke(Request $request, InventorySessionService $service): RedirectResponse
     {
         $user = User::mustAuth();
-        $scopeUser = $user->isAdmin() ? $user : $this->resolveScopeUser($user);
+        $scopeUser = $user->resolveScopeUser();
         $validity = InventoryCountValidity::inject($scopeUser->getKey());
 
         $validated = $this->validateRequest($request, [
@@ -62,26 +62,5 @@ class InventoryCountUpdateController
         return Resolver::resolveRedirector()->route('inventory-counts.show', [
             'session' => $session->getKey(),
         ]);
-    }
-
-    /**
-     * The owner used for store / item scoping.
-     *
-     * For a limited user this is the admin (parent) so that the limited
-     * user can write inventory counts against stores the admin owns.
-     */
-    private function resolveScopeUser(User $user): User
-    {
-        $parentId = $user->getParentUserId();
-
-        if ($parentId !== null) {
-            $parent = User::query()->whereKey($parentId)->first();
-
-            if ($parent instanceof User) {
-                return $parent;
-            }
-        }
-
-        return $user;
     }
 }

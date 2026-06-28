@@ -22,7 +22,7 @@ class StatementVersionShowController
     public function __invoke(int $version): Response
     {
         $user = User::mustAuth();
-        $scopeUser = $this->resolveScopeUser($user);
+        $scopeUser = $user->resolveScopeUser();
 
         $versionModel = StatementVersion::query()
             ->where('user_id', $scopeUser->getKey())
@@ -75,28 +75,5 @@ class StatementVersionShowController
             'rows' => $rows,
             'is_admin' => $user->isAdmin(),
         ]);
-    }
-
-    /**
-     * The owner used to scope version lookups. Limited users resolve
-     * to their parent (admin) so they can browse the admin's versions.
-     */
-    private function resolveScopeUser(User $user): User
-    {
-        if ($user->isAdmin()) {
-            return $user;
-        }
-
-        $parentId = $user->getParentUserId();
-
-        if ($parentId !== null) {
-            $parent = User::query()->whereKey($parentId)->first();
-
-            if ($parent instanceof User) {
-                return $parent;
-            }
-        }
-
-        return $user;
     }
 }

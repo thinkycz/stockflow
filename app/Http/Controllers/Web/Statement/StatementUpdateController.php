@@ -21,10 +21,25 @@ class StatementUpdateController
 
     /**
      * Persist the daily amounts for the given statement.
+     *
+     * The statement is resolved through the scope user (admin or parent)
+     * so limited users can update statements owned by their admin. A limited
+     * user may only update statements attached to their assigned store.
      */
-    public function __invoke(Request $request, Statement $statement, StatementService $service): RedirectResponse
+    public function __invoke(Request $request, StatementService $service): RedirectResponse
     {
         $user = User::mustAuth();
+        $scopeUser = $user->resolveScopeUser();
+
+        $statement = Statement::query()
+            ->where('user_id', $scopeUser->getKey())
+            ->whereKey(Typer::parseInt($request->route('statement')))
+            ->first();
+
+        if (!$statement instanceof Statement) {
+            \abort(404);
+        }
+
         $this->ensureCanEdit($user, $statement);
 
         $validity = StatementValidity::inject($statement->getUserId());
@@ -59,12 +74,6 @@ class StatementUpdateController
      */
     private function ensureCanEdit(User $user, Statement $statement): void
     {
-        $ownerId = $user->isAdmin() ? $user->getKey() : $user->getParentUserId();
-
-        if ($ownerId === null || $ownerId !== $statement->getUserId()) {
-            \abort(403);
-        }
-
         if ($user->isAdmin()) {
             return;
         }

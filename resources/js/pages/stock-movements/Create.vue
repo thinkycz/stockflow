@@ -397,14 +397,17 @@ function submit(): void {
         return;
     }
     serverError.value = null;
-    form.transform((data) => buildPayload(data)).post('/stock-movements', {
-        onError: (errors): void => {
-            const firstKey = Object.keys(errors)[0];
-            if (firstKey) {
-                serverError.value = String(errors[firstKey]);
-            }
+    form.transform((data) => buildPayload(data)).post(
+        route('stock-movements.store'),
+        {
+            onError: (errors): void => {
+                const firstKey = Object.keys(errors)[0];
+                if (firstKey) {
+                    serverError.value = String(errors[firstKey]);
+                }
+            },
         },
-    });
+    );
 }
 
 watch(

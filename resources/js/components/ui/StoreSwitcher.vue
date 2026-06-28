@@ -40,7 +40,7 @@ const options = computed(() =>
     })),
 );
 
-const isAdmin = computed(() => options.value.length > 0);
+const hasStores = computed(() => options.value.length > 0);
 
 const switching = ref(false);
 
@@ -72,12 +72,9 @@ function onChange(event: Event): void {
         .post(route('stores.switch'), { store_id: Number(next) })
         .then(() => {
             // Reload the current page to pick up the updated shared
-            // props and page-specific data. preserveState keeps the
-            // component tree alive so the drawer stays open on mobile.
-            router.reload({
-                preserveScroll: true,
-                preserveState: true,
-            });
+            // props and page-specific data. The component tree stays
+            // alive so the drawer remains open on mobile.
+            router.reload();
         })
         .catch(() => {
             // Revert to the previous store on error.
@@ -91,7 +88,7 @@ function onChange(event: Event): void {
 
 <template>
     <div
-        v-if="isAdmin"
+        v-if="hasStores"
         :class="
             cn(
                 'flex w-full min-w-0 items-center gap-2 rounded-xl border border-outline-glass bg-surface-container-lowest px-3 py-2 text-xs font-semibold text-on-surface',

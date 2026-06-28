@@ -45,7 +45,7 @@ class ReportController
         $activeStore = ActiveStoreResolver::resolve($request, $user);
 
         if (!$activeStore instanceof Store) {
-            return Inertia::render('reports/Index', $this->emptyPayload($user, $allTime, $year, $month));
+            return Inertia::render('reports/Index', $this->emptyPayload($user, $statementService, $allTime, $year, $month));
         }
 
         $storeId = $activeStore->getKey();
@@ -182,9 +182,8 @@ class ReportController
      *
      * @return array<string, mixed>
      */
-    private function emptyPayload(User $user, bool $allTime, int|null $year, int|null $month): array
+    private function emptyPayload(User $user, StatementService $statementService, bool $allTime, int|null $year, int|null $month): array
     {
-        $statementService = \app(StatementService::class);
         $statementReport = $statementService->buildReport($user, null, $year, $month);
 
         return [

@@ -75,5 +75,17 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $this->actingAs($limited)
         ->get(\route('inventory-counts.show', ['session' => $session->getKey()]))
-        ->assertNotFound();
+        ->assertForbidden();
+});
+
+\test('limited user can open a session from their assigned store', function (): void {
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $limited = Typer::assertInstance(UserFactory::new()->limited($store)->createOne(), User::class);
+
+    $session = InventorySession::factory()->forStore($store)->byUser($admin)->create();
+
+    $this->actingAs($limited)
+        ->get(\route('inventory-counts.show', ['session' => $session->getKey()]))
+        ->assertOk();
 });

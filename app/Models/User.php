@@ -169,6 +169,33 @@ class User extends BaseUser implements MustVerifyEmail
     }
 
     /**
+     * Resolve the owner user used for data scoping.
+     *
+     * For admins this is the admin themselves. For limited users this is
+     * their parent (admin) so they can browse the same stores, statements,
+     * and inventory that the admin owns. Falls back to the user themselves
+     * if the parent cannot be resolved.
+     */
+    public function resolveScopeUser(): self
+    {
+        if ($this->isAdmin()) {
+            return $this;
+        }
+
+        $parentId = $this->getParentUserId();
+
+        if ($parentId !== null) {
+            $parent = self::query()->whereKey($parentId)->first();
+
+            if ($parent instanceof self) {
+                return $parent;
+            }
+        }
+
+        return $this;
+    }
+
+    /**
      * Loaded or queried assigned store (may be null for admins).
      */
     public function getAssignedStore(): Store|null

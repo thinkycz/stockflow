@@ -7,21 +7,33 @@ namespace App\Http\Controllers\Web\InventoryCount;
 use App\Models\InventorySession;
 use App\Models\User;
 use App\Services\InventorySessionService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Thinkycz\LaravelCore\Support\Typer;
 
 class InventoryCountShowController
 {
     /**
      * Render the read-only detail of a single inventory session.
      *
-     * The session is resolved through `BelongsToUser` so foreign
-     * sessions are rejected automatically. Limited users are pinned to
-     * their assigned store to prevent store hopping via crafted URLs.
+     * The session is resolved through the scope user (admin or parent)
+     * so limited users can view sessions owned by their admin. A limited
+     * user is pinned to their assigned store to prevent store hopping.
      */
-    public function __invoke(InventorySession $session, InventorySessionService $service): Response
+    public function __invoke(Request $request, InventorySessionService $service): Response
     {
         $user = User::mustAuth();
+        $scopeUser = $user->resolveScopeUser();
+
+        $session = InventorySession::query()
+            ->where('user_id', $scopeUser->getKey())
+            ->whereKey(Typer::parseInt($request->route('session')))
+            ->first();
+
+        if (!$session instanceof InventorySession) {
+            \abort(404);
+        }
 
         if (!$user->isAdmin()) {
             $assignedStoreId = $user->getAssignedStoreId();

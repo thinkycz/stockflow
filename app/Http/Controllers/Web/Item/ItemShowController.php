@@ -10,7 +10,6 @@ use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
 use App\Support\ActiveStoreResolver;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;

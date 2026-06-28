@@ -34,7 +34,7 @@ class StatementIndexController
             \abort(403);
         }
 
-        $scopeUser = $this->resolveScopeUser($user);
+        $scopeUser = $user->resolveScopeUser();
         $store = ActiveStoreResolver::resolve($request, $user);
 
         $now = \Illuminate\Support\Carbon::now();
@@ -76,30 +76,5 @@ class StatementIndexController
             ],
             'is_admin' => $user->isAdmin(),
         ]);
-    }
-
-    /**
-     * The owner used for store scoping.
-     *
-     * For a limited user this is the admin (parent) so that the limited
-     * user can browse the same stores and statements that the admin owns.
-     */
-    private function resolveScopeUser(User $user): User
-    {
-        if ($user->isAdmin()) {
-            return $user;
-        }
-
-        $parentId = $user->getParentUserId();
-
-        if ($parentId !== null) {
-            $parent = User::query()->whereKey($parentId)->first();
-
-            if ($parent instanceof User) {
-                return $parent;
-            }
-        }
-
-        return $user;
     }
 }

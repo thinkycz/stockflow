@@ -116,15 +116,11 @@ watch(query, (value) => {
     highlightedIndex.value = -1;
 });
 
-watch(isOpen, async (open) => {
+watch(isOpen, (open) => {
     if (open) {
-        await nextTick();
-        updatePosition();
-        // Mobile browsers scroll the focused input into view asynchronously
-        // (and the keyboard animates in), so the first measurement is often
-        // stale. Re-measure on the following frames and after a short delay.
-        requestAnimationFrame(() => requestAnimationFrame(updatePosition));
-        window.setTimeout(updatePosition, 120);
+        startTracking();
+    } else {
+        stopTracking();
     }
 });
 
@@ -181,6 +177,54 @@ function updatePosition(): void {
             width: String(rect.width) + 'px',
             maxHeight: String(height) + 'px',
         };
+    }
+}
+
+// A requestAnimationFrame loop keeps the dropdown glued to the input while
+// open. This is the reliable way to handle mobile browsers, which
+// asynchronously scroll the focused input into view, animate the keyboard in,
+// and (iOS Safari) shift the coordinate system of `position: fixed` elements
+// during scroll. Event-based repositioning races these animations and captures
+// stale rects, leaving the dropdown floating far from the input. Tracking every
+// frame guarantees the dropdown stays adjacent regardless of what the browser
+// does, and lets the user scroll freely without the dropdown disappearing.
+let rafId: number | null = null;
+
+function isInputVisible(): boolean {
+    const input = inputRef.value;
+    if (input === null) {
+        return false;
+    }
+    const rect = input.getBoundingClientRect();
+    const viewportHeight = getViewportHeight();
+    return rect.bottom > 0 && rect.top < viewportHeight;
+}
+
+function trackingFrame(): void {
+    if (!isOpen.value) {
+        rafId = null;
+        return;
+    }
+    if (!isInputVisible()) {
+        isOpen.value = false;
+        rafId = null;
+        return;
+    }
+    updatePosition();
+    rafId = requestAnimationFrame(trackingFrame);
+}
+
+function startTracking(): void {
+    stopTracking();
+    // Measure immediately, then keep tracking every frame.
+    updatePosition();
+    rafId = requestAnimationFrame(trackingFrame);
+}
+
+function stopTracking(): void {
+    if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
     }
 }
 
@@ -252,45 +296,13 @@ function onDocumentClick(event: MouseEvent): void {
     }
 }
 
-function isInputVisible(): boolean {
-    const input = inputRef.value;
-    if (input === null) {
-        return false;
-    }
-    const rect = input.getBoundingClientRect();
-    const viewportHeight = getViewportHeight();
-    return rect.bottom > 0 && rect.top < viewportHeight;
-}
-
-function onScrollOrResize(): void {
-    if (!isOpen.value) {
-        return;
-    }
-    // Reposition the dropdown to follow the input instead of closing it.
-    // This is essential on mobile, where the user often needs to scroll to
-    // reach a dropdown that opened above the input. Only close when the input
-    // itself has scrolled completely out of the viewport.
-    if (!isInputVisible()) {
-        isOpen.value = false;
-        return;
-    }
-    updatePosition();
-}
-
 onMounted(() => {
     document.addEventListener('mousedown', onDocumentClick);
-    window.addEventListener('scroll', onScrollOrResize, true);
-    window.addEventListener('resize', onScrollOrResize);
-    window.visualViewport?.addEventListener('resize', onScrollOrResize);
-    window.visualViewport?.addEventListener('scroll', onScrollOrResize);
 });
 
 onBeforeUnmount(() => {
     document.removeEventListener('mousedown', onDocumentClick);
-    window.removeEventListener('scroll', onScrollOrResize, true);
-    window.removeEventListener('resize', onScrollOrResize);
-    window.visualViewport?.removeEventListener('resize', onScrollOrResize);
-    window.visualViewport?.removeEventListener('scroll', onScrollOrResize);
+    stopTracking();
 });
 
 const showDropdown = computed((): boolean => {

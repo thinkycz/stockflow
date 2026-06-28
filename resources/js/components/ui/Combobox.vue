@@ -67,7 +67,8 @@ const dropdownStyle = ref<{
     top: string;
     left: string;
     width: string;
-}>({ top: '0px', left: '0px', width: '0px' });
+    maxHeight: string;
+}>({ top: '0px', left: '0px', width: '0px', maxHeight: '15rem' });
 
 const selectedItem = computed((): Item | null => {
     if (
@@ -81,6 +82,18 @@ const selectedItem = computed((): Item | null => {
         props.items.find((item) => String(item.id) === String(model.value)) ??
         null
     );
+});
+
+const filteredItems = computed((): Item[] => {
+    const term = query.value.trim().toLowerCase();
+    if (term === '') {
+        return props.items;
+    }
+    return props.items.filter((item) => {
+        const title = item.title.toLowerCase();
+        const sku = (item.sku ?? '').toLowerCase();
+        return title.includes(term) || sku.includes(term);
+    });
 });
 
 watch(
@@ -100,6 +113,7 @@ watch(
 
 watch(query, (value) => {
     emit('search', value);
+    highlightedIndex.value = -1;
 });
 
 watch(isOpen, async (open) => {
@@ -109,17 +123,49 @@ watch(isOpen, async (open) => {
     }
 });
 
+watch(filteredItems, async () => {
+    if (isOpen.value) {
+        await nextTick();
+        updatePosition();
+    }
+});
+
+watch(highlightedIndex, (index) => {
+    if (index < 0 || dropdownRef.value === null) {
+        return;
+    }
+    const el = dropdownRef.value.querySelector<HTMLElement>(
+        `#${inputId.value}-option-${index}`,
+    );
+    el?.scrollIntoView({ block: 'nearest' });
+});
+
 function updatePosition(): void {
     const input = inputRef.value;
     if (input === null) {
         return;
     }
     const rect = input.getBoundingClientRect();
-    dropdownStyle.value = {
-        top: String(rect.bottom + 4) + 'px',
-        left: String(rect.left) + 'px',
-        width: String(rect.width) + 'px',
-    };
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+    const maxDropdownHeight = 240;
+    const gap = 4;
+
+    if (spaceBelow >= maxDropdownHeight || spaceBelow >= spaceAbove) {
+        dropdownStyle.value = {
+            top: String(rect.bottom + gap) + 'px',
+            left: String(rect.left) + 'px',
+            width: String(rect.width) + 'px',
+            maxHeight: String(Math.min(spaceBelow, maxDropdownHeight)) + 'px',
+        };
+    } else {
+        dropdownStyle.value = {
+            top: String(rect.top - gap - Math.min(spaceAbove, maxDropdownHeight)) + 'px',
+            left: String(rect.left) + 'px',
+            width: String(rect.width) + 'px',
+            maxHeight: String(Math.min(spaceAbove, maxDropdownHeight)) + 'px',
+        };
+    }
 }
 
 function onInput(event: Event): void {
@@ -141,7 +187,7 @@ function onKeyDown(event: KeyboardEvent): void {
         isOpen.value = true;
         highlightedIndex.value = Math.min(
             highlightedIndex.value + 1,
-            props.items.length - 1,
+            filteredItems.value.length - 1,
         );
     } else if (event.key === 'ArrowUp') {
         event.preventDefault();
@@ -150,10 +196,10 @@ function onKeyDown(event: KeyboardEvent): void {
         if (
             isOpen.value &&
             highlightedIndex.value >= 0 &&
-            highlightedIndex.value < props.items.length
+            highlightedIndex.value < filteredItems.value.length
         ) {
             event.preventDefault();
-            selectItem(props.items[highlightedIndex.value]);
+            selectItem(filteredItems.value[highlightedIndex.value]);
         }
     } else if (event.key === 'Escape') {
         isOpen.value = false;
@@ -276,23 +322,24 @@ const showDropdown = computed((): boolean => {
                 top: dropdownStyle.top,
                 left: dropdownStyle.left,
                 width: dropdownStyle.width,
+                maxHeight: dropdownStyle.maxHeight,
             }"
-            class="z-50 max-h-60 overflow-auto rounded-xl border border-outline-glass bg-white shadow-lg"
+            class="z-50 overflow-auto rounded-xl border border-outline-glass bg-white shadow-lg"
         >
             <li
-                v-if="props.loading && props.items.length === 0"
+                v-if="props.loading && filteredItems.length === 0"
                 class="px-3 py-2 text-xs text-on-surface-variant"
             >
                 {{ props.loadingText }}
             </li>
             <li
-                v-else-if="props.items.length === 0"
+                v-else-if="filteredItems.length === 0"
                 class="px-3 py-2 text-xs text-on-surface-variant"
             >
                 {{ props.noResultsText }}
             </li>
             <li
-                v-for="(item, index) in props.items"
+                v-for="(item, index) in filteredItems"
                 :id="`${inputId}-option-${index}`"
                 :key="item.id"
                 role="option"

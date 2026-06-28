@@ -147,38 +147,49 @@ function getViewportHeight(): number {
     return window.visualViewport?.height ?? window.innerHeight;
 }
 
-// On iOS Safari, `getBoundingClientRect()` returns coordinates relative to the
-// *layout viewport* (which doesn't shrink when the keyboard opens), but
-// `position: fixed` elements are placed relative to the *visual viewport*
-// (which does shrink). When the keyboard is open these two coordinate systems
-// diverge, causing the dropdown to appear in the wrong place. We convert
-// layout-viewport coordinates to visual-viewport coordinates using
-// `visualViewport.offsetTop` / `offsetLeft`. On desktop these offsets are 0,
-// so the conversion is a no-op.
-function visualViewportOffsetY(): number {
-    return window.visualViewport?.offsetTop ?? 0;
+function getScrollY(): number {
+    // On iOS Safari, `window.scrollY` can be 0 during momentum scrolling.
+    // `document.scrollingElement.scrollTop` is more reliable.
+    return (
+        document.scrollingElement?.scrollTop ??
+        window.pageYOffset ??
+        window.scrollY ??
+        0
+    );
 }
 
-function visualViewportOffsetX(): number {
-    return window.visualViewport?.offsetLeft ?? 0;
+function getScrollX(): number {
+    return (
+        document.scrollingElement?.scrollLeft ??
+        window.pageXOffset ??
+        window.scrollX ??
+        0
+    );
 }
 
+// The dropdown is teleported to <body> and uses `position: absolute` (not
+// `fixed`). This avoids the notorious iOS Safari quirk where `position: fixed`
+// elements use a different coordinate system than `getBoundingClientRect()`
+// when the keyboard is open. With `position: absolute`, we compute
+// document-relative coordinates by adding the scroll offset to the viewport-
+// relative rect. The dropdown then scrolls naturally with the page, and the
+// rAF loop keeps it glued to the input.
 function updatePosition(): void {
     const input = inputRef.value;
     if (input === null) {
         return;
     }
     const rect = input.getBoundingClientRect();
-    const offsetY = visualViewportOffsetY();
-    const offsetX = visualViewportOffsetX();
-    // Convert layout-viewport coordinates to visual-viewport coordinates so
-    // they match what `position: fixed` uses on iOS Safari.
-    const inputTop = rect.top - offsetY;
-    const inputBottom = rect.bottom - offsetY;
-    const inputLeft = rect.left - offsetX;
+    const scrollY = getScrollY();
+    const scrollX = getScrollX();
+    // Document-relative coordinates of the input.
+    const inputTop = rect.top + scrollY;
+    const inputBottom = rect.bottom + scrollY;
+    const inputLeft = rect.left + scrollX;
+    // Viewport-relative coordinates for space calculation (keyboard-aware).
     const viewportHeight = getViewportHeight();
-    const spaceBelow = viewportHeight - inputBottom - 8;
-    const spaceAbove = inputTop - 8;
+    const spaceBelow = viewportHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
     const maxDropdownHeight = 240;
     const gap = 4;
 
@@ -206,7 +217,7 @@ function updatePosition(): void {
                 ? Math.min(renderedHeight, availableHeight)
                 : availableHeight;
         dropdownStyle.value = {
-            top: String(Math.max(inputTop - gap - actualHeight, 8)) + 'px',
+            top: String(inputTop - gap - actualHeight) + 'px',
             left: String(inputLeft) + 'px',
             width: String(rect.width) + 'px',
             maxHeight: String(availableHeight) + 'px',
@@ -215,13 +226,10 @@ function updatePosition(): void {
 }
 
 // A requestAnimationFrame loop keeps the dropdown glued to the input while
-// open. This is the reliable way to handle mobile browsers, which
-// asynchronously scroll the focused input into view, animate the keyboard in,
-// and (iOS Safari) shift the coordinate system of `position: fixed` elements
-// during scroll. Event-based repositioning races these animations and captures
-// stale rects, leaving the dropdown floating far from the input. Tracking every
-// frame guarantees the dropdown stays adjacent regardless of what the browser
-// does, and lets the user scroll freely without the dropdown disappearing.
+// open. This handles mobile browsers which asynchronously scroll the focused
+// input into view and animate the keyboard in. Event-based repositioning
+// races these animations and captures stale rects. Tracking every frame
+// guarantees the dropdown stays adjacent regardless of what the browser does.
 let rafId: number | null = null;
 
 function trackingFrame(): void {
@@ -388,7 +396,7 @@ const showDropdown = computed((): boolean => {
             ref="dropdownRef"
             role="listbox"
             :style="{
-                position: 'fixed',
+                position: 'absolute',
                 top: dropdownStyle.top,
                 left: dropdownStyle.left,
                 width: dropdownStyle.width,

@@ -55,6 +55,7 @@ class StatementVersionShowController
             'bolt_cash' => $day->getBoltCash(),
             'foodora' => $day->getFoodora(),
             'total' => $day->getTotal(),
+            'cash_checked' => $day->getCashChecked(),
         ])->all();
 
         return Inertia::render('statements/Version', [

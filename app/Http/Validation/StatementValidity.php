@@ -111,4 +111,15 @@ class StatementValidity
     {
         return $this->baseValidity->make()->numeric(null, 0)->decimal(0, 2);
     }
+
+    /**
+     * Cash-checked flag validation rules (boolean). Only admins submit
+     * this field; for everyone else it is absent and the service
+     * preserves the existing value. Controllers add `sometimes` and
+     * `nullable` so the field is optional.
+     */
+    public function cashChecked(): Validity
+    {
+        return $this->baseValidity->make()->boolean();
+    }
 }

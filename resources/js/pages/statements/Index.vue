@@ -24,6 +24,7 @@ type DayRow = {
     bolt_cash: number;
     foodora: number;
     total: number;
+    cash_checked: boolean;
 };
 
 const props = defineProps<{
@@ -39,6 +40,7 @@ const props = defineProps<{
         year: number;
         month: number;
     };
+    is_admin: boolean;
 }>();
 
 const { t, locale } = useI18n();
@@ -153,15 +155,21 @@ const totals = computed(() => {
     };
 });
 
-function updateEditing(key: string, field: keyof DayRow, value: string): void {
+function updateEditing(
+    key: string,
+    field: keyof DayRow,
+    value: string | boolean,
+): void {
     const day = editing[key];
     if (!day) {
         return;
     }
-    const numeric = field === 'date' ? 0 : Number(value);
     if (field === 'date') {
-        day.date = value;
+        day.date = String(value);
+    } else if (field === 'cash_checked') {
+        day.cash_checked = Boolean(value);
     } else {
+        const numeric = Number(value);
         (day as unknown as Record<string, number>)[field] = Number.isFinite(
             numeric,
         )
@@ -282,6 +290,14 @@ function save(): void {
                                     </th>
                                     <th class="min-w-[7rem] text-right">
                                         {{ t('statements.columns.total') }}
+                                    </th>
+                                    <th
+                                        v-if="props.is_admin"
+                                        class="min-w-[5rem] text-center"
+                                    >
+                                        {{
+                                            t('statements.columns.cash_checked')
+                                        }}
                                     </th>
                                 </tr>
                             </thead>
@@ -406,6 +422,26 @@ function save(): void {
                                     >
                                         {{ formatMoney(rowTotal(day)) }}
                                     </td>
+                                    <td
+                                        v-if="props.is_admin"
+                                        class="text-center"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            :checked="day.cash_checked"
+                                            class="h-4 w-4 cursor-pointer rounded border-outline-glass text-primary focus:ring-primary"
+                                            @change="
+                                                (event) =>
+                                                    updateEditing(
+                                                        editingKey(day),
+                                                        'cash_checked',
+                                                        (
+                                                            event.target as HTMLInputElement
+                                                        ).checked,
+                                                    )
+                                            "
+                                        />
+                                    </td>
                                 </tr>
                             </tbody>
                             <tfoot>
@@ -450,6 +486,10 @@ function save(): void {
                                     >
                                         {{ formatMoney(totals.total) }}
                                     </th>
+                                    <th
+                                        v-if="props.is_admin"
+                                        class="border-t border-outline-glass pt-2"
+                                    ></th>
                                 </tr>
                             </tfoot>
                         </DataTable>

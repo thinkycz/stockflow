@@ -492,7 +492,8 @@
             "bolt": "Bolt",
             "bolt_cash": "Bolt Cash",
             "foodora": "Foodora",
-            "total": "Total"
+            "total": "Total",
+            "cash_checked": "Cash checked"
         },
         "actions": {
             "save": "Save statement",

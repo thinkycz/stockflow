@@ -358,7 +358,7 @@
             "number": "Číslo",
             "type": "Typ",
             "source": "Zdroj",
-            "destination": "Cieľ",
+            "destination": "Cíl",
             "store": "Prodejna",
             "items_count": "Položek",
             "quantity": "Množství",
@@ -492,7 +492,8 @@
             "bolt": "Bolt",
             "bolt_cash": "Bolt hotově",
             "foodora": "Foodora",
-            "total": "Celkem"
+            "total": "Celkem",
+            "cash_checked": "Hotovost ověřena"
         },
         "actions": {
             "save": "Uložit výkaz",

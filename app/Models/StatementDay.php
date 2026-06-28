@@ -52,6 +52,7 @@ class StatementDay extends BaseModel
             'bolt_cash',
             'foodora',
             'total',
+            'cash_checked',
             'created_at',
             'updated_at',
         ]);
@@ -158,6 +159,15 @@ class StatementDay extends BaseModel
     }
 
     /**
+     * Cash checked getter. Indicates an admin confirmed the cash amount
+     * matches what was taken home from the store for this day.
+     */
+    public function getCashChecked(): bool
+    {
+        return (bool) $this->getAttribute('cash_checked');
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -173,6 +183,7 @@ class StatementDay extends BaseModel
             'bolt_cash' => 'decimal:2',
             'foodora' => 'decimal:2',
             'total' => 'decimal:2',
+            'cash_checked' => 'boolean',
         ];
     }
 }

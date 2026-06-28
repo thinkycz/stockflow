@@ -19,6 +19,7 @@ type VersionRow = {
     bolt_cash: number;
     foodora: number;
     total: number;
+    cash_checked: boolean;
 };
 
 const props = defineProps<{
@@ -176,6 +177,12 @@ function restore(): void {
                                 <th class="min-w-[7rem] text-right">
                                     {{ t('statements.columns.total') }}
                                 </th>
+                                <th
+                                    v-if="props.is_admin"
+                                    class="min-w-[5rem] text-center"
+                                >
+                                    {{ t('statements.columns.cash_checked') }}
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -224,6 +231,14 @@ function restore(): void {
                                 >
                                     {{ formatMoney(row.total) }}
                                 </td>
+                                <td v-if="props.is_admin" class="text-center">
+                                    <input
+                                        type="checkbox"
+                                        :checked="row.cash_checked"
+                                        disabled
+                                        class="h-4 w-4 cursor-default rounded border-outline-glass text-primary"
+                                    />
+                                </td>
                             </tr>
                         </tbody>
                         <tfoot>
@@ -268,6 +283,10 @@ function restore(): void {
                                 >
                                     {{ formatMoney(totals().total) }}
                                 </th>
+                                <th
+                                    v-if="props.is_admin"
+                                    class="border-t border-outline-glass pt-2"
+                                ></th>
                             </tr>
                         </tfoot>
                     </DataTable>

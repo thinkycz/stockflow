@@ -72,6 +72,7 @@ class StatementService
                     'bolt_cash' => 0,
                     'foodora' => 0,
                     'total' => 0,
+                    'cash_checked' => false,
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now(),
                 ];
@@ -92,7 +93,7 @@ class StatementService
      */
     public function updateDays(Statement $statement, array $rows, User $user): void
     {
-        DB::transaction(function () use ($statement, $rows): void {
+        DB::transaction(function () use ($statement, $rows, $user): void {
             $existing = $statement->days()->get()->keyBy(static fn(StatementDay $day): string => $day->getDate());
             $seen = [];
 
@@ -113,7 +114,7 @@ class StatementService
                 $boltCash = Typer::parseFloat($row['bolt_cash'] ?? 0);
                 $foodora = Typer::parseFloat($row['foodora'] ?? 0);
 
-                $day->update([
+                $update = [
                     'cash' => $cash,
                     'card' => $card,
                     'wolt' => $wolt,
@@ -121,7 +122,16 @@ class StatementService
                     'bolt_cash' => $boltCash,
                     'foodora' => $foodora,
                     'total' => \round($cash + $card + $wolt + $bolt + $boltCash + $foodora, 2),
-                ]);
+                ];
+
+                // Only admins can toggle the cash-checked flag. Limited
+                // users keep the existing value so a save from a non-admin
+                // never silently clears an admin's confirmation.
+                if ($user->isAdmin()) {
+                    $update['cash_checked'] = (bool) ($row['cash_checked'] ?? false);
+                }
+
+                $day->update($update);
             }
         });
 
@@ -144,6 +154,7 @@ class StatementService
                 'bolt_cash' => 0,
                 'foodora' => 0,
                 'total' => 0,
+                'cash_checked' => false,
             ]);
         });
 
@@ -183,6 +194,7 @@ class StatementService
                     'bolt_cash' => $day->getBoltCash(),
                     'foodora' => $day->getFoodora(),
                     'total' => $day->getTotal(),
+                    'cash_checked' => $day->getCashChecked(),
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];
@@ -225,6 +237,7 @@ class StatementService
                     'bolt_cash' => $versionDay->getBoltCash(),
                     'foodora' => $versionDay->getFoodora(),
                     'total' => $versionDay->getTotal(),
+                    'cash_checked' => $versionDay->getCashChecked(),
                 ]);
             }
         });

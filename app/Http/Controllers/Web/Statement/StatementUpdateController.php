@@ -53,6 +53,7 @@ class StatementUpdateController
             'days.*.bolt' => $validity->amount()->required()->toArray(),
             'days.*.bolt_cash' => $validity->amount()->required()->toArray(),
             'days.*.foodora' => $validity->amount()->required()->toArray(),
+            'days.*.cash_checked' => $validity->cashChecked()->sometimes()->nullable()->toArray(),
         ]);
 
         /** @var array<int, array<string, mixed>> $rows */

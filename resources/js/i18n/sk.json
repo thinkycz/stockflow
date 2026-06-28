@@ -492,7 +492,8 @@
             "bolt": "Bolt",
             "bolt_cash": "Bolt hotovosť",
             "foodora": "Foodora",
-            "total": "Celkom"
+            "total": "Celkom",
+            "cash_checked": "Hotovosť overená"
         },
         "actions": {
             "save": "Uložiť výkaz",

@@ -47,6 +47,12 @@ onMounted(() => {
 
 onUnmounted(() => {
     unsubscribeNavigate?.();
+    // Ensure the body scroll lock is removed even if the component is
+    // unmounted while the drawer is still open (e.g. Inertia navigation
+    // re-mounts the layout before the watch can fire).
+    if (typeof document !== 'undefined') {
+        document.body.classList.remove('overflow-hidden');
+    }
 });
 
 // Lock body scroll while the drawer is open.

@@ -147,22 +147,45 @@ function getViewportHeight(): number {
     return window.visualViewport?.height ?? window.innerHeight;
 }
 
+// On iOS Safari, `getBoundingClientRect()` returns coordinates relative to the
+// *layout viewport* (which doesn't shrink when the keyboard opens), but
+// `position: fixed` elements are placed relative to the *visual viewport*
+// (which does shrink). When the keyboard is open these two coordinate systems
+// diverge, causing the dropdown to appear in the wrong place. We convert
+// layout-viewport coordinates to visual-viewport coordinates using
+// `visualViewport.offsetTop` / `offsetLeft`. On desktop these offsets are 0,
+// so the conversion is a no-op.
+function visualViewportOffsetY(): number {
+    return window.visualViewport?.offsetTop ?? 0;
+}
+
+function visualViewportOffsetX(): number {
+    return window.visualViewport?.offsetLeft ?? 0;
+}
+
 function updatePosition(): void {
     const input = inputRef.value;
     if (input === null) {
         return;
     }
     const rect = input.getBoundingClientRect();
+    const offsetY = visualViewportOffsetY();
+    const offsetX = visualViewportOffsetX();
+    // Convert layout-viewport coordinates to visual-viewport coordinates so
+    // they match what `position: fixed` uses on iOS Safari.
+    const inputTop = rect.top - offsetY;
+    const inputBottom = rect.bottom - offsetY;
+    const inputLeft = rect.left - offsetX;
     const viewportHeight = getViewportHeight();
-    const spaceBelow = viewportHeight - rect.bottom - 8;
-    const spaceAbove = rect.top - 8;
+    const spaceBelow = viewportHeight - inputBottom - 8;
+    const spaceAbove = inputTop - 8;
     const maxDropdownHeight = 240;
     const gap = 4;
 
     if (spaceBelow >= maxDropdownHeight || spaceBelow >= spaceAbove) {
         dropdownStyle.value = {
-            top: String(rect.bottom + gap) + 'px',
-            left: String(rect.left) + 'px',
+            top: String(inputBottom + gap) + 'px',
+            left: String(inputLeft) + 'px',
             width: String(rect.width) + 'px',
             maxHeight:
                 String(Math.max(Math.min(spaceBelow, maxDropdownHeight), 0)) +
@@ -183,8 +206,8 @@ function updatePosition(): void {
                 ? Math.min(renderedHeight, availableHeight)
                 : availableHeight;
         dropdownStyle.value = {
-            top: String(Math.max(rect.top - gap - actualHeight, 8)) + 'px',
-            left: String(rect.left) + 'px',
+            top: String(Math.max(inputTop - gap - actualHeight, 8)) + 'px',
+            left: String(inputLeft) + 'px',
             width: String(rect.width) + 'px',
             maxHeight: String(availableHeight) + 'px',
         };

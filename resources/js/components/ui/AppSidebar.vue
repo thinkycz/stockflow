@@ -4,7 +4,9 @@ import {
     ArrowLeftRight,
     BarChart3,
     Boxes,
+    CalendarDays,
     ClipboardList,
+    HardHat,
     LayoutDashboard,
     LogOut,
     Receipt,
@@ -19,6 +21,7 @@ import Brand from '@/components/ui/Brand.vue';
 import StoreSwitcher from '@/components/ui/StoreSwitcher.vue';
 import { useRoute } from '@/composables/useRoute';
 import { useSharedProps } from '@/composables/useSharedProps';
+import { canViewShiftCalendar } from '@/lib/sidebar-navigation';
 
 withDefaults(
     defineProps<{
@@ -45,6 +48,14 @@ type NavItem = {
     icon: typeof LayoutDashboard;
     active: boolean;
 };
+
+const shiftNavItem = computed<NavItem>(() => ({
+    key: 'shifts',
+    href: route('shifts.index'),
+    label: t('nav.shifts'),
+    icon: CalendarDays,
+    active: activeUrl.value.startsWith('/shifts'),
+}));
 
 const adminStoreNavItems = computed<NavItem[]>(() => [
     {
@@ -77,6 +88,7 @@ const adminStoreNavItems = computed<NavItem[]>(() => [
         icon: TrendingUp,
         active: activeUrl.value.startsWith('/reports/statistics'),
     },
+    shiftNavItem.value,
 ]);
 
 const adminManagementNavItems = computed<NavItem[]>(() => [
@@ -108,6 +120,13 @@ const adminManagementNavItems = computed<NavItem[]>(() => [
         icon: Users,
         active: activeUrl.value.startsWith('/users'),
     },
+    {
+        key: 'workers',
+        href: route('workers.index'),
+        label: t('nav.workers'),
+        icon: HardHat,
+        active: activeUrl.value.startsWith('/workers'),
+    },
 ]);
 
 const dashboardNavItem = computed<NavItem>(() => ({
@@ -135,6 +154,12 @@ const limitedStoreNavItems = computed<NavItem[]>(() => [
         icon: ClipboardList,
         active: activeUrl.value.startsWith('/inventory-counts'),
     },
+    ...(canViewShiftCalendar(
+        isAdmin.value,
+        auth.value.user?.assigned_store_id ?? null,
+    )
+        ? [shiftNavItem.value]
+        : []),
 ]);
 
 type NavSection = {

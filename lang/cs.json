@@ -39,5 +39,12 @@
     "You cannot delete the main admin.": "Hlavního administrátora nelze smazat.",
     "You do not have permission for this section.": "Nemáte oprávnění k této sekci.",
     "You cannot change the role of the main admin.": "Hlavnímu administrátorovi nelze změnit roli.",
-    "Inventory count record deleted.": "Záznam inventury byl smazán."
+    "Inventory count record deleted.": "Záznam inventury byl smazán.",
+    "Worker created.": "Brigádník byl vytvořen.",
+    "Worker updated.": "Brigádník byl aktualizován.",
+    "Worker deleted.": "Brigádník byl smazán.",
+    "Cannot delete a worker with existing shifts.": "Brigádníka se směnami nelze smazat.",
+    "Shift created.": "Směna byla vytvořena.",
+    "Shift updated.": "Směna byla aktualizována.",
+    "Shift deleted.": "Směna byla smazána."
 }

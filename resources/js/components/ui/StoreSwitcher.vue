@@ -5,6 +5,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from '@/composables/useRoute';
 import { useSharedProps } from '@/composables/useSharedProps';
+import { storeSwitchRefreshUrl } from '@/lib/store-switch-navigation';
 import { cn } from '@/lib/utils';
 
 const props = defineProps<{
@@ -27,7 +28,6 @@ watch(
     () => activeStore.value?.id,
     (id) => {
         selectedId.value = id === undefined ? '' : String(id);
-        switching.value = false;
     },
 );
 
@@ -61,26 +61,25 @@ function onChange(event: Event): void {
     selectedId.value = next;
     switching.value = true;
 
-    // Use a plain axios POST instead of router.post so we avoid the
-    // Inertia re-mount / preserveState race that caused the select to
-    // revert to the old store on mobile. The controller returns JSON
-    // with the confirmed active store; we then reload the Inertia page
-    // to refresh all props (active_store + page-specific data like
-    // items, movements, metrics, etc.) so the page reflects the new
-    // active store immediately.
+    // Persist first, then make a fresh GET visit so page-specific state is
+    // rebuilt for the confirmed store. A current `store_id` query override
+    // must be removed because it takes precedence over the persisted choice.
     window.axios
         .post(route('stores.switch'), { store_id: Number(next) })
         .then(() => {
-            // Reload the current page to pick up the updated shared
-            // props and page-specific data. The component tree stays
-            // alive so the drawer remains open on mobile.
-            router.reload();
+            router.visit(storeSwitchRefreshUrl(window.location.href), {
+                method: 'get',
+                replace: true,
+                preserveScroll: true,
+                preserveState: false,
+                onFinish: () => {
+                    switching.value = false;
+                },
+            });
         })
         .catch(() => {
             // Revert to the previous store on error.
             selectedId.value = previous;
-        })
-        .finally(() => {
             switching.value = false;
         });
 }

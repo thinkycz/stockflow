@@ -212,25 +212,14 @@ function toggleAllTime(): void {
         <Head :title="t('reports.title')" />
 
         <div class="flex flex-col gap-6">
-            <header
-                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
-            >
-                <div>
-                    <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                    >
-                        {{ t('reports.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('reports.subtitle') }}
-                    </p>
-                </div>
-                <p
-                    v-if="props.active_store"
-                    class="text-sm font-semibold text-on-surface-variant"
-                    data-testid="active-store"
+            <header>
+                <h1
+                    class="font-heading text-2xl font-bold tracking-tight text-on-surface"
                 >
-                    {{ props.active_store.name }}
+                    {{ t('reports.title') }}
+                </h1>
+                <p class="mt-1 text-sm text-on-surface-variant">
+                    {{ t('reports.subtitle') }}
                 </p>
             </header>
 
@@ -341,7 +330,7 @@ function toggleAllTime(): void {
                     <p
                         class="mb-4 text-xs font-semibold uppercase tracking-wider text-on-surface-variant"
                     >
-                        {{ props.active_store.name }} · {{ periodLabel }}
+                        {{ periodLabel }}
                     </p>
 
                     <div

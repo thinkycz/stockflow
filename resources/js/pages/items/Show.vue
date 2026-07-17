@@ -143,11 +143,9 @@ useBoundLocale();
             <div class="grid gap-4 sm:grid-cols-3">
                 <Card padded>
                     <CardHeader>
-                        <CardDescription>{{
-                            active_store
-                                ? active_store.name
-                                : t('items.metrics.quantity')
-                        }}</CardDescription>
+                        <CardDescription>
+                            {{ t('items.columns.quantity') }}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <p

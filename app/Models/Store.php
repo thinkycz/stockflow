@@ -49,7 +49,7 @@ class Store extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'user_id', 'name', 'address', 'status', 'is_warehouse', 'notes', 'created_at', 'updated_at']);
+        return $query->select(['id', 'user_id', 'name', 'address', 'status', 'is_warehouse', 'notes', 'shift_share_token', 'created_at', 'updated_at']);
     }
 
     /**
@@ -80,6 +80,16 @@ class Store extends BaseModel
     public static function scopeRetail(Builder $query): void
     {
         $query->where('is_warehouse', false);
+    }
+
+    /**
+     * Scope to a public shift calendar share token.
+     *
+     * @param Builder<Store> $query
+     */
+    public static function scopeForShiftShareToken(Builder $query, string $token): void
+    {
+        $query->where('shift_share_token', $token);
     }
 
     /**
@@ -209,6 +219,14 @@ class Store extends BaseModel
     public function getNotes(): string|null
     {
         return $this->assertNullableString('notes');
+    }
+
+    /**
+     * Public shift calendar share token getter.
+     */
+    public function getShiftShareToken(): string|null
+    {
+        return $this->assertNullableString('shift_share_token');
     }
 
     /**

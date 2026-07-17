@@ -110,25 +110,14 @@ function statementPeriodLabel(statement: RecentStatement): string {
         <Head :title="t('dashboard.title')" />
 
         <div class="flex flex-col gap-6">
-            <header
-                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
-            >
-                <div>
-                    <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                    >
-                        {{ t('dashboard.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('dashboard.subtitle') }}
-                    </p>
-                </div>
-                <p
-                    v-if="props.active_store"
-                    class="text-sm font-semibold text-on-surface-variant"
-                    data-testid="active-store"
+            <header>
+                <h1
+                    class="font-heading text-2xl font-bold tracking-tight text-on-surface"
                 >
-                    {{ props.active_store.name }}
+                    {{ t('dashboard.title') }}
+                </h1>
+                <p class="mt-1 text-sm text-on-surface-variant">
+                    {{ t('dashboard.subtitle') }}
                 </p>
             </header>
 

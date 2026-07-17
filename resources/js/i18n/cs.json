@@ -16,7 +16,9 @@
         "inventory_counts": "Inventura",
         "reports": "Reporty",
         "statistics": "Statistika",
+        "shifts": "Směny",
         "users": "Uživatelé",
+        "workers": "Brigádníci",
         "settings": "Nastavení",
         "profile": "Profil",
         "password": "Heslo",
@@ -46,7 +48,8 @@
         "previous": "Předchozí",
         "next": "Další",
         "decrease": "Snížit",
-        "increase": "Zvýšit"
+        "increase": "Zvýšit",
+        "dismiss_notification": "Zavřít oznámení"
     },
     "auth": {
         "login": {
@@ -276,8 +279,14 @@
             "adjustment": "Ruční úprava"
         },
         "filter": {
+            "search": "Hledat",
+            "type": "Typ",
             "all_types": "Všechny typy",
             "all_stores": "Všechny prodejny",
+            "source": "Zdroj",
+            "all_sources": "Všechny zdroje",
+            "destination": "Cíl",
+            "all_destinations": "Všechny cíle",
             "date_from": "Od",
             "date_to": "Do"
         },
@@ -646,6 +655,58 @@
             "deleted": "Uživatel byl smazán.",
             "cannot_delete_admin": "Hlavního administrátora nelze smazat.",
             "cannot_modify_admin_role": "Hlavní administrátor má vždy roli administrátora."
+        }
+    },
+    "workers": {
+        "title": "Brigádníci",
+        "subtitle": "Spravujte brigádníky a jejich hodinové sazby v CZK.",
+        "title_create": "Přidat brigádníka",
+        "subtitle_create": "Vytvořte nového brigádníka s jménem, příjmením a hodinovou sazbou.",
+        "title_edit": "Upravit brigádníka",
+        "subtitle_edit": "Aktualizujte údaje brigádníka.",
+        "add_worker": "Přidat brigádníka",
+        "search_placeholder": "Hledat brigádníky...",
+        "confirm_delete": "Opravdu chcete smazat tohoto brigádníka?",
+        "empty": {
+            "title": "Zatím žádní brigádníci",
+            "description": "Přidejte svého prvního brigádníka."
+        },
+        "columns": {
+            "first_name": "Jméno",
+            "last_name": "Příjmení",
+            "hourly_rate": "Hodinová sazba (CZK)",
+            "actions": "Akce"
+        }
+    },
+    "shifts": {
+        "title": "Směny",
+        "subtitle": "Kalendář směn brigádníků pro aktivní prodejnu.",
+        "prev_month": "Předchozí měsíc",
+        "next_month": "Další měsíc",
+        "no_store": "Nejprve vyberte prodejnu.",
+        "day_title": "Směny pro {date}",
+        "existing_shifts": "Existující směny",
+        "add_shift": "Přidat směnu",
+        "edit_shift": "Upravit směnu",
+        "select_worker": "Vyberte brigádníka",
+        "confirm_delete": "Opravdu chcete smazat tuto směnu?",
+        "read_only_notice": "Směny může spravovat pouze administrátor.",
+        "copy_public_link": "Kopírovat veřejný odkaz",
+        "public_link_copied": "Veřejný odkaz zkopírován",
+        "public_link_error": "Veřejný odkaz se nepodařilo zkopírovat.",
+        "public_title": "Kalendář směn — {store}",
+        "public_subtitle": "Kalendář směn zaměstnanců pouze pro čtení.",
+        "summary": {
+            "title": "Měsíční přehled",
+            "subtitle": "Naplánované hodiny a odhadovaná mzda za {month}.",
+            "worker": "Zaměstnanec",
+            "hours": "Naplánované hodiny",
+            "salary": "Celková mzda"
+        },
+        "columns": {
+            "worker": "Brigádník",
+            "start_time": "Začátek",
+            "end_time": "Konec"
         }
     }
 }

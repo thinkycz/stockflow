@@ -154,7 +154,7 @@ function destroyItem(id: number): void {
                                 <th>{{ t('items.columns.title') }}</th>
                                 <th>{{ t('items.columns.sku') }}</th>
                                 <th v-if="store" class="text-right">
-                                    {{ store.name }}
+                                    {{ t('items.columns.quantity') }}
                                 </th>
                                 <th class="text-right">
                                     {{ t('items.columns.price') }}

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\StockMovement;
+use App\Models\Store;
 
 \test('guest is redirected from stock-movements to login', function (): void {
     $this->get('/stock-movements')->assertRedirect('/login');
@@ -29,7 +30,7 @@ use App\Models\StockMovement;
         'user_id' => $user->getKey(),
         'number' => 'IN-2026-0001',
     ]);
-    StockMovement::factory()->outgoing(App\Models\Store::factory()->create([
+    StockMovement::factory()->outgoing(Store::factory()->create([
         'user_id' => $user->getKey(),
     ]))->byUser($user)->create([
         'user_id' => $user->getKey(),
@@ -43,4 +44,54 @@ use App\Models\StockMovement;
 
     \expect($response->json('props.movements'))->toHaveCount(1);
     \expect($response->json('props.movements.0.type'))->toBe('outgoing');
+});
+
+\test('stock movement index filters by exact source and destination stores', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $source = Store::factory()->create(['user_id' => $user->getKey()]);
+    $otherSource = Store::factory()->create(['user_id' => $user->getKey()]);
+    $destination = Store::factory()->create(['user_id' => $user->getKey()]);
+    $otherDestination = Store::factory()->create(['user_id' => $user->getKey()]);
+
+    $matching = StockMovement::factory()->outgoing($destination)->byUser($user)->create([
+        'user_id' => $user->getKey(),
+        'source_store_id' => $source->getKey(),
+    ]);
+    StockMovement::factory()->outgoing($destination)->byUser($user)->create([
+        'user_id' => $user->getKey(),
+        'source_store_id' => $otherSource->getKey(),
+    ]);
+    StockMovement::factory()->outgoing($otherDestination)->byUser($user)->create([
+        'user_id' => $user->getKey(),
+        'source_store_id' => $source->getKey(),
+    ]);
+
+    $response = $this->be($user, 'users')->get(
+        '/stock-movements?source_store_id=' . $source->getKey()
+            . '&destination_store_id=' . $destination->getKey(),
+        $this->inertiaHeaders(),
+    );
+
+    $response->assertOk();
+    $response->assertJsonCount(1, 'props.movements');
+    $response->assertJsonPath('props.movements.0.id', $matching->getKey());
+    $response->assertJsonPath('props.filters.source_store_id', $source->getKey());
+    $response->assertJsonPath('props.filters.destination_store_id', $destination->getKey());
+});
+
+\test('stock movement index provides all owned stores as filter options', function (): void {
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+    $inactiveStore = Store::factory()->inactive()->create([
+        'user_id' => $user->getKey(),
+        'name' => 'Closed branch',
+    ]);
+    Store::factory()->create(['name' => 'Foreign branch']);
+
+    $response = $this->be($user, 'users')->get('/stock-movements', $this->inertiaHeaders());
+
+    $response->assertOk();
+    $response->assertJsonCount(2, 'props.stores');
+    $response->assertJsonPath('props.stores.0.id', $inactiveStore->getKey());
+    $response->assertJsonPath('props.stores.0.name', 'Closed branch');
+    $response->assertJsonPath('props.stores.1.id', $warehouse->getKey());
 });

@@ -39,5 +39,12 @@
     "You cannot delete the main admin.": "You cannot delete the main admin.",
     "You do not have permission for this section.": "You do not have permission for this section.",
     "You cannot change the role of the main admin.": "You cannot change the role of the main admin.",
-    "Inventory count record deleted.": "Inventory count record deleted."
+    "Inventory count record deleted.": "Inventory count record deleted.",
+    "Worker created.": "Worker created.",
+    "Worker updated.": "Worker updated.",
+    "Worker deleted.": "Worker deleted.",
+    "Cannot delete a worker with existing shifts.": "Cannot delete a worker with existing shifts.",
+    "Shift created.": "Shift created.",
+    "Shift updated.": "Shift updated.",
+    "Shift deleted.": "Shift deleted."
 }

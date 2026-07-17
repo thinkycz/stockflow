@@ -22,6 +22,12 @@ use App\Http\Controllers\Web\Item\ItemShowController;
 use App\Http\Controllers\Web\Report\ReportController;
 use App\Http\Controllers\Web\Report\StatisticsController;
 use App\Http\Controllers\Web\Settings\SettingsController;
+use App\Http\Controllers\Web\Shift\SharedShiftIndexController;
+use App\Http\Controllers\Web\Shift\ShiftDestroyController;
+use App\Http\Controllers\Web\Shift\ShiftIndexController;
+use App\Http\Controllers\Web\Shift\ShiftShareController;
+use App\Http\Controllers\Web\Shift\ShiftStoreController;
+use App\Http\Controllers\Web\Shift\ShiftUpdateController;
 use App\Http\Controllers\Web\Statement\StatementClearController;
 use App\Http\Controllers\Web\Statement\StatementHistoryController;
 use App\Http\Controllers\Web\Statement\StatementIndexController;
@@ -42,6 +48,10 @@ use App\Http\Controllers\Web\User\UserCreateController;
 use App\Http\Controllers\Web\User\UserDestroyController;
 use App\Http\Controllers\Web\User\UserEditController;
 use App\Http\Controllers\Web\User\UserIndexController;
+use App\Http\Controllers\Web\Worker\WorkerCreateController;
+use App\Http\Controllers\Web\Worker\WorkerDestroyController;
+use App\Http\Controllers\Web\Worker\WorkerEditController;
+use App\Http\Controllers\Web\Worker\WorkerIndexController;
 use App\Http\Middleware\EnsureInertiaUserIsAuthenticated;
 use App\Models\User;
 use Illuminate\Routing\Router;
@@ -68,6 +78,8 @@ Resolver::resolveRouteRegistrar()
 
 Resolver::resolveRouteRegistrar()->get('email/verify', EmailVerificationConfirmController::class)->name('email.verify');
 
+Resolver::resolveRouteRegistrar()->get('public/shifts/{token}', SharedShiftIndexController::class)->name('public-shifts.index');
+
 Resolver::resolveRouteRegistrar()
     ->middleware(EnsureInertiaUserIsAuthenticated::class)
     ->group(static function (Router $router): void {
@@ -87,6 +99,9 @@ Resolver::resolveRouteRegistrar()
         $router->post('inventory-counts', InventoryCountUpdateController::class)->name('inventory-counts.update');
         $router->get('inventory-counts/history', InventoryCountHistoryController::class)->name('inventory-counts.history');
         $router->get('inventory-counts/{session}', InventoryCountShowController::class)->whereNumber('session')->name('inventory-counts.show');
+
+        // Shifts (admin + limited view)
+        $router->get('shifts', ShiftIndexController::class)->name('shifts.index');
 
         // Settings
         $router->get('verify-email', [VerifyEmailController::class, 'create'])->name('verify-email.show');
@@ -137,4 +152,18 @@ Resolver::resolveRouteRegistrar()
         $router->get('users/{user}/edit', [UserEditController::class, 'edit'])->whereNumber('user')->name('users.edit');
         $router->put('users/{user}', [UserEditController::class, 'update'])->whereNumber('user')->name('users.update');
         $router->delete('users/{user}', UserDestroyController::class)->whereNumber('user')->name('users.destroy');
+
+        // Workers
+        $router->get('workers', WorkerIndexController::class)->name('workers.index');
+        $router->get('workers/create', [WorkerCreateController::class, 'create'])->name('workers.create');
+        $router->post('workers', [WorkerCreateController::class, 'store'])->name('workers.store');
+        $router->get('workers/{worker}/edit', [WorkerEditController::class, 'edit'])->whereNumber('worker')->name('workers.edit');
+        $router->put('workers/{worker}', [WorkerEditController::class, 'update'])->whereNumber('worker')->name('workers.update');
+        $router->delete('workers/{worker}', WorkerDestroyController::class)->whereNumber('worker')->name('workers.destroy');
+
+        // Shifts (admin write)
+        $router->post('shifts', ShiftStoreController::class)->name('shifts.store');
+        $router->post('shifts/share', ShiftShareController::class)->name('shifts.share');
+        $router->put('shifts/{shift}', ShiftUpdateController::class)->whereNumber('shift')->name('shifts.update');
+        $router->delete('shifts/{shift}', ShiftDestroyController::class)->whereNumber('shift')->name('shifts.destroy');
     });

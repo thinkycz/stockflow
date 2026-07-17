@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Web\StockMovement;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\StockMovementValidity;
 use App\Models\StockMovement;
+use App\Models\Store;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -32,7 +33,8 @@ class StockMovementIndexController
         $validated = $this->validateRequest($request, [
             'search' => $validity->search()->nullable()->toArray(),
             'type' => $validity->typeFilter()->nullable()->toArray(),
-            'store_id' => $validity->storeId()->nullable()->toArray(),
+            'source_store_id' => $validity->storeId()->nullable()->toArray(),
+            'destination_store_id' => $validity->storeId()->nullable()->toArray(),
             'date_from' => $validity->dateFrom()->nullable()->toArray(),
             'date_to' => $validity->dateTo()->nullable()->toArray(),
             'page' => $validity->baseValidity->page()->nullable()->toArray(),
@@ -40,7 +42,8 @@ class StockMovementIndexController
 
         $search = $validated->assertNullableString('search') ?? '';
         $type = $validated->assertNullableString('type');
-        $storeId = $validated->parseNullableInt('store_id');
+        $sourceStoreId = $validated->parseNullableInt('source_store_id');
+        $destinationStoreId = $validated->parseNullableInt('destination_store_id');
         $dateFrom = $validated->assertNullableString('date_from');
         $dateTo = $validated->assertNullableString('date_to');
 
@@ -60,11 +63,12 @@ class StockMovementIndexController
             $query->where('type', $type);
         }
 
-        if ($storeId !== null) {
-            $query->where(static function ($query) use ($storeId): void {
-                $query->where('store_id', $storeId)
-                    ->orWhere('source_store_id', $storeId);
-            });
+        if ($sourceStoreId !== null) {
+            $query->where('source_store_id', $sourceStoreId);
+        }
+
+        if ($destinationStoreId !== null) {
+            $query->where('store_id', $destinationStoreId);
         }
 
         if ($dateFrom !== null) {
@@ -95,12 +99,25 @@ class StockMovementIndexController
             ];
         })->all();
 
+        $storesQuery = Store::query();
+        Store::scopeForUser($storesQuery, $user);
+        $stores = Store::querySelect($storesQuery)
+            ->orderBy('name')
+            ->get()
+            ->map(static fn(Store $store): array => [
+                'id' => $store->getKey(),
+                'name' => $store->getName(),
+            ])
+            ->all();
+
         return Inertia::render('stock-movements/Index', [
             'movements' => $movements,
+            'stores' => $stores,
             'filters' => [
                 'search' => $search,
                 'type' => $type,
-                'store_id' => $storeId,
+                'source_store_id' => $sourceStoreId,
+                'destination_store_id' => $destinationStoreId,
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
             ],

@@ -216,7 +216,6 @@ function formatCount(value: number): string {
                             t('reports.statistics.charts.daily')
                         }}</CardTitle>
                         <CardDescription>
-                            {{ props.store.name }} ·
                             {{ formatCount(props.incoming.movements) }} /
                             {{ formatCount(props.outgoing.movements) }}
                         </CardDescription>

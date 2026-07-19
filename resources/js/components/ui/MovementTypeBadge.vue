@@ -8,7 +8,8 @@ type MovementType =
     | 'transfer'
     | 'consumption'
     | 'adjustment'
-    | 'inventory_reconciliation';
+    | 'inventory_reconciliation'
+    | 'reversal';
 type LabelKey = MovementType;
 
 const props = defineProps<{
@@ -30,7 +31,10 @@ const variant = computed<'incoming' | 'outgoing' | 'adjustment'>(() => {
         return 'outgoing';
     }
 
-    if (resolvedLabelKey.value === 'inventory_reconciliation') {
+    if (
+        resolvedLabelKey.value === 'inventory_reconciliation' ||
+        resolvedLabelKey.value === 'reversal'
+    ) {
         return 'adjustment';
     }
 

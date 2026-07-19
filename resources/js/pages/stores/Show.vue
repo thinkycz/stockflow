@@ -35,7 +35,8 @@ type MovementRow = {
         | 'transfer'
         | 'consumption'
         | 'adjustment'
-        | 'inventory_reconciliation';
+        | 'inventory_reconciliation'
+        | 'reversal';
     note: string | null;
     total_quantity: number;
     total_value: number;

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Web\Store;
 
 use App\Enums\StockMovementTypeEnum;
-use App\Models\InventorySession;
 use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\StockMovementItem;
@@ -16,8 +15,10 @@ use App\Services\InventorySessionService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Thinkycz\LaravelCore\Support\Typer;
 
 class StoreShowController
 {
@@ -61,21 +62,24 @@ class StoreShowController
         })->all();
 
         $owner = User::query()->whereKey($store->getUserId())->first() ?? User::mustAuth();
-        $inventory = $store->storeItems()
-            ->with('item')
-            ->get()
-            ->map(static function (StoreItem $row) use ($counts, $owner, $store): array {
+        $storeItems = $store->storeItems()->with('item')->get();
+        $itemIds = \array_values($storeItems->map(static fn(StoreItem $row): int => $row->getItemId())->all());
+        $predictions = $counts->predictionsForStore($store, $storeItems);
+        $sparklines = $counts->sparklinesForItems($owner, $store, $itemIds, 30);
+        $lastCounts = DB::table('inventory_session_items')
+            ->join('inventory_sessions', 'inventory_sessions.id', '=', 'inventory_session_items.session_id')
+            ->where('inventory_sessions.store_id', $store->getKey())
+            ->where('inventory_sessions.status', 'closed')
+            ->whereIn('inventory_session_items.item_id', $itemIds)
+            ->groupBy('inventory_session_items.item_id')
+            ->pluck(DB::raw('MAX(inventory_sessions.counted_at)'), 'inventory_session_items.item_id');
+
+        $inventory = $storeItems
+            ->map(static function (StoreItem $row) use ($lastCounts, $predictions, $sparklines): array {
                 $item = $row->getItem();
                 $quantity = $row->getQuantity();
-                $lastSession = InventorySession::query()
-                    ->where('store_id', $store->getKey())
-                    ->whereHas('items', static function (Builder $query) use ($item): void {
-                        $query->where('item_id', $item->getKey());
-                    })
-                    ->orderByDesc('counted_at')
-                    ->orderByDesc('id')
-                    ->first();
-                $prediction = $counts->predictedRunOut($store, $item);
+                $prediction = $predictions[$item->getKey()];
+                $lastCount = $lastCounts->get($item->getKey());
 
                 return [
                     'item_id' => $row->getItemId(),
@@ -86,8 +90,8 @@ class StoreShowController
                     'purchase_price' => $item->getPurchasePrice(),
                     'total_value' => $quantity * $item->getPurchasePrice(),
                     'status' => $prediction['status'],
-                    'sparkline' => $counts->sparklineForItem($owner, $store, $item, 30),
-                    'last_count_at' => $lastSession?->getCountedAt()?->toJSON(),
+                    'sparkline' => $sparklines[$item->getKey()],
+                    'last_count_at' => $lastCount === null ? null : Carbon::parse(Typer::assertString($lastCount))->toJSON(),
                     'avg_daily_consumption' => $prediction['per_day'],
                     'coverage_days' => $prediction['coverage_days'],
                     'days_until_stockout' => $prediction['days_left'],
@@ -115,7 +119,7 @@ class StoreShowController
                 return [];
             }
 
-            $totalQuantity = $rows->sum(static fn(StockMovementItem $row): int => $row->getQuantity() ?? 0);
+            $totalQuantity = $rows->sum(static fn(StockMovementItem $row): float|int => $row->getQuantity() ?? 0);
             $totalValue = $rows->sum(static fn(StockMovementItem $row): float => $row->getTotal());
 
             return [

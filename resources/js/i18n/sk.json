@@ -11,6 +11,7 @@
         "dashboard": "Nástenka",
         "inventory": "Inventár",
         "stock_movements": "Skladové pohyby",
+        "consumption": "Výdaj / spotreba",
         "stores": "Predajne",
         "statements": "Výkazy",
         "inventory_counts": "Inventúra",
@@ -188,6 +189,11 @@
             "price": "Cena",
             "total_value": "Hodnota",
             "status": "Stav",
+            "inventory_value": "Hodnota zásob",
+            "sku_count": "Počet SKU",
+            "out_of_stock": "Vypredané",
+            "risk_count": "Riziko do 7 dní",
+            "last_inventory": "Posledná inventúra",
             "actions": "Akcie",
             "description": "Popis"
         },
@@ -289,7 +295,8 @@
             "transfer": "Presun medzi predajňami",
             "consumption": "Spotreba",
             "adjustment": "Ručná úprava",
-            "inventory_reconciliation": "Inventúrne vyrovnanie"
+            "inventory_reconciliation": "Inventúrne vyrovnanie",
+            "reversal": "Storno"
         },
         "filter": {
             "search": "Hľadať",
@@ -321,6 +328,8 @@
             "select_store": "Vyberte predajňu",
             "select_warehouse": "Vyberte sklad",
             "note": "Poznámka / referencia",
+            "occurred_at": "Dátum a čas udalosti",
+            "occurred_at_help": "Pre aktuálny čas nechajte prázdne. Staršia udalosť musí byť po poslednej uzavretej inventúre všetkých dotknutých položiek.",
             "items": "Položky pohybu",
             "item": "Položka",
             "select_item": "Vyberte položku",
@@ -360,6 +369,10 @@
             "would_be_negative": "Tento pohyb nie je možné zmazať, pretože by množstvo \":title\" v \":store\" kleslo pod nulu."
         },
         "confirm_delete": "Naozaj chcete zmazať tento skladový pohyb?",
+        "reverse": "Stornovať",
+        "reversal_reason_prompt": "Uveďte dôvod storna:",
+        "reversed": "Tento pohyb bol stornovaný.",
+        "reversal_of": "Storno pohybu #{id}",
         "detail": {
             "title": "Pohyb č.",
             "items": "Položky pohybu",
@@ -600,7 +613,14 @@
             "reason": "Dôvod"
         },
         "actions": {
+            "start": "Začať inventúru",
             "save": "Uložiť inventúru"
+        },
+        "autosave": {
+            "idle": "Neuložené",
+            "saving": "Ukladám…",
+            "saved": "Uložené",
+            "error": "Chyba ukladania"
         },
         "status": {
             "ok": "OK",

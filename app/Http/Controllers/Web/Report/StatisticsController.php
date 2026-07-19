@@ -8,6 +8,7 @@ use App\Enums\StockMovementClassificationEnum;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\InventorySession;
 use App\Models\Store;
+use App\Models\StoreItem;
 use App\Models\User;
 use App\Services\InventorySessionService;
 use App\Support\ActiveStoreResolver;
@@ -56,6 +57,9 @@ class StatisticsController
         $risk = ['due_soon' => 0, 'out' => 0, 'no_data' => 0];
         $coverageTotal = 0.0;
         $coveredItems = 0;
+        $itemIds = \array_values($storeItems->map(static fn(StoreItem $row): int => $row->getItemId())->all());
+        $periodConsumptions = $inventoryService->consumptionForItems($store, $itemIds, $periodDays, 1000);
+        $predictions = $inventoryService->predictionsForStore($store, $storeItems);
 
         foreach ($storeItems as $storeItem) {
             $item = $storeItem->getItem();
@@ -66,8 +70,8 @@ class StatisticsController
                 ++$positiveSkuCount;
             }
 
-            $periodConsumption = $inventoryService->consumptionLastDays($store, $item, $periodDays, 1000);
-            $prediction = $inventoryService->predictedRunOut($store, $item);
+            $periodConsumption = $periodConsumptions[$item->getKey()];
+            $prediction = $predictions[$item->getKey()];
             if ($prediction['status'] === InventorySessionService::STATUS_SOON) {
                 ++$risk['due_soon'];
             } elseif ($prediction['status'] === InventorySessionService::STATUS_OUT) {
@@ -155,6 +159,7 @@ class StatisticsController
         $rows = DB::table('stock_movements')
             ->where('user_id', $user->getKey())
             ->where('occurred_at', '>=', $since->toDateTimeString())
+            ->whereNull('reversed_at')
             ->whereIn('type', [StockMovementTypeEnum::INCOMING->value, StockMovementTypeEnum::TRANSFER->value])
             ->get(['type', 'store_id', 'source_store_id', 'total_value']);
 
@@ -198,6 +203,7 @@ class StatisticsController
             ->where('stock_movements.user_id', $user->getKey())
             ->where('stock_movements.store_id', $store->getKey())
             ->where('stock_movements.occurred_at', '>=', $since->toDateTimeString())
+            ->whereNull('stock_movements.reversed_at')
             ->whereNotNull('stock_movement_items.classification')
             ->get([
                 'stock_movements.occurred_at',

@@ -43,7 +43,7 @@ class InventorySessionItem extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'session_id', 'item_id', 'quantity', 'expected_quantity', 'quantity_difference', 'classification', 'observation_started_at', 'note', 'created_at', 'updated_at']);
+        return $query->select(['id', 'session_id', 'item_id', 'quantity', 'counted_at', 'opening_quantity', 'client_version', 'expected_quantity', 'quantity_difference', 'classification', 'observation_started_at', 'note', 'created_at', 'updated_at']);
     }
 
     /**
@@ -101,25 +101,37 @@ class InventorySessionItem extends BaseModel
     /**
      * Quantity getter.
      */
-    public function getQuantity(): int
+    public function getQuantity(): float|int
     {
-        return $this->assertInt('quantity');
+        return $this->decimalNumber($this->getAttribute('quantity'));
     }
 
     /**
      * Expected quantity before the physical count.
      */
-    public function getExpectedQuantity(): int|null
+    public function getExpectedQuantity(): float|int|null
     {
-        return $this->assertNullableInt('expected_quantity');
+        $value = $this->getAttribute('expected_quantity');
+
+        return $value === null ? null : $this->decimalNumber($value);
+    }
+
+    /**
+     * Timestamp of this row's physical count.
+     */
+    public function getCountedAt(): Carbon|null
+    {
+        return Typer::assertNullableCarbon($this->getAttribute('counted_at'));
     }
 
     /**
      * Counted quantity minus expected quantity.
      */
-    public function getQuantityDifference(): int|null
+    public function getQuantityDifference(): float|int|null
     {
-        return $this->assertNullableInt('quantity_difference');
+        $value = $this->getAttribute('quantity_difference');
+
+        return $value === null ? null : $this->decimalNumber($value);
     }
 
     /**
@@ -160,10 +172,18 @@ class InventorySessionItem extends BaseModel
     protected function casts(): array
     {
         return [
-            'quantity' => 'integer',
-            'expected_quantity' => 'integer',
-            'quantity_difference' => 'integer',
+            'counted_at' => 'datetime',
             'observation_started_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Preserve fractional database values while keeping whole numbers ergonomic.
+     */
+    private function decimalNumber(mixed $value): float|int
+    {
+        $number = (float) Typer::assertScalar($value);
+
+        return $number === \floor($number) ? (int) $number : $number;
     }
 }

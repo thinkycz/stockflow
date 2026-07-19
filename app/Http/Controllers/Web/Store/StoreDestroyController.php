@@ -20,6 +20,7 @@ class StoreDestroyController
     public function __invoke(Store $store): RedirectResponse
     {
         $hasInventory = $store->storeItems()->exists();
+        $hasAssignedUser = $store->assignedUser()->exists();
 
         $hasMovements = StockMovement::query()
             ->where('user_id', $store->getUserId())
@@ -29,7 +30,7 @@ class StoreDestroyController
             })
             ->exists();
 
-        if ($hasInventory || $hasMovements) {
+        if ($hasInventory || $hasMovements || $hasAssignedUser) {
             $thrower = new Thrower(Resolver::resolveValidatorFactory()->make([], []));
             $thrower->message('store', \__('Cannot delete a store that has inventory or stock movement history.'));
             $thrower->throw();

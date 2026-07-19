@@ -124,6 +124,9 @@ class StockMovementCreateController
 
         $rules = [
             'note' => $validity->note()->nullable()->toArray(),
+            'occurred_at' => $user->isAdmin()
+                ? ['nullable', 'date', 'before_or_equal:now']
+                : ['prohibited'],
             'items' => $validity->items()->required()->toArray(),
             'items.*.item_id' => $validity->rowItemId()->required()->toArray(),
         ];
@@ -151,6 +154,7 @@ class StockMovementCreateController
             'store_id' => Typer::parseNullableInt($validated->mixed('store_id')),
             'source_store_id' => Typer::parseNullableInt($validated->mixed('source_store_id')),
             'note' => $validated->assertNullableString('note'),
+            'occurred_at' => $validated->assertNullableString('occurred_at'),
             'items' => $validated->assertArray('items'),
         ];
 

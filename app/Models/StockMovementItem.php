@@ -53,6 +53,8 @@ class StockMovementItem extends BaseModel
             'stock_movement_id',
             'item_id',
             'quantity',
+            'unit_cost',
+            'unit_cost_estimated',
             'total',
             'quantity_before',
             'quantity_after',
@@ -137,9 +139,11 @@ class StockMovementItem extends BaseModel
     /**
      * Quantity getter.
      */
-    public function getQuantity(): int|null
+    public function getQuantity(): float|int|null
     {
-        return Typer::assertNullableInt($this->getAttribute('quantity'));
+        $value = $this->getAttribute('quantity');
+
+        return $value === null ? null : $this->decimalNumber($value);
     }
 
     /**
@@ -151,27 +155,51 @@ class StockMovementItem extends BaseModel
     }
 
     /**
+     * Unit-cost snapshot getter.
+     */
+    public function getUnitCost(): float|null
+    {
+        $value = $this->getAttribute('unit_cost');
+
+        return $value === null ? null : (float) Typer::assertScalar($value);
+    }
+
+    /**
+     * Whether migration had to estimate the historical unit cost.
+     */
+    public function isUnitCostEstimated(): bool
+    {
+        return $this->assertBool('unit_cost_estimated');
+    }
+
+    /**
      * Quantity before getter.
      */
-    public function getQuantityBefore(): int|null
+    public function getQuantityBefore(): float|int|null
     {
-        return Typer::assertNullableInt($this->getAttribute('quantity_before'));
+        $value = $this->getAttribute('quantity_before');
+
+        return $value === null ? null : $this->decimalNumber($value);
     }
 
     /**
      * Quantity after getter.
      */
-    public function getQuantityAfter(): int|null
+    public function getQuantityAfter(): float|int|null
     {
-        return Typer::assertNullableInt($this->getAttribute('quantity_after'));
+        $value = $this->getAttribute('quantity_after');
+
+        return $value === null ? null : $this->decimalNumber($value);
     }
 
     /**
      * Quantity difference getter.
      */
-    public function getQuantityDifference(): int|null
+    public function getQuantityDifference(): float|int|null
     {
-        return Typer::assertNullableInt($this->getAttribute('quantity_difference'));
+        $value = $this->getAttribute('quantity_difference');
+
+        return $value === null ? null : $this->decimalNumber($value);
     }
 
     /**
@@ -229,9 +257,9 @@ class StockMovementItem extends BaseModel
     /**
      * Aggregate total quantity getter.
      */
-    public function getAggregatedTotalQuantity(): int
+    public function getAggregatedTotalQuantity(): float|int
     {
-        return Typer::parseInt($this->getAttribute('total_quantity'));
+        return $this->decimalNumber($this->getAttribute('total_quantity'));
     }
 
     /**
@@ -242,12 +270,20 @@ class StockMovementItem extends BaseModel
     protected function casts(): array
     {
         return [
-            'quantity' => 'integer',
+            'unit_cost' => 'decimal:4',
+            'unit_cost_estimated' => 'boolean',
             'total' => 'decimal:2',
-            'quantity_before' => 'integer',
-            'quantity_after' => 'integer',
-            'quantity_difference' => 'integer',
             'observation_started_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Preserve fractional database values while keeping whole numbers ergonomic.
+     */
+    private function decimalNumber(mixed $value): float|int
+    {
+        $number = (float) Typer::assertScalar($value);
+
+        return $number === \floor($number) ? (int) $number : $number;
     }
 }

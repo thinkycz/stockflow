@@ -1,5 +1,7 @@
+import { getIntlLocale } from '@/i18n';
+
 export function formatMoney(value: number): string {
-    return new Intl.NumberFormat('cs-CZ', {
+    return new Intl.NumberFormat(getIntlLocale(), {
         style: 'currency',
         currency: 'CZK',
         minimumFractionDigits: 2,
@@ -8,7 +10,7 @@ export function formatMoney(value: number): string {
 }
 
 export function formatNumber(value: number, fractionDigits = 0): string {
-    return new Intl.NumberFormat('cs-CZ', {
+    return new Intl.NumberFormat(getIntlLocale(), {
         minimumFractionDigits: fractionDigits,
         maximumFractionDigits: fractionDigits,
     }).format(value);
@@ -17,9 +19,7 @@ export function formatNumber(value: number, fractionDigits = 0): string {
 /**
  * Format a date string as `dd.MM.yyyy`.
  *
- * The application presents dates exclusively in the Czech format
- * regardless of the active UI locale — the backend always emits ISO 8601
- * and the frontend applies this fixed formatter.
+ * The backend emits ISO 8601 and the frontend formats it using the UI locale.
  */
 export function formatDate(date: string | Date | null | undefined): string {
     if (date === null || date === undefined || date === '') {
@@ -31,10 +31,11 @@ export function formatDate(date: string | Date | null | undefined): string {
         return '—';
     }
 
-    return new Intl.DateTimeFormat('cs-CZ', {
+    return new Intl.DateTimeFormat(getIntlLocale(), {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
+        timeZone: 'Europe/Prague',
     }).format(parsed);
 }
 
@@ -51,13 +52,14 @@ export function formatDateTime(date: string | Date | null | undefined): string {
         return '—';
     }
 
-    return new Intl.DateTimeFormat('cs-CZ', {
+    return new Intl.DateTimeFormat(getIntlLocale(), {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
+        timeZone: 'Europe/Prague',
     }).format(parsed);
 }
 

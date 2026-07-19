@@ -216,15 +216,15 @@ class Item extends BaseModel
     /**
      * Total quantity across all of the owner's stores.
      */
-    public function getTotalQuantity(): int
+    public function getTotalQuantity(): float|int
     {
         $cached = $this->getAttribute('total_quantity_sum');
 
         if ($cached !== null) {
-            return Typer::parseInt($cached);
+            return $this->decimalNumber($cached);
         }
 
-        return Typer::parseInt($this->storeItems()->sum('quantity'));
+        return $this->decimalNumber($this->storeItems()->sum('quantity'));
     }
 
     /**
@@ -277,5 +277,15 @@ class Item extends BaseModel
         return [
             'purchase_price' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Preserve fractional database aggregates without changing whole-number output.
+     */
+    private function decimalNumber(mixed $value): float|int
+    {
+        $number = (float) Typer::assertScalar($value);
+
+        return $number === \floor($number) ? (int) $number : $number;
     }
 }

@@ -1,7 +1,8 @@
 import { usePage } from '@inertiajs/vue3';
 import { computed, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { isSupportedLocale } from '@/i18n';
+import { isSupportedLocale, setActiveLocale } from '@/i18n';
+import type { SupportedLocale } from '@/i18n';
 import type { SharedProps } from '@/types';
 
 /**
@@ -16,7 +17,7 @@ export function useBoundLocale(): void {
     const i18n = useI18n();
     const page = usePage<SharedProps>();
 
-    const requestedLocale = computed<string>(() => {
+    const requestedLocale = computed<SupportedLocale>(() => {
         const user = page.props.auth?.user?.locale;
         const app = page.props.app?.locale;
         const raw = user ?? app ?? 'en';
@@ -28,5 +29,6 @@ export function useBoundLocale(): void {
         if (i18n.locale.value !== next) {
             i18n.locale.value = next;
         }
+        setActiveLocale(next);
     });
 }

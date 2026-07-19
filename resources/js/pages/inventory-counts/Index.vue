@@ -11,6 +11,7 @@ import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
+import { formatNumber as formatLocalizedNumber } from '@/lib/format';
 
 type InventoryRow = {
     item_id: number;
@@ -32,6 +33,19 @@ type EditableRow = {
     classification: string;
     classificationTouched: boolean;
     note: string;
+    clientVersion: number;
+};
+
+type Draft = {
+    id: number;
+    started_at: string;
+    rows: Array<{
+        item_id: number;
+        quantity: number;
+        classification: string | null;
+        note: string | null;
+        client_version: number;
+    }>;
 };
 
 const props = defineProps<{
@@ -40,6 +54,7 @@ const props = defineProps<{
     filters: { store_id: number | null };
     is_admin: boolean;
     classifications: string[];
+    draft: Draft | null;
 }>();
 
 const { t } = useI18n();
@@ -50,20 +65,30 @@ const route = useRoute();
 
 const editing = reactive<Record<number, EditableRow>>(
     Object.fromEntries(
-        props.rows.map((row) => [
-            row.item_id,
-            {
-                item_id: row.item_id,
-                quantity: '',
-                classification: 'consumption',
-                classificationTouched: false,
-                note: '',
-            },
-        ]),
+        props.rows.map((row) => {
+            const saved = props.draft?.rows.find(
+                (draftRow) => draftRow.item_id === row.item_id,
+            );
+            return [
+                row.item_id,
+                {
+                    item_id: row.item_id,
+                    quantity: saved ? String(saved.quantity) : '',
+                    classification: saved?.classification ?? 'consumption',
+                    classificationTouched: saved?.classification !== null,
+                    note: saved?.note ?? '',
+                    clientVersion: saved?.client_version ?? 0,
+                },
+            ];
+        }),
     ),
 );
 
 const submitting = ref(false);
+const saveState = reactive<
+    Record<number, 'idle' | 'saving' | 'saved' | 'error'>
+>({});
+const pending = new Set<Promise<unknown>>();
 
 const hasNoItems = computed(() => props.rows.length === 0);
 
@@ -85,7 +110,7 @@ function setQuantity(itemId: number, value: string | number | undefined): void {
     if (!Number.isFinite(numeric) || numeric < 0) {
         return;
     }
-    row.quantity = String(Math.floor(numeric));
+    row.quantity = next;
     if (!row.classificationTouched) {
         const source = props.rows.find((item) => item.item_id === itemId);
         row.classification =
@@ -147,45 +172,63 @@ function setNote(itemId: number, value: string | number | undefined): void {
     row.note = value === null || value === undefined ? '' : String(value);
 }
 
-function formatNumber(value: number, fractionDigits = 0): string {
-    return value.toLocaleString('cs-CZ', {
-        minimumFractionDigits: fractionDigits,
-        maximumFractionDigits: fractionDigits,
-    });
-}
-
 function formatWithUnit(value: number | null, unit: string | null): string {
-    const base = value === null ? '–' : formatNumber(value);
+    const base = value === null ? '–' : formatLocalizedNumber(value, 3);
     return unit !== null ? `${base} ${unit}` : base;
 }
 
-function save(): void {
-    if (!props.store || !hasAnyValue.value) {
+function startDraft(): void {
+    if (!props.store) {
+        return;
+    }
+    router.post(route('inventory-counts.drafts.start'), {
+        store_id: props.store.id,
+    });
+}
+
+function autosave(itemId: number): void {
+    const row = editing[itemId];
+    if (!props.draft || !row || row.quantity === '') {
         return;
     }
 
-    const rowsToSave = Object.values(editing)
-        .filter((row) => row.quantity !== '')
-        .map((row) => ({
+    row.clientVersion += 1;
+    saveState[itemId] = 'saving';
+    const request = window.axios
+        .put(route('inventory-counts.drafts.rows.update', props.draft.id), {
             item_id: row.item_id,
-            quantity: Number(row.quantity),
+            quantity: row.quantity,
             classification:
-                difference(row.item_id) === 0 ? null : row.classification,
+                difference(itemId) === 0 ? null : row.classification,
             note: row.note,
-        }));
+            client_version: row.clientVersion,
+        })
+        .then(() => {
+            saveState[itemId] = 'saved';
+        })
+        .catch(() => {
+            saveState[itemId] = 'error';
+        })
+        .finally(() => pending.delete(request));
+    pending.add(request);
+}
 
+async function save(): Promise<void> {
+    if (!props.draft || !hasAnyValue.value) {
+        return;
+    }
     submitting.value = true;
+    Object.values(editing).forEach((row) => autosave(row.item_id));
+    await Promise.all([...pending]);
+    if (Object.values(saveState).includes('error')) {
+        submitting.value = false;
+        return;
+    }
     router.post(
-        route('inventory-counts.update'),
+        route('inventory-counts.drafts.close', props.draft.id),
+        {},
         {
-            store_id: props.store.id,
-            rows: rowsToSave,
-        },
-        {
-            preserveScroll: true,
-            onFinish: (): void => {
-                submitting.value = false;
-            },
+            onFinish: () => (submitting.value = false),
         },
     );
 }
@@ -238,8 +281,13 @@ function save(): void {
             </div>
 
             <Card v-else padded>
+                <div v-if="!draft" class="py-8 text-center">
+                    <Button type="button" @click="startDraft">
+                        {{ t('inventory_counts.actions.start') }}
+                    </Button>
+                </div>
                 <div class="overflow-x-auto">
-                    <DataTable class="[&_td]:px-2 [&_th]:px-2">
+                    <DataTable v-if="draft" class="[&_td]:px-2 [&_th]:px-2">
                         <thead>
                             <tr>
                                 <th class="min-w-[16rem] text-left">
@@ -315,8 +363,8 @@ function save(): void {
                                                     ?.quantity ?? ''
                                             "
                                             type="number"
-                                            inputmode="numeric"
-                                            step="1"
+                                            inputmode="decimal"
+                                            step="0.001"
                                             min="0"
                                             :placeholder="String(row.current)"
                                             :data-testid="`qty-${row.item_id}`"
@@ -328,6 +376,7 @@ function save(): void {
                                                         value,
                                                     )
                                             "
+                                            @blur="autosave(row.item_id)"
                                         />
                                         <button
                                             type="button"
@@ -370,6 +419,7 @@ function save(): void {
                                                 $event,
                                             )
                                         "
+                                        @blur="autosave(row.item_id)"
                                     />
                                     <span
                                         v-else
@@ -387,7 +437,17 @@ function save(): void {
                                             (value) =>
                                                 setNote(row.item_id, value)
                                         "
+                                        @blur="autosave(row.item_id)"
                                     />
+                                    <span
+                                        class="mt-1 block text-[10px] text-on-surface-variant"
+                                    >
+                                        {{
+                                            t(
+                                                `inventory_counts.autosave.${saveState[row.item_id] ?? 'idle'}`,
+                                            )
+                                        }}
+                                    </span>
                                 </td>
                             </tr>
                         </tbody>
@@ -395,6 +455,7 @@ function save(): void {
                 </div>
 
                 <div
+                    v-if="draft"
                     class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end"
                 >
                     <Button

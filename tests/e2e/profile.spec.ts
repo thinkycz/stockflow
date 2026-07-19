@@ -2,23 +2,9 @@ import { expect, test } from '@playwright/test';
 
 test.describe('Profile management', () => {
     test.beforeEach(async ({ page }) => {
-        const email = `profile-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-        const response = await page.request.post('/api/v1/auth/register', {
-            data: {
-                email,
-                password: 'password1',
-                locale: 'en',
-            },
-            headers: {
-                Accept: 'application/vnd.api+json',
-            },
-        });
-
-        expect(response.status()).toBe(201);
-
         await page.goto('/login');
-        await page.getByLabel('Email').fill(email);
-        await page.getByLabel('Password', { exact: true }).fill('password1');
+        await page.getByLabel('Email').fill('test@test.com');
+        await page.getByLabel('Password', { exact: true }).fill('password');
         await page.getByRole('button', { name: 'Log in' }).click();
         await page.waitForURL(/\/dashboard$/);
     });

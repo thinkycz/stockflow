@@ -23,7 +23,7 @@ export default defineConfig({
     ],
     webServer: {
         command:
-            'php artisan optimize:clear && php artisan migrate:fresh --env=testing --force && php artisan serve --host=127.0.0.1 --port=8000 --no-reload',
+            'php artisan optimize:clear && php artisan migrate:fresh --env=testing --force && php artisan db:seed --class=Database\\\\Seeders\\\\E2ESeeder --env=testing --force && php artisan serve --host=127.0.0.1 --port=8000 --no-reload',
         url: 'http://127.0.0.1:8000',
         reuseExistingServer: !process.env.CI,
         timeout: 60000,

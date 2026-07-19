@@ -33,7 +33,8 @@ class ItemSearchController
         $activeStore = ActiveStoreResolver::resolve($request, $user);
         $activeStoreId = $activeStore instanceof Store ? $activeStore->getKey() : null;
 
-        $items = $term === '' ? [] : $this->search($user, $term, $activeStoreId);
+        $owner = $user->resolveScopeUser();
+        $items = $term === '' ? [] : $this->search($owner, $term, $activeStoreId);
 
         return new JsonResponse(['items' => $items]);
     }

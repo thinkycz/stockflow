@@ -2,14 +2,23 @@ import { expect, test } from '@playwright/test';
 
 test.describe('Locale switcher', () => {
     test.beforeEach(async ({ page }) => {
-        const email = `locale-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
-        await page.goto('/register');
-        await page.getByLabel('Email', { exact: true }).fill(email);
-        await page.getByLabel('Password', { exact: true }).fill('password1');
-        await page.getByLabel('Confirm password').fill('password1');
-        await page.getByLabel('Locale').selectOption('en');
-        await page.getByRole('button', { name: 'Register' }).click();
+        await page.goto('/login');
+        await page.getByLabel('Email', { exact: true }).fill('test@test.com');
+        await page.getByLabel('Password', { exact: true }).fill('password');
+        await page.getByRole('button', { name: 'Log in' }).click();
         await page.waitForURL(/\/dashboard/);
+    });
+
+    test.afterEach(async ({ page }) => {
+        await page.goto('/settings');
+
+        const switcher = page.locator('select#locale');
+        await switcher.selectOption('en');
+        await page
+            .getByRole('button', {
+                name: /Save profile|Uložit profil|Uložiť profil/,
+            })
+            .click();
     });
 
     test('switching the locale flips the nav and heading strings', async ({

@@ -49,7 +49,7 @@ class StockMovement extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'user_id', 'number', 'type', 'occurred_at', 'origin', 'inventory_session_id', 'store_id', 'source_store_id', 'note', 'created_by', 'total_quantity', 'total_value', 'created_at', 'updated_at']);
+        return $query->select(['id', 'user_id', 'number', 'type', 'occurred_at', 'origin', 'inventory_session_id', 'reversal_of_id', 'store_id', 'source_store_id', 'note', 'reversal_reason', 'reversed_at', 'created_by', 'total_quantity', 'items_count', 'total_value', 'created_at', 'updated_at']);
     }
 
     /**
@@ -138,6 +138,14 @@ class StockMovement extends BaseModel
     public function inventorySession(): BelongsTo
     {
         return $this->belongsTo(InventorySession::class, 'inventory_session_id');
+    }
+
+    /**
+     * @return BelongsTo<StockMovement, $this>
+     */
+    public function reversalOf(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'reversal_of_id');
     }
 
     /**
@@ -326,6 +334,30 @@ class StockMovement extends BaseModel
     }
 
     /**
+     * Original movement id when this row is a reversal.
+     */
+    public function getReversalOfId(): int|null
+    {
+        return $this->assertNullableInt('reversal_of_id');
+    }
+
+    /**
+     * Administrator-provided reversal reason.
+     */
+    public function getReversalReason(): string|null
+    {
+        return $this->assertNullableString('reversal_reason');
+    }
+
+    /**
+     * Timestamp marking an original movement as reversed.
+     */
+    public function getReversedAt(): Carbon|null
+    {
+        return Typer::assertNullableCarbon($this->getAttribute('reversed_at'));
+    }
+
+    /**
      * Store id getter.
      */
     public function getStoreId(): int|null
@@ -392,6 +424,11 @@ class StockMovement extends BaseModel
             return Typer::assertInt($count);
         }
 
+        $persistedCount = $this->getAttribute('items_count');
+        if ($persistedCount !== null) {
+            return Typer::assertInt($persistedCount);
+        }
+
         return $this->movementItems()->count();
     }
 
@@ -404,6 +441,7 @@ class StockMovement extends BaseModel
     {
         return [
             'occurred_at' => 'datetime',
+            'reversed_at' => 'datetime',
             'total_quantity' => 'integer',
             'total_value' => 'decimal:2',
         ];

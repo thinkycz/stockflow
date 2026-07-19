@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToUser;
 use Database\Factories\InventorySessionFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -69,7 +70,7 @@ class InventorySession extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'user_id', 'store_id', 'created_by', 'counted_at', 'note', 'created_at', 'updated_at']);
+        return $query->select(['id', 'user_id', 'store_id', 'active_store_key', 'created_by', 'status', 'started_at', 'counted_at', 'closed_at', 'cancelled_at', 'opening_snapshot', 'note', 'created_at', 'updated_at']);
     }
 
     /**
@@ -103,6 +104,18 @@ class InventorySession extends BaseModel
     }
 
     /**
+     * @return Collection<array-key, InventorySessionItem>
+     */
+    public function getItems(): Collection
+    {
+        if ($this->relationLoaded('items')) {
+            return $this->assertRelationshipCollection('items', InventorySessionItem::class);
+        }
+
+        return $this->items()->get();
+    }
+
+    /**
      * Loaded or queried store.
      */
     public function getStore(): Store
@@ -131,6 +144,30 @@ class InventorySession extends BaseModel
     }
 
     /**
+     * Workflow status getter.
+     */
+    public function getStatus(): string
+    {
+        return $this->assertString('status');
+    }
+
+    /**
+     * Draft start timestamp getter.
+     */
+    public function getStartedAt(): Carbon
+    {
+        return Typer::assertCarbon($this->getAttribute('started_at'));
+    }
+
+    /**
+     * Whether this session is still editable.
+     */
+    public function isDraft(): bool
+    {
+        return $this->getStatus() === 'draft';
+    }
+
+    /**
      * Note getter.
      */
     public function getNote(): string|null
@@ -155,6 +192,10 @@ class InventorySession extends BaseModel
     {
         return [
             'counted_at' => 'datetime',
+            'started_at' => 'datetime',
+            'closed_at' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'opening_snapshot' => 'array',
         ];
     }
 }

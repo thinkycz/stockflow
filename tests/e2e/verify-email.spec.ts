@@ -21,12 +21,10 @@ test.describe('Email verification', () => {
         await expect(errorToast).toBeHidden();
     });
 
-    test('send verification email shows success flash', async ({ page }) => {
-        const email = `verify-${Date.now()}@example.com`;
-
+    test('public registration API is unavailable', async ({ page }) => {
         const response = await page.request.post('/api/v1/auth/register', {
             data: {
-                email,
+                email: 'public-registration@example.com',
                 password: 'password1',
                 locale: 'en',
             },
@@ -35,46 +33,13 @@ test.describe('Email verification', () => {
             },
         });
 
-        expect(response.status()).toBe(201);
-
-        await page.goto('/login');
-        await page.getByLabel('Email').fill(email);
-        await page.getByLabel('Password', { exact: true }).fill('password1');
-        await page.getByRole('button', { name: 'Log in' }).click();
-        await page.waitForURL(/\/dashboard$/);
-
-        await page.goto('/verify-email');
-        await page
-            .getByRole('button', { name: 'Send verification email' })
-            .click();
-
-        await expect(
-            page
-                .getByRole('status')
-                .filter({ hasText: 'Verification email sent.' })
-                .first(),
-        ).toBeVisible();
+        expect(response.status()).toBe(404);
     });
 
     test('verify-email page is reachable while logged in', async ({ page }) => {
-        const email = `verify-${Date.now()}@example.com`;
-
-        const response = await page.request.post('/api/v1/auth/register', {
-            data: {
-                email,
-                password: 'password1',
-                locale: 'en',
-            },
-            headers: {
-                Accept: 'application/vnd.api+json',
-            },
-        });
-
-        expect(response.status()).toBe(201);
-
         await page.goto('/login');
-        await page.getByLabel('Email').fill(email);
-        await page.getByLabel('Password', { exact: true }).fill('password1');
+        await page.getByLabel('Email').fill('test@test.com');
+        await page.getByLabel('Password', { exact: true }).fill('password');
         await page.getByRole('button', { name: 'Log in' }).click();
         await page.waitForURL(/\/dashboard$/);
 

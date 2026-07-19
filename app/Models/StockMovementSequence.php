@@ -24,7 +24,7 @@ class StockMovementSequence extends BaseModel
      *
      * @var array<int, string>
      */
-    private const array PRIMARY_KEYS = ['user_id', 'type', 'year'];
+    private const array PRIMARY_KEYS = ['type', 'year'];
 
     /**
      * Indicates if the model should be timestamped.
@@ -44,7 +44,7 @@ class StockMovementSequence extends BaseModel
     /**
      * The primary key for the model.
      */
-    protected $primaryKey = 'user_id';
+    protected $primaryKey = 'type';
 
     /**
      * Scope a search to nothing (no text search on this table).
@@ -53,7 +53,7 @@ class StockMovementSequence extends BaseModel
      */
     public static function scopeSearch(Builder $query, string $search): void
     {
-        // No-op: sequences are looked up by (user_id, type, year).
+        // No-op: sequences are looked up by (type, year).
     }
 
     /**
@@ -65,7 +65,7 @@ class StockMovementSequence extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['user_id', 'type', 'year', 'last_number']);
+        return $query->select(['type', 'year', 'last_number']);
     }
 
     /**
@@ -84,21 +84,19 @@ class StockMovementSequence extends BaseModel
      * or older code paths do not go through this counter, and starting
      * at 1 would collide with the unique index on `stock_movements.number`.
      */
-    public static function next(StockMovementTypeEnum $type, int $year, int $userId): string
+    public static function next(StockMovementTypeEnum $type, int $year): string
     {
-        $row = DB::transaction(function () use ($type, $year, $userId): StockMovementSequence {
+        $row = DB::transaction(function () use ($type, $year): StockMovementSequence {
             $existing = static::query()
-                ->where('user_id', $userId)
                 ->where('type', $type->value)
                 ->where('year', $year)
                 ->lockForUpdate()
                 ->first();
 
             if ($existing instanceof StockMovementSequence) {
-                $actualMax = self::maxActualNumber($type, $year, $userId);
+                $actualMax = self::maxActualNumber($type, $year);
                 if ($actualMax > $existing->getLastNumber()) {
                     static::query()
-                        ->where('user_id', $userId)
                         ->where('type', $type->value)
                         ->where('year', $year)
                         ->update(['last_number' => $actualMax]);
@@ -108,21 +106,19 @@ class StockMovementSequence extends BaseModel
                     );
                 }
 
-                return self::bump($type, $year, $userId, $existing);
+                return self::bump($type, $year, $existing);
             }
 
-            $startingNumber = \max(1, self::maxActualNumber($type, $year, $userId) + 1);
+            $startingNumber = \max(1, self::maxActualNumber($type, $year) + 1);
 
             try {
                 return StockMovementSequence::query()->create([
-                    'user_id' => $userId,
                     'type' => $type->value,
                     'year' => $year,
                     'last_number' => $startingNumber,
                 ]);
             } catch (UniqueConstraintViolationException) {
                 $existing = static::query()
-                    ->where('user_id', $userId)
                     ->where('type', $type->value)
                     ->where('year', $year)
                     ->lockForUpdate()
@@ -132,7 +128,7 @@ class StockMovementSequence extends BaseModel
                     throw new RuntimeException('Stock movement sequence race could not be resolved.');
                 }
 
-                return self::bump($type, $year, $userId, $existing);
+                return self::bump($type, $year, $existing);
             }
         });
 
@@ -171,7 +167,6 @@ class StockMovementSequence extends BaseModel
     protected function casts(): array
     {
         return [
-            'user_id' => 'integer',
             'year' => 'integer',
             'last_number' => 'integer',
         ];
@@ -193,11 +188,10 @@ class StockMovementSequence extends BaseModel
      * Highest number actually present in `stock_movements` for this
      * (user_id, type, year), parsed from the trailing 4-digit segment.
      */
-    private static function maxActualNumber(StockMovementTypeEnum $type, int $year, int $userId): int
+    private static function maxActualNumber(StockMovementTypeEnum $type, int $year): int
     {
         $prefix = $type->prefix() . '-' . $year . '-';
         $row = DB::table('stock_movements')
-            ->where('user_id', $userId)
             ->where('type', $type->value)
             ->where('number', 'like', $prefix . '%')
             ->selectRaw('MAX(CAST(SUBSTR(number, ?) AS UNSIGNED)) as max_number', [\mb_strlen($prefix) + 1])
@@ -215,12 +209,11 @@ class StockMovementSequence extends BaseModel
     /**
      * Increment and persist the last_number for an existing sequence row.
      */
-    private static function bump(StockMovementTypeEnum $type, int $year, int $userId, self $existing): self
+    private static function bump(StockMovementTypeEnum $type, int $year, self $existing): self
     {
         $newNumber = $existing->getLastNumber() + 1;
 
         static::query()
-            ->where('user_id', $userId)
             ->where('type', $type->value)
             ->where('year', $year)
             ->update(['last_number' => $newNumber]);

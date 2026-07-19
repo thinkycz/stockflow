@@ -16,6 +16,8 @@ enum StockMovementTypeEnum: string
 
     case INVENTORY_RECONCILIATION = 'inventory_reconciliation';
 
+    case REVERSAL = 'reversal';
+
     /**
      * Get possible values.
      *
@@ -37,6 +39,7 @@ enum StockMovementTypeEnum: string
             self::CONSUMPTION => 'CON',
             self::ADJUSTMENT => 'ADJ',
             self::INVENTORY_RECONCILIATION => 'REC',
+            self::REVERSAL => 'REV',
         };
     }
 }

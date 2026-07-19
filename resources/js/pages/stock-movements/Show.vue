@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowLeft, ArrowLeftRight, Trash2 } from '@lucide/vue';
+import { ArrowLeft, ArrowLeftRight, Undo2 } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
@@ -38,20 +38,25 @@ defineProps<{
             | 'transfer'
             | 'consumption'
             | 'adjustment'
-            | 'inventory_reconciliation';
+            | 'inventory_reconciliation'
+            | 'reversal';
         display_label_key:
             | 'incoming'
             | 'transfer'
             | 'consumption'
             | 'adjustment'
-            | 'inventory_reconciliation';
+            | 'inventory_reconciliation'
+            | 'reversal';
         note: string | null;
         store_id: number | null;
         store_name: string | null;
         source_store_id: number | null;
         source_store_name: string | null;
-        total_quantity: number;
         total_value: number;
+        reversal_of_id: number | null;
+        reversal_reason: string | null;
+        reversed_at: string | null;
+        can_reverse: boolean;
         created_by: string | null;
         created_at: string;
     };
@@ -64,11 +69,12 @@ useBoundLocale();
 
 const route = useRoute();
 
-function destroyMovement(id: number): void {
-    if (!window.confirm(t('stock_movements.confirm_delete'))) {
+function reverseMovement(id: number): void {
+    const reason = window.prompt(t('stock_movements.reversal_reason_prompt'));
+    if (reason === null || reason.trim() === '') {
         return;
     }
-    router.delete(route('stock-movements.destroy', id));
+    router.post(route('stock-movements.reverse', id), { reason });
 }
 </script>
 
@@ -122,32 +128,33 @@ function destroyMovement(id: number): void {
                 </div>
                 <div class="flex items-center gap-2">
                     <Button
-                        v-if="movement.type !== 'inventory_reconciliation'"
+                        v-if="movement.can_reverse"
                         variant="danger"
                         type="button"
-                        @click="destroyMovement(movement.id)"
+                        @click="reverseMovement(movement.id)"
                     >
-                        <Trash2 :size="14" />
-                        {{ t('common.delete') }}
+                        <Undo2 :size="14" />
+                        {{ t('stock_movements.reverse') }}
                     </Button>
                 </div>
             </div>
 
-            <div class="grid gap-4 sm:grid-cols-3">
-                <Card padded>
-                    <CardHeader>
-                        <CardDescription>{{
-                            t('stock_movements.detail.total_quantity')
-                        }}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p
-                            class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                        >
-                            {{ formatNumber(movement.total_quantity) }}
-                        </p>
-                    </CardContent>
-                </Card>
+            <Card v-if="movement.reversed_at || movement.reversal_of_id" padded>
+                <p class="text-sm text-on-surface-variant">
+                    {{
+                        movement.reversal_of_id
+                            ? t('stock_movements.reversal_of', {
+                                  id: movement.reversal_of_id,
+                              })
+                            : t('stock_movements.reversed')
+                    }}
+                    <span v-if="movement.reversal_reason">
+                        · {{ movement.reversal_reason }}
+                    </span>
+                </p>
+            </Card>
+
+            <div class="grid gap-4 sm:grid-cols-2">
                 <Card padded>
                     <CardHeader>
                         <CardDescription>{{

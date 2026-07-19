@@ -13,6 +13,10 @@ use App\Http\Controllers\Web\InventoryCount\InventoryCountHistoryController;
 use App\Http\Controllers\Web\InventoryCount\InventoryCountIndexController;
 use App\Http\Controllers\Web\InventoryCount\InventoryCountShowController;
 use App\Http\Controllers\Web\InventoryCount\InventoryCountUpdateController;
+use App\Http\Controllers\Web\InventoryCount\InventoryDraftCancelController;
+use App\Http\Controllers\Web\InventoryCount\InventoryDraftCloseController;
+use App\Http\Controllers\Web\InventoryCount\InventoryDraftRowController;
+use App\Http\Controllers\Web\InventoryCount\InventoryDraftStartController;
 use App\Http\Controllers\Web\Item\ItemCreateController;
 use App\Http\Controllers\Web\Item\ItemDestroyController;
 use App\Http\Controllers\Web\Item\ItemEditController;
@@ -39,8 +43,8 @@ use App\Http\Controllers\Web\Statement\StatementUpdateController;
 use App\Http\Controllers\Web\Statement\StatementVersionRestoreController;
 use App\Http\Controllers\Web\Statement\StatementVersionShowController;
 use App\Http\Controllers\Web\StockMovement\StockMovementCreateController;
-use App\Http\Controllers\Web\StockMovement\StockMovementDestroyController;
 use App\Http\Controllers\Web\StockMovement\StockMovementIndexController;
+use App\Http\Controllers\Web\StockMovement\StockMovementReverseController;
 use App\Http\Controllers\Web\StockMovement\StockMovementShowController;
 use App\Http\Controllers\Web\Store\StoreCreateController;
 use App\Http\Controllers\Web\Store\StoreDestroyController;
@@ -101,12 +105,17 @@ Resolver::resolveRouteRegistrar()
         // Inventory counts (admin + limited)
         $router->get('inventory-counts', InventoryCountIndexController::class)->name('inventory-counts.index');
         $router->post('inventory-counts', InventoryCountUpdateController::class)->name('inventory-counts.update');
+        $router->post('inventory-counts/drafts', InventoryDraftStartController::class)->name('inventory-counts.drafts.start');
+        $router->put('inventory-counts/drafts/{session}/rows', InventoryDraftRowController::class)->whereNumber('session')->name('inventory-counts.drafts.rows.update');
+        $router->post('inventory-counts/drafts/{session}/close', InventoryDraftCloseController::class)->whereNumber('session')->name('inventory-counts.drafts.close');
+        $router->post('inventory-counts/drafts/{session}/cancel', InventoryDraftCancelController::class)->whereNumber('session')->name('inventory-counts.drafts.cancel');
         $router->get('inventory-counts/history', InventoryCountHistoryController::class)->name('inventory-counts.history');
         $router->get('inventory-counts/{session}', InventoryCountShowController::class)->whereNumber('session')->name('inventory-counts.show');
 
         // Manual consumption (admin + limited assigned-store users)
         $router->get('stock-movements/create', [StockMovementCreateController::class, 'create'])->name('stock-movements.create');
         $router->post('stock-movements', [StockMovementCreateController::class, 'store'])->name('stock-movements.store');
+        $router->get('items/search', ItemSearchController::class)->name('items.search');
 
         // Shifts (admin + limited view)
         $router->get('shifts', ShiftIndexController::class)->name('shifts.index');
@@ -126,7 +135,6 @@ Resolver::resolveRouteRegistrar()
         $router->get('items', ItemIndexController::class)->name('items.index');
         $router->get('items/create', [ItemCreateController::class, 'create'])->name('items.create');
         $router->post('items', [ItemCreateController::class, 'store'])->name('items.store');
-        $router->get('items/search', ItemSearchController::class)->name('items.search');
         $router->get('items/{item}', ItemShowController::class)->whereNumber('item')->name('items.show');
         $router->get('items/{item}/edit', [ItemEditController::class, 'edit'])->whereNumber('item')->name('items.edit');
         $router->put('items/{item}', [ItemEditController::class, 'update'])->whereNumber('item')->name('items.update');
@@ -145,7 +153,7 @@ Resolver::resolveRouteRegistrar()
         // Stock movements
         $router->get('stock-movements', StockMovementIndexController::class)->name('stock-movements.index');
         $router->get('stock-movements/{stockMovement}', StockMovementShowController::class)->whereNumber('stockMovement')->name('stock-movements.show');
-        $router->delete('stock-movements/{stockMovement}', StockMovementDestroyController::class)->whereNumber('stockMovement')->name('stock-movements.destroy');
+        $router->post('stock-movements/{stockMovement}/reverse', StockMovementReverseController::class)->whereNumber('stockMovement')->name('stock-movements.reverse');
 
         // Reports
         $router->get('reports', ReportController::class)->name('reports.index');

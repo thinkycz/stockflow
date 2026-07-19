@@ -67,9 +67,10 @@ class DashboardController
             'no_data' => 0,
         ];
         $lowStockCount = 0;
+        $predictions = $inventoryService->predictionsForStore($activeStore, $itemsInStore);
 
         foreach ($itemsInStore as $row) {
-            $prediction = $inventoryService->predictedRunOut($activeStore, $row->getItem());
+            $prediction = $predictions[$row->getItemId()];
 
             if ($prediction['status'] === InventorySessionService::STATUS_OUT) {
                 ++$stockStatus['out_of_stock'];
@@ -110,6 +111,7 @@ class DashboardController
                 });
         });
         $recentMovements = $recentMovements
+            ->whereNull('reversed_at')
             ->with(['store', 'creator'])
             ->orderByDesc('occurred_at')
             ->orderByDesc('id')
@@ -180,6 +182,7 @@ class DashboardController
         $query = StockMovement::query();
         StockMovement::scopeForUser($query, $user);
         StockMovement::scopeFromDate($query, $since);
+        $query->whereNull('reversed_at');
         $query->where(static function (Builder $query) use ($storeId): void {
             $query
                 ->where(static function (Builder $query) use ($storeId): void {
@@ -219,6 +222,7 @@ class DashboardController
         StockMovement::scopeForUser($query, $user);
         StockMovement::scopeOfType($query, $type);
         StockMovement::scopeFromDate($query, $since);
+        $query->whereNull('reversed_at');
 
         return (float) $query
             ->where($storeColumn, $storeId)
@@ -239,6 +243,7 @@ class DashboardController
             ->where('movements.user_id', $user->getKey())
             ->where('movements.store_id', $storeId)
             ->where('movements.occurred_at', '>=', $since)
+            ->whereNull('movements.reversed_at')
             ->where('stock_movement_items.classification', 'consumption')
             ->select(
                 'items.id',
@@ -260,7 +265,7 @@ class DashboardController
                 'item_id' => Typer::assertInt($values['id'] ?? null),
                 'title' => Typer::assertString($values['title'] ?? null),
                 'sku' => Typer::parseNullableString($values['sku'] ?? null),
-                'total_quantity' => Typer::parseInt($values['total_quantity'] ?? null),
+                'total_quantity' => Typer::parseFloat($values['total_quantity'] ?? null),
                 'total_value' => Typer::parseFloat($values['total_value'] ?? null),
                 'rows_count' => Typer::parseInt($values['rows_count'] ?? null),
             ];
@@ -277,6 +282,7 @@ class DashboardController
             ->where('stock_movements.user_id', $user->getKey())
             ->where('stock_movements.store_id', $storeId)
             ->where('stock_movements.occurred_at', '>=', $since)
+            ->whereNull('stock_movements.reversed_at')
             ->where('stock_movement_items.classification', 'consumption')
             ->sum('stock_movement_items.total');
     }

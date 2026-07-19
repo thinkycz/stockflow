@@ -9,6 +9,7 @@ import {
     HardHat,
     LayoutDashboard,
     LogOut,
+    PackageMinus,
     Receipt,
     Settings as SettingsIcon,
     Store as StoreIcon,
@@ -140,6 +141,13 @@ const dashboardNavItem = computed<NavItem>(() => ({
 }));
 
 const limitedStoreNavItems = computed<NavItem[]>(() => [
+    {
+        key: 'consumption',
+        href: route('stock-movements.create', { mode: 'consumption' }),
+        label: t('nav.consumption'),
+        icon: PackageMinus,
+        active: activeUrl.value.startsWith('/stock-movements/create'),
+    },
     {
         key: 'statements',
         href: route('statements.index'),

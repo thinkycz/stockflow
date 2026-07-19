@@ -80,6 +80,8 @@ class StatementService
 
             StatementDay::query()->insert($rows);
 
+            $this->snapshot($statement, $user);
+
             return $statement->fresh(['days']) ?? $statement;
         });
     }
@@ -133,9 +135,9 @@ class StatementService
 
                 $day->update($update);
             }
-        });
 
-        $this->snapshot($statement, $user);
+            $this->snapshot($statement, $user);
+        });
     }
 
     /**
@@ -145,7 +147,7 @@ class StatementService
      */
     public function clear(Statement $statement, User $user): void
     {
-        DB::transaction(function () use ($statement): void {
+        DB::transaction(function () use ($statement, $user): void {
             $statement->days()->update([
                 'cash' => 0,
                 'card' => 0,
@@ -156,9 +158,9 @@ class StatementService
                 'total' => 0,
                 'cash_checked' => false,
             ]);
-        });
 
-        $this->snapshot($statement, $user);
+            $this->snapshot($statement, $user);
+        });
     }
 
     /**
@@ -218,8 +220,6 @@ class StatementService
         DB::transaction(function () use ($version, $user): void {
             $statement = $version->getStatement();
 
-            $this->snapshot($statement, $user);
-
             $existing = $statement->days()->get()->keyBy(static fn(StatementDay $day): string => $day->getDate());
 
             foreach ($version->days()->orderBy('date')->get() as $versionDay) {
@@ -240,6 +240,8 @@ class StatementService
                     'cash_checked' => $versionDay->getCashChecked(),
                 ]);
             }
+
+            $this->snapshot($statement, $user);
         });
     }
 
@@ -515,6 +517,7 @@ class StatementService
         $query = DB::table('stock_movement_items')
             ->join('stock_movements', 'stock_movements.id', '=', 'stock_movement_items.stock_movement_id')
             ->where('stock_movements.user_id', $userId)
+            ->whereNull('stock_movements.reversed_at')
             ->where(static function (QueryBuilder $query): void {
                 $query->where('stock_movements.type', StockMovementTypeEnum::CONSUMPTION->value)
                     ->orWhere(static function (QueryBuilder $query): void {

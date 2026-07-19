@@ -435,3 +435,51 @@ use Thinkycz\LaravelCore\Support\Typer;
     ));
     \expect($filled)->toHaveCount(2);
 });
+
+\test('draft reconciliation preserves movements posted after a row was counted', function (): void {
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
+    StoreItem::query()->create(['store_id' => $store->getKey(), 'item_id' => $item->getKey(), 'quantity' => 10]);
+    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
+    $draft = $service->startDraft($user, $store);
+    $service->saveDraftRow($user, $draft, [
+        'item_id' => $item->getKey(), 'quantity' => 7, 'classification' => 'consumption', 'client_version' => 1,
+    ]);
+
+    Typer::assertInstance(\app(StockMovementService::class), StockMovementService::class)->createMovement([
+        'mode' => 'incoming', 'store_id' => $store->getKey(),
+        'items' => [['item_id' => $item->getKey(), 'quantity' => 5]],
+    ], $user);
+    $service->closeDraft($user, $draft);
+
+    \expect((int) StoreItem::query()->where('store_id', $store->getKey())->where('item_id', $item->getKey())->value('quantity'))->toBe(12)
+        ->and($draft->fresh()?->getStatus())->toBe('closed');
+});
+
+\test('draft is unique per store and stale autosave cannot overwrite a newer row', function (): void {
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
+    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
+    $draft = $service->startDraft($user, $store);
+
+    \expect($service->startDraft($user, $store)->getKey())->toBe($draft->getKey());
+    $service->saveDraftRow($user, $draft, ['item_id' => $item->getKey(), 'quantity' => 8, 'client_version' => 2]);
+    $row = $service->saveDraftRow($user, $draft, ['item_id' => $item->getKey(), 'quantity' => 3, 'client_version' => 1]);
+
+    \expect($row->getQuantity())->toBe(8)
+        ->and(InventorySession::query()->where('active_store_key', $store->getKey())->count())->toBe(1);
+});
+
+\test('closing a partial draft leaves uncounted items untouched', function (): void {
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+    $counted = Item::factory()->create(['user_id' => $user->getKey()]);
+    $untouched = Item::factory()->create(['user_id' => $user->getKey()]);
+    StoreItem::query()->create(['store_id' => $store->getKey(), 'item_id' => $counted->getKey(), 'quantity' => 10]);
+    StoreItem::query()->create(['store_id' => $store->getKey(), 'item_id' => $untouched->getKey(), 'quantity' => 9]);
+    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
+    $draft = $service->startDraft($user, $store);
+    $service->saveDraftRow($user, $draft, ['item_id' => $counted->getKey(), 'quantity' => 7, 'client_version' => 1]);
+    $service->closeDraft($user, $draft);
+
+    \expect((int) StoreItem::query()->where('store_id', $store->getKey())->where('item_id', $untouched->getKey())->value('quantity'))->toBe(9);
+});

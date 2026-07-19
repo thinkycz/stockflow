@@ -37,8 +37,8 @@ type ItemOption = {
 type Row = {
     id: string;
     item_id: string;
-    quantity: number;
-    quantity_after: number;
+    quantity: string;
+    quantity_after: string;
     adjustment_reason: string;
 };
 
@@ -47,6 +47,7 @@ type FormState = {
     store_id: string;
     source_store_id: string;
     note: string;
+    occurred_at: string;
 };
 
 const props = defineProps<{
@@ -79,6 +80,7 @@ const form = useForm<FormState>({
     store_id: defaultWarehouseId,
     source_store_id: '',
     note: '',
+    occurred_at: '',
 });
 
 const rows = reactive<Row[]>([]);
@@ -135,8 +137,8 @@ function makeRow(): Row {
     return {
         id: `row-${rowCounter}`,
         item_id: props.defaults.item_id ? String(props.defaults.item_id) : '',
-        quantity: 0,
-        quantity_after: 0,
+        quantity: '',
+        quantity_after: '0.000',
         adjustment_reason: props.reasons[0] ?? 'other',
     };
 }
@@ -301,7 +303,7 @@ function onItemChange(row: Row): void {
     if (isAdjustmentMode.value) {
         const item = findItem(row.item_id);
         if (item) {
-            row.quantity_after = displayedQuantity(row);
+            row.quantity_after = String(displayedQuantity(row));
         }
     }
 }
@@ -352,10 +354,11 @@ type StockMovementPayload = {
     store_id: number | string | null;
     source_store_id?: number | string | null;
     note: string | null;
+    occurred_at?: string | null;
     items: Array<{
         item_id: string;
-        quantity?: number;
-        quantity_after?: number;
+        quantity?: string;
+        quantity_after?: string;
         adjustment_reason?: string;
     }>;
 };
@@ -380,6 +383,7 @@ function buildPayload(data: FormState): StockMovementPayload {
             mode: 'adjustment',
             store_id: data.store_id || null,
             note: data.note || null,
+            occurred_at: data.occurred_at || null,
             items,
         };
     }
@@ -389,6 +393,7 @@ function buildPayload(data: FormState): StockMovementPayload {
             mode: 'consumption',
             store_id: data.store_id || null,
             note: data.note || null,
+            occurred_at: data.occurred_at || null,
             items,
         };
     }
@@ -398,6 +403,7 @@ function buildPayload(data: FormState): StockMovementPayload {
         store_id: data.store_id || null,
         source_store_id: data.source_store_id || null,
         note: data.note || null,
+        occurred_at: data.occurred_at || null,
         items,
     };
 }
@@ -616,6 +622,19 @@ watch(
                         }}</Label>
                         <Input id="note" v-model="form.note" type="text" />
                     </div>
+                    <div v-if="props.is_admin" class="mt-4 space-y-2">
+                        <Label for="occurred_at">{{
+                            t('stock_movements.form.occurred_at')
+                        }}</Label>
+                        <Input
+                            id="occurred_at"
+                            v-model="form.occurred_at"
+                            type="datetime-local"
+                        />
+                        <p class="text-xs text-on-surface-variant">
+                            {{ t('stock_movements.form.occurred_at_help') }}
+                        </p>
+                    </div>
                 </Card>
 
                 <Card padded>
@@ -762,7 +781,7 @@ watch(
                                         <Input
                                             v-model="row.quantity"
                                             type="number"
-                                            step="1"
+                                            step="0.001"
                                             min="1"
                                             :invalid="isOutOfStockError(row)"
                                             required
@@ -772,7 +791,7 @@ watch(
                                         <Input
                                             v-model="row.quantity_after"
                                             type="number"
-                                            step="1"
+                                            step="0.001"
                                             min="0"
                                             required
                                         />

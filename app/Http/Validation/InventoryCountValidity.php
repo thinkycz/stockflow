@@ -76,7 +76,7 @@ class InventoryCountValidity
      */
     public function rowQuantity(): Validity
     {
-        return $this->baseValidity->make()->integer(999999, 0);
+        return $this->baseValidity->make()->numeric(999999999.999, 0)->decimal(0, 3);
     }
 
     /**

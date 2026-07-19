@@ -119,7 +119,7 @@ class StockMovementValidity
      */
     public function rowQuantity(): Validity
     {
-        return $this->baseValidity->make()->integer(999999, 1);
+        return $this->baseValidity->make()->numeric(999999999.999, 0.001)->decimal(0, 3);
     }
 
     /**
@@ -127,7 +127,7 @@ class StockMovementValidity
      */
     public function rowQuantityAfter(): Validity
     {
-        return $this->baseValidity->make()->integer(999999, 0);
+        return $this->baseValidity->make()->numeric(999999999.999, 0)->decimal(0, 3);
     }
 
     /**

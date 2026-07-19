@@ -14,6 +14,8 @@ use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
 use App\Services\StockMovementService;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +28,10 @@ class BackfillInventoryConsumptionCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'stockflow:backfill-inventory-consumption {--dry-run : Report changes without writing them}';
+    protected $signature = 'stockflow:backfill-inventory-consumption
+        {--dry-run : Report changes without writing them}
+        {--chunk=200 : Number of inventory sessions processed per batch}
+        {--after=0 : Resume after this inventory session id}';
 
     /**
      * Console command description.
@@ -48,123 +53,28 @@ class BackfillInventoryConsumptionCommand extends Command
             'unchanged' => 0,
             'skipped' => 0,
         ];
-        /** @var array<int, array<int, array{session_item: InventorySessionItem, item: Item, expected: int, counted: int, difference: int, classification: StockMovementClassificationEnum, observation_started_at: Carbon|null}>> $rowsBySession */
-        $rowsBySession = [];
-        /** @var array<int, array{expected_quantity: int, quantity_difference: int, classification: string|null, observation_started_at: Carbon}> $updates */
-        $updates = [];
+        $chunk = \max(1, Typer::parseInt($this->option('chunk')));
+        $after = \max(0, Typer::parseInt($this->option('after')));
+        $lastProcessed = $after;
 
-        $existingSessionIds = StockMovement::query()
-            ->where('type', StockMovementTypeEnum::INVENTORY_RECONCILIATION->value)
-            ->whereNotNull('inventory_session_id')
-            ->pluck('inventory_session_id')
-            ->map(static fn(mixed $value): int => Typer::parseInt($value))
-            ->all();
-        $existingLookup = \array_fill_keys($existingSessionIds, true);
+        InventorySession::query()
+            ->where('status', 'closed')
+            ->where('id', '>', $after)
+            ->with(['store', 'items.item'])
+            ->orderBy('id')
+            ->chunkById($chunk, function ($sessions) use (
+                $dryRun,
+                $movementService,
+                &$stats,
+                &$lastProcessed,
+            ): void {
+                foreach ($sessions as $session) {
+                    $lastProcessed = $session->getKey();
+                    $this->processSession($session, $dryRun, $movementService, $stats);
+                }
 
-        $items = InventorySessionItem::query()
-            ->with(['session.store', 'item'])
-            ->get()
-            ->sortBy(static function (InventorySessionItem $row): string {
-                $session = $row->getSession();
-
-                return \mb_str_pad((string) $session->getStore()->getKey(), 12, '0', \STR_PAD_LEFT)
-                    . ':' . \mb_str_pad((string) $row->getItemId(), 12, '0', \STR_PAD_LEFT)
-                    . ':' . $session->getCountedAt()->format('YmdHis.u')
-                    . ':' . \mb_str_pad((string) $row->getKey(), 12, '0', \STR_PAD_LEFT);
-            })
-            ->groupBy(static function (InventorySessionItem $row): string {
-                return $row->getSession()->getStore()->getKey() . ':' . $row->getItemId();
+                $this->line("Checkpoint: --after={$lastProcessed}");
             });
-
-        foreach ($items as $group) {
-            $previous = null;
-
-            foreach ($group as $row) {
-                if (!$previous instanceof InventorySessionItem) {
-                    $previous = $row;
-                    ++$stats['skipped'];
-
-                    continue;
-                }
-
-                $session = $row->getSession();
-                $sessionId = $session->getKey();
-                if (isset($existingLookup[$sessionId]) || $row->getExpectedQuantity() !== null) {
-                    $previous = $row;
-                    ++$stats['skipped'];
-
-                    continue;
-                }
-
-                $previousSession = $previous->getSession();
-                $store = $session->getStore();
-                $item = $row->getItem();
-                $expected = $previous->getQuantity() + $this->movementDelta(
-                    $store,
-                    $item,
-                    $previousSession->getCountedAt(),
-                    $session->getCountedAt(),
-                );
-                $difference = $row->getQuantity() - $expected;
-                $classification = $difference < 0
-                    ? StockMovementClassificationEnum::CONSUMPTION
-                    : StockMovementClassificationEnum::INVENTORY_CORRECTION;
-
-                ++$stats['intervals'];
-                if ($difference < 0) {
-                    $stats['consumption'] += \abs($difference);
-                } elseif ($difference > 0) {
-                    $stats['corrections'] += $difference;
-                } else {
-                    ++$stats['unchanged'];
-                }
-
-                $updates[$row->getKey()] = [
-                    'expected_quantity' => $expected,
-                    'quantity_difference' => $difference,
-                    'classification' => $difference === 0 ? null : $classification->value,
-                    'observation_started_at' => $previousSession->getCountedAt(),
-                ];
-
-                if ($difference !== 0) {
-                    $rowsBySession[$sessionId][] = [
-                        'session_item' => $row,
-                        'item' => $item,
-                        'expected' => $expected,
-                        'counted' => $row->getQuantity(),
-                        'difference' => $difference,
-                        'classification' => $classification,
-                        'observation_started_at' => $previousSession->getCountedAt(),
-                    ];
-                }
-
-                $previous = $row;
-            }
-        }
-
-        if (!$dryRun) {
-            DB::transaction(function () use ($updates, $rowsBySession, $movementService): void {
-                foreach ($updates as $itemId => $attributes) {
-                    InventorySessionItem::query()->whereKey($itemId)->update($attributes);
-                }
-                foreach ($rowsBySession as $sessionId => $rows) {
-                    $session = InventorySession::query()->with('store')->whereKey($sessionId)->first();
-                    if (!$session instanceof InventorySession) {
-                        continue;
-                    }
-                    $owner = User::query()->whereKey($session->getUserId())->first();
-                    if (!$owner instanceof User) {
-                        continue;
-                    }
-                    $movementService->createInventoryReconciliation(
-                        $session,
-                        $owner,
-                        $rows,
-                        StockMovementOriginEnum::MIGRATION,
-                    );
-                }
-            });
-        }
 
         $this->table(
             ['Mode', 'Intervals', 'Consumed units', 'Correction units', 'Zero differences', 'Skipped'],
@@ -182,9 +92,125 @@ class BackfillInventoryConsumptionCommand extends Command
     }
 
     /**
+     * Process one inventory in its own bounded transaction.
+     *
+     * @param array{intervals: int, consumption: float|int, corrections: float|int, unchanged: int, skipped: int} $stats
+     */
+    private function processSession(
+        InventorySession $session,
+        bool $dryRun,
+        StockMovementService $movementService,
+        array &$stats,
+    ): void {
+        if (StockMovement::query()->where('inventory_session_id', $session->getKey())->exists()) {
+            $stats['skipped'] += $session->getItems()->count();
+
+            return;
+        }
+
+        /** @var array<int, array{session_item: InventorySessionItem, item: Item, expected: string, counted: string, difference: string, classification: StockMovementClassificationEnum, observation_started_at: Carbon|null}> $movementRows */
+        $movementRows = [];
+        /** @var array<int, array{expected_quantity: string, quantity_difference: string, classification: string|null, observation_started_at: Carbon}> $updates */
+        $updates = [];
+        $store = $session->getStore();
+
+        foreach ($session->getItems()->sortBy(static fn(InventorySessionItem $row): int => $row->getItemId()) as $row) {
+            if ($row->getExpectedQuantity() !== null) {
+                ++$stats['skipped'];
+
+                continue;
+            }
+
+            $previous = InventorySessionItem::query()
+                ->with('session')
+                ->where('item_id', $row->getItemId())
+                ->whereHas('session', static function ($query) use ($store, $session): void {
+                    $query->where('store_id', $store->getKey())
+                        ->where('status', 'closed')
+                        ->where('counted_at', '<', $session->getCountedAt()->toDateTimeString());
+                })
+                ->orderByDesc(
+                    InventorySession::query()
+                        ->select('counted_at')
+                        ->whereColumn('inventory_sessions.id', 'inventory_session_items.session_id')
+                        ->limit(1),
+                )
+                ->first();
+
+            if (!$previous instanceof InventorySessionItem) {
+                ++$stats['skipped'];
+
+                continue;
+            }
+
+            $previousSession = $previous->getSession();
+            $item = $row->getItem();
+            $expected = $this->decimal($previous->getQuantity())->plus($this->movementDelta(
+                $store,
+                $item,
+                $previousSession->getCountedAt(),
+                $session->getCountedAt(),
+            ));
+            $counted = $this->decimal($row->getQuantity());
+            $difference = $counted->minus($expected);
+            $classification = $difference->isNegative()
+                ? StockMovementClassificationEnum::CONSUMPTION
+                : StockMovementClassificationEnum::INVENTORY_CORRECTION;
+
+            ++$stats['intervals'];
+            if ($difference->isNegative()) {
+                $stats['consumption'] += (float) (string) $difference->abs();
+            } elseif ($difference->isPositive()) {
+                $stats['corrections'] += (float) (string) $difference;
+            } else {
+                ++$stats['unchanged'];
+            }
+
+            $updates[$row->getKey()] = [
+                'expected_quantity' => (string) $expected,
+                'quantity_difference' => (string) $difference,
+                'classification' => $difference->isZero() ? null : $classification->value,
+                'observation_started_at' => $previousSession->getCountedAt(),
+            ];
+
+            if (!$difference->isZero()) {
+                $movementRows[] = [
+                    'session_item' => $row,
+                    'item' => $item,
+                    'expected' => (string) $expected,
+                    'counted' => (string) $counted,
+                    'difference' => (string) $difference,
+                    'classification' => $classification,
+                    'observation_started_at' => $previousSession->getCountedAt(),
+                ];
+            }
+        }
+
+        if ($dryRun || $updates === []) {
+            return;
+        }
+
+        DB::transaction(function () use ($session, $updates, $movementRows, $movementService): void {
+            if (StockMovement::query()->where('inventory_session_id', $session->getKey())->lockForUpdate()->exists()) {
+                return;
+            }
+            foreach ($updates as $rowId => $attributes) {
+                InventorySessionItem::query()->whereKey($rowId)->update($attributes);
+            }
+            $owner = User::query()->whereKey($session->getUserId())->firstOrFail();
+            $movementService->createInventoryReconciliation(
+                $session,
+                $owner,
+                $movementRows,
+                StockMovementOriginEnum::MIGRATION,
+            );
+        }, 3);
+    }
+
+    /**
      * Net known ledger change at one store between two physical counts.
      */
-    private function movementDelta(Store $store, Item $item, Carbon $from, Carbon $to): int
+    private function movementDelta(Store $store, Item $item, Carbon $from, Carbon $to): BigDecimal
     {
         $rows = DB::table('stock_movement_items')
             ->join('stock_movements', 'stock_movements.id', '=', 'stock_movement_items.stock_movement_id')
@@ -201,29 +227,37 @@ class BackfillInventoryConsumptionCommand extends Command
                 'stock_movement_items.quantity_difference',
             ]);
 
-        $delta = 0;
+        $delta = BigDecimal::zero();
         foreach ($rows as $row) {
             $type = StockMovementTypeEnum::from(Typer::assertString($row->type));
             $storeId = Typer::parseNullableInt($row->store_id);
             $sourceStoreId = Typer::parseNullableInt($row->source_store_id);
-            $quantity = Typer::parseInt($row->quantity);
+            $quantity = $this->decimal($row->quantity);
 
             if ($type === StockMovementTypeEnum::TRANSFER) {
                 if ($storeId === $store->getKey()) {
-                    $delta += $quantity;
+                    $delta = $delta->plus($quantity);
                 }
                 if ($sourceStoreId === $store->getKey()) {
-                    $delta -= $quantity;
+                    $delta = $delta->minus($quantity);
                 }
 
                 continue;
             }
 
             if ($storeId === $store->getKey()) {
-                $delta += Typer::parseInt($row->quantity_difference);
+                $delta = $delta->plus($this->decimal($row->quantity_difference));
             }
         }
 
         return $delta;
+    }
+
+    /**
+     * Parse a quantity without binary floating-point arithmetic.
+     */
+    private function decimal(mixed $value): BigDecimal
+    {
+        return BigDecimal::of((string) Typer::assertScalar($value))->toScale(3, RoundingMode::Unnecessary);
     }
 }

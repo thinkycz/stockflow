@@ -3,10 +3,12 @@
 ## High-level
 
 This project is a Laravel 13 + Inertia 3 + Vue 3 inventory starter with
-**per-user data isolation** within one deployment. Each authenticated user
-owns their own stores, item catalog, and stock movements. Quantity is tracked
+**one company per deployment**. The main administrator owns stores, catalog,
+and stock movements; limited users resolve that owner and are pinned to an
+assigned branch. Quantity is tracked
 per store via `store_items`; the immutable stock ledger records `incoming`,
-`transfer`, `consumption`, `adjustment`, and `inventory_reconciliation` events.
+`transfer`, `consumption`, `adjustment`, `inventory_reconciliation`, and
+`reversal` events.
 A transfer only changes location and never counts as consumption. Physical
 inventory creates a snapshot and, for non-zero differences, a linked inventory
 reconciliation in the same transaction. See
@@ -24,12 +26,14 @@ množství** (read-only — the current on-hand value in `store_items`),
 **Poslední množství** (read-only — the value recorded in the previous
 inventory session for the same store/item) and **Nové množství** (the
 input — what becomes the new on-hand value when the form is saved).
-Saving the form creates a new `inventory_sessions` header and one
-`inventory_session_items` row per recorded item inside a single
-transaction. Every row stores expected, counted, and difference values. A
+Opening the page can resume its store's single active draft. Rows autosave
+with a row-specific count time and client version. Closing the draft creates
+the final session and reconciliation in one transaction. Every row stores
+expected, counted, and difference values. A
 non-zero difference creates a linked ledger line with a reason; negative rows
 default to consumption and positive rows to inventory correction. The matching
-`store_items` row becomes the counted value.
+current `store_items` row receives only the difference, preserving movements
+posted after that row was counted.
 
 `/inventory-counts/{session}` is the read-only detail of one inventory
 session. It lists every item in alphabetical order with the value
@@ -261,4 +265,4 @@ All UI dates use the `useCzechDate()` composable
 `dd.MM.yyyy` (or `dd.MM.yyyy HH:mm` for timestamps) regardless of the
 active UI locale. The backend always returns ISO 8601 strings; the
 frontend formats on the client. `resources/js/lib/format.ts` also uses
-`Intl.DateTimeFormat('cs-CZ', …)` so legacy call sites stay consistent.
+`Intl.DateTimeFormat` with `cs-CZ`, `sk-SK`, or `en-GB` according to the active UI locale; application timestamps use `Europe/Prague`.

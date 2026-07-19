@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Plus, Search, Trash2 } from '@lucide/vue';
+import { Plus, Search } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -15,7 +15,7 @@ import Pagination from '@/components/ui/Pagination.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
-import { formatDate, formatMoney, formatNumber } from '@/lib/format';
+import { formatDate, formatMoney } from '@/lib/format';
 
 type MovementRow = {
     id: number;
@@ -25,19 +25,20 @@ type MovementRow = {
         | 'transfer'
         | 'consumption'
         | 'adjustment'
-        | 'inventory_reconciliation';
+        | 'inventory_reconciliation'
+        | 'reversal';
     display_label_key:
         | 'incoming'
         | 'transfer'
         | 'consumption'
         | 'adjustment'
-        | 'inventory_reconciliation';
+        | 'inventory_reconciliation'
+        | 'reversal';
     store_id: number | null;
     store_name: string | null;
     source_store_id: number | null;
     source_store_name: string | null;
     created_at: string;
-    total_quantity: number;
     total_value: number;
     items_count: number;
     created_by: string | null;
@@ -93,12 +94,10 @@ const totals = computed(() =>
     props.movements.reduce(
         (summary, movement) => ({
             items_count: summary.items_count + movement.items_count,
-            total_quantity: summary.total_quantity + movement.total_quantity,
             total_value: summary.total_value + movement.total_value,
         }),
         {
             items_count: 0,
-            total_quantity: 0,
             total_value: 0,
         },
     ),
@@ -146,13 +145,6 @@ watch(
         filterTimer = setTimeout(applyFilters, 300);
     },
 );
-
-function destroyMovement(id: number): void {
-    if (!window.confirm(t('stock_movements.confirm_delete'))) {
-        return;
-    }
-    router.delete(route('stock-movements.destroy', id));
-}
 </script>
 
 <template>
@@ -244,6 +236,10 @@ function destroyMovement(id: number): void {
                                     label: t(
                                         'stock_movements.types.adjustment',
                                     ),
+                                },
+                                {
+                                    value: 'reversal',
+                                    label: t('stock_movements.types.reversal'),
                                 },
                             ]"
                         />
@@ -350,9 +346,6 @@ function destroyMovement(id: number): void {
                                     }}
                                 </th>
                                 <th class="text-right">
-                                    {{ t('stock_movements.columns.quantity') }}
-                                </th>
-                                <th class="text-right">
                                     {{ t('stock_movements.columns.value') }}
                                 </th>
                                 <th>{{ t('stock_movements.columns.date') }}</th>
@@ -360,9 +353,6 @@ function destroyMovement(id: number): void {
                                     {{
                                         t('stock_movements.columns.created_by')
                                     }}
-                                </th>
-                                <th class="w-0">
-                                    {{ t('stock_movements.columns.actions') }}
                                 </th>
                             </tr>
                         </thead>
@@ -401,11 +391,6 @@ function destroyMovement(id: number): void {
                                 >
                                     {{ movement.items_count }}
                                 </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ formatNumber(movement.total_quantity) }}
-                                </td>
                                 <td class="text-right text-on-surface-variant">
                                     {{ formatMoney(movement.total_value) }}
                                 </td>
@@ -414,16 +399,6 @@ function destroyMovement(id: number): void {
                                 </td>
                                 <td class="text-xs text-on-surface-variant">
                                     {{ movement.created_by ?? '—' }}
-                                </td>
-                                <td>
-                                    <Button
-                                        variant="ghost"
-                                        type="button"
-                                        :aria-label="t('common.delete')"
-                                        @click="destroyMovement(movement.id)"
-                                    >
-                                        <Trash2 :size="14" />
-                                    </Button>
                                 </td>
                             </tr>
                         </tbody>
@@ -441,17 +416,12 @@ function destroyMovement(id: number): void {
                                     {{ totals.items_count }}
                                 </th>
                                 <th
-                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                >
-                                    {{ formatNumber(totals.total_quantity) }}
-                                </th>
-                                <th
                                     class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface"
                                 >
                                     {{ formatMoney(totals.total_value) }}
                                 </th>
                                 <th
-                                    colspan="3"
+                                    colspan="2"
                                     class="border-t border-outline-glass pt-2"
                                 ></th>
                             </tr>

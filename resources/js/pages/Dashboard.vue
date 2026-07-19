@@ -40,9 +40,9 @@ type RecentMovement = {
         | 'transfer'
         | 'consumption'
         | 'adjustment'
-        | 'inventory_reconciliation';
+        | 'inventory_reconciliation'
+        | 'reversal';
     store_name: string | null;
-    total_quantity: number;
     total_value: number;
     created_at: string;
 };
@@ -529,9 +529,6 @@ function statementPeriodLabel(statement: RecentStatement): string {
                                     <th>{{ t('dashboard.recent.number') }}</th>
                                     <th>{{ t('dashboard.recent.type') }}</th>
                                     <th class="text-right">
-                                        {{ t('dashboard.recent.quantity') }}
-                                    </th>
-                                    <th class="text-right">
                                         {{ t('dashboard.recent.value') }}
                                     </th>
                                     <th>{{ t('dashboard.recent.date') }}</th>
@@ -565,15 +562,6 @@ function statementPeriodLabel(statement: RecentStatement): string {
                                         <MovementTypeBadge
                                             :type="movement.type"
                                         />
-                                    </td>
-                                    <td
-                                        class="text-right font-semibold text-on-surface"
-                                    >
-                                        {{
-                                            formatNumber(
-                                                movement.total_quantity,
-                                            )
-                                        }}
                                     </td>
                                     <td
                                         class="text-right text-on-surface-variant"

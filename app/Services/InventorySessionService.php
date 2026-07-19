@@ -12,6 +12,9 @@ use App\Models\Item;
 use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -57,6 +60,178 @@ class InventorySessionService
     public function __construct(
         private readonly StockMovementService $movementService,
     ) {
+    }
+
+    /**
+     * Start or return the single active draft for a store.
+     */
+    public function startDraft(User $user, Store $store): InventorySession
+    {
+        $owner = $user->resolveScopeUser();
+        $this->authoriseStore($user, $store);
+
+        return DB::transaction(function () use ($user, $owner, $store): InventorySession {
+            $existing = InventorySession::query()
+                ->where('user_id', $owner->getKey())
+                ->where('active_store_key', $store->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($existing instanceof InventorySession) {
+                return $existing;
+            }
+
+            $now = Carbon::now();
+            $snapshot = StoreItem::query()
+                ->where('store_id', $store->getKey())
+                ->orderBy('item_id')
+                ->pluck('quantity', 'item_id')
+                ->map(static fn(mixed $quantity): string => BigDecimal::of((string) Typer::assertScalar($quantity))->toScale(3)->__toString())
+                ->all();
+
+            return InventorySession::query()->create([
+                'user_id' => $owner->getKey(),
+                'store_id' => $store->getKey(),
+                'active_store_key' => $store->getKey(),
+                'created_by' => $user->getKey(),
+                'status' => 'draft',
+                'started_at' => $now,
+                'counted_at' => $now,
+                'opening_snapshot' => $snapshot,
+            ]);
+        }, 3);
+    }
+
+    /**
+     * Find the active draft visible to the user.
+     */
+    public function activeDraft(User $user, Store $store): InventorySession|null
+    {
+        $this->authoriseStore($user, $store);
+
+        return InventorySession::query()
+            ->where('user_id', $user->resolveScopeUser()->getKey())
+            ->where('active_store_key', $store->getKey())
+            ->with('items')
+            ->first();
+    }
+
+    /**
+     * @param array<array-key, mixed> $payload
+     */
+    public function saveDraftRow(User $user, InventorySession $session, array $payload): InventorySessionItem
+    {
+        $this->authoriseSession($user, $session);
+
+        return DB::transaction(function () use ($session, $payload): InventorySessionItem {
+            $lockedSession = InventorySession::query()->whereKey($session->getKey())->lockForUpdate()->firstOrFail();
+            if (!$lockedSession->isDraft()) {
+                $this->fail(['inventory' => \__('Only an open inventory draft can be edited.')]);
+            }
+
+            $itemId = Typer::parseInt($payload['item_id'] ?? 0);
+            $quantity = $this->decimal($payload['quantity'] ?? -1);
+            $clientVersion = Typer::parseInt($payload['client_version'] ?? 0);
+            if ($quantity->isNegative() || $clientVersion <= 0) {
+                $this->fail(['quantity' => \__('A non-negative quantity and version are required.')]);
+            }
+
+            $item = Item::query()->where('user_id', $lockedSession->getUserId())->whereKey($itemId)->first();
+            if (!$item instanceof Item) {
+                $this->fail(['item_id' => \__('Item not found.')]);
+            }
+
+            $existing = InventorySessionItem::query()
+                ->where('session_id', $lockedSession->getKey())
+                ->where('item_id', $itemId)
+                ->lockForUpdate()
+                ->first();
+            if ($existing instanceof InventorySessionItem && $clientVersion <= Typer::parseInt($existing->getAttribute('client_version'))) {
+                return $existing;
+            }
+
+            $countedAt = Carbon::now();
+            $expected = $this->decimal($this->currentQuantity($lockedSession->getStore(), $item));
+            $difference = $quantity->minus($expected);
+            $classification = $this->resolveClassification($difference, Typer::parseNullableString($payload['classification'] ?? null));
+            $snapshot = Typer::assertArray($lockedSession->getAttribute('opening_snapshot') ?? []);
+
+            return InventorySessionItem::query()->updateOrCreate(
+                ['session_id' => $lockedSession->getKey(), 'item_id' => $itemId],
+                [
+                    'quantity' => (string) $quantity,
+                    'counted_at' => $countedAt,
+                    'opening_quantity' => (string) $this->decimal($snapshot[(string) $itemId] ?? $snapshot[$itemId] ?? 0),
+                    'client_version' => $clientVersion,
+                    'expected_quantity' => (string) $expected,
+                    'quantity_difference' => (string) $difference,
+                    'classification' => $classification?->value,
+                    'observation_started_at' => $this->previousCountedAt($lockedSession->getStore(), $item, $countedAt),
+                    'note' => Typer::parseNullableString($payload['note'] ?? null),
+                ],
+            );
+        }, 3);
+    }
+
+    /**
+     * Close a draft and apply only its row-level physical differences.
+     */
+    public function closeDraft(User $user, InventorySession $session): InventorySession
+    {
+        $this->authoriseSession($user, $session);
+        $owner = $user->resolveScopeUser();
+
+        return DB::transaction(function () use ($session, $owner): InventorySession {
+            $session = InventorySession::query()->whereKey($session->getKey())->lockForUpdate()->firstOrFail();
+            if (!$session->isDraft()) {
+                $this->fail(['inventory' => \__('Only an open inventory draft can be closed.')]);
+            }
+
+            $rows = $session->items()->with('item')->orderBy('item_id')->lockForUpdate()->get();
+            $reconciliationRows = [];
+            foreach ($rows as $row) {
+                $item = $row->getItem();
+                $difference = $this->decimal(Typer::assertScalar($row->getQuantityDifference()));
+                $storeItem = StoreItem::query()->firstOrCreate(
+                    ['store_id' => $session->getStore()->getKey(), 'item_id' => $item->getKey()],
+                    ['quantity' => 0],
+                );
+                $storeItem = StoreItem::query()->whereKey($storeItem->getKey())->lockForUpdate()->firstOrFail();
+                $before = $this->decimal($storeItem->getAttribute('quantity'));
+                $after = $before->plus($difference);
+                if ($after->isNegative()) {
+                    $this->fail(['inventory' => \__('Inventory reconciliation would make stock negative.')]);
+                }
+                $storeItem->update(['quantity' => (string) $after]);
+
+                $classification = $row->getClassification();
+                if (!$difference->isZero() && $classification instanceof StockMovementClassificationEnum) {
+                    $reconciliationRows[] = [
+                        'session_item' => $row, 'item' => $item, 'expected' => (string) $before, 'counted' => (string) $after,
+                        'difference' => (string) $difference, 'classification' => $classification,
+                        'observation_started_at' => $row->getObservationStartedAt(),
+                    ];
+                }
+            }
+
+            $now = Carbon::now();
+            $session->update(['status' => 'closed', 'active_store_key' => null, 'counted_at' => $now, 'closed_at' => $now]);
+            $this->movementService->createInventoryReconciliation($session, $owner, $reconciliationRows);
+
+            return $session;
+        }, 3);
+    }
+
+    /**
+     * Cancel a draft without posting inventory changes.
+     */
+    public function cancelDraft(User $user, InventorySession $session): void
+    {
+        if (!$user->isAdmin()) {
+            \abort(403);
+        }
+        $this->authoriseSession($user, $session);
+        $session->update(['status' => 'cancelled', 'active_store_key' => null, 'cancelled_at' => Carbon::now()]);
     }
 
     /**
@@ -107,7 +282,7 @@ class InventorySessionService
                     continue;
                 }
 
-                $quantity = Typer::parseInt($payload['quantity']);
+                $quantity = $this->decimal($payload['quantity']);
                 $rowNote = Typer::parseNullableString($payload['note'] ?? null);
 
                 $itemQuery = Item::query();
@@ -128,8 +303,8 @@ class InventorySessionService
                     continue;
                 }
 
-                $expected = $storeItem->getQuantity();
-                $difference = $quantity - $expected;
+                $expected = $this->decimal($storeItem->getAttribute('quantity'));
+                $difference = $quantity->minus($expected);
                 $classification = $this->resolveClassification(
                     $difference,
                     Typer::parseNullableString($payload['classification'] ?? null),
@@ -139,23 +314,23 @@ class InventorySessionService
                 $sessionItem = InventorySessionItem::query()->create([
                     'session_id' => $session->getKey(),
                     'item_id' => $item->getKey(),
-                    'quantity' => $quantity,
-                    'expected_quantity' => $expected,
-                    'quantity_difference' => $difference,
+                    'quantity' => (string) $quantity,
+                    'expected_quantity' => (string) $expected,
+                    'quantity_difference' => (string) $difference,
                     'classification' => $classification?->value,
                     'observation_started_at' => $observationStartedAt,
                     'note' => $rowNote,
                 ]);
 
-                $storeItem->update(['quantity' => $quantity]);
+                $storeItem->update(['quantity' => (string) $quantity]);
 
-                if ($difference !== 0 && $classification instanceof StockMovementClassificationEnum) {
+                if (!$difference->isZero() && $classification instanceof StockMovementClassificationEnum) {
                     $reconciliationRows[] = [
                         'session_item' => $sessionItem,
                         'item' => $item,
-                        'expected' => $expected,
-                        'counted' => $quantity,
-                        'difference' => $difference,
+                        'expected' => (string) $expected,
+                        'counted' => (string) $quantity,
+                        'difference' => (string) $difference,
                         'classification' => $classification,
                         'observation_started_at' => $observationStartedAt,
                     ];
@@ -171,7 +346,7 @@ class InventorySessionService
     /**
      * Current quantity on hand for the given store and item.
      */
-    public function currentQuantity(Store $store, Item $item): int
+    public function currentQuantity(Store $store, Item $item): float|int
     {
         $row = StoreItem::query()
             ->where('store_id', $store->getKey())
@@ -189,9 +364,9 @@ class InventorySessionService
      * Quantity from the most recent prior inventory session for the
      * given store and item. Returns null when no prior session exists.
      */
-    public function previousQuantity(Store $store, Item $item, Carbon|null $before = null): int|null
+    public function previousQuantity(Store $store, Item $item, Carbon|null $before = null): float|int|null
     {
-        $query = InventorySessionItem::query()
+        $query = DB::table('inventory_session_items')
             ->join('inventory_sessions', 'inventory_sessions.id', '=', 'inventory_session_items.session_id')
             ->where('inventory_sessions.store_id', $store->getKey())
             ->where('inventory_session_items.item_id', $item->getKey())
@@ -205,7 +380,7 @@ class InventorySessionService
 
         $value = $query->value('inventory_session_items.quantity');
 
-        return $value === null ? null : Typer::parseInt($value);
+        return $value === null ? null : $this->number($value);
     }
 
     /**
@@ -213,7 +388,7 @@ class InventorySessionService
      */
     public function previousCountedAt(Store $store, Item $item, Carbon|null $before = null): Carbon|null
     {
-        $query = InventorySessionItem::query()
+        $query = DB::table('inventory_session_items')
             ->join('inventory_sessions', 'inventory_sessions.id', '=', 'inventory_session_items.session_id')
             ->where('inventory_sessions.store_id', $store->getKey())
             ->where('inventory_session_items.item_id', $item->getKey())
@@ -232,7 +407,7 @@ class InventorySessionService
     /**
      * Calculate consumption across closed physical-count intervals.
      *
-     * @return array{quantity: int, per_day: float, coverage_days: float}
+     * @return array{quantity: float|int, per_day: float, coverage_days: float}
      */
     public function consumptionLastDays(
         Store $store,
@@ -241,116 +416,142 @@ class InventorySessionService
         int $maximumIntervals = self::MAXIMUM_INTERVALS,
     ): array
     {
+        return $this->consumptionForItems($store, [$item->getKey()], $days, $maximumIntervals)[$item->getKey()];
+    }
+
+    /**
+     * Load all closed intervals and manual consumption for a store in two queries.
+     *
+     * @param list<int> $itemIds
+     *
+     * @return array<int, array{quantity: float|int, per_day: float, coverage_days: float}>
+     */
+    public function consumptionForItems(Store $store, array $itemIds, int $days = self::CONSUMPTION_WINDOW_DAYS, int $maximumIntervals = self::MAXIMUM_INTERVALS): array
+    {
         $since = Carbon::now()->subDays($days)->startOfDay();
         $intervals = DB::table('inventory_session_items')
             ->join('inventory_sessions', 'inventory_sessions.id', '=', 'inventory_session_items.session_id')
             ->where('inventory_sessions.user_id', $store->getUserId())
             ->where('inventory_sessions.store_id', $store->getKey())
-            ->where('inventory_session_items.item_id', $item->getKey())
+            ->where('inventory_sessions.status', 'closed')
+            ->whereIn('inventory_session_items.item_id', $itemIds)
             ->whereNotNull('inventory_session_items.observation_started_at')
             ->where('inventory_sessions.counted_at', '>=', $since->toDateTimeString())
             ->orderByDesc('inventory_sessions.counted_at')
-            ->limit($maximumIntervals)
             ->get([
-                'inventory_sessions.counted_at',
+                'inventory_session_items.item_id',
+                DB::raw('COALESCE(inventory_session_items.counted_at, inventory_sessions.counted_at) as interval_ended_at'),
                 'inventory_session_items.observation_started_at',
                 'inventory_session_items.quantity_difference',
                 'inventory_session_items.classification',
             ]);
 
-        $consumed = 0;
-        $coverageSeconds = 0;
-        $earliest = null;
-        $latest = null;
+        /** @var array<int, array{consumed: float, coverage_seconds: int, ranges: list<array{Carbon, Carbon}>, intervals: int}> $states */
+        $states = [];
+        foreach ($itemIds as $itemId) {
+            $states[$itemId] = ['consumed' => 0.0, 'coverage_seconds' => 0, 'ranges' => [], 'intervals' => 0];
+        }
 
         foreach ($intervals as $interval) {
+            $itemId = Typer::parseInt($interval->item_id);
+            if (!isset($states[$itemId]) || $states[$itemId]['intervals'] >= $maximumIntervals) {
+                continue;
+            }
+            ++$states[$itemId]['intervals'];
             $start = Carbon::parse(Typer::assertString($interval->observation_started_at));
-            $end = Carbon::parse(Typer::assertString($interval->counted_at));
+            $end = Carbon::parse(Typer::assertString($interval->interval_ended_at));
             $effectiveStart = $start->lessThan($since) ? $since->copy() : $start;
 
             if ($effectiveStart->greaterThanOrEqualTo($end)) {
                 continue;
             }
 
-            $coverageSeconds += (int) $effectiveStart->diffInSeconds($end);
-            $earliest = !$earliest instanceof Carbon || $effectiveStart->lessThan($earliest) ? $effectiveStart : $earliest;
-            $latest = !$latest instanceof Carbon || $end->greaterThan($latest) ? $end : $latest;
+            $effectiveSeconds = (int) $effectiveStart->diffInSeconds($end);
+            $fullSeconds = (int) $start->diffInSeconds($end);
+            $states[$itemId]['coverage_seconds'] += $effectiveSeconds;
+            $states[$itemId]['ranges'][] = [$effectiveStart, $end];
 
             if (
                 StockMovementClassificationEnum::CONSUMPTION->value === Typer::parseNullableString($interval->classification) &&
-                Typer::parseInt($interval->quantity_difference) < 0
+                Typer::parseFloat($interval->quantity_difference) < 0.0
             ) {
-                $consumed += \abs(Typer::parseInt($interval->quantity_difference));
+                $states[$itemId]['consumed'] += \abs(Typer::parseFloat($interval->quantity_difference)) * ($effectiveSeconds / $fullSeconds);
             }
         }
 
-        if ($earliest instanceof Carbon && $latest instanceof Carbon) {
-            $manual = DB::table('stock_movement_items')
+        if ($itemIds !== []) {
+            $manualRows = DB::table('stock_movement_items')
                 ->join('stock_movements', 'stock_movements.id', '=', 'stock_movement_items.stock_movement_id')
                 ->where('stock_movements.user_id', $store->getUserId())
                 ->where('stock_movements.store_id', $store->getKey())
                 ->where('stock_movements.type', StockMovementTypeEnum::CONSUMPTION->value)
-                ->where('stock_movement_items.item_id', $item->getKey())
-                ->whereBetween('stock_movements.occurred_at', [$earliest->toDateTimeString(), $latest->toDateTimeString()])
-                ->sum('stock_movement_items.quantity');
-            $consumed += Typer::parseInt($manual);
+                ->whereNull('stock_movements.reversed_at')
+                ->whereIn('stock_movement_items.item_id', $itemIds)
+                ->where('stock_movements.occurred_at', '>=', $since->toDateTimeString())
+                ->get(['stock_movement_items.item_id', 'stock_movements.occurred_at', 'stock_movement_items.quantity']);
+            foreach ($manualRows as $manualRow) {
+                $itemId = Typer::parseInt($manualRow->item_id);
+                if (!isset($states[$itemId])) {
+                    continue;
+                }
+                $occurredAt = Carbon::parse(Typer::assertString($manualRow->occurred_at));
+                foreach ($states[$itemId]['ranges'] as [$rangeStart, $rangeEnd]) {
+                    if ($occurredAt->betweenIncluded($rangeStart, $rangeEnd)) {
+                        $states[$itemId]['consumed'] += Typer::parseFloat($manualRow->quantity);
+                        break;
+                    }
+                }
+            }
         }
 
-        $coverageDays = $coverageSeconds / 86400;
-        $perDay = $coverageDays >= self::MINIMUM_COVERAGE_DAYS ? $consumed / $coverageDays : 0.0;
+        $result = [];
+        foreach ($states as $itemId => $state) {
+            $coverageDays = $state['coverage_seconds'] / 86400;
+            $roundedConsumed = \round($state['consumed'], 3);
+            $result[$itemId] = [
+                'quantity' => $roundedConsumed === \floor($roundedConsumed) ? (int) $roundedConsumed : $roundedConsumed,
+                'per_day' => $coverageDays >= self::MINIMUM_COVERAGE_DAYS ? $state['consumed'] / $coverageDays : 0.0,
+                'coverage_days' => $coverageDays,
+            ];
+        }
 
-        return [
-            'quantity' => $consumed,
-            'per_day' => $perDay,
-            'coverage_days' => $coverageDays,
-        ];
+        return $result;
     }
 
     /**
      * Forecast when the store will run out of an item based on the
      * configured consumption window.
      *
-     * @return array{current: int, per_day: float, coverage_days: float, days_left: int|null, projected_stockout_at: string|null, status: string}
+     * @return array{current: float|int, per_day: float, coverage_days: float, days_left: int|null, projected_stockout_at: string|null, status: string}
      */
     public function predictedRunOut(Store $store, Item $item, int $days = self::CONSUMPTION_WINDOW_DAYS): array
     {
         $current = $this->currentQuantity($store, $item);
         $consumption = $this->consumptionLastDays($store, $item, $days);
-        $perDay = $consumption['per_day'];
 
-        if ($current <= 0) {
-            return [
-                'current' => $current,
-                'per_day' => $perDay,
-                'coverage_days' => $consumption['coverage_days'],
-                'days_left' => 0,
-                'projected_stockout_at' => Carbon::now()->toDateString(),
-                'status' => self::STATUS_OUT,
-            ];
+        return $this->predictionFromConsumption($current, $consumption);
+    }
+
+    /**
+     * @param Collection<array-key, StoreItem> $storeItems
+     *
+     * @return array<int, array{current: float|int, per_day: float, coverage_days: float, days_left: int|null, projected_stockout_at: string|null, status: string}>
+     */
+    public function predictionsForStore(Store $store, Collection $storeItems): array
+    {
+        $consumption = $this->consumptionForItems(
+            $store,
+            \array_values($storeItems->map(static fn(StoreItem $row): int => $row->getItemId())->all()),
+        );
+        $result = [];
+        foreach ($storeItems as $storeItem) {
+            $result[$storeItem->getItemId()] = $this->predictionFromConsumption(
+                $storeItem->getQuantity(),
+                $consumption[$storeItem->getItemId()],
+            );
         }
 
-        if ($perDay <= 0.0 || $consumption['coverage_days'] < self::MINIMUM_COVERAGE_DAYS) {
-            return [
-                'current' => $current,
-                'per_day' => $perDay,
-                'coverage_days' => $consumption['coverage_days'],
-                'days_left' => null,
-                'projected_stockout_at' => null,
-                'status' => self::STATUS_NO_DATA,
-            ];
-        }
-
-        $daysLeft = (int) \floor($current / $perDay);
-        $status = $daysLeft <= self::SOON_THRESHOLD_DAYS ? self::STATUS_SOON : self::STATUS_OK;
-
-        return [
-            'current' => $current,
-            'per_day' => $perDay,
-            'coverage_days' => $consumption['coverage_days'],
-            'days_left' => $daysLeft,
-            'projected_stockout_at' => Carbon::now()->addDays($daysLeft)->toDateString(),
-            'status' => $status,
-        ];
+        return $result;
     }
 
     /**
@@ -371,6 +572,20 @@ class InventorySessionService
             ->where('store_id', $store->getKey())
             ->get()
             ->keyBy(static fn(StoreItem $row): int => $row->getItemId());
+        $previousByItem = [];
+        $previousRows = DB::table('inventory_session_items')
+            ->join('inventory_sessions', 'inventory_sessions.id', '=', 'inventory_session_items.session_id')
+            ->where('inventory_sessions.store_id', $store->getKey())
+            ->where('inventory_sessions.status', 'closed')
+            ->orderByDesc('inventory_sessions.counted_at')
+            ->orderByDesc('inventory_session_items.id')
+            ->get(['inventory_session_items.item_id', 'inventory_session_items.quantity']);
+        foreach ($previousRows as $previousRow) {
+            $itemId = Typer::parseInt($previousRow->item_id);
+            if (!isset($previousByItem[$itemId])) {
+                $previousByItem[$itemId] = $this->number($previousRow->quantity);
+            }
+        }
 
         $rows = [];
 
@@ -378,7 +593,7 @@ class InventorySessionService
             $itemId = $item->getKey();
             $storeItem = $currentByItem->get($itemId);
             $current = $storeItem instanceof StoreItem ? $storeItem->getQuantity() : 0;
-            $previous = $this->previousQuantity($store, $item);
+            $previous = $previousByItem[$itemId] ?? null;
 
             $rows[] = [
                 'item_id' => $itemId,
@@ -500,9 +715,19 @@ class InventorySessionService
      * Days without a recorded session are returned as `null` so the UI
      * can render a gap (the count is unknown for that day).
      *
-     * @return array<int, array{label: string, value: int|null}>
+     * @return array<int, array{label: string, value: float|int|null}>
      */
     public function sparklineForItem(User $user, Store $store, Item $item, int $days = 30): array
+    {
+        return $this->sparklinesForItems($user, $store, [$item->getKey()], $days)[$item->getKey()];
+    }
+
+    /**
+     * @param list<int> $itemIds
+     *
+     * @return array<int, array<int, array{label: string, value: float|int|null}>>
+     */
+    public function sparklinesForItems(User $user, Store $store, array $itemIds, int $days = 30): array
     {
         $today = Carbon::now()->endOfDay();
         $from = Carbon::now()->subDays($days - 1)->startOfDay();
@@ -511,31 +736,76 @@ class InventorySessionService
             ->join('inventory_sessions', 'inventory_sessions.id', '=', 'inventory_session_items.session_id')
             ->where('inventory_sessions.user_id', $user->getKey())
             ->where('inventory_sessions.store_id', $store->getKey())
-            ->where('inventory_session_items.item_id', $item->getKey())
+            ->whereIn('inventory_session_items.item_id', $itemIds)
+            ->where('inventory_sessions.status', 'closed')
             ->where('inventory_sessions.counted_at', '>=', $from->toDateTimeString())
             ->orderBy('inventory_sessions.counted_at')
-            ->get(['inventory_sessions.counted_at', 'inventory_session_items.quantity']);
+            ->get(['inventory_session_items.item_id', 'inventory_sessions.counted_at', 'inventory_session_items.quantity']);
 
         $byDay = [];
 
         foreach ($records as $record) {
             $countedAt = Carbon::parse(Typer::assertString($record->counted_at));
-            $byDay[$countedAt->toDateString()] = Typer::parseInt($record->quantity);
+            $byDay[Typer::parseInt($record->item_id)][$countedAt->toDateString()] = $this->number($record->quantity);
         }
 
-        $sparkline = [];
-        $cursor = $from->copy();
+        $result = [];
+        foreach ($itemIds as $itemId) {
+            $sparkline = [];
+            $cursor = $from->copy();
+            while ($cursor->lessThanOrEqualTo($today)) {
+                $key = $cursor->toDateString();
+                $sparkline[] = ['label' => $key, 'value' => $byDay[$itemId][$key] ?? null];
+                $cursor->addDay();
+            }
+            $result[$itemId] = $sparkline;
+        }
 
-        while ($cursor->lessThanOrEqualTo($today)) {
-            $key = $cursor->toDateString();
-            $sparkline[] = [
-                'label' => $key,
-                'value' => $byDay[$key] ?? null,
+        return $result;
+    }
+
+    /**
+     * @param array{quantity: float|int, per_day: float, coverage_days: float} $consumption
+     *
+     * @return array{current: float|int, per_day: float, coverage_days: float, days_left: int|null, projected_stockout_at: string|null, status: string}
+     */
+    private function predictionFromConsumption(float|int $current, array $consumption): array
+    {
+        $perDay = $consumption['per_day'];
+
+        if ($current <= 0) {
+            return [
+                'current' => $current,
+                'per_day' => $perDay,
+                'coverage_days' => $consumption['coverage_days'],
+                'days_left' => 0,
+                'projected_stockout_at' => Carbon::now()->toDateString(),
+                'status' => self::STATUS_OUT,
             ];
-            $cursor->addDay();
         }
 
-        return $sparkline;
+        if ($perDay <= 0.0 || $consumption['coverage_days'] < self::MINIMUM_COVERAGE_DAYS) {
+            return [
+                'current' => $current,
+                'per_day' => $perDay,
+                'coverage_days' => $consumption['coverage_days'],
+                'days_left' => null,
+                'projected_stockout_at' => null,
+                'status' => self::STATUS_NO_DATA,
+            ];
+        }
+
+        $daysLeft = (int) \floor($current / $perDay);
+        $status = $daysLeft <= self::SOON_THRESHOLD_DAYS ? self::STATUS_SOON : self::STATUS_OK;
+
+        return [
+            'current' => $current,
+            'per_day' => $perDay,
+            'coverage_days' => $consumption['coverage_days'],
+            'days_left' => $daysLeft,
+            'projected_stockout_at' => Carbon::now()->addDays($daysLeft)->toDateString(),
+            'status' => $status,
+        ];
     }
 
     /**
@@ -559,21 +829,62 @@ class InventorySessionService
     }
 
     /**
+     * Enforce owner and assigned-store access.
+     */
+    private function authoriseStore(User $user, Store $store): void
+    {
+        if ($store->getUserId() !== $user->resolveScopeUser()->getKey()) {
+            \abort(404);
+        }
+
+        if (!$user->isAdmin() && $user->getAssignedStoreId() !== $store->getKey()) {
+            \abort(403);
+        }
+    }
+
+    /**
+     * Enforce access to the draft's store and owning company.
+     */
+    private function authoriseSession(User $user, InventorySession $session): void
+    {
+        if ($session->getUserId() !== $user->resolveScopeUser()->getKey()) {
+            \abort(404);
+        }
+
+        $this->authoriseStore($user, $session->getStore());
+    }
+
+    /**
+     * @param array<string, array<array-key, mixed>|string> $messages
+     */
+    private function fail(array $messages): never
+    {
+        $validator = Resolver::resolveValidatorFactory()->make([], []);
+        $thrower = new Thrower($validator);
+
+        foreach ($messages as $key => $message) {
+            $thrower->message($key, $message);
+        }
+
+        $thrower->throw();
+    }
+
+    /**
      * Resolve and validate a classification for an inventory difference.
      */
-    private function resolveClassification(int $difference, string|null $requested): StockMovementClassificationEnum|null
+    private function resolveClassification(BigDecimal $difference, string|null $requested): StockMovementClassificationEnum|null
     {
-        if ($difference === 0) {
+        if ($difference->isZero()) {
             return null;
         }
 
         $classification = $requested === null
-            ? ($difference < 0 ? StockMovementClassificationEnum::CONSUMPTION : StockMovementClassificationEnum::INVENTORY_CORRECTION)
+            ? ($difference->isNegative() ? StockMovementClassificationEnum::CONSUMPTION : StockMovementClassificationEnum::INVENTORY_CORRECTION)
             : StockMovementClassificationEnum::from($requested);
 
         if (
-            ($difference < 0 && !$classification->supportsNegativeDifference()) ||
-            ($difference > 0 && !$classification->supportsPositiveDifference())
+            ($difference->isNegative() && !$classification->supportsNegativeDifference()) ||
+            ($difference->isPositive() && !$classification->supportsPositiveDifference())
         ) {
             $validator = Resolver::resolveValidatorFactory()->make([], []);
             (new Thrower($validator))
@@ -582,5 +893,23 @@ class InventorySessionService
         }
 
         return $classification;
+    }
+
+    /**
+     * Parse an exact stock quantity at the canonical scale.
+     */
+    private function decimal(mixed $value): BigDecimal
+    {
+        return BigDecimal::of((string) Typer::assertScalar($value))->toScale(3, RoundingMode::Unnecessary);
+    }
+
+    /**
+     * Convert a database decimal to a presentation number.
+     */
+    private function number(mixed $value): float|int
+    {
+        $number = (float) Typer::assertScalar($value);
+
+        return $number === \floor($number) ? (int) $number : $number;
     }
 }

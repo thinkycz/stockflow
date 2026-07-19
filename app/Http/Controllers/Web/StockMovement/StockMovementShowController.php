@@ -47,6 +47,12 @@ class StockMovementShowController
                 'source_store_name' => $stockMovement->getSourceStore()?->getName(),
                 'total_quantity' => $stockMovement->getTotalQuantity(),
                 'total_value' => $stockMovement->getTotalValue(),
+                'reversal_of_id' => $stockMovement->getReversalOfId(),
+                'reversal_reason' => $stockMovement->getReversalReason(),
+                'reversed_at' => $stockMovement->getReversedAt()?->toJSON(),
+                'can_reverse' => $stockMovement->getOrigin()->value === 'manual' &&
+                    !\in_array($stockMovement->getType()->value, ['inventory_reconciliation', 'reversal'], true) &&
+                    $stockMovement->getReversedAt() === null,
                 'created_by' => $stockMovement->getCreator()?->getEmail(),
                 'created_at' => $stockMovement->getOccurredAt()->toJSON(),
             ],

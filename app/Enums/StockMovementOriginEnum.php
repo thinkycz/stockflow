@@ -12,6 +12,8 @@ enum StockMovementOriginEnum: string
 
     case MIGRATION = 'migration';
 
+    case REVERSAL = 'reversal';
+
     /**
      * Get possible values.
      *

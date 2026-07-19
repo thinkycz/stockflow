@@ -11,6 +11,7 @@
         "dashboard": "Dashboard",
         "inventory": "Inventory",
         "stock_movements": "Stock movements",
+        "consumption": "Issue / consumption",
         "stores": "Stores",
         "statements": "Statements",
         "inventory_counts": "Inventory counts",
@@ -188,6 +189,11 @@
             "price": "Price",
             "total_value": "Total value",
             "status": "Status",
+            "inventory_value": "Inventory value",
+            "sku_count": "SKUs",
+            "out_of_stock": "Out of stock",
+            "risk_count": "Risk within 7 days",
+            "last_inventory": "Last inventory",
             "actions": "Actions",
             "description": "Description"
         },
@@ -289,7 +295,8 @@
             "transfer": "Store transfer",
             "consumption": "Consumption",
             "adjustment": "Adjustment",
-            "inventory_reconciliation": "Inventory reconciliation"
+            "inventory_reconciliation": "Inventory reconciliation",
+            "reversal": "Reversal"
         },
         "filter": {
             "search": "Search",
@@ -321,6 +328,8 @@
             "select_store": "Select a store",
             "select_warehouse": "Select a warehouse",
             "note": "Note / reference",
+            "occurred_at": "Event date and time",
+            "occurred_at_help": "Leave empty for now. A historical event must be later than the latest closed inventory of every affected item.",
             "items": "Items",
             "item": "Item",
             "select_item": "Select an item",
@@ -360,6 +369,10 @@
             "would_be_negative": "Cannot delete this movement because it would make \":title\" negative at \":store\"."
         },
         "confirm_delete": "Are you sure you want to delete this stock movement?",
+        "reverse": "Reverse",
+        "reversal_reason_prompt": "Enter the reversal reason:",
+        "reversed": "This movement has been reversed.",
+        "reversal_of": "Reversal of movement #{id}",
         "detail": {
             "title": "Movement",
             "items": "Movement items",
@@ -600,7 +613,14 @@
             "reason": "Reason"
         },
         "actions": {
+            "start": "Start inventory count",
             "save": "Save stock count"
+        },
+        "autosave": {
+            "idle": "Not saved",
+            "saving": "Saving…",
+            "saved": "Saved",
+            "error": "Save failed"
         },
         "status": {
             "ok": "OK",

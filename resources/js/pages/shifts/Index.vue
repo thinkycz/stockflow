@@ -6,12 +6,16 @@ import {
     ChevronRight,
     Check,
     Link2,
+    LoaderCircle,
     Pencil,
     Plus,
+    Settings2,
     Trash2,
     X,
+    Zap,
 } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { isAxiosError } from 'axios';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
@@ -52,6 +56,13 @@ type WorkerSummary = {
     salary: number;
 };
 
+type ShiftPreset = {
+    id: number;
+    name: string;
+    start_time: string;
+    end_time: string;
+};
+
 const props = defineProps<{
     store: { id: number; name: string } | null;
     shifts: Shift[];
@@ -63,6 +74,7 @@ const props = defineProps<{
     };
     is_admin: boolean;
     worker_summary?: WorkerSummary[];
+    shift_presets?: ShiftPreset[];
 }>();
 
 const { t, locale } = useI18n();
@@ -73,6 +85,24 @@ const route = useRoute();
 
 const year = ref<number>(props.filters.year);
 const month = ref<number>(props.filters.month);
+const localShifts = ref<Shift[]>([...props.shifts]);
+const localWorkerSummary = ref<WorkerSummary[]>([
+    ...(props.worker_summary ?? []),
+]);
+
+watch(
+    () => props.shifts,
+    (shifts) => {
+        localShifts.value = [...shifts];
+    },
+);
+
+watch(
+    () => props.worker_summary,
+    (summary) => {
+        localWorkerSummary.value = [...(summary ?? [])];
+    },
+);
 
 const monthNames = computed<Record<string, string[]>>(() => ({
     cs: [
@@ -155,7 +185,7 @@ const calendarDays = computed<CalendarDay[]>(() => {
     }
 
     const shiftsByDate = new Map<string, CalendarShift[]>();
-    for (const shift of props.shifts) {
+    for (const shift of localShifts.value) {
         const worker = workerMap.get(shift.worker_id);
         const enriched: CalendarShift = {
             ...shift,
@@ -265,6 +295,7 @@ type ShiftForm = {
     date: string;
     start_time: string;
     end_time: string;
+    allow_overlap: boolean;
 };
 
 const form = useForm<ShiftForm>({
@@ -272,7 +303,12 @@ const form = useForm<ShiftForm>({
     date: '',
     start_time: '',
     end_time: '',
+    allow_overlap: false,
 });
+
+const overlapError = computed<string | undefined>(
+    () => (form.errors as Record<string, string>).overlap,
+);
 
 const timeOptions: string[] = [];
 for (let h = 0; h < 24; h++) {
@@ -296,6 +332,7 @@ function openDayModal(date: string): void {
     form.date = date;
     form.start_time = '09:00';
     form.end_time = '16:00';
+    form.allow_overlap = false;
     form.worker_id =
         props.workers.length > 0 ? String(props.workers[0].id) : '';
     modalOpen.value = true;
@@ -307,6 +344,7 @@ function editShift(shift: Shift): void {
     form.date = shift.date;
     form.start_time = shift.start_time;
     form.end_time = shift.end_time;
+    form.allow_overlap = false;
 }
 
 function cancelEdit(): void {
@@ -316,6 +354,7 @@ function cancelEdit(): void {
     form.date = modalDate.value;
     form.start_time = '09:00';
     form.end_time = '16:00';
+    form.allow_overlap = false;
 }
 
 function closeModal(): void {
@@ -325,6 +364,17 @@ function closeModal(): void {
 }
 
 function submitShift(): void {
+    const confirmOverlap = (errors: Record<string, string>): void => {
+        if (
+            errors.overlap !== undefined &&
+            !form.allow_overlap &&
+            window.confirm(t('shifts.overlap_confirm'))
+        ) {
+            form.allow_overlap = true;
+            submitShift();
+        }
+    };
+
     if (editingShiftId.value !== null) {
         form.put(
             route('shifts.update', {
@@ -334,12 +384,14 @@ function submitShift(): void {
             }),
             {
                 preserveState: true,
+                onError: confirmOverlap,
                 onSuccess: () => {
                     editingShiftId.value = null;
                     form.reset();
                     form.date = modalDate.value;
                     form.start_time = '09:00';
                     form.end_time = '16:00';
+                    form.allow_overlap = false;
                     form.worker_id =
                         props.workers.length > 0
                             ? String(props.workers[0].id)
@@ -357,11 +409,13 @@ function submitShift(): void {
             }),
             {
                 preserveState: true,
+                onError: confirmOverlap,
                 onSuccess: () => {
                     form.reset();
                     form.date = modalDate.value;
                     form.start_time = nextShiftStart;
                     form.end_time = '21:00';
+                    form.allow_overlap = false;
                     form.worker_id =
                         props.workers.length > 0
                             ? String(props.workers[0].id)
@@ -382,6 +436,251 @@ function deleteShift(id: number): void {
         }),
         { preserveState: true },
     );
+}
+
+// --- Shift presets ---
+
+const presetModalOpen = ref<boolean>(false);
+const editingPresetId = ref<number | null>(null);
+
+type PresetForm = {
+    name: string;
+    start_time: string;
+    end_time: string;
+};
+
+const presetForm = useForm<PresetForm>({
+    name: '',
+    start_time: '09:00',
+    end_time: '17:00',
+});
+
+function openPresetModal(): void {
+    editingPresetId.value = null;
+    presetForm.reset();
+    presetForm.start_time = '09:00';
+    presetForm.end_time = '17:00';
+    presetModalOpen.value = true;
+}
+
+function closePresetModal(): void {
+    presetModalOpen.value = false;
+    editingPresetId.value = null;
+    presetForm.reset();
+}
+
+function editPreset(preset: ShiftPreset): void {
+    editingPresetId.value = preset.id;
+    presetForm.name = preset.name;
+    presetForm.start_time = preset.start_time;
+    presetForm.end_time = preset.end_time;
+    presetForm.clearErrors();
+}
+
+function cancelPresetEdit(): void {
+    editingPresetId.value = null;
+    presetForm.reset();
+    presetForm.start_time = '09:00';
+    presetForm.end_time = '17:00';
+}
+
+function submitPreset(): void {
+    const options = {
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: cancelPresetEdit,
+    };
+
+    if (editingPresetId.value !== null) {
+        presetForm.put(
+            route('shift-presets.update', {
+                shiftPreset: editingPresetId.value,
+                month: month.value,
+                year: year.value,
+            }),
+            options,
+        );
+        return;
+    }
+
+    presetForm.post(
+        route('shift-presets.store', {
+            month: month.value,
+            year: year.value,
+        }),
+        options,
+    );
+}
+
+function deletePreset(preset: ShiftPreset): void {
+    if (!window.confirm(t('shifts.presets.confirm_delete'))) return;
+
+    if (selectedPresetId.value === String(preset.id)) {
+        stopQuickAdd();
+        selectedPresetId.value = '';
+    }
+
+    router.delete(
+        route('shift-presets.destroy', {
+            shiftPreset: preset.id,
+            month: month.value,
+            year: year.value,
+        }),
+        { preserveState: true, preserveScroll: true },
+    );
+}
+
+// --- Quick add ---
+
+type QuickFeedback = 'created' | 'exists' | 'conflict' | 'failed';
+
+type QuickAddSuccess = {
+    status: 'created' | 'exists';
+    shift: Shift;
+    contribution?: {
+        minutes: number;
+        salary: number;
+    };
+};
+
+type QuickAddConflict = {
+    status: 'overlap';
+    conflicts: Array<{
+        id: number;
+        start_time: string;
+        end_time: string;
+    }>;
+};
+
+const selectedWorkerId = ref<string>('');
+const selectedPresetId = ref<string>('');
+const quickAddActive = ref<boolean>(false);
+const pendingDates = ref<Set<string>>(new Set());
+const quickFeedback = ref<Record<string, QuickFeedback>>({});
+
+watch(
+    () => props.store?.id,
+    () => {
+        stopQuickAdd();
+        selectedPresetId.value = '';
+        quickFeedback.value = {};
+    },
+);
+
+function startQuickAdd(): void {
+    if (selectedWorkerId.value === '' || selectedPresetId.value === '') return;
+    quickAddActive.value = true;
+    quickFeedback.value = {};
+}
+
+function stopQuickAdd(): void {
+    quickAddActive.value = false;
+    pendingDates.value = new Set();
+}
+
+function quickFeedbackLabel(status: QuickFeedback | undefined): string {
+    return status === undefined ? '' : t('shifts.quick_add.' + status);
+}
+
+function handleDayClick(day: CalendarDay): void {
+    if (!day.isCurrentMonth || !props.is_admin) return;
+
+    if (quickAddActive.value) {
+        void quickAddShift(day.date);
+        return;
+    }
+
+    openDayModal(day.date);
+}
+
+async function quickAddShift(
+    date: string,
+    allowOverlap = false,
+): Promise<void> {
+    if (
+        pendingDates.value.has(date) ||
+        selectedWorkerId.value === '' ||
+        selectedPresetId.value === ''
+    ) {
+        return;
+    }
+
+    pendingDates.value = new Set(pendingDates.value).add(date);
+    let retryWithOverlap = false;
+
+    try {
+        const response = await window.axios.post<QuickAddSuccess>(
+            route('shifts.quick-add'),
+            {
+                worker_id: Number(selectedWorkerId.value),
+                shift_preset_id: Number(selectedPresetId.value),
+                date,
+                allow_overlap: allowOverlap,
+            },
+        );
+
+        if (response.data.status === 'exists') {
+            quickFeedback.value = {
+                ...quickFeedback.value,
+                [date]: 'exists',
+            };
+            return;
+        }
+
+        localShifts.value = [...localShifts.value, response.data.shift];
+        const contribution = response.data.contribution;
+        const summary = localWorkerSummary.value.find(
+            (row) => row.worker_id === response.data.shift.worker_id,
+        );
+
+        if (summary !== undefined && contribution !== undefined) {
+            localWorkerSummary.value = localWorkerSummary.value.map((row) =>
+                row.worker_id === summary.worker_id
+                    ? {
+                          ...row,
+                          hours: row.hours + contribution.minutes / 60,
+                          salary: row.salary + contribution.salary,
+                      }
+                    : row,
+            );
+        }
+
+        quickFeedback.value = {
+            ...quickFeedback.value,
+            [date]: 'created',
+        };
+    } catch (error: unknown) {
+        if (
+            isAxiosError<QuickAddConflict>(error) &&
+            error.response?.status === 409
+        ) {
+            const conflicts = error.response.data.conflicts
+                .map(
+                    (conflict) => `${conflict.start_time}–${conflict.end_time}`,
+                )
+                .join(', ');
+            quickFeedback.value = {
+                ...quickFeedback.value,
+                [date]: 'conflict',
+            };
+            retryWithOverlap = window.confirm(
+                t('shifts.quick_add.overlap_confirm', { conflicts }),
+            );
+        } else {
+            quickFeedback.value = {
+                ...quickFeedback.value,
+                [date]: 'failed',
+            };
+        }
+    } finally {
+        const nextPending = new Set(pendingDates.value);
+        nextPending.delete(date);
+        pendingDates.value = nextPending;
+    }
+
+    if (retryWithOverlap) {
+        await quickAddShift(date, true);
+    }
 }
 
 async function copyPublicLink(): Promise<void> {
@@ -451,25 +750,134 @@ async function copyText(value: string): Promise<void> {
                     v-if="store && is_admin"
                     class="flex flex-col items-start gap-2 sm:items-end"
                 >
-                    <Button
-                        variant="secondary"
-                        type="button"
-                        :disabled="copyingPublicLink"
-                        @click="copyPublicLink"
-                    >
-                        <Check v-if="publicLinkCopied" :size="14" />
-                        <Link2 v-else :size="14" />
-                        {{
-                            publicLinkCopied
-                                ? t('shifts.public_link_copied')
-                                : t('shifts.copy_public_link')
-                        }}
-                    </Button>
+                    <div class="flex flex-wrap gap-2">
+                        <Button
+                            variant="secondary"
+                            type="button"
+                            @click="openPresetModal"
+                        >
+                            <Settings2 :size="14" />
+                            {{ t('shifts.presets.manage') }}
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            type="button"
+                            :disabled="copyingPublicLink"
+                            @click="copyPublicLink"
+                        >
+                            <Check v-if="publicLinkCopied" :size="14" />
+                            <Link2 v-else :size="14" />
+                            {{
+                                publicLinkCopied
+                                    ? t('shifts.public_link_copied')
+                                    : t('shifts.copy_public_link')
+                            }}
+                        </Button>
+                    </div>
                     <p v-if="publicLinkError" class="text-xs text-error-red">
                         {{ publicLinkError }}
                     </p>
                 </div>
             </header>
+
+            <Card v-if="store && is_admin" padded>
+                <div
+                    class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+                >
+                    <div class="grid flex-1 gap-4 sm:grid-cols-2">
+                        <div class="space-y-2">
+                            <Label for="quick_worker">{{
+                                t('shifts.quick_add.employee')
+                            }}</Label>
+                            <select
+                                id="quick_worker"
+                                v-model="selectedWorkerId"
+                                :disabled="quickAddActive"
+                                class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-sm text-on-surface transition focus:border-primary focus:outline-none disabled:opacity-60"
+                            >
+                                <option value="" disabled>
+                                    {{ t('shifts.select_worker') }}
+                                </option>
+                                <option
+                                    v-for="worker in workers"
+                                    :key="worker.id"
+                                    :value="String(worker.id)"
+                                >
+                                    {{ worker.first_name }}
+                                    {{ worker.last_name }}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <Label for="quick_preset">{{
+                                t('shifts.quick_add.preset')
+                            }}</Label>
+                            <select
+                                id="quick_preset"
+                                v-model="selectedPresetId"
+                                :disabled="quickAddActive"
+                                class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-sm text-on-surface transition focus:border-primary focus:outline-none disabled:opacity-60"
+                            >
+                                <option value="" disabled>
+                                    {{
+                                        shift_presets?.length
+                                            ? t(
+                                                  'shifts.quick_add.select_preset',
+                                              )
+                                            : t('shifts.quick_add.no_presets')
+                                    }}
+                                </option>
+                                <option
+                                    v-for="preset in shift_presets ?? []"
+                                    :key="preset.id"
+                                    :value="String(preset.id)"
+                                >
+                                    {{ preset.name }} ({{
+                                        preset.start_time
+                                    }}–{{ preset.end_time }})
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <p
+                            v-if="quickAddActive"
+                            class="text-xs font-semibold text-primary"
+                        >
+                            {{ t('shifts.quick_add.active_help') }}
+                        </p>
+                        <Button
+                            v-if="!quickAddActive"
+                            type="button"
+                            :disabled="
+                                selectedWorkerId === '' ||
+                                selectedPresetId === ''
+                            "
+                            @click="startQuickAdd"
+                        >
+                            <Zap :size="14" />
+                            {{ t('shifts.quick_add.start') }}
+                        </Button>
+                        <Button
+                            v-else
+                            variant="secondary"
+                            type="button"
+                            @click="stopQuickAdd"
+                        >
+                            <Check :size="14" />
+                            {{ t('shifts.quick_add.done') }}
+                        </Button>
+                        <Button
+                            v-if="(shift_presets?.length ?? 0) === 0"
+                            variant="ghost"
+                            type="button"
+                            @click="openPresetModal"
+                        >
+                            {{ t('shifts.quick_add.configure_first') }}
+                        </Button>
+                    </div>
+                </div>
+            </Card>
 
             <Card padded>
                 <div class="mb-4 flex items-center justify-between">
@@ -531,12 +939,11 @@ async function copyText(value: string): Promise<void> {
                                 is_admin && day.isCurrentMonth
                                     ? 'cursor-pointer hover:border-primary/40'
                                     : '',
+                                quickAddActive && day.isCurrentMonth
+                                    ? 'hover:bg-primary/5'
+                                    : '',
                             ]"
-                            @click="
-                                day.isCurrentMonth
-                                    ? openDayModal(day.date)
-                                    : undefined
-                            "
+                            @click="handleDayClick(day)"
                         >
                             <div
                                 class="mb-1 text-xs font-semibold"
@@ -547,6 +954,29 @@ async function copyText(value: string): Promise<void> {
                                 "
                             >
                                 {{ day.day }}
+                                <LoaderCircle
+                                    v-if="pendingDates.has(day.date)"
+                                    :size="12"
+                                    class="ml-1 inline animate-spin text-primary"
+                                />
+                            </div>
+                            <div
+                                v-if="quickFeedback[day.date]"
+                                class="mb-1 rounded px-1 py-0.5 text-[9px] font-semibold"
+                                :class="{
+                                    'bg-emerald-50 text-emerald-700':
+                                        quickFeedback[day.date] === 'created',
+                                    'bg-sky-50 text-sky-700':
+                                        quickFeedback[day.date] === 'exists',
+                                    'bg-amber-50 text-amber-700':
+                                        quickFeedback[day.date] === 'conflict',
+                                    'bg-red-50 text-error-red':
+                                        quickFeedback[day.date] === 'failed',
+                                }"
+                            >
+                                {{
+                                    quickFeedbackLabel(quickFeedback[day.date])
+                                }}
                             </div>
                             <div class="space-y-1">
                                 <div
@@ -603,7 +1033,7 @@ async function copyText(value: string): Promise<void> {
                         </thead>
                         <tbody>
                             <tr
-                                v-for="row in worker_summary ?? []"
+                                v-for="row in localWorkerSummary"
                                 :key="row.worker_id"
                             >
                                 <td>
@@ -780,6 +1210,7 @@ async function copyText(value: string): Promise<void> {
                     <div
                         class="flex items-center justify-end gap-3 border-t border-outline-glass pt-4"
                     >
+                        <FieldError :message="overlapError" />
                         <Button type="submit" :disabled="form.processing">
                             <Plus :size="14" />
                             {{
@@ -797,6 +1228,145 @@ async function copyText(value: string): Promise<void> {
                 >
                     {{ t('shifts.read_only_notice') }}
                 </div>
+            </div>
+        </Modal>
+
+        <Modal
+            :open="presetModalOpen"
+            :title="t('shifts.presets.title')"
+            class="max-w-2xl"
+            @close="closePresetModal"
+        >
+            <div class="space-y-5">
+                <div
+                    v-if="(shift_presets?.length ?? 0) === 0"
+                    class="rounded-xl bg-surface-container-low p-4 text-sm text-on-surface-variant"
+                >
+                    {{ t('shifts.presets.empty') }}
+                </div>
+                <div v-else class="space-y-2">
+                    <div
+                        v-for="preset in shift_presets ?? []"
+                        :key="preset.id"
+                        class="flex items-center justify-between rounded-xl border border-outline-glass px-4 py-3"
+                    >
+                        <div>
+                            <p class="font-semibold text-on-surface">
+                                {{ preset.name }}
+                            </p>
+                            <p class="text-xs text-on-surface-variant">
+                                {{ preset.start_time }}–{{ preset.end_time }}
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <Button
+                                variant="ghost"
+                                type="button"
+                                :aria-label="t('common.edit')"
+                                @click="editPreset(preset)"
+                            >
+                                <Pencil :size="14" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                type="button"
+                                :aria-label="t('common.delete')"
+                                @click="deletePreset(preset)"
+                            >
+                                <Trash2 :size="14" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                <form class="space-y-4" @submit.prevent="submitPreset">
+                    <div class="flex items-center justify-between">
+                        <h3
+                            class="text-xs font-semibold uppercase text-on-surface-variant"
+                        >
+                            {{
+                                editingPresetId === null
+                                    ? t('shifts.presets.add')
+                                    : t('shifts.presets.edit')
+                            }}
+                        </h3>
+                        <Button
+                            v-if="editingPresetId !== null"
+                            variant="ghost"
+                            type="button"
+                            @click="cancelPresetEdit"
+                        >
+                            <X :size="14" />
+                            {{ t('common.cancel') }}
+                        </Button>
+                    </div>
+                    <div class="space-y-2">
+                        <Label for="preset_name" :required="true">{{
+                            t('shifts.presets.name')
+                        }}</Label>
+                        <input
+                            id="preset_name"
+                            v-model="presetForm.name"
+                            type="text"
+                            maxlength="100"
+                            required
+                            class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-sm text-on-surface transition focus:border-primary focus:outline-none"
+                        />
+                        <FieldError :message="presetForm.errors.name" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <Label for="preset_start" :required="true">{{
+                                t('shifts.columns.start_time')
+                            }}</Label>
+                            <select
+                                id="preset_start"
+                                v-model="presetForm.start_time"
+                                required
+                                class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-sm text-on-surface focus:border-primary focus:outline-none"
+                            >
+                                <option
+                                    v-for="time in timeOptions"
+                                    :key="time"
+                                    :value="time"
+                                >
+                                    {{ time }}
+                                </option>
+                            </select>
+                            <FieldError
+                                :message="presetForm.errors.start_time"
+                            />
+                        </div>
+                        <div class="space-y-2">
+                            <Label for="preset_end" :required="true">{{
+                                t('shifts.columns.end_time')
+                            }}</Label>
+                            <select
+                                id="preset_end"
+                                v-model="presetForm.end_time"
+                                required
+                                class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-sm text-on-surface focus:border-primary focus:outline-none"
+                            >
+                                <option
+                                    v-for="time in timeOptions"
+                                    :key="time"
+                                    :value="time"
+                                >
+                                    {{ time }}
+                                </option>
+                            </select>
+                            <FieldError :message="presetForm.errors.end_time" />
+                        </div>
+                    </div>
+                    <div
+                        class="flex justify-end border-t border-outline-glass pt-4"
+                    >
+                        <Button type="submit" :disabled="presetForm.processing">
+                            <Plus :size="14" />
+                            {{ t('common.save') }}
+                        </Button>
+                    </div>
+                </form>
             </div>
         </Modal>
     </AppLayout>

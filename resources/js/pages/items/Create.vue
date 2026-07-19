@@ -8,6 +8,7 @@ import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Select from '@/components/ui/Select.vue';
+import Textarea from '@/components/ui/Textarea.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 
@@ -119,16 +120,13 @@ function submit(): void {
                         <Label for="description">{{
                             t('items.columns.description')
                         }}</Label>
-                        <textarea
+                        <Textarea
                             id="description"
                             v-model="form.description"
-                            rows="4"
-                            :aria-invalid="
-                                form.errors.description ? 'true' : undefined
-                            "
-                            aria-describedby="description-error"
-                            class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-xs text-on-surface outline-none transition placeholder:text-on-surface-variant/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
-                        ></textarea>
+                            :rows="4"
+                            :invalid="Boolean(form.errors.description)"
+                            described-by="description-error"
+                        />
                         <FieldError
                             id="description-error"
                             :message="form.errors.description"

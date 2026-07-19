@@ -6,15 +6,16 @@ namespace App\Http\Controllers\Web\Shift;
 
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\ShiftValidity;
-use App\Models\Shift;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
+use App\Services\ShiftAssignmentService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class ShiftStoreController
@@ -39,20 +40,28 @@ class ShiftStoreController
             'date' => $validity->date()->required()->toArray(),
             'start_time' => $validity->startTime()->required()->toArray(),
             'end_time' => $validity->endTime()->required()->toArray(),
+            'allow_overlap' => $validity->allowOverlap()->nullable()->toArray(),
         ]);
 
         $workerId = $validated->parseInt('worker_id');
         $worker = Typer::assertInstance(Worker::query()->find($workerId), Worker::class);
+        $date = $validated->assertString('date');
+        $startTime = $validated->assertString('start_time');
+        $endTime = $validated->assertString('end_time');
+        $service = new ShiftAssignmentService();
 
-        Shift::query()->create([
-            'user_id' => $admin->getKey(),
-            'store_id' => $store->getKey(),
-            'worker_id' => $workerId,
-            'date' => $validated->assertString('date'),
-            'start_time' => $validated->assertString('start_time'),
-            'end_time' => $validated->assertString('end_time'),
-            'hourly_rate' => $worker->getHourlyRate(),
-        ]);
+        if (!$validated->parseBool('allow_overlap') && $service->findOverlaps(
+            $admin,
+            $store,
+            $worker,
+            $date,
+            $startTime,
+            $endTime,
+        )->isNotEmpty()) {
+            Thrower::default()->message('overlap', \__('This shift overlaps an existing assignment.'))->throw();
+        }
+
+        $service->create($admin, $store, $worker, $date, $startTime, $endTime);
 
         Inertia::flash('success', \__('Shift created.'));
 

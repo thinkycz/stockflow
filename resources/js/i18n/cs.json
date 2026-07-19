@@ -694,6 +694,31 @@
         "copy_public_link": "Kopírovat veřejný odkaz",
         "public_link_copied": "Veřejný odkaz zkopírován",
         "public_link_error": "Veřejný odkaz se nepodařilo zkopírovat.",
+        "overlap_confirm": "Tato směna se překrývá s jinou směnou. Přesto ji uložit?",
+        "presets": {
+            "title": "Přednastavené směny",
+            "manage": "Spravovat předvolby",
+            "empty": "Zatím nejsou žádné předvolby. Níže přidejte první směnu pro aktivní provozovnu.",
+            "add": "Přidat předvolbu",
+            "edit": "Upravit předvolbu",
+            "name": "Název předvolby",
+            "confirm_delete": "Smazat tuto předvolbu? Již přiřazené směny se nezmění."
+        },
+        "quick_add": {
+            "employee": "Zaměstnanec",
+            "preset": "Přednastavená směna",
+            "select_preset": "Vyberte předvolbu",
+            "no_presets": "Nejsou nastavené žádné předvolby",
+            "configure_first": "Nejprve nastavte předvolbu",
+            "start": "Spustit rychlé přidávání",
+            "done": "Hotovo",
+            "active_help": "Kliknutím na dny v kalendáři přiřadíte vybranou směnu.",
+            "created": "Přidáno",
+            "exists": "Již přiřazeno",
+            "conflict": "Konflikt",
+            "failed": "Chyba",
+            "overlap_confirm": "Směna se překrývá s {conflicts}. Přesto ji přidat?"
+        },
         "public_title": "Kalendář směn — {store}",
         "public_subtitle": "Kalendář směn zaměstnanců pouze pro čtení.",
         "summary": {

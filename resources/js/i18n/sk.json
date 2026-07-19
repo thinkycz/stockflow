@@ -694,6 +694,31 @@
         "copy_public_link": "Kopírovať verejný odkaz",
         "public_link_copied": "Verejný odkaz skopírovaný",
         "public_link_error": "Verejný odkaz sa nepodarilo skopírovať.",
+        "overlap_confirm": "Táto smena sa prekrýva s inou smenou. Napriek tomu ju uložiť?",
+        "presets": {
+            "title": "Prednastavené smeny",
+            "manage": "Spravovať predvoľby",
+            "empty": "Zatiaľ nie sú žiadne predvoľby. Nižšie pridajte prvú smenu pre aktívnu prevádzku.",
+            "add": "Pridať predvoľbu",
+            "edit": "Upraviť predvoľbu",
+            "name": "Názov predvoľby",
+            "confirm_delete": "Odstrániť túto predvoľbu? Už priradené smeny sa nezmenia."
+        },
+        "quick_add": {
+            "employee": "Zamestnanec",
+            "preset": "Prednastavená smena",
+            "select_preset": "Vyberte predvoľbu",
+            "no_presets": "Nie sú nastavené žiadne predvoľby",
+            "configure_first": "Najprv nastavte predvoľbu",
+            "start": "Spustiť rýchle pridávanie",
+            "done": "Hotovo",
+            "active_help": "Kliknutím na dni v kalendári priradíte vybranú smenu.",
+            "created": "Pridané",
+            "exists": "Už priradené",
+            "conflict": "Konflikt",
+            "failed": "Chyba",
+            "overlap_confirm": "Smena sa prekrýva s {conflicts}. Napriek tomu ju pridať?"
+        },
         "public_title": "Kalendár smien — {store}",
         "public_subtitle": "Kalendár smien zamestnancov iba na čítanie.",
         "summary": {

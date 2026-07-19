@@ -28,7 +28,7 @@ class ItemSearchController
     {
         $user = User::mustAuth();
         $term = Typer::parseNullableString($request->query('q')) ?? '';
-        $term = \trim($term);
+        $term = \mb_trim($term);
 
         $activeStore = ActiveStoreResolver::resolve($request, $user);
         $activeStoreId = $activeStore instanceof Store ? $activeStore->getKey() : null;

@@ -25,9 +25,13 @@ use App\Http\Controllers\Web\Settings\SettingsController;
 use App\Http\Controllers\Web\Shift\SharedShiftIndexController;
 use App\Http\Controllers\Web\Shift\ShiftDestroyController;
 use App\Http\Controllers\Web\Shift\ShiftIndexController;
+use App\Http\Controllers\Web\Shift\ShiftQuickAddController;
 use App\Http\Controllers\Web\Shift\ShiftShareController;
 use App\Http\Controllers\Web\Shift\ShiftStoreController;
 use App\Http\Controllers\Web\Shift\ShiftUpdateController;
+use App\Http\Controllers\Web\ShiftPreset\ShiftPresetDestroyController;
+use App\Http\Controllers\Web\ShiftPreset\ShiftPresetStoreController;
+use App\Http\Controllers\Web\ShiftPreset\ShiftPresetUpdateController;
 use App\Http\Controllers\Web\Statement\StatementClearController;
 use App\Http\Controllers\Web\Statement\StatementHistoryController;
 use App\Http\Controllers\Web\Statement\StatementIndexController;
@@ -163,7 +167,13 @@ Resolver::resolveRouteRegistrar()
 
         // Shifts (admin write)
         $router->post('shifts', ShiftStoreController::class)->name('shifts.store');
+        $router->post('shifts/quick-add', ShiftQuickAddController::class)->name('shifts.quick-add');
         $router->post('shifts/share', ShiftShareController::class)->name('shifts.share');
         $router->put('shifts/{shift}', ShiftUpdateController::class)->whereNumber('shift')->name('shifts.update');
         $router->delete('shifts/{shift}', ShiftDestroyController::class)->whereNumber('shift')->name('shifts.destroy');
+
+        // Shift presets (admin write)
+        $router->post('shift-presets', ShiftPresetStoreController::class)->name('shift-presets.store');
+        $router->put('shift-presets/{shiftPreset}', ShiftPresetUpdateController::class)->whereNumber('shiftPreset')->name('shift-presets.update');
+        $router->delete('shift-presets/{shiftPreset}', ShiftPresetDestroyController::class)->whereNumber('shiftPreset')->name('shift-presets.destroy');
     });

@@ -8,6 +8,7 @@ import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Select from '@/components/ui/Select.vue';
+import Textarea from '@/components/ui/Textarea.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 
@@ -106,16 +107,13 @@ function submit(): void {
                         <Label for="notes">{{
                             t('stores.columns.notes')
                         }}</Label>
-                        <textarea
+                        <Textarea
                             id="notes"
                             v-model="form.notes"
-                            rows="4"
-                            :aria-invalid="
-                                form.errors.notes ? 'true' : undefined
-                            "
-                            aria-describedby="notes-error"
-                            class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-xs text-on-surface outline-none transition placeholder:text-on-surface-variant/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
-                        ></textarea>
+                            :rows="4"
+                            :invalid="Boolean(form.errors.notes)"
+                            described-by="notes-error"
+                        />
                         <FieldError
                             id="notes-error"
                             :message="form.errors.notes"

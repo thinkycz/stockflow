@@ -33,11 +33,50 @@ class ShiftValidity
     }
 
     /**
+     * Valid quarter-hour time values.
+     *
+     * @return list<string>
+     */
+    public static function timeOptions(): array
+    {
+        $times = [];
+
+        for ($hour = 0; $hour < 24; ++$hour) {
+            foreach ([0, 15, 30, 45] as $minute) {
+                $times[] = \sprintf('%02d:%02d', $hour, $minute);
+            }
+        }
+
+        return $times;
+    }
+
+    /**
      * Worker id validation rules.
      */
     public function workerId(): Validity
     {
         return $this->baseValidity->id()->exists('workers', 'id', ['user_id', (string) $this->userId]);
+    }
+
+    /**
+     * Shift preset id validation rules for an active store.
+     */
+    public function presetId(int $storeId): Validity
+    {
+        return $this->baseValidity->id()->exists('shift_presets', 'id', [
+            'user_id',
+            (string) $this->userId,
+            'store_id',
+            (string) $storeId,
+        ]);
+    }
+
+    /**
+     * Optional explicit overlap override.
+     */
+    public function allowOverlap(): Validity
+    {
+        return $this->baseValidity->make()->boolean();
     }
 
     /**
@@ -77,23 +116,5 @@ class ShiftValidity
     public function id(): Validity
     {
         return $this->baseValidity->id()->exists('shifts', 'id', ['user_id', (string) $this->userId]);
-    }
-
-    /**
-     * Valid quarter-hour time values.
-     *
-     * @return list<string>
-     */
-    private static function timeOptions(): array
-    {
-        $times = [];
-
-        for ($hour = 0; $hour < 24; ++$hour) {
-            foreach ([0, 15, 30, 45] as $minute) {
-                $times[] = \sprintf('%02d:%02d', $hour, $minute);
-            }
-        }
-
-        return $times;
     }
 }

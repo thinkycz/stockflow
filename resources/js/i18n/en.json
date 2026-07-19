@@ -694,6 +694,31 @@
         "copy_public_link": "Copy public link",
         "public_link_copied": "Public link copied",
         "public_link_error": "The public link could not be copied.",
+        "overlap_confirm": "This shift overlaps another assignment. Save it anyway?",
+        "presets": {
+            "title": "Shift presets",
+            "manage": "Manage presets",
+            "empty": "No presets yet. Add the active store's first reusable shift below.",
+            "add": "Add preset",
+            "edit": "Edit preset",
+            "name": "Preset name",
+            "confirm_delete": "Delete this preset? Existing assigned shifts will not change."
+        },
+        "quick_add": {
+            "employee": "Employee",
+            "preset": "Shift preset",
+            "select_preset": "Select a preset",
+            "no_presets": "No presets configured",
+            "configure_first": "Configure a preset first",
+            "start": "Start quick add",
+            "done": "Done",
+            "active_help": "Click calendar days to assign the selected shift.",
+            "created": "Added",
+            "exists": "Already assigned",
+            "conflict": "Conflict",
+            "failed": "Failed",
+            "overlap_confirm": "This overlaps {conflicts}. Add it anyway?"
+        },
         "public_title": "Shift calendar — {store}",
         "public_subtitle": "Read-only employee shift calendar.",
         "summary": {

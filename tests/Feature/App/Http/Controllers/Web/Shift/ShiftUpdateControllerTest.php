@@ -85,3 +85,40 @@ use App\Models\Worker;
         ])
         ->assertNotFound();
 });
+
+\test('updating into an overlap requires an explicit override', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    Shift::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $worker->getKey(),
+        'date' => '2026-07-15',
+        'start_time' => '10:00',
+        'end_time' => '15:00',
+    ]);
+    $shift = Shift::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $worker->getKey(),
+        'date' => '2026-07-15',
+        'start_time' => '15:00',
+        'end_time' => '21:00',
+    ]);
+    $payload = [
+        'worker_id' => $worker->getKey(),
+        'date' => '2026-07-15',
+        'start_time' => '14:00',
+        'end_time' => '18:00',
+    ];
+
+    $this->be($admin, 'users')->put("/shifts/{$shift->getKey()}", $payload, $this->inertiaHeaders())
+        ->assertStatus(422)
+        ->assertJsonPath('props.errors.overlap.0', \__('This shift overlaps an existing assignment.'));
+    \expect($shift->refresh()->getStartTimeShort())->toBe('15:00');
+
+    $this->be($admin, 'users')->put("/shifts/{$shift->getKey()}", [...$payload, 'allow_overlap' => true], $this->inertiaHeaders())
+        ->assertRedirect();
+    \expect($shift->refresh()->getStartTimeShort())->toBe('14:00');
+});

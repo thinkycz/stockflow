@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Web\Shift;
 
 use App\Models\Shift;
+use App\Models\ShiftPreset;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
@@ -95,6 +96,27 @@ class ShiftIndexController
         ];
 
         if ($user->isAdmin()) {
+            $presetQuery = ShiftPreset::query();
+            ShiftPreset::scopeForUser($presetQuery, $scopeUser);
+
+            if ($store instanceof Store) {
+                ShiftPreset::scopeForStore($presetQuery, $store->getKey());
+            } else {
+                $presetQuery->whereRaw('1 = 0');
+            }
+
+            ShiftPreset::querySelect($presetQuery);
+            $props['shift_presets'] = $presetQuery
+                ->orderBy('start_time')
+                ->orderBy('name')
+                ->get()
+                ->map(static fn(ShiftPreset $preset): array => [
+                    'id' => $preset->getKey(),
+                    'name' => $preset->getName(),
+                    'start_time' => $preset->getStartTimeShort(),
+                    'end_time' => $preset->getEndTimeShort(),
+                ])
+                ->all();
             $props['worker_summary'] = $workerModels->map(
                 static function (Worker $worker) use ($minutesByWorker, $salaryByWorker): array {
                     $hours = ($minutesByWorker[$worker->getKey()] ?? 0) / 60;

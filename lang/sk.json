@@ -46,5 +46,9 @@
     "Cannot delete a worker with existing shifts.": "Brigádnika so smenami nie je možné zmazať.",
     "Shift created.": "Smena bola vytvorená.",
     "Shift updated.": "Smena bola aktualizovaná.",
-    "Shift deleted.": "Smena bola zmazaná."
+    "Shift deleted.": "Smena bola zmazaná.",
+    "Shift preset created.": "Predvoľba smeny bola vytvorená.",
+    "Shift preset updated.": "Predvoľba smeny bola upravená.",
+    "Shift preset deleted.": "Predvoľba smeny bola odstránená.",
+    "This shift overlaps an existing assignment.": "Táto smena sa prekrýva s existujúcou smenou."
 }

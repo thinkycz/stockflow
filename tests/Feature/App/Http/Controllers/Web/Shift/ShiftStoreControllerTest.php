@@ -122,6 +122,34 @@ use App\Models\Worker;
     $this->assertDatabaseCount('shifts', 0);
 });
 
+\test('creating an overlapping shift requires an explicit override', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    Shift::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $worker->getKey(),
+        'date' => '2026-07-15',
+        'start_time' => '10:00',
+        'end_time' => '15:00',
+    ]);
+    $payload = [
+        'worker_id' => $worker->getKey(),
+        'date' => '2026-07-15',
+        'start_time' => '14:00',
+        'end_time' => '18:00',
+    ];
+
+    $response = $this->be($admin, 'users')->post('/shifts', $payload, $this->inertiaHeaders());
+    $response->assertStatus(422)->assertJsonPath('props.errors.overlap.0', \__('This shift overlaps an existing assignment.'));
+    \expect(Shift::query()->count())->toBe(1);
+
+    $this->be($admin, 'users')->post('/shifts', [...$payload, 'allow_overlap' => true], $this->inertiaHeaders())
+        ->assertRedirect();
+    \expect(Shift::query()->count())->toBe(2);
+});
+
 \test('limited user cannot create shifts', function (): void {
     $admin = Database\Factories\UserFactory::new()->admin()->createOne();
     $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);

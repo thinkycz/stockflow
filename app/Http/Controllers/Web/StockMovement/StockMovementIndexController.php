@@ -52,7 +52,7 @@ class StockMovementIndexController
         $query = StockMovement::querySelect($baseQuery)
             ->with(['store', 'sourceStore', 'creator'])
             ->withCount('movementItems')
-            ->orderByDesc('created_at')
+            ->orderByDesc('occurred_at')
             ->orderByDesc('id');
 
         if ($search !== '') {
@@ -72,11 +72,11 @@ class StockMovementIndexController
         }
 
         if ($dateFrom !== null) {
-            $query->where('created_at', '>=', $dateFrom);
+            $query->where('occurred_at', '>=', $dateFrom);
         }
 
         if ($dateTo !== null) {
-            $query->whereDate('created_at', '<=', $dateTo);
+            $query->whereDate('occurred_at', '<=', $dateTo);
         }
 
         $paginator = $query->paginate(self::TAKE)->withQueryString();
@@ -91,7 +91,7 @@ class StockMovementIndexController
                 'store_name' => $movement->getStore()?->getName(),
                 'source_store_id' => $movement->getSourceStoreId(),
                 'source_store_name' => $movement->getSourceStore()?->getName(),
-                'created_at' => $movement->getCreatedAt()->toJSON(),
+                'created_at' => $movement->getOccurredAt()->toJSON(),
                 'total_quantity' => $movement->getTotalQuantity(),
                 'total_value' => $movement->getTotalValue(),
                 'items_count' => $movement->getItemsCount(),

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\StockMovementClassificationEnum;
 use Database\Factories\InventorySessionItemFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Models\BaseModel;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -41,7 +43,7 @@ class InventorySessionItem extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'session_id', 'item_id', 'quantity', 'note', 'created_at', 'updated_at']);
+        return $query->select(['id', 'session_id', 'item_id', 'quantity', 'expected_quantity', 'quantity_difference', 'classification', 'observation_started_at', 'note', 'created_at', 'updated_at']);
     }
 
     /**
@@ -105,6 +107,44 @@ class InventorySessionItem extends BaseModel
     }
 
     /**
+     * Expected quantity before the physical count.
+     */
+    public function getExpectedQuantity(): int|null
+    {
+        return $this->assertNullableInt('expected_quantity');
+    }
+
+    /**
+     * Counted quantity minus expected quantity.
+     */
+    public function getQuantityDifference(): int|null
+    {
+        return $this->assertNullableInt('quantity_difference');
+    }
+
+    /**
+     * Classification selected for a non-zero difference.
+     */
+    public function getClassification(): StockMovementClassificationEnum|null
+    {
+        $value = $this->getAttribute('classification');
+
+        if ($value === null) {
+            return null;
+        }
+
+        return StockMovementClassificationEnum::from(Typer::assertString($value));
+    }
+
+    /**
+     * Start of the closed physical-count interval.
+     */
+    public function getObservationStartedAt(): Carbon|null
+    {
+        return Typer::assertNullableCarbon($this->getAttribute('observation_started_at'));
+    }
+
+    /**
      * Note getter.
      */
     public function getNote(): string|null
@@ -121,6 +161,9 @@ class InventorySessionItem extends BaseModel
     {
         return [
             'quantity' => 'integer',
+            'expected_quantity' => 'integer',
+            'quantity_difference' => 'integer',
+            'observation_started_at' => 'datetime',
         ];
     }
 }

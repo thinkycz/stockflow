@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Console\Commands\BackfillInventoryConsumptionCommand;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ResolveActiveStore;
@@ -58,6 +59,9 @@ return Application::configure(basePath: \dirname(__DIR__))
     })
     ->withSingletons([
         ExceptionHandler::class => Handler::class,
+    ])
+    ->withCommands([
+        BackfillInventoryConsumptionCommand::class,
     ])
     ->withSchedule(static function (Schedule $schedule): void {
         $config = Config::inject();

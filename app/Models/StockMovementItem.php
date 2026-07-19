@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\AdjustmentReasonEnum;
+use App\Enums\StockMovementClassificationEnum;
 use Database\Factories\StockMovementItemFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Models\BaseModel;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -56,6 +58,9 @@ class StockMovementItem extends BaseModel
             'quantity_after',
             'quantity_difference',
             'adjustment_reason',
+            'classification',
+            'observation_started_at',
+            'inventory_session_item_id',
         ]);
     }
 
@@ -77,6 +82,16 @@ class StockMovementItem extends BaseModel
     public function item(): BelongsTo
     {
         return $this->belongsTo(Item::class, 'item_id');
+    }
+
+    /**
+     * Inventory row reconciled by this movement row.
+     *
+     * @return BelongsTo<InventorySessionItem, $this>
+     */
+    public function inventorySessionItem(): BelongsTo
+    {
+        return $this->belongsTo(InventorySessionItem::class, 'inventory_session_item_id');
     }
 
     /**
@@ -174,6 +189,36 @@ class StockMovementItem extends BaseModel
     }
 
     /**
+     * Business classification of the stock difference.
+     */
+    public function getClassification(): StockMovementClassificationEnum|null
+    {
+        $value = $this->getAttribute('classification');
+
+        if ($value === null) {
+            return null;
+        }
+
+        return StockMovementClassificationEnum::from(Typer::assertString($value));
+    }
+
+    /**
+     * Start of the closed observation interval.
+     */
+    public function getObservationStartedAt(): Carbon|null
+    {
+        return Typer::assertNullableCarbon($this->getAttribute('observation_started_at'));
+    }
+
+    /**
+     * Linked inventory row id.
+     */
+    public function getInventorySessionItemId(): int|null
+    {
+        return $this->assertNullableInt('inventory_session_item_id');
+    }
+
+    /**
      * Aggregate rows count getter.
      */
     public function getRowsCount(): int
@@ -202,6 +247,7 @@ class StockMovementItem extends BaseModel
             'quantity_before' => 'integer',
             'quantity_after' => 'integer',
             'quantity_difference' => 'integer',
+            'observation_started_at' => 'datetime',
         ];
     }
 }

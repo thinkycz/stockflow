@@ -42,7 +42,7 @@ use App\Models\Store;
     \expect($names)->not->toContain('Other Store');
 });
 
-\test('per-store metrics aggregate incoming and outgoing movements in a single grouped query', function (): void {
+\test('per-store metrics aggregate receipts and transfers out in a single grouped query', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $retail = Store::factory()->create([
         'user_id' => $user->getKey(),
@@ -85,7 +85,7 @@ use App\Models\Store;
     // 5 units received (incoming) and 2 units sent (outgoing) at value 4 each.
     \expect((int) $row['total_received_quantity'])->toBe(5);
     \expect((float) $row['total_received_value'])->toBe(20.0);
-    \expect((float) $row['total_outgoing_value'])->toBe(8.0);
+    \expect((float) $row['total_transfer_out_value'])->toBe(8.0);
 });
 
 \test('per-store metrics only count the authenticated users own movements', function (): void {
@@ -116,6 +116,6 @@ use App\Models\Store;
         \expect($row['movements_count'])->toBe(0);
         \expect((int) $row['total_received_quantity'])->toBe(0);
         \expect((float) $row['total_received_value'])->toBe(0.0);
-        \expect((float) $row['total_outgoing_value'])->toBe(0.0);
+        \expect((float) $row['total_transfer_out_value'])->toBe(0.0);
     }
 });

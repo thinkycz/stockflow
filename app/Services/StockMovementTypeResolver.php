@@ -14,10 +14,20 @@ class StockMovementTypeResolver
     /**
      * Resolve movement type from explicit adjustment mode or source/destination pair.
      */
-    public function resolve(bool $isAdjustment, int|null $sourceStoreId, int|null $storeId): StockMovementTypeEnum
+    public function resolve(string $mode, int|null $sourceStoreId, int|null $storeId): StockMovementTypeEnum
     {
-        if ($isAdjustment) {
+        if ($mode === 'adjustment') {
             return StockMovementTypeEnum::ADJUSTMENT;
+        }
+
+        if ($mode === 'consumption') {
+            if ($storeId !== null && $sourceStoreId === null) {
+                return StockMovementTypeEnum::CONSUMPTION;
+            }
+
+            $this->fail([
+                'store_id' => Typer::assertString(\__('Consumption requires one store and no source store.')),
+            ]);
         }
 
         if ($sourceStoreId === null && $storeId !== null) {
@@ -33,7 +43,7 @@ class StockMovementTypeResolver
                 ]);
             }
 
-            return StockMovementTypeEnum::OUTGOING;
+            return StockMovementTypeEnum::TRANSFER;
         }
 
         $this->fail([

@@ -766,7 +766,8 @@ trait ParseTrait
 
         if ($value instanceof BigNumber || \is_string($value) || \is_int($value) || \is_float($value)) {
             try {
-                return BigDecimal::of($value)->toScale($scale, $roundingMode);
+                return BigDecimal::of(\is_float($value) ? (string) $value : $value)
+                    ->toScale(\max(0, $scale), $roundingMode);
             } catch (Throwable $th) {
                 return null;
             }
@@ -796,7 +797,8 @@ trait ParseTrait
 
         if ($value instanceof BigNumber || \is_string($value) || \is_int($value) || \is_float($value)) {
             try {
-                $value = BigDecimal::of($value)->toScale($scale, $roundingMode);
+                $value = BigDecimal::of(\is_float($value) ? (string) $value : $value)
+                    ->toScale(\max(0, $scale), $roundingMode);
             } catch (Throwable $th) {
                 Panicker::message(__METHOD__, 'assertion failed', \compact('key', 'value'));
             }

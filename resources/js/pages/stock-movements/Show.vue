@@ -26,14 +26,25 @@ type Row = {
     quantity_after: number | null;
     quantity_difference: number | null;
     adjustment_reason: string | null;
+    classification: string | null;
 };
 
 defineProps<{
     movement: {
         id: number;
         number: string;
-        type: 'incoming' | 'outgoing' | 'adjustment';
-        display_label_key: 'incoming' | 'outgoing' | 'transfer' | 'adjustment';
+        type:
+            | 'incoming'
+            | 'transfer'
+            | 'consumption'
+            | 'adjustment'
+            | 'inventory_reconciliation';
+        display_label_key:
+            | 'incoming'
+            | 'transfer'
+            | 'consumption'
+            | 'adjustment'
+            | 'inventory_reconciliation';
         note: string | null;
         store_id: number | null;
         store_name: string | null;
@@ -96,7 +107,7 @@ function destroyMovement(id: number): void {
                         {{ formatDate(movement.created_at) }} ·
                         <span
                             v-if="
-                                movement.type === 'outgoing' &&
+                                movement.type === 'transfer' &&
                                 movement.source_store_name
                             "
                             >{{ movement.source_store_name }} →
@@ -111,6 +122,7 @@ function destroyMovement(id: number): void {
                 </div>
                 <div class="flex items-center gap-2">
                     <Button
+                        v-if="movement.type !== 'inventory_reconciliation'"
                         variant="danger"
                         type="button"
                         @click="destroyMovement(movement.id)"

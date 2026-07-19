@@ -27,7 +27,12 @@ import { formatDateTime, formatMoney, formatNumber } from '@/lib/format';
 type MovementRow = {
     id: number;
     number: string;
-    type: 'incoming' | 'outgoing' | 'adjustment';
+    type:
+        | 'incoming'
+        | 'transfer'
+        | 'consumption'
+        | 'adjustment'
+        | 'inventory_reconciliation';
     store_id: number | null;
     total_quantity: number;
     total_value: number;

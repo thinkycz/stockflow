@@ -30,7 +30,12 @@ import { formatDateTime, formatMoney, formatNumber } from '@/lib/format';
 type MovementRow = {
     id: number;
     number: string;
-    type: 'incoming' | 'outgoing' | 'adjustment';
+    type:
+        | 'incoming'
+        | 'transfer'
+        | 'consumption'
+        | 'adjustment'
+        | 'inventory_reconciliation';
     note: string | null;
     total_quantity: number;
     total_value: number;
@@ -59,7 +64,7 @@ type SparklinePoint = {
     value: number | null;
 };
 
-type InventoryStatus = 'in_stock' | 'low_stock' | 'out_of_stock';
+type InventoryStatus = 'ok' | 'due_soon' | 'out' | 'no_data';
 
 type InventoryRow = {
     item_id: number;
@@ -73,7 +78,9 @@ type InventoryRow = {
     sparkline: SparklinePoint[];
     last_count_at: string | null;
     avg_daily_consumption: number;
-    days_until_restock: number | null;
+    coverage_days: number;
+    days_until_stockout: number | null;
+    projected_stockout_at: string | null;
 };
 
 defineProps<{
@@ -87,8 +94,8 @@ defineProps<{
     };
     inventory: InventoryRow[];
     metrics: {
-        total_outgoing_movements: number;
-        total_outgoing_value: number;
+        total_transfer_out_movements: number;
+        total_transfer_out_value: number;
         total_received_quantity: number;
         total_received_value: number;
     };
@@ -186,14 +193,14 @@ function destroyStore(id: number): void {
                 <Card padded>
                     <CardHeader>
                         <CardDescription>{{
-                            t('stores.metrics.outgoing_movements')
+                            t('stores.metrics.transfer_out_movements')
                         }}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <p
                             class="font-heading text-2xl font-bold tracking-tight text-on-surface"
                         >
-                            {{ metrics.total_outgoing_movements }}
+                            {{ metrics.total_transfer_out_movements }}
                         </p>
                     </CardContent>
                 </Card>
@@ -261,7 +268,9 @@ function destroyStore(id: number): void {
                                     }}
                                 </th>
                                 <th class="text-right">
-                                    {{ t('stores.columns.days_until_restock') }}
+                                    {{
+                                        t('stores.columns.days_until_stockout')
+                                    }}
                                 </th>
                             </tr>
                         </thead>
@@ -306,8 +315,8 @@ function destroyStore(id: number): void {
                                     class="text-right text-xs text-on-surface-variant"
                                 >
                                     {{
-                                        row.days_until_restock !== null
-                                            ? `${row.days_until_restock} d`
+                                        row.days_until_stockout !== null
+                                            ? `${row.days_until_stockout} d`
                                             : '—'
                                     }}
                                 </td>

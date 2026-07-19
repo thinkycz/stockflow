@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Enums\StockMovementTypeEnum;
+use App\Enums\StockMovementClassificationEnum;
 use App\Models\Item;
 use App\Models\Statement;
 use App\Models\StatementDay;
@@ -78,7 +78,7 @@ use App\Services\StatementService;
     \expect($firstDay->getTotal())->toBe(0.0);
 });
 
-\test('calculateInvestment sums totals of outgoing movements sourced from the store', function (): void {
+\test('calculateInvestment sums consumption and excludes transfers', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
     $warehouse = Store::factory()->create([
         'user_id' => $user->getKey(),
@@ -92,35 +92,37 @@ use App\Services\StatementService;
         'user_id' => $user->getKey(),
         'purchase_price' => '5.00',
     ]);
-    StockMovementItem::query()->create([
-        'stock_movement_id' => StockMovement::factory()->outgoing($store)->byUser($user)->create([
-            'user_id' => $user->getKey(),
-            'source_store_id' => $store->getKey(),
-            'store_id' => $warehouse->getKey(),
-            'type' => StockMovementTypeEnum::OUTGOING,
-            'created_at' => '2026-06-15 10:00:00',
-        ])->getKey(),
-        'item_id' => $item->getKey(),
-        'quantity' => 4,
-        'total' => 20.0,
+    $consumption = StockMovement::factory()->consumption($store)->byUser($user)->create([
+        'user_id' => $user->getKey(),
+        'occurred_at' => '2026-06-15 10:00:00',
     ]);
     StockMovementItem::query()->create([
-        'stock_movement_id' => StockMovement::factory()->outgoing($store)->byUser($user)->create([
-            'user_id' => $user->getKey(),
-            'source_store_id' => $store->getKey(),
-            'store_id' => $warehouse->getKey(),
-            'type' => StockMovementTypeEnum::OUTGOING,
-            'created_at' => '2026-06-20 10:00:00',
-        ])->getKey(),
+        'stock_movement_id' => $consumption->getKey(),
+        'item_id' => $item->getKey(),
+        'quantity' => 4,
+        'quantity_difference' => -4,
+        'classification' => StockMovementClassificationEnum::CONSUMPTION->value,
+        'total' => 20.0,
+    ]);
+
+    $transfer = StockMovement::factory()->transfer($warehouse)->byUser($user)->create([
+        'user_id' => $user->getKey(),
+        'source_store_id' => $store->getKey(),
+        'store_id' => $warehouse->getKey(),
+        'occurred_at' => '2026-06-20 10:00:00',
+    ]);
+    StockMovementItem::query()->create([
+        'stock_movement_id' => $transfer->getKey(),
         'item_id' => $item->getKey(),
         'quantity' => 2,
+        'quantity_difference' => -2,
         'total' => 10.0,
     ]);
 
     $service = \app(StatementService::class);
     $statement = $service->findOrCreateForMonth($user, $store, 2026, 6);
 
-    \expect($service->calculateInvestment($statement))->toBe(30.0);
+    \expect($service->calculateInvestment($statement))->toBe(20.0);
 });
 
 \test('buildMetrics computes revenue, margin and channel breakdown', function (): void {

@@ -45,7 +45,7 @@ class StockMovementSequenceFactory extends Factory
     public function outgoing(): self
     {
         return $this->state(fn(): array => [
-            'type' => StockMovementTypeEnum::OUTGOING->value,
+            'type' => StockMovementTypeEnum::TRANSFER->value,
         ]);
     }
 

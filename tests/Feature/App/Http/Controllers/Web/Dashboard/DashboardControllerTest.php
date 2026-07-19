@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\StockMovementClassificationEnum;
 use App\Models\Item;
 use App\Models\Statement;
 use App\Models\StockMovement;
@@ -37,7 +38,7 @@ use Thinkycz\LaravelCore\Support\Typer;
                 'month_incoming',
                 'month_outgoing',
             ],
-            'stock_status' => ['in_stock', 'low_stock', 'out_of_stock'],
+            'stock_status' => ['in_stock', 'low_stock', 'out_of_stock', 'no_data'],
             'top_consumed',
             'recent_movements',
             'recent_statements',
@@ -91,11 +92,12 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response = $this->be($user, 'users')
         ->get('/dashboard?store_id=' . $warehouse->getKey(), $this->inertiaHeaders());
 
-    \expect($response->json('props.stock_status.in_stock'))->toBe(1);
-    \expect($response->json('props.stock_status.low_stock'))->toBe(1);
+    \expect($response->json('props.stock_status.in_stock'))->toBe(0);
+    \expect($response->json('props.stock_status.low_stock'))->toBe(0);
     \expect($response->json('props.stock_status.out_of_stock'))->toBe(1);
+    \expect($response->json('props.stock_status.no_data'))->toBe(2);
     \expect($response->json('props.metrics.items_count'))->toBe(3);
-    \expect($response->json('props.metrics.low_stock_items'))->toBe(1);
+    \expect($response->json('props.metrics.low_stock_items'))->toBe(0);
 });
 
 \test('dashboard scopes recent movements to the active store', function (): void {
@@ -127,24 +129,28 @@ use Thinkycz\LaravelCore\Support\Typer;
     $itemOther = Item::factory()->create(['user_id' => $user->getKey(), 'title' => 'Other-store top']);
 
     $localMovement = StockMovement::factory()
-        ->outgoing($warehouse)
+        ->consumption($warehouse)
         ->byUser($user)
-        ->create(['user_id' => $user->getKey(), 'source_store_id' => $warehouse->getKey()]);
+        ->create(['user_id' => $user->getKey()]);
     StockMovementItem::factory()->create([
         'stock_movement_id' => $localMovement->getKey(),
         'item_id' => $itemLocal->getKey(),
-        'quantity_difference' => 4,
+        'quantity' => 4,
+        'quantity_difference' => -4,
+        'classification' => StockMovementClassificationEnum::CONSUMPTION->value,
         'total' => 40.0,
     ]);
 
     $otherMovement = StockMovement::factory()
-        ->outgoing($other)
+        ->consumption($other)
         ->byUser($user)
-        ->create(['user_id' => $user->getKey(), 'source_store_id' => $other->getKey()]);
+        ->create(['user_id' => $user->getKey()]);
     StockMovementItem::factory()->create([
         'stock_movement_id' => $otherMovement->getKey(),
         'item_id' => $itemOther->getKey(),
-        'quantity_difference' => 99,
+        'quantity' => 99,
+        'quantity_difference' => -99,
+        'classification' => StockMovementClassificationEnum::CONSUMPTION->value,
         'total' => 9999.0,
     ]);
 
@@ -155,6 +161,20 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($topConsumed)->toHaveCount(1);
     \expect($topConsumed[0]['item_id'])->toBe($itemLocal->getKey());
     \expect((float) $topConsumed[0]['total_quantity'])->toBe(4.0);
+});
+
+\test('limited dashboard reads the owner inventory for its assigned store', function (): void {
+    [$admin, $warehouse] = \createIsolatedUserWithWarehouse();
+    $limited = UserFactory::new()->limited($warehouse)->createOne();
+    $item = Item::factory()->create(['user_id' => $admin->getKey(), 'purchase_price' => '10.00']);
+    StoreItem::factory()->create(['store_id' => $warehouse->getKey(), 'item_id' => $item->getKey(), 'quantity' => 3]);
+
+    $response = $this->be($limited, 'users')->get('/dashboard', $this->inertiaHeaders());
+
+    $response->assertOk();
+    \expect($response->json('props.active_store.id'))->toBe($warehouse->getKey());
+    \expect((float) $response->json('props.metrics.inventory_value'))->toBe(30.0);
+    \expect($response->json('props.can_manage_movements'))->toBeFalse();
 });
 
 \test('dashboard scopes recent statements to the active store', function (): void {

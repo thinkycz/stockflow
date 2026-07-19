@@ -109,14 +109,15 @@
         "metrics": {
             "inventory_value": "Hodnota zásob",
             "items_count": "Položiek v predajni",
-            "low_stock": "Nízke zásoby",
+            "low_stock": "Riziko do 7 dní",
+            "last_inventory": "Posledná inventúra",
             "today_movements": "Dnešné pohyby"
         },
         "month_flow": {
             "title": "Mesačný pohyb",
-            "subtitle": "Súčet hodnôt príjmov a výdajov za aktuálny mesiac.",
-            "incoming": "Príjem",
-            "outgoing": "Výdaj"
+            "subtitle": "Nákupy a skutočná spotreba za aktuálny mesiac.",
+            "incoming": "Nákupy",
+            "outgoing": "Spotreba"
         },
         "stock_status": {
             "title": "Stav zásob",
@@ -124,11 +125,11 @@
         },
         "top_consumed": {
             "title": "Najviac odoberané",
-            "subtitle": "Top 5 položiek podľa množstva za posledných 30 dní.",
+            "subtitle": "Top 5 položiek podľa evidovanej spotreby za posledných 30 dní.",
             "item": "Položka",
             "quantity": "Množstvo",
             "value": "Hodnota",
-            "empty": "Za posledných 30 dní neboli žiadne výdaje."
+            "empty": "Za posledných 30 dní nebola evidovaná žiadna spotreba."
         },
         "statements": {
             "title": "Posledné výkazy",
@@ -173,7 +174,11 @@
         "status": {
             "in_stock": "Skladom",
             "low_stock": "Nízky stav",
-            "out_of_stock": "Vypredané"
+            "out_of_stock": "Vypredané",
+            "ok": "V poriadku",
+            "due_soon": "Riziko do 7 dní",
+            "out": "Vypredané",
+            "no_data": "Nedostatok dát"
         },
         "columns": {
             "title": "Položka",
@@ -236,7 +241,8 @@
         },
         "confirm_delete": "Naozaj chcete zmazať túto predajňu?",
         "metrics": {
-            "outgoing_movements": "Výdajové pohyby",
+            "outgoing_movements": "Presuny von",
+            "transfer_out_movements": "Presuny von",
             "received_quantity": "Celkom prijaté",
             "received_value": "Celková hodnota príjmu"
         },
@@ -248,7 +254,8 @@
             "notes": "Poznámky",
             "movements": "Pohyby",
             "received_value": "Hodnota príjmu",
-            "outgoing_value": "Hodnota výdaja",
+            "outgoing_value": "Hodnota presunov von",
+            "transfer_out_value": "Hodnota presunov von",
             "item": "Položka",
             "sku": "SKU",
             "total_quantity": "Celkom množstvo",
@@ -257,7 +264,8 @@
             "sparkline": "Vývoj (30 dní)",
             "last_count": "Naposledy napočítané",
             "avg_daily_consumption": "Priem. spotreba / deň",
-            "days_until_restock": "Dní do vypredania"
+            "days_until_restock": "Dní do vypredania",
+            "days_until_stockout": "Dní do vypredania"
         }
     },
     "stock_movements": {
@@ -268,6 +276,9 @@
         "title_adjustment": "Ručná úprava",
         "subtitle_adjustment": "Nastavte nové množstvo a dôvod pre každú položku v predajni.",
         "open_adjustment": "Ručná úprava",
+        "title_consumption": "Výdaj / spotreba",
+        "subtitle_consumption": "Odpíšte skutočne spotrebovaný tovar z jednej predajne.",
+        "open_consumption": "Výdaj / spotreba",
         "back_to_transfer": "Späť na presun",
         "create_new": "Nový pohyb",
         "back_to_list": "Späť na pohyby",
@@ -276,7 +287,9 @@
             "incoming": "Naskladnenie",
             "outgoing": "Vyskladnenie",
             "transfer": "Presun medzi predajňami",
-            "adjustment": "Ručná úprava"
+            "consumption": "Spotreba",
+            "adjustment": "Ručná úprava",
+            "inventory_reconciliation": "Inventúrne vyrovnanie"
         },
         "filter": {
             "search": "Hľadať",
@@ -304,6 +317,7 @@
             "source_warehouse": "Zdrojový sklad",
             "destination_store": "Cieľová predajňa",
             "adjustment_store": "Upravovaná predajňa",
+            "consumption_store": "Predajňa spotreby",
             "select_store": "Vyberte predajňu",
             "select_warehouse": "Vyberte sklad",
             "note": "Poznámka / referencia",
@@ -330,6 +344,7 @@
             "value": "Celková hodnota"
         },
         "reasons": {
+            "consumption": "Spotreba",
             "initial_stock": "Počiatočný stav",
             "missing": "Chýbajúce",
             "stolen": "Odcudzené",
@@ -379,7 +394,7 @@
     },
     "reports": {
         "title": "Reporty",
-        "subtitle": "Rýchly prehľad o stave zásob a trendoch pohybov.",
+        "subtitle": "Finančný prehľad tržieb, provízií a odhadovanej marže zo skutočnej spotreby.",
         "inventory_value": "Aktuálna hodnota zásob",
         "monthly_incoming": "Príjem tento mesiac",
         "monthly_outgoing": "Výdaj tento mesiac",
@@ -413,11 +428,12 @@
             "period_all_time": "Celé obdobie",
             "empty": "Vyberte predajňu a obdobie, aby sa zobrazili dáta.",
             "total_revenue": "Celkové tržby",
-            "investment": "Investícia do tovaru",
+            "investment": "Náklad skutočnej spotreby",
+            "inventory_coverage": "Pokrytie: {days} dní / {items} položiek",
             "provisions": "Provízie platieb",
             "card_provision": "karta (1 %)",
             "marketplace_provision": "marketplace (30 %)",
-            "gross_margin": "Hrubá marža",
+            "gross_margin": "Odhadovaná hrubá marža",
             "margin_percent": "Percentuálna marža",
             "daily_average": "Denný priemer",
             "days_with_revenue": "Dní s tržbami",
@@ -428,8 +444,8 @@
             "channel_bars": "Tržby podľa kanálov"
         },
         "statistics": {
-            "title": "Štatistika pobočky",
-            "subtitle": "Predaj, príjem, výdaj, stav zásob a predikcia naskladnenia pre vybranú pobočku.",
+            "title": "Skladová štatistika",
+            "subtitle": "Spotreba, presuny, stav zásob a predikcia vypredania pre vybranú pobočku.",
             "store": "Pobočka",
             "period": "Obdobie (dní)",
             "apply": "Použiť",
@@ -455,6 +471,28 @@
                 "value": "Hodnota zásob",
                 "items": "Položiek na sklade"
             },
+            "consumption": { "title": "Náklad spotreby" },
+            "risk": { "title": "Ohrozené položky" },
+            "coverage": {
+                "title": "Pokrytie inventúrami",
+                "last_inventory": "Posledná inventúra"
+            },
+            "flows": {
+                "receipts": "Nákupy / príjmy",
+                "transfer_in": "Presuny dovnútra",
+                "transfer_out": "Presuny von"
+            },
+            "items": {
+                "title": "Spotreba a predikcie položiek",
+                "subtitle": "Množstvá sú vždy zobrazené vo vlastnej jednotke položky.",
+                "item": "Položka",
+                "current": "Aktuálny stav",
+                "consumed": "Spotreba",
+                "average": "Priemer za deň",
+                "stockout": "Predikované vypredanie",
+                "status": "Stav"
+            },
+            "classifications": { "title": "Straty a korekcie podľa dôvodu" },
             "top_consumed": {
                 "title": "Najviac spotrebované položky",
                 "subtitle": "Položky s najväčšou absolútnou zmenou v období.",
@@ -467,7 +505,8 @@
             "charts": {
                 "daily": "Denný príjem vs. výdaj",
                 "incoming": "Príjem",
-                "outgoing": "Výdaj"
+                "outgoing": "Výdaj",
+                "consumption": "Náklad spotreby po týždňoch"
             },
             "empty": "Vyberte pobočku na zobrazenie štatistík."
         }
@@ -556,7 +595,9 @@
             "current": "Aktuálne množstvo",
             "previous": "Posledná inventúra",
             "new_quantity": "Nové množstvo",
-            "note": "Poznámka"
+            "note": "Poznámka",
+            "difference": "Rozdiel",
+            "reason": "Dôvod"
         },
         "actions": {
             "save": "Uložiť inventúru"

@@ -36,19 +36,19 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($movement->getCreatedAtDate())->toBeString();
 });
 
-\test('getDisplayLabelKey differentiates incoming / outgoing / transfer / adjustment', function (): void {
+\test('getDisplayLabelKey follows the canonical movement type', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $retail = StoreFactory::new()->createOne(['user_id' => $user->getKey(), 'is_warehouse' => false]);
 
     $incoming = StockMovementFactory::new()->incoming()->createOne(['user_id' => $user->getKey()]);
     \expect($incoming->getDisplayLabelKey())->toBe('incoming');
 
-    $outgoingFromWarehouse = StockMovementFactory::new()->outgoing($warehouse)->createOne(['user_id' => $user->getKey()]);
-    \expect($outgoingFromWarehouse->getDisplayLabelKey())->toBe('outgoing');
+    $outgoingFromWarehouse = StockMovementFactory::new()->transfer($warehouse)->createOne(['user_id' => $user->getKey()]);
+    \expect($outgoingFromWarehouse->getDisplayLabelKey())->toBe('transfer');
 
     $transfer = StockMovementFactory::new()->createOne([
         'user_id' => $user->getKey(),
-        'type' => StockMovementTypeEnum::OUTGOING->value,
+        'type' => StockMovementTypeEnum::TRANSFER->value,
         'source_store_id' => $retail->getKey(),
         'store_id' => $warehouse->getKey(),
     ]);
@@ -78,8 +78,8 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 \test('scopeForStore and date scopes filter correctly', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
-    $a = StockMovementFactory::new()->createOne(['store_id' => $warehouse->getKey(), 'created_at' => '2026-01-15 10:00:00']);
-    StockMovementFactory::new()->createOne(['store_id' => $warehouse->getKey(), 'created_at' => '2026-03-01 10:00:00']);
+    $a = StockMovementFactory::new()->createOne(['store_id' => $warehouse->getKey(), 'occurred_at' => '2026-01-15 10:00:00']);
+    StockMovementFactory::new()->createOne(['store_id' => $warehouse->getKey(), 'occurred_at' => '2026-03-01 10:00:00']);
 
     \expect(StockMovement::query()->where(fn($q) => StockMovement::scopeForStore(...)($q, $warehouse->getKey()))->count())->toBe(2);
     \expect(StockMovement::query()->where(fn($q) => StockMovement::scopeForStore(...)($q, 9999))->count())->toBe(0);

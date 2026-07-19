@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import Input from '@/components/ui/Input.vue';
+import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 
@@ -28,6 +29,8 @@ type EditableRow = {
      * on-hand quantity must stay untouched on save.
      */
     quantity: string;
+    classification: string;
+    classificationTouched: boolean;
     note: string;
 };
 
@@ -36,6 +39,7 @@ const props = defineProps<{
     rows: InventoryRow[];
     filters: { store_id: number | null };
     is_admin: boolean;
+    classifications: string[];
 }>();
 
 const { t } = useI18n();
@@ -51,6 +55,8 @@ const editing = reactive<Record<number, EditableRow>>(
             {
                 item_id: row.item_id,
                 quantity: '',
+                classification: 'consumption',
+                classificationTouched: false,
                 note: '',
             },
         ]),
@@ -60,16 +66,6 @@ const editing = reactive<Record<number, EditableRow>>(
 const submitting = ref(false);
 
 const hasNoItems = computed(() => props.rows.length === 0);
-
-const totals = computed(() => {
-    let quantity = 0;
-
-    for (const row of props.rows) {
-        quantity += row.current;
-    }
-
-    return { quantity };
-});
 
 const hasAnyValue = computed(() =>
     Object.values(editing).some((row) => row.quantity !== ''),
@@ -90,6 +86,47 @@ function setQuantity(itemId: number, value: string | number | undefined): void {
         return;
     }
     row.quantity = String(Math.floor(numeric));
+    if (!row.classificationTouched) {
+        const source = props.rows.find((item) => item.item_id === itemId);
+        row.classification =
+            source && numeric > source.current
+                ? 'inventory_correction'
+                : 'consumption';
+    }
+}
+
+function difference(itemId: number): number {
+    const editable = editing[itemId];
+    const source = props.rows.find((item) => item.item_id === itemId);
+    if (!editable || !source || editable.quantity === '') {
+        return 0;
+    }
+    return Number(editable.quantity) - source.current;
+}
+
+function classificationOptions(
+    itemId: number,
+): Array<{ value: string; label: string }> {
+    const values =
+        difference(itemId) > 0
+            ? ['inventory_correction', 'initial_stock', 'other']
+            : ['consumption', 'damaged', 'stolen', 'missing', 'other'];
+    return values.map((value) => ({
+        value,
+        label: t(`stock_movements.reasons.${value}`),
+    }));
+}
+
+function setClassification(
+    itemId: number,
+    value: string | number | null | undefined,
+): void {
+    const row = editing[itemId];
+    if (!row || value === null || value === undefined) {
+        return;
+    }
+    row.classification = String(value);
+    row.classificationTouched = true;
 }
 
 function adjustQuantity(itemId: number, delta: number): void {
@@ -99,7 +136,7 @@ function adjustQuantity(itemId: number, delta: number): void {
     }
     const current = row.quantity === '' ? 0 : Number(row.quantity);
     const next = Math.max(0, current + delta);
-    row.quantity = String(next);
+    setQuantity(itemId, next);
 }
 
 function setNote(itemId: number, value: string | number | undefined): void {
@@ -132,6 +169,8 @@ function save(): void {
         .map((row) => ({
             item_id: row.item_id,
             quantity: Number(row.quantity),
+            classification:
+                difference(row.item_id) === 0 ? null : row.classification,
             note: row.note,
         }));
 
@@ -220,6 +259,14 @@ function save(): void {
                                     }}
                                 </th>
                                 <th class="min-w-[12rem] text-left">
+                                    {{
+                                        t('inventory_counts.columns.difference')
+                                    }}
+                                </th>
+                                <th class="min-w-[12rem] text-left">
+                                    {{ t('inventory_counts.columns.reason') }}
+                                </th>
+                                <th class="min-w-[12rem] text-left">
                                     {{ t('inventory_counts.columns.note') }}
                                 </th>
                             </tr>
@@ -295,6 +342,41 @@ function save(): void {
                                         </button>
                                     </div>
                                 </td>
+                                <td
+                                    class="text-right text-xs font-semibold"
+                                    :class="
+                                        difference(row.item_id) < 0
+                                            ? 'text-rose-600'
+                                            : difference(row.item_id) > 0
+                                              ? 'text-emerald-600'
+                                              : 'text-on-surface-variant'
+                                    "
+                                >
+                                    {{ difference(row.item_id) > 0 ? '+' : ''
+                                    }}{{ difference(row.item_id) }}
+                                </td>
+                                <td>
+                                    <Select
+                                        v-if="difference(row.item_id) !== 0"
+                                        :model-value="
+                                            editing[row.item_id]?.classification
+                                        "
+                                        :options="
+                                            classificationOptions(row.item_id)
+                                        "
+                                        @update:model-value="
+                                            setClassification(
+                                                row.item_id,
+                                                $event,
+                                            )
+                                        "
+                                    />
+                                    <span
+                                        v-else
+                                        class="text-xs text-on-surface-variant"
+                                        >—</span
+                                    >
+                                </td>
                                 <td>
                                     <Input
                                         :model-value="
@@ -309,29 +391,6 @@ function save(): void {
                                 </td>
                             </tr>
                         </tbody>
-                        <tfoot>
-                            <tr>
-                                <th
-                                    colspan="1"
-                                    class="border-t border-outline-glass pt-2 text-left text-xs font-semibold text-on-surface-variant"
-                                >
-                                    {{
-                                        t(
-                                            'inventory_counts.totals.current_quantity',
-                                        )
-                                    }}
-                                </th>
-                                <th
-                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface"
-                                >
-                                    {{ formatNumber(totals.quantity) }}
-                                </th>
-                                <th
-                                    colspan="3"
-                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                ></th>
-                            </tr>
-                        </tfoot>
                     </DataTable>
                 </div>
 

@@ -23,7 +23,7 @@ type StoreRow = {
     movements_count: number;
     total_received_quantity: number;
     total_received_value: number;
-    total_outgoing_value: number;
+    total_transfer_out_value: number;
 };
 
 const props = defineProps<{
@@ -134,7 +134,7 @@ function destroyStore(id: number): void {
                                     {{ t('stores.columns.received_value') }}
                                 </th>
                                 <th class="text-right">
-                                    {{ t('stores.columns.outgoing_value') }}
+                                    {{ t('stores.columns.transfer_out_value') }}
                                 </th>
                                 <th class="w-0">
                                     {{ t('stores.columns.actions') }}
@@ -200,7 +200,9 @@ function destroyStore(id: number): void {
                                 </td>
                                 <td class="text-right text-on-surface-variant">
                                     {{
-                                        formatMoney(store.total_outgoing_value)
+                                        formatMoney(
+                                            store.total_transfer_out_value,
+                                        )
                                     }}
                                 </td>
                                 <td>

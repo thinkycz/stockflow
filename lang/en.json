@@ -50,5 +50,10 @@
     "Shift preset created.": "Shift preset created.",
     "Shift preset updated.": "Shift preset updated.",
     "Shift preset deleted.": "Shift preset deleted.",
-    "This shift overlaps an existing assignment.": "This shift overlaps an existing assignment."
+    "This shift overlaps an existing assignment.": "This shift overlaps an existing assignment.",
+    "Consumption requires one store and no source store.": "Consumption requires one store and no source store.",
+    "Inventory reconciliations are immutable.": "Inventory reconciliations are immutable.",
+    "The selected inventory reason does not match the quantity difference.": "The selected inventory reason does not match the quantity difference.",
+    "The selected adjustment reason does not match the quantity difference.": "The selected adjustment reason does not match the quantity difference.",
+    "You cannot consume :qty from \":title\" (only :current available).": "You cannot consume :qty from \":title\" (only :current available)."
 }

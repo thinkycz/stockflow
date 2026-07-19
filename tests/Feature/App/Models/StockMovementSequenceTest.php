@@ -30,12 +30,12 @@ use App\Models\StockMovementSequence;
     $user = Database\Factories\UserFactory::new()->createOne();
 
     $in1 = StockMovementSequence::next(App\Enums\StockMovementTypeEnum::INCOMING, 2026, $user->getKey());
-    $out1 = StockMovementSequence::next(App\Enums\StockMovementTypeEnum::OUTGOING, 2026, $user->getKey());
+    $out1 = StockMovementSequence::next(App\Enums\StockMovementTypeEnum::TRANSFER, 2026, $user->getKey());
     $adj1 = StockMovementSequence::next(App\Enums\StockMovementTypeEnum::ADJUSTMENT, 2026, $user->getKey());
     $in2 = StockMovementSequence::next(App\Enums\StockMovementTypeEnum::INCOMING, 2027, $user->getKey());
 
     \expect($in1)->toBe('IN-2026-0001');
-    \expect($out1)->toBe('OUT-2026-0001');
+    \expect($out1)->toBe('TR-2026-0001');
     \expect($adj1)->toBe('ADJ-2026-0001');
     \expect($in2)->toBe('IN-2027-0001');
     \expect(StockMovementSequence::query()->count())->toBe(4);

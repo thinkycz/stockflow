@@ -104,6 +104,10 @@ Resolver::resolveRouteRegistrar()
         $router->get('inventory-counts/history', InventoryCountHistoryController::class)->name('inventory-counts.history');
         $router->get('inventory-counts/{session}', InventoryCountShowController::class)->whereNumber('session')->name('inventory-counts.show');
 
+        // Manual consumption (admin + limited assigned-store users)
+        $router->get('stock-movements/create', [StockMovementCreateController::class, 'create'])->name('stock-movements.create');
+        $router->post('stock-movements', [StockMovementCreateController::class, 'store'])->name('stock-movements.store');
+
         // Shifts (admin + limited view)
         $router->get('shifts', ShiftIndexController::class)->name('shifts.index');
 
@@ -140,8 +144,6 @@ Resolver::resolveRouteRegistrar()
 
         // Stock movements
         $router->get('stock-movements', StockMovementIndexController::class)->name('stock-movements.index');
-        $router->get('stock-movements/create', [StockMovementCreateController::class, 'create'])->name('stock-movements.create');
-        $router->post('stock-movements', [StockMovementCreateController::class, 'store'])->name('stock-movements.store');
         $router->get('stock-movements/{stockMovement}', StockMovementShowController::class)->whereNumber('stockMovement')->name('stock-movements.show');
         $router->delete('stock-movements/{stockMovement}', StockMovementDestroyController::class)->whereNumber('stockMovement')->name('stock-movements.destroy');
 

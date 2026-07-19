@@ -109,14 +109,15 @@
         "metrics": {
             "inventory_value": "Inventory Value",
             "items_count": "Items in store",
-            "low_stock": "Low stock items",
+            "low_stock": "At risk within 7 days",
+            "last_inventory": "Last inventory count",
             "today_movements": "Today's movements"
         },
         "month_flow": {
             "title": "Monthly Flow",
-            "subtitle": "Sum of incoming and outgoing values for the current month.",
-            "incoming": "Incoming",
-            "outgoing": "Outgoing"
+            "subtitle": "Purchases and actual consumption this month.",
+            "incoming": "Purchases",
+            "outgoing": "Consumption"
         },
         "stock_status": {
             "title": "Stock Status",
@@ -124,11 +125,11 @@
         },
         "top_consumed": {
             "title": "Most Consumed",
-            "subtitle": "Top 5 items by quantity over the last 30 days.",
+            "subtitle": "Top 5 items by recorded consumption over the last 30 days.",
             "item": "Item",
             "quantity": "Quantity",
             "value": "Value",
-            "empty": "No outgoing movements in the last 30 days."
+            "empty": "No consumption was recorded in the last 30 days."
         },
         "statements": {
             "title": "Recent Statements",
@@ -173,7 +174,11 @@
         "status": {
             "in_stock": "In stock",
             "low_stock": "Low stock",
-            "out_of_stock": "Out of stock"
+            "out_of_stock": "Out of stock",
+            "ok": "OK",
+            "due_soon": "At risk within 7 days",
+            "out": "Out of stock",
+            "no_data": "Insufficient data"
         },
         "columns": {
             "title": "Item",
@@ -236,7 +241,8 @@
         },
         "confirm_delete": "Are you sure you want to delete this store?",
         "metrics": {
-            "outgoing_movements": "Outgoing movements",
+            "outgoing_movements": "Transfers out",
+            "transfer_out_movements": "Transfers out",
             "received_quantity": "Total received",
             "received_value": "Total received value"
         },
@@ -248,7 +254,8 @@
             "notes": "Notes",
             "movements": "Movements",
             "received_value": "Received value",
-            "outgoing_value": "Outgoing value",
+            "outgoing_value": "Transfer-out value",
+            "transfer_out_value": "Transfer-out value",
             "item": "Item",
             "sku": "SKU",
             "total_quantity": "Total qty",
@@ -257,7 +264,8 @@
             "sparkline": "Trend (30 days)",
             "last_count": "Last counted",
             "avg_daily_consumption": "Avg. daily consumption",
-            "days_until_restock": "Days left"
+            "days_until_restock": "Days until stockout",
+            "days_until_stockout": "Days until stockout"
         }
     },
     "stock_movements": {
@@ -268,6 +276,9 @@
         "title_adjustment": "Manual adjustment",
         "subtitle_adjustment": "Set the new quantity and reason for each item at a store.",
         "open_adjustment": "Manual adjustment",
+        "title_consumption": "Issue / consumption",
+        "subtitle_consumption": "Deduct actually consumed goods from one store.",
+        "open_consumption": "Issue / consumption",
         "back_to_transfer": "Back to transfer",
         "create_new": "New movement",
         "back_to_list": "Back to movements",
@@ -276,7 +287,9 @@
             "incoming": "Incoming",
             "outgoing": "Outgoing",
             "transfer": "Store transfer",
-            "adjustment": "Adjustment"
+            "consumption": "Consumption",
+            "adjustment": "Adjustment",
+            "inventory_reconciliation": "Inventory reconciliation"
         },
         "filter": {
             "search": "Search",
@@ -304,6 +317,7 @@
             "source_warehouse": "Source warehouse",
             "destination_store": "Destination store",
             "adjustment_store": "Store to adjust",
+            "consumption_store": "Consumption store",
             "select_store": "Select a store",
             "select_warehouse": "Select a warehouse",
             "note": "Note / reference",
@@ -330,6 +344,7 @@
             "value": "Total value"
         },
         "reasons": {
+            "consumption": "Consumption",
             "initial_stock": "Initial stock",
             "missing": "Missing",
             "stolen": "Stolen",
@@ -379,7 +394,7 @@
     },
     "reports": {
         "title": "Reports",
-        "subtitle": "Quick overview of inventory value and movement trends.",
+        "subtitle": "Financial overview of revenue, fees, and estimated margin from actual consumption.",
         "inventory_value": "Current inventory value",
         "monthly_incoming": "Incoming this month",
         "monthly_outgoing": "Outgoing this month",
@@ -413,11 +428,12 @@
             "period_all_time": "All time",
             "empty": "Pick a store and period to view the data.",
             "total_revenue": "Total revenue",
-            "investment": "Investment in goods",
+            "investment": "Actual consumption cost",
+            "inventory_coverage": "Coverage: {days} days / {items} items",
             "provisions": "Payment provisions",
             "card_provision": "card (1%)",
             "marketplace_provision": "marketplace (30%)",
-            "gross_margin": "Gross margin",
+            "gross_margin": "Estimated gross margin",
             "margin_percent": "Margin percent",
             "daily_average": "Daily average",
             "days_with_revenue": "Days with revenue",
@@ -428,8 +444,8 @@
             "channel_bars": "Revenue by channel"
         },
         "statistics": {
-            "title": "Branch statistics",
-            "subtitle": "Sales, incoming, outgoing, inventory value and restock prediction for the selected branch.",
+            "title": "Inventory statistics",
+            "subtitle": "Consumption, transfers, inventory and stockout predictions for the selected branch.",
             "store": "Branch",
             "period": "Period (days)",
             "apply": "Apply",
@@ -455,6 +471,28 @@
                 "value": "Inventory value",
                 "items": "Items on hand"
             },
+            "consumption": { "title": "Consumption cost" },
+            "risk": { "title": "At-risk items" },
+            "coverage": {
+                "title": "Inventory count coverage",
+                "last_inventory": "Last inventory count"
+            },
+            "flows": {
+                "receipts": "Purchases / receipts",
+                "transfer_in": "Transfers in",
+                "transfer_out": "Transfers out"
+            },
+            "items": {
+                "title": "Item consumption and predictions",
+                "subtitle": "Quantities are always shown in each item's own unit.",
+                "item": "Item",
+                "current": "Current stock",
+                "consumed": "Consumption",
+                "average": "Daily average",
+                "stockout": "Predicted stockout",
+                "status": "Status"
+            },
+            "classifications": { "title": "Losses and corrections by reason" },
             "top_consumed": {
                 "title": "Top consumed items",
                 "subtitle": "Items with the largest absolute stock change in the period.",
@@ -467,7 +505,8 @@
             "charts": {
                 "daily": "Daily incoming vs. outgoing",
                 "incoming": "Incoming",
-                "outgoing": "Outgoing"
+                "outgoing": "Outgoing",
+                "consumption": "Weekly consumption cost"
             },
             "empty": "Select a branch to view statistics."
         }
@@ -556,7 +595,9 @@
             "current": "On hand",
             "previous": "Last inventory",
             "new_quantity": "New quantity",
-            "note": "Note"
+            "note": "Note",
+            "difference": "Difference",
+            "reason": "Reason"
         },
         "actions": {
             "save": "Save stock count"

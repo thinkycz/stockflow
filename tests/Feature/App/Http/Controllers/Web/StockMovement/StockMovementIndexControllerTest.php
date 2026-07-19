@@ -38,12 +38,12 @@ use App\Models\Store;
     ]);
 
     $response = $this->be($user, 'users')->get(
-        '/stock-movements?type=outgoing',
+        '/stock-movements?type=transfer',
         $this->inertiaHeaders(),
     );
 
     \expect($response->json('props.movements'))->toHaveCount(1);
-    \expect($response->json('props.movements.0.type'))->toBe('outgoing');
+    \expect($response->json('props.movements.0.type'))->toBe('transfer');
 });
 
 \test('stock movement index filters by exact source and destination stores', function (): void {

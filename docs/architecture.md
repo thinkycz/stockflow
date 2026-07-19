@@ -5,14 +5,12 @@
 This project is a Laravel 13 + Inertia 3 + Vue 3 inventory starter with
 **per-user data isolation** within one deployment. Each authenticated user
 owns their own stores, item catalog, and stock movements. Quantity is tracked
-per store via `store_items`. Users can mark any store as a **warehouse** (`is_warehouse`);
-a default Warehouse is auto-created on registration. On the create form, movement
-type is **inferred** from source and destination: no source + destination =
-incoming (receipt/purchase); source + different destination = outgoing (warehouse
-source displays as dispatch, retail source as store transfer). Manual adjustment
-is a separate explicit mode (`?mode=adjustment`) that posts `type: adjustment`.
-Stock can move between any owned stores; quantity is checked at the source store
-for outgoing transfers.
+per store via `store_items`; the immutable stock ledger records `incoming`,
+`transfer`, `consumption`, `adjustment`, and `inventory_reconciliation` events.
+A transfer only changes location and never counts as consumption. Physical
+inventory creates a snapshot and, for non-zero differences, a linked inventory
+reconciliation in the same transaction. See
+[`docs/adr/0001-unified-stock-ledger.md`](adr/0001-unified-stock-ledger.md).
 
 The backend ships with two HTTP surfaces and one framework helper package; the
 frontend is a Vite-built Vue 3 app that consumes Inertia pages from the
@@ -28,11 +26,10 @@ inventory session for the same store/item) and **Nové množství** (the
 input — what becomes the new on-hand value when the form is saved).
 Saving the form creates a new `inventory_sessions` header and one
 `inventory_session_items` row per recorded item inside a single
-transaction; the matching `store_items` row is upserted so the single
-source of truth for "what is on the shelf right now" stays on
-`store_items`. Statistical columns (average consumption, days until
-restock, status, sparkline, last count) live on the store detail page
-instead.
+transaction. Every row stores expected, counted, and difference values. A
+non-zero difference creates a linked ledger line with a reason; negative rows
+default to consumption and positive rows to inventory correction. The matching
+`store_items` row becomes the counted value.
 
 `/inventory-counts/{session}` is the read-only detail of one inventory
 session. It lists every item in alphabetical order with the value
@@ -46,17 +43,12 @@ page. The page is accessible to both the main admin and limited users;
 limited users are pinned to their assigned store, and visitors without
 an `assigned_store_id` are refused (403).
 
-`/reports/statistics` aggregates three data sources for the selected
-branch over a configurable window (default 30 days):
-
-- `StatementDay` rows for revenue, channel breakdown, and daily totals.
-- `StockMovement` rows for incoming (received) and outgoing (consumed /
-  transferred) volume and value.
-- `store_items` joined with `items` for the current inventory value.
-
-The store detail page computes per-item average daily consumption from
-outgoing movements in the window and predicts when the branch will
-run out, so the operator can plan restocking.
+`/reports` is financial: revenue, channels, fees, actual consumption cost and
+estimated gross margin with inventory-coverage information.
+`/reports/statistics` is inventory-only: current value, receipts, transfers,
+consumption trend, losses/corrections, data coverage and per-item stockout
+forecast. Forecasts use closed physical-count intervals, at most eight and 56
+days, and require at least seven covered days.
 
 ```mermaid
 flowchart LR
@@ -251,13 +243,12 @@ truth for these views.
 the current per-store stock snapshot and its per-item statistics. The
 inventory table on that page renders the per-item Množství
 (`store_items.quantity`), Hodnota (`quantity × items.purchase_price`),
-Stav (`ItemStockStatusEnum::fromQuantity($quantity)` — in_stock /
-low_stock / out_of_stock), Vývoj (30 dní)
+Stav (`ok`, `due_soon`, `out`, or `no_data` from the forecast), Vývoj (30 dní)
 (`InventorySessionService::sparklineForItem` reading the
 `inventory_session_items` history), Naposledy napočítáno (timestamp of
 the most recent `inventory_sessions` row that contains the item for
 this store), Prům. spotřeba / den (average daily consumption computed
-from outgoing movements in the configured window) and Dnů do
+from closed inventory intervals plus explicit consumption) and Dnů do
 vyprodání (predicted days of stock left based on current quantity
 and average consumption). The `/items` index never carries these
 columns because they belong to the `store_items` link, not the item

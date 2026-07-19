@@ -65,7 +65,7 @@ class StoreIndexController
                     type,
                     SUM(CASE WHEN type = \'incoming\' THEN total_quantity ELSE 0 END) as total_received_quantity,
                     SUM(CASE WHEN type = \'incoming\' THEN total_value ELSE 0 END) as total_received_value,
-                    SUM(CASE WHEN type = \'outgoing\' THEN total_value ELSE 0 END) as total_outgoing_value,
+                    SUM(CASE WHEN type = \'transfer\' THEN total_value ELSE 0 END) as total_transfer_out_value,
                     COUNT(*) as movements_count
                 ')
                 ->groupBy('source_store_id', 'store_id', 'type')
@@ -79,7 +79,7 @@ class StoreIndexController
                 'movements_count' => 0,
                 'total_received_quantity' => 0,
                 'total_received_value' => 0.0,
-                'total_outgoing_value' => 0.0,
+                'total_transfer_out_value' => 0.0,
             ];
 
             return [
@@ -91,7 +91,7 @@ class StoreIndexController
                 'movements_count' => $metrics['movements_count'],
                 'total_received_quantity' => $metrics['total_received_quantity'],
                 'total_received_value' => $metrics['total_received_value'],
-                'total_outgoing_value' => $metrics['total_outgoing_value'],
+                'total_transfer_out_value' => $metrics['total_transfer_out_value'],
             ];
         })->all();
 
@@ -106,7 +106,7 @@ class StoreIndexController
      *
      * Each movement row contributes to one of two buckets per store:
      *  - incoming movements count for the destination store (store_id)
-     *  - outgoing movements count for the source store (source_store_id)
+     *  - transfer movements count for the source store (source_store_id)
      *
      * @param array<int, stdClass> $rows
      *
@@ -131,12 +131,12 @@ class StoreIndexController
                 'movements_count' => 0,
                 'total_received_quantity' => 0,
                 'total_received_value' => 0.0,
-                'total_outgoing_value' => 0.0,
+                'total_transfer_out_value' => 0.0,
             ];
             $bucket['movements_count'] += Typer::parseInt($rowValues['movements_count'] ?? null);
             $bucket['total_received_quantity'] += Typer::parseInt($rowValues['total_received_quantity'] ?? null);
             $bucket['total_received_value'] += Typer::parseFloat($rowValues['total_received_value'] ?? null);
-            $bucket['total_outgoing_value'] += Typer::parseFloat($rowValues['total_outgoing_value'] ?? null);
+            $bucket['total_transfer_out_value'] += Typer::parseFloat($rowValues['total_transfer_out_value'] ?? null);
             $aggregated[$bucketId] = $bucket;
         }
 

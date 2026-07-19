@@ -20,8 +20,18 @@ import { formatDate, formatMoney, formatNumber } from '@/lib/format';
 type MovementRow = {
     id: number;
     number: string;
-    type: 'incoming' | 'outgoing' | 'adjustment';
-    display_label_key: 'incoming' | 'outgoing' | 'transfer' | 'adjustment';
+    type:
+        | 'incoming'
+        | 'transfer'
+        | 'consumption'
+        | 'adjustment'
+        | 'inventory_reconciliation';
+    display_label_key:
+        | 'incoming'
+        | 'transfer'
+        | 'consumption'
+        | 'adjustment'
+        | 'inventory_reconciliation';
     store_id: number | null;
     store_name: string | null;
     source_store_id: number | null;
@@ -214,8 +224,20 @@ function destroyMovement(id: number): void {
                                     label: t('stock_movements.types.incoming'),
                                 },
                                 {
-                                    value: 'outgoing',
-                                    label: t('stock_movements.types.outgoing'),
+                                    value: 'transfer',
+                                    label: t('stock_movements.types.transfer'),
+                                },
+                                {
+                                    value: 'consumption',
+                                    label: t(
+                                        'stock_movements.types.consumption',
+                                    ),
+                                },
+                                {
+                                    value: 'inventory_reconciliation',
+                                    label: t(
+                                        'stock_movements.types.inventory_reconciliation',
+                                    ),
                                 },
                                 {
                                     value: 'adjustment',

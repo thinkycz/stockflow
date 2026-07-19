@@ -9,9 +9,9 @@ use App\Models\Statement;
 use App\Models\StatementDay;
 use App\Models\StatementVersion;
 use App\Models\StatementVersionDay;
-use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -305,6 +305,7 @@ class StatementService
      *     channels: array<string, float>,
      *     daily: array<int, array{label: string, value: float}>,
      *     days_with_revenue: int,
+     *     inventory_coverage: array{average_days: float, covered_items: int, last_inventory_at: string|null},
      * }
      */
     public function buildReport(
@@ -397,31 +398,24 @@ class StatementService
             ],
             'daily' => $daily,
             'days_with_revenue' => $daysWithRevenue,
+            'inventory_coverage' => $this->inventoryCoverage($user, $storeId, $year, $month),
         ];
     }
 
     /**
-     * Calculate the investment (cost of goods leaving the store) for the
-     * statement's store and month, summing `total` across all OUTGOING
-     * stock movements where the store is the source.
+     * Calculate estimated consumption cost for the statement month.
      */
     public function calculateInvestment(Statement $statement): float
     {
         $start = Carbon::createFromDate($statement->getYear(), $statement->getMonth(), 1)->startOfMonth();
         $end = Carbon::createFromDate($statement->getYear(), $statement->getMonth(), 1)->endOfMonth();
 
-        $query = StockMovement::query();
-        StockMovement::scopeForUser($query, $statement->getUserId());
-        StockMovement::scopeOfType($query, StockMovementTypeEnum::OUTGOING);
-        $query->where('source_store_id', $statement->getStoreId());
-        StockMovement::scopeFromDate($query, $start->toDateTimeString());
-        StockMovement::scopeUntilDate($query, $end->toDateTimeString());
-
-        $rows = $query
-            ->withSum('movementItems as investment_total', 'total')
-            ->get();
-
-        return Typer::parseFloat($rows->sum(static fn(StockMovement $m): float => Typer::parseFloat($m->getAttribute('investment_total'))));
+        return $this->consumptionCost(
+            $statement->getUserId(),
+            $statement->getStoreId(),
+            $start,
+            $end,
+        );
     }
 
     /**
@@ -491,9 +485,7 @@ class StatementService
     }
 
     /**
-     * Sum stock movement totals for outgoing movements whose source
-     * store matches the filter. Used by `buildReport()` to compute the
-     * cost of goods leaving the selected scope.
+     * Calculate consumption cost for the selected report scope.
      */
     private function calculateReportInvestment(
         User $user,
@@ -501,24 +493,138 @@ class StatementService
         int|null $year,
         int|null $month,
     ): float {
-        $query = StockMovement::query();
-        StockMovement::scopeForUser($query, $user);
-        StockMovement::scopeOfType($query, StockMovementTypeEnum::OUTGOING);
-
-        if ($storeId !== null) {
-            $query->where('source_store_id', $storeId);
-        }
+        $start = null;
+        $end = null;
         if ($year !== null && $month !== null) {
             $start = Carbon::createFromDate($year, $month, 1)->startOfMonth();
             $end = Carbon::createFromDate($year, $month, 1)->endOfMonth();
-            StockMovement::scopeFromDate($query, $start->toDateTimeString());
-            StockMovement::scopeUntilDate($query, $end->toDateTimeString());
         }
 
-        $rows = $query
-            ->withSum('movementItems as investment_total', 'total')
-            ->get();
+        return $this->consumptionCost($user->getKey(), $storeId, $start, $end);
+    }
 
-        return Typer::parseFloat($rows->sum(static fn(StockMovement $m): float => Typer::parseFloat($m->getAttribute('investment_total'))));
+    /**
+     * Sum manual consumption and prorated inventory-derived consumption.
+     */
+    private function consumptionCost(
+        int $userId,
+        int|null $storeId,
+        Carbon|null $periodStart,
+        Carbon|null $periodEnd,
+    ): float {
+        $query = DB::table('stock_movement_items')
+            ->join('stock_movements', 'stock_movements.id', '=', 'stock_movement_items.stock_movement_id')
+            ->where('stock_movements.user_id', $userId)
+            ->where(static function (QueryBuilder $query): void {
+                $query->where('stock_movements.type', StockMovementTypeEnum::CONSUMPTION->value)
+                    ->orWhere(static function (QueryBuilder $query): void {
+                        $query->where('stock_movements.type', StockMovementTypeEnum::INVENTORY_RECONCILIATION->value)
+                            ->where('stock_movement_items.classification', 'consumption');
+                    });
+            });
+
+        if ($storeId !== null) {
+            $query->where('stock_movements.store_id', $storeId);
+        }
+
+        $rows = $query->get([
+            'stock_movements.type',
+            'stock_movements.occurred_at',
+            'stock_movement_items.observation_started_at',
+            'stock_movement_items.total',
+        ]);
+
+        $total = 0.0;
+        foreach ($rows as $row) {
+            $value = Typer::parseFloat($row->total);
+            $occurredAt = Carbon::parse(Typer::assertString($row->occurred_at));
+            $observationStartedAt = Typer::parseNullableString($row->observation_started_at);
+
+            if ($periodStart === null || $periodEnd === null) {
+                $total += $value;
+
+                continue;
+            }
+
+            if ($observationStartedAt === null) {
+                if ($occurredAt->betweenIncluded($periodStart, $periodEnd)) {
+                    $total += $value;
+                }
+
+                continue;
+            }
+
+            $intervalStart = Carbon::parse($observationStartedAt);
+            $overlapStart = $intervalStart->greaterThan($periodStart) ? $intervalStart : $periodStart;
+            $overlapEnd = $occurredAt->lessThan($periodEnd) ? $occurredAt : $periodEnd;
+            if ($overlapStart->greaterThanOrEqualTo($overlapEnd)) {
+                continue;
+            }
+
+            $intervalSeconds = $intervalStart->diffInSeconds($occurredAt);
+            if ($intervalSeconds <= 0) {
+                continue;
+            }
+            $total += $value * ($overlapStart->diffInSeconds($overlapEnd) / $intervalSeconds);
+        }
+
+        return \round($total, 2);
+    }
+
+    /**
+     * Describe the physical-count coverage behind estimated consumption.
+     *
+     * @return array{average_days: float, covered_items: int, last_inventory_at: string|null}
+     */
+    private function inventoryCoverage(User $user, int|null $storeId, int|null $year, int|null $month): array
+    {
+        if ($storeId === null) {
+            return ['average_days' => 0.0, 'covered_items' => 0, 'last_inventory_at' => null];
+        }
+
+        $periodStart = $year !== null && $month !== null
+            ? Carbon::createFromDate($year, $month, 1)->startOfMonth()
+            : null;
+        $periodEnd = $year !== null && $month !== null
+            ? Carbon::createFromDate($year, $month, 1)->endOfMonth()
+            : null;
+        $rows = DB::table('inventory_session_items')
+            ->join('inventory_sessions', 'inventory_sessions.id', '=', 'inventory_session_items.session_id')
+            ->where('inventory_sessions.user_id', $user->getKey())
+            ->where('inventory_sessions.store_id', $storeId)
+            ->whereNotNull('inventory_session_items.observation_started_at')
+            ->get([
+                'inventory_session_items.item_id',
+                'inventory_session_items.observation_started_at',
+                'inventory_sessions.counted_at',
+            ]);
+
+        $secondsByItem = [];
+        foreach ($rows as $row) {
+            $start = Carbon::parse(Typer::assertString($row->observation_started_at));
+            $end = Carbon::parse(Typer::assertString($row->counted_at));
+            if ($periodStart instanceof Carbon && $start->lessThan($periodStart)) {
+                $start = $periodStart->copy();
+            }
+            if ($periodEnd instanceof Carbon && $end->greaterThan($periodEnd)) {
+                $end = $periodEnd->copy();
+            }
+            if ($start->greaterThanOrEqualTo($end)) {
+                continue;
+            }
+            $itemId = Typer::parseInt($row->item_id);
+            $secondsByItem[$itemId] = ($secondsByItem[$itemId] ?? 0) + (int) $start->diffInSeconds($end);
+        }
+
+        $lastInventory = DB::table('inventory_sessions')
+            ->where('user_id', $user->getKey())
+            ->where('store_id', $storeId)
+            ->max('counted_at');
+
+        return [
+            'average_days' => $secondsByItem === [] ? 0.0 : \round((\array_sum($secondsByItem) / \count($secondsByItem)) / 86400, 1),
+            'covered_items' => \count($secondsByItem),
+            'last_inventory_at' => Typer::parseNullableString($lastInventory),
+        ];
     }
 }

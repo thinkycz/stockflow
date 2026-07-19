@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\InventoryCount;
 
+use App\Enums\StockMovementClassificationEnum;
 use App\Models\Store;
 use App\Models\User;
 use App\Services\InventorySessionService;
@@ -52,6 +53,10 @@ class InventoryCountIndexController
                 'store_id' => $store?->getKey(),
             ],
             'is_admin' => $user->isAdmin(),
+            'classifications' => \array_map(
+                static fn(StockMovementClassificationEnum $classification): string => $classification->value,
+                StockMovementClassificationEnum::cases(),
+            ),
         ]);
     }
 }

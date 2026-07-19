@@ -15,7 +15,6 @@ import {
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
-import Badge from '@/components/ui/Badge.vue';
 import Card from '@/components/ui/Card.vue';
 import CardDescription from '@/components/ui/CardDescription.vue';
 import CardHeader from '@/components/ui/CardHeader.vue';
@@ -23,6 +22,7 @@ import CardTitle from '@/components/ui/CardTitle.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import MetricCard from '@/components/ui/MetricCard.vue';
+import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import {
@@ -35,7 +35,12 @@ import {
 type RecentMovement = {
     id: number;
     number: string;
-    type: 'incoming' | 'outgoing' | 'adjustment';
+    type:
+        | 'incoming'
+        | 'transfer'
+        | 'consumption'
+        | 'adjustment'
+        | 'inventory_reconciliation';
     store_name: string | null;
     total_quantity: number;
     total_value: number;
@@ -62,6 +67,7 @@ type StockStatus = {
     in_stock: number;
     low_stock: number;
     out_of_stock: number;
+    no_data: number;
 };
 
 const props = defineProps<{
@@ -73,11 +79,13 @@ const props = defineProps<{
         today_movements: number;
         month_incoming: number;
         month_outgoing: number;
+        last_inventory_at: string | null;
     };
     stock_status: StockStatus;
     top_consumed: TopConsumedItem[];
     recent_movements: RecentMovement[];
     recent_statements: RecentStatement[];
+    can_manage_movements: boolean;
 }>();
 
 const { t, locale } = useI18n();
@@ -90,7 +98,8 @@ const totalTracked = computed(
     (): number =>
         props.stock_status.in_stock +
         props.stock_status.low_stock +
-        props.stock_status.out_of_stock,
+        props.stock_status.out_of_stock +
+        props.stock_status.no_data,
 );
 
 function statusPercent(count: number): number {
@@ -138,8 +147,12 @@ function statementPeriodLabel(statement: RecentStatement): string {
                         </template>
                     </MetricCard>
                     <MetricCard
-                        :title="t('dashboard.metrics.items_count')"
-                        :value="formatNumber(metrics.items_count)"
+                        :title="t('dashboard.metrics.last_inventory')"
+                        :value="
+                            metrics.last_inventory_at
+                                ? formatDateTime(metrics.last_inventory_at)
+                                : '—'
+                        "
                     >
                         <template #icon>
                             <Boxes :size="14" />
@@ -194,6 +207,19 @@ function statementPeriodLabel(statement: RecentStatement): string {
                                 >
                                     {{ formatMoney(metrics.month_incoming) }}
                                 </p>
+                            </div>
+                            <div
+                                class="flex items-center justify-between gap-3 text-xs"
+                            >
+                                <span class="text-on-surface">{{
+                                    t('items.status.no_data')
+                                }}</span>
+                                <span
+                                    class="font-mono text-on-surface-variant"
+                                    >{{
+                                        formatNumber(stock_status.no_data)
+                                    }}</span
+                                >
                             </div>
                             <div
                                 class="rounded-xl border border-outline-glass bg-surface-container-low p-4"
@@ -518,6 +544,7 @@ function statementPeriodLabel(statement: RecentStatement): string {
                                 >
                                     <td>
                                         <Link
+                                            v-if="props.can_manage_movements"
                                             :href="
                                                 route(
                                                     'stock-movements.show',
@@ -528,15 +555,16 @@ function statementPeriodLabel(statement: RecentStatement): string {
                                         >
                                             {{ movement.number }}
                                         </Link>
+                                        <span
+                                            v-else
+                                            class="font-mono text-xs font-semibold text-on-surface"
+                                            >{{ movement.number }}</span
+                                        >
                                     </td>
                                     <td>
-                                        <Badge :variant="movement.type">
-                                            {{
-                                                t(
-                                                    `stock_movements.types.${movement.type}`,
-                                                )
-                                            }}
-                                        </Badge>
+                                        <MovementTypeBadge
+                                            :type="movement.type"
+                                        />
                                     </td>
                                     <td
                                         class="text-right font-semibold text-on-surface"

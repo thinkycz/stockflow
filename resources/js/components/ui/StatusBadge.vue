@@ -3,7 +3,14 @@ import { computed } from 'vue';
 import Badge from '@/components/ui/Badge.vue';
 import { useI18n } from 'vue-i18n';
 
-type Status = 'in_stock' | 'low_stock' | 'out_of_stock';
+type Status =
+    | 'in_stock'
+    | 'low_stock'
+    | 'out_of_stock'
+    | 'ok'
+    | 'due_soon'
+    | 'out'
+    | 'no_data';
 
 const props = defineProps<{
     status: Status;
@@ -14,11 +21,16 @@ const { t } = useI18n();
 const variant = computed<'success' | 'warning' | 'danger'>(() => {
     switch (props.status) {
         case 'in_stock':
+        case 'ok':
             return 'success';
         case 'low_stock':
+        case 'due_soon':
             return 'warning';
         case 'out_of_stock':
+        case 'out':
             return 'danger';
+        case 'no_data':
+            return 'warning';
     }
 });
 
@@ -26,10 +38,18 @@ const label = computed<string>(() => {
     switch (props.status) {
         case 'in_stock':
             return t('items.status.in_stock');
+        case 'ok':
+            return t('items.status.ok');
         case 'low_stock':
             return t('items.status.low_stock');
+        case 'due_soon':
+            return t('items.status.due_soon');
         case 'out_of_stock':
             return t('items.status.out_of_stock');
+        case 'out':
+            return t('items.status.out');
+        case 'no_data':
+            return t('items.status.no_data');
     }
 });
 </script>

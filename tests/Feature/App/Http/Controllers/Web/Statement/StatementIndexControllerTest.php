@@ -7,6 +7,7 @@ use App\Models\StatementDay;
 use App\Models\Store;
 use App\Models\User;
 use Database\Factories\UserFactory;
+use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Support\Typer;
 
 \test('guest is redirected from statements to login', function (): void {
@@ -25,7 +26,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response->assertOk();
     $response->assertJsonPath('component', 'statements/Index');
     $response->assertJsonPath('props.filters.store_id', $retail->getKey());
-    $response->assertJsonCount(30, 'props.days');
+    $response->assertJsonCount(Carbon::now()->daysInMonth, 'props.days');
     \expect($response->json('props.statement.id'))->toBeInt();
 });
 
@@ -44,7 +45,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     )->assertOk();
 
     \expect(Statement::query()->count())->toBe(1);
-    \expect(StatementDay::query()->count())->toBe(30);
+    \expect(StatementDay::query()->count())->toBe(Carbon::now()->daysInMonth);
 });
 
 \test('statement is reused on subsequent visits', function (): void {

@@ -115,6 +115,14 @@ class InventorySession extends BaseModel
     }
 
     /**
+     * Owning user id.
+     */
+    public function getUserId(): int
+    {
+        return Typer::assertInt($this->getAttribute('user_id'));
+    }
+
+    /**
      * Counted-at getter.
      */
     public function getCountedAt(): Carbon

@@ -4,331 +4,278 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Report;
 
+use App\Enums\StockMovementClassificationEnum;
 use App\Enums\StockMovementTypeEnum;
-use App\Models\StockMovement;
+use App\Models\InventorySession;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\InventorySessionService;
 use App\Support\ActiveStoreResolver;
-use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use stdClass;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class StatisticsController
 {
     /**
-     * Lower bound for the configurable period (days).
+     * Lower bound for the configurable period.
      */
     private const int MIN_PERIOD_DAYS = 7;
 
     /**
-     * Upper bound for the configurable period (days).
+     * Upper bound for the configurable period.
      */
     private const int MAX_PERIOD_DAYS = 365;
 
     /**
-     * Default period (days) when none is supplied.
+     * Default report period.
      */
-    private const int DEFAULT_PERIOD_DAYS = 30;
+    private const int DEFAULT_PERIOD_DAYS = 56;
 
     /**
-     * Render the per-store statistics page.
+     * Render inventory statistics for the active store.
      */
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, InventorySessionService $inventoryService): Response
     {
         $user = User::mustAuth();
-        $userId = $user->getKey();
-
         $store = ActiveStoreResolver::resolve($request, $user);
-
         $periodDays = $this->resolvePeriodDays($request);
-        $since = Carbon::now()->subDays($periodDays)->startOfDay();
-        $sinceString = $since->toDateTimeString();
 
-        $sales = $store instanceof Store
-            ? $this->summariseSales($user, $store, $sinceString)
-            : ['total' => 0.0, 'count' => 0, 'channels' => [], 'daily' => []];
-        $incoming = $store instanceof Store
-            ? $this->summariseMovement($user, $store, StockMovementTypeEnum::INCOMING, $sinceString)
-            : ['quantity' => 0, 'value' => 0.0, 'movements' => 0];
-        $outgoing = $store instanceof Store
-            ? $this->summariseMovement($user, $store, StockMovementTypeEnum::OUTGOING, $sinceString)
-            : ['quantity' => 0, 'value' => 0.0, 'movements' => 0];
-        $inventoryValue = $store instanceof Store
-            ? $this->inventoryValue($user, $store)
-            : ['items' => 0, 'value' => 0.0];
-        $topConsumed = $store instanceof Store
-            ? $this->topConsumed($user, $store, $sinceString)
-            : [];
-        $dailySeries = $store instanceof Store
-            ? $this->dailySeries($user, $store, $since, $periodDays)
-            : [];
+        if (!$store instanceof Store) {
+            return Inertia::render('reports/Statistics', $this->emptyPayload($periodDays));
+        }
+
+        $since = Carbon::now()->subDays($periodDays)->startOfDay();
+        $storeItems = $store->storeItems()->with('item')->get();
+        $inventoryRows = [];
+        $inventoryValue = 0.0;
+        $positiveSkuCount = 0;
+        $risk = ['due_soon' => 0, 'out' => 0, 'no_data' => 0];
+        $coverageTotal = 0.0;
+        $coveredItems = 0;
+
+        foreach ($storeItems as $storeItem) {
+            $item = $storeItem->getItem();
+            $quantity = $storeItem->getQuantity();
+            $value = $quantity * $item->getPurchasePrice();
+            $inventoryValue += $value;
+            if ($quantity > 0) {
+                ++$positiveSkuCount;
+            }
+
+            $periodConsumption = $inventoryService->consumptionLastDays($store, $item, $periodDays, 1000);
+            $prediction = $inventoryService->predictedRunOut($store, $item);
+            if ($prediction['status'] === InventorySessionService::STATUS_SOON) {
+                ++$risk['due_soon'];
+            } elseif ($prediction['status'] === InventorySessionService::STATUS_OUT) {
+                ++$risk['out'];
+            } elseif ($prediction['status'] === InventorySessionService::STATUS_NO_DATA) {
+                ++$risk['no_data'];
+            }
+            if ($prediction['coverage_days'] >= InventorySessionService::MINIMUM_COVERAGE_DAYS) {
+                $coverageTotal += $prediction['coverage_days'];
+                ++$coveredItems;
+            }
+
+            $inventoryRows[] = [
+                'item_id' => $item->getKey(),
+                'title' => $item->getTitle(),
+                'sku' => $item->getSku(),
+                'unit' => $item->getUnit(),
+                'current_quantity' => $quantity,
+                'consumed_quantity' => $periodConsumption['quantity'],
+                'consumed_value' => \round($periodConsumption['quantity'] * $item->getPurchasePrice(), 2),
+                'avg_daily_consumption' => $prediction['per_day'],
+                'coverage_days' => \round($prediction['coverage_days'], 1),
+                'days_until_stockout' => $prediction['days_left'],
+                'projected_stockout_at' => $prediction['projected_stockout_at'],
+                'status' => $prediction['status'],
+            ];
+        }
+
+        \usort($inventoryRows, static function (array $left, array $right): int {
+            $leftDays = Typer::parseNullableInt($left['days_until_stockout']) ?? \PHP_INT_MAX;
+            $rightDays = Typer::parseNullableInt($right['days_until_stockout']) ?? \PHP_INT_MAX;
+
+            $daysComparison = $leftDays <=> $rightDays;
+
+            return $daysComparison !== 0
+                ? $daysComparison
+                : Typer::assertString($left['title']) <=> Typer::assertString($right['title']);
+        });
+
+        $flows = $this->flows($user, $store, $since);
+        $classified = $this->classifiedChanges($user, $store, $since);
 
         return Inertia::render('reports/Statistics', [
-            'store' => $store instanceof Store ? [
-                'id' => $store->getKey(),
-                'name' => $store->getName(),
-            ] : null,
+            'store' => ['id' => $store->getKey(), 'name' => $store->getName()],
             'period_days' => $periodDays,
-            'sales' => $sales,
-            'incoming' => $incoming,
-            'outgoing' => $outgoing,
-            'current_inventory' => $inventoryValue,
-            'top_consumed' => $topConsumed,
-            'daily_series' => $dailySeries,
-            'filters' => [
-                'store_id' => $store?->getKey(),
-                'period_days' => $periodDays,
+            'current_inventory' => [
+                'sku_count' => $positiveSkuCount,
+                'value' => \round($inventoryValue, 2),
             ],
+            'consumption' => [
+                'value' => $classified['consumption_value'],
+                'affected_skus' => $classified['consumption_skus'],
+            ],
+            'flows' => $flows,
+            'risk' => $risk,
+            'data_quality' => [
+                'last_inventory_at' => $this->lastInventoryAt($store),
+                'average_coverage_days' => $coveredItems > 0 ? \round($coverageTotal / $coveredItems, 1) : 0.0,
+                'covered_items' => $coveredItems,
+            ],
+            'classified_changes' => $classified['reasons'],
+            'consumption_series' => $classified['series'],
+            'items' => $inventoryRows,
+            'filters' => ['store_id' => $store->getKey(), 'period_days' => $periodDays],
         ]);
     }
 
     /**
-     * Parse and clamp the period_days query parameter.
+     * Parse and clamp the selected period.
      */
     private function resolvePeriodDays(Request $request): int
     {
-        $raw = Typer::parseNullableInt($request->query('period_days'));
+        $raw = Typer::parseNullableInt($request->query('period_days')) ?? self::DEFAULT_PERIOD_DAYS;
 
-        if ($raw === null) {
-            return self::DEFAULT_PERIOD_DAYS;
-        }
-
-        if ($raw < self::MIN_PERIOD_DAYS) {
-            return self::MIN_PERIOD_DAYS;
-        }
-
-        if ($raw > self::MAX_PERIOD_DAYS) {
-            return self::MAX_PERIOD_DAYS;
-        }
-
-        return $raw;
+        return \max(self::MIN_PERIOD_DAYS, \min(self::MAX_PERIOD_DAYS, $raw));
     }
 
     /**
-     * Summarise statement sales for the given store and period.
+     * Purchase and transfer flows in the selected period.
      *
-     * @return array{
-     *     total: float,
-     *     count: int,
-     *     channels: array<string, float>,
-     *     daily: array<int, array{label: string, value: float}>
-     * }
+     * @return array<string, float|int>
      */
-    private function summariseSales(User $user, Store $store, string $since): array
-    {
-        $rows = DB::table('statement_days')
-            ->join('statements', 'statements.id', '=', 'statement_days.statement_id')
-            ->where('statements.user_id', $user->getKey())
-            ->where('statements.store_id', $store->getKey())
-            ->where('statement_days.date', '>=', $since)
-            ->select(
-                'statement_days.date',
-                'statement_days.cash',
-                'statement_days.card',
-                'statement_days.wolt',
-                'statement_days.bolt',
-                'statement_days.bolt_cash',
-                'statement_days.foodora',
-                'statement_days.total',
-            )
-            ->orderBy('statement_days.date')
-            ->get();
-
-        $totals = [
-            'cash' => 0.0,
-            'card' => 0.0,
-            'wolt' => 0.0,
-            'bolt' => 0.0,
-            'bolt_cash' => 0.0,
-            'foodora' => 0.0,
-            'total_revenue' => 0.0,
-        ];
-        $daily = [];
-        $count = 0;
-
-        foreach ($rows as $row) {
-            $row = (array) $row;
-            $totals['cash'] += Typer::parseFloat($row['cash']);
-            $totals['card'] += Typer::parseFloat($row['card']);
-            $totals['wolt'] += Typer::parseFloat($row['wolt']);
-            $totals['bolt'] += Typer::parseFloat($row['bolt']);
-            $totals['bolt_cash'] += Typer::parseFloat($row['bolt_cash']);
-            $totals['foodora'] += Typer::parseFloat($row['foodora']);
-            $totals['total_revenue'] += Typer::parseFloat($row['total']);
-            ++$count;
-            $daily[] = [
-                'label' => \mb_substr(Typer::assertString($row['date']), -2),
-                'value' => Typer::parseFloat($row['total']),
-            ];
-        }
-
-        return [
-            'total' => \round($totals['total_revenue'], 2),
-            'count' => $count,
-            'channels' => [
-                'cash' => \round($totals['cash'], 2),
-                'card' => \round($totals['card'], 2),
-                'wolt' => \round($totals['wolt'], 2),
-                'bolt' => \round($totals['bolt'], 2),
-                'bolt_cash' => \round($totals['bolt_cash'], 2),
-                'foodora' => \round($totals['foodora'], 2),
-            ],
-            'daily' => $daily,
-        ];
-    }
-
-    /**
-     * Summarise stock movements for a given type at the given store.
-     *
-     * @return array{quantity: int, value: float, movements: int}
-     */
-    private function summariseMovement(User $user, Store $store, StockMovementTypeEnum $type, string $since): array
-    {
-        $query = StockMovement::query();
-        StockMovement::scopeForUser($query, $user);
-        StockMovement::scopeOfType($query, $type);
-        StockMovement::scopeFromDate($query, $since);
-
-        if ($type === StockMovementTypeEnum::INCOMING) {
-            $query->where('store_id', $store->getKey());
-        } else {
-            $query->where('source_store_id', $store->getKey());
-        }
-
-        $builder = $query->getQuery();
-
-        /** @var stdClass|null $row */
-        $row = $builder
-            ->selectRaw('COUNT(*) as movements_count, COALESCE(SUM(total_quantity), 0) as total_quantity, COALESCE(SUM(total_value), 0) as total_value')
-            ->first();
-
-        return [
-            'quantity' => Typer::parseInt($row->total_quantity ?? null),
-            'value' => Typer::parseFloat($row->total_value ?? null),
-            'movements' => Typer::parseInt($row->movements_count ?? null),
-        ];
-    }
-
-    /**
-     * Sum the current inventory value for the selected store.
-     *
-     * @return array{items: int, value: float}
-     */
-    private function inventoryValue(User $user, Store $store): array
-    {
-        /** @var stdClass|null $row */
-        $row = DB::table('store_items')
-            ->join('items', 'items.id', '=', 'store_items.item_id')
-            ->where('items.user_id', $user->getKey())
-            ->where('store_items.store_id', $store->getKey())
-            ->selectRaw('COUNT(*) as items_count, COALESCE(SUM(store_items.quantity * items.purchase_price), 0) as total_value')
-            ->first();
-
-        return [
-            'items' => Typer::parseInt($row->items_count ?? null),
-            'value' => Typer::parseFloat($row->total_value ?? null),
-        ];
-    }
-
-    /**
-     * Top consumed items at the store over the selected window.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function topConsumed(User $user, Store $store, string $since): array
-    {
-        $movementQuery = StockMovement::query();
-        StockMovement::scopeForUser($movementQuery, $user);
-        StockMovement::scopeOfType($movementQuery, StockMovementTypeEnum::OUTGOING);
-        StockMovement::scopeFromDate($movementQuery, $since);
-        $movementQuery->where('source_store_id', $store->getKey());
-
-        $subBuilder = $movementQuery->getQuery();
-
-        $rows = DB::table('stock_movement_items')
-            ->joinSub($subBuilder, 'movements', static function (\Illuminate\Database\Query\JoinClause $join): void {
-                $join->on('movements.id', '=', 'stock_movement_items.stock_movement_id');
-            })
-            ->join('items', 'items.id', '=', 'stock_movement_items.item_id')
-            ->where('items.user_id', $user->getKey())
-            ->select(
-                'items.id',
-                'items.title',
-                'items.sku',
-                DB::raw('SUM(ABS(stock_movement_items.quantity_difference)) as total_quantity'),
-                DB::raw('SUM(stock_movement_items.total) as total_value'),
-                DB::raw('COUNT(*) as rows_count'),
-            )
-            ->groupBy('items.id', 'items.title', 'items.sku')
-            ->orderByDesc('total_quantity')
-            ->limit(10)
-            ->get();
-
-        return $rows->map(static function (stdClass $row): array {
-            $values = (array) $row;
-
-            return [
-                'item_id' => Typer::assertInt($values['id'] ?? null),
-                'title' => Typer::assertString($values['title'] ?? null),
-                'sku' => Typer::parseNullableString($values['sku'] ?? null),
-                'total_quantity' => Typer::parseInt($values['total_quantity'] ?? null),
-                'total_value' => Typer::parseFloat($values['total_value'] ?? null),
-                'rows_count' => Typer::parseInt($values['rows_count'] ?? null),
-            ];
-        })->all();
-    }
-
-    /**
-     * Daily time series for incoming and outgoing movements.
-     *
-     * @return array<int, array{label: string, incoming: float, outgoing: float}>
-     */
-    private function dailySeries(User $user, Store $store, Carbon $since, int $periodDays): array
+    private function flows(User $user, Store $store, Carbon $since): array
     {
         $rows = DB::table('stock_movements')
             ->where('user_id', $user->getKey())
-            ->where(function (QueryBuilder $query) use ($store): void {
-                $query->where(static function (QueryBuilder $query) use ($store): void {
-                    $query->where('type', StockMovementTypeEnum::INCOMING->value)
-                        ->where('store_id', $store->getKey());
-                })->orWhere(static function (QueryBuilder $query) use ($store): void {
-                    $query->where('type', StockMovementTypeEnum::OUTGOING->value)
-                        ->where('source_store_id', $store->getKey());
-                });
-            })
-            ->where('created_at', '>=', $since->toDateTimeString())
-            ->selectRaw('DATE(created_at) as day, type, SUM(total_value) as total_value')
-            ->groupBy('day', 'type')
-            ->get();
+            ->where('occurred_at', '>=', $since->toDateTimeString())
+            ->whereIn('type', [StockMovementTypeEnum::INCOMING->value, StockMovementTypeEnum::TRANSFER->value])
+            ->get(['type', 'store_id', 'source_store_id', 'total_value']);
 
-        $byDay = [];
+        $result = [
+            'receipts_value' => 0.0,
+            'receipts_count' => 0,
+            'transfer_in_value' => 0.0,
+            'transfer_in_count' => 0,
+            'transfer_out_value' => 0.0,
+            'transfer_out_count' => 0,
+        ];
         foreach ($rows as $row) {
-            $row = (array) $row;
-            $day = Typer::assertString($row['day']);
-            if (!isset($byDay[$day])) {
-                $byDay[$day] = ['incoming' => 0.0, 'outgoing' => 0.0];
+            $type = Typer::assertString($row->type);
+            $value = Typer::parseFloat($row->total_value);
+            if ($type === StockMovementTypeEnum::INCOMING->value && Typer::parseNullableInt($row->store_id) === $store->getKey()) {
+                $result['receipts_value'] += $value;
+                ++$result['receipts_count'];
             }
-            $type = Typer::assertString($row['type']);
-            $bucket = $type === StockMovementTypeEnum::INCOMING->value ? 'incoming' : 'outgoing';
-            $byDay[$day][$bucket] = Typer::parseFloat($row['total_value']);
+            if ($type === StockMovementTypeEnum::TRANSFER->value && Typer::parseNullableInt($row->store_id) === $store->getKey()) {
+                $result['transfer_in_value'] += $value;
+                ++$result['transfer_in_count'];
+            }
+            if ($type === StockMovementTypeEnum::TRANSFER->value && Typer::parseNullableInt($row->source_store_id) === $store->getKey()) {
+                $result['transfer_out_value'] += $value;
+                ++$result['transfer_out_count'];
+            }
         }
 
+        return $result;
+    }
+
+    /**
+     * Aggregate consumption, losses, corrections, and weekly value series.
+     *
+     * @return array{consumption_value: float, consumption_skus: int, reasons: array<int, array<string, mixed>>, series: array<int, array{label: string, value: float}>}
+     */
+    private function classifiedChanges(User $user, Store $store, Carbon $since): array
+    {
+        $rows = DB::table('stock_movement_items')
+            ->join('stock_movements', 'stock_movements.id', '=', 'stock_movement_items.stock_movement_id')
+            ->where('stock_movements.user_id', $user->getKey())
+            ->where('stock_movements.store_id', $store->getKey())
+            ->where('stock_movements.occurred_at', '>=', $since->toDateTimeString())
+            ->whereNotNull('stock_movement_items.classification')
+            ->get([
+                'stock_movements.occurred_at',
+                'stock_movement_items.item_id',
+                'stock_movement_items.classification',
+                'stock_movement_items.total',
+            ]);
+
+        $consumptionValue = 0.0;
+        $consumptionItems = [];
+        $reasons = [];
         $series = [];
-        for ($offset = $periodDays - 1; $offset >= 0; --$offset) {
-            $date = Carbon::now()->subDays($offset)->toDateString();
-            $bucket = $byDay[$date] ?? ['incoming' => 0.0, 'outgoing' => 0.0];
-            $series[] = [
-                'label' => \mb_substr($date, -2),
-                'incoming' => \round($bucket['incoming'], 2),
-                'outgoing' => \round($bucket['outgoing'], 2),
-            ];
+        foreach ($rows as $row) {
+            $classification = Typer::assertString($row->classification);
+            $value = Typer::parseFloat($row->total);
+            if (!isset($reasons[$classification])) {
+                $reasons[$classification] = ['classification' => $classification, 'rows_count' => 0, 'value' => 0.0];
+            }
+            ++$reasons[$classification]['rows_count'];
+            $reasons[$classification]['value'] += $value;
+
+            if ($classification !== StockMovementClassificationEnum::CONSUMPTION->value) {
+                continue;
+            }
+            $consumptionValue += $value;
+            $consumptionItems[Typer::parseInt($row->item_id)] = true;
+            $week = Carbon::parse(Typer::assertString($row->occurred_at))->startOfWeek()->toDateString();
+            $series[$week] = ($series[$week] ?? 0.0) + $value;
         }
 
-        return $series;
+        return [
+            'consumption_value' => \round($consumptionValue, 2),
+            'consumption_skus' => \count($consumptionItems),
+            'reasons' => \array_values(\array_map(static function (array $row): array {
+                $row['value'] = \round(Typer::parseFloat($row['value']), 2);
+
+                return $row;
+            }, $reasons)),
+            'series' => \array_map(
+                static fn(string $label, float $value): array => ['label' => $label, 'value' => \round($value, 2)],
+                \array_keys($series),
+                \array_values($series),
+            ),
+        ];
+    }
+
+    /**
+     * Latest physical count for the store.
+     */
+    private function lastInventoryAt(Store $store): string|null
+    {
+        $session = InventorySession::query()
+            ->where('store_id', $store->getKey())
+            ->orderByDesc('counted_at')
+            ->first();
+
+        return $session?->getCountedAt()->toJSON();
+    }
+
+    /**
+     * Empty payload for accounts without a store.
+     *
+     * @return array<string, mixed>
+     */
+    private function emptyPayload(int $periodDays): array
+    {
+        return [
+            'store' => null,
+            'period_days' => $periodDays,
+            'current_inventory' => ['sku_count' => 0, 'value' => 0.0],
+            'consumption' => ['value' => 0.0, 'affected_skus' => 0],
+            'flows' => ['receipts_value' => 0.0, 'receipts_count' => 0, 'transfer_in_value' => 0.0, 'transfer_in_count' => 0, 'transfer_out_value' => 0.0, 'transfer_out_count' => 0],
+            'risk' => ['due_soon' => 0, 'out' => 0, 'no_data' => 0],
+            'data_quality' => ['last_inventory_at' => null, 'average_coverage_days' => 0.0, 'covered_items' => 0],
+            'classified_changes' => [],
+            'consumption_series' => [],
+            'items' => [],
+            'filters' => ['store_id' => null, 'period_days' => $periodDays],
+        ];
     }
 }

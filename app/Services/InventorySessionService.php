@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\StockMovementClassificationEnum;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\InventorySession;
 use App\Models\InventorySessionItem;
 use App\Models\Item;
-use App\Models\StockMovement;
-use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class InventorySessionService
@@ -22,7 +23,17 @@ class InventorySessionService
     /**
      * Window (in days) used when computing average daily consumption.
      */
-    public const int CONSUMPTION_WINDOW_DAYS = 30;
+    public const int CONSUMPTION_WINDOW_DAYS = 56;
+
+    /**
+     * Minimum closed observation coverage required for a forecast.
+     */
+    public const int MINIMUM_COVERAGE_DAYS = 7;
+
+    /**
+     * Maximum number of closed inventory intervals used by a forecast.
+     */
+    public const int MAXIMUM_INTERVALS = 8;
 
     /**
      * Days of stock threshold below which a row is flagged as "soon".
@@ -34,11 +45,19 @@ class InventorySessionService
      */
     public const string STATUS_OK = 'ok';
 
-    public const string STATUS_SOON = 'soon';
+    public const string STATUS_SOON = 'due_soon';
 
     public const string STATUS_OUT = 'out';
 
     public const string STATUS_NO_DATA = 'no_data';
+
+    /**
+     * Create the service.
+     */
+    public function __construct(
+        private readonly StockMovementService $movementService,
+    ) {
+    }
 
     /**
      * Create a new inventory session for the given store.
@@ -74,6 +93,8 @@ class InventorySessionService
                 'note' => $note,
             ]);
 
+            $reconciliationRows = [];
+
             foreach ($rows as $row) {
                 $payload = Typer::assertArray($row);
                 $itemId = Typer::parseInt($payload['item_id'] ?? 0);
@@ -97,18 +118,51 @@ class InventorySessionService
                     continue;
                 }
 
-                InventorySessionItem::query()->create([
+                $storeItem = StoreItem::query()->firstOrCreate(
+                    ['store_id' => $store->getKey(), 'item_id' => $item->getKey()],
+                    ['quantity' => 0],
+                );
+                $storeItem = StoreItem::query()->whereKey($storeItem->getKey())->lockForUpdate()->first();
+
+                if (!$storeItem instanceof StoreItem) {
+                    continue;
+                }
+
+                $expected = $storeItem->getQuantity();
+                $difference = $quantity - $expected;
+                $classification = $this->resolveClassification(
+                    $difference,
+                    Typer::parseNullableString($payload['classification'] ?? null),
+                );
+                $observationStartedAt = $this->previousCountedAt($store, $item, $now);
+
+                $sessionItem = InventorySessionItem::query()->create([
                     'session_id' => $session->getKey(),
                     'item_id' => $item->getKey(),
                     'quantity' => $quantity,
+                    'expected_quantity' => $expected,
+                    'quantity_difference' => $difference,
+                    'classification' => $classification?->value,
+                    'observation_started_at' => $observationStartedAt,
                     'note' => $rowNote,
                 ]);
 
-                StoreItem::query()->updateOrCreate(
-                    ['store_id' => $store->getKey(), 'item_id' => $item->getKey()],
-                    ['quantity' => $quantity],
-                );
+                $storeItem->update(['quantity' => $quantity]);
+
+                if ($difference !== 0 && $classification instanceof StockMovementClassificationEnum) {
+                    $reconciliationRows[] = [
+                        'session_item' => $sessionItem,
+                        'item' => $item,
+                        'expected' => $expected,
+                        'counted' => $quantity,
+                        'difference' => $difference,
+                        'classification' => $classification,
+                        'observation_started_at' => $observationStartedAt,
+                    ];
+                }
             }
+
+            $this->movementService->createInventoryReconciliation($session, $owner, $reconciliationRows);
 
             return $session;
         });
@@ -155,33 +209,100 @@ class InventorySessionService
     }
 
     /**
-     * Sum of negative `quantity_difference` from outgoing movements
-     * whose source store matches, taken within the last $days days.
-     *
-     * @return array{quantity: int, per_day: float}
+     * Timestamp of the most recent prior physical count.
      */
-    public function consumptionLastDays(Store $store, Item $item, int $days = self::CONSUMPTION_WINDOW_DAYS): array
+    public function previousCountedAt(Store $store, Item $item, Carbon|null $before = null): Carbon|null
     {
-        $since = Carbon::now()->subDays($days);
+        $query = InventorySessionItem::query()
+            ->join('inventory_sessions', 'inventory_sessions.id', '=', 'inventory_session_items.session_id')
+            ->where('inventory_sessions.store_id', $store->getKey())
+            ->where('inventory_session_items.item_id', $item->getKey())
+            ->orderByDesc('inventory_sessions.counted_at')
+            ->orderByDesc('inventory_session_items.id');
 
-        $movementQuery = StockMovement::query();
-        StockMovement::scopeForUser($movementQuery, $store->getUserId());
-        StockMovement::scopeOfType($movementQuery, StockMovementTypeEnum::OUTGOING);
-        $movementQuery->where('source_store_id', $store->getKey());
-        StockMovement::scopeFromDate($movementQuery, $since->toDateTimeString());
+        if ($before instanceof Carbon) {
+            $query->where('inventory_sessions.counted_at', '<', $before->toDateTimeString());
+        }
 
-        $total = StockMovementItem::query()
-            ->whereIn('stock_movement_id', $movementQuery->select('id'))
-            ->where('item_id', $item->getKey())
-            ->sum('quantity_difference');
+        $value = $query->value('inventory_sessions.counted_at');
 
-        $raw = (float) (string) $total;
-        $consumed = $raw < 0.0 ? (int) \floor(-$raw) : 0;
-        $perDay = $days > 0 ? $consumed / $days : 0.0;
+        return $value === null ? null : Carbon::parse(Typer::assertString($value));
+    }
+
+    /**
+     * Calculate consumption across closed physical-count intervals.
+     *
+     * @return array{quantity: int, per_day: float, coverage_days: float}
+     */
+    public function consumptionLastDays(
+        Store $store,
+        Item $item,
+        int $days = self::CONSUMPTION_WINDOW_DAYS,
+        int $maximumIntervals = self::MAXIMUM_INTERVALS,
+    ): array
+    {
+        $since = Carbon::now()->subDays($days)->startOfDay();
+        $intervals = DB::table('inventory_session_items')
+            ->join('inventory_sessions', 'inventory_sessions.id', '=', 'inventory_session_items.session_id')
+            ->where('inventory_sessions.user_id', $store->getUserId())
+            ->where('inventory_sessions.store_id', $store->getKey())
+            ->where('inventory_session_items.item_id', $item->getKey())
+            ->whereNotNull('inventory_session_items.observation_started_at')
+            ->where('inventory_sessions.counted_at', '>=', $since->toDateTimeString())
+            ->orderByDesc('inventory_sessions.counted_at')
+            ->limit($maximumIntervals)
+            ->get([
+                'inventory_sessions.counted_at',
+                'inventory_session_items.observation_started_at',
+                'inventory_session_items.quantity_difference',
+                'inventory_session_items.classification',
+            ]);
+
+        $consumed = 0;
+        $coverageSeconds = 0;
+        $earliest = null;
+        $latest = null;
+
+        foreach ($intervals as $interval) {
+            $start = Carbon::parse(Typer::assertString($interval->observation_started_at));
+            $end = Carbon::parse(Typer::assertString($interval->counted_at));
+            $effectiveStart = $start->lessThan($since) ? $since->copy() : $start;
+
+            if ($effectiveStart->greaterThanOrEqualTo($end)) {
+                continue;
+            }
+
+            $coverageSeconds += (int) $effectiveStart->diffInSeconds($end);
+            $earliest = !$earliest instanceof Carbon || $effectiveStart->lessThan($earliest) ? $effectiveStart : $earliest;
+            $latest = !$latest instanceof Carbon || $end->greaterThan($latest) ? $end : $latest;
+
+            if (
+                StockMovementClassificationEnum::CONSUMPTION->value === Typer::parseNullableString($interval->classification) &&
+                Typer::parseInt($interval->quantity_difference) < 0
+            ) {
+                $consumed += \abs(Typer::parseInt($interval->quantity_difference));
+            }
+        }
+
+        if ($earliest instanceof Carbon && $latest instanceof Carbon) {
+            $manual = DB::table('stock_movement_items')
+                ->join('stock_movements', 'stock_movements.id', '=', 'stock_movement_items.stock_movement_id')
+                ->where('stock_movements.user_id', $store->getUserId())
+                ->where('stock_movements.store_id', $store->getKey())
+                ->where('stock_movements.type', StockMovementTypeEnum::CONSUMPTION->value)
+                ->where('stock_movement_items.item_id', $item->getKey())
+                ->whereBetween('stock_movements.occurred_at', [$earliest->toDateTimeString(), $latest->toDateTimeString()])
+                ->sum('stock_movement_items.quantity');
+            $consumed += Typer::parseInt($manual);
+        }
+
+        $coverageDays = $coverageSeconds / 86400;
+        $perDay = $coverageDays >= self::MINIMUM_COVERAGE_DAYS ? $consumed / $coverageDays : 0.0;
 
         return [
             'quantity' => $consumed,
             'per_day' => $perDay,
+            'coverage_days' => $coverageDays,
         ];
     }
 
@@ -189,7 +310,7 @@ class InventorySessionService
      * Forecast when the store will run out of an item based on the
      * configured consumption window.
      *
-     * @return array{current: int, per_day: float, days_left: int|null, status: string}
+     * @return array{current: int, per_day: float, coverage_days: float, days_left: int|null, projected_stockout_at: string|null, status: string}
      */
     public function predictedRunOut(Store $store, Item $item, int $days = self::CONSUMPTION_WINDOW_DAYS): array
     {
@@ -201,16 +322,20 @@ class InventorySessionService
             return [
                 'current' => $current,
                 'per_day' => $perDay,
+                'coverage_days' => $consumption['coverage_days'],
                 'days_left' => 0,
+                'projected_stockout_at' => Carbon::now()->toDateString(),
                 'status' => self::STATUS_OUT,
             ];
         }
 
-        if ($perDay <= 0.0) {
+        if ($perDay <= 0.0 || $consumption['coverage_days'] < self::MINIMUM_COVERAGE_DAYS) {
             return [
                 'current' => $current,
                 'per_day' => $perDay,
+                'coverage_days' => $consumption['coverage_days'],
                 'days_left' => null,
+                'projected_stockout_at' => null,
                 'status' => self::STATUS_NO_DATA,
             ];
         }
@@ -221,7 +346,9 @@ class InventorySessionService
         return [
             'current' => $current,
             'per_day' => $perDay,
+            'coverage_days' => $consumption['coverage_days'],
             'days_left' => $daysLeft,
+            'projected_stockout_at' => Carbon::now()->addDays($daysLeft)->toDateString(),
             'status' => $status,
         ];
     }
@@ -355,6 +482,9 @@ class InventorySessionService
                 'sku' => $item->getSku(),
                 'unit' => $item->getUnit(),
                 'current' => $sessionItem->getQuantity(),
+                'expected' => $sessionItem->getExpectedQuantity(),
+                'difference' => $sessionItem->getQuantityDifference(),
+                'classification' => $sessionItem->getClassification()?->value,
                 'previous' => $this->previousQuantity($session->getStore(), $item, $session->getCountedAt()),
                 'note' => $sessionItem->getNote(),
             ];
@@ -426,5 +556,31 @@ class InventorySessionService
         }
 
         return $user;
+    }
+
+    /**
+     * Resolve and validate a classification for an inventory difference.
+     */
+    private function resolveClassification(int $difference, string|null $requested): StockMovementClassificationEnum|null
+    {
+        if ($difference === 0) {
+            return null;
+        }
+
+        $classification = $requested === null
+            ? ($difference < 0 ? StockMovementClassificationEnum::CONSUMPTION : StockMovementClassificationEnum::INVENTORY_CORRECTION)
+            : StockMovementClassificationEnum::from($requested);
+
+        if (
+            ($difference < 0 && !$classification->supportsNegativeDifference()) ||
+            ($difference > 0 && !$classification->supportsPositiveDifference())
+        ) {
+            $validator = Resolver::resolveValidatorFactory()->make([], []);
+            (new Thrower($validator))
+                ->message('rows', \__('The selected inventory reason does not match the quantity difference.'))
+                ->throw();
+        }
+
+        return $classification;
     }
 }

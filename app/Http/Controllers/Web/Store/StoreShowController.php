@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Store;
 
-use App\Enums\ItemStockStatusEnum;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\InventorySession;
 use App\Models\Item;
@@ -86,11 +85,13 @@ class StoreShowController
                     'unit' => $item->getUnit(),
                     'purchase_price' => $item->getPurchasePrice(),
                     'total_value' => $quantity * $item->getPurchasePrice(),
-                    'status' => ItemStockStatusEnum::fromQuantity($quantity)->value,
+                    'status' => $prediction['status'],
                     'sparkline' => $counts->sparklineForItem($owner, $store, $item, 30),
                     'last_count_at' => $lastSession?->getCountedAt()?->toJSON(),
                     'avg_daily_consumption' => $prediction['per_day'],
-                    'days_until_restock' => $prediction['days_left'],
+                    'coverage_days' => $prediction['coverage_days'],
+                    'days_until_stockout' => $prediction['days_left'],
+                    'projected_stockout_at' => $prediction['projected_stockout_at'],
                 ];
             })
             ->all();
@@ -128,7 +129,7 @@ class StoreShowController
         })->values()->all();
 
         $outgoingMovements = $movements->filter(
-            static fn(StockMovement $movement): bool => $movement->getType() === StockMovementTypeEnum::OUTGOING,
+            static fn(StockMovement $movement): bool => $movement->getType() === StockMovementTypeEnum::TRANSFER,
         );
         $totalOutgoingValue = $outgoingMovements->sum(static fn(StockMovement $m): float => $m->getTotalValue());
         $incomingMovements = $movements->filter(
@@ -147,8 +148,8 @@ class StoreShowController
                 'notes' => $store->getNotes(),
             ],
             'metrics' => [
-                'total_outgoing_movements' => $outgoingMovements->count(),
-                'total_outgoing_value' => $totalOutgoingValue,
+                'total_transfer_out_movements' => $outgoingMovements->count(),
+                'total_transfer_out_value' => $totalOutgoingValue,
                 'total_received_quantity' => $totalReceivedQuantity,
                 'total_received_value' => $totalReceivedValue,
             ],

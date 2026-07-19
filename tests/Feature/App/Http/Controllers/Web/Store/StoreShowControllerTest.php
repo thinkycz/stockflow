@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\ItemStockStatusEnum;
 use App\Models\Item;
 use App\Models\Store;
 use App\Models\StoreItem;
@@ -46,14 +45,14 @@ use Illuminate\Support\Carbon;
     \expect($row)->toHaveKey('item_id', $item->getKey());
     \expect($row)->toHaveKey('quantity', 0);
     \expect($row)->toHaveKey('total_value', 0.0);
-    \expect($row)->toHaveKey('status', ItemStockStatusEnum::OUT_OF_STOCK->value);
+    \expect($row)->toHaveKey('status', 'out');
     \expect($row)->toHaveKey('sparkline');
     \expect($row['sparkline'])->toBeArray();
     \expect($row)->toHaveKey('last_count_at', null);
     \expect($response->json('props.now'))->toBeString();
 });
 
-\test('store show inventory status reflects current quantity bucket', function (): void {
+\test('store show reports no_data without sufficient inventory coverage', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $user->getKey()]);
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
@@ -67,7 +66,8 @@ use Illuminate\Support\Carbon;
 
     $response->assertOk();
     $row = $response->json('props.inventory.0');
-    \expect($row['status'])->toBe(ItemStockStatusEnum::fromQuantity(5)->value);
+    \expect($row['status'])->toBe('no_data');
+    \expect($row['days_until_stockout'])->toBeNull();
     \expect($row['last_count_at'])->toBeNull();
 });
 

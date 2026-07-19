@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Validation;
 
+use App\Enums\StockMovementClassificationEnum;
 use App\Models\User;
 use Thinkycz\LaravelCore\Validation\BaseValidity;
 use Thinkycz\LaravelCore\Validation\Validity;
@@ -84,5 +85,13 @@ class InventoryCountValidity
     public function rowNote(): Validity
     {
         return $this->baseValidity->make()->text();
+    }
+
+    /**
+     * Per-row inventory difference classification.
+     */
+    public function rowClassification(): Validity
+    {
+        return $this->baseValidity->make()->inString(StockMovementClassificationEnum::values());
     }
 }

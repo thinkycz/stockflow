@@ -50,5 +50,10 @@
     "Shift preset created.": "Předvolba směny byla vytvořena.",
     "Shift preset updated.": "Předvolba směny byla upravena.",
     "Shift preset deleted.": "Předvolba směny byla smazána.",
-    "This shift overlaps an existing assignment.": "Tato směna se překrývá s existující směnou."
+    "This shift overlaps an existing assignment.": "Tato směna se překrývá s existující směnou.",
+    "Consumption requires one store and no source store.": "Spotřeba vyžaduje jednu prodejnu a nesmí mít zdrojovou prodejnu.",
+    "Inventory reconciliations are immutable.": "Inventurní vyrovnání nelze samostatně měnit ani smazat.",
+    "The selected inventory reason does not match the quantity difference.": "Zvolený důvod inventury neodpovídá znaménku rozdílu.",
+    "The selected adjustment reason does not match the quantity difference.": "Zvolený důvod úpravy neodpovídá znaménku rozdílu.",
+    "You cannot consume :qty from \":title\" (only :current available).": "Nelze spotřebovat :qty z položky \":title\" (k dispozici je pouze :current)."
 }

@@ -49,7 +49,7 @@ use Illuminate\Validation\ValidationException;
     \expect(StockMovementSequence::query()->where('user_id', $user->getKey())->count())->toBe(1);
 });
 
-\test('outgoing movement transfers stock between two stores', function (): void {
+\test('transfer movement moves stock between two stores', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $retail = Store::factory()->create([
         'user_id' => $user->getKey(),
@@ -75,8 +75,8 @@ use Illuminate\Validation\ValidationException;
         ]],
     ], $user);
 
-    \expect($movement->getType())->toBe(StockMovementTypeEnum::OUTGOING);
-    \expect($movement->getNumber())->toStartWith('OUT-');
+    \expect($movement->getType())->toBe(StockMovementTypeEnum::TRANSFER);
+    \expect($movement->getNumber())->toStartWith('TR-');
 
     \expect((int) StoreItem::query()
         ->where('store_id', $warehouse->getKey())
@@ -86,6 +86,26 @@ use Illuminate\Validation\ValidationException;
         ->where('store_id', $retail->getKey())
         ->where('item_id', $item->getKey())
         ->value('quantity'))->toBe(3);
+});
+
+\test('manual consumption deducts one store and creates a classified ledger row', function (): void {
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+    $item = Item::factory()->create(['user_id' => $user->getKey(), 'purchase_price' => '5.00']);
+    StoreItem::factory()->create(['store_id' => $store->getKey(), 'item_id' => $item->getKey(), 'quantity' => 10]);
+
+    $movement = \app(StockMovementService::class)->createMovement([
+        'mode' => 'consumption',
+        'store_id' => $store->getKey(),
+        'items' => [['item_id' => $item->getKey(), 'quantity' => 3]],
+    ], $user);
+
+    $row = StockMovementItem::query()->where('stock_movement_id', $movement->getKey())->firstOrFail();
+    \expect($movement->getType())->toBe(StockMovementTypeEnum::CONSUMPTION);
+    \expect($movement->getSourceStoreId())->toBeNull();
+    \expect($movement->getNumber())->toStartWith('CON-');
+    \expect($row->getClassification()?->value)->toBe('consumption');
+    \expect($row->getQuantityDifference())->toBe(-3);
+    \expect(StoreItem::query()->where('store_id', $store->getKey())->where('item_id', $item->getKey())->value('quantity'))->toBe(7);
 });
 
 \test('outgoing movement fails when source has insufficient stock', function (): void {
@@ -140,6 +160,22 @@ use Illuminate\Validation\ValidationException;
     \expect($row->getQuantityDifference())->toBe(-2);
     \expect($row->getAdjustmentReason())->toBe(AdjustmentReasonEnum::DAMAGED);
 });
+
+\test('adjustment rejects a reason whose sign does not match the change', function (): void {
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
+    StoreItem::factory()->create(['store_id' => $store->getKey(), 'item_id' => $item->getKey(), 'quantity' => 5]);
+
+    \app(StockMovementService::class)->createMovement([
+        'mode' => 'adjustment',
+        'store_id' => $store->getKey(),
+        'items' => [[
+            'item_id' => $item->getKey(),
+            'quantity_after' => 7,
+            'adjustment_reason' => AdjustmentReasonEnum::DAMAGED->value,
+        ]],
+    ], $user);
+})->throws(ValidationException::class);
 
 \test('creating a movement with an unknown item fails validation', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();

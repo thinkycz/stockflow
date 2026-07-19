@@ -30,6 +30,7 @@ class StockMovementShowController
                 'quantity_after' => $row->getQuantityAfter(),
                 'quantity_difference' => $row->getQuantityDifference(),
                 'adjustment_reason' => $row->getAdjustmentReason()?->value,
+                'classification' => $row->getClassification()?->value,
             ];
         })->all();
 
@@ -47,7 +48,7 @@ class StockMovementShowController
                 'total_quantity' => $stockMovement->getTotalQuantity(),
                 'total_value' => $stockMovement->getTotalValue(),
                 'created_by' => $stockMovement->getCreator()?->getEmail(),
-                'created_at' => $stockMovement->getCreatedAt()->toJSON(),
+                'created_at' => $stockMovement->getOccurredAt()->toJSON(),
             ],
             'rows' => $rows,
         ]);

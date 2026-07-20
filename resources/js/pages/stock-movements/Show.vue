@@ -13,7 +13,12 @@ import DataTable from '@/components/ui/DataTable.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
-import { formatDate, formatMoney, formatNumber } from '@/lib/format';
+import {
+    formatDate,
+    formatMoney,
+    formatSignedNumber,
+    formatStockQuantity,
+} from '@/lib/format';
 
 type Row = {
     id: number;
@@ -198,7 +203,12 @@ function reverseMovement(id: number): void {
                     </CardTitle>
                 </CardHeader>
                 <div class="overflow-x-auto">
-                    <DataTable v-if="movement.type === 'adjustment'">
+                    <DataTable
+                        v-if="
+                            movement.type === 'adjustment' ||
+                            movement.type === 'inventory_reconciliation'
+                        "
+                    >
                         <thead>
                             <tr>
                                 <th>{{ t('stock_movements.detail.item') }}</th>
@@ -230,7 +240,9 @@ function reverseMovement(id: number): void {
                                 <td class="text-right text-on-surface-variant">
                                     {{
                                         row.quantity_before !== null
-                                            ? formatNumber(row.quantity_before)
+                                            ? formatStockQuantity(
+                                                  row.quantity_before,
+                                              )
                                             : '—'
                                     }}
                                 </td>
@@ -239,7 +251,9 @@ function reverseMovement(id: number): void {
                                 >
                                     {{
                                         row.quantity_after !== null
-                                            ? formatNumber(row.quantity_after)
+                                            ? formatStockQuantity(
+                                                  row.quantity_after,
+                                              )
                                             : '—'
                                     }}
                                 </td>
@@ -253,7 +267,7 @@ function reverseMovement(id: number): void {
                                 >
                                     {{
                                         row.quantity_difference !== null
-                                            ? formatNumber(
+                                            ? formatSignedNumber(
                                                   row.quantity_difference,
                                               )
                                             : '—'
@@ -261,11 +275,17 @@ function reverseMovement(id: number): void {
                                 </td>
                                 <td class="text-xs text-on-surface-variant">
                                     {{
-                                        row.adjustment_reason
+                                        movement.type ===
+                                            'inventory_reconciliation' &&
+                                        row.classification
                                             ? t(
-                                                  `stock_movements.reasons.${row.adjustment_reason}`,
+                                                  `stock_movements.reasons.${row.classification}`,
                                               )
-                                            : '—'
+                                            : row.adjustment_reason
+                                              ? t(
+                                                    `stock_movements.reasons.${row.adjustment_reason}`,
+                                                )
+                                              : '—'
                                     }}
                                 </td>
                             </tr>
@@ -299,7 +319,7 @@ function reverseMovement(id: number): void {
                                 >
                                     {{
                                         row.quantity !== null
-                                            ? formatNumber(row.quantity)
+                                            ? formatStockQuantity(row.quantity)
                                             : '—'
                                     }}
                                 </td>

@@ -16,6 +16,21 @@ export function formatNumber(value: number, fractionDigits = 0): string {
     }).format(value);
 }
 
+export function formatStockQuantity(value: number): string {
+    return new Intl.NumberFormat(getIntlLocale(), {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 3,
+    }).format(value);
+}
+
+export function formatSignedNumber(value: number): string {
+    return new Intl.NumberFormat(getIntlLocale(), {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 3,
+        signDisplay: 'exceptZero',
+    }).format(value);
+}
+
 /**
  * Format a date string as `dd.MM.yyyy`.
  *

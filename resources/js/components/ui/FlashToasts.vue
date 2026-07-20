@@ -2,6 +2,7 @@
 import { CircleAlert, CircleCheck, X } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch, type Component } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useClientToast } from '@/composables/useClientToast';
 import { useSharedProps } from '@/composables/useSharedProps';
 
 type ToastState = {
@@ -22,6 +23,7 @@ const props = withDefaults(
 
 const { t } = useI18n();
 const { flash } = useSharedProps();
+const { clientToast } = useClientToast();
 
 const successMessage = ref<string | null>(null);
 const errorMessage = ref<string | null>(null);
@@ -135,6 +137,23 @@ watch(
     },
     { immediate: true },
 );
+
+watch(clientToast, (value) => {
+    if (value === null) {
+        return;
+    }
+
+    if (value.type === 'success') {
+        successMessage.value = value.message;
+        successState.hovered = false;
+        successState.focused = false;
+        successTimeRemaining = SUCCESS_DURATION;
+        startSuccessTimer();
+        return;
+    }
+
+    errorMessage.value = value.message;
+});
 
 onBeforeUnmount(clearSuccessTimer);
 

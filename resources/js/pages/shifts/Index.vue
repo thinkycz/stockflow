@@ -25,8 +25,10 @@ import FieldError from '@/components/ui/FieldError.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { showErrorToast, showSuccessToast } from '@/composables/useClientToast';
 import { useRoute } from '@/composables/useRoute';
 import { formatMoney } from '@/lib/format';
+import { sortShiftsByTime } from '@/lib/shift-calendar';
 
 type Worker = {
     id: number;
@@ -197,6 +199,10 @@ const calendarDays = computed<CalendarDay[]>(() => {
         const list = shiftsByDate.get(shift.date) ?? [];
         list.push(enriched);
         shiftsByDate.set(shift.date, list);
+    }
+
+    for (const [date, shifts] of shiftsByDate) {
+        shiftsByDate.set(date, sortShiftsByTime(shifts));
     }
 
     const days: CalendarDay[] = [];
@@ -532,8 +538,6 @@ function deletePreset(preset: ShiftPreset): void {
 
 // --- Quick add ---
 
-type QuickFeedback = 'created' | 'exists' | 'conflict' | 'failed';
-
 type QuickAddSuccess = {
     status: 'created' | 'exists';
     shift: Shift;
@@ -556,30 +560,23 @@ const selectedWorkerId = ref<string>('');
 const selectedPresetId = ref<string>('');
 const quickAddActive = ref<boolean>(false);
 const pendingDates = ref<Set<string>>(new Set());
-const quickFeedback = ref<Record<string, QuickFeedback>>({});
 
 watch(
     () => props.store?.id,
     () => {
         stopQuickAdd();
         selectedPresetId.value = '';
-        quickFeedback.value = {};
     },
 );
 
 function startQuickAdd(): void {
     if (selectedWorkerId.value === '' || selectedPresetId.value === '') return;
     quickAddActive.value = true;
-    quickFeedback.value = {};
 }
 
 function stopQuickAdd(): void {
     quickAddActive.value = false;
     pendingDates.value = new Set();
-}
-
-function quickFeedbackLabel(status: QuickFeedback | undefined): string {
-    return status === undefined ? '' : t('shifts.quick_add.' + status);
 }
 
 function handleDayClick(day: CalendarDay): void {
@@ -620,10 +617,7 @@ async function quickAddShift(
         );
 
         if (response.data.status === 'exists') {
-            quickFeedback.value = {
-                ...quickFeedback.value,
-                [date]: 'exists',
-            };
+            showSuccessToast(t('shifts.quick_add.exists'));
             return;
         }
 
@@ -645,10 +639,7 @@ async function quickAddShift(
             );
         }
 
-        quickFeedback.value = {
-            ...quickFeedback.value,
-            [date]: 'created',
-        };
+        showSuccessToast(t('shifts.quick_add.created'));
     } catch (error: unknown) {
         if (
             isAxiosError<QuickAddConflict>(error) &&
@@ -659,18 +650,14 @@ async function quickAddShift(
                     (conflict) => `${conflict.start_time}–${conflict.end_time}`,
                 )
                 .join(', ');
-            quickFeedback.value = {
-                ...quickFeedback.value,
-                [date]: 'conflict',
-            };
             retryWithOverlap = window.confirm(
                 t('shifts.quick_add.overlap_confirm', { conflicts }),
             );
+            if (!retryWithOverlap) {
+                showErrorToast(t('shifts.quick_add.conflict'));
+            }
         } else {
-            quickFeedback.value = {
-                ...quickFeedback.value,
-                [date]: 'failed',
-            };
+            showErrorToast(t('shifts.quick_add.failed'));
         }
     } finally {
         const nextPending = new Set(pendingDates.value);
@@ -943,6 +930,7 @@ async function copyText(value: string): Promise<void> {
                                     ? 'hover:bg-primary/5'
                                     : '',
                             ]"
+                            :data-testid="`calendar-day-${day.date}`"
                             @click="handleDayClick(day)"
                         >
                             <div
@@ -960,28 +948,11 @@ async function copyText(value: string): Promise<void> {
                                     class="ml-1 inline animate-spin text-primary"
                                 />
                             </div>
-                            <div
-                                v-if="quickFeedback[day.date]"
-                                class="mb-1 rounded px-1 py-0.5 text-[9px] font-semibold"
-                                :class="{
-                                    'bg-emerald-50 text-emerald-700':
-                                        quickFeedback[day.date] === 'created',
-                                    'bg-sky-50 text-sky-700':
-                                        quickFeedback[day.date] === 'exists',
-                                    'bg-amber-50 text-amber-700':
-                                        quickFeedback[day.date] === 'conflict',
-                                    'bg-red-50 text-error-red':
-                                        quickFeedback[day.date] === 'failed',
-                                }"
-                            >
-                                {{
-                                    quickFeedbackLabel(quickFeedback[day.date])
-                                }}
-                            </div>
                             <div class="space-y-1">
                                 <div
                                     v-for="shift in day.shifts"
                                     :key="shift.id"
+                                    data-testid="calendar-shift"
                                     class="rounded-md border px-1.5 py-1 text-[10px] leading-tight"
                                     :style="{
                                         backgroundColor: `${shift.worker_color}18`,

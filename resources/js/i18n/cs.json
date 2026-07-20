@@ -388,6 +388,7 @@
             "before": "Před",
             "after": "Po",
             "difference": "Rozdíl",
+            "value_change": "Změna hodnoty",
             "reason": "Důvod",
             "total_quantity": "Celkové množství",
             "total_value": "Celková hodnota",

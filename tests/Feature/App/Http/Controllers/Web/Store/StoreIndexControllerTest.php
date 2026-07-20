@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Models\InventorySession;
 use App\Models\Item;
 use App\Models\Store;
+use Illuminate\Support\Carbon;
 
 \test('guest is redirected from stores to login', function (): void {
     $this->get('/stores')->assertRedirect('/login');
@@ -53,6 +55,11 @@ use App\Models\Store;
         'user_id' => $user->getKey(),
         'purchase_price' => '4.00',
     ]);
+    $countedAt = Carbon::parse('2026-07-18 09:00:00');
+    InventorySession::factory()->forStore($retail)->byUser($user)->create([
+        'status' => 'closed',
+        'counted_at' => $countedAt,
+    ]);
 
     // 1 incoming purchase to the retail store. The controller only
     // exposes 'transfer' / 'adjustment' as modes; a transfer with
@@ -84,7 +91,7 @@ use App\Models\Store;
         ->and($row['sku_count'])->toBe(1)
         ->and($row['out_of_stock'])->toBe(0)
         ->and($row['risk_count'])->toBe(0)
-        ->and($row['last_inventory_at'])->toBeNull();
+        ->and($row['last_inventory_at'])->toBe($countedAt->toDateTimeString());
 });
 
 \test('per-store metrics only count the authenticated users own movements', function (): void {

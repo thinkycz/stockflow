@@ -9,6 +9,16 @@ export function formatMoney(value: number): string {
     }).format(value);
 }
 
+export function formatSignedMoney(value: number): string {
+    return new Intl.NumberFormat(getIntlLocale(), {
+        style: 'currency',
+        currency: 'CZK',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+        signDisplay: 'exceptZero',
+    }).format(value);
+}
+
 export function formatNumber(value: number, fractionDigits = 0): string {
     return new Intl.NumberFormat(getIntlLocale(), {
         minimumFractionDigits: fractionDigits,

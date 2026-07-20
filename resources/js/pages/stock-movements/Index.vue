@@ -15,7 +15,7 @@ import Pagination from '@/components/ui/Pagination.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
-import { formatDate, formatMoney } from '@/lib/format';
+import { formatDate, formatMoney, formatSignedMoney } from '@/lib/format';
 
 type MovementRow = {
     id: number;
@@ -40,6 +40,7 @@ type MovementRow = {
     source_store_name: string | null;
     created_at: string;
     total_value: number;
+    net_value: number;
     items_count: number;
     created_by: string | null;
 };
@@ -94,7 +95,11 @@ const totals = computed(() =>
     props.movements.reduce(
         (summary, movement) => ({
             items_count: summary.items_count + movement.items_count,
-            total_value: summary.total_value + movement.total_value,
+            total_value:
+                summary.total_value +
+                (movement.type === 'inventory_reconciliation'
+                    ? movement.net_value
+                    : movement.total_value),
         }),
         {
             items_count: 0,
@@ -392,7 +397,14 @@ watch(
                                     {{ movement.items_count }}
                                 </td>
                                 <td class="text-right text-on-surface-variant">
-                                    {{ formatMoney(movement.total_value) }}
+                                    {{
+                                        movement.type ===
+                                        'inventory_reconciliation'
+                                            ? formatSignedMoney(
+                                                  movement.net_value,
+                                              )
+                                            : formatMoney(movement.total_value)
+                                    }}
                                 </td>
                                 <td class="text-xs text-on-surface-variant">
                                     {{ formatDate(movement.created_at) }}

@@ -414,6 +414,20 @@ class StockMovement extends BaseModel
     }
 
     /**
+     * Net signed value for inventory reconciliation movements.
+     */
+    public function getNetValue(): float
+    {
+        if ($this->getType() !== StockMovementTypeEnum::INVENTORY_RECONCILIATION) {
+            return $this->getTotalValue();
+        }
+
+        return \round($this->getMovementItems()->sum(
+            static fn(StockMovementItem $item): float => $item->getSignedTotal(),
+        ), 2);
+    }
+
+    /**
      * Item count getter.
      */
     public function getItemsCount(): int

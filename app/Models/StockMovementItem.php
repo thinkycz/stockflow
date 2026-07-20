@@ -155,6 +155,18 @@ class StockMovementItem extends BaseModel
     }
 
     /**
+     * Signed value of the stock difference represented by this row.
+     */
+    public function getSignedTotal(): float
+    {
+        $difference = $this->getQuantityDifference();
+
+        return $difference !== null && $difference < 0
+            ? -$this->getTotal()
+            : $this->getTotal();
+    }
+
+    /**
      * Unit-cost snapshot getter.
      */
     public function getUnitCost(): float|null

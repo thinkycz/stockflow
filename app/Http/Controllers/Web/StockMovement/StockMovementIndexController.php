@@ -50,7 +50,7 @@ class StockMovementIndexController
         $baseQuery = StockMovement::query();
         StockMovement::scopeForUser($baseQuery, $user);
         $query = StockMovement::querySelect($baseQuery)
-            ->with(['store', 'sourceStore', 'creator'])
+            ->with(['store', 'sourceStore', 'creator', 'movementItems'])
             ->withCount('movementItems')
             ->orderByDesc('occurred_at')
             ->orderByDesc('id');
@@ -94,6 +94,7 @@ class StockMovementIndexController
                 'created_at' => $movement->getOccurredAt()->toJSON(),
                 'total_quantity' => $movement->getTotalQuantity(),
                 'total_value' => $movement->getTotalValue(),
+                'net_value' => $movement->getNetValue(),
                 'items_count' => $movement->getItemsCount(),
                 'created_by' => $movement->getCreator()?->getEmail(),
             ];

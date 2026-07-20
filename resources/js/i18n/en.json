@@ -388,6 +388,7 @@
             "before": "Before",
             "after": "After",
             "difference": "Difference",
+            "value_change": "Value change",
             "reason": "Reason",
             "total_quantity": "Total quantity",
             "total_value": "Total value",

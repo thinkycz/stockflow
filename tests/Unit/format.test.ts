@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest';
 import { setActiveLocale } from '@/i18n';
-import { formatSignedNumber, formatStockQuantity } from '@/lib/format';
+import {
+    formatSignedMoney,
+    formatSignedNumber,
+    formatStockQuantity,
+} from '@/lib/format';
 
 describe('signed number formatting', () => {
     test('makes both inventory reconciliation directions explicit', () => {
@@ -10,5 +14,7 @@ describe('signed number formatting', () => {
         expect(formatSignedNumber(-3)).toBe('-3');
         expect(formatSignedNumber(0)).toBe('0');
         expect(formatStockQuantity(1.25)).toBe('1.25');
+        expect(formatSignedMoney(20).startsWith('+')).toBe(true);
+        expect(formatSignedMoney(-30).startsWith('-')).toBe(true);
     });
 });

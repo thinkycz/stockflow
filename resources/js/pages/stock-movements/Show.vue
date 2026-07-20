@@ -16,6 +16,7 @@ import { useRoute } from '@/composables/useRoute';
 import {
     formatDate,
     formatMoney,
+    formatSignedMoney,
     formatSignedNumber,
     formatStockQuantity,
 } from '@/lib/format';
@@ -27,6 +28,7 @@ type Row = {
     item_sku: string | null;
     quantity: number | null;
     total: number;
+    signed_total: number;
     quantity_before: number | null;
     quantity_after: number | null;
     quantity_difference: number | null;
@@ -58,6 +60,7 @@ defineProps<{
         source_store_id: number | null;
         source_store_name: string | null;
         total_value: number;
+        net_value: number;
         reversal_of_id: number | null;
         reversal_reason: string | null;
         reversed_at: string | null;
@@ -170,7 +173,11 @@ function reverseMovement(id: number): void {
                         <p
                             class="font-heading text-2xl font-bold tracking-tight text-on-surface"
                         >
-                            {{ formatMoney(movement.total_value) }}
+                            {{
+                                movement.type === 'inventory_reconciliation'
+                                    ? formatSignedMoney(movement.net_value)
+                                    : formatMoney(movement.total_value)
+                            }}
                         </p>
                     </CardContent>
                 </Card>
@@ -222,6 +229,11 @@ function reverseMovement(id: number): void {
                                 <th class="text-right">
                                     {{ t('stock_movements.detail.difference') }}
                                 </th>
+                                <th class="text-right">
+                                    {{
+                                        t('stock_movements.detail.value_change')
+                                    }}
+                                </th>
                                 <th>
                                     {{ t('stock_movements.detail.reason') }}
                                 </th>
@@ -272,6 +284,16 @@ function reverseMovement(id: number): void {
                                               )
                                             : '—'
                                     }}
+                                </td>
+                                <td
+                                    class="text-right font-semibold"
+                                    :class="
+                                        row.signed_total >= 0
+                                            ? 'text-emerald-600'
+                                            : 'text-rose-600'
+                                    "
+                                >
+                                    {{ formatSignedMoney(row.signed_total) }}
                                 </td>
                                 <td class="text-xs text-on-surface-variant">
                                     {{

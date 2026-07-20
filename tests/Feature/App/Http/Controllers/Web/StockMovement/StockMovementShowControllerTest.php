@@ -30,8 +30,14 @@ use App\Services\InventorySessionService;
 \test('inventory reconciliation detail exposes signed increases and decreases', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $user->getKey()]);
-    $decreased = Item::factory()->create(['user_id' => $user->getKey()]);
-    $increased = Item::factory()->create(['user_id' => $user->getKey()]);
+    $decreased = Item::factory()->create([
+        'user_id' => $user->getKey(),
+        'purchase_price' => 10,
+    ]);
+    $increased = Item::factory()->create([
+        'user_id' => $user->getKey(),
+        'purchase_price' => 10,
+    ]);
     foreach ([$decreased, $increased] as $item) {
         StoreItem::query()->create([
             'store_id' => $store->getKey(),
@@ -55,6 +61,9 @@ use App\Services\InventorySessionService;
     $response->assertJsonPath('props.movement.type', 'inventory_reconciliation');
     $response->assertJsonPath('props.rows.0.quantity_difference', -3);
     $response->assertJsonPath('props.rows.0.classification', 'consumption');
+    $response->assertJsonPath('props.rows.0.signed_total', -30);
     $response->assertJsonPath('props.rows.1.quantity_difference', 2);
     $response->assertJsonPath('props.rows.1.classification', 'inventory_correction');
+    $response->assertJsonPath('props.rows.1.signed_total', 20);
+    $response->assertJsonPath('props.movement.net_value', -10);
 });

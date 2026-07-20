@@ -28,18 +28,22 @@ test('inventory reconciliation shows explicit increase and decrease signs', asyn
         .locator('tbody tr')
         .filter({ hasText: 'Inventory reconciliation' })
         .first();
+    await expect(newestReconciliation).toContainText(/-CZK\s*[\d,.]+/);
     await newestReconciliation.getByRole('link').first().click();
     await expect(
         page.getByRole('cell', { name: '-1', exact: true }),
     ).toBeVisible();
+    await expect(page.getByText(/-CZK\s*[\d,.]+/).first()).toBeVisible();
 
     await page.goto('/stock-movements');
     const oldestReconciliation = page
         .locator('tbody tr')
         .filter({ hasText: 'Inventory reconciliation' })
         .nth(1);
+    await expect(oldestReconciliation).toContainText(/\+CZK\s*[\d,.]+/);
     await oldestReconciliation.getByRole('link').first().click();
     await expect(
         page.getByRole('cell', { name: '+2', exact: true }),
     ).toBeVisible();
+    await expect(page.getByText(/\+CZK\s*[\d,.]+/).first()).toBeVisible();
 });

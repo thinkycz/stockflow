@@ -71,8 +71,11 @@ class StoreShowController
             ->where('inventory_sessions.store_id', $store->getKey())
             ->where('inventory_sessions.status', 'closed')
             ->whereIn('inventory_session_items.item_id', $itemIds)
+            ->selectRaw(
+                'inventory_session_items.item_id, MAX(inventory_sessions.counted_at) AS last_counted_at',
+            )
             ->groupBy('inventory_session_items.item_id')
-            ->pluck(DB::raw('MAX(inventory_sessions.counted_at)'), 'inventory_session_items.item_id');
+            ->pluck('last_counted_at', 'inventory_session_items.item_id');
 
         $inventory = $storeItems
             ->map(static function (StoreItem $row) use ($lastCounts, $predictions, $sparklines): array {

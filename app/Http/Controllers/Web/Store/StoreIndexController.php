@@ -57,8 +57,9 @@ class StoreIndexController
         $lastInventories = DB::table('inventory_sessions')
             ->whereIn('store_id', $storeIds)
             ->where('status', 'closed')
+            ->selectRaw('store_id, MAX(counted_at) AS last_counted_at')
             ->groupBy('store_id')
-            ->pluck(DB::raw('MAX(counted_at)'), 'store_id');
+            ->pluck('last_counted_at', 'store_id');
 
         $rows = $stores->map(function (Store $store) use ($allStoreItems, $inventoryService, $lastInventories): array {
             /** @var Collection<array-key, StoreItem> $storeItems */

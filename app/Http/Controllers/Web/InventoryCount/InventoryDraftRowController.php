@@ -20,9 +20,9 @@ class InventoryDraftRowController
     {
         $validated = $request->validate([
             'item_id' => ['required', 'integer'],
-            'quantity' => ['required', 'numeric', 'decimal:0,3', 'min:0'],
+            'quantity' => ['required', 'numeric', 'min:0'],
             'classification' => ['nullable', 'string'],
-            'note' => ['nullable', 'string', 'max:2000'],
+            'note' => ['nullable', 'string'],
             'client_version' => ['required', 'integer', 'min:1'],
         ]);
         $row = $service->saveDraftRow(User::mustAuth(), $session, Typer::assertArray($validated));

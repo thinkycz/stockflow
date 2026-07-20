@@ -130,7 +130,7 @@ class InventorySessionService
             }
 
             $itemId = Typer::parseInt($payload['item_id'] ?? 0);
-            $quantity = $this->decimal($payload['quantity'] ?? -1);
+            $quantity = $this->draftQuantity($payload['quantity'] ?? -1);
             $clientVersion = Typer::parseInt($payload['client_version'] ?? 0);
             if ($quantity->isNegative() || $clientVersion <= 0) {
                 $this->fail(['quantity' => \__('A non-negative quantity and version are required.')]);
@@ -153,7 +153,7 @@ class InventorySessionService
             $countedAt = Carbon::now();
             $expected = $this->decimal($this->currentQuantity($lockedSession->getStore(), $item));
             $difference = $quantity->minus($expected);
-            $classification = $this->resolveClassification($difference, Typer::parseNullableString($payload['classification'] ?? null));
+            $classification = $this->resolveDraftClassification($difference, Typer::parseNullableString($payload['classification'] ?? null));
             $snapshot = Typer::assertArray($lockedSession->getAttribute('opening_snapshot') ?? []);
 
             return InventorySessionItem::query()->updateOrCreate(
@@ -896,11 +896,48 @@ class InventorySessionService
     }
 
     /**
+     * Keep draft autosave non-blocking when the expected stock changed after
+     * the browser selected a reason or when a stale client sends an unknown
+     * classification.
+     */
+    private function resolveDraftClassification(BigDecimal $difference, string|null $requested): StockMovementClassificationEnum|null
+    {
+        if ($difference->isZero()) {
+            return null;
+        }
+
+        $fallback = $difference->isNegative()
+            ? StockMovementClassificationEnum::CONSUMPTION
+            : StockMovementClassificationEnum::INVENTORY_CORRECTION;
+        $classification = $requested === null
+            ? $fallback
+            : StockMovementClassificationEnum::tryFrom($requested) ?? $fallback;
+
+        if (
+            ($difference->isNegative() && !$classification->supportsNegativeDifference()) ||
+            ($difference->isPositive() && !$classification->supportsPositiveDifference())
+        ) {
+            return $fallback;
+        }
+
+        return $classification;
+    }
+
+    /**
      * Parse an exact stock quantity at the canonical scale.
      */
     private function decimal(mixed $value): BigDecimal
     {
         return BigDecimal::of((string) Typer::assertScalar($value))->toScale(3, RoundingMode::Unnecessary);
+    }
+
+    /**
+     * Normalize user-entered draft quantities instead of rejecting harmless
+     * precision beyond the canonical three decimal places.
+     */
+    private function draftQuantity(mixed $value): BigDecimal
+    {
+        return BigDecimal::of((string) Typer::assertScalar($value))->toScale(3, RoundingMode::HalfUp);
     }
 
     /**

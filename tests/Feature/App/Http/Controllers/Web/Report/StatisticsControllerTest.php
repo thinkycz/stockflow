@@ -64,6 +64,38 @@ use Illuminate\Support\Carbon;
     \expect($response->json('props.items.0.status'))->toBe('no_data');
 });
 
+\test('statistics value past consumption using its stored price snapshot', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
+    $item = Item::factory()->create(['user_id' => $user->getKey(), 'purchase_price' => '4.00']);
+    StoreItem::factory()->create(['store_id' => $store->getKey(), 'item_id' => $item->getKey(), 'quantity' => 5]);
+    $consumption = StockMovement::factory()->consumption($store)->byUser($user)->create([
+        'user_id' => $user->getKey(),
+        'total_value' => 12,
+        'occurred_at' => Carbon::now()->subDay(),
+    ]);
+    StockMovementItem::factory()->create([
+        'stock_movement_id' => $consumption->getKey(),
+        'item_id' => $item->getKey(),
+        'quantity' => 3,
+        'quantity_difference' => -3,
+        'classification' => StockMovementClassificationEnum::CONSUMPTION->value,
+        'unit_cost' => 4,
+        'total' => 12,
+    ]);
+
+    $item->update(['purchase_price' => '10.00']);
+
+    $response = $this->be($user, 'users')->get(
+        '/reports/statistics?store_id=' . $store->getKey(),
+        $this->inertiaHeaders(),
+    );
+
+    \expect((float) $response->json('props.items.0.consumed_value'))->toBe(12.0)
+        ->and((float) $response->json('props.consumption.value'))->toBe(12.0)
+        ->and((float) $response->json('props.current_inventory.value'))->toBe(50.0);
+});
+
 \test('transfer never enters consumption statistics', function (): void {
     [$user, $source] = \createIsolatedUserWithWarehouse();
     $destination = Store::factory()->create(['user_id' => $user->getKey()]);

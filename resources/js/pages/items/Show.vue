@@ -58,20 +58,17 @@ const props = defineProps<{
         title: string;
         sku: string | null;
         unit: string | null;
-        warehouse_quantity: number;
         total_quantity: number;
         purchase_price: number;
         total_value: number;
         description: string | null;
         status: 'in_stock' | 'low_stock' | 'out_of_stock';
-        created_at: string;
     };
     store_quantities: StoreQuantityRow[];
     movements: MovementRow[];
     active_store: {
         id: number;
         name: string;
-        quantity: number | null;
     } | null;
 }>();
 
@@ -157,13 +154,7 @@ useBoundLocale();
                         <p
                             class="font-heading text-2xl font-bold tracking-tight text-on-surface"
                         >
-                            {{
-                                formatNumber(
-                                    active_store
-                                        ? (active_store.quantity ?? 0)
-                                        : item.warehouse_quantity,
-                                )
-                            }}
+                            {{ formatNumber(item.total_quantity) }}
                         </p>
                         <p
                             v-if="item.unit"

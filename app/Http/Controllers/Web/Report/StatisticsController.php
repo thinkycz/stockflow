@@ -60,6 +60,7 @@ class StatisticsController
         $itemIds = \array_values($storeItems->map(static fn(StoreItem $row): int => $row->getItemId())->all());
         $periodConsumptions = $inventoryService->consumptionForItems($store, $itemIds, $periodDays, 1000);
         $predictions = $inventoryService->predictionsForStore($store, $storeItems);
+        $classified = $this->classifiedChanges($user, $store, $since);
 
         foreach ($storeItems as $storeItem) {
             $item = $storeItem->getItem();
@@ -91,7 +92,7 @@ class StatisticsController
                 'unit' => $item->getUnit(),
                 'current_quantity' => $quantity,
                 'consumed_quantity' => $periodConsumption['quantity'],
-                'consumed_value' => \round($periodConsumption['quantity'] * $item->getPurchasePrice(), 2),
+                'consumed_value' => $classified['consumption_by_item'][$item->getKey()] ?? 0.0,
                 'avg_daily_consumption' => $prediction['per_day'],
                 'coverage_days' => \round($prediction['coverage_days'], 1),
                 'days_until_stockout' => $prediction['days_left'],
@@ -112,7 +113,6 @@ class StatisticsController
         });
 
         $flows = $this->flows($user, $store, $since);
-        $classified = $this->classifiedChanges($user, $store, $since);
 
         return Inertia::render('reports/Statistics', [
             'store' => ['id' => $store->getKey(), 'name' => $store->getName()],
@@ -194,7 +194,7 @@ class StatisticsController
     /**
      * Aggregate consumption, losses, corrections, and weekly value series.
      *
-     * @return array{consumption_value: float, consumption_skus: int, reasons: array<int, array<string, mixed>>, series: array<int, array{label: string, value: float}>}
+     * @return array{consumption_value: float, consumption_skus: int, consumption_by_item: array<int, float>, reasons: array<int, array<string, mixed>>, series: array<int, array{label: string, value: float}>}
      */
     private function classifiedChanges(User $user, Store $store, Carbon $since): array
     {
@@ -214,6 +214,7 @@ class StatisticsController
 
         $consumptionValue = 0.0;
         $consumptionItems = [];
+        $consumptionByItem = [];
         $reasons = [];
         $series = [];
         foreach ($rows as $row) {
@@ -229,7 +230,9 @@ class StatisticsController
                 continue;
             }
             $consumptionValue += $value;
-            $consumptionItems[Typer::parseInt($row->item_id)] = true;
+            $itemId = Typer::parseInt($row->item_id);
+            $consumptionItems[$itemId] = true;
+            $consumptionByItem[$itemId] = ($consumptionByItem[$itemId] ?? 0.0) + $value;
             $week = Carbon::parse(Typer::assertString($row->occurred_at))->startOfWeek()->toDateString();
             $series[$week] = ($series[$week] ?? 0.0) + $value;
         }
@@ -237,6 +240,7 @@ class StatisticsController
         return [
             'consumption_value' => \round($consumptionValue, 2),
             'consumption_skus' => \count($consumptionItems),
+            'consumption_by_item' => \array_map(static fn(float $value): float => \round($value, 2), $consumptionByItem),
             'reasons' => \array_values(\array_map(static function (array $row): array {
                 $row['value'] = \round(Typer::parseFloat($row['value']), 2);
 

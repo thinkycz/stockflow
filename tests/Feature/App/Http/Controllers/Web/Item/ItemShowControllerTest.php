@@ -36,7 +36,7 @@ use App\Models\StoreItem;
     $response->assertJsonCount(1, 'props.movements');
 });
 
-\test('item show filters movements to the active store', function (): void {
+\test('item show includes movements from all stores', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $retail = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
@@ -81,15 +81,20 @@ use App\Models\StoreItem;
 
     $response->assertOk();
     $movements = $response->json('props.movements');
-    \expect($movements)->toHaveCount(1);
-    \expect($movements[0]['store_id'])->toBe($retail->getKey());
+    \expect($movements)->toHaveCount(2);
+    \expect(\array_column($movements, 'store_id'))->toContain($warehouse->getKey(), $retail->getKey());
 });
 
-\test('item show includes active store quantity', function (): void {
+\test('item show includes total quantity across all stores', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $retail = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
 
+    StoreItem::query()->create([
+        'store_id' => $warehouse->getKey(),
+        'item_id' => $item->getKey(),
+        'quantity' => 4,
+    ]);
     StoreItem::query()->create([
         'store_id' => $retail->getKey(),
         'item_id' => $item->getKey(),
@@ -101,7 +106,8 @@ use App\Models\StoreItem;
     $response = $this->be($user, 'users')->get("/items/{$item->getKey()}", $this->inertiaHeaders());
 
     $response->assertOk();
+    $response->assertJsonPath('props.item.total_quantity', 19);
     $response->assertJsonPath('props.active_store.id', $retail->getKey());
     $response->assertJsonPath('props.active_store.name', $retail->getName());
-    $response->assertJsonPath('props.active_store.quantity', 15);
+    \expect($response->json('props.active_store'))->not->toHaveKey('quantity');
 });

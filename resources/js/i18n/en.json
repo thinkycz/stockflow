@@ -186,6 +186,7 @@
             "sku": "SKU",
             "unit": "Unit",
             "quantity": "Quantity",
+            "total_quantity": "Total quantity",
             "price": "Price",
             "total_value": "Total value",
             "status": "Status",
@@ -203,7 +204,7 @@
         "store_quantities_subtitle": "Current quantity of this item at each store.",
         "no_store_stock": "No stock recorded at any store yet.",
         "metrics": {
-            "quantity": "Warehouse quantity",
+            "quantity": "Total quantity",
             "unit_price": "Unit price",
             "total_value": "Total value"
         },

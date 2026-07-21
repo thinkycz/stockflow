@@ -35,11 +35,16 @@ use App\Models\StoreItem;
     \expect($items[0]['title'])->toBe('Matcha Powder');
 });
 
-\test('items index includes active store quantity when a store is active', function (): void {
+\test('items index includes total quantity across all stores', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $retail = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
 
+    StoreItem::query()->create([
+        'store_id' => $warehouse->getKey(),
+        'item_id' => $item->getKey(),
+        'quantity' => 4,
+    ]);
     StoreItem::query()->create([
         'store_id' => $retail->getKey(),
         'item_id' => $item->getKey(),
@@ -51,29 +56,34 @@ use App\Models\StoreItem;
     $response = $this->be($user, 'users')->get('/items', $this->inertiaHeaders());
 
     $response->assertOk();
-    $response->assertJsonPath('props.store.id', $retail->getKey());
-    $response->assertJsonPath('props.store.name', $retail->getName());
     $row = $response->json('props.items.0');
-    \expect($row)->toHaveKey('store_quantity');
-    \expect($row['store_quantity'])->toBe(7);
+    \expect($row)->toHaveKey('total_quantity');
+    \expect($row['total_quantity'])->toBe(11);
 });
 
-\test('items index shows null store_quantity when item has no stock at active store', function (): void {
+\test('items index preserves decimal total quantity across all stores', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $retail = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
 
-    $user->setActiveStoreId($retail->getKey());
+    StoreItem::query()->create([
+        'store_id' => $warehouse->getKey(),
+        'item_id' => $item->getKey(),
+        'quantity' => 0.5,
+    ]);
+    StoreItem::query()->create([
+        'store_id' => $retail->getKey(),
+        'item_id' => $item->getKey(),
+        'quantity' => 1.25,
+    ]);
 
     $response = $this->be($user, 'users')->get('/items', $this->inertiaHeaders());
 
     $response->assertOk();
-    $row = $response->json('props.items.0');
-    \expect($row)->toHaveKey('store_quantity');
-    \expect($row['store_quantity'])->toBeNull();
+    $response->assertJsonPath('props.items.0.total_quantity', 1.75);
 });
 
-\test('items index does not expose per-store quantity, value or status', function (): void {
+\test('items index exposes total quantity without per-store quantity, value or status', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
 
@@ -86,8 +96,9 @@ use App\Models\StoreItem;
     \expect($row)->toHaveKey('sku');
     \expect($row)->toHaveKey('unit');
     \expect($row)->toHaveKey('purchase_price');
+    \expect($row)->toHaveKey('total_quantity', 0);
+    \expect($row)->not->toHaveKey('store_quantity');
     \expect($row)->not->toHaveKey('warehouse_quantity');
-    \expect($row)->not->toHaveKey('total_quantity');
     \expect($row)->not->toHaveKey('total_value');
     \expect($row)->not->toHaveKey('status');
 });

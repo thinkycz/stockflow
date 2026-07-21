@@ -186,6 +186,7 @@
             "sku": "SKU",
             "unit": "Jedn.",
             "quantity": "Množstvo",
+            "total_quantity": "Celkové množstvo",
             "price": "Cena",
             "total_value": "Hodnota",
             "status": "Stav",
@@ -203,7 +204,7 @@
         "store_quantities_subtitle": "Aktuálne množstvo položky v jednotlivých predajniach.",
         "no_store_stock": "Zatiaľ nie je evidované množstvo v žiadnej predajni.",
         "metrics": {
-            "quantity": "Množstvo vo sklade",
+            "quantity": "Celkové množstvo",
             "unit_price": "Jednotková cena",
             "total_value": "Celková hodnota"
         },

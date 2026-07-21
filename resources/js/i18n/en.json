@@ -18,6 +18,7 @@
         "reports": "Reports",
         "statistics": "Statistics",
         "shifts": "Shifts",
+        "attendance": "Attendance",
         "users": "Users",
         "workers": "Workers",
         "settings": "Settings",
@@ -686,11 +687,18 @@
     "users": {
         "title": "Users",
         "subtitle": "Manage user accounts and store assignments.",
+        "search_placeholder": "Search users by email...",
+        "empty": {
+            "title": "No users yet",
+            "description": "Add your first user.",
+            "search_description": "Try changing the email search."
+        },
         "columns": {
             "email": "Email",
             "role": "Role",
             "store": "Store",
-            "created": "Created"
+            "created": "Created",
+            "actions": "Actions"
         },
         "role": {
             "admin": "Administrator",
@@ -808,6 +816,97 @@
             "worker": "Worker",
             "start_time": "Start",
             "end_time": "End"
+        }
+    },
+    "attendance": {
+        "title": "Attendance",
+        "subtitle": "Worker arrivals, breaks and departures for the active store.",
+        "worker": "Worker",
+        "select_worker": "Select a worker",
+        "today": "Today's attendance",
+        "today_help": "A quick overview of today's arrivals, breaks and departures.",
+        "empty_today": "No attendance has been recorded today.",
+        "retail_required": "Attendance is available only for an active retail store.",
+        "break": "Break",
+        "breaks": "Breaks",
+        "break_count": "Breaks: {count}",
+        "table": {
+            "work": "Working hours",
+            "worked": "Worked excluding breaks",
+            "status": "Status",
+            "no_breaks": "No breaks"
+        },
+        "duration": {
+            "less_than_minute": "less than 1 min"
+        },
+        "now": "now",
+        "arrived_at": "Arrived at {time}",
+        "stale_help": "This work session remained open from a previous day and must be corrected by an administrator.",
+        "status": {
+            "absent": "Not working",
+            "present": "Working now",
+            "break": "On a break",
+            "stale": "Needs correction",
+            "active": "Active",
+            "working": "Working",
+            "completed": "Completed"
+        },
+        "timer": {
+            "select": "Select a worker first",
+            "working": "Time worked today",
+            "break": "Current break duration",
+            "absent": "Shift has not started",
+            "stale": "Unclosed session"
+        },
+        "store_state": {
+            "occupied": "Staff present",
+            "empty": "Unstaffed",
+            "unclear": "Unclear state"
+        },
+        "store_state_description": {
+            "occupied": "At least one worker is present at the store and is not on a break.",
+            "empty": "The store currently has no active staff. Check whether this state is expected.",
+            "unclear": "A record from a previous day remains open. Staffing cannot be determined reliably."
+        },
+        "actions": {
+            "arrival": "Arrival",
+            "break_start": "Start break",
+            "break_end": "Return",
+            "departure": "Departure"
+        },
+        "no_shift": {
+            "title": "Worker has no current shift",
+            "description": "The selected worker has no shift in the matching window. Record the arrival anyway?",
+            "confirm": "Record arrival"
+        },
+        "report": {
+            "title": "Monthly report",
+            "help": "Filters, totals and all records in one place.",
+            "back": "Back to attendance",
+            "month": "Month",
+            "all_workers": "All workers",
+            "print": "Print",
+            "print_title": "Attendance report",
+            "actual": "Actual",
+            "planned": "Planned",
+            "difference": "Difference",
+            "wage": "Pay",
+            "date": "Date",
+            "interval": "Interval",
+            "breaks_total": "Total breaks",
+            "total_actual": "Total worked",
+            "total_planned": "Total planned",
+            "total_wage": "Estimated pay",
+            "empty": "There are no records for the selected filters.",
+            "incomplete": "Incomplete sessions: {count}"
+        },
+        "correction": {
+            "create": "Add record",
+            "edit": "Correct record",
+            "void": "Void",
+            "reason": "Correction reason",
+            "reason_prompt": "Enter the reason for voiding",
+            "add_break": "Add break"
         }
     }
 }

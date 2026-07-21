@@ -18,6 +18,7 @@
         "reports": "Reporty",
         "statistics": "Štatistika",
         "shifts": "Smeny",
+        "attendance": "Dochádzka",
         "users": "Používatelia",
         "workers": "Brigádnici",
         "settings": "Nastavenia",
@@ -686,11 +687,18 @@
     "users": {
         "title": "Používatelia",
         "subtitle": "Spravujte používateľské účty a priradenie k predajniam.",
+        "search_placeholder": "Hľadať používateľov podľa e-mailu...",
+        "empty": {
+            "title": "Zatiaľ žiadni používatelia",
+            "description": "Pridajte prvého používateľa.",
+            "search_description": "Skúste upraviť hľadaný e-mail."
+        },
         "columns": {
             "email": "E-mail",
             "role": "Rola",
             "store": "Predajňa",
-            "created": "Vytvorený"
+            "created": "Vytvorený",
+            "actions": "Akcie"
         },
         "role": {
             "admin": "Administrátor",
@@ -808,6 +816,97 @@
             "worker": "Brigádnik",
             "start_time": "Začiatok",
             "end_time": "Koniec"
+        }
+    },
+    "attendance": {
+        "title": "Dochádzka",
+        "subtitle": "Príchody, prestávky a odchody brigádnikov pre aktívnu predajňu.",
+        "worker": "Brigádnik",
+        "select_worker": "Vyberte brigádnika",
+        "today": "Dnešná dochádzka",
+        "today_help": "Rýchly prehľad dnešných príchodov, prestávok a odchodov.",
+        "empty_today": "Dnes zatiaľ nebola zaznamenaná žiadna dochádzka.",
+        "retail_required": "Dochádzka je dostupná iba pre aktívnu maloobchodnú predajňu.",
+        "break": "Prestávka",
+        "breaks": "Prestávky",
+        "break_count": "Prestávky: {count}",
+        "table": {
+            "work": "Pracovný čas",
+            "worked": "Odpracované bez prestávok",
+            "status": "Stav",
+            "no_breaks": "Bez prestávky"
+        },
+        "duration": {
+            "less_than_minute": "menej ako 1 min"
+        },
+        "now": "teraz",
+        "arrived_at": "Príchod o {time}",
+        "stale_help": "Tento pracovný blok zostal otvorený z predchádzajúceho dňa a musí ho opraviť administrátor.",
+        "status": {
+            "absent": "Mimo práce",
+            "present": "Práve pracuje",
+            "break": "Na prestávke",
+            "stale": "Vyžaduje opravu",
+            "active": "Aktívny",
+            "working": "Pracuje",
+            "completed": "Ukončené"
+        },
+        "timer": {
+            "select": "Najprv vyberte brigádnika",
+            "working": "Odpracovaný čas dnes",
+            "break": "Dĺžka aktuálnej prestávky",
+            "absent": "Smena ešte nezačala",
+            "stale": "Neuzavretý blok"
+        },
+        "store_state": {
+            "occupied": "Obsluha prítomná",
+            "empty": "Bez obsluhy",
+            "unclear": "Nejasný stav"
+        },
+        "store_state_description": {
+            "occupied": "V predajni je aspoň jeden brigádnik, ktorý nie je na prestávke.",
+            "empty": "Predajňa je práve bez aktívnej obsluhy. Skontrolujte, či je tento stav očakávaný.",
+            "unclear": "Existuje neuzavretý záznam z predchádzajúceho dňa. Stav obsluhy nie je možné spoľahlivo určiť."
+        },
+        "actions": {
+            "arrival": "Príchod",
+            "break_start": "Začať prestávku",
+            "break_end": "Návrat",
+            "departure": "Odchod"
+        },
+        "no_shift": {
+            "title": "Brigádnik nemá aktuálnu smenu",
+            "description": "Vybraný brigádnik nemá smenu v párovacom okne. Chcete príchod napriek tomu zaznamenať?",
+            "confirm": "Zaznamenať príchod"
+        },
+        "report": {
+            "title": "Mesačný výkaz",
+            "help": "Filtre, súhrn a všetky záznamy na jednom mieste.",
+            "back": "Späť na dochádzku",
+            "month": "Mesiac",
+            "all_workers": "Všetci brigádnici",
+            "print": "Tlač",
+            "print_title": "Výkaz dochádzky",
+            "actual": "Skutočnosť",
+            "planned": "Plán",
+            "difference": "Odchýlka",
+            "wage": "Odmena",
+            "date": "Dátum",
+            "interval": "Interval",
+            "breaks_total": "Prestávky celkom",
+            "total_actual": "Celkom odpracované",
+            "total_planned": "Celkom naplánované",
+            "total_wage": "Orientačná odmena",
+            "empty": "Pre zvolené filtre nie sú žiadne záznamy.",
+            "incomplete": "Neúplné bloky: {count}"
+        },
+        "correction": {
+            "create": "Doplniť záznam",
+            "edit": "Opraviť záznam",
+            "void": "Zneplatniť",
+            "reason": "Dôvod opravy",
+            "reason_prompt": "Zadajte dôvod zneplatnenia",
+            "add_break": "Pridať prestávku"
         }
     }
 }

@@ -18,6 +18,7 @@
         "reports": "Reporty",
         "statistics": "Statistika",
         "shifts": "Směny",
+        "attendance": "Docházka",
         "users": "Uživatelé",
         "workers": "Brigádníci",
         "settings": "Nastavení",
@@ -686,11 +687,18 @@
     "users": {
         "title": "Uživatelé",
         "subtitle": "Spravujte uživatelské účty a přiřazení k prodejnám.",
+        "search_placeholder": "Hledat uživatele podle e-mailu...",
+        "empty": {
+            "title": "Zatím žádní uživatelé",
+            "description": "Přidejte prvního uživatele.",
+            "search_description": "Zkuste upravit hledaný e-mail."
+        },
         "columns": {
             "email": "E-mail",
             "role": "Role",
             "store": "Prodejna",
-            "created": "Vytvořen"
+            "created": "Vytvořen",
+            "actions": "Akce"
         },
         "role": {
             "admin": "Administrátor",
@@ -808,6 +816,97 @@
             "worker": "Brigádník",
             "start_time": "Začátek",
             "end_time": "Konec"
+        }
+    },
+    "attendance": {
+        "title": "Docházka",
+        "subtitle": "Příchody, pauzy a odchody brigádníků pro aktivní prodejnu.",
+        "worker": "Brigádník",
+        "select_worker": "Vyberte brigádníka",
+        "today": "Dnešní docházka",
+        "today_help": "Rychlý přehled dnešních příchodů, pauz a odchodů.",
+        "empty_today": "Dnes zatím nebyla zaznamenána žádná docházka.",
+        "retail_required": "Docházka je dostupná pouze pro aktivní maloobchodní prodejnu.",
+        "break": "Pauza",
+        "breaks": "Pauzy",
+        "break_count": "Pauzy: {count}",
+        "table": {
+            "work": "Pracovní doba",
+            "worked": "Odpracováno bez pauz",
+            "status": "Stav",
+            "no_breaks": "Bez pauzy"
+        },
+        "duration": {
+            "less_than_minute": "méně než 1 min"
+        },
+        "now": "nyní",
+        "arrived_at": "Příchod v {time}",
+        "stale_help": "Tento pracovní blok zůstal otevřený z předchozího dne a musí jej opravit administrátor.",
+        "status": {
+            "absent": "Mimo práci",
+            "present": "Právě pracuje",
+            "break": "Na pauze",
+            "stale": "Vyžaduje opravu",
+            "active": "Aktivní",
+            "working": "Pracuje",
+            "completed": "Ukončeno"
+        },
+        "timer": {
+            "select": "Nejdříve vyberte brigádníka",
+            "working": "Odpracovaný čas dnes",
+            "break": "Délka aktuální pauzy",
+            "absent": "Směna ještě nezačala",
+            "stale": "Neuzavřený blok"
+        },
+        "store_state": {
+            "occupied": "Obsluha přítomna",
+            "empty": "Bez obsluhy",
+            "unclear": "Nejasný stav"
+        },
+        "store_state_description": {
+            "occupied": "Na prodejně je alespoň jeden brigádník, který není na pauze.",
+            "empty": "Prodejna je právě bez aktivní obsluhy. Zkontrolujte, zda je tento stav očekávaný.",
+            "unclear": "Existuje neuzavřený záznam z předchozího dne. Stav obsluhy nelze spolehlivě určit."
+        },
+        "actions": {
+            "arrival": "Příchod",
+            "break_start": "Začít pauzu",
+            "break_end": "Návrat",
+            "departure": "Odchod"
+        },
+        "no_shift": {
+            "title": "Brigádník nemá aktuální směnu",
+            "description": "Vybraný brigádník nemá směnu v párovacím okně. Chcete příchod přesto zaznamenat?",
+            "confirm": "Zaznamenat příchod"
+        },
+        "report": {
+            "title": "Měsíční výkaz",
+            "help": "Filtry, souhrn a všechny záznamy na jednom místě.",
+            "back": "Zpět na docházku",
+            "month": "Měsíc",
+            "all_workers": "Všichni brigádníci",
+            "print": "Tisk",
+            "print_title": "Výkaz docházky",
+            "actual": "Skutečnost",
+            "planned": "Plán",
+            "difference": "Odchylka",
+            "wage": "Odměna",
+            "date": "Datum",
+            "interval": "Interval",
+            "breaks_total": "Pauzy celkem",
+            "total_actual": "Celkem odpracováno",
+            "total_planned": "Celkem naplánováno",
+            "total_wage": "Orientační odměna",
+            "empty": "Pro zvolené filtry nejsou žádné záznamy.",
+            "incomplete": "Neúplné bloky: {count}"
+        },
+        "correction": {
+            "create": "Doplnit záznam",
+            "edit": "Opravit záznam",
+            "void": "Zneplatnit",
+            "reason": "Důvod opravy",
+            "reason_prompt": "Zadejte důvod zneplatnění",
+            "add_break": "Přidat pauzu"
         }
     }
 }

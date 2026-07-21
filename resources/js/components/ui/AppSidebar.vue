@@ -5,6 +5,7 @@ import {
     BarChart3,
     Boxes,
     CalendarDays,
+    ClipboardCheck,
     ClipboardList,
     HardHat,
     LayoutDashboard,
@@ -58,6 +59,14 @@ const shiftNavItem = computed<NavItem>(() => ({
     active: activeUrl.value.startsWith('/shifts'),
 }));
 
+const attendanceNavItem = computed<NavItem>(() => ({
+    key: 'attendance',
+    href: route('attendance.index'),
+    label: t('nav.attendance'),
+    icon: ClipboardCheck,
+    active: activeUrl.value.startsWith('/attendance'),
+}));
+
 const adminStoreNavItems = computed<NavItem[]>(() => [
     {
         key: 'statements',
@@ -90,6 +99,7 @@ const adminStoreNavItems = computed<NavItem[]>(() => [
         active: activeUrl.value.startsWith('/reports/statistics'),
     },
     shiftNavItem.value,
+    attendanceNavItem.value,
 ]);
 
 const adminManagementNavItems = computed<NavItem[]>(() => [
@@ -167,6 +177,12 @@ const limitedStoreNavItems = computed<NavItem[]>(() => [
         auth.value.user?.assigned_store_id ?? null,
     )
         ? [shiftNavItem.value]
+        : []),
+    ...(canViewShiftCalendar(
+        isAdmin.value,
+        auth.value.user?.assigned_store_id ?? null,
+    )
+        ? [attendanceNavItem.value]
         : []),
 ]);
 

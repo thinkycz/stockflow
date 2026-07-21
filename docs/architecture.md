@@ -196,6 +196,26 @@ provisions **limited users** (`is_admin = false`,
 `parent_user_id = admin.id`, `assigned_store_id = one-of-admin-stores`)
 from the `/users` section.
 
+### Docházka brigádníků
+
+`/attendance` je provozní docházka aktivní maloobchodní prodejny. Adminský
+měsíční výkaz a auditované opravy jsou oddělené na `/attendance/report`, aby
+provozní obrazovka zůstala zaměřená pouze na aktuální obsluhu. Pracovní
+blok (`attendance_sessions`) začíná příchodem a končí odchodem; libovolný počet
+uzavřených pauz ukládá `attendance_breaks`. Unikátní nullable klíče
+`active_worker_id` a `active_session_id` databázově brání souběžným otevřeným
+blokům jednoho brigádníka a souběžným pauzám jednoho bloku.
+
+Časy jsou UTC timestampy, zatímco párování plánovaných směn, hranice dne a UI
+používají `Europe/Prague`. Příchod snapshotuje plán a sazbu odpovídající směny;
+report proto zůstává historicky stabilní. Obsazenost se neukládá duplicitně,
+ale odvozuje se ze všech otevřených bloků a pauz prodejny. Neuzavřený blok z
+předchozího lokálního dne vytváří stav `unclear` a nevstupuje do odměny.
+
+Adminské doplnění, změna a zneplatnění ukládá důvod a stav před/po změně do
+`attendance_audits`. Omezené účty mohou zapisovat běžné události jen pro svou
+přiřazenou prodejnu; report, sazby, tisk a opravy jsou admin-only.
+
 - Limited users are pinned to one store and only see Dashboard, Výkazy
   (Statements), Inventura, and Settings in `AppLayout.vue`. The store
   select on `/statements` and `/inventory-counts` is fixed; cross-store

@@ -55,5 +55,19 @@
     "Inventory reconciliations are immutable.": "Inventory reconciliations are immutable.",
     "The selected inventory reason does not match the quantity difference.": "The selected inventory reason does not match the quantity difference.",
     "The selected adjustment reason does not match the quantity difference.": "The selected adjustment reason does not match the quantity difference.",
-    "You cannot consume :qty from \":title\" (only :current available).": "You cannot consume :qty from \":title\" (only :current available)."
+    "You cannot consume :qty from \":title\" (only :current available).": "You cannot consume :qty from \":title\" (only :current available).",
+    "Attendance recorded.": "Attendance recorded.",
+    "Attendance correction created.": "Attendance correction created.",
+    "Attendance correction saved.": "Attendance correction saved.",
+    "Attendance session voided.": "Attendance session voided.",
+    "This worker already has an open attendance session.": "This worker already has an open attendance session.",
+    "This worker has no current shift.": "This worker has no current shift.",
+    "This worker has no open attendance session at this store.": "This worker has no open attendance session at this store.",
+    "This attendance session is stale and must be corrected by an administrator.": "This attendance session is stale and must be corrected by an administrator.",
+    "This worker is already on a break.": "This worker is already on a break.",
+    "This worker is not on a break.": "This worker is not on a break.",
+    "Departure must be after arrival.": "Departure must be after arrival.",
+    "Attendance breaks must be ordered and contained in the work session.": "Attendance breaks must be ordered and contained in the work session.",
+    "Attendance is not available for this store.": "Attendance is not available for this store.",
+    "Attendance correction is not allowed.": "Attendance correction is not allowed."
 }

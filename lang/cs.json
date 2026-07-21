@@ -55,5 +55,19 @@
     "Inventory reconciliations are immutable.": "Inventurní vyrovnání nelze samostatně měnit ani smazat.",
     "The selected inventory reason does not match the quantity difference.": "Zvolený důvod inventury neodpovídá znaménku rozdílu.",
     "The selected adjustment reason does not match the quantity difference.": "Zvolený důvod úpravy neodpovídá znaménku rozdílu.",
-    "You cannot consume :qty from \":title\" (only :current available).": "Nelze spotřebovat :qty z položky \":title\" (k dispozici je pouze :current)."
+    "You cannot consume :qty from \":title\" (only :current available).": "Nelze spotřebovat :qty z položky \":title\" (k dispozici je pouze :current).",
+    "Attendance recorded.": "Docházka byla zaznamenána.",
+    "Attendance correction created.": "Záznam docházky byl doplněn.",
+    "Attendance correction saved.": "Oprava docházky byla uložena.",
+    "Attendance session voided.": "Pracovní blok byl zneplatněn.",
+    "This worker already has an open attendance session.": "Tento brigádník již má otevřený pracovní blok.",
+    "This worker has no current shift.": "Tento brigádník nemá aktuální směnu.",
+    "This worker has no open attendance session at this store.": "Tento brigádník nemá v této prodejně otevřený pracovní blok.",
+    "This attendance session is stale and must be corrected by an administrator.": "Tento pracovní blok je z předchozího dne a musí jej opravit administrátor.",
+    "This worker is already on a break.": "Tento brigádník již má pauzu.",
+    "This worker is not on a break.": "Tento brigádník není na pauze.",
+    "Departure must be after arrival.": "Odchod musí být po příchodu.",
+    "Attendance breaks must be ordered and contained in the work session.": "Pauzy musí být seřazené a ležet uvnitř pracovního bloku.",
+    "Attendance is not available for this store.": "Docházka není pro tuto prodejnu dostupná.",
+    "Attendance correction is not allowed.": "Tato oprava docházky není povolena."
 }

@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Web\Attendance\AttendanceActionController;
+use App\Http\Controllers\Web\Attendance\AttendanceCorrectionController;
+use App\Http\Controllers\Web\Attendance\AttendanceIndexController;
+use App\Http\Controllers\Web\Attendance\AttendancePrintController;
+use App\Http\Controllers\Web\Attendance\AttendanceReportController;
 use App\Http\Controllers\Web\Auth\EmailVerificationConfirmController;
 use App\Http\Controllers\Web\Auth\ForgotPasswordController;
 use App\Http\Controllers\Web\Auth\LoginController;
@@ -120,6 +125,10 @@ Resolver::resolveRouteRegistrar()
         // Shifts (admin + limited view)
         $router->get('shifts', ShiftIndexController::class)->name('shifts.index');
 
+        // Attendance (admin + limited assigned-store users)
+        $router->get('attendance', AttendanceIndexController::class)->name('attendance.index');
+        $router->post('attendance/actions', AttendanceActionController::class)->name('attendance.actions.store');
+
         // Settings
         $router->get('verify-email', [VerifyEmailController::class, 'create'])->name('verify-email.show');
         $router->post('verify-email', [VerifyEmailController::class, 'store'])->name('verify-email.store');
@@ -186,4 +195,11 @@ Resolver::resolveRouteRegistrar()
         $router->post('shift-presets', ShiftPresetStoreController::class)->name('shift-presets.store');
         $router->put('shift-presets/{shiftPreset}', ShiftPresetUpdateController::class)->whereNumber('shiftPreset')->name('shift-presets.update');
         $router->delete('shift-presets/{shiftPreset}', ShiftPresetDestroyController::class)->whereNumber('shiftPreset')->name('shift-presets.destroy');
+
+        // Attendance corrections and reports (admin only)
+        $router->get('attendance/report', AttendanceReportController::class)->name('attendance.report');
+        $router->get('attendance/print', AttendancePrintController::class)->name('attendance.print');
+        $router->post('attendance/corrections', [AttendanceCorrectionController::class, 'store'])->name('attendance.corrections.store');
+        $router->put('attendance/sessions/{attendanceSession}', [AttendanceCorrectionController::class, 'update'])->whereNumber('attendanceSession')->name('attendance.sessions.update');
+        $router->post('attendance/sessions/{attendanceSession}/void', [AttendanceCorrectionController::class, 'void'])->whereNumber('attendanceSession')->name('attendance.sessions.void');
     });

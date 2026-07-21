@@ -91,6 +91,15 @@ const localShifts = ref<Shift[]>([...props.shifts]);
 const localWorkerSummary = ref<WorkerSummary[]>([
     ...(props.worker_summary ?? []),
 ]);
+const summaryTotals = computed(() =>
+    localWorkerSummary.value.reduce(
+        (totals, row) => ({
+            hours: totals.hours + row.hours,
+            salary: totals.salary + row.salary,
+        }),
+        { hours: 0, salary: 0 },
+    ),
+);
 
 watch(
     () => props.shifts,
@@ -637,6 +646,23 @@ async function quickAddShift(
                       }
                     : row,
             );
+        } else if (contribution !== undefined) {
+            const worker = props.workers.find(
+                (row) => row.id === response.data.shift.worker_id,
+            );
+
+            if (worker !== undefined) {
+                localWorkerSummary.value = [
+                    ...localWorkerSummary.value,
+                    {
+                        worker_id: worker.id,
+                        worker_name: `${worker.first_name} ${worker.last_name}`,
+                        color: worker.color,
+                        hours: contribution.minutes / 60,
+                        salary: contribution.salary,
+                    },
+                ];
+            }
         }
 
         showSuccessToast(t('shifts.quick_add.created'));
@@ -1033,6 +1059,25 @@ async function copyText(value: string): Promise<void> {
                                 </td>
                             </tr>
                         </tbody>
+                        <tfoot>
+                            <tr>
+                                <th
+                                    class="border-t border-outline-glass pt-2 text-left text-xs font-semibold text-on-surface-variant"
+                                >
+                                    Σ
+                                </th>
+                                <th
+                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
+                                >
+                                    {{ formatHours(summaryTotals.hours) }} h
+                                </th>
+                                <th
+                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface"
+                                >
+                                    {{ formatMoney(summaryTotals.salary) }}
+                                </th>
+                            </tr>
+                        </tfoot>
                     </DataTable>
                 </div>
             </Card>

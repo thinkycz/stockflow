@@ -51,6 +51,16 @@ use Database\Factories\UserFactory;
     Shift::factory()->create([
         'user_id' => $admin->getKey(),
         'store_id' => $store->getKey(),
+        'worker_id' => $workerWithoutShifts->getKey(),
+        'date' => '2026-08-01',
+        'start_time' => '09:00',
+        'end_time' => '12:00',
+        'hourly_rate' => 180,
+    ]);
+
+    Shift::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
         'worker_id' => $worker->getKey(),
         'date' => '2026-07-16',
         'start_time' => '15:30',
@@ -74,9 +84,8 @@ use Database\Factories\UserFactory;
     $response->assertJsonPath('props.worker_summary.0.color', $worker->getCalendarColor());
     $response->assertJsonPath('props.worker_summary.0.hours', 8.5);
     $response->assertJsonPath('props.worker_summary.0.salary', 1704.25);
-    $response->assertJsonPath('props.worker_summary.1.worker_id', $workerWithoutShifts->getKey());
-    $response->assertJsonPath('props.worker_summary.1.hours', 0);
-    $response->assertJsonPath('props.worker_summary.1.salary', 0);
+    \expect($response->json('props.worker_summary'))->toHaveCount(1);
+    $response->assertJsonMissingPath('props.worker_summary.1');
     $response->assertJsonPath('props.shift_presets.0.name', 'Morning');
     $response->assertJsonPath('props.shift_presets.0.start_time', '10:00');
     $response->assertJsonPath('props.shift_presets.1.name', 'Evening');

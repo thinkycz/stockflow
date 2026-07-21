@@ -117,8 +117,10 @@ class ShiftIndexController
                     'end_time' => $preset->getEndTimeShort(),
                 ])
                 ->all();
-            $props['worker_summary'] = $workerModels->map(
-                static function (Worker $worker) use ($minutesByWorker, $salaryByWorker): array {
+            $props['worker_summary'] = $workerModels
+                ->filter(static fn(Worker $worker): bool => isset($minutesByWorker[$worker->getKey()]))
+                ->values()
+                ->map(static function (Worker $worker) use ($minutesByWorker, $salaryByWorker): array {
                     $hours = ($minutesByWorker[$worker->getKey()] ?? 0) / 60;
 
                     return [
@@ -128,8 +130,8 @@ class ShiftIndexController
                         'hours' => $hours,
                         'salary' => \round($salaryByWorker[$worker->getKey()] ?? 0, 2),
                     ];
-                },
-            )->all();
+                })
+                ->all();
         }
 
         return Inertia::render('shifts/Index', $props);

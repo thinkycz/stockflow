@@ -209,19 +209,6 @@ function statementPeriodLabel(statement: RecentStatement): string {
                                 </p>
                             </div>
                             <div
-                                class="flex items-center justify-between gap-3 text-xs"
-                            >
-                                <span class="text-on-surface">{{
-                                    t('items.status.no_data')
-                                }}</span>
-                                <span
-                                    class="font-mono text-on-surface-variant"
-                                    >{{
-                                        formatNumber(stock_status.no_data)
-                                    }}</span
-                                >
-                            </div>
-                            <div
                                 class="rounded-xl border border-outline-glass bg-surface-container-low p-4"
                             >
                                 <div
@@ -352,6 +339,38 @@ function statementPeriodLabel(statement: RecentStatement): string {
                                         width:
                                             statusPercent(
                                                 stock_status.out_of_stock,
+                                            ) + '%',
+                                    }"
+                                ></div>
+                            </div>
+
+                            <div
+                                class="flex items-center justify-between gap-3 text-xs"
+                            >
+                                <span class="text-on-surface">
+                                    {{ t('items.status.no_data') }}
+                                </span>
+                                <span class="font-mono text-on-surface-variant">
+                                    {{ formatNumber(stock_status.no_data) }}
+                                    <span
+                                        class="ml-1 text-[10px] text-on-surface-variant/70"
+                                    >
+                                        ({{
+                                            statusPercent(stock_status.no_data)
+                                        }}
+                                        %)
+                                    </span>
+                                </span>
+                            </div>
+                            <div
+                                class="h-2 overflow-hidden rounded-full bg-surface-container-low"
+                            >
+                                <div
+                                    class="h-full bg-slate-400"
+                                    :style="{
+                                        width:
+                                            statusPercent(
+                                                stock_status.no_data,
                                             ) + '%',
                                     }"
                                 ></div>

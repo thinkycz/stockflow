@@ -763,6 +763,14 @@
         "public_link_copied": "Veřejný odkaz zkopírován",
         "public_link_error": "Veřejný odkaz se nepodařilo zkopírovat.",
         "overlap_confirm": "Tato směna se překrývá s jinou směnou. Přesto ji uložit?",
+        "mobile": {
+            "view_label": "Zobrazení mobilního kalendáře",
+            "day_view": "Den",
+            "month_view": "Celý měsíc",
+            "full_calendar": "Kalendář celého měsíce",
+            "selected_day": "Vybraný den",
+            "no_shifts": "Na tento den nejsou směny"
+        },
         "presets": {
             "title": "Přednastavené směny",
             "manage": "Spravovat předvolby",

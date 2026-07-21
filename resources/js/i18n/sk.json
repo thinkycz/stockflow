@@ -763,6 +763,14 @@
         "public_link_copied": "Verejný odkaz skopírovaný",
         "public_link_error": "Verejný odkaz sa nepodarilo skopírovať.",
         "overlap_confirm": "Táto smena sa prekrýva s inou smenou. Napriek tomu ju uložiť?",
+        "mobile": {
+            "view_label": "Zobrazenie mobilného kalendára",
+            "day_view": "Deň",
+            "month_view": "Celý mesiac",
+            "full_calendar": "Kalendár celého mesiaca",
+            "selected_day": "Vybraný deň",
+            "no_shifts": "Na tento deň nie sú smeny"
+        },
         "presets": {
             "title": "Prednastavené smeny",
             "manage": "Spravovať predvoľby",

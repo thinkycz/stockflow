@@ -5,8 +5,10 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
+import ShiftMonthCalendar from '@/components/ShiftMonthCalendar.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
+import { sortShiftsByTime } from '@/lib/shift-calendar';
 
 type Shift = {
     id: number;
@@ -80,6 +82,10 @@ const calendarDays = computed<CalendarDay[]>(() => {
         const shifts = shiftsByDate.get(shift.date) ?? [];
         shifts.push(shift);
         shiftsByDate.set(shift.date, shifts);
+    }
+
+    for (const [date, shifts] of shiftsByDate) {
+        shiftsByDate.set(date, sortShiftsByTime(shifts));
     }
 
     let startWeekday = firstOfMonth.getDay() - 1;
@@ -175,7 +181,7 @@ function navigateMonth(delta: number): void {
                 </p>
             </header>
 
-            <Card padded>
+            <Card padded class="p-4 sm:p-6">
                 <div class="mb-4 flex items-center justify-between gap-3">
                     <h2
                         class="font-heading text-lg font-bold capitalize text-on-surface sm:text-xl"
@@ -202,59 +208,10 @@ function navigateMonth(delta: number): void {
                     </div>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <div class="grid min-w-[720px] grid-cols-7 gap-px">
-                        <div
-                            v-for="label in weekdayLabels"
-                            :key="label"
-                            class="bg-surface-container-low py-2 text-center text-xs font-semibold capitalize text-on-surface-variant"
-                        >
-                            {{ label }}
-                        </div>
-                        <div
-                            v-for="day in calendarDays"
-                            :key="day.date"
-                            :class="[
-                                'min-h-[110px] border border-outline-glass p-2',
-                                day.isCurrentMonth
-                                    ? 'bg-surface-container-lowest'
-                                    : 'bg-surface-container-high opacity-50',
-                            ]"
-                        >
-                            <div
-                                class="mb-1.5 text-xs font-semibold"
-                                :class="
-                                    day.isCurrentMonth
-                                        ? 'text-on-surface'
-                                        : 'text-on-surface-variant'
-                                "
-                            >
-                                {{ day.day }}
-                            </div>
-                            <div class="space-y-1">
-                                <div
-                                    v-for="shift in day.shifts"
-                                    :key="shift.id"
-                                    class="rounded-md border px-2 py-1.5 text-xs leading-tight"
-                                    :style="{
-                                        backgroundColor: `${shift.worker_color}18`,
-                                        borderColor: `${shift.worker_color}40`,
-                                        color: shift.worker_color,
-                                    }"
-                                >
-                                    <div class="font-semibold">
-                                        {{ shift.start_time }}–{{
-                                            shift.end_time
-                                        }}
-                                    </div>
-                                    <div class="mt-0.5 truncate">
-                                        {{ shift.worker_name }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <ShiftMonthCalendar
+                    :days="calendarDays"
+                    :weekday-labels="weekdayLabels"
+                />
             </Card>
         </div>
     </main>

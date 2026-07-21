@@ -6,7 +6,6 @@ import {
     ChevronRight,
     Check,
     Link2,
-    LoaderCircle,
     Pencil,
     Plus,
     Settings2,
@@ -24,6 +23,7 @@ import DataTable from '@/components/ui/DataTable.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
+import ShiftMonthCalendar from '@/components/ShiftMonthCalendar.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { showErrorToast, showSuccessToast } from '@/composables/useClientToast';
 import { useRoute } from '@/composables/useRoute';
@@ -588,7 +588,9 @@ function stopQuickAdd(): void {
     pendingDates.value = new Set();
 }
 
-function handleDayClick(day: CalendarDay): void {
+function handleDayClick(
+    day: Pick<CalendarDay, 'date' | 'isCurrentMonth'>,
+): void {
     if (!day.isCurrentMonth || !props.is_admin) return;
 
     if (quickAddActive.value) {
@@ -892,7 +894,7 @@ async function copyText(value: string): Promise<void> {
                 </div>
             </Card>
 
-            <Card padded>
+            <Card padded class="p-4 sm:p-6">
                 <div class="mb-4 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <CalendarDays
@@ -932,73 +934,15 @@ async function copyText(value: string): Promise<void> {
                     {{ t('shifts.no_store') }}
                 </div>
 
-                <div v-else class="overflow-x-auto">
-                    <div class="grid grid-cols-7 gap-px">
-                        <div
-                            v-for="label in weekdayLabels"
-                            :key="label"
-                            class="bg-surface-container-low py-2 text-center text-xs font-semibold text-on-surface-variant"
-                        >
-                            {{ label }}
-                        </div>
-                        <div
-                            v-for="day in calendarDays"
-                            :key="day.date"
-                            :class="[
-                                'min-h-[100px] border border-outline-glass p-1.5 transition',
-                                day.isCurrentMonth
-                                    ? 'bg-surface-container-lowest'
-                                    : 'bg-surface-container-high opacity-50',
-                                is_admin && day.isCurrentMonth
-                                    ? 'cursor-pointer hover:border-primary/40'
-                                    : '',
-                                quickAddActive && day.isCurrentMonth
-                                    ? 'hover:bg-primary/5'
-                                    : '',
-                            ]"
-                            :data-testid="`calendar-day-${day.date}`"
-                            @click="handleDayClick(day)"
-                        >
-                            <div
-                                class="mb-1 text-xs font-semibold"
-                                :class="
-                                    day.isCurrentMonth
-                                        ? 'text-on-surface'
-                                        : 'text-on-surface-variant'
-                                "
-                            >
-                                {{ day.day }}
-                                <LoaderCircle
-                                    v-if="pendingDates.has(day.date)"
-                                    :size="12"
-                                    class="ml-1 inline animate-spin text-primary"
-                                />
-                            </div>
-                            <div class="space-y-1">
-                                <div
-                                    v-for="shift in day.shifts"
-                                    :key="shift.id"
-                                    data-testid="calendar-shift"
-                                    class="rounded-md border px-1.5 py-1 text-[10px] leading-tight"
-                                    :style="{
-                                        backgroundColor: `${shift.worker_color}18`,
-                                        borderColor: `${shift.worker_color}40`,
-                                        color: shift.worker_color,
-                                    }"
-                                >
-                                    <div class="font-semibold">
-                                        {{ shift.start_time }}–{{
-                                            shift.end_time
-                                        }}
-                                    </div>
-                                    <div class="truncate">
-                                        {{ shift.worker_name }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <ShiftMonthCalendar
+                    v-else
+                    :days="calendarDays"
+                    :weekday-labels="weekdayLabels"
+                    :interactive="is_admin"
+                    :quick-add-active="quickAddActive"
+                    :pending-dates="pendingDates"
+                    @activate="handleDayClick"
+                />
             </Card>
 
             <Card v-if="store && is_admin" padded>

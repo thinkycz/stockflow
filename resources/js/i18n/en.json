@@ -763,6 +763,14 @@
         "public_link_copied": "Public link copied",
         "public_link_error": "The public link could not be copied.",
         "overlap_confirm": "This shift overlaps another assignment. Save it anyway?",
+        "mobile": {
+            "view_label": "Mobile calendar view",
+            "day_view": "Day",
+            "month_view": "Whole month",
+            "full_calendar": "Full month calendar",
+            "selected_day": "Selected day",
+            "no_shifts": "No shifts scheduled"
+        },
         "presets": {
             "title": "Shift presets",
             "manage": "Manage presets",

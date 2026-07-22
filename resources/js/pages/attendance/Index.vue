@@ -488,7 +488,7 @@ onUnmounted(() => {
                                             ? 'bg-emerald-500'
                                             : sessionStatus(row) === 'break'
                                               ? 'bg-amber-400'
-                                              : 'bg-outline'
+                                              : 'bg-neutral'
                                     "
                                 ></span>
                                 <div>

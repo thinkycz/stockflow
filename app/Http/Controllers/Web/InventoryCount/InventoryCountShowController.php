@@ -28,6 +28,7 @@ class InventoryCountShowController
 
         $session = InventorySession::query()
             ->where('user_id', $scopeUser->getKey())
+            ->where('status', 'closed')
             ->whereKey(Typer::parseInt($request->route('session')))
             ->first();
 

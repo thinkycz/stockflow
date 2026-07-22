@@ -3,14 +3,24 @@ import { Head, Link } from '@inertiajs/vue3';
 import {
     ArrowLeftRight,
     ArrowDownToLine,
+    ArrowRight,
     ArrowUpFromLine,
     Boxes,
+    CalendarDays,
     CalendarRange,
     CircleDollarSign,
+    Clock3,
+    ClipboardCheck,
+    ClipboardList,
+    Coffee,
     Flame,
     Layers,
+    PackageMinus,
+    PackagePlus,
     Receipt,
+    Store as StoreIcon,
     TrendingDown,
+    Users,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -27,6 +37,7 @@ import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import {
     formatDateTime,
+    formatDate,
     formatMoney,
     formatMonth,
     formatNumber,
@@ -70,6 +81,29 @@ type StockStatus = {
     no_data: number;
 };
 
+type Operations = {
+    current_shifts: Array<{
+        id: number;
+        worker_name: string;
+        start_time: string;
+        end_time: string;
+    }>;
+    next_shift: {
+        id: number;
+        worker_name: string;
+        date: string;
+        start_time: string;
+        end_time: string;
+    } | null;
+    attendance: {
+        workers: Array<{
+            worker_name: string;
+            status: 'present' | 'break';
+        }>;
+        stale_count: number;
+    };
+};
+
 const props = defineProps<{
     active_store: { id: number; name: string } | null;
     metrics: {
@@ -80,12 +114,13 @@ const props = defineProps<{
         month_incoming: number;
         month_outgoing: number;
         last_inventory_at: string | null;
-    };
-    stock_status: StockStatus;
+    } | null;
+    stock_status: StockStatus | null;
     top_consumed: TopConsumedItem[];
     recent_movements: RecentMovement[];
     recent_statements: RecentStatement[];
-    can_manage_movements: boolean;
+    operations: Operations | null;
+    is_admin: boolean;
 }>();
 
 const { t, locale } = useI18n();
@@ -94,12 +129,57 @@ useBoundLocale();
 
 const route = useRoute();
 
+const limitedActions = computed(() => [
+    {
+        key: 'incoming',
+        href: route('stock-movements.create', { mode: 'incoming' }),
+        title: t('dashboard.actions.incoming.title'),
+        description: t('dashboard.actions.incoming.description'),
+        icon: PackagePlus,
+    },
+    {
+        key: 'consumption',
+        href: route('stock-movements.create', { mode: 'consumption' }),
+        title: t('dashboard.actions.consumption.title'),
+        description: t('dashboard.actions.consumption.description'),
+        icon: PackageMinus,
+    },
+    {
+        key: 'statements',
+        href: route('statements.index'),
+        title: t('dashboard.actions.statements.title'),
+        description: t('dashboard.actions.statements.description'),
+        icon: Receipt,
+    },
+    {
+        key: 'inventory',
+        href: route('inventory-counts.index'),
+        title: t('dashboard.actions.inventory.title'),
+        description: t('dashboard.actions.inventory.description'),
+        icon: ClipboardList,
+    },
+    {
+        key: 'shifts',
+        href: route('shifts.index'),
+        title: t('dashboard.actions.shifts.title'),
+        description: t('dashboard.actions.shifts.description'),
+        icon: CalendarDays,
+    },
+    {
+        key: 'attendance',
+        href: route('attendance.index'),
+        title: t('dashboard.actions.attendance.title'),
+        description: t('dashboard.actions.attendance.description'),
+        icon: ClipboardCheck,
+    },
+]);
+
 const totalTracked = computed(
     (): number =>
-        props.stock_status.in_stock +
-        props.stock_status.low_stock +
-        props.stock_status.out_of_stock +
-        props.stock_status.no_data,
+        (props.stock_status?.in_stock ?? 0) +
+        (props.stock_status?.low_stock ?? 0) +
+        (props.stock_status?.out_of_stock ?? 0) +
+        (props.stock_status?.no_data ?? 0),
 );
 
 function statusPercent(count: number): number {
@@ -126,17 +206,218 @@ function statementPeriodLabel(statement: RecentStatement): string {
                     {{ t('dashboard.title') }}
                 </h1>
                 <p class="mt-1 text-sm text-on-surface-variant">
-                    {{ t('dashboard.subtitle') }}
+                    {{
+                        props.is_admin
+                            ? t('dashboard.subtitle')
+                            : t('dashboard.actions.subtitle')
+                    }}
                 </p>
+                <div
+                    v-if="!props.is_admin && props.active_store"
+                    class="mt-3 inline-flex items-center gap-2 rounded-full border border-outline-glass bg-surface-container-low px-3 py-1.5 text-sm"
+                >
+                    <StoreIcon :size="15" class="text-primary" />
+                    <span class="text-on-surface-variant">
+                        {{ t('dashboard.actions.current_store') }}:
+                    </span>
+                    <span class="font-semibold text-on-surface">
+                        {{ props.active_store.name }}
+                    </span>
+                </div>
             </header>
 
+            <template v-if="!props.is_admin">
+                <section v-if="operations" class="flex flex-col gap-4">
+                    <div>
+                        <h2
+                            class="font-heading text-lg font-bold text-on-surface"
+                        >
+                            {{ t('dashboard.operations.title') }}
+                        </h2>
+                        <p class="mt-1 text-sm text-on-surface-variant">
+                            {{ t('dashboard.operations.subtitle') }}
+                        </p>
+                    </div>
+
+                    <div class="grid gap-4 lg:grid-cols-3">
+                        <Card padded>
+                            <div class="flex items-center gap-2">
+                                <Users :size="17" class="text-primary" />
+                                <h3
+                                    class="font-heading text-sm font-bold text-on-surface"
+                                >
+                                    {{
+                                        t('dashboard.operations.current_shift')
+                                    }}
+                                </h3>
+                            </div>
+                            <p
+                                v-if="operations.current_shifts.length === 0"
+                                class="mt-4 text-sm text-on-surface-variant"
+                            >
+                                {{ t('dashboard.operations.no_current_shift') }}
+                            </p>
+                            <ul v-else class="mt-4 space-y-3">
+                                <li
+                                    v-for="shift in operations.current_shifts"
+                                    :key="shift.id"
+                                    class="flex items-center justify-between gap-3"
+                                >
+                                    <span
+                                        class="text-sm font-semibold text-on-surface"
+                                    >
+                                        {{ shift.worker_name }}
+                                    </span>
+                                    <span
+                                        class="font-mono text-xs text-on-surface-variant"
+                                    >
+                                        {{ shift.start_time }}–{{
+                                            shift.end_time
+                                        }}
+                                    </span>
+                                </li>
+                            </ul>
+                        </Card>
+
+                        <Card padded>
+                            <div class="flex items-center gap-2">
+                                <Clock3 :size="17" class="text-primary" />
+                                <h3
+                                    class="font-heading text-sm font-bold text-on-surface"
+                                >
+                                    {{ t('dashboard.operations.next_shift') }}
+                                </h3>
+                            </div>
+                            <p
+                                v-if="!operations.next_shift"
+                                class="mt-4 text-sm text-on-surface-variant"
+                            >
+                                {{ t('dashboard.operations.no_next_shift') }}
+                            </p>
+                            <div v-else class="mt-4">
+                                <p
+                                    class="text-sm font-semibold text-on-surface"
+                                >
+                                    {{ operations.next_shift.worker_name }}
+                                </p>
+                                <p class="mt-1 text-xs text-on-surface-variant">
+                                    {{ formatDate(operations.next_shift.date) }}
+                                    · {{ operations.next_shift.start_time }}–{{
+                                        operations.next_shift.end_time
+                                    }}
+                                </p>
+                            </div>
+                        </Card>
+
+                        <Card padded>
+                            <div class="flex items-center gap-2">
+                                <ClipboardCheck
+                                    :size="17"
+                                    class="text-primary"
+                                />
+                                <h3
+                                    class="font-heading text-sm font-bold text-on-surface"
+                                >
+                                    {{ t('dashboard.operations.attendance') }}
+                                </h3>
+                            </div>
+                            <p
+                                v-if="
+                                    operations.attendance.workers.length === 0
+                                "
+                                class="mt-4 text-sm text-on-surface-variant"
+                            >
+                                {{ t('dashboard.operations.no_attendance') }}
+                            </p>
+                            <ul v-else class="mt-4 space-y-3">
+                                <li
+                                    v-for="worker in operations.attendance
+                                        .workers"
+                                    :key="worker.worker_name"
+                                    class="flex items-center justify-between gap-3"
+                                >
+                                    <span
+                                        class="flex items-center gap-2 text-sm font-semibold text-on-surface"
+                                    >
+                                        <span
+                                            class="size-2 rounded-full"
+                                            :class="
+                                                worker.status === 'break'
+                                                    ? 'bg-amber-500'
+                                                    : 'bg-emerald-500'
+                                            "
+                                        ></span>
+                                        {{ worker.worker_name }}
+                                    </span>
+                                    <span
+                                        class="flex items-center gap-1 text-xs text-on-surface-variant"
+                                    >
+                                        <Coffee
+                                            v-if="worker.status === 'break'"
+                                            :size="13"
+                                        />
+                                        {{
+                                            t(
+                                                `dashboard.operations.status.${worker.status}`,
+                                            )
+                                        }}
+                                    </span>
+                                </li>
+                            </ul>
+                            <p
+                                v-if="operations.attendance.stale_count > 0"
+                                class="mt-4 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700"
+                            >
+                                {{
+                                    t('dashboard.operations.stale_attendance', {
+                                        count: operations.attendance
+                                            .stale_count,
+                                    })
+                                }}
+                            </p>
+                        </Card>
+                    </div>
+                </section>
+
+                <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    <Link
+                        v-for="action in limitedActions"
+                        :key="action.key"
+                        :href="action.href"
+                        class="group flex min-h-36 items-start gap-4 rounded-2xl border border-outline-glass bg-surface-container-lowest p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                    >
+                        <span
+                            class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-on-primary"
+                        >
+                            <component :is="action.icon" :size="22" />
+                        </span>
+                        <span class="flex min-w-0 flex-1 flex-col">
+                            <span
+                                class="flex items-center justify-between gap-3 font-heading text-base font-bold text-on-surface"
+                            >
+                                {{ action.title }}
+                                <ArrowRight
+                                    :size="17"
+                                    class="shrink-0 text-on-surface-variant transition group-hover:translate-x-1 group-hover:text-primary"
+                                />
+                            </span>
+                            <span
+                                class="mt-2 text-sm leading-relaxed text-on-surface-variant"
+                            >
+                                {{ action.description }}
+                            </span>
+                        </span>
+                    </Link>
+                </div>
+            </template>
+
             <EmptyState
-                v-if="!props.active_store"
+                v-else-if="!props.active_store"
                 :title="t('dashboard.no_store.title')"
                 :description="t('dashboard.no_store.description')"
             />
 
-            <template v-else>
+            <template v-else-if="metrics && stock_status">
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <MetricCard
                         :title="t('dashboard.metrics.inventory_value')"
@@ -545,12 +826,18 @@ function statementPeriodLabel(statement: RecentStatement): string {
                         <DataTable>
                             <thead>
                                 <tr>
-                                    <th>{{ t('dashboard.recent.number') }}</th>
-                                    <th>{{ t('dashboard.recent.type') }}</th>
+                                    <th>
+                                        {{ t('dashboard.recent.number') }}
+                                    </th>
+                                    <th>
+                                        {{ t('dashboard.recent.type') }}
+                                    </th>
                                     <th class="text-right">
                                         {{ t('dashboard.recent.value') }}
                                     </th>
-                                    <th>{{ t('dashboard.recent.date') }}</th>
+                                    <th>
+                                        {{ t('dashboard.recent.date') }}
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -560,7 +847,6 @@ function statementPeriodLabel(statement: RecentStatement): string {
                                 >
                                     <td>
                                         <Link
-                                            v-if="props.can_manage_movements"
                                             :href="
                                                 route(
                                                     'stock-movements.show',
@@ -571,11 +857,6 @@ function statementPeriodLabel(statement: RecentStatement): string {
                                         >
                                             {{ movement.number }}
                                         </Link>
-                                        <span
-                                            v-else
-                                            class="font-mono text-xs font-semibold text-on-surface"
-                                            >{{ movement.number }}</span
-                                        >
                                     </td>
                                     <td>
                                         <MovementTypeBadge

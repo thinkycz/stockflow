@@ -33,7 +33,7 @@ class StockMovementCreateController
         $user = User::mustAuth();
         $requestedMode = $request->query('mode');
         $mode = !$user->isAdmin()
-            ? 'consumption'
+            ? ($requestedMode === 'incoming' ? 'incoming' : 'consumption')
             : (\in_array($requestedMode, ['adjustment', 'consumption'], true) ? $requestedMode : 'transfer');
         $owner = $user->resolveScopeUser();
 
@@ -121,6 +121,7 @@ class StockMovementCreateController
         $mode = $request->input('mode');
         $isAdjustment = $mode === 'adjustment';
         $isConsumption = $mode === 'consumption';
+        $isIncoming = $mode === 'incoming';
 
         $rules = [
             'note' => $validity->note()->nullable()->toArray(),
@@ -140,6 +141,10 @@ class StockMovementCreateController
             $rules['mode'] = $validity->baseValidity->mode(['consumption'])->required()->toArray();
             $rules['store_id'] = $validity->activeStoreId()->required()->toArray();
             $rules['items.*.quantity'] = $validity->rowQuantity()->required()->toArray();
+        } elseif ($isIncoming) {
+            $rules['mode'] = $validity->baseValidity->mode(['incoming'])->required()->toArray();
+            $rules['store_id'] = $validity->activeStoreId()->required()->toArray();
+            $rules['items.*.quantity'] = $validity->rowQuantity()->required()->toArray();
         } else {
             $rules['mode'] = $validity->baseValidity->mode(['transfer'])->nullable()->toArray();
             $rules['source_store_id'] = $validity->activeStoreId()->nullable()->toArray();
@@ -150,7 +155,7 @@ class StockMovementCreateController
         $validated = $this->validateRequest($request, $rules);
 
         $payload = [
-            'mode' => $isAdjustment ? 'adjustment' : ($isConsumption ? 'consumption' : 'transfer'),
+            'mode' => $isAdjustment ? 'adjustment' : ($isConsumption ? 'consumption' : ($isIncoming ? 'incoming' : 'transfer')),
             'store_id' => Typer::parseNullableInt($validated->mixed('store_id')),
             'source_store_id' => Typer::parseNullableInt($validated->mixed('source_store_id')),
             'note' => $validated->assertNullableString('note'),

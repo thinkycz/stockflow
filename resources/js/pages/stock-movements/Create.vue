@@ -43,7 +43,7 @@ type Row = {
 };
 
 type FormState = {
-    mode: 'transfer' | 'adjustment' | 'consumption';
+    mode: 'transfer' | 'adjustment' | 'consumption' | 'incoming';
     store_id: string;
     source_store_id: string;
     note: string;
@@ -57,7 +57,7 @@ const props = defineProps<{
     classifications: string[];
     is_admin: boolean;
     defaults: {
-        mode: 'transfer' | 'adjustment' | 'consumption';
+        mode: 'transfer' | 'adjustment' | 'consumption' | 'incoming';
         item_id: string | null;
         warehouse_id: number;
     };
@@ -70,7 +70,7 @@ useBoundLocale();
 const route = useRoute();
 
 const defaultWarehouseId = String(
-    props.defaults.mode === 'consumption'
+    props.defaults.mode === 'consumption' || props.defaults.mode === 'incoming'
         ? (props.stores[0]?.id ?? '')
         : (props.defaults.warehouse_id ?? ''),
 );
@@ -87,6 +87,22 @@ const rows = reactive<Row[]>([]);
 
 const isAdjustmentMode = computed((): boolean => form.mode === 'adjustment');
 const isConsumptionMode = computed((): boolean => form.mode === 'consumption');
+const isIncomingMode = computed((): boolean => form.mode === 'incoming');
+
+const pageTitle = computed((): string => {
+    if (isAdjustmentMode.value) return t('stock_movements.title_adjustment');
+    if (isConsumptionMode.value) return t('stock_movements.title_consumption');
+    if (isIncomingMode.value) return t('stock_movements.title_incoming');
+    return t('stock_movements.title_create');
+});
+
+const pageSubtitle = computed((): string => {
+    if (isAdjustmentMode.value) return t('stock_movements.subtitle_adjustment');
+    if (isConsumptionMode.value)
+        return t('stock_movements.subtitle_consumption');
+    if (isIncomingMode.value) return t('stock_movements.subtitle_incoming');
+    return t('stock_movements.subtitle_create');
+});
 
 const destinationStoreOptions = computed((): StoreOption[] => {
     if (!form.source_store_id) {
@@ -106,6 +122,9 @@ const inferredLabelKey = computed((): InferredLabelKey | null => {
     if (isConsumptionMode.value) {
         return 'consumption';
     }
+    if (isIncomingMode.value) {
+        return 'incoming';
+    }
     if (!form.store_id) {
         return null;
     }
@@ -119,6 +138,7 @@ const isOutgoingTransfer = computed(
     (): boolean =>
         !isAdjustmentMode.value &&
         !isConsumptionMode.value &&
+        !isIncomingMode.value &&
         form.source_store_id !== '' &&
         form.store_id !== '',
 );
@@ -350,7 +370,7 @@ const hasOutOfStockErrors = computed(() => rows.some(isOutOfStockError));
 const outOfStockRows = computed(() => rows.filter(isOutOfStockError));
 
 type StockMovementPayload = {
-    mode: 'transfer' | 'adjustment' | 'consumption';
+    mode: 'transfer' | 'adjustment' | 'consumption' | 'incoming';
     store_id: number | string | null;
     source_store_id?: number | string | null;
     note: string | null;
@@ -398,6 +418,15 @@ function buildPayload(data: FormState): StockMovementPayload {
         };
     }
 
+    if (isIncomingMode.value) {
+        return {
+            mode: 'incoming',
+            store_id: data.store_id || null,
+            note: data.note || null,
+            items,
+        };
+    }
+
     return {
         mode: 'transfer',
         store_id: data.store_id || null,
@@ -440,8 +469,8 @@ watch(
 </script>
 
 <template>
-    <AppLayout :title="t('stock_movements.title_create')">
-        <Head :title="t('stock_movements.title_create')" />
+    <AppLayout :title="pageTitle">
+        <Head :title="pageTitle" />
 
         <div class="flex flex-col gap-6">
             <div>
@@ -462,22 +491,10 @@ watch(
                     <h1
                         class="font-heading text-2xl font-bold tracking-tight text-on-surface"
                     >
-                        {{
-                            isAdjustmentMode
-                                ? t('stock_movements.title_adjustment')
-                                : isConsumptionMode
-                                  ? t('stock_movements.title_consumption')
-                                  : t('stock_movements.title_create')
-                        }}
+                        {{ pageTitle }}
                     </h1>
                     <p class="mt-1 text-sm text-on-surface-variant">
-                        {{
-                            isAdjustmentMode
-                                ? t('stock_movements.subtitle_adjustment')
-                                : isConsumptionMode
-                                  ? t('stock_movements.subtitle_consumption')
-                                  : t('stock_movements.subtitle_create')
-                        }}
+                        {{ pageSubtitle }}
                     </p>
                 </div>
                 <div v-if="props.is_admin" class="flex items-center gap-2">
@@ -529,7 +546,11 @@ watch(
                 <Card padded>
                     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <template
-                            v-if="!isAdjustmentMode && !isConsumptionMode"
+                            v-if="
+                                !isAdjustmentMode &&
+                                !isConsumptionMode &&
+                                !isIncomingMode
+                            "
                         >
                             <div class="space-y-2">
                                 <Label for="source_store_id">{{
@@ -594,7 +615,9 @@ watch(
                                 t(
                                     isConsumptionMode
                                         ? 'stock_movements.form.consumption_store'
-                                        : 'stock_movements.form.adjustment_store',
+                                        : isIncomingMode
+                                          ? 'stock_movements.form.incoming_store'
+                                          : 'stock_movements.form.adjustment_store',
                                 )
                             }}</Label>
                             <Select

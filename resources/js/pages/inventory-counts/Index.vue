@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Minus, Plus, Save } from '@lucide/vue';
+import { CalendarDays, Minus, Plus, Save } from '@lucide/vue';
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -53,6 +53,7 @@ const props = defineProps<{
     rows: InventoryRow[];
     filters: { store_id: number | null };
     is_admin: boolean;
+    default_counted_on: string;
     classifications: string[];
     draft: Draft | null;
 }>();
@@ -85,6 +86,7 @@ const editing = reactive<Record<number, EditableRow>>(
 );
 
 const submitting = ref(false);
+const inventoryDate = ref(props.default_counted_on);
 const saveState = reactive<
     Record<number, 'idle' | 'saving' | 'saved' | 'error'>
 >({});
@@ -214,7 +216,7 @@ function autosave(itemId: number): void {
 }
 
 async function save(): Promise<void> {
-    if (!props.draft || !hasAnyValue.value) {
+    if (!props.draft || !hasAnyValue.value || inventoryDate.value === '') {
         return;
     }
     submitting.value = true;
@@ -226,7 +228,7 @@ async function save(): Promise<void> {
     }
     router.post(
         route('inventory-counts.drafts.close', props.draft.id),
-        {},
+        { counted_on: inventoryDate.value },
         {
             onFinish: () => (submitting.value = false),
         },
@@ -258,6 +260,39 @@ async function save(): Promise<void> {
                     </Button>
                 </Link>
             </header>
+
+            <Card v-if="props.store" padded>
+                <div
+                    class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                    <div class="flex items-start gap-3">
+                        <span
+                            class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
+                        >
+                            <CalendarDays :size="19" />
+                        </span>
+                        <div>
+                            <label
+                                for="inventory_counted_on"
+                                class="text-sm font-semibold text-on-surface"
+                            >
+                                {{ t('inventory_counts.date.label') }}
+                            </label>
+                            <p class="mt-1 text-xs text-on-surface-variant">
+                                {{ t('inventory_counts.date.help') }}
+                            </p>
+                        </div>
+                    </div>
+                    <Input
+                        id="inventory_counted_on"
+                        v-model="inventoryDate"
+                        type="date"
+                        :max="props.default_counted_on"
+                        :disabled="submitting"
+                        class="w-full sm:w-48"
+                    />
+                </div>
+            </Card>
 
             <div
                 v-if="!props.store"
@@ -460,7 +495,9 @@ async function save(): Promise<void> {
                 >
                     <Button
                         type="button"
-                        :disabled="submitting || !hasAnyValue"
+                        :disabled="
+                            submitting || !hasAnyValue || inventoryDate === ''
+                        "
                         @click="save"
                     >
                         <Save :size="14" />

@@ -7,6 +7,7 @@ use App\Models\InventorySessionItem;
 use App\Models\Item;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\InventorySessionService;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -123,4 +124,22 @@ use Thinkycz\LaravelCore\Support\Typer;
     $this->actingAs($limited)
         ->get(\route('inventory-counts.history'))
         ->assertForbidden();
+});
+
+\test('open inventory drafts do not appear in inventory history', function (): void {
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $closed = InventorySession::factory()->forStore($store)->byUser($admin)->create([
+        'status' => 'closed',
+    ]);
+    \app(InventorySessionService::class)->startDraft($admin, $store);
+
+    $response = $this->actingAs($admin)->get(\route('inventory-counts.history', [
+        'store_id' => $store->getKey(),
+    ]));
+
+    $response->assertOk();
+    $response->assertInertia(static fn($page) => $page
+        ->has('rows', 1)
+        ->where('rows.0.id', $closed->getKey()));
 });

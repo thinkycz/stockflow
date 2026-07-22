@@ -5,14 +5,19 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Web\Dashboard;
 
 use App\Enums\StockMovementTypeEnum;
+use App\Models\AttendanceSession;
 use App\Models\InventorySession;
+use App\Models\Shift;
 use App\Models\Statement;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
+use App\Models\Worker;
+use App\Services\AttendanceService;
 use App\Services\InventorySessionService;
 use App\Support\ActiveStoreResolver;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -27,22 +32,39 @@ class DashboardController
     /**
      * Render the dashboard for the currently active store.
      *
-     * Every metric is scoped to the active store resolved via
-     * `ActiveStoreResolver`. Without an active store the page returns
-     * an empty payload and the frontend renders an explanatory empty
-     * state.
+     * Administrators receive metrics scoped to the active store resolved via
+     * `ActiveStoreResolver`. Limited users receive only their store context;
+     * the frontend renders the available action shortcuts without statistics.
      */
     public function __invoke(Request $request, InventorySessionService $inventoryService): Response
     {
         $user = User::mustAuth();
+        $activeStore = ActiveStoreResolver::resolve($request, $user);
+
+        if (!$user->isAdmin()) {
+            return Inertia::render('Dashboard', [
+                'active_store' => $activeStore instanceof Store ? [
+                    'id' => $activeStore->getKey(),
+                    'name' => $activeStore->getName(),
+                ] : null,
+                'metrics' => null,
+                'stock_status' => null,
+                'top_consumed' => [],
+                'recent_movements' => [],
+                'recent_statements' => [],
+                'operations' => $activeStore instanceof Store
+                    ? $this->limitedOperations($user->resolveScopeUser(), $activeStore)
+                    : null,
+                'is_admin' => false,
+            ]);
+        }
+
         $owner = $user->resolveScopeUser();
         $now = Carbon::now();
         $startOfToday = $now->copy()->startOfDay();
         $startOfTodayString = $startOfToday->toDateTimeString();
         $startOfMonthString = $now->copy()->startOfMonth()->toDateString();
         $thirtyDaysAgoString = $now->copy()->subDays(30)->toDateTimeString();
-
-        $activeStore = ActiveStoreResolver::resolve($request, $user);
 
         if (!$activeStore instanceof Store) {
             return Inertia::render('Dashboard', $this->emptyPayload());
@@ -148,7 +170,12 @@ class DashboardController
 
         $monthIncomingValue = $this->monthValueForStore($owner, $storeId, StockMovementTypeEnum::INCOMING, $startOfMonthString, 'store_id');
         $monthOutgoingValue = $this->consumptionValueForStore($owner, $storeId, $startOfMonthString);
-        $lastInventory = InventorySession::query()->where('user_id', $owner->getKey())->where('store_id', $storeId)->orderByDesc('counted_at')->first();
+        $lastInventory = InventorySession::query()
+            ->where('user_id', $owner->getKey())
+            ->where('store_id', $storeId)
+            ->where('status', 'closed')
+            ->orderByDesc('counted_at')
+            ->first();
 
         return Inertia::render('Dashboard', [
             'active_store' => [
@@ -168,7 +195,8 @@ class DashboardController
             'top_consumed' => $topConsumed,
             'recent_movements' => $recentMovements,
             'recent_statements' => $recentStatements,
-            'can_manage_movements' => $user->isAdmin(),
+            'operations' => null,
+            'is_admin' => true,
         ]);
     }
 
@@ -316,7 +344,123 @@ class DashboardController
             'top_consumed' => [],
             'recent_movements' => [],
             'recent_statements' => [],
-            'can_manage_movements' => false,
+            'operations' => null,
+            'is_admin' => true,
+        ];
+    }
+
+    /**
+     * Build the non-financial live operations summary for a limited user's store.
+     *
+     * @return array{
+     *     current_shifts: list<array{id: int, worker_name: string, start_time: string, end_time: string}>,
+     *     next_shift: array{id: int, worker_name: string, date: string, start_time: string, end_time: string}|null,
+     *     attendance: array{workers: list<array{worker_name: string, status: 'break'|'present'}>, stale_count: int}
+     * }
+     */
+    private function limitedOperations(User $owner, Store $store): array
+    {
+        $now = CarbonImmutable::now(AttendanceService::BUSINESS_TIMEZONE);
+        $today = $now->toDateString();
+        $time = $now->format('H:i:s');
+
+        $shiftQuery = Shift::query();
+        Shift::scopeForUser($shiftQuery, $owner);
+        Shift::scopeForStore($shiftQuery, $store->getKey());
+        Shift::querySelect($shiftQuery);
+
+        $currentShifts = (clone $shiftQuery)
+            ->whereDate('date', $today)
+            ->where('start_time', '<=', $time)
+            ->where('end_time', '>', $time)
+            ->orderBy('start_time')
+            ->get();
+        $nextShift = (clone $shiftQuery)
+            ->where(static function (Builder $query) use ($today, $time): void {
+                $query->whereDate('date', '>', $today)
+                    ->orWhere(static function (Builder $query) use ($today, $time): void {
+                        $query->whereDate('date', $today)->where('start_time', '>', $time);
+                    });
+            })
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->first();
+
+        $attendanceQuery = AttendanceSession::query();
+        AttendanceSession::scopeForUser($attendanceQuery, $owner);
+        AttendanceSession::scopeForStore($attendanceQuery, $store->getKey());
+        AttendanceSession::querySelect($attendanceQuery);
+        $attendanceSessions = $attendanceQuery->whereNotNull('active_worker_id')->get();
+        $attendanceSessionIds = $attendanceSessions
+            ->map(static fn(AttendanceSession $session): int => $session->getKey())
+            ->all();
+        $breakSessionIds = DB::table('attendance_breaks')
+            ->whereIn('active_session_id', $attendanceSessionIds)
+            ->pluck('active_session_id')
+            ->map(static fn(mixed $id): int => Typer::parseInt($id))
+            ->all();
+
+        $workerIds = [
+            ...$currentShifts->map(static fn(Shift $shift): int => $shift->getWorkerId())->all(),
+            ...$attendanceSessions->map(static fn(AttendanceSession $session): int => $session->getWorkerId())->all(),
+        ];
+        if ($nextShift instanceof Shift) {
+            $workerIds[] = $nextShift->getWorkerId();
+        }
+
+        $workerQuery = Worker::query();
+        Worker::scopeForUser($workerQuery, $owner);
+        Worker::querySelect($workerQuery);
+        $workers = $workerQuery->whereKey(\array_values(\array_unique($workerIds)))->get()->keyBy(
+            static fn(Worker $worker): int => $worker->getKey(),
+        );
+
+        $currentShiftRows = [];
+        foreach ($currentShifts as $shift) {
+            $worker = $workers->get($shift->getWorkerId());
+            if ($worker instanceof Worker) {
+                $currentShiftRows[] = [
+                    'id' => $shift->getKey(),
+                    'worker_name' => $worker->getFullName(),
+                    'start_time' => $shift->getStartTimeShort(),
+                    'end_time' => $shift->getEndTimeShort(),
+                ];
+            }
+        }
+
+        $attendanceRows = [];
+        $staleCount = 0;
+        foreach ($attendanceSessions as $session) {
+            if ($today !== $session->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toDateString()) {
+                ++$staleCount;
+
+                continue;
+            }
+
+            $worker = $workers->get($session->getWorkerId());
+            if ($worker instanceof Worker) {
+                $attendanceRows[] = [
+                    'worker_name' => $worker->getFullName(),
+                    'status' => \in_array($session->getKey(), $breakSessionIds, true) ? 'break' : 'present',
+                ];
+            }
+        }
+
+        $nextWorker = $nextShift instanceof Shift ? $workers->get($nextShift->getWorkerId()) : null;
+
+        return [
+            'current_shifts' => $currentShiftRows,
+            'next_shift' => $nextShift instanceof Shift && $nextWorker instanceof Worker ? [
+                'id' => $nextShift->getKey(),
+                'worker_name' => $nextWorker->getFullName(),
+                'date' => $nextShift->getDate(),
+                'start_time' => $nextShift->getStartTimeShort(),
+                'end_time' => $nextShift->getEndTimeShort(),
+            ] : null,
+            'attendance' => [
+                'workers' => $attendanceRows,
+                'stale_count' => $staleCount,
+            ],
         ];
     }
 }

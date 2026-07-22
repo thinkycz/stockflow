@@ -94,4 +94,12 @@ class InventoryCountValidity
     {
         return $this->baseValidity->make()->inString(StockMovementClassificationEnum::values());
     }
+
+    /**
+     * Final inventory date validation rules.
+     */
+    public function countedOn(): Validity
+    {
+        return $this->baseValidity->date()->beforeOrEqual('today');
+    }
 }

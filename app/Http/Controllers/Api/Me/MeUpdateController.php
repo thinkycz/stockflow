@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\Me;
 
 use App\Enums\GuardEnum;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Thinkycz\LaravelCore\Http\ApiFormRequest;
@@ -33,6 +34,10 @@ class MeUpdateController extends AutomaticController
 
         if ($user instanceof BaseUser === false) {
             throw new AuthenticationException();
+        }
+
+        if (!$user->isAdmin()) {
+            throw new AuthorizationException();
         }
 
         $user->update([

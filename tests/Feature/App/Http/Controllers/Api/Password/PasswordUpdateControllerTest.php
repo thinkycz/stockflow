@@ -8,8 +8,8 @@ use Database\Factories\UserFactory;
 use Illuminate\Support\Facades\Hash;
 use Thinkycz\LaravelCore\Support\Resolver;
 
-\test('authenticated user can update password', function (): void {
-    $user = UserFactory::new()->createOne([
+\test('admin can update password', function (): void {
+    $user = UserFactory::new()->admin()->createOne([
         'email' => 'update@example.com',
     ]);
     \expect($user)->toBeInstanceOf(User::class);
@@ -28,7 +28,7 @@ use Thinkycz\LaravelCore\Support\Resolver;
 });
 
 \test('update fails with wrong current password', function (): void {
-    $user = UserFactory::new()->createOne([
+    $user = UserFactory::new()->admin()->createOne([
         'email' => 'update@example.com',
     ]);
     \expect($user)->toBeInstanceOf(User::class);
@@ -44,7 +44,7 @@ use Thinkycz\LaravelCore\Support\Resolver;
 });
 
 \test('update revokes existing database tokens', function (): void {
-    $user = UserFactory::new()->createOne([
+    $user = UserFactory::new()->admin()->createOne([
         'email' => 'update@example.com',
     ]);
     \expect($user)->toBeInstanceOf(User::class);
@@ -69,4 +69,20 @@ use Thinkycz\LaravelCore\Support\Resolver;
     ], ['Accept' => 'application/vnd.api+json']);
 
     $response->assertStatus(401);
+});
+
+\test('limited user cannot update password through the api', function (): void {
+    $user = UserFactory::new()->createOne();
+    \expect($user)->toBeInstanceOf(User::class);
+    $originalPassword = $user->getAuthPassword();
+
+    $this->be($user, 'users')
+        ->postJson(Resolver::resolveUrlGenerator()->action(PasswordUpdateController::class), [
+            'password' => 'password',
+            'new_password' => 'new-password',
+        ], ['Accept' => 'application/vnd.api+json'])
+        ->assertForbidden();
+
+    $user->refresh();
+    \expect($user->getAuthPassword())->toBe($originalPassword);
 });

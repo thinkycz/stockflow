@@ -11,6 +11,7 @@
         "dashboard": "Dashboard",
         "inventory": "Inventory",
         "stock_movements": "Stock movements",
+        "incoming": "Goods receipt",
         "consumption": "Issue / consumption",
         "stores": "Stores",
         "statements": "Statements",
@@ -107,6 +108,49 @@
         "no_store": {
             "title": "Select a store",
             "description": "The dashboard always shows data for a single store. Pick an active store from the sidebar."
+        },
+        "actions": {
+            "subtitle": "Choose an action for your assigned store.",
+            "current_store": "Current store",
+            "incoming": {
+                "title": "Receive goods",
+                "description": "Add received goods to your store's stock."
+            },
+            "consumption": {
+                "title": "Issue goods",
+                "description": "Record goods issued or consumed from stock."
+            },
+            "statements": {
+                "title": "Statements",
+                "description": "Enter and manage the store's daily revenue."
+            },
+            "inventory": {
+                "title": "Inventory count",
+                "description": "Start an inventory count or view count history."
+            },
+            "shifts": {
+                "title": "Shifts",
+                "description": "View the shift schedule for your store."
+            },
+            "attendance": {
+                "title": "Attendance",
+                "description": "Record arrivals, breaks, and departures."
+            }
+        },
+        "operations": {
+            "title": "Today's operations",
+            "subtitle": "Current shift and attendance overview for your store.",
+            "current_shift": "Current shift",
+            "no_current_shift": "No shift is scheduled right now.",
+            "next_shift": "Next shift",
+            "no_next_shift": "No upcoming shift is scheduled.",
+            "attendance": "Attendance now",
+            "no_attendance": "No arrivals have been recorded yet.",
+            "stale_attendance": "Older open attendance records to review: {count}",
+            "status": {
+                "present": "Present",
+                "break": "On break"
+            }
         },
         "metrics": {
             "inventory_value": "Inventory Value",
@@ -292,6 +336,8 @@
         "title_adjustment": "Manual adjustment",
         "subtitle_adjustment": "Set the new quantity and reason for each item at a store.",
         "open_adjustment": "Manual adjustment",
+        "title_incoming": "Goods receipt",
+        "subtitle_incoming": "Add received goods directly to your assigned store.",
         "title_consumption": "Issue / consumption",
         "subtitle_consumption": "Deduct actually consumed goods from one store.",
         "open_consumption": "Issue / consumption",
@@ -334,6 +380,7 @@
             "source_warehouse": "Source warehouse",
             "destination_store": "Destination store",
             "adjustment_store": "Store to adjust",
+            "incoming_store": "Receiving store",
             "consumption_store": "Consumption store",
             "select_store": "Select a store",
             "select_warehouse": "Select a warehouse",
@@ -626,6 +673,10 @@
         "actions": {
             "start": "Start inventory count",
             "save": "Save stock count"
+        },
+        "date": {
+            "label": "Inventory date",
+            "help": "The date becomes final only after the entire inventory count is saved. Until then, the form defaults to today's date when opened."
         },
         "autosave": {
             "idle": "Not saved",

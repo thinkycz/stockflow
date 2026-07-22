@@ -261,6 +261,7 @@ class StatisticsController
     {
         $session = InventorySession::query()
             ->where('store_id', $store->getKey())
+            ->where('status', 'closed')
             ->orderByDesc('counted_at')
             ->first();
 

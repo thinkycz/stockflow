@@ -11,6 +11,7 @@ import {
     LayoutDashboard,
     LogOut,
     PackageMinus,
+    PackagePlus,
     Receipt,
     Settings as SettingsIcon,
     Store as StoreIcon,
@@ -152,11 +153,22 @@ const dashboardNavItem = computed<NavItem>(() => ({
 
 const limitedStoreNavItems = computed<NavItem[]>(() => [
     {
+        key: 'incoming',
+        href: route('stock-movements.create', { mode: 'incoming' }),
+        label: t('nav.incoming'),
+        icon: PackagePlus,
+        active: activeUrl.value.startsWith(
+            '/stock-movements/create?mode=incoming',
+        ),
+    },
+    {
         key: 'consumption',
         href: route('stock-movements.create', { mode: 'consumption' }),
         label: t('nav.consumption'),
         icon: PackageMinus,
-        active: activeUrl.value.startsWith('/stock-movements/create'),
+        active:
+            activeUrl.value.startsWith('/stock-movements/create') &&
+            !activeUrl.value.includes('mode=incoming'),
     },
     {
         key: 'statements',
@@ -312,7 +324,7 @@ function logout(): void {
 
             <div class="flex shrink-0 items-center gap-1">
                 <Link
-                    v-if="auth.user"
+                    v-if="isAdmin"
                     :href="route('settings.show')"
                     :class="[
                         'rounded-lg p-1.5 transition-colors',

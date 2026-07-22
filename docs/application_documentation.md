@@ -64,9 +64,13 @@
 - Registration has been removed. The single main admin account (`test@test.com`)
   is seeded by `UserSeeder` and provisions additional limited accounts from the
   `/users` section. Limited users are pinned to exactly one store
-  (`assigned_store_id`) and may only see Dashboard, Výkazy (Statements),
-  Inventura, and Settings — the store select is fixed and any cross-store
-  access returns 403.
+  (`assigned_store_id`) and may only see Dashboard, Příjem zboží,
+  Výdej / spotřeba, Výkazy (Statements), Inventura, Směny, Docházka, and
+  Settings. Their Dashboard does not expose inventory statistics and instead
+  provides a store-scoped live operations summary (current and next shifts,
+  current attendance, breaks, and stale attendance warnings) plus direct action
+  cards for the six store workflows. Store-scoped inputs are fixed and any
+  cross-store access returns 403.
 
 ## Cookies
 
@@ -126,12 +130,22 @@ Copy `.env.example` to `.env` and set:
   now" and is updated transactionally by `InventorySessionService` and
   `StockMovementService`.
 - The single stock ledger uses these terms consistently:
+    - **příjem / incoming** — externally received goods added directly to one
+      store.
     - **spotřeba / consumption** — goods that actually left inventory through
       operation; it affects consumption cost and forecast.
     - **přesun / transfer** — stock relocated between two stores; it has zero
       company-level consumption impact.
     - **inventurní vyrovnání / inventory reconciliation** — immutable ledger
       evidence for a physical-count difference.
+- Limited users have focused `/stock-movements/create?mode=incoming` and
+  `?mode=consumption` forms. Both are server-pinned to `assigned_store_id`;
+  transfer, adjustment, cross-store, and backdated submissions remain
+  forbidden.
+- An open inventory draft has no finalized `counted_at`. The inventory form
+  defaults to today's date on every open, permits a past date, and persists the
+  selected date only when the entire draft is closed. Drafts never appear in
+  inventory history, dashboard last-inventory data, or statistics.
 - `/items` (Inventář) is a pure catalog list — it never exposes
   per-store quantity, value, or status. Those are properties of the
   `store_items` link, so they only render inside a store context.

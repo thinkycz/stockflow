@@ -448,3 +448,65 @@ use Database\Factories\UserFactory;
         'items' => [['item_id' => $item->getKey(), 'quantity' => 1]],
     ])->assertForbidden();
 });
+
+\test('limited user can open and record incoming stock at the assigned store', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create([
+        'user_id' => $admin->getKey(),
+        'name' => 'Assigned Branch',
+        'is_warehouse' => false,
+    ]);
+    $limited = UserFactory::new()->limited($store)->createOne();
+    $item = Item::factory()->create([
+        'user_id' => $admin->getKey(),
+        'purchase_price' => '3.50',
+    ]);
+    StoreItem::factory()->create([
+        'store_id' => $store->getKey(),
+        'item_id' => $item->getKey(),
+        'quantity' => 2,
+    ]);
+
+    $this->be($limited, 'users')
+        ->get(\route('stock-movements.create', ['mode' => 'incoming']))
+        ->assertOk()
+        ->assertInertia(static fn($page) => $page
+            ->component('stock-movements/Create')
+            ->where('defaults.mode', 'incoming')
+            ->has('stores', 1)
+            ->where('stores.0.id', $store->getKey())
+            ->where('is_admin', false));
+
+    $this->be($limited, 'users')->post('/stock-movements', [
+        'mode' => 'incoming',
+        'store_id' => $store->getKey(),
+        'note' => 'Supplier delivery',
+        'items' => [['item_id' => $item->getKey(), 'quantity' => '4.5']],
+    ])->assertRedirect('/dashboard');
+
+    $movement = StockMovement::query()->latest('id')->first();
+
+    \expect($movement?->getType()->value)->toBe('incoming')
+        ->and($movement?->getUserId())->toBe($admin->getKey())
+        ->and($movement?->getCreatedBy())->toBe($limited->getKey())
+        ->and(StoreItem::query()
+            ->where('store_id', $store->getKey())
+            ->where('item_id', $item->getKey())
+            ->value('quantity'))->toBe(6.5);
+});
+
+\test('limited user cannot record incoming stock at another store', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $assignedStore = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $otherStore = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $limited = UserFactory::new()->limited($assignedStore)->createOne();
+    $item = Item::factory()->create(['user_id' => $admin->getKey()]);
+
+    $this->be($limited, 'users')->post('/stock-movements', [
+        'mode' => 'incoming',
+        'store_id' => $otherStore->getKey(),
+        'items' => [['item_id' => $item->getKey(), 'quantity' => 1]],
+    ])->assertForbidden();
+
+    \expect(StockMovement::query()->count())->toBe(0);
+});

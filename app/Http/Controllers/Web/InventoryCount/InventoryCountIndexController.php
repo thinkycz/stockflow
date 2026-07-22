@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\InventorySessionService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -58,6 +59,7 @@ class InventoryCountIndexController
                 'store_id' => $store?->getKey(),
             ],
             'is_admin' => $user->isAdmin(),
+            'default_counted_on' => Carbon::now()->toDateString(),
             'draft' => $draft instanceof InventorySession ? [
                 'id' => $draft->getKey(),
                 'started_at' => $draft->getStartedAt()->toJSON(),

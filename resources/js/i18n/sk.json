@@ -11,6 +11,7 @@
         "dashboard": "Nástenka",
         "inventory": "Inventár",
         "stock_movements": "Skladové pohyby",
+        "incoming": "Príjem tovaru",
         "consumption": "Výdaj / spotreba",
         "stores": "Predajne",
         "statements": "Výkazy",
@@ -107,6 +108,49 @@
         "no_store": {
             "title": "Vyberte predajňu",
             "description": "Nástenka zobrazuje dáta vždy len pre jednu predajňu. Vyberte aktívnu predajňu v sidebare."
+        },
+        "actions": {
+            "subtitle": "Vyberte akciu, ktorú chcete vykonať pre svoju pobočku.",
+            "current_store": "Aktuálna predajňa",
+            "incoming": {
+                "title": "Príjem tovaru",
+                "description": "Pridajte prijatý tovar do zásob svojej pobočky."
+            },
+            "consumption": {
+                "title": "Výdaj tovaru",
+                "description": "Odpíšte vydaný alebo spotrebovaný tovar zo zásob."
+            },
+            "statements": {
+                "title": "Výkazy",
+                "description": "Zadajte a spravujte denné tržby pobočky."
+            },
+            "inventory": {
+                "title": "Inventúra",
+                "description": "Spustite inventúru alebo otvorte históriu počítania."
+            },
+            "shifts": {
+                "title": "Zmeny",
+                "description": "Zobrazte plán zmien pre svoju pobočku."
+            },
+            "attendance": {
+                "title": "Dochádzka",
+                "description": "Zaznamenajte príchody, prestávky a odchody."
+            }
+        },
+        "operations": {
+            "title": "Dnešná prevádzka",
+            "subtitle": "Aktuálny prehľad zmien a dochádzky na vašej pobočke.",
+            "current_shift": "Aktuálna zmena",
+            "no_current_shift": "Práve nie je naplánovaná žiadna zmena.",
+            "next_shift": "Ďalšia zmena",
+            "no_next_shift": "Žiadna ďalšia zmena nie je naplánovaná.",
+            "attendance": "Dochádzka teraz",
+            "no_attendance": "Nikto zatiaľ nemá zaznamenaný príchod.",
+            "stale_attendance": "Staršie neuzavreté dochádzky na preverenie: {count}",
+            "status": {
+                "present": "Prítomný",
+                "break": "Prestávka"
+            }
         },
         "metrics": {
             "inventory_value": "Hodnota zásob",
@@ -292,6 +336,8 @@
         "title_adjustment": "Ručná úprava",
         "subtitle_adjustment": "Nastavte nové množstvo a dôvod pre každú položku v predajni.",
         "open_adjustment": "Ručná úprava",
+        "title_incoming": "Príjem tovaru",
+        "subtitle_incoming": "Naskladnite prijatý tovar priamo na svoju pobočku.",
         "title_consumption": "Výdaj / spotreba",
         "subtitle_consumption": "Odpíšte skutočne spotrebovaný tovar z jednej predajne.",
         "open_consumption": "Výdaj / spotreba",
@@ -334,6 +380,7 @@
             "source_warehouse": "Zdrojový sklad",
             "destination_store": "Cieľová predajňa",
             "adjustment_store": "Upravovaná predajňa",
+            "incoming_store": "Pobočka príjmu",
             "consumption_store": "Predajňa spotreby",
             "select_store": "Vyberte predajňu",
             "select_warehouse": "Vyberte sklad",
@@ -626,6 +673,10 @@
         "actions": {
             "start": "Začať inventúru",
             "save": "Uložiť inventúru"
+        },
+        "date": {
+            "label": "Dátum inventúry",
+            "help": "Dátum sa stane platným až po uložení celej inventúry. Dovtedy sa pri otvorení formulára ponúkne dnešný dátum."
         },
         "autosave": {
             "idle": "Neuložené",

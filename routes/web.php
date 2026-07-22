@@ -132,14 +132,16 @@ Resolver::resolveRouteRegistrar()
         // Settings
         $router->get('verify-email', [VerifyEmailController::class, 'create'])->name('verify-email.show');
         $router->post('verify-email', [VerifyEmailController::class, 'store'])->name('verify-email.store');
-        $router->get('settings', [SettingsController::class, 'edit'])->name('settings.show');
-        $router->post('settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
-        $router->post('settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
     });
 
 Resolver::resolveRouteRegistrar()
     ->middleware([EnsureInertiaUserIsAuthenticated::class, 'admin'])
     ->group(static function (Router $router): void {
+        // Settings
+        $router->get('settings', [SettingsController::class, 'edit'])->name('settings.show');
+        $router->post('settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
+        $router->post('settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
+
         // Items
         $router->get('items', ItemIndexController::class)->name('items.index');
         $router->get('items/create', [ItemCreateController::class, 'create'])->name('items.create');

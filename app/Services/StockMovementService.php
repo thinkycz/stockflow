@@ -55,7 +55,11 @@ class StockMovementService
         $type = $this->typeResolver->resolve($mode, $sourceStoreId, $storeId);
 
         if (!$user->isAdmin()) {
-            if ($type !== StockMovementTypeEnum::CONSUMPTION || $storeId !== $user->getAssignedStoreId()) {
+            $isAllowedMode = ($mode === 'incoming' && $type === StockMovementTypeEnum::INCOMING) ||
+                ($mode === 'consumption' && $type === StockMovementTypeEnum::CONSUMPTION);
+
+            if (!$isAllowedMode ||
+                $storeId !== $user->getAssignedStoreId()) {
                 \abort(403);
             }
         }

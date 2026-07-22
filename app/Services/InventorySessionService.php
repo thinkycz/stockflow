@@ -82,7 +82,6 @@ class InventorySessionService
                 return $existing;
             }
 
-            $now = Carbon::now();
             $snapshot = StoreItem::query()
                 ->where('store_id', $store->getKey())
                 ->orderBy('item_id')
@@ -96,8 +95,8 @@ class InventorySessionService
                 'active_store_key' => $store->getKey(),
                 'created_by' => $user->getKey(),
                 'status' => 'draft',
-                'started_at' => $now,
-                'counted_at' => $now,
+                'started_at' => Carbon::now(),
+                'counted_at' => null,
                 'opening_snapshot' => $snapshot,
             ]);
         }, 3);
@@ -177,12 +176,13 @@ class InventorySessionService
     /**
      * Close a draft and apply only its row-level physical differences.
      */
-    public function closeDraft(User $user, InventorySession $session): InventorySession
+    public function closeDraft(User $user, InventorySession $session, Carbon|null $countedAt = null): InventorySession
     {
         $this->authoriseSession($user, $session);
         $owner = $user->resolveScopeUser();
+        $countedAt ??= Carbon::now();
 
-        return DB::transaction(function () use ($user, $session, $owner): InventorySession {
+        return DB::transaction(function () use ($user, $session, $owner, $countedAt): InventorySession {
             $session = InventorySession::query()->whereKey($session->getKey())->lockForUpdate()->firstOrFail();
             if (!$session->isDraft()) {
                 $this->fail(['inventory' => \__('Only an open inventory draft can be closed.')]);
@@ -216,7 +216,7 @@ class InventorySessionService
             }
 
             $now = Carbon::now();
-            $session->update(['status' => 'closed', 'active_store_key' => null, 'counted_at' => $now, 'closed_at' => $now]);
+            $session->update(['status' => 'closed', 'active_store_key' => null, 'counted_at' => $countedAt, 'closed_at' => $now]);
             $this->movementService->createInventoryReconciliation($session, $owner, $reconciliationRows);
             $this->notifyInventory($user, $session, $rows->count(), \count($reconciliationRows));
 
@@ -624,6 +624,7 @@ class InventorySessionService
         InventorySession::scopeForUser($query, $user);
         InventorySession::scopeForStore($query, $store->getKey());
         InventorySession::scopeBetween($query, $from, $to);
+        $query->where('status', 'closed');
 
         if ($item instanceof Item) {
             $query->whereHas('items', static function ($q) use ($item): void {
@@ -674,7 +675,7 @@ class InventorySessionService
     public function buildSessionView(User $user, InventorySession $session): array
     {
         $itemsQuery = Item::query();
-        Item::scopeForUser($itemsQuery, $user);
+        Item::scopeForUser($itemsQuery, $user->resolveScopeUser());
         $items = $itemsQuery
             ->orderBy('title')
             ->get()

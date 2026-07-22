@@ -11,8 +11,8 @@ use Thinkycz\LaravelCore\Support\Typer;
     $this->get('/settings')->assertRedirect('/login');
 });
 
-\test('authenticated user can view the unified settings page', function (): void {
-    $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+\test('admin can view the unified settings page', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
 
     $response = $this->be($user, 'users')->get('/settings', $this->inertiaHeaders());
 
@@ -20,8 +20,8 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response->assertJsonPath('component', 'settings/Index');
 });
 
-\test('authenticated user can update profile', function (): void {
-    $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+\test('admin can update profile', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
 
     $response = $this->be($user, 'users')->post('/settings/profile', [
         'email' => 'updated@example.com',
@@ -39,7 +39,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('profile email must be unique', function (): void {
-    $userA = Typer::assertInstance(UserFactory::new()->createOne([
+    $userA = Typer::assertInstance(UserFactory::new()->admin()->createOne([
         'email' => 'a@example.com',
     ]), User::class);
     $userB = Typer::assertInstance(UserFactory::new()->createOne([
@@ -54,8 +54,8 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->assertStatus(422);
 });
 
-\test('authenticated user can update password', function (): void {
-    $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+\test('admin can update password', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
 
     $response = $this->be($user, 'users')->post('/settings/password', [
         'password' => UserFactory::$password,
@@ -73,7 +73,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('password update revokes existing database tokens', function (): void {
-    $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+    $user = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
 
     Resolver::resolveDatabaseTokenGuard($user->getTable())->login($user);
 
@@ -89,7 +89,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('wrong current password is rejected', function (): void {
-    $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+    $user = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
 
     $this->be($user, 'users')
         ->post('/settings/password', [
@@ -101,7 +101,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('validation failure on profile re-renders the unified settings page', function (): void {
-    $user = Typer::assertInstance(UserFactory::new()->createOne([
+    $user = Typer::assertInstance(UserFactory::new()->admin()->createOne([
         'email' => 'me@example.com',
     ]), User::class);
 
@@ -119,7 +119,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('validation failure on password re-renders the unified settings page', function (): void {
-    $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+    $user = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
 
     $response = $this->be($user, 'users')
         ->post('/settings/password', [
@@ -130,4 +130,39 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->assertStatus(422);
 
     $response->assertJsonPath('component', 'settings/Index');
+});
+
+\test('limited user cannot open settings', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+
+    $this->be($user, 'users')
+        ->get('/settings', $this->inertiaHeaders())
+        ->assertRedirect('/dashboard');
+});
+
+\test('limited user cannot change email or password through settings routes', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->createOne([
+        'email' => 'limited@example.com',
+    ]), User::class);
+    $originalPassword = $user->getAuthPassword();
+
+    $this->be($user, 'users')
+        ->post('/settings/profile', [
+            'email' => 'changed@example.com',
+            'locale' => 'cs',
+        ], $this->inertiaHeaders())
+        ->assertRedirect('/dashboard');
+
+    $this->be($user, 'users')
+        ->post('/settings/password', [
+            'password' => UserFactory::$password,
+            'new_password' => 'new-password',
+            'new_password_confirmation' => 'new-password',
+        ], $this->inertiaHeaders())
+        ->assertRedirect('/dashboard');
+
+    $user->refresh();
+
+    static::assertSame('limited@example.com', $user->getEmail());
+    static::assertSame($originalPassword, $user->getAuthPassword());
 });

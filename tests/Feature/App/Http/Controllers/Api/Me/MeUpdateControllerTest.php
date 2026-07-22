@@ -7,8 +7,8 @@ use App\Models\User;
 use Database\Factories\UserFactory;
 use Thinkycz\LaravelCore\Support\Resolver;
 
-\test('authenticated user can update their profile', function (): void {
-    $me = UserFactory::new()->createOne();
+\test('admin can update their profile', function (): void {
+    $me = UserFactory::new()->admin()->createOne();
     \expect($me)->toBeInstanceOf(User::class);
 
     $response = $this->be($me)->post(Resolver::resolveUrlGenerator()->action(MeUpdateController::class), [
@@ -29,7 +29,7 @@ use Thinkycz\LaravelCore\Support\Resolver;
 });
 
 \test('validation fails with invalid data', function (): void {
-    $me = UserFactory::new()->createOne();
+    $me = UserFactory::new()->admin()->createOne();
     \expect($me)->toBeInstanceOf(User::class);
 
     $response = $this->be($me)->postJson(Resolver::resolveUrlGenerator()->action(MeUpdateController::class), [
@@ -46,7 +46,7 @@ use Thinkycz\LaravelCore\Support\Resolver;
 });
 
 \test('email must be unique', function (): void {
-    $me = UserFactory::new()->createOne();
+    $me = UserFactory::new()->admin()->createOne();
     \expect($me)->toBeInstanceOf(User::class);
 
     $existingUser = UserFactory::new()->createOne();
@@ -60,7 +60,7 @@ use Thinkycz\LaravelCore\Support\Resolver;
 });
 
 \test('update is rate limited after max attempts', function (): void {
-    $me = UserFactory::new()->createOne();
+    $me = UserFactory::new()->admin()->createOne();
     \expect($me)->toBeInstanceOf(User::class);
 
     $url = Resolver::resolveUrlGenerator()->action(MeUpdateController::class);
@@ -82,7 +82,7 @@ use Thinkycz\LaravelCore\Support\Resolver;
 });
 
 \test('mass-assignment does not let a password leak through', function (): void {
-    $me = UserFactory::new()->createOne();
+    $me = UserFactory::new()->admin()->createOne();
     \expect($me)->toBeInstanceOf(User::class);
 
     $originalHash = $me->getAuthPassword();
@@ -124,4 +124,19 @@ use Thinkycz\LaravelCore\Support\Resolver;
 
     \expect($me->getAuthPassword())->toBe($originalHash);
     \expect($me->getEmail())->toBe($originalEmail);
+});
+
+\test('limited user cannot update their profile through the api', function (): void {
+    $me = UserFactory::new()->createOne([
+        'email' => 'limited@example.com',
+    ]);
+    \expect($me)->toBeInstanceOf(User::class);
+
+    $this->be($me)->postJson(Resolver::resolveUrlGenerator()->action(MeUpdateController::class), [
+        'email' => 'changed@example.com',
+        'locale' => 'en',
+    ])->assertForbidden();
+
+    $me->refresh();
+    \expect($me->getEmail())->toBe('limited@example.com');
 });

@@ -3,13 +3,19 @@
 declare(strict_types=1);
 
 use App\Enums\StockMovementClassificationEnum;
+use App\Models\AttendanceBreak;
+use App\Models\AttendanceSession;
 use App\Models\Item;
+use App\Models\Shift;
 use App\Models\Statement;
 use App\Models\StockMovement;
 use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
+use App\Models\Worker;
+use App\Services\InventorySessionService;
+use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -20,13 +26,14 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('authenticated user can view dashboard with metrics', function (): void {
-    $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+    $user = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
 
     $response = $this->be($user, 'users')->get('/dashboard', $this->inertiaHeaders());
 
     $response->assertOk();
     $response->assertJsonPath('component', 'Dashboard');
     $response->assertJsonPath('props.auth.user.email', $user->getEmail());
+    $response->assertJsonPath('props.is_admin', true);
     $response->assertJsonStructure([
         'props' => [
             'active_store',
@@ -53,12 +60,24 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $response->assertOk();
     \expect($response->json('props.active_store'))->toBeNull();
+    \expect($response->json('props.is_admin'))->toBeTrue();
     \expect((float) $response->json('props.metrics.inventory_value'))->toBe(0.0);
     \expect($response->json('props.metrics.items_count'))->toBe(0);
     \expect($response->json('props.stock_status.in_stock'))->toBe(0);
     \expect($response->json('props.top_consumed'))->toBe([]);
     \expect($response->json('props.recent_movements'))->toBe([]);
     \expect($response->json('props.recent_statements'))->toBe([]);
+});
+
+\test('dashboard ignores an open inventory draft without a finalized date', function (): void {
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+    \app(InventorySessionService::class)->startDraft($user, $store);
+
+    $response = $this->be($user, 'users')
+        ->get('/dashboard?store_id=' . $store->getKey(), $this->inertiaHeaders());
+
+    $response->assertOk();
+    \expect($response->json('props.metrics.last_inventory_at'))->toBeNull();
 });
 
 \test('dashboard scopes inventory value to the active store', function (): void {
@@ -163,7 +182,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect((float) $topConsumed[0]['total_quantity'])->toBe(4.0);
 });
 
-\test('limited dashboard reads the owner inventory for its assigned store', function (): void {
+\test('limited dashboard exposes actions without statistics', function (): void {
     [$admin, $warehouse] = \createIsolatedUserWithWarehouse();
     $limited = UserFactory::new()->limited($warehouse)->createOne();
     $item = Item::factory()->create(['user_id' => $admin->getKey(), 'purchase_price' => '10.00']);
@@ -173,8 +192,94 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $response->assertOk();
     \expect($response->json('props.active_store.id'))->toBe($warehouse->getKey());
-    \expect((float) $response->json('props.metrics.inventory_value'))->toBe(30.0);
-    \expect($response->json('props.can_manage_movements'))->toBeFalse();
+    \expect($response->json('props.metrics'))->toBeNull();
+    \expect($response->json('props.stock_status'))->toBeNull();
+    \expect($response->json('props.top_consumed'))->toBe([]);
+    \expect($response->json('props.recent_movements'))->toBe([]);
+    \expect($response->json('props.recent_statements'))->toBe([]);
+    \expect($response->json('props.is_admin'))->toBeFalse();
+});
+
+\test('limited dashboard shows current operations for its assigned store', function (): void {
+    CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-07-22 10:00:00', 'Europe/Prague'));
+
+    [$admin, $store] = \createIsolatedUserWithWarehouse();
+    $otherStore = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $limited = UserFactory::new()->limited($store)->createOne();
+    $currentWorker = Worker::factory()->create(['user_id' => $admin->getKey(), 'first_name' => 'Anna', 'last_name' => 'Nováková']);
+    $nextWorker = Worker::factory()->create(['user_id' => $admin->getKey(), 'first_name' => 'Boris', 'last_name' => 'Malý']);
+    $breakWorker = Worker::factory()->create(['user_id' => $admin->getKey(), 'first_name' => 'Cyril', 'last_name' => 'Veselý']);
+
+    Shift::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $currentWorker->getKey(),
+        'date' => '2026-07-22', 'start_time' => '08:00', 'end_time' => '12:00',
+    ]);
+    Shift::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $nextWorker->getKey(),
+        'date' => '2026-07-22', 'start_time' => '14:00', 'end_time' => '18:00',
+    ]);
+    Shift::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $otherStore->getKey(), 'worker_id' => $breakWorker->getKey(),
+        'date' => '2026-07-22', 'start_time' => '11:00', 'end_time' => '12:00',
+    ]);
+
+    AttendanceSession::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $currentWorker->getKey(),
+        'created_by_user_id' => $limited->getKey(), 'active_worker_id' => $currentWorker->getKey(),
+        'started_at' => CarbonImmutable::parse('2026-07-22 08:00:00', 'Europe/Prague')->utc(), 'ended_at' => null,
+    ]);
+    $breakSession = AttendanceSession::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $breakWorker->getKey(),
+        'created_by_user_id' => $limited->getKey(), 'active_worker_id' => $breakWorker->getKey(),
+        'started_at' => CarbonImmutable::parse('2026-07-22 09:00:00', 'Europe/Prague')->utc(), 'ended_at' => null,
+    ]);
+    AttendanceBreak::factory()->create([
+        'attendance_session_id' => $breakSession->getKey(), 'active_session_id' => $breakSession->getKey(),
+        'started_at' => CarbonImmutable::parse('2026-07-22 09:45:00', 'Europe/Prague')->utc(), 'ended_at' => null,
+    ]);
+
+    $response = $this->be($limited, 'users')->get('/dashboard', $this->inertiaHeaders());
+
+    $response->assertOk();
+    \expect($response->json('props.operations.current_shifts'))->toHaveCount(1);
+    $response->assertJsonPath('props.operations.current_shifts.0.worker_name', 'Anna Nováková');
+    $response->assertJsonPath('props.operations.current_shifts.0.start_time', '08:00');
+    $response->assertJsonPath('props.operations.current_shifts.0.end_time', '12:00');
+    $response->assertJsonPath('props.operations.next_shift.worker_name', 'Boris Malý');
+    $response->assertJsonPath('props.operations.next_shift.date', '2026-07-22');
+    $response->assertJsonPath('props.operations.next_shift.start_time', '14:00');
+    $response->assertJsonPath('props.operations.next_shift.end_time', '18:00');
+    \expect($response->json('props.operations.attendance.workers'))->toHaveCount(2);
+    $response->assertJsonPath('props.operations.attendance.workers.0.worker_name', 'Anna Nováková');
+    $response->assertJsonPath('props.operations.attendance.workers.0.status', 'present');
+    $response->assertJsonPath('props.operations.attendance.workers.1.worker_name', 'Cyril Veselý');
+    $response->assertJsonPath('props.operations.attendance.workers.1.status', 'break');
+    \expect($response->json('props.operations.attendance.stale_count'))->toBe(0);
+
+    CarbonImmutable::setTestNow();
+});
+
+\test('limited dashboard handles attendance when no shift is currently running', function (): void {
+    CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-07-22 17:00:00', 'Europe/Prague'));
+
+    [$admin, $store] = \createIsolatedUserWithWarehouse();
+    $limited = UserFactory::new()->limited($store)->createOne();
+    $worker = Worker::factory()->create([
+        'user_id' => $admin->getKey(), 'first_name' => 'Anna', 'last_name' => 'Nováková',
+    ]);
+    AttendanceSession::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
+        'created_by_user_id' => $limited->getKey(), 'active_worker_id' => $worker->getKey(),
+        'started_at' => CarbonImmutable::parse('2026-07-22 16:00:00', 'Europe/Prague')->utc(), 'ended_at' => null,
+    ]);
+
+    $response = $this->be($limited, 'users')->get('/dashboard', $this->inertiaHeaders());
+
+    $response->assertOk();
+    \expect($response->json('props.operations.current_shifts'))->toBe([]);
+    $response->assertJsonPath('props.operations.attendance.workers.0.worker_name', 'Anna Nováková');
+
+    CarbonImmutable::setTestNow();
 });
 
 \test('dashboard scopes recent statements to the active store', function (): void {

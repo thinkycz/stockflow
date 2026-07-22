@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\Item;
 use App\Models\Store;
 use App\Models\StoreItem;
+use Illuminate\Support\Carbon;
 
 \test('guest is redirected from inventory counts to login', function (): void {
     $this->get('/inventory-counts')->assertRedirect('/login');
@@ -26,6 +27,7 @@ use App\Models\StoreItem;
     $response->assertOk();
     $response->assertJsonPath('component', 'inventory-counts/Index');
     $response->assertJsonPath('props.store.id', $store->getKey());
+    $response->assertJsonPath('props.default_counted_on', Carbon::now()->toDateString());
 
     $rows = $response->json('props.rows');
     \expect($rows[0]['item_id'])->toBe($item->getKey());

@@ -17,7 +17,7 @@ Ready for deployment configuration. The implementation, automated routing behavi
     - Composer audit and npm audit: no vulnerabilities.
     - Composer platform requirements and strict manifest validation: passed.
     - Vue TypeScript check and production Vite build: passed.
-    - Pest: 525 tests passed with 10,655 assertions.
+    - Pest: 526 tests passed with 10,657 assertions after the queue failure-storage regression fix.
 - `git diff --check` — passed.
 
 ## Behavior covered

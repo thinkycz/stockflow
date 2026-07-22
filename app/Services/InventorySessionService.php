@@ -674,7 +674,7 @@ class InventorySessionService
      */
     public function buildSessionView(User $user, InventorySession $session): array
     {
-        $itemsQuery = Item::query();
+        $itemsQuery = Item::withTrashed();
         Item::scopeForUser($itemsQuery, $user->resolveScopeUser());
         $items = $itemsQuery
             ->orderBy('title')

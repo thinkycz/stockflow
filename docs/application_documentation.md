@@ -124,6 +124,7 @@ Copy `.env.example` to `.env` and set:
 ## Inventory semantics
 
 - Items are the catalog (`items` table): name, SKU, unit, purchase price.
+- Deleting an item soft-deletes it from the active catalog when completed inventory rows reference it. Completed inventory history remains readable, while rows from open inventory drafts are removed. Items with stock-movement history remain protected from deletion.
   They do not carry stock on their own.
 - Per-store stock lives on `store_items` (`store_id`, `item_id`, `quantity`).
   Quantity is the single source of truth for "what is on the shelf right

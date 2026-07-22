@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\AdjustmentReasonEnum;
+use App\Enums\OperationalActivityTypeEnum;
 use App\Enums\StockMovementClassificationEnum;
 use App\Enums\StockMovementOriginEnum;
 use App\Enums\StockMovementTypeEnum;
@@ -195,6 +196,8 @@ class StockMovementService
                 'total_value' => \round($totals['value'], 2),
             ]);
 
+            $this->notifyMovement($movement, $user, false, $type === StockMovementTypeEnum::TRANSFER);
+
             return $movement->fresh(['movementItems.item', 'store', 'sourceStore', 'creator']) ?? $movement;
         });
     }
@@ -376,8 +379,51 @@ class StockMovementService
 
             $movement->update(['reversed_at' => Carbon::now()]);
 
+            $this->notifyMovement($reversal, $user, true, $type === StockMovementTypeEnum::TRANSFER);
+
             return $reversal->fresh(['movementItems.item', 'store', 'sourceStore', 'creator']) ?? $reversal;
         }, 3);
+    }
+
+    /**
+     * Dispatch one manual movement activity to every affected store channel.
+     */
+    private function notifyMovement(StockMovement $movement, User $user, bool $reversed, bool $isTransfer): void
+    {
+        $destinations = [];
+        $sourceStore = $movement->getSourceStore();
+        $store = $movement->getStore();
+
+        if ($isTransfer) {
+            if ($sourceStore instanceof Store) {
+                $destinations[] = ['store' => $sourceStore, 'perspective' => $reversed ? 'incoming' : 'outgoing'];
+            }
+
+            if ($store instanceof Store) {
+                $destinations[] = ['store' => $store, 'perspective' => $reversed ? 'outgoing' : 'incoming'];
+            }
+        } elseif ($store instanceof Store) {
+            $destinations[] = ['store' => $store, 'perspective' => null];
+        }
+
+        OperationalActivityService::dispatch(
+            match (true) {
+                $isTransfer && $reversed => OperationalActivityTypeEnum::STOCK_TRANSFER_REVERSED,
+                $isTransfer => OperationalActivityTypeEnum::STOCK_TRANSFER_CREATED,
+                $reversed => OperationalActivityTypeEnum::STOCK_MOVEMENT_REVERSED,
+                default => OperationalActivityTypeEnum::STOCK_MOVEMENT_CREATED,
+            },
+            $user,
+            Carbon::now('UTC')->toIso8601String(),
+            Resolver::resolveUrlGenerator()->route('stock-movements.show', ['stockMovement' => $movement->getKey()]),
+            $destinations,
+            [
+                'Slack movement number' => $movement->getNumber(),
+                'Slack item count' => (string) $movement->getItemsCount(),
+                'Slack total quantity' => (string) $movement->getTotalQuantity(),
+                'Slack total value' => \number_format($movement->getTotalValue(), 2, ',', ' ') . ' Kč',
+            ],
+        );
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\OperationalActivityTypeEnum;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\Statement;
 use App\Models\StatementDay;
@@ -14,6 +15,7 @@ use App\Models\User;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class StatementService
@@ -137,6 +139,7 @@ class StatementService
             }
 
             $this->snapshot($statement, $user);
+            $this->notify($statement, $user, OperationalActivityTypeEnum::STATEMENT_SAVED);
         });
     }
 
@@ -160,6 +163,7 @@ class StatementService
             ]);
 
             $this->snapshot($statement, $user);
+            $this->notify($statement, $user, OperationalActivityTypeEnum::STATEMENT_CLEARED);
         });
     }
 
@@ -242,6 +246,7 @@ class StatementService
             }
 
             $this->snapshot($statement, $user);
+            $this->notify($statement, $user, OperationalActivityTypeEnum::STATEMENT_RESTORED);
         });
     }
 
@@ -484,6 +489,28 @@ class StatementService
                 'foodora' => \round($foodoraTotal, 2),
             ],
         ];
+    }
+
+    /**
+     * Dispatch one committed statement activity.
+     */
+    private function notify(Statement $statement, User $user, OperationalActivityTypeEnum $type): void
+    {
+        OperationalActivityService::dispatch(
+            $type,
+            $user,
+            Carbon::now('UTC')->toIso8601String(),
+            Resolver::resolveUrlGenerator()->route('statements.index', [
+                'store_id' => $statement->getStoreId(),
+                'year' => $statement->getYear(),
+                'month' => $statement->getMonth(),
+            ]),
+            [['store' => $statement->getStore(), 'perspective' => null]],
+            [
+                'Slack statement period' => \sprintf('%02d/%d', $statement->getMonth(), $statement->getYear()),
+                'Slack statement total' => \number_format(Typer::parseFloat($statement->days()->sum('total')), 2, ',', ' ') . ' Kč',
+            ],
+        );
     }
 
     /**

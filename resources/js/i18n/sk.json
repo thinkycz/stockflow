@@ -212,6 +212,8 @@
         "active_store": "Aktívna pobočka"
     },
     "stores": {
+        "slack_channel_placeholder": "#predajna-bratislava alebo C0123456789",
+        "slack_channel_help": "Voliteľný názov alebo ID Slack kanála pre prevádzkové oznámenia.",
         "title": "Predajne",
         "subtitle": "Spravujte svoje predajne a sledujte, čo prijali.",
         "title_create": "Pridať novú predajňu",
@@ -260,6 +262,7 @@
             "status": "Stav",
             "is_warehouse": "Táto predajňa je sklad",
             "notes": "Poznámky",
+            "slack_channel": "Slack kanál",
             "movements": "Pohyby",
             "received_value": "Hodnota príjmu",
             "outgoing_value": "Hodnota presunov von",

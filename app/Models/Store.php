@@ -49,7 +49,7 @@ class Store extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'user_id', 'name', 'address', 'status', 'is_warehouse', 'notes', 'shift_share_token', 'created_at', 'updated_at']);
+        return $query->select(['id', 'user_id', 'name', 'address', 'status', 'is_warehouse', 'notes', 'slack_channel', 'shift_share_token', 'created_at', 'updated_at']);
     }
 
     /**
@@ -219,6 +219,14 @@ class Store extends BaseModel
     public function getNotes(): string|null
     {
         return $this->assertNullableString('notes');
+    }
+
+    /**
+     * Slack channel name or identifier used for operational notifications.
+     */
+    public function getSlackChannel(): string|null
+    {
+        return $this->assertNullableString('slack_channel');
     }
 
     /**

@@ -9,7 +9,36 @@ use App\Models\StatementDay;
 use App\Models\StockMovement;
 use App\Models\StockMovementItem;
 use App\Models\Store;
+use App\Notifications\OperationalActivitySlackNotification;
 use App\Services\StatementService;
+use Illuminate\Support\Facades\Notification;
+use Thinkycz\LaravelCore\Support\Config;
+
+\test('statement save clear and restore notify once while creation and snapshots stay silent', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $user->getKey(), 'slack_channel' => '#praha']);
+    $service = \app(StatementService::class);
+    $statement = $service->findOrCreateForMonth($user, $store, 2026, 7);
+    Notification::assertNothingSent();
+    $day = $statement->getDays()->first();
+    \assert($day instanceof StatementDay);
+
+    $service->updateDays($statement, [[
+        'date' => $day->getDate(),
+        'cash' => 100,
+        'card' => 50,
+        'wolt' => 0,
+        'bolt' => 0,
+        'foodora' => 0,
+    ]], $user);
+    $version = $statement->versions()->orderByDesc('id')->firstOrFail();
+    $service->clear($statement, $user);
+    $service->restoreVersion($version, $user);
+
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 3);
+});
 
 \test('findOrCreateForMonth creates statement and rows for a fresh month', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();

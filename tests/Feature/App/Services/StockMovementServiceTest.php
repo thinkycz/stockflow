@@ -11,9 +11,60 @@ use App\Models\StockMovementItem;
 use App\Models\StockMovementSequence;
 use App\Models\Store;
 use App\Models\StoreItem;
+use App\Notifications\OperationalActivitySlackNotification;
 use App\Services\StockMovementService;
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
+use Thinkycz\LaravelCore\Support\Config;
+
+\test('transfer notifications reach both stores and deduplicate shared channels', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+    $warehouse->update(['slack_channel' => '#operations']);
+    $retail = Store::factory()->create([
+        'user_id' => $user->getKey(),
+        'name' => 'Brno Outlet',
+        'slack_channel' => '#operations',
+    ]);
+    $item = Item::factory()->create(['user_id' => $user->getKey(), 'purchase_price' => '2.00']);
+    StoreItem::factory()->create(['store_id' => $warehouse->getKey(), 'item_id' => $item->getKey(), 'quantity' => 10]);
+    $service = \app(StockMovementService::class);
+    $movement = $service->createMovement([
+        'mode' => 'transfer',
+        'source_store_id' => $warehouse->getKey(),
+        'store_id' => $retail->getKey(),
+        'items' => [['item_id' => $item->getKey(), 'quantity' => 3]],
+    ], $user);
+
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 1);
+    $retail->update(['slack_channel' => '#brno']);
+    $service->reverseMovement($movement, $user, 'Test reversal');
+
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 3);
+    Notification::assertSentOnDemand(
+        OperationalActivitySlackNotification::class,
+        static fn(OperationalActivitySlackNotification $notification, array $channels, AnonymousNotifiable $notifiable): bool => $notifiable->routeNotificationFor('slack') === '#brno' && $notification->getStoreName() === 'Brno Outlet',
+    );
+});
+
+\test('single-store manual movement notifies only its affected store', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+    $warehouse->update(['slack_channel' => '#warehouse']);
+    $item = Item::factory()->create(['user_id' => $user->getKey(), 'purchase_price' => '3.50']);
+
+    \app(StockMovementService::class)->createMovement([
+        'mode' => 'incoming',
+        'store_id' => $warehouse->getKey(),
+        'items' => [['item_id' => $item->getKey(), 'quantity' => 4]],
+    ], $user);
+
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 1);
+});
 
 \test('incoming movement adds stock to the destination store and assigns the next number', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();

@@ -12,15 +12,16 @@
 
 ## Packages
 
-| package                         | description                         |
-| ------------------------------- | ----------------------------------- |
-| `thinkycz/laravel-core`         | internal Laravel core package       |
-| `inertiajs/inertia-laravel`     | Laravel server adapter for Inertia  |
-| `@inertiajs/vue3`               | Vue client adapter for Inertia      |
-| `@inertiajs/vite`               | Inertia Vite integration            |
-| `vue`                           | frontend framework                  |
-| `tailwindcss`                   | styling system                      |
-| `class-variance-authority/clsx` | shadcn-vue-compatible class helpers |
+| package                              | description                         |
+| ------------------------------------ | ----------------------------------- |
+| `thinkycz/laravel-core`              | internal Laravel core package       |
+| `inertiajs/inertia-laravel`          | Laravel server adapter for Inertia  |
+| `laravel/slack-notification-channel` | queued operational Slack messages   |
+| `@inertiajs/vue3`                    | Vue client adapter for Inertia      |
+| `@inertiajs/vite`                    | Inertia Vite integration            |
+| `vue`                                | frontend framework                  |
+| `tailwindcss`                        | styling system                      |
+| `class-variance-authority/clsx`      | shadcn-vue-compatible class helpers |
 
 ## Runtime services
 
@@ -99,6 +100,16 @@ Copy `.env.example` to `.env` and set:
 - `REDIS_USERNAME`, `REDIS_PASSWORD` when Redis requires credentials
 - `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`
 - `TRUSTED_PROXIES`
+- `SLACK_BOT_USER_OAUTH_TOKEN` when store-specific Slack notifications are enabled
+
+## Slack notifications
+
+- Each store may define its own optional Slack channel name or ID in the store administration form.
+- A single deployment-wide bot token is read from `SLACK_BOT_USER_OAUTH_TOKEN`; no default channel is used.
+- Attendance, finalized inventory, statement mutations, and manual stock movements produce queued Czech operational messages after the surrounding database transaction commits.
+- Transfers are routed to both affected stores. Stores sharing the same configured channel receive one message for that activity.
+- Missing tokens/channels and Slack enqueue failures do not change the result of the underlying application action.
+- The Slack App must be installed in the workspace and invited to every configured private channel. Queue workers must be running to deliver messages.
 
 ## Deferred
 

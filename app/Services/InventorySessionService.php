@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\OperationalActivityTypeEnum;
 use App\Enums\StockMovementClassificationEnum;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\InventorySession;
@@ -181,7 +182,7 @@ class InventorySessionService
         $this->authoriseSession($user, $session);
         $owner = $user->resolveScopeUser();
 
-        return DB::transaction(function () use ($session, $owner): InventorySession {
+        return DB::transaction(function () use ($user, $session, $owner): InventorySession {
             $session = InventorySession::query()->whereKey($session->getKey())->lockForUpdate()->firstOrFail();
             if (!$session->isDraft()) {
                 $this->fail(['inventory' => \__('Only an open inventory draft can be closed.')]);
@@ -217,6 +218,7 @@ class InventorySessionService
             $now = Carbon::now();
             $session->update(['status' => 'closed', 'active_store_key' => null, 'counted_at' => $now, 'closed_at' => $now]);
             $this->movementService->createInventoryReconciliation($session, $owner, $reconciliationRows);
+            $this->notifyInventory($user, $session, $rows->count(), \count($reconciliationRows));
 
             return $session;
         }, 3);
@@ -338,6 +340,7 @@ class InventorySessionService
             }
 
             $this->movementService->createInventoryReconciliation($session, $owner, $reconciliationRows);
+            $this->notifyInventory($user, $session, $session->items()->count(), \count($reconciliationRows));
 
             return $session;
         });
@@ -762,6 +765,25 @@ class InventorySessionService
         }
 
         return $result;
+    }
+
+    /**
+     * Dispatch one finalized inventory activity without duplicating its reconciliation.
+     */
+    private function notifyInventory(User $user, InventorySession $session, int $countedRows, int $differenceRows): void
+    {
+        OperationalActivityService::dispatch(
+            OperationalActivityTypeEnum::INVENTORY_SAVED,
+            $user,
+            Carbon::now('UTC')->toIso8601String(),
+            Resolver::resolveUrlGenerator()->route('inventory-counts.show', ['session' => $session->getKey()]),
+            [['store' => $session->getStore(), 'perspective' => null]],
+            [
+                'Slack inventory number' => '#' . $session->getKey(),
+                'Slack counted rows' => (string) $countedRows,
+                'Slack difference rows' => (string) $differenceRows,
+            ],
+        );
     }
 
     /**

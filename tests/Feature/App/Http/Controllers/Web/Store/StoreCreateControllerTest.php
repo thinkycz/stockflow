@@ -24,6 +24,7 @@ use App\Models\Store;
             'address' => '123 Main St',
             'status' => StoreStatusEnum::ACTIVE->value,
             'notes' => null,
+            'slack_channel' => '  #prodejna-praha  ',
             'is_warehouse' => false,
         ], $this->inertiaHeaders());
 
@@ -31,7 +32,27 @@ use App\Models\Store;
     $store = Store::query()->where('name', 'My Store')->first();
     \expect($store)->not->toBeNull();
     \expect($store->getUserId())->toBe($user->getKey());
+    \expect($store->getSlackChannel())->toBe('#prodejna-praha');
     \assertInertiaFlash($response, 'success', \__('Store created.'));
+});
+
+\test('store create accepts an empty Slack channel and rejects an oversized one', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+
+    $this->be($user, 'users')->post('/stores', [
+        'name' => 'Without Slack',
+        'status' => StoreStatusEnum::ACTIVE->value,
+        'slack_channel' => '   ',
+    ])->assertRedirect();
+
+    $store = Store::query()->where('name', 'Without Slack')->firstOrFail();
+    \expect($store->getSlackChannel())->toBeNull();
+
+    $this->be($user, 'users')->post('/stores', [
+        'name' => 'Invalid Slack',
+        'status' => StoreStatusEnum::ACTIVE->value,
+        'slack_channel' => \str_repeat('x', 101),
+    ], $this->inertiaHeaders())->assertStatus(422);
 });
 
 \test('user can create a second warehouse store', function (): void {

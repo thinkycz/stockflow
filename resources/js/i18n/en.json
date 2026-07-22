@@ -212,6 +212,8 @@
         "active_store": "Active store"
     },
     "stores": {
+        "slack_channel_placeholder": "#store-prague or C0123456789",
+        "slack_channel_help": "Optional Slack channel name or ID for operational notifications.",
         "title": "Stores",
         "subtitle": "Manage your stores and track what they received.",
         "title_create": "Add new store",
@@ -260,6 +262,7 @@
             "status": "Status",
             "is_warehouse": "This store is a warehouse",
             "notes": "Notes",
+            "slack_channel": "Slack channel",
             "movements": "Movements",
             "received_value": "Received value",
             "outgoing_value": "Transfer-out value",

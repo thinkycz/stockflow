@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\OperationalActivityTypeEnum;
 use App\Models\AttendanceAudit;
 use App\Models\AttendanceBreak;
 use App\Models\AttendanceSession;
@@ -12,6 +13,7 @@ use App\Models\User;
 use App\Models\Worker;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -37,6 +39,7 @@ class AttendanceCorrectionService
             ]);
             $this->replaceBreaks($session, $actor, $breaks);
             $this->audit($session, $actor, 'correction_create', $reason, null, $this->snapshot($session));
+            $this->notify($actor, $store, $worker, $session, OperationalActivityTypeEnum::ATTENDANCE_CORRECTION_CREATED);
 
             return $session;
         });
@@ -66,6 +69,7 @@ class AttendanceCorrectionService
             ]);
             $this->replaceBreaks($locked, $actor, $breaks);
             $this->audit($locked, $actor, 'correction_update', $reason, $before, $this->snapshot($locked));
+            $this->notify($actor, $store, $worker, $locked, OperationalActivityTypeEnum::ATTENDANCE_CORRECTION_UPDATED);
 
             return $locked->refresh();
         });
@@ -87,6 +91,7 @@ class AttendanceCorrectionService
                 ->update(['ended_at' => $now, 'active_session_id' => null]);
             $locked->update(['active_worker_id' => null, 'voided_at' => $now, 'voided_by_user_id' => $actor->getKey()]);
             $this->audit($locked, $actor, 'correction_void', $reason, $before, $this->snapshot($locked));
+            $this->notify($actor, $store, $worker, $locked, OperationalActivityTypeEnum::ATTENDANCE_CORRECTION_VOIDED);
 
             return $locked->refresh();
         });
@@ -167,6 +172,24 @@ class AttendanceCorrectionService
             'attendance_session_id' => $session->getKey(), 'actor_user_id' => $actor->getKey(),
             'action' => $action, 'reason' => $reason, 'before_state' => $before, 'after_state' => $after,
         ]);
+    }
+
+    /**
+     * Dispatch a committed attendance correction activity.
+     */
+    private function notify(User $actor, Store $store, Worker $worker, AttendanceSession $session, OperationalActivityTypeEnum $type): void
+    {
+        OperationalActivityService::dispatch(
+            $type,
+            $actor,
+            CarbonImmutable::now('UTC')->toIso8601String(),
+            Resolver::resolveUrlGenerator()->route('attendance.report'),
+            [['store' => $store, 'perspective' => null]],
+            [
+                'Slack worker' => $worker->getFullName(),
+                'Slack attendance date' => $session->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toDateString(),
+            ],
+        );
     }
 
     /**

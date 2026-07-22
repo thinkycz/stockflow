@@ -212,6 +212,8 @@
         "active_store": "Aktivní pobočka"
     },
     "stores": {
+        "slack_channel_placeholder": "#prodejna-praha nebo C0123456789",
+        "slack_channel_help": "Volitelný název nebo ID Slack kanálu pro provozní oznámení.",
         "title": "Prodejny",
         "subtitle": "Spravujte své prodejny a sledujte, co přijaly.",
         "title_create": "Přidat novou prodejnu",
@@ -260,6 +262,7 @@
             "status": "Stav",
             "is_warehouse": "Tato prodejna je sklad",
             "notes": "Poznámky",
+            "slack_channel": "Slack kanál",
             "movements": "Pohyby",
             "received_value": "Hodnota příjmu",
             "outgoing_value": "Hodnota přesunů ven",

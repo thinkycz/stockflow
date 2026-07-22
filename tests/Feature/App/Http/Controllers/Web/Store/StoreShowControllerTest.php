@@ -11,13 +11,17 @@ use Illuminate\Support\Carbon;
 
 \test('store show page is reachable', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
-    $store = Store::factory()->create(['user_id' => $user->getKey()]);
+    $store = Store::factory()->create([
+        'user_id' => $user->getKey(),
+        'slack_channel' => '#praha-provoz',
+    ]);
 
     $response = $this->be($user, 'users')->get("/stores/{$store->getKey()}", $this->inertiaHeaders());
 
     $response->assertOk();
     $response->assertJsonPath('component', 'stores/Show');
     $response->assertJsonPath('props.store.id', $store->getKey());
+    $response->assertJsonPath('props.store.slack_channel', '#praha-provoz');
 });
 
 \test('store show 404s for another user', function (): void {

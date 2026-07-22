@@ -39,8 +39,11 @@ class StoreCreateController
             'address' => $storeValidity->address()->nullable()->toArray(),
             'status' => $storeValidity->status()->required()->toArray(),
             'notes' => $storeValidity->notes()->nullable()->toArray(),
+            'slack_channel' => $storeValidity->slackChannel()->nullable()->toArray(),
             'is_warehouse' => $storeValidity->isWarehouse()->nullable()->toArray(),
         ]);
+
+        $slackChannel = \mb_trim($validated->assertNullableString('slack_channel') ?? '');
 
         $store = Store::query()->create([
             'user_id' => $user->getKey(),
@@ -48,6 +51,7 @@ class StoreCreateController
             'address' => $validated->assertNullableString('address'),
             'status' => $validated->assertString('status'),
             'notes' => $validated->assertNullableString('notes'),
+            'slack_channel' => $slackChannel === '' ? null : $slackChannel,
             'is_warehouse' => $validated->parseBool('is_warehouse'),
         ]);
 

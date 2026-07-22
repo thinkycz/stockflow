@@ -153,6 +153,7 @@ class StoreShowController
                 'status' => $store->getStatus()->value,
                 'is_warehouse' => $store->isWarehouse(),
                 'notes' => $store->getNotes(),
+                'slack_channel' => $store->getSlackChannel(),
             ],
             'metrics' => [
                 'total_transfer_out_movements' => $outgoingMovements->count(),

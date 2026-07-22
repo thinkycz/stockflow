@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\AttendanceActionEnum;
+use App\Enums\OperationalActivityTypeEnum;
 use App\Models\AttendanceAudit;
 use App\Models\AttendanceBreak;
 use App\Models\AttendanceSession;
@@ -14,6 +15,7 @@ use App\Models\User;
 use App\Models\Worker;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -62,6 +64,7 @@ class AttendanceService
                     'voided_by_user_id' => null,
                 ]);
                 $this->audit($session, $actor, $action->value);
+                $this->notify($actor, $store, $worker, $action, $now);
 
                 return $session;
             }
@@ -98,6 +101,8 @@ class AttendanceService
             }
 
             $this->audit($active, $actor, $action->value);
+
+            $this->notify($actor, $store, $worker, $action, $now);
 
             return $active->refresh();
         });
@@ -138,6 +143,29 @@ class AttendanceService
             'action' => $action,
             'after_state' => ['session_id' => $session->getKey()],
         ]);
+    }
+
+    /**
+     * Dispatch a committed attendance activity for the store channel.
+     */
+    private function notify(User $actor, Store $store, Worker $worker, AttendanceActionEnum $action, CarbonImmutable $occurredAt): void
+    {
+        OperationalActivityService::dispatch(
+            match ($action) {
+                AttendanceActionEnum::ARRIVAL => OperationalActivityTypeEnum::ATTENDANCE_ARRIVAL,
+                AttendanceActionEnum::BREAK_START => OperationalActivityTypeEnum::ATTENDANCE_BREAK_STARTED,
+                AttendanceActionEnum::BREAK_END => OperationalActivityTypeEnum::ATTENDANCE_BREAK_ENDED,
+                AttendanceActionEnum::DEPARTURE => OperationalActivityTypeEnum::ATTENDANCE_DEPARTURE,
+            },
+            $actor,
+            $occurredAt->toIso8601String(),
+            Resolver::resolveUrlGenerator()->route('attendance.index'),
+            [['store' => $store, 'perspective' => null]],
+            [
+                'Slack worker' => $worker->getFullName(),
+                'Slack attendance date' => $occurredAt->setTimezone(self::BUSINESS_TIMEZONE)->toDateString(),
+            ],
+        );
     }
 
     /**

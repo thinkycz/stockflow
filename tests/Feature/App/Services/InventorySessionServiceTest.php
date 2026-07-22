@@ -9,13 +9,42 @@ use App\Models\StockMovement;
 use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Models\StoreItem;
+use App\Notifications\OperationalActivitySlackNotification;
 use App\Services\InventorySessionService;
 use App\Services\StockMovementService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Notification;
+use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Typer;
 
 \beforeEach(function (): void {
     Carbon::setTestNow(Carbon::parse('2026-06-24 10:00:00'));
+});
+
+\test('only finalized inventory paths notify once each', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $user->getKey(), 'slack_channel' => '#praha']);
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
+    StoreItem::factory()->create(['store_id' => $store->getKey(), 'item_id' => $item->getKey(), 'quantity' => 5]);
+    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
+
+    $service->createSession($user, $store, [[
+        'item_id' => $item->getKey(),
+        'quantity' => 6,
+        'classification' => 'inventory_correction',
+    ]]);
+
+    $cancelled = $service->startDraft($user, $store);
+    $service->saveDraftRow($user, $cancelled, ['item_id' => $item->getKey(), 'quantity' => 6, 'client_version' => 1]);
+    $service->cancelDraft($user, $cancelled);
+
+    $closed = $service->startDraft($user, $store);
+    $service->saveDraftRow($user, $closed, ['item_id' => $item->getKey(), 'quantity' => 7, 'client_version' => 1, 'classification' => 'inventory_correction']);
+    $service->closeDraft($user, $closed);
+
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 2);
 });
 
 \test('inventory differences create one immutable reconciliation with signed classifications', function (): void {

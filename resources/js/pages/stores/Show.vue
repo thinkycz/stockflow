@@ -92,6 +92,7 @@ defineProps<{
         status: 'active' | 'inactive';
         is_warehouse?: boolean;
         notes: string | null;
+        slack_channel: string | null;
     };
     inventory: InventoryRow[];
     metrics: {
@@ -169,6 +170,11 @@ function destroyStore(id: number): void {
                                         : t('stores.status.inactive')
                                 }}
                             </Badge>
+                            <span v-if="store.slack_channel">·</span>
+                            <span v-if="store.slack_channel">
+                                {{ t('stores.columns.slack_channel') }}:
+                                {{ store.slack_channel }}
+                            </span>
                         </div>
                     </div>
                 </div>

@@ -8,14 +8,58 @@ use App\Models\AttendanceSession;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\Worker;
+use App\Notifications\OperationalActivitySlackNotification;
 use App\Services\AttendanceService;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
+use Thinkycz\LaravelCore\Support\Config;
 
 \afterEach(function (): void {
     Carbon::setTestNow();
+});
+
+\test('successful attendance transitions notify the configured store channel', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create([
+        'user_id' => $admin->getKey(),
+        'is_warehouse' => false,
+        'slack_channel' => '#praha',
+    ]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new AttendanceService();
+
+    $service->perform($admin, $store, $worker, AttendanceActionEnum::ARRIVAL, true);
+    $service->perform($admin, $store, $worker, AttendanceActionEnum::BREAK_START);
+    $service->perform($admin, $store, $worker, AttendanceActionEnum::BREAK_END);
+    $service->perform($admin, $store, $worker, AttendanceActionEnum::DEPARTURE);
+
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 4);
+});
+
+\test('attendance stays silent without a store channel and for rejected actions', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create([
+        'user_id' => $admin->getKey(),
+        'is_warehouse' => false,
+        'slack_channel' => null,
+    ]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+
+    (new AttendanceService())->perform($admin, $store, $worker, AttendanceActionEnum::ARRIVAL, true);
+    Notification::assertNothingSent();
+
+    $store->update(['slack_channel' => '#praha']);
+
+    \expect(fn(): AttendanceSession => (new AttendanceService())->perform($admin, $store, $worker, AttendanceActionEnum::ARRIVAL, true))
+        ->toThrow(ValidationException::class);
+    Notification::assertNothingSent();
 });
 
 \test('worker can take a break return and depart with exact timestamps', function (): void {

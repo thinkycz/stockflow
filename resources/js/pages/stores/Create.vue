@@ -17,6 +17,7 @@ type StoreFields = {
     address: string;
     status: string;
     notes: string;
+    slack_channel: string;
     is_warehouse: boolean;
 };
 
@@ -31,6 +32,7 @@ const form = useForm<StoreFields>({
     address: '',
     status: 'active',
     notes: '',
+    slack_channel: '',
     is_warehouse: false,
 });
 
@@ -101,6 +103,23 @@ function submit(): void {
                             ]"
                         />
                         <FieldError :message="form.errors.status" />
+                    </div>
+
+                    <div class="space-y-2">
+                        <Label for="slack_channel">{{
+                            t('stores.columns.slack_channel')
+                        }}</Label>
+                        <Input
+                            id="slack_channel"
+                            v-model="form.slack_channel"
+                            type="text"
+                            maxlength="100"
+                            :placeholder="t('stores.slack_channel_placeholder')"
+                        />
+                        <p class="text-xs text-on-surface-variant">
+                            {{ t('stores.slack_channel_help') }}
+                        </p>
+                        <FieldError :message="form.errors.slack_channel" />
                     </div>
 
                     <div class="space-y-2">

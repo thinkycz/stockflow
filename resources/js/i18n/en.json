@@ -675,7 +675,13 @@
         },
         "actions": {
             "start": "Start inventory count",
-            "save": "Save stock count"
+            "save": "Save stock count",
+            "cancel": "Cancel stock count"
+        },
+        "cancel_modal": {
+            "title": "Cancel stock count?",
+            "description": "Are you sure you want to cancel this stock count? You will lose all values saved so far and this action cannot be undone.",
+            "confirm": "Yes, cancel stock count"
         },
         "date": {
             "label": "Inventory date",

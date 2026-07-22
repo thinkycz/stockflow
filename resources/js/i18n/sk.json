@@ -675,7 +675,13 @@
         },
         "actions": {
             "start": "Začať inventúru",
-            "save": "Uložiť inventúru"
+            "save": "Uložiť inventúru",
+            "cancel": "Zrušiť inventúru"
+        },
+        "cancel_modal": {
+            "title": "Zrušiť inventúru?",
+            "description": "Naozaj chcete túto inventúru zrušiť? Prídete o všetky doteraz uložené hodnoty a túto akciu nemožno vrátiť späť.",
+            "confirm": "Áno, zrušiť inventúru"
         },
         "date": {
             "label": "Dátum inventúry",

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { CalendarDays, Minus, Plus, Save } from '@lucide/vue';
+import { CalendarDays, Minus, Plus, Save, XCircle } from '@lucide/vue';
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import Input from '@/components/ui/Input.vue';
+import Modal from '@/components/ui/Modal.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
@@ -86,6 +87,8 @@ const editing = reactive<Record<number, EditableRow>>(
 );
 
 const submitting = ref(false);
+const cancelling = ref(false);
+const cancelModalOpen = ref(false);
 const inventoryDate = ref(props.default_counted_on);
 const saveState = reactive<
     Record<number, 'idle' | 'saving' | 'saved' | 'error'>
@@ -158,12 +161,28 @@ function setClassification(
 
 function adjustQuantity(itemId: number, delta: number): void {
     const row = editing[itemId];
-    if (!row) {
+    const source = props.rows.find((item) => item.item_id === itemId);
+    if (!row || !source) {
         return;
     }
-    const current = row.quantity === '' ? 0 : Number(row.quantity);
+    const current = row.quantity === '' ? source.current : Number(row.quantity);
     const next = Math.max(0, current + delta);
     setQuantity(itemId, next);
+}
+
+function focusAdjacentQuantity(event: KeyboardEvent, itemId: number): void {
+    const currentIndex = props.rows.findIndex((row) => row.item_id === itemId);
+    const nextRow = props.rows[currentIndex + (event.shiftKey ? -1 : 1)];
+    if (!nextRow) {
+        return;
+    }
+
+    event.preventDefault();
+    const input = document.querySelector<HTMLInputElement>(
+        `[data-testid="qty-${nextRow.item_id}"]`,
+    );
+    input?.focus();
+    input?.select();
 }
 
 function setNote(itemId: number, value: string | number | undefined): void {
@@ -231,6 +250,32 @@ async function save(): Promise<void> {
         { counted_on: inventoryDate.value },
         {
             onFinish: () => (submitting.value = false),
+        },
+    );
+}
+
+function openCancelModal(): void {
+    cancelModalOpen.value = true;
+}
+
+function closeCancelModal(): void {
+    if (!cancelling.value) {
+        cancelModalOpen.value = false;
+    }
+}
+
+async function cancelDraft(): Promise<void> {
+    if (!props.draft || cancelling.value) {
+        return;
+    }
+
+    cancelling.value = true;
+    await Promise.allSettled([...pending]);
+    router.post(
+        route('inventory-counts.drafts.cancel', props.draft.id),
+        {},
+        {
+            onFinish: () => (cancelling.value = false),
         },
     );
 }
@@ -454,6 +499,12 @@ async function save(): Promise<void> {
                                                         )
                                                 "
                                                 @blur="autosave(row.item_id)"
+                                                @keydown.tab="
+                                                    focusAdjacentQuantity(
+                                                        $event,
+                                                        row.item_id,
+                                                    )
+                                                "
                                             />
                                             <button
                                                 type="button"
@@ -552,8 +603,20 @@ async function save(): Promise<void> {
                 >
                     <Button
                         type="button"
+                        variant="secondary"
+                        :disabled="submitting || cancelling"
+                        @click="openCancelModal"
+                    >
+                        <XCircle :size="14" />
+                        {{ t('inventory_counts.actions.cancel') }}
+                    </Button>
+                    <Button
+                        type="button"
                         :disabled="
-                            submitting || !hasAnyValue || inventoryDate === ''
+                            submitting ||
+                            cancelling ||
+                            !hasAnyValue ||
+                            inventoryDate === ''
                         "
                         @click="save"
                     >
@@ -562,6 +625,36 @@ async function save(): Promise<void> {
                     </Button>
                 </div>
             </Card>
+
+            <Modal
+                :open="cancelModalOpen"
+                :title="t('inventory_counts.cancel_modal.title')"
+                @close="closeCancelModal"
+            >
+                <p class="text-sm leading-6 text-on-surface-variant">
+                    {{ t('inventory_counts.cancel_modal.description') }}
+                </p>
+
+                <template #footer>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        :disabled="cancelling"
+                        @click="closeCancelModal"
+                    >
+                        {{ t('common.cancel') }}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="danger"
+                        :disabled="cancelling"
+                        @click="cancelDraft"
+                    >
+                        <XCircle :size="14" />
+                        {{ t('inventory_counts.cancel_modal.confirm') }}
+                    </Button>
+                </template>
+            </Modal>
         </div>
     </AppLayout>
 </template>

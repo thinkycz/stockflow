@@ -229,9 +229,6 @@ class InventorySessionService
      */
     public function cancelDraft(User $user, InventorySession $session): void
     {
-        if (!$user->isAdmin()) {
-            \abort(403);
-        }
         $this->authoriseSession($user, $session);
         $session->update(['status' => 'cancelled', 'active_store_key' => null, 'cancelled_at' => Carbon::now()]);
     }

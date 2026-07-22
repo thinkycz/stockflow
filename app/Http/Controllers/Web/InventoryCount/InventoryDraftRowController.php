@@ -16,8 +16,18 @@ class InventoryDraftRowController
     /**
      * Autosave one counted inventory row.
      */
-    public function __invoke(Request $request, InventorySession $session, InventorySessionService $service): JsonResponse
+    public function __invoke(Request $request, InventorySessionService $service): JsonResponse
     {
+        $user = User::mustAuth();
+        $session = InventorySession::query()
+            ->where('user_id', $user->resolveScopeUser()->getKey())
+            ->whereKey(Typer::parseInt($request->route('session')))
+            ->first();
+
+        if (!$session instanceof InventorySession) {
+            \abort(404);
+        }
+
         $validated = $request->validate([
             'item_id' => ['required', 'integer'],
             'quantity' => ['required', 'numeric', 'min:0'],
@@ -25,7 +35,7 @@ class InventoryDraftRowController
             'note' => ['nullable', 'string'],
             'client_version' => ['required', 'integer', 'min:1'],
         ]);
-        $row = $service->saveDraftRow(User::mustAuth(), $session, Typer::assertArray($validated));
+        $row = $service->saveDraftRow($user, $session, Typer::assertArray($validated));
 
         return new JsonResponse([
             'saved' => true,

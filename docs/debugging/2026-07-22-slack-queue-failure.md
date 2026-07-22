@@ -23,6 +23,10 @@ The queue failure repository used a database fallback inconsistent with the appl
 
 Use the same MySQL fallback for queue batch and failed-job storage as the main database configuration, and add a regression test for an absent `DB_CONNECTION`.
 
-## Remaining evidence needed
+## Original Slack failure
 
-After deployment and worker restart, inspect the recorded failed job or worker log for the original Slack exception. Likely operational causes include an invalid token, an unknown channel, or a bot that has not been invited, but none is proven by the supplied trace.
+After failed-job persistence was corrected, the provider exception was recorded as `Slack API call failed with error [missing_scope]` at the package's `chat.postMessage` request.
+
+The configured bot token has not been granted Slack's required `chat:write` bot scope. Adding the scope requires reinstalling the Slack App to the workspace so the installation and token receive the new permission.
+
+For channels the bot joins explicitly, `chat:write` is sufficient. Posting to public channels without inviting the bot additionally requires `chat:write.public`; private channels always require inviting the bot.

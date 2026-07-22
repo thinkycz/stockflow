@@ -18,4 +18,4 @@ Deploy the change, ensure `DB_CONNECTION=mysql` is explicitly configured, clear 
 
 ## Remaining external issue
 
-The supplied exception proves the failed-job storage defect but does not contain the original Slack API response. Slack credentials, channel membership, and channel identity therefore remain unverified.
+The original Slack response is now known: `missing_scope`. The operator must add the `chat:write` Bot Token Scope, reinstall the app to the workspace, update the deployed token if Slack issues a replacement, invite the bot to every configured channel, restart the queue workers, and retry the notification. Credentialed delivery remains unverified until that operational step succeeds.

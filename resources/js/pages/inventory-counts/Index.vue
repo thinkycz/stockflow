@@ -168,6 +168,9 @@ function adjustQuantity(itemId: number, delta: number): void {
     const current = row.quantity === '' ? source.current : Number(row.quantity);
     const next = Math.max(0, current + delta);
     setQuantity(itemId, next);
+    if (delta > 0 && next > source.current) {
+        row.classification = 'inventory_correction';
+    }
 }
 
 function focusAdjacentQuantity(event: KeyboardEvent, itemId: number): void {
@@ -275,6 +278,7 @@ async function cancelDraft(): Promise<void> {
         route('inventory-counts.drafts.cancel', props.draft.id),
         {},
         {
+            onSuccess: () => (cancelModalOpen.value = false),
             onFinish: () => (cancelling.value = false),
         },
     );

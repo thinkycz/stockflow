@@ -622,6 +622,7 @@ class StatementService
             ->join('inventory_sessions', 'inventory_sessions.id', '=', 'inventory_session_items.session_id')
             ->where('inventory_sessions.user_id', $user->getKey())
             ->where('inventory_sessions.store_id', $storeId)
+            ->where('inventory_sessions.status', 'closed')
             ->whereNotNull('inventory_session_items.observation_started_at')
             ->get([
                 'inventory_session_items.item_id',
@@ -649,6 +650,7 @@ class StatementService
         $lastInventory = DB::table('inventory_sessions')
             ->where('user_id', $user->getKey())
             ->where('store_id', $storeId)
+            ->where('status', 'closed')
             ->max('counted_at');
 
         return [

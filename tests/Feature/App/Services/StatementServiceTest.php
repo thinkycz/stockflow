@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Enums\StockMovementClassificationEnum;
+use App\Models\InventorySession;
+use App\Models\InventorySessionItem;
 use App\Models\Item;
 use App\Models\Statement;
 use App\Models\StatementDay;
@@ -255,6 +257,30 @@ use Thinkycz\LaravelCore\Support\Config;
     \expect($report['channels']['wolt'])->toBe(500.0);
     \expect($report['marketplace_provision'] ?? $report['totals']['marketplace_provision'])->toBe(150.0);
     \expect($report['totals']['marketplace_provision'])->toBe(150.0);
+});
+
+\test('buildReport excludes open inventory drafts from coverage', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $user->getKey()]);
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
+    $draft = InventorySession::factory()->forStore($store)->byUser($user)->create([
+        'status' => 'draft',
+        'started_at' => '2026-06-10 10:00:00',
+        'counted_at' => null,
+    ]);
+    InventorySessionItem::factory()->create([
+        'session_id' => $draft->getKey(),
+        'item_id' => $item->getKey(),
+        'observation_started_at' => '2026-06-01 10:00:00',
+    ]);
+
+    $report = \app(StatementService::class)->buildReport($user, $store->getKey(), 2026, 6);
+
+    \expect($report['inventory_coverage'])->toBe([
+        'average_days' => 0.0,
+        'covered_items' => 0,
+        'last_inventory_at' => null,
+    ]);
 });
 
 \test('buildReport exposes a daily series for the line chart', function (): void {

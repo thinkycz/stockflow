@@ -98,7 +98,7 @@ class OperationalActivitySlackNotification extends Notification implements Shoul
             ->setTimezone('Europe/Prague')
             ->format('j. n. Y H:i');
 
-        return (new SlackMessage())
+        $message = (new SlackMessage())
             ->text($title . ': ' . $this->storeName)
             ->headerBlock($title)
             ->sectionBlock(function (SectionBlock $block) use ($time): void {
@@ -109,14 +109,19 @@ class OperationalActivitySlackNotification extends Notification implements Shoul
                 if ($this->perspective !== null) {
                     $block->field('*' . $this->translate('Slack direction') . ":*\n" . $this->translate('Slack direction ' . $this->perspective))->markdown();
                 }
+            });
 
-                foreach ($this->facts as $label => $value) {
+        foreach (\array_chunk($this->facts, 10, true) as $facts) {
+            $message->sectionBlock(function (SectionBlock $block) use ($facts): void {
+                foreach ($facts as $label => $value) {
                     $block->field('*' . $this->translate($label) . ":*\n" . $this->escape($value))->markdown();
                 }
-            })
-            ->contextBlock(function (ContextBlock $block): void {
-                $block->text('<' . $this->url . '|' . $this->translate('Open in StockFlow') . '>')->markdown();
             });
+        }
+
+        return $message->contextBlock(function (ContextBlock $block): void {
+            $block->text('<' . $this->url . '|' . $this->translate('Open in StockFlow') . '>')->markdown();
+        });
     }
 
     /**

@@ -44,6 +44,7 @@ use App\Http\Controllers\Web\ShiftPreset\ShiftPresetUpdateController;
 use App\Http\Controllers\Web\Statement\StatementClearController;
 use App\Http\Controllers\Web\Statement\StatementHistoryController;
 use App\Http\Controllers\Web\Statement\StatementIndexController;
+use App\Http\Controllers\Web\Statement\StatementTodayUpdateController;
 use App\Http\Controllers\Web\Statement\StatementUpdateController;
 use App\Http\Controllers\Web\Statement\StatementVersionRestoreController;
 use App\Http\Controllers\Web\Statement\StatementVersionShowController;
@@ -102,6 +103,7 @@ Resolver::resolveRouteRegistrar()
         // Statements (admin + limited)
         $router->get('statements', StatementIndexController::class)->name('statements.index');
         $router->put('statements/{statement}', StatementUpdateController::class)->whereNumber('statement')->name('statements.update');
+        $router->put('statements/{statement}/today', StatementTodayUpdateController::class)->whereNumber('statement')->name('statements.today.update');
         $router->post('statements/{statement}/clear', StatementClearController::class)->whereNumber('statement')->name('statements.clear');
         $router->get('statements/{statement}/history', StatementHistoryController::class)->whereNumber('statement')->name('statements.history');
         $router->get('statements/versions/{version}', StatementVersionShowController::class)->whereNumber('version')->name('statements.versions.show');

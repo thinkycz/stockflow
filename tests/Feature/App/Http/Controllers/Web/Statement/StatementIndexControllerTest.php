@@ -82,6 +82,45 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($response->json('props.days'))->toHaveCount(28);
 });
 
+\test('statements expose todays row independently from the selected month', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-07-23 10:00:00', 'Europe/Prague'));
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+
+    $response = $this->be($user, 'users')->get(
+        '/statements?store_id=' . $store->getKey() . '&year=2026&month=6',
+        $this->inertiaHeaders(),
+    );
+
+    $response->assertOk()
+        ->assertJsonPath('props.filters.month', 6)
+        ->assertJsonPath('props.today_statement.store_id', $store->getKey())
+        ->assertJsonPath('props.today_statement.year', 2026)
+        ->assertJsonPath('props.today_statement.month', 7)
+        ->assertJsonPath('props.today_day.date', '2026-07-23')
+        ->assertJsonPath('props.today_day.total', 0);
+
+    Carbon::setTestNow();
+});
+
+\test('statements expose entered values for todays panel visibility decision', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-07-23 10:00:00', 'Europe/Prague'));
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+    $statement = Statement::factory()->forStore($store)->forMonth(2026, 7)->create();
+    StatementDay::factory()->for($statement, 'statement')->create([
+        'date' => '2026-07-23',
+        'cash' => 100,
+        'total' => 100,
+    ]);
+
+    $this->be($user, 'users')
+        ->get('/statements?store_id=' . $store->getKey(), $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.today_day.cash', 100)
+        ->assertJsonPath('props.today_day.total', 100);
+
+    Carbon::setTestNow();
+});
+
 \test('statements index is isolated per user', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     [$other] = \createIsolatedUserWithWarehouse();

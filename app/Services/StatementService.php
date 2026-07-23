@@ -21,6 +21,11 @@ use Thinkycz\LaravelCore\Support\Typer;
 class StatementService
 {
     /**
+     * Business timezone used for daily statements.
+     */
+    public const string TIMEZONE = 'Europe/Prague';
+
+    /**
      * Provision rate charged on card payments.
      */
     public const float CARD_PROVISION_RATE = 0.01;
@@ -496,6 +501,25 @@ class StatementService
      */
     private function notify(Statement $statement, User $user, OperationalActivityTypeEnum $type): void
     {
+        $facts = [
+            'Slack statement period' => \sprintf('%02d/%d', $statement->getMonth(), $statement->getYear()),
+        ];
+        $today = Carbon::now(self::TIMEZONE);
+        $todayDay = $statement->days()->whereDate('date', $today->toDateString())->first();
+
+        if ($todayDay instanceof StatementDay) {
+            $facts += [
+                'Slack statement date' => $today->format('j. n. Y'),
+                'Slack statement cash' => $this->formatCurrency($todayDay->getCash()),
+                'Slack statement card' => $this->formatCurrency($todayDay->getCard()),
+                'Slack statement wolt' => $this->formatCurrency($todayDay->getWolt()),
+                'Slack statement bolt' => $this->formatCurrency($todayDay->getBolt()),
+                'Slack statement bolt cash' => $this->formatCurrency($todayDay->getBoltCash()),
+                'Slack statement foodora' => $this->formatCurrency($todayDay->getFoodora()),
+                'Slack statement today total' => $this->formatCurrency($todayDay->getTotal()),
+            ];
+        }
+
         OperationalActivityService::dispatch(
             $type,
             $user,
@@ -506,11 +530,16 @@ class StatementService
                 'month' => $statement->getMonth(),
             ]),
             [['store' => $statement->getStore(), 'perspective' => null]],
-            [
-                'Slack statement period' => \sprintf('%02d/%d', $statement->getMonth(), $statement->getYear()),
-                'Slack statement total' => \number_format(Typer::parseFloat($statement->days()->sum('total')), 2, ',', ' ') . ' Kč',
-            ],
+            $facts,
         );
+    }
+
+    /**
+     * Format one statement amount for operational notifications.
+     */
+    private function formatCurrency(float $amount): string
+    {
+        return \number_format($amount, 2, ',', ' ') . ' Kč';
     }
 
     /**

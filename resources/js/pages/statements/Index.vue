@@ -7,6 +7,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
+import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
@@ -35,6 +36,13 @@ const props = defineProps<{
         month: number;
     } | null;
     days: DayRow[];
+    today_statement: {
+        id: number;
+        store_id: number;
+        year: number;
+        month: number;
+    } | null;
+    today_day: DayRow | null;
     filters: {
         store_id: number | null;
         year: number;
@@ -49,9 +57,49 @@ useBoundLocale();
 
 const route = useRoute();
 
+type TodayForm = {
+    cash: string;
+    card: string;
+    wolt: string;
+    bolt: string;
+    bolt_cash: string;
+    foodora: string;
+};
+
+const todayFields: Array<keyof TodayForm> = [
+    'cash',
+    'card',
+    'wolt',
+    'bolt',
+    'bolt_cash',
+    'foodora',
+];
+
 const form = useForm<{ days: DayRow[] }>({
     days: props.days.map((day) => ({ ...day })),
 });
+
+const todayForm = useForm<TodayForm>({
+    cash: String(props.today_day?.cash ?? 0),
+    card: String(props.today_day?.card ?? 0),
+    wolt: String(props.today_day?.wolt ?? 0),
+    bolt: String(props.today_day?.bolt ?? 0),
+    bolt_cash: String(props.today_day?.bolt_cash ?? 0),
+    foodora: String(props.today_day?.foodora ?? 0),
+});
+
+watch(
+    () => props.today_day,
+    (day) => {
+        todayForm.cash = String(day?.cash ?? 0);
+        todayForm.card = String(day?.card ?? 0);
+        todayForm.wolt = String(day?.wolt ?? 0);
+        todayForm.bolt = String(day?.bolt ?? 0);
+        todayForm.bolt_cash = String(day?.bolt_cash ?? 0);
+        todayForm.foodora = String(day?.foodora ?? 0);
+        todayForm.clearErrors();
+    },
+);
 
 const editing = reactive<Record<string, DayRow>>({});
 
@@ -127,6 +175,23 @@ function rowTotal(row: DayRow): number {
     );
 }
 
+const showTodayPanel = computed(
+    () =>
+        props.today_statement !== null &&
+        props.today_day !== null &&
+        rowTotal(props.today_day) === 0,
+);
+
+const todayTotal = computed(
+    () =>
+        Number(todayForm.cash || 0) +
+        Number(todayForm.card || 0) +
+        Number(todayForm.wolt || 0) +
+        Number(todayForm.bolt || 0) +
+        Number(todayForm.bolt_cash || 0) +
+        Number(todayForm.foodora || 0),
+);
+
 const totals = computed(() => {
     let cash = 0;
     let card = 0;
@@ -196,6 +261,19 @@ function save(): void {
         },
     });
 }
+
+function saveToday(): void {
+    if (!props.today_statement) {
+        return;
+    }
+
+    todayForm.put(
+        route('statements.today.update', {
+            statement: props.today_statement.id,
+        }),
+        { preserveScroll: true },
+    );
+}
 </script>
 
 <template>
@@ -229,6 +307,78 @@ function save(): void {
                     </Button>
                 </Link>
             </header>
+
+            <Card v-if="showTodayPanel && props.today_day" padded>
+                <form class="space-y-5" @submit.prevent="saveToday">
+                    <div
+                        class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"
+                    >
+                        <div>
+                            <h2
+                                class="font-heading text-lg font-bold text-on-surface"
+                            >
+                                {{ t('statements.quick_entry.title') }}
+                            </h2>
+                            <p class="mt-1 text-sm text-on-surface-variant">
+                                {{
+                                    t('statements.quick_entry.description', {
+                                        date: formatCzechDate(
+                                            props.today_day.date,
+                                        ),
+                                    })
+                                }}
+                            </p>
+                        </div>
+                        <div
+                            class="rounded-xl border border-outline-glass bg-surface-container-low px-4 py-2"
+                        >
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant"
+                            >
+                                {{ t('statements.quick_entry.total') }}
+                            </p>
+                            <p
+                                class="font-heading text-lg font-bold text-on-surface"
+                            >
+                                {{ formatMoney(todayTotal) }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
+                    >
+                        <div
+                            v-for="field in todayFields"
+                            :key="field"
+                            class="space-y-2"
+                        >
+                            <label
+                                :for="`today_${field}`"
+                                class="text-xs font-semibold text-on-surface-variant"
+                            >
+                                {{ t(`statements.columns.${field}`) }}
+                            </label>
+                            <Input
+                                :id="`today_${field}`"
+                                v-model="todayForm[field]"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                class="text-right"
+                            />
+                            <FieldError :message="todayForm.errors[field]" />
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <Button type="submit" :disabled="todayForm.processing">
+                            <Save :size="14" />
+                            {{ t('statements.quick_entry.save') }}
+                        </Button>
+                    </div>
+                </form>
+            </Card>
 
             <Card padded>
                 <div class="grid gap-4 sm:grid-cols-2 lg:max-w-2xl">

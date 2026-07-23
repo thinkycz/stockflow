@@ -603,6 +603,12 @@
         "store": "Store",
         "month": "Month",
         "select_store": "Select a store",
+        "quick_entry": {
+            "title": "Today's statement",
+            "description": "Quick revenue entry for {date}.",
+            "total": "Today's total",
+            "save": "Save today's data"
+        },
         "columns": {
             "day": "Day",
             "cash": "Cash",

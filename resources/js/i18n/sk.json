@@ -603,6 +603,12 @@
         "store": "Predajňa",
         "month": "Mesiac",
         "select_store": "Vyberte predajňu",
+        "quick_entry": {
+            "title": "Dnešný výkaz",
+            "description": "Rýchle zadanie tržieb za {date}.",
+            "total": "Dnešný súčet",
+            "save": "Uložiť dnešné údaje"
+        },
         "columns": {
             "day": "Deň",
             "cash": "Hotovosť",

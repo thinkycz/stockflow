@@ -13,6 +13,8 @@ use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Notifications\OperationalActivitySlackNotification;
 use App\Services\StatementService;
+use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
 use Thinkycz\LaravelCore\Support\Config;
 
@@ -40,6 +42,80 @@ use Thinkycz\LaravelCore\Support\Config;
     $service->restoreVersion($version, $user);
 
     Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 3);
+});
+
+\test('statement Slack notification contains todays channels and total without monthly revenue', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-07-23 10:00:00', 'Europe/Prague'));
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $user->getKey(), 'slack_channel' => '#praha']);
+    $service = \app(StatementService::class);
+    $statement = $service->findOrCreateForMonth($user, $store, 2026, 7);
+
+    $service->updateDays($statement, [[
+        'date' => '2026-07-23',
+        'cash' => 100,
+        'card' => 50,
+        'wolt' => 30,
+        'bolt' => 20,
+        'bolt_cash' => 15,
+        'foodora' => 10,
+    ]], $user);
+
+    Notification::assertSentOnDemand(
+        OperationalActivitySlackNotification::class,
+        static function (OperationalActivitySlackNotification $notification): bool {
+            $payload = $notification->toSlack(new AnonymousNotifiable())->toArray();
+            $encoded = \json_encode($payload, flags: \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
+
+            return \str_contains($encoded, '23. 7. 2026') &&
+                \str_contains($encoded, 'Hotovost') &&
+                \str_contains($encoded, 'Karta') &&
+                \str_contains($encoded, 'Wolt') &&
+                \str_contains($encoded, 'Bolt') &&
+                \str_contains($encoded, 'Bolt hotově') &&
+                \str_contains($encoded, 'Foodora') &&
+                \str_contains($encoded, 'Dnešní součet') &&
+                !\str_contains($encoded, 'Celková tržba');
+        },
+    );
+
+    Carbon::setTestNow();
+});
+
+\test('historical statement Slack notification does not fabricate todays values', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-07-23 10:00:00', 'Europe/Prague'));
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $user->getKey(), 'slack_channel' => '#praha']);
+    $service = \app(StatementService::class);
+    $statement = $service->findOrCreateForMonth($user, $store, 2026, 6);
+
+    $service->updateDays($statement, [[
+        'date' => '2026-06-23',
+        'cash' => 100,
+        'card' => 0,
+        'wolt' => 0,
+        'bolt' => 0,
+        'bolt_cash' => 0,
+        'foodora' => 0,
+    ]], $user);
+
+    Notification::assertSentOnDemand(
+        OperationalActivitySlackNotification::class,
+        static function (OperationalActivitySlackNotification $notification): bool {
+            $payload = $notification->toSlack(new AnonymousNotifiable())->toArray();
+            $encoded = \json_encode($payload, flags: \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
+
+            return \str_contains($encoded, '06/2026') &&
+                !\str_contains($encoded, 'Dnešní součet') &&
+                !\str_contains($encoded, 'Celková tržba');
+        },
+    );
+
+    Carbon::setTestNow();
 });
 
 \test('findOrCreateForMonth creates statement and rows for a fresh month', function (): void {

@@ -170,7 +170,10 @@ function adjustQuantity(itemId: number, delta: number): void {
     setQuantity(itemId, next);
     if (delta > 0 && next > source.current) {
         row.classification = 'inventory_correction';
+    } else if (delta < 0 && next < source.current) {
+        row.classification = 'consumption';
     }
+    autosave(itemId);
 }
 
 function focusAdjacentQuantity(event: KeyboardEvent, itemId: number): void {

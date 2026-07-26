@@ -225,6 +225,42 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->and($session->refresh()->getActiveWorkerId())->toBeNull();
 });
 
+\test('admin can save the current month and close all active current-day attendances', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-07-23 10:00:00', 'Europe/Prague'));
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $statement = Statement::factory()->forStore($store)->forMonth(2026, 7)->create();
+    $day = StatementDay::factory()->for($statement, 'statement')->create(['date' => '2026-07-23']);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $session = AttendanceSession::query()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $worker->getKey(),
+        'created_by_user_id' => $admin->getKey(),
+        'active_worker_id' => $worker->getKey(),
+        'hourly_rate' => $worker->getHourlyRate(),
+        'started_at' => Carbon::parse('2026-07-23 08:00:00', 'Europe/Prague')->utc(),
+    ]);
+
+    $this->actingAs($admin, 'users')
+        ->put('/statements/' . $statement->getKey(), [
+            'days' => [[
+                'date' => $day->getDate(),
+                'cash' => 125,
+                'card' => 0,
+                'wolt' => 0,
+                'bolt' => 0,
+                'bolt_cash' => 0,
+                'foodora' => 0,
+            ]],
+            'close_attendances' => true,
+        ])
+        ->assertRedirect();
+
+    \expect($day->refresh()->getTotal())->toBe(125.0)
+        ->and($session->refresh()->getActiveWorkerId())->toBeNull();
+});
+
 \test('historical statement save cannot close current attendances', function (): void {
     Carbon::setTestNow(Carbon::parse('2026-07-23 10:00:00', 'Europe/Prague'));
     $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);

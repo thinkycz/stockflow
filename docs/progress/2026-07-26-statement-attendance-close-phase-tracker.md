@@ -40,7 +40,7 @@
 
 - Only current-day sessions in `Europe/Prague` are eligible.
 - The server reloads the full eligible set when closure is requested.
-- Admin, historical, and stale-session behavior remains unchanged.
+- Admins and limited users both participate for their authorized store; historical and stale-session behavior remains unchanged.
 
 ## Deferred
 

@@ -82,7 +82,7 @@ class StatementIndexController
                 'month' => $month,
             ],
             'is_admin' => $user->isAdmin(),
-            'active_attendances' => !$user->isAdmin() && $store !== null
+            'active_attendances' => $store !== null
                 ? (new AttendanceService())->activeCurrentDayEmployees($user, $store)
                 : [],
         ]);

@@ -27,11 +27,37 @@ class AttendanceService
     /**
      * List active current-day employees for the actor's store.
      *
-     * @return list<array{worker_id: int, worker_name: string}>
+     * @return list<array{worker_id: int, worker_name: string, worked_seconds: int, is_on_break: bool}>
      */
     public function activeCurrentDayEmployees(User $actor, Store $store): array
     {
         $sessions = $this->activeCurrentDaySessions($actor, $store);
+        $now = CarbonImmutable::now('UTC');
+        $breakQuery = AttendanceBreak::query();
+        AttendanceBreak::querySelect($breakQuery);
+        $breaks = $breakQuery
+            ->whereIn('attendance_session_id', $sessions->modelKeys())
+            ->get()
+            ->groupBy(static fn(AttendanceBreak $break): int => $break->getAttendanceSessionId());
+        /** @var array<int, array{worked_seconds: int, is_on_break: bool}> $timings */
+        $timings = [];
+        foreach ($sessions as $session) {
+            $breakSeconds = 0;
+            $isOnBreak = false;
+            foreach ($breaks->get($session->getKey(), []) as $break) {
+                $endedAt = $break->getEndedAt();
+                $breakSeconds += (int) $break->getStartedAt()->diffInSeconds($endedAt ?? $now);
+                $isOnBreak = $isOnBreak || $endedAt === null;
+            }
+            $timings[$session->getWorkerId()] = [
+                'worked_seconds' => \max(
+                    0,
+                    (int) $session->getStartedAt()->diffInSeconds($now) - $breakSeconds,
+                ),
+                'is_on_break' => $isOnBreak,
+            ];
+        }
+
         $workerQuery = Worker::query();
         Worker::scopeForUser($workerQuery, $actor->resolveScopeUser());
         Worker::querySelect($workerQuery);
@@ -43,10 +69,16 @@ class AttendanceService
             ->orderBy('last_name')
             ->orderBy('first_name')
             ->get()
-            ->map(static fn(Worker $worker): array => [
-                'worker_id' => $worker->getKey(),
-                'worker_name' => $worker->getFullName(),
-            ])
+            ->map(static function (Worker $worker) use ($timings): array {
+                $timing = $timings[$worker->getKey()];
+
+                return [
+                    'worker_id' => $worker->getKey(),
+                    'worker_name' => $worker->getFullName(),
+                    'worked_seconds' => $timing['worked_seconds'],
+                    'is_on_break' => $timing['is_on_break'],
+                ];
+            })
             ->all());
     }
 
@@ -76,11 +108,13 @@ class AttendanceService
     }
 
     /**
-     * Close every active current-day attendance at the limited user's store.
+     * Close every active current-day attendance at the actor's authorized store.
      */
     public function closeActiveCurrentDayAttendances(User $actor, Store $store): void
     {
-        if ($actor->isAdmin() || $actor->getAssignedStoreId() !== $store->getKey()) {
+        $scopeUser = $actor->resolveScopeUser();
+        if ($store->isWarehouse() || $store->getUserId() !== $scopeUser->getKey() ||
+            (!$actor->isAdmin() && $actor->getAssignedStoreId() !== $store->getKey())) {
             \abort(403);
         }
 

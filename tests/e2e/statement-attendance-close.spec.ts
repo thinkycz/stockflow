@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
 
-test('limited user sees and closes every active attendance while saving today', async ({
+test('admin sees and closes every active attendance while saving today', async ({
     page,
 }) => {
     await page.goto('/login');
-    await page.getByLabel('Email').fill('limited@test.com');
+    await page.getByLabel('Email').fill('test@test.com');
     await page.getByLabel('Password', { exact: true }).fill('password');
     await page.getByRole('button', { name: 'Log in' }).click();
     await page.waitForURL(/\/dashboard$/);
@@ -20,6 +20,16 @@ test('limited user sees and closes every active attendance while saving today', 
         page.getByText('Active Employee', { exact: true }),
     ).toBeVisible();
     await expect(page.getByText('E2E Worker', { exact: true })).toBeVisible();
+    const workers = page.getByRole('list', { name: 'Workers' });
+    await expect(workers).toBeVisible();
+    await expect(
+        page.getByText('Active attendance', { exact: true }),
+    ).toHaveCount(2);
+    await expect(page.getByText('Worked', { exact: true })).toHaveCount(2);
+    await expect(workers.locator('span.font-mono')).toHaveText([
+        /^\s*01:00:\d{2}$/,
+        /^\s*01:00:\d{2}$/,
+    ]);
 
     await page.getByRole('button', { name: 'Save and close all' }).click();
 

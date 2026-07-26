@@ -610,8 +610,12 @@
             "save": "Uložit dnešní údaje"
         },
         "attendance_close": {
-            "title": "Ukončit aktivní docházku?",
-            "description": "Tito zaměstnanci mají stále aktivní docházku:",
+            "title": "Ukončit aktivní docházku brigádníků?",
+            "description": "Tito brigádníci mají stále aktivní docházku:",
+            "workers": "Brigádníci",
+            "active_status": "Aktivní docházka",
+            "on_break": "Na pauze",
+            "worked_time": "Odpracováno",
             "save_only": "Pouze uložit",
             "save_and_close": "Uložit a ukončit vše"
         },

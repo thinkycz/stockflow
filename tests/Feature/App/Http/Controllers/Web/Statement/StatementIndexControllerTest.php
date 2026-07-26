@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\AttendanceBreak;
 use App\Models\AttendanceSession;
 use App\Models\Statement;
 use App\Models\StatementDay;
@@ -164,7 +165,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $overrideResponse->assertJsonPath('props.filters.store_id', $own->getKey());
 });
 
-\test('limited user sees all active current-day attendance employees ordered by name', function (): void {
+\test('limited users and admins see all active current-day attendance employees ordered by name', function (): void {
     Carbon::setTestNow(Carbon::parse('2026-07-23 10:00:00', 'Europe/Prague'));
     $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
     $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
@@ -196,6 +197,14 @@ use Thinkycz\LaravelCore\Support\Typer;
             'started_at' => Carbon::parse('2026-07-23 08:00:00', 'Europe/Prague')->utc(),
         ]);
     }
+    $aliceSession = AttendanceSession::query()->where('worker_id', $alice->getKey())->firstOrFail();
+    AttendanceBreak::query()->create([
+        'attendance_session_id' => $aliceSession->getKey(),
+        'created_by_user_id' => $limited->getKey(),
+        'active_session_id' => null,
+        'started_at' => Carbon::parse('2026-07-23 09:00:00', 'Europe/Prague')->utc(),
+        'ended_at' => Carbon::parse('2026-07-23 09:15:00', 'Europe/Prague')->utc(),
+    ]);
     AttendanceSession::query()->create([
         'user_id' => $admin->getKey(),
         'store_id' => $store->getKey(),
@@ -209,6 +218,19 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response = $this->be($limited, 'users')->get('/statements', $this->inertiaHeaders());
 
     $response->assertOk()
+        ->assertJsonCount(2, 'props.active_attendances')
+        ->assertJsonPath('props.active_attendances.0.worker_id', $zoe->getKey())
+        ->assertJsonPath('props.active_attendances.0.worker_name', 'Zoe Adams')
+        ->assertJsonPath('props.active_attendances.0.worked_seconds', 7200)
+        ->assertJsonPath('props.active_attendances.0.is_on_break', false)
+        ->assertJsonPath('props.active_attendances.1.worker_id', $alice->getKey())
+        ->assertJsonPath('props.active_attendances.1.worker_name', 'Alice Brown')
+        ->assertJsonPath('props.active_attendances.1.worked_seconds', 6300)
+        ->assertJsonPath('props.active_attendances.1.is_on_break', false);
+
+    $this->be($admin, 'users')
+        ->get('/statements?store_id=' . $store->getKey(), $this->inertiaHeaders())
+        ->assertOk()
         ->assertJsonCount(2, 'props.active_attendances')
         ->assertJsonPath('props.active_attendances.0.worker_id', $zoe->getKey())
         ->assertJsonPath('props.active_attendances.0.worker_name', 'Zoe Adams')

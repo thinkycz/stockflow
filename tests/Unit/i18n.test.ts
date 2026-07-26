@@ -80,6 +80,15 @@ describe('i18n configurations', () => {
         expect([...flattenKeys(messages.sk)].sort()).toEqual(englishKeys);
     });
 
+    test('Czech attendance-close copy uses the brigádník terminology', () => {
+        expect(messages.cs.statements.attendance_close.workers).toBe(
+            'Brigádníci',
+        );
+        expect(messages.cs.statements.attendance_close.description).toContain(
+            'brigádníci',
+        );
+    });
+
     test('all statically referenced translation keys exist', () => {
         const knownKeys = flattenKeys(messages.en);
         const missing = new Set<string>();

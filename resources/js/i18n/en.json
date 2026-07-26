@@ -611,7 +611,11 @@
         },
         "attendance_close": {
             "title": "Close active attendances?",
-            "description": "These employees still have active attendance:",
+            "description": "These workers still have active attendance:",
+            "workers": "Workers",
+            "active_status": "Active attendance",
+            "on_break": "On break",
+            "worked_time": "Worked",
             "save_only": "Save only",
             "save_and_close": "Save and close all"
         },

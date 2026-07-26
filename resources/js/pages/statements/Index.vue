@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { Save } from '@lucide/vue';
-import { computed, reactive, ref, watch } from 'vue';
+import { Clock3, Save, UserRound } from '@lucide/vue';
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
@@ -32,6 +33,8 @@ type DayRow = {
 type ActiveAttendance = {
     worker_id: number;
     worker_name: string;
+    worked_seconds: number;
+    is_on_break: boolean;
 };
 
 const props = defineProps<{
@@ -144,6 +147,50 @@ const attendanceModalOpen = computed(() => pendingSave.value !== null);
 const attendanceModalProcessing = computed(
     () => form.processing || todayForm.processing,
 );
+const attendanceClockMs = ref(Date.now());
+const attendanceSnapshotMs = ref(Date.now());
+let attendanceClockTimer: ReturnType<typeof setInterval> | null = null;
+
+watch(
+    () => props.active_attendances,
+    () => {
+        attendanceClockMs.value = Date.now();
+        attendanceSnapshotMs.value = attendanceClockMs.value;
+    },
+);
+
+onMounted(() => {
+    attendanceClockTimer = setInterval(() => {
+        attendanceClockMs.value = Date.now();
+    }, 1000);
+});
+
+onUnmounted(() => {
+    if (attendanceClockTimer !== null) {
+        clearInterval(attendanceClockTimer);
+    }
+});
+
+function attendanceWorkedSeconds(attendance: ActiveAttendance): number {
+    const liveSeconds = attendance.is_on_break
+        ? 0
+        : Math.max(
+              0,
+              Math.floor(
+                  (attendanceClockMs.value - attendanceSnapshotMs.value) / 1000,
+              ),
+          );
+
+    return attendance.worked_seconds + liveSeconds;
+}
+
+function attendanceDuration(seconds: number): string {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+}
 
 const months = computed(() => {
     const now = new Date();
@@ -309,10 +356,6 @@ function submitToday(closeAttendances: boolean): void {
 }
 
 function shouldCheckAttendances(kind: 'statement' | 'today'): boolean {
-    if (props.is_admin) {
-        return false;
-    }
-
     return (
         kind === 'today' ||
         (props.statement !== null &&
@@ -765,17 +808,94 @@ function submitPendingSave(closeAttendances: boolean): void {
             <p class="text-sm leading-6 text-on-surface-variant">
                 {{ t('statements.attendance_close.description') }}
             </p>
-            <ul
-                class="mt-4 max-h-64 divide-y divide-outline-glass overflow-y-auto rounded-xl border border-outline-glass bg-surface-container-low"
+            <div
+                class="mt-4 overflow-hidden rounded-xl border border-outline-glass"
             >
-                <li
-                    v-for="attendance in props.active_attendances"
-                    :key="attendance.worker_id"
-                    class="px-4 py-3 text-sm font-semibold text-on-surface"
+                <div
+                    class="flex items-center justify-between bg-surface-container-low px-4 py-3"
                 >
-                    {{ attendance.worker_name }}
-                </li>
-            </ul>
+                    <span
+                        id="active-attendance-workers-label"
+                        class="text-xs font-semibold uppercase tracking-wide text-on-surface-variant"
+                    >
+                        {{ t('statements.attendance_close.workers') }}
+                    </span>
+                    <Badge variant="success">
+                        {{ props.active_attendances.length }}
+                    </Badge>
+                </div>
+                <ul
+                    aria-labelledby="active-attendance-workers-label"
+                    class="max-h-64 divide-y divide-outline-glass overflow-y-auto bg-surface-container-lowest"
+                >
+                    <li
+                        v-for="attendance in props.active_attendances"
+                        :key="attendance.worker_id"
+                        class="flex items-center gap-3 px-4 py-3"
+                    >
+                        <span
+                            class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+                        >
+                            <UserRound :size="18" aria-hidden="true" />
+                        </span>
+                        <span class="min-w-0 flex-1">
+                            <strong
+                                class="block truncate text-sm font-semibold text-on-surface"
+                            >
+                                {{ attendance.worker_name }}
+                            </strong>
+                            <span
+                                class="mt-0.5 flex items-center gap-1.5 text-xs font-medium"
+                                :class="
+                                    attendance.is_on_break
+                                        ? 'text-amber-700'
+                                        : 'text-emerald-700'
+                                "
+                            >
+                                <span
+                                    class="size-2 rounded-full"
+                                    :class="
+                                        attendance.is_on_break
+                                            ? 'bg-amber-400'
+                                            : 'bg-emerald-500'
+                                    "
+                                    aria-hidden="true"
+                                ></span>
+                                {{
+                                    t(
+                                        attendance.is_on_break
+                                            ? 'statements.attendance_close.on_break'
+                                            : 'statements.attendance_close.active_status',
+                                    )
+                                }}
+                            </span>
+                        </span>
+                        <span class="shrink-0 text-right">
+                            <span
+                                class="block text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant"
+                            >
+                                {{
+                                    t('statements.attendance_close.worked_time')
+                                }}
+                            </span>
+                            <span
+                                class="mt-1 flex items-center justify-end gap-1.5 font-mono text-sm font-semibold tabular-nums text-on-surface"
+                            >
+                                <Clock3
+                                    :size="14"
+                                    class="text-on-surface-variant"
+                                    aria-hidden="true"
+                                />
+                                {{
+                                    attendanceDuration(
+                                        attendanceWorkedSeconds(attendance),
+                                    )
+                                }}
+                            </span>
+                        </span>
+                    </li>
+                </ul>
+            </div>
 
             <template #footer>
                 <Button

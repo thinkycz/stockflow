@@ -219,7 +219,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($session->refresh()->getActiveWorkerId())->toBe($worker->getKey());
 });
 
-\test('admin cannot close attendances through a statement save', function (): void {
+\test('admin can close attendances through a statement save', function (): void {
     Carbon::setTestNow(Carbon::parse('2026-07-23 10:00:00', 'Europe/Prague'));
     $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
     $store = Store::factory()->create(['user_id' => $admin->getKey()]);
@@ -245,8 +245,8 @@ use Thinkycz\LaravelCore\Support\Typer;
             'foodora' => 0,
             'close_attendances' => true,
         ])
-        ->assertForbidden();
+        ->assertRedirect();
 
-    \expect($session->refresh()->getActiveWorkerId())->toBe($worker->getKey())
-        ->and($statement->days()->whereDate('date', '2026-07-23')->firstOrFail()->getTotal())->toBe(0.0);
+    \expect($session->refresh()->getActiveWorkerId())->toBeNull()
+        ->and($statement->days()->whereDate('date', '2026-07-23')->firstOrFail()->getTotal())->toBe(100.0);
 });

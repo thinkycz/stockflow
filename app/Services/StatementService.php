@@ -149,6 +149,19 @@ class StatementService
     }
 
     /**
+     * Save statement rows and close all eligible attendances atomically.
+     *
+     * @param array<int, array<string, mixed>> $rows
+     */
+    public function updateDaysAndCloseAttendances(Statement $statement, array $rows, User $user): void
+    {
+        DB::transaction(function () use ($statement, $rows, $user): void {
+            $this->updateDays($statement, $rows, $user);
+            (new AttendanceService())->closeActiveCurrentDayAttendances($user, $statement->getStore());
+        });
+    }
+
+    /**
      * Reset all daily amounts to zero without deleting the statement and
      * record an immutable version snapshot afterwards so the previous
      * state can be restored from history.

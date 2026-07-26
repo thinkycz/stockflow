@@ -14,6 +14,7 @@ use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Thrower;
@@ -22,6 +23,89 @@ use Thinkycz\LaravelCore\Support\Typer;
 class AttendanceService
 {
     public const string BUSINESS_TIMEZONE = 'Europe/Prague';
+
+    /**
+     * List active current-day employees for the actor's store.
+     *
+     * @return list<array{worker_id: int, worker_name: string}>
+     */
+    public function activeCurrentDayEmployees(User $actor, Store $store): array
+    {
+        $sessions = $this->activeCurrentDaySessions($actor, $store);
+        $workerQuery = Worker::query();
+        Worker::scopeForUser($workerQuery, $actor->resolveScopeUser());
+        Worker::querySelect($workerQuery);
+
+        return \array_values($workerQuery
+            ->whereIn('id', $sessions->map(
+                static fn(AttendanceSession $session): int => $session->getWorkerId(),
+            )->all())
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get()
+            ->map(static fn(Worker $worker): array => [
+                'worker_id' => $worker->getKey(),
+                'worker_name' => $worker->getFullName(),
+            ])
+            ->all());
+    }
+
+    /**
+     * Find active sessions that started on the current Prague business day.
+     *
+     * @return Collection<int, AttendanceSession>
+     */
+    public function activeCurrentDaySessions(User $actor, Store $store, bool $lockForUpdate = false): Collection
+    {
+        $today = CarbonImmutable::now(self::BUSINESS_TIMEZONE);
+        $query = AttendanceSession::query();
+        AttendanceSession::scopeForUser($query, $actor->resolveScopeUser());
+        AttendanceSession::scopeForStore($query, $store->getKey());
+        AttendanceSession::querySelect($query);
+        $query
+            ->whereNotNull('active_worker_id')
+            ->where('started_at', '>=', $today->startOfDay()->utc())
+            ->where('started_at', '<', $today->addDay()->startOfDay()->utc())
+            ->orderBy('id');
+
+        if ($lockForUpdate) {
+            $query->lockForUpdate();
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * Close every active current-day attendance at the limited user's store.
+     */
+    public function closeActiveCurrentDayAttendances(User $actor, Store $store): void
+    {
+        if ($actor->isAdmin() || $actor->getAssignedStoreId() !== $store->getKey()) {
+            \abort(403);
+        }
+
+        DB::transaction(function () use ($actor, $store): void {
+            $sessions = $this->activeCurrentDaySessions($actor, $store, true);
+            $workerQuery = Worker::query();
+            Worker::scopeForUser($workerQuery, $actor->resolveScopeUser());
+            Worker::querySelect($workerQuery);
+            $workers = $workerQuery
+                ->whereIn('id', $sessions->map(
+                    static fn(AttendanceSession $session): int => $session->getWorkerId(),
+                )->all())
+                ->get()
+                ->keyBy(static fn(Worker $worker): int => $worker->getKey());
+
+            foreach ($sessions as $session) {
+                $this->perform(
+                    $actor,
+                    $store,
+                    Typer::assertInstance($workers->get($session->getWorkerId()), Worker::class),
+                    AttendanceActionEnum::DEPARTURE,
+                );
+            }
+        });
+    }
 
     /**
      * Apply one transactional attendance state transition.

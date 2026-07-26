@@ -52,9 +52,10 @@ class StatementTodayUpdateController
             'bolt' => $validity->amount()->required()->toArray(),
             'bolt_cash' => $validity->amount()->required()->toArray(),
             'foodora' => $validity->amount()->required()->toArray(),
+            'close_attendances' => $validity->closeAttendances()->sometimes()->nullable()->toArray(),
         ]);
 
-        $service->updateDays($statement, [[
+        $rows = [[
             'date' => $today->toDateString(),
             'cash' => $validated->parseFloat('cash'),
             'card' => $validated->parseFloat('card'),
@@ -62,7 +63,13 @@ class StatementTodayUpdateController
             'bolt' => $validated->parseFloat('bolt'),
             'bolt_cash' => $validated->parseFloat('bolt_cash'),
             'foodora' => $validated->parseFloat('foodora'),
-        ]], $user);
+        ]];
+
+        if ($validated->parseBool('close_attendances')) {
+            $service->updateDaysAndCloseAttendances($statement, $rows, $user);
+        } else {
+            $service->updateDays($statement, $rows, $user);
+        }
 
         Inertia::flash('success', \__('Statement saved.'));
 

@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Models\AttendanceSession;
 use App\Models\Statement;
 use App\Models\StatementDay;
 use App\Models\Store;
 use App\Models\User;
+use App\Models\Worker;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -27,6 +29,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response->assertJsonPath('component', 'statements/Index');
     $response->assertJsonPath('props.filters.store_id', $retail->getKey());
     $response->assertJsonCount(Carbon::now()->daysInMonth, 'props.days');
+    $response->assertJsonPath('props.active_attendances', []);
     \expect($response->json('props.statement.id'))->toBeInt();
 });
 
@@ -150,6 +153,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response->assertOk();
     $response->assertJsonPath('props.filters.store_id', $own->getKey());
     $response->assertJsonPath('props.is_admin', false);
+    $response->assertJsonPath('props.active_attendances', []);
 
     // A `?store_id=` override for a non-assigned store is silently
     // ignored — the resolver always pins limited users to their
@@ -158,6 +162,60 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->get('/statements?store_id=' . $other->getKey(), $this->inertiaHeaders());
     $overrideResponse->assertOk();
     $overrideResponse->assertJsonPath('props.filters.store_id', $own->getKey());
+});
+
+\test('limited user sees all active current-day attendance employees ordered by name', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-07-23 10:00:00', 'Europe/Prague'));
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $limited = Typer::assertInstance(UserFactory::new()->limited($store)->createOne(), User::class);
+    $zoe = Worker::factory()->create([
+        'user_id' => $admin->getKey(),
+        'first_name' => 'Zoe',
+        'last_name' => 'Adams',
+    ]);
+    $alice = Worker::factory()->create([
+        'user_id' => $admin->getKey(),
+        'first_name' => 'Alice',
+        'last_name' => 'Brown',
+    ]);
+    $stale = Worker::factory()->create([
+        'user_id' => $admin->getKey(),
+        'first_name' => 'Stale',
+        'last_name' => 'Worker',
+    ]);
+
+    foreach ([$alice, $zoe] as $worker) {
+        AttendanceSession::query()->create([
+            'user_id' => $admin->getKey(),
+            'store_id' => $store->getKey(),
+            'worker_id' => $worker->getKey(),
+            'created_by_user_id' => $limited->getKey(),
+            'active_worker_id' => $worker->getKey(),
+            'hourly_rate' => $worker->getHourlyRate(),
+            'started_at' => Carbon::parse('2026-07-23 08:00:00', 'Europe/Prague')->utc(),
+        ]);
+    }
+    AttendanceSession::query()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $stale->getKey(),
+        'created_by_user_id' => $limited->getKey(),
+        'active_worker_id' => $stale->getKey(),
+        'hourly_rate' => $stale->getHourlyRate(),
+        'started_at' => Carbon::parse('2026-07-22 08:00:00', 'Europe/Prague')->utc(),
+    ]);
+
+    $response = $this->be($limited, 'users')->get('/statements', $this->inertiaHeaders());
+
+    $response->assertOk()
+        ->assertJsonCount(2, 'props.active_attendances')
+        ->assertJsonPath('props.active_attendances.0.worker_id', $zoe->getKey())
+        ->assertJsonPath('props.active_attendances.0.worker_name', 'Zoe Adams')
+        ->assertJsonPath('props.active_attendances.1.worker_id', $alice->getKey())
+        ->assertJsonPath('props.active_attendances.1.worker_name', 'Alice Brown');
+
+    Carbon::setTestNow();
 });
 
 \test('limited user without an assigned store is refused', function (): void {

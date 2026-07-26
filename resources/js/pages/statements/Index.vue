@@ -9,6 +9,7 @@ import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
+import Modal from '@/components/ui/Modal.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { formatCzechDate } from '@/composables/useCzechDate';
@@ -26,6 +27,11 @@ type DayRow = {
     foodora: number;
     total: number;
     cash_checked: boolean;
+};
+
+type ActiveAttendance = {
+    worker_id: number;
+    worker_name: string;
 };
 
 const props = defineProps<{
@@ -49,6 +55,7 @@ const props = defineProps<{
         month: number;
     };
     is_admin: boolean;
+    active_attendances: ActiveAttendance[];
 }>();
 
 const { t, locale } = useI18n();
@@ -75,17 +82,19 @@ const todayFields: Array<keyof TodayForm> = [
     'foodora',
 ];
 
-const form = useForm<{ days: DayRow[] }>({
+const form = useForm<{ days: DayRow[]; close_attendances: boolean }>({
     days: props.days.map((day) => ({ ...day })),
+    close_attendances: false,
 });
 
-const todayForm = useForm<TodayForm>({
+const todayForm = useForm<TodayForm & { close_attendances: boolean }>({
     cash: String(props.today_day?.cash ?? 0),
     card: String(props.today_day?.card ?? 0),
     wolt: String(props.today_day?.wolt ?? 0),
     bolt: String(props.today_day?.bolt ?? 0),
     bolt_cash: String(props.today_day?.bolt_cash ?? 0),
     foodora: String(props.today_day?.foodora ?? 0),
+    close_attendances: false,
 });
 
 watch(
@@ -129,6 +138,12 @@ const editingRows = computed(() =>
 );
 
 const submitting = ref(false);
+const checkingAttendances = ref(false);
+const pendingSave = ref<'statement' | 'today' | null>(null);
+const attendanceModalOpen = computed(() => pendingSave.value !== null);
+const attendanceModalProcessing = computed(
+    () => form.processing || todayForm.processing,
+);
 
 const months = computed(() => {
     const now = new Date();
@@ -248,31 +263,107 @@ function editingKey(day: DayRow): string {
     return day.id !== null ? String(day.id) : day.date;
 }
 
-function save(): void {
+function finishPendingSave(): void {
+    pendingSave.value = null;
+}
+
+function closeAttendanceModal(): void {
+    if (!attendanceModalProcessing.value) {
+        finishPendingSave();
+    }
+}
+
+function submitStatement(closeAttendances: boolean): void {
     if (!props.statement) {
         return;
     }
     submitting.value = true;
     form.days = editingRows.value;
+    form.close_attendances = closeAttendances;
     form.put(route('statements.update', { statement: props.statement.id }), {
         preserveScroll: true,
+        onSuccess: finishPendingSave,
+        onError: finishPendingSave,
         onFinish: () => {
             submitting.value = false;
         },
     });
 }
 
-function saveToday(): void {
+function submitToday(closeAttendances: boolean): void {
     if (!props.today_statement) {
         return;
     }
 
+    todayForm.close_attendances = closeAttendances;
     todayForm.put(
         route('statements.today.update', {
             statement: props.today_statement.id,
         }),
-        { preserveScroll: true },
+        {
+            preserveScroll: true,
+            onSuccess: finishPendingSave,
+            onError: finishPendingSave,
+        },
     );
+}
+
+function shouldCheckAttendances(kind: 'statement' | 'today'): boolean {
+    if (props.is_admin) {
+        return false;
+    }
+
+    return (
+        kind === 'today' ||
+        (props.statement !== null &&
+            props.today_statement !== null &&
+            props.statement.id === props.today_statement.id)
+    );
+}
+
+function checkAttendancesBeforeSave(kind: 'statement' | 'today'): void {
+    checkingAttendances.value = true;
+    router.reload({
+        only: ['active_attendances'],
+        onSuccess: () => {
+            if (props.active_attendances.length > 0) {
+                pendingSave.value = kind;
+            } else if (kind === 'statement') {
+                submitStatement(false);
+            } else {
+                submitToday(false);
+            }
+        },
+        onFinish: () => {
+            checkingAttendances.value = false;
+        },
+    });
+}
+
+function save(): void {
+    if (shouldCheckAttendances('statement')) {
+        checkAttendancesBeforeSave('statement');
+        return;
+    }
+
+    submitStatement(false);
+}
+
+function saveToday(): void {
+    if (shouldCheckAttendances('today')) {
+        checkAttendancesBeforeSave('today');
+        return;
+    }
+
+    submitToday(false);
+}
+
+function submitPendingSave(closeAttendances: boolean): void {
+    if (pendingSave.value === 'statement') {
+        submitStatement(closeAttendances);
+    } else if (pendingSave.value === 'today') {
+        submitToday(closeAttendances);
+    }
 }
 </script>
 
@@ -372,7 +463,12 @@ function saveToday(): void {
                     </div>
 
                     <div class="flex justify-end">
-                        <Button type="submit" :disabled="todayForm.processing">
+                        <Button
+                            type="submit"
+                            :disabled="
+                                todayForm.processing || checkingAttendances
+                            "
+                        >
                             <Save :size="14" />
                             {{ t('statements.quick_entry.save') }}
                         </Button>
@@ -650,7 +746,7 @@ function saveToday(): void {
                     >
                         <Button
                             type="button"
-                            :disabled="submitting"
+                            :disabled="submitting || checkingAttendances"
                             @click="save"
                         >
                             <Save :size="14" />
@@ -660,5 +756,44 @@ function saveToday(): void {
                 </Card>
             </template>
         </div>
+
+        <Modal
+            :open="attendanceModalOpen"
+            :title="t('statements.attendance_close.title')"
+            @close="closeAttendanceModal"
+        >
+            <p class="text-sm leading-6 text-on-surface-variant">
+                {{ t('statements.attendance_close.description') }}
+            </p>
+            <ul
+                class="mt-4 max-h-64 divide-y divide-outline-glass overflow-y-auto rounded-xl border border-outline-glass bg-surface-container-low"
+            >
+                <li
+                    v-for="attendance in props.active_attendances"
+                    :key="attendance.worker_id"
+                    class="px-4 py-3 text-sm font-semibold text-on-surface"
+                >
+                    {{ attendance.worker_name }}
+                </li>
+            </ul>
+
+            <template #footer>
+                <Button
+                    type="button"
+                    variant="secondary"
+                    :disabled="attendanceModalProcessing"
+                    @click="submitPendingSave(false)"
+                >
+                    {{ t('statements.attendance_close.save_only') }}
+                </Button>
+                <Button
+                    type="button"
+                    :disabled="attendanceModalProcessing"
+                    @click="submitPendingSave(true)"
+                >
+                    {{ t('statements.attendance_close.save_and_close') }}
+                </Button>
+            </template>
+        </Modal>
     </AppLayout>
 </template>

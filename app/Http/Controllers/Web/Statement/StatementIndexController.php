@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Web\Statement;
 use App\Models\Statement;
 use App\Models\StatementDay;
 use App\Models\User;
+use App\Services\AttendanceService;
 use App\Services\StatementService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
@@ -81,6 +82,9 @@ class StatementIndexController
                 'month' => $month,
             ],
             'is_admin' => $user->isAdmin(),
+            'active_attendances' => !$user->isAdmin() && $store !== null
+                ? (new AttendanceService())->activeCurrentDayEmployees($user, $store)
+                : [],
         ]);
     }
 

@@ -2,10 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Models\AttendanceAudit;
+use App\Models\AttendanceBreak;
+use App\Models\AttendanceSession;
 use App\Models\Statement;
 use App\Models\StatementDay;
 use App\Models\Store;
 use App\Models\User;
+use App\Models\Worker;
 use App\Services\StatementService;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Carbon;
@@ -118,4 +122,131 @@ use Thinkycz\LaravelCore\Support\Typer;
     $today = $assigned->days()->whereDate('date', '2026-07-23')->first();
     \assert($today instanceof StatementDay);
     \expect($today->getCash())->toBe(1.0);
+});
+
+\test('limited user can save today and close all active current-day attendances', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-07-23 10:00:00', 'Europe/Prague'));
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $limited = Typer::assertInstance(UserFactory::new()->limited($store)->createOne(), User::class);
+    $statement = \app(StatementService::class)->findOrCreateForMonth($admin, $store, 2026, 7);
+    $working = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $onBreak = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $stale = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $sessions = [];
+
+    foreach ([$working, $onBreak] as $worker) {
+        $sessions[] = AttendanceSession::query()->create([
+            'user_id' => $admin->getKey(),
+            'store_id' => $store->getKey(),
+            'worker_id' => $worker->getKey(),
+            'created_by_user_id' => $limited->getKey(),
+            'active_worker_id' => $worker->getKey(),
+            'hourly_rate' => $worker->getHourlyRate(),
+            'started_at' => Carbon::parse('2026-07-23 08:00:00', 'Europe/Prague')->utc(),
+        ]);
+    }
+    $break = AttendanceBreak::query()->create([
+        'attendance_session_id' => $sessions[1]->getKey(),
+        'created_by_user_id' => $limited->getKey(),
+        'active_session_id' => $sessions[1]->getKey(),
+        'started_at' => Carbon::parse('2026-07-23 09:00:00', 'Europe/Prague')->utc(),
+    ]);
+    $staleSession = AttendanceSession::query()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $stale->getKey(),
+        'created_by_user_id' => $limited->getKey(),
+        'active_worker_id' => $stale->getKey(),
+        'hourly_rate' => $stale->getHourlyRate(),
+        'started_at' => Carbon::parse('2026-07-22 08:00:00', 'Europe/Prague')->utc(),
+    ]);
+
+    $this->actingAs($limited, 'users')
+        ->put('/statements/' . $statement->getKey() . '/today', [
+            'cash' => 100,
+            'card' => 0,
+            'wolt' => 0,
+            'bolt' => 0,
+            'bolt_cash' => 0,
+            'foodora' => 0,
+            'close_attendances' => true,
+        ])
+        ->assertRedirect();
+
+    foreach ($sessions as $session) {
+        $session->refresh();
+        \expect($session->getActiveWorkerId())->toBeNull()
+            ->and($session->getEndedAt())->not->toBeNull();
+    }
+
+    $break->refresh();
+    $staleSession->refresh();
+    \expect($break->getEndedAt())->not->toBeNull()
+        ->and($staleSession->getActiveWorkerId())->toBe($stale->getKey())
+        ->and(AttendanceAudit::query()->where('action', 'departure')->count())->toBe(2)
+        ->and($statement->days()->whereDate('date', '2026-07-23')->firstOrFail()->getTotal())->toBe(100.0);
+});
+
+\test('saving today without confirmation leaves active attendances open', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-07-23 10:00:00', 'Europe/Prague'));
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $limited = Typer::assertInstance(UserFactory::new()->limited($store)->createOne(), User::class);
+    $statement = \app(StatementService::class)->findOrCreateForMonth($admin, $store, 2026, 7);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $session = AttendanceSession::query()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $worker->getKey(),
+        'created_by_user_id' => $limited->getKey(),
+        'active_worker_id' => $worker->getKey(),
+        'hourly_rate' => $worker->getHourlyRate(),
+        'started_at' => Carbon::parse('2026-07-23 08:00:00', 'Europe/Prague')->utc(),
+    ]);
+
+    $this->actingAs($limited, 'users')
+        ->put('/statements/' . $statement->getKey() . '/today', [
+            'cash' => 100,
+            'card' => 0,
+            'wolt' => 0,
+            'bolt' => 0,
+            'bolt_cash' => 0,
+            'foodora' => 0,
+        ])
+        ->assertRedirect();
+
+    \expect($session->refresh()->getActiveWorkerId())->toBe($worker->getKey());
+});
+
+\test('admin cannot close attendances through a statement save', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-07-23 10:00:00', 'Europe/Prague'));
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $statement = \app(StatementService::class)->findOrCreateForMonth($admin, $store, 2026, 7);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $session = AttendanceSession::query()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $worker->getKey(),
+        'created_by_user_id' => $admin->getKey(),
+        'active_worker_id' => $worker->getKey(),
+        'hourly_rate' => $worker->getHourlyRate(),
+        'started_at' => Carbon::parse('2026-07-23 08:00:00', 'Europe/Prague')->utc(),
+    ]);
+
+    $this->actingAs($admin, 'users')
+        ->put('/statements/' . $statement->getKey() . '/today', [
+            'cash' => 100,
+            'card' => 0,
+            'wolt' => 0,
+            'bolt' => 0,
+            'bolt_cash' => 0,
+            'foodora' => 0,
+            'close_attendances' => true,
+        ])
+        ->assertForbidden();
+
+    \expect($session->refresh()->getActiveWorkerId())->toBe($worker->getKey())
+        ->and($statement->days()->whereDate('date', '2026-07-23')->firstOrFail()->getTotal())->toBe(0.0);
 });

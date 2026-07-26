@@ -609,6 +609,12 @@
             "total": "Dnešní součet",
             "save": "Uložit dnešní údaje"
         },
+        "attendance_close": {
+            "title": "Ukončit aktivní docházku?",
+            "description": "Tito zaměstnanci mají stále aktivní docházku:",
+            "save_only": "Pouze uložit",
+            "save_and_close": "Uložit a ukončit vše"
+        },
         "columns": {
             "day": "Den",
             "cash": "Hotovost",

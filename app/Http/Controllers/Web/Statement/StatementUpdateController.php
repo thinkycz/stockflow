@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\StatementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -54,11 +55,22 @@ class StatementUpdateController
             'days.*.bolt_cash' => $validity->amount()->required()->toArray(),
             'days.*.foodora' => $validity->amount()->required()->toArray(),
             'days.*.cash_checked' => $validity->cashChecked()->sometimes()->nullable()->toArray(),
+            'close_attendances' => $validity->closeAttendances()->sometimes()->nullable()->toArray(),
         ]);
 
         /** @var array<int, array<string, mixed>> $rows */
         $rows = Typer::assertArray($validated->assertArray('days'));
-        $service->updateDays($statement, $rows, $user);
+        if ($validated->parseBool('close_attendances')) {
+            $now = Carbon::now(StatementService::TIMEZONE);
+
+            if ($now->year !== $statement->getYear() || $now->month !== $statement->getMonth()) {
+                \abort(403);
+            }
+
+            $service->updateDaysAndCloseAttendances($statement, $rows, $user);
+        } else {
+            $service->updateDays($statement, $rows, $user);
+        }
 
         Inertia::flash('success', \__('Statement saved.'));
 

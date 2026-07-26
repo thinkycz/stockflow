@@ -609,6 +609,12 @@
             "total": "Today's total",
             "save": "Save today's data"
         },
+        "attendance_close": {
+            "title": "Close active attendances?",
+            "description": "These employees still have active attendance:",
+            "save_only": "Save only",
+            "save_and_close": "Save and close all"
+        },
         "columns": {
             "day": "Day",
             "cash": "Cash",

@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Models\AttendanceSession;
 use App\Models\ShiftPreset;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
+use Carbon\CarbonImmutable;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Seeder;
+use Thinkycz\LaravelCore\Support\Typer;
 
 class E2ESeeder extends Seeder
 {
@@ -39,7 +43,7 @@ class E2ESeeder extends Seeder
             return;
         }
 
-        Worker::query()->updateOrCreate(
+        $worker = Worker::query()->updateOrCreate(
             [
                 'user_id' => $user->getKey(),
                 'first_name' => 'E2E',
@@ -47,6 +51,41 @@ class E2ESeeder extends Seeder
             ],
             ['hourly_rate' => 200],
         );
+        $secondWorker = Worker::query()->updateOrCreate(
+            [
+                'user_id' => $user->getKey(),
+                'first_name' => 'Active',
+                'last_name' => 'Employee',
+            ],
+            ['hourly_rate' => 200],
+        );
+        $limited = User::query()->where('email', 'limited@test.com')->first();
+
+        if (!$limited instanceof User) {
+            $limited = Typer::assertInstance(
+                UserFactory::new()->limited($store)->password()->createOne([
+                    'email' => 'limited@test.com',
+                    'locale' => 'en',
+                ]),
+                User::class,
+            );
+        }
+
+        foreach ([$worker, $secondWorker] as $activeWorker) {
+            if (AttendanceSession::query()->where('active_worker_id', $activeWorker->getKey())->exists()) {
+                continue;
+            }
+
+            AttendanceSession::query()->create([
+                'user_id' => $user->getKey(),
+                'store_id' => $store->getKey(),
+                'worker_id' => $activeWorker->getKey(),
+                'created_by_user_id' => $limited->getKey(),
+                'active_worker_id' => $activeWorker->getKey(),
+                'hourly_rate' => $activeWorker->getHourlyRate(),
+                'started_at' => CarbonImmutable::now('UTC')->subHour(),
+            ]);
+        }
 
         foreach ([
             ['name' => 'Morning', 'start_time' => '06:30', 'end_time' => '12:00'],

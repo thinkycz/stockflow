@@ -145,7 +145,6 @@
         "form": {
             "create_title": "Nová kartička",
             "edit_title": "Upraviť kartičku",
-            "title": "Nadpis",
             "content": "Obsah",
             "label": "Štítok",
             "color": "Farba",
@@ -210,8 +209,6 @@
             }
         },
         "operations": {
-            "title": "Dnešná prevádzka",
-            "subtitle": "Aktuálny prehľad zmien a dochádzky na vašej pobočke.",
             "current_shift": "Aktuálna zmena",
             "no_current_shift": "Práve nie je naplánovaná žiadna zmena.",
             "next_shift": "Ďalšia zmena",

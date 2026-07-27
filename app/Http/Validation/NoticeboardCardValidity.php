@@ -34,14 +34,6 @@ class NoticeboardCardValidity
     }
 
     /**
-     * Card title.
-     */
-    public function title(): Validity
-    {
-        return $this->baseValidity->make()->string(120);
-    }
-
-    /**
      * Raw editor HTML.
      */
     public function bodyHtml(): Validity

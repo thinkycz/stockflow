@@ -428,7 +428,6 @@ class DashboardController
 
             return [
                 'id' => $card->getKey(),
-                'title' => $card->getTitle(),
                 'body_html' => $card->getBodyHtml(),
                 'label' => $card->getLabel()->value,
                 'color' => $card->getColor()->value,

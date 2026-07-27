@@ -145,7 +145,6 @@
         "form": {
             "create_title": "Nová kartička",
             "edit_title": "Upravit kartičku",
-            "title": "Titulek",
             "content": "Obsah",
             "label": "Štítek",
             "color": "Barva",
@@ -210,8 +209,6 @@
             }
         },
         "operations": {
-            "title": "Dnešní provoz",
-            "subtitle": "Aktuální přehled směn a docházky na vaší pobočce.",
             "current_shift": "Aktuální směna",
             "no_current_shift": "Právě není naplánovaná žádná směna.",
             "next_shift": "Další směna",

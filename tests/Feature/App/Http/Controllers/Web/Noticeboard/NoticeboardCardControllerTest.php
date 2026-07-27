@@ -27,6 +27,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $card = Typer::assertInstance(NoticeboardCard::query()->first(), NoticeboardCard::class);
     \expect($card->getStoreId())->toBe($store->getKey())
         ->and($card->getSize()->value)->toBe('large')
+        ->and($card->getTitle())->toBe('Ahoj týme')
         ->and($card->getBodyHtml())->toContain('<strong>týme</strong>')
         ->not->toContain('<script');
 });
@@ -41,10 +42,6 @@ use Thinkycz\LaravelCore\Support\Typer;
         'color' => 'yellow',
     ];
 
-    $this->be($admin, 'users')->post('/noticeboard-cards', [
-        ...$base,
-        'title' => \str_repeat('a', 121),
-    ])->assertUnprocessable();
     $this->be($admin, 'users')->post('/noticeboard-cards', [
         ...$base,
         'body_html' => \str_repeat('a', 20_001),
@@ -108,7 +105,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         ...$payload,
         '_method' => 'put',
     ])->assertRedirect('/dashboard');
-    \expect($local->fresh()?->getTitle())->toBe('Upraveno')
+    \expect($local->fresh()?->getTitle())->toBe('Nový obsah')
         ->and($local->fresh()?->getSize()->value)->toBe('small');
     $this->be($limited, 'users')->put('/noticeboard-cards/' . $foreign->getKey(), $payload)->assertNotFound();
 });

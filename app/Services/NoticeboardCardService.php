@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Thrower;
@@ -24,7 +25,6 @@ class NoticeboardCardService
     public function create(
         User $actor,
         Store $store,
-        string $title,
         string $bodyHtml,
         string $label,
         string $color,
@@ -41,7 +41,7 @@ class NoticeboardCardService
                 'store_id' => $store->getKey(),
                 'created_by_user_id' => $actor->getKey(),
                 'updated_by_user_id' => $actor->getKey(),
-                'title' => $title,
+                'title' => $this->title($content['text']),
                 'body_html' => $content['html'],
                 'body_text' => $content['text'],
                 'label' => $label,
@@ -65,7 +65,6 @@ class NoticeboardCardService
     public function update(
         NoticeboardCard $card,
         User $actor,
-        string $title,
         string $bodyHtml,
         string $label,
         string $color,
@@ -83,7 +82,6 @@ class NoticeboardCardService
             $updated = DB::transaction(function () use (
                 $card,
                 $actor,
-                $title,
                 $content,
                 $label,
                 $color,
@@ -105,7 +103,7 @@ class NoticeboardCardService
                         ->throw();
                 }
 
-                $locked->setAttribute('title', $title);
+                $locked->setAttribute('title', $this->title($content['text']));
                 $locked->setAttribute('body_html', $content['html']);
                 $locked->setAttribute('body_text', $content['text']);
                 $locked->setAttribute('label', $label);
@@ -227,5 +225,13 @@ class NoticeboardCardService
         }
 
         return Carbon::parse($expiresOn, 'Europe/Prague')->endOfDay()->utc();
+    }
+
+    /**
+     * Derive the internal searchable summary from card content.
+     */
+    private function title(string $bodyText): string
+    {
+        return Str::limit($bodyText, 120, '');
     }
 }

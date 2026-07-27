@@ -145,7 +145,6 @@
         "form": {
             "create_title": "New card",
             "edit_title": "Edit card",
-            "title": "Title",
             "content": "Content",
             "label": "Label",
             "color": "Color",
@@ -210,8 +209,6 @@
             }
         },
         "operations": {
-            "title": "Today's operations",
-            "subtitle": "Current shift and attendance overview for your store.",
             "current_shift": "Current shift",
             "no_current_shift": "No shift is scheduled right now.",
             "next_shift": "Next shift",

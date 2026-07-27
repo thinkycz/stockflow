@@ -29,7 +29,6 @@ import { cn } from '@/lib/utils';
 
 export type NoticeboardCard = {
     id: number;
-    title: string;
     body_html: string;
     label: 'information' | 'important' | 'task' | 'event';
     color: 'yellow' | 'pink' | 'blue' | 'green' | 'purple';
@@ -79,7 +78,6 @@ const selectedImageUrl = ref<string | null>(null);
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
 const form = useForm({
-    title: '',
     body_html: '<p></p>',
     label: 'information',
     color: 'yellow',
@@ -153,7 +151,6 @@ function openEdit(card: NoticeboardCard): void {
     detailCard.value = null;
     editingCard.value = card;
     form.clearErrors();
-    form.title = card.title;
     form.body_html = card.body_html;
     form.label = card.label;
     form.color = card.color;
@@ -428,16 +425,11 @@ function cardClass(
                     <img
                         v-if="card.image_url"
                         :src="card.image_url"
-                        :alt="card.title"
+                        :alt="t(`noticeboard.labels.${card.label}`)"
                         class="mt-4 h-32 w-full rounded-xl object-cover"
                     />
-                    <h3
-                        class="mt-4 font-heading text-lg font-bold text-slate-900"
-                    >
-                        {{ card.title }}
-                    </h3>
                     <div
-                        class="noticeboard-rich-text mt-2 max-h-36 overflow-hidden text-sm leading-relaxed text-slate-700"
+                        class="noticeboard-rich-text mt-4 max-h-36 overflow-hidden text-sm leading-relaxed text-slate-700"
                         v-html="card.body_html"
                     />
                     <div
@@ -482,25 +474,6 @@ function cardClass(
         @close="closeForm"
     >
         <form class="space-y-5" @submit.prevent="submit">
-            <div>
-                <label
-                    for="noticeboard-title"
-                    class="mb-1.5 block text-xs font-semibold text-on-surface"
-                >
-                    {{ t('noticeboard.form.title') }}
-                </label>
-                <Input
-                    id="noticeboard-title"
-                    v-model="form.title"
-                    maxlength="120"
-                    :invalid="Boolean(form.errors.title)"
-                    required
-                />
-                <p v-if="form.errors.title" class="mt-1 text-xs text-error-red">
-                    {{ form.errors.title }}
-                </p>
-            </div>
-
             <div>
                 <label
                     class="mb-1.5 block text-xs font-semibold text-on-surface"
@@ -694,27 +667,15 @@ function cardClass(
 
     <Modal
         :open="detailCard !== null"
-        :title="detailCard?.title"
+        :title="
+            detailCard ? t(`noticeboard.labels.${detailCard.label}`) : undefined
+        "
         class="max-h-[92vh] max-w-3xl overflow-y-auto"
         @close="detailCard = null"
     >
         <template v-if="detailCard">
-            <div class="mb-4 flex flex-wrap items-center gap-2">
-                <span
-                    class="inline-flex items-center gap-1.5 rounded-full bg-surface-container-low px-2.5 py-1.5 text-xs font-semibold text-on-surface-variant"
-                    :title="t(`noticeboard.labels.${detailCard.label}`)"
-                >
-                    <component
-                        :is="labelIcon(detailCard.label)"
-                        :size="16"
-                        aria-hidden="true"
-                    />
-                    {{ t(`noticeboard.labels.${detailCard.label}`) }}
-                </span>
-                <span
-                    v-if="detailCard.expires_on"
-                    class="text-xs text-on-surface-variant"
-                >
+            <div v-if="detailCard.expires_on" class="mb-4">
+                <span class="text-xs text-on-surface-variant">
                     {{
                         t('noticeboard.expires', {
                             date: detailCard.expires_on,
@@ -725,7 +686,7 @@ function cardClass(
             <img
                 v-if="detailCard.image_url"
                 :src="detailCard.image_url"
-                :alt="detailCard.title"
+                :alt="t(`noticeboard.labels.${detailCard.label}`)"
                 class="mb-5 max-h-[28rem] w-full rounded-2xl object-contain"
             />
             <div

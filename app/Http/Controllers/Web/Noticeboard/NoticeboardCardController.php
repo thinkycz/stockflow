@@ -35,7 +35,6 @@ class NoticeboardCardController
         $store = $this->resolveStore($request, $actor);
         $validity = NoticeboardCardValidity::inject();
         $validated = $this->validateRequest($request, [
-            'title' => $validity->title()->required()->toArray(),
             'body_html' => $validity->bodyHtml()->required()->toArray(),
             'label' => $validity->label()->required()->toArray(),
             'color' => $validity->color()->required()->toArray(),
@@ -48,7 +47,6 @@ class NoticeboardCardController
             (new NoticeboardCardService())->create(
                 $actor,
                 $store,
-                $validated->assertString('title'),
                 $validated->assertString('body_html'),
                 $validated->assertString('label'),
                 $validated->assertString('color'),
@@ -75,7 +73,6 @@ class NoticeboardCardController
         $card = $this->resolveCard($request, $actor, $store);
         $validity = NoticeboardCardValidity::inject();
         $validated = $this->validateRequest($request, [
-            'title' => $validity->title()->required()->toArray(),
             'body_html' => $validity->bodyHtml()->required()->toArray(),
             'label' => $validity->label()->required()->toArray(),
             'color' => $validity->color()->required()->toArray(),
@@ -90,7 +87,6 @@ class NoticeboardCardController
             (new NoticeboardCardService())->update(
                 $card,
                 $actor,
-                $validated->assertString('title'),
                 $validated->assertString('body_html'),
                 $validated->assertString('label'),
                 $validated->assertString('color'),

@@ -92,11 +92,14 @@ test('limited user creates a noticeboard card that admin can edit', async ({
     await page.waitForURL(/\/dashboard$/);
 
     await page.getByRole('button', { name: 'Add card' }).first().click();
-    await page.getByLabel('Title').fill('Shared E2E notice');
-    await page.locator('.noticeboard-editor').fill('Created by limited user');
+    await page
+        .locator('.noticeboard-editor')
+        .fill('Shared E2E notice created by limited user');
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(
-        page.getByRole('heading', { name: 'Shared E2E notice' }),
+        page.getByText('Shared E2E notice created by limited user', {
+            exact: true,
+        }),
     ).toBeVisible();
 
     await page.context().clearCookies();
@@ -106,17 +109,21 @@ test('limited user creates a noticeboard card that admin can edit', async ({
     await page.getByRole('button', { name: 'Log in' }).click();
     await page.waitForURL(/\/dashboard$/);
     await expect(
-        page.getByRole('heading', { name: 'Shared E2E notice' }),
+        page.getByText('Shared E2E notice created by limited user', {
+            exact: true,
+        }),
     ).toBeVisible();
 
     const card = page.locator('article').filter({
-        has: page.getByRole('heading', { name: 'Shared E2E notice' }),
+        has: page.getByText('Shared E2E notice created by limited user', {
+            exact: true,
+        }),
     });
     await card.getByRole('button', { name: 'Edit' }).click();
-    await page.getByLabel('Title').fill('Admin edited notice');
+    await page.locator('.noticeboard-editor').fill('Admin edited notice');
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(
-        page.getByRole('heading', { name: 'Admin edited notice' }),
+        page.getByText('Admin edited notice', { exact: true }),
     ).toBeVisible();
 });
 
@@ -130,21 +137,10 @@ test('noticeboard editor, preview, detail, filters and validation work together'
     await page.waitForURL(/\/dashboard$/);
 
     await page.getByRole('button', { name: 'Add card' }).first().click();
-    await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByLabel('Title')).toBeFocused();
-    await expect
-        .poll(() =>
-            page
-                .getByLabel('Title')
-                .evaluate(
-                    (input: HTMLInputElement) => input.validity.valueMissing,
-                ),
-        )
-        .toBe(true);
-
-    await page.getByLabel('Title').fill('Formatted E2E notice');
     await page.getByRole('button', { name: 'Bold' }).click();
-    await page.locator('.noticeboard-editor').fill('Formatted E2E content');
+    await page
+        .locator('.noticeboard-editor')
+        .fill('Formatted E2E notice content');
     await page.getByRole('button', { name: 'Task', exact: true }).click();
     await page.getByRole('button', { name: 'Blue', exact: true }).click();
     await page.getByRole('button', { name: 'Large', exact: true }).click();
@@ -160,16 +156,22 @@ test('noticeboard editor, preview, detail, filters and validation work together'
     await page.getByRole('button', { name: 'Save' }).click();
 
     const card = page.locator('article').filter({
-        has: page.getByRole('heading', { name: 'Formatted E2E notice' }),
+        has: page.getByText('Formatted E2E notice content', { exact: true }),
     });
-    await expect(card.getByText('Formatted E2E content')).toBeVisible();
-    await expect(card.locator('strong')).toHaveText('Formatted E2E content');
+    await expect(
+        card.getByText('Formatted E2E notice content', { exact: true }),
+    ).toBeVisible();
+    await expect(card.locator('strong')).toHaveText(
+        'Formatted E2E notice content',
+    );
     await expect(card.locator('img')).toBeVisible();
     await expect(card).toHaveAttribute('data-card-color', 'blue');
     await expect(card).toHaveAttribute('data-card-size', 'large');
     await expect(card.getByText('Task', { exact: true })).toBeVisible();
 
-    await card.getByRole('heading', { name: 'Formatted E2E notice' }).click();
+    await card
+        .getByText('Formatted E2E notice content', { exact: true })
+        .click();
     await expect(
         page.getByText(/Last updated by .*test@test\.com/),
     ).toBeVisible();
@@ -178,7 +180,7 @@ test('noticeboard editor, preview, detail, filters and validation work together'
     await page.getByPlaceholder('Search cards…').fill('Formatted E2E notice');
     await page.waitForURL(/search=Formatted(\+|%20)E2E(\+|%20)notice/);
     await expect(
-        page.getByRole('heading', { name: 'Formatted E2E notice' }),
+        page.getByText('Formatted E2E notice content', { exact: true }),
     ).toBeVisible();
 
     await page.getByRole('button', { name: 'Expired' }).click();

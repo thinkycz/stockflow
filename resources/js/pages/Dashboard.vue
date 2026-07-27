@@ -191,17 +191,6 @@ function statementPeriodLabel(statement: RecentStatement): string {
 
             <template v-if="!props.is_admin">
                 <section v-if="operations" class="flex flex-col gap-4">
-                    <div>
-                        <h2
-                            class="font-heading text-lg font-bold text-on-surface"
-                        >
-                            {{ t('dashboard.operations.title') }}
-                        </h2>
-                        <p class="mt-1 text-sm text-on-surface-variant">
-                            {{ t('dashboard.operations.subtitle') }}
-                        </p>
-                    </div>
-
                     <div class="grid gap-4 lg:grid-cols-3">
                         <Card padded>
                             <div class="flex items-center gap-2">

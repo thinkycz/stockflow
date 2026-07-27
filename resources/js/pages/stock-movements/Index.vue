@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Plus, Search, Trash2 } from '@lucide/vue';
-import { ref, watch } from 'vue';
+import { Plus, Search } from '@lucide/vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
@@ -9,35 +9,55 @@ import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Input from '@/components/ui/Input.vue';
+import Label from '@/components/ui/Label.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
-import { formatDate, formatMoney, formatNumber } from '@/lib/format';
+import { formatDate, formatMoney, formatSignedMoney } from '@/lib/format';
 
 type MovementRow = {
     id: number;
     number: string;
-    type: 'incoming' | 'outgoing' | 'adjustment';
-    display_label_key: 'incoming' | 'outgoing' | 'transfer' | 'adjustment';
+    type:
+        | 'incoming'
+        | 'transfer'
+        | 'consumption'
+        | 'adjustment'
+        | 'inventory_reconciliation'
+        | 'reversal';
+    display_label_key:
+        | 'incoming'
+        | 'transfer'
+        | 'consumption'
+        | 'adjustment'
+        | 'inventory_reconciliation'
+        | 'reversal';
     store_id: number | null;
     store_name: string | null;
     source_store_id: number | null;
     source_store_name: string | null;
     created_at: string;
-    total_quantity: number;
     total_value: number;
+    net_value: number;
     items_count: number;
     created_by: string | null;
 };
 
+type StoreOption = {
+    id: number;
+    name: string;
+};
+
 const props = defineProps<{
     movements: MovementRow[];
+    stores: StoreOption[];
     filters: {
         search: string;
         type: string | null;
-        store_id: number | null;
+        source_store_id: number | null;
+        destination_store_id: number | null;
         date_from: string | null;
         date_to: string | null;
     };
@@ -57,9 +77,36 @@ const route = useRoute();
 
 const formSearch = ref<string>(props.filters.search || '');
 const formType = ref<string>(props.filters.type || '');
+const formSourceStoreId = ref<string>(
+    props.filters.source_store_id !== null
+        ? String(props.filters.source_store_id)
+        : '',
+);
+const formDestinationStoreId = ref<string>(
+    props.filters.destination_store_id !== null
+        ? String(props.filters.destination_store_id)
+        : '',
+);
 const formDateFrom = ref<string>(props.filters.date_from || '');
 const formDateTo = ref<string>(props.filters.date_to || '');
 let filterTimer: ReturnType<typeof setTimeout> | null = null;
+
+const totals = computed(() =>
+    props.movements.reduce(
+        (summary, movement) => ({
+            items_count: summary.items_count + movement.items_count,
+            total_value:
+                summary.total_value +
+                (movement.type === 'inventory_reconciliation'
+                    ? movement.net_value
+                    : movement.total_value),
+        }),
+        {
+            items_count: 0,
+            total_value: 0,
+        },
+    ),
+);
 
 function applyFilters(): void {
     const params: Record<string, string | number> = {};
@@ -68,6 +115,12 @@ function applyFilters(): void {
     }
     if (formType.value) {
         params.type = formType.value;
+    }
+    if (formSourceStoreId.value) {
+        params.source_store_id = formSourceStoreId.value;
+    }
+    if (formDestinationStoreId.value) {
+        params.destination_store_id = formDestinationStoreId.value;
     }
     if (formDateFrom.value) {
         params.date_from = formDateFrom.value;
@@ -81,19 +134,22 @@ function applyFilters(): void {
     });
 }
 
-watch([formSearch, formType, formDateFrom, formDateTo], () => {
-    if (filterTimer !== null) {
-        clearTimeout(filterTimer);
-    }
-    filterTimer = setTimeout(applyFilters, 300);
-});
-
-function destroyMovement(id: number): void {
-    if (!window.confirm(t('stock_movements.confirm_delete'))) {
-        return;
-    }
-    router.delete(route('stock-movements.destroy', id));
-}
+watch(
+    [
+        formSearch,
+        formType,
+        formSourceStoreId,
+        formDestinationStoreId,
+        formDateFrom,
+        formDateTo,
+    ],
+    () => {
+        if (filterTimer !== null) {
+            clearTimeout(filterTimer);
+        }
+        filterTimer = setTimeout(applyFilters, 300);
+    },
+);
 </script>
 
 <template>
@@ -126,22 +182,32 @@ function destroyMovement(id: number): void {
 
             <Card padded>
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-end">
-                    <div class="relative lg:flex-1">
-                        <Search
-                            :size="14"
-                            class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
-                        />
-                        <Input
-                            v-model="formSearch"
-                            type="search"
-                            :placeholder="
-                                t('stock_movements.search_placeholder')
-                            "
-                            class="pl-9"
-                        />
+                    <div class="flex flex-col gap-1 lg:flex-1">
+                        <Label for="stock_movement_search">
+                            {{ t('stock_movements.filter.search') }}
+                        </Label>
+                        <div class="relative">
+                            <Search
+                                :size="14"
+                                class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
+                            />
+                            <Input
+                                id="stock_movement_search"
+                                v-model="formSearch"
+                                type="search"
+                                :placeholder="
+                                    t('stock_movements.search_placeholder')
+                                "
+                                class="pl-9"
+                            />
+                        </div>
                     </div>
-                    <div class="lg:w-40">
+                    <div class="flex flex-col gap-1 lg:w-40">
+                        <Label for="movement_type_filter">
+                            {{ t('stock_movements.filter.type') }}
+                        </Label>
                         <Select
+                            id="movement_type_filter"
                             v-model="formType"
                             :options="[
                                 {
@@ -155,8 +221,20 @@ function destroyMovement(id: number): void {
                                     label: t('stock_movements.types.incoming'),
                                 },
                                 {
-                                    value: 'outgoing',
-                                    label: t('stock_movements.types.outgoing'),
+                                    value: 'transfer',
+                                    label: t('stock_movements.types.transfer'),
+                                },
+                                {
+                                    value: 'consumption',
+                                    label: t(
+                                        'stock_movements.types.consumption',
+                                    ),
+                                },
+                                {
+                                    value: 'inventory_reconciliation',
+                                    label: t(
+                                        'stock_movements.types.inventory_reconciliation',
+                                    ),
                                 },
                                 {
                                     value: 'adjustment',
@@ -164,21 +242,73 @@ function destroyMovement(id: number): void {
                                         'stock_movements.types.adjustment',
                                     ),
                                 },
+                                {
+                                    value: 'reversal',
+                                    label: t('stock_movements.types.reversal'),
+                                },
                             ]"
                         />
                     </div>
-                    <div class="lg:w-40">
-                        <Input
-                            v-model="formDateFrom"
-                            type="date"
-                            :aria-label="t('stock_movements.filter.date_from')"
+                    <div class="flex flex-col gap-1 lg:w-44">
+                        <Label for="source_store_filter">
+                            {{ t('stock_movements.filter.source') }}
+                        </Label>
+                        <Select
+                            id="source_store_filter"
+                            v-model="formSourceStoreId"
+                            :options="[
+                                {
+                                    value: '',
+                                    label: t(
+                                        'stock_movements.filter.all_sources',
+                                    ),
+                                },
+                                ...stores.map((store) => ({
+                                    value: String(store.id),
+                                    label: store.name,
+                                })),
+                            ]"
                         />
                     </div>
-                    <div class="lg:w-40">
+                    <div class="flex flex-col gap-1 lg:w-44">
+                        <Label for="destination_store_filter">
+                            {{ t('stock_movements.filter.destination') }}
+                        </Label>
+                        <Select
+                            id="destination_store_filter"
+                            v-model="formDestinationStoreId"
+                            :options="[
+                                {
+                                    value: '',
+                                    label: t(
+                                        'stock_movements.filter.all_destinations',
+                                    ),
+                                },
+                                ...stores.map((store) => ({
+                                    value: String(store.id),
+                                    label: store.name,
+                                })),
+                            ]"
+                        />
+                    </div>
+                    <div class="flex flex-col gap-1 lg:w-40">
+                        <Label for="date_from_filter">
+                            {{ t('stock_movements.filter.date_from') }}
+                        </Label>
                         <Input
+                            id="date_from_filter"
+                            v-model="formDateFrom"
+                            type="date"
+                        />
+                    </div>
+                    <div class="flex flex-col gap-1 lg:w-40">
+                        <Label for="date_to_filter">
+                            {{ t('stock_movements.filter.date_to') }}
+                        </Label>
+                        <Input
+                            id="date_to_filter"
                             v-model="formDateTo"
                             type="date"
-                            :aria-label="t('stock_movements.filter.date_to')"
                         />
                     </div>
                 </div>
@@ -221,9 +351,6 @@ function destroyMovement(id: number): void {
                                     }}
                                 </th>
                                 <th class="text-right">
-                                    {{ t('stock_movements.columns.quantity') }}
-                                </th>
-                                <th class="text-right">
                                     {{ t('stock_movements.columns.value') }}
                                 </th>
                                 <th>{{ t('stock_movements.columns.date') }}</th>
@@ -231,9 +358,6 @@ function destroyMovement(id: number): void {
                                     {{
                                         t('stock_movements.columns.created_by')
                                     }}
-                                </th>
-                                <th class="w-0">
-                                    {{ t('stock_movements.columns.actions') }}
                                 </th>
                             </tr>
                         </thead>
@@ -272,13 +396,15 @@ function destroyMovement(id: number): void {
                                 >
                                     {{ movement.items_count }}
                                 </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ formatNumber(movement.total_quantity) }}
-                                </td>
                                 <td class="text-right text-on-surface-variant">
-                                    {{ formatMoney(movement.total_value) }}
+                                    {{
+                                        movement.type ===
+                                        'inventory_reconciliation'
+                                            ? formatSignedMoney(
+                                                  movement.net_value,
+                                              )
+                                            : formatMoney(movement.total_value)
+                                    }}
                                 </td>
                                 <td class="text-xs text-on-surface-variant">
                                     {{ formatDate(movement.created_at) }}
@@ -286,18 +412,32 @@ function destroyMovement(id: number): void {
                                 <td class="text-xs text-on-surface-variant">
                                     {{ movement.created_by ?? '—' }}
                                 </td>
-                                <td>
-                                    <Button
-                                        variant="ghost"
-                                        type="button"
-                                        :aria-label="t('common.delete')"
-                                        @click="destroyMovement(movement.id)"
-                                    >
-                                        <Trash2 :size="14" />
-                                    </Button>
-                                </td>
                             </tr>
                         </tbody>
+                        <tfoot>
+                            <tr>
+                                <th
+                                    colspan="4"
+                                    class="border-t border-outline-glass pt-2 text-left text-xs font-semibold text-on-surface-variant"
+                                >
+                                    Σ
+                                </th>
+                                <th
+                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
+                                >
+                                    {{ totals.items_count }}
+                                </th>
+                                <th
+                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface"
+                                >
+                                    {{ formatMoney(totals.total_value) }}
+                                </th>
+                                <th
+                                    colspan="2"
+                                    class="border-t border-outline-glass pt-2"
+                                ></th>
+                            </tr>
+                        </tfoot>
                     </DataTable>
                 </div>
 
@@ -311,6 +451,9 @@ function destroyMovement(id: number): void {
                     :query-params="{
                         search: filters.search,
                         type: filters.type ?? undefined,
+                        source_store_id: filters.source_store_id ?? undefined,
+                        destination_store_id:
+                            filters.destination_store_id ?? undefined,
                         date_from: filters.date_from ?? undefined,
                         date_to: filters.date_to ?? undefined,
                     }"

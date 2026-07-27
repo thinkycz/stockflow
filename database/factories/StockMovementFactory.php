@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\StockMovementOriginEnum;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\StockMovement;
 use App\Models\Store;
@@ -27,6 +28,8 @@ class StockMovementFactory extends Factory
             'user_id' => static fn(): int => UserFactory::new()->createOne()->getKey(),
             'number' => 'IN-' . Carbon::now()->year . '-' . \mb_str_pad((string) $this->faker->unique()->numberBetween(1, 9999), 4, '0', \STR_PAD_LEFT),
             'type' => StockMovementTypeEnum::INCOMING->value,
+            'origin' => StockMovementOriginEnum::MANUAL->value,
+            'occurred_at' => Carbon::now(),
             'store_id' => null,
             'source_store_id' => null,
             'note' => null,
@@ -47,12 +50,31 @@ class StockMovementFactory extends Factory
     }
 
     /**
-     * Indicate that the movement is outgoing for a given store.
+     * Indicate that the movement is a transfer to the given store.
      */
     public function outgoing(Store $store): self
     {
         return $this->state(fn(): array => [
-            'type' => StockMovementTypeEnum::OUTGOING->value,
+            'type' => StockMovementTypeEnum::TRANSFER->value,
+            'store_id' => $store->getKey(),
+        ]);
+    }
+
+    /**
+     * Indicate that the movement is a transfer to the given store.
+     */
+    public function transfer(Store $store): self
+    {
+        return $this->outgoing($store);
+    }
+
+    /**
+     * Indicate that the movement is manual consumption at the given store.
+     */
+    public function consumption(Store $store): self
+    {
+        return $this->state(fn(): array => [
+            'type' => StockMovementTypeEnum::CONSUMPTION->value,
             'store_id' => $store->getKey(),
         ]);
     }

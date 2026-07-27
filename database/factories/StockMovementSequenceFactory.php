@@ -6,7 +6,6 @@ namespace Database\Factories;
 
 use App\Enums\StockMovementTypeEnum;
 use App\Models\StockMovementSequence;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,7 +21,6 @@ class StockMovementSequenceFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => static fn(): int => UserFactory::new()->createOne()->getKey(),
             'type' => StockMovementTypeEnum::INCOMING->value,
             'year' => (int) \date('Y'),
             'last_number' => 0,
@@ -45,7 +43,7 @@ class StockMovementSequenceFactory extends Factory
     public function outgoing(): self
     {
         return $this->state(fn(): array => [
-            'type' => StockMovementTypeEnum::OUTGOING->value,
+            'type' => StockMovementTypeEnum::TRANSFER->value,
         ]);
     }
 
@@ -56,16 +54,6 @@ class StockMovementSequenceFactory extends Factory
     {
         return $this->state(fn(): array => [
             'type' => StockMovementTypeEnum::ADJUSTMENT->value,
-        ]);
-    }
-
-    /**
-     * Indicate the sequence is for a specific user.
-     */
-    public function byUser(User $user): self
-    {
-        return $this->state(fn(): array => [
-            'user_id' => $user->getKey(),
         ]);
     }
 }

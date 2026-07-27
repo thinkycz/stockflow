@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\StockMovementClassificationEnum;
 use Database\Factories\InventorySessionItemFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Models\BaseModel;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -41,7 +43,7 @@ class InventorySessionItem extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'session_id', 'item_id', 'quantity', 'note', 'created_at', 'updated_at']);
+        return $query->select(['id', 'session_id', 'item_id', 'quantity', 'counted_at', 'opening_quantity', 'client_version', 'expected_quantity', 'quantity_difference', 'classification', 'observation_started_at', 'note', 'created_at', 'updated_at']);
     }
 
     /**
@@ -61,7 +63,7 @@ class InventorySessionItem extends BaseModel
      */
     public function item(): BelongsTo
     {
-        return $this->belongsTo(Item::class, 'item_id');
+        return $this->belongsTo(Item::class, 'item_id')->withTrashed();
     }
 
     /**
@@ -99,9 +101,59 @@ class InventorySessionItem extends BaseModel
     /**
      * Quantity getter.
      */
-    public function getQuantity(): int
+    public function getQuantity(): float|int
     {
-        return $this->assertInt('quantity');
+        return $this->decimalNumber($this->getAttribute('quantity'));
+    }
+
+    /**
+     * Expected quantity before the physical count.
+     */
+    public function getExpectedQuantity(): float|int|null
+    {
+        $value = $this->getAttribute('expected_quantity');
+
+        return $value === null ? null : $this->decimalNumber($value);
+    }
+
+    /**
+     * Timestamp of this row's physical count.
+     */
+    public function getCountedAt(): Carbon|null
+    {
+        return Typer::assertNullableCarbon($this->getAttribute('counted_at'));
+    }
+
+    /**
+     * Counted quantity minus expected quantity.
+     */
+    public function getQuantityDifference(): float|int|null
+    {
+        $value = $this->getAttribute('quantity_difference');
+
+        return $value === null ? null : $this->decimalNumber($value);
+    }
+
+    /**
+     * Classification selected for a non-zero difference.
+     */
+    public function getClassification(): StockMovementClassificationEnum|null
+    {
+        $value = $this->getAttribute('classification');
+
+        if ($value === null) {
+            return null;
+        }
+
+        return StockMovementClassificationEnum::from(Typer::assertString($value));
+    }
+
+    /**
+     * Start of the closed physical-count interval.
+     */
+    public function getObservationStartedAt(): Carbon|null
+    {
+        return Typer::assertNullableCarbon($this->getAttribute('observation_started_at'));
     }
 
     /**
@@ -120,7 +172,18 @@ class InventorySessionItem extends BaseModel
     protected function casts(): array
     {
         return [
-            'quantity' => 'integer',
+            'counted_at' => 'datetime',
+            'observation_started_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Preserve fractional database values while keeping whole numbers ergonomic.
+     */
+    private function decimalNumber(mixed $value): float|int
+    {
+        $number = (float) Typer::assertScalar($value);
+
+        return $number === \floor($number) ? (int) $number : $number;
     }
 }

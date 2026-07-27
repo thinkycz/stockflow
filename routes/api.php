@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\LogoutController;
-use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\EmailVerification\EmailVerificationResendController;
 use App\Http\Controllers\Api\EmailVerification\EmailVerificationVerifyController;
 use App\Http\Controllers\Api\Me\MeDestroyController;
@@ -28,7 +27,6 @@ Resolver::resolveRouteRegistrar()
     ->prefix('v1/auth')
     ->group(static function (Router $router): void {
         $router->post('login', LoginController::class)->name('login');
-        $router->post('register', RegisterController::class)->name('v1.auth.register');
         $router->post('logout', LogoutController::class)->name('v1.auth.logout');
     });
 

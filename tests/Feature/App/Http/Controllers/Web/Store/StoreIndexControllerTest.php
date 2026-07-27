@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Models\InventorySession;
 use App\Models\Item;
 use App\Models\Store;
+use Illuminate\Support\Carbon;
 
 \test('guest is redirected from stores to login', function (): void {
     $this->get('/stores')->assertRedirect('/login');
@@ -42,7 +44,7 @@ use App\Models\Store;
     \expect($names)->not->toContain('Other Store');
 });
 
-\test('per-store metrics aggregate incoming and outgoing movements in a single grouped query', function (): void {
+\test('per-store metrics show current inventory risk and data freshness', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $retail = Store::factory()->create([
         'user_id' => $user->getKey(),
@@ -52,6 +54,11 @@ use App\Models\Store;
     $item = Item::factory()->create([
         'user_id' => $user->getKey(),
         'purchase_price' => '4.00',
+    ]);
+    $countedAt = Carbon::parse('2026-07-18 09:00:00');
+    InventorySession::factory()->forStore($retail)->byUser($user)->create([
+        'status' => 'closed',
+        'counted_at' => $countedAt,
     ]);
 
     // 1 incoming purchase to the retail store. The controller only
@@ -80,12 +87,11 @@ use App\Models\Store;
     ))[0] ?? null;
 
     \expect($row)->not->toBeNull();
-    // 2 movements total touch the retail store.
-    \expect($row['movements_count'])->toBe(2);
-    // 5 units received (incoming) and 2 units sent (outgoing) at value 4 each.
-    \expect((int) $row['total_received_quantity'])->toBe(5);
-    \expect((float) $row['total_received_value'])->toBe(20.0);
-    \expect((float) $row['total_outgoing_value'])->toBe(8.0);
+    \expect((float) $row['inventory_value'])->toBe(12.0)
+        ->and($row['sku_count'])->toBe(1)
+        ->and($row['out_of_stock'])->toBe(0)
+        ->and($row['risk_count'])->toBe(0)
+        ->and($row['last_inventory_at'])->toBe($countedAt->toDateTimeString());
 });
 
 \test('per-store metrics only count the authenticated users own movements', function (): void {
@@ -109,13 +115,13 @@ use App\Models\Store;
         'items' => [['item_id' => $otherItem->getKey(), 'quantity' => 10]],
     ])->assertRedirect();
 
-    // The current user has zero movements, so all metrics are zero.
+    // The other company cannot affect this company's inventory metrics.
     $response = $this->be($user, 'users')->get('/stores', $this->inertiaHeaders());
 
     foreach ($response->json('props.stores') as $row) {
-        \expect($row['movements_count'])->toBe(0);
-        \expect((int) $row['total_received_quantity'])->toBe(0);
-        \expect((float) $row['total_received_value'])->toBe(0.0);
-        \expect((float) $row['total_outgoing_value'])->toBe(0.0);
+        \expect((float) $row['inventory_value'])->toBe(0.0);
+        \expect($row['sku_count'])->toBe(0);
+        \expect($row['out_of_stock'])->toBe(0);
+        \expect($row['risk_count'])->toBe(0);
     }
 });

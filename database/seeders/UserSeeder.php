@@ -7,7 +7,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Seeder;
-use Thinkycz\LaravelCore\Support\Config;
+use RuntimeException;
 
 class UserSeeder extends Seeder
 {
@@ -16,22 +16,27 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        if (Config::inject()->appEnvIs(['staging', 'production'])) {
+        $adminQuery = User::query();
+        User::scopeAdmin($adminQuery);
+        $adminCount = $adminQuery->count();
+
+        if ($adminCount > 1) {
+            throw new RuntimeException('StockFlow supports exactly one main administrator.');
+        }
+
+        if ($adminCount === 1) {
             return;
         }
 
-        if (
-            User::query()
-                ->getQuery()
-                ->exists()
-        ) {
-            return;
+        if (User::query()->getQuery()->exists()) {
+            throw new RuntimeException('Cannot provision the main administrator while orphan root accounts exist.');
         }
 
         $admin = UserFactory::new()
+            ->admin()
             ->password()
             ->createOne(['email' => 'test@test.com']);
 
-        $admin->update(['is_admin' => true, 'parent_user_id' => null]);
+        $admin->provisionWarehouse();
     }
 }

@@ -37,24 +37,27 @@ type ItemOption = {
 type Row = {
     id: string;
     item_id: string;
-    quantity: number;
-    quantity_after: number;
+    quantity: string;
+    quantity_after: string;
     adjustment_reason: string;
 };
 
 type FormState = {
-    mode: 'transfer' | 'adjustment';
+    mode: 'transfer' | 'adjustment' | 'consumption' | 'incoming';
     store_id: string;
     source_store_id: string;
     note: string;
+    occurred_at: string;
 };
 
 const props = defineProps<{
     stores: StoreOption[];
     items: ItemOption[];
     reasons: string[];
+    classifications: string[];
+    is_admin: boolean;
     defaults: {
-        mode: 'transfer' | 'adjustment';
+        mode: 'transfer' | 'adjustment' | 'consumption' | 'incoming';
         item_id: string | null;
         warehouse_id: number;
     };
@@ -66,18 +69,40 @@ useBoundLocale();
 
 const route = useRoute();
 
-const defaultWarehouseId = String(props.defaults.warehouse_id ?? '');
+const defaultWarehouseId = String(
+    props.defaults.mode === 'consumption' || props.defaults.mode === 'incoming'
+        ? (props.stores[0]?.id ?? '')
+        : (props.defaults.warehouse_id ?? ''),
+);
 
 const form = useForm<FormState>({
     mode: props.defaults.mode || 'transfer',
     store_id: defaultWarehouseId,
     source_store_id: '',
     note: '',
+    occurred_at: '',
 });
 
 const rows = reactive<Row[]>([]);
 
 const isAdjustmentMode = computed((): boolean => form.mode === 'adjustment');
+const isConsumptionMode = computed((): boolean => form.mode === 'consumption');
+const isIncomingMode = computed((): boolean => form.mode === 'incoming');
+
+const pageTitle = computed((): string => {
+    if (isAdjustmentMode.value) return t('stock_movements.title_adjustment');
+    if (isConsumptionMode.value) return t('stock_movements.title_consumption');
+    if (isIncomingMode.value) return t('stock_movements.title_incoming');
+    return t('stock_movements.title_create');
+});
+
+const pageSubtitle = computed((): string => {
+    if (isAdjustmentMode.value) return t('stock_movements.subtitle_adjustment');
+    if (isConsumptionMode.value)
+        return t('stock_movements.subtitle_consumption');
+    if (isIncomingMode.value) return t('stock_movements.subtitle_incoming');
+    return t('stock_movements.subtitle_create');
+});
 
 const destinationStoreOptions = computed((): StoreOption[] => {
     if (!form.source_store_id) {
@@ -88,22 +113,17 @@ const destinationStoreOptions = computed((): StoreOption[] => {
     );
 });
 
-const sourceStore = computed((): StoreOption | null => {
-    if (!form.source_store_id) {
-        return null;
-    }
-    return (
-        props.stores.find(
-            (store) => String(store.id) === form.source_store_id,
-        ) ?? null
-    );
-});
-
-type InferredLabelKey = 'incoming' | 'outgoing' | 'transfer' | 'adjustment';
+type InferredLabelKey = 'incoming' | 'transfer' | 'adjustment' | 'consumption';
 
 const inferredLabelKey = computed((): InferredLabelKey | null => {
     if (isAdjustmentMode.value) {
         return 'adjustment';
+    }
+    if (isConsumptionMode.value) {
+        return 'consumption';
+    }
+    if (isIncomingMode.value) {
+        return 'incoming';
     }
     if (!form.store_id) {
         return null;
@@ -111,17 +131,20 @@ const inferredLabelKey = computed((): InferredLabelKey | null => {
     if (!form.source_store_id) {
         return 'incoming';
     }
-    if (sourceStore.value?.is_warehouse) {
-        return 'outgoing';
-    }
     return 'transfer';
 });
 
 const isOutgoingTransfer = computed(
     (): boolean =>
         !isAdjustmentMode.value &&
+        !isConsumptionMode.value &&
+        !isIncomingMode.value &&
         form.source_store_id !== '' &&
         form.store_id !== '',
+);
+
+const removesStock = computed(
+    (): boolean => isConsumptionMode.value || isOutgoingTransfer.value,
 );
 
 const serverError = ref<string | null>(null);
@@ -134,8 +157,8 @@ function makeRow(): Row {
     return {
         id: `row-${rowCounter}`,
         item_id: props.defaults.item_id ? String(props.defaults.item_id) : '',
-        quantity: 0,
-        quantity_after: 0,
+        quantity: '',
+        quantity_after: '0.000',
         adjustment_reason: props.reasons[0] ?? 'other',
     };
 }
@@ -300,7 +323,7 @@ function onItemChange(row: Row): void {
     if (isAdjustmentMode.value) {
         const item = findItem(row.item_id);
         if (item) {
-            row.quantity_after = displayedQuantity(row);
+            row.quantity_after = String(displayedQuantity(row));
         }
     }
 }
@@ -336,7 +359,7 @@ const totals = computed(() => {
 });
 
 function isOutOfStockError(row: Row): boolean {
-    if (!isOutgoingTransfer.value) {
+    if (!removesStock.value) {
         return false;
     }
     return Number(row.quantity || 0) > displayedQuantity(row);
@@ -347,14 +370,15 @@ const hasOutOfStockErrors = computed(() => rows.some(isOutOfStockError));
 const outOfStockRows = computed(() => rows.filter(isOutOfStockError));
 
 type StockMovementPayload = {
-    mode: 'transfer' | 'adjustment';
+    mode: 'transfer' | 'adjustment' | 'consumption' | 'incoming';
     store_id: number | string | null;
     source_store_id?: number | string | null;
     note: string | null;
+    occurred_at?: string | null;
     items: Array<{
         item_id: string;
-        quantity?: number;
-        quantity_after?: number;
+        quantity?: string;
+        quantity_after?: string;
         adjustment_reason?: string;
     }>;
 };
@@ -379,6 +403,26 @@ function buildPayload(data: FormState): StockMovementPayload {
             mode: 'adjustment',
             store_id: data.store_id || null,
             note: data.note || null,
+            occurred_at: data.occurred_at || null,
+            items,
+        };
+    }
+
+    if (isConsumptionMode.value) {
+        return {
+            mode: 'consumption',
+            store_id: data.store_id || null,
+            note: data.note || null,
+            occurred_at: data.occurred_at || null,
+            items,
+        };
+    }
+
+    if (isIncomingMode.value) {
+        return {
+            mode: 'incoming',
+            store_id: data.store_id || null,
+            note: data.note || null,
             items,
         };
     }
@@ -388,6 +432,7 @@ function buildPayload(data: FormState): StockMovementPayload {
         store_id: data.store_id || null,
         source_store_id: data.source_store_id || null,
         note: data.note || null,
+        occurred_at: data.occurred_at || null,
         items,
     };
 }
@@ -424,12 +469,13 @@ watch(
 </script>
 
 <template>
-    <AppLayout :title="t('stock_movements.title_create')">
-        <Head :title="t('stock_movements.title_create')" />
+    <AppLayout :title="pageTitle">
+        <Head :title="pageTitle" />
 
         <div class="flex flex-col gap-6">
             <div>
                 <Link
+                    v-if="props.is_admin"
                     :href="route('stock-movements.index')"
                     class="inline-flex items-center gap-1 text-xs font-semibold text-on-surface-variant hover:text-primary"
                 >
@@ -445,21 +491,13 @@ watch(
                     <h1
                         class="font-heading text-2xl font-bold tracking-tight text-on-surface"
                     >
-                        {{
-                            isAdjustmentMode
-                                ? t('stock_movements.title_adjustment')
-                                : t('stock_movements.title_create')
-                        }}
+                        {{ pageTitle }}
                     </h1>
                     <p class="mt-1 text-sm text-on-surface-variant">
-                        {{
-                            isAdjustmentMode
-                                ? t('stock_movements.subtitle_adjustment')
-                                : t('stock_movements.subtitle_create')
-                        }}
+                        {{ pageSubtitle }}
                     </p>
                 </div>
-                <div class="flex items-center gap-2">
+                <div v-if="props.is_admin" class="flex items-center gap-2">
                     <Link
                         v-if="isAdjustmentMode"
                         :href="route('stock-movements.create')"
@@ -469,7 +507,7 @@ watch(
                         </Button>
                     </Link>
                     <Link
-                        v-else
+                        v-else-if="!isConsumptionMode"
                         :href="
                             route('stock-movements.create', {
                                 mode: 'adjustment',
@@ -478,6 +516,23 @@ watch(
                     >
                         <Button variant="secondary" type="button">
                             {{ t('stock_movements.open_adjustment') }}
+                        </Button>
+                    </Link>
+                    <Link
+                        v-if="!isConsumptionMode"
+                        :href="
+                            route('stock-movements.create', {
+                                mode: 'consumption',
+                            })
+                        "
+                    >
+                        <Button variant="secondary" type="button">
+                            {{ t('stock_movements.open_consumption') }}
+                        </Button>
+                    </Link>
+                    <Link v-else :href="route('stock-movements.create')">
+                        <Button variant="secondary" type="button">
+                            {{ t('stock_movements.back_to_transfer') }}
                         </Button>
                     </Link>
                 </div>
@@ -490,7 +545,13 @@ watch(
             <form class="flex flex-col gap-6" @submit.prevent="submit">
                 <Card padded>
                     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <template v-if="!isAdjustmentMode">
+                        <template
+                            v-if="
+                                !isAdjustmentMode &&
+                                !isConsumptionMode &&
+                                !isIncomingMode
+                            "
+                        >
                             <div class="space-y-2">
                                 <Label for="source_store_id">{{
                                     t('stock_movements.form.source_store')
@@ -543,11 +604,7 @@ watch(
                                 }}</Label>
                                 <div class="flex h-10 items-center">
                                     <MovementTypeBadge
-                                        :type="
-                                            inferredLabelKey === 'transfer'
-                                                ? 'outgoing'
-                                                : inferredLabelKey
-                                        "
+                                        :type="inferredLabelKey"
                                         :label-key="inferredLabelKey"
                                     />
                                 </div>
@@ -555,7 +612,13 @@ watch(
                         </template>
                         <div v-else class="space-y-2 sm:col-span-2">
                             <Label for="adjustment_store_id" :required="true">{{
-                                t('stock_movements.form.adjustment_store')
+                                t(
+                                    isConsumptionMode
+                                        ? 'stock_movements.form.consumption_store'
+                                        : isIncomingMode
+                                          ? 'stock_movements.form.incoming_store'
+                                          : 'stock_movements.form.adjustment_store',
+                                )
                             }}</Label>
                             <Select
                                 id="adjustment_store_id"
@@ -581,6 +644,19 @@ watch(
                             t('stock_movements.form.note')
                         }}</Label>
                         <Input id="note" v-model="form.note" type="text" />
+                    </div>
+                    <div v-if="props.is_admin" class="mt-4 space-y-2">
+                        <Label for="occurred_at">{{
+                            t('stock_movements.form.occurred_at')
+                        }}</Label>
+                        <Input
+                            id="occurred_at"
+                            v-model="form.occurred_at"
+                            type="datetime-local"
+                        />
+                        <p class="text-xs text-on-surface-variant">
+                            {{ t('stock_movements.form.occurred_at_help') }}
+                        </p>
                     </div>
                 </Card>
 
@@ -644,7 +720,7 @@ watch(
                                     >
                                         {{
                                             t(
-                                                isOutgoingTransfer
+                                                removesStock
                                                     ? 'stock_movements.form.quantity_out'
                                                     : 'stock_movements.form.quantity_in',
                                             )
@@ -658,7 +734,7 @@ watch(
                                         }}
                                     </th>
                                     <th
-                                        v-if="isOutgoingTransfer"
+                                        v-if="removesStock"
                                         class="min-w-[6rem] text-right"
                                     >
                                         {{
@@ -728,7 +804,7 @@ watch(
                                         <Input
                                             v-model="row.quantity"
                                             type="number"
-                                            step="1"
+                                            step="0.001"
                                             min="1"
                                             :invalid="isOutOfStockError(row)"
                                             required
@@ -738,7 +814,7 @@ watch(
                                         <Input
                                             v-model="row.quantity_after"
                                             type="number"
-                                            step="1"
+                                            step="0.001"
                                             min="0"
                                             required
                                         />
@@ -819,7 +895,10 @@ watch(
                             {{ t('stock_movements.form.add_row') }}
                         </Button>
                         <div class="flex items-center gap-3">
-                            <Link :href="route('stock-movements.index')">
+                            <Link
+                                v-if="props.is_admin"
+                                :href="route('stock-movements.index')"
+                            >
                                 <Button variant="secondary" type="button">
                                     {{ t('common.cancel') }}
                                 </Button>

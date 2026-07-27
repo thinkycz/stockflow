@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Console\Commands\BackfillInventoryConsumptionCommand;
+use App\Console\Commands\PruneNoticeboardCardsCommand;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ResolveActiveStore;
@@ -59,6 +61,10 @@ return Application::configure(basePath: \dirname(__DIR__))
     ->withSingletons([
         ExceptionHandler::class => Handler::class,
     ])
+    ->withCommands([
+        BackfillInventoryConsumptionCommand::class,
+        PruneNoticeboardCardsCommand::class,
+    ])
     ->withSchedule(static function (Schedule $schedule): void {
         $config = Config::inject();
 
@@ -75,6 +81,12 @@ return Application::configure(basePath: \dirname(__DIR__))
         $schedule
             ->command('cache:prune-stale-tags')
             ->hourly();
+
+        $schedule
+            ->command('stockflow:prune-noticeboard-cards')
+            ->dailyAt('03:30')
+            ->timezone($timezone)
+            ->runInBackground();
     })
     ->withExceptions(static function (Exceptions $exceptions): void {
         $exceptions->map(

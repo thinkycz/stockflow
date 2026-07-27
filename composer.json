@@ -21,7 +21,9 @@
         "php": "^8.3.0",
         "inertiajs/inertia-laravel": "^3.0",
         "laravel/framework": "^13.0",
+        "laravel/slack-notification-channel": "^3.8",
         "laravel/tinker": "^3.0",
+        "symfony/html-sanitizer": "^7.4.13",
         "thinkycz/laravel-core": "*",
         "tightenco/ziggy": "^2.6"
     },

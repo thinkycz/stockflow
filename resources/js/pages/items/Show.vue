@@ -27,7 +27,13 @@ import { formatDateTime, formatMoney, formatNumber } from '@/lib/format';
 type MovementRow = {
     id: number;
     number: string;
-    type: 'incoming' | 'outgoing' | 'adjustment';
+    type:
+        | 'incoming'
+        | 'transfer'
+        | 'consumption'
+        | 'adjustment'
+        | 'inventory_reconciliation'
+        | 'reversal';
     store_id: number | null;
     total_quantity: number;
     total_value: number;
@@ -52,20 +58,17 @@ const props = defineProps<{
         title: string;
         sku: string | null;
         unit: string | null;
-        warehouse_quantity: number;
         total_quantity: number;
         purchase_price: number;
         total_value: number;
         description: string | null;
         status: 'in_stock' | 'low_stock' | 'out_of_stock';
-        created_at: string;
     };
     store_quantities: StoreQuantityRow[];
     movements: MovementRow[];
     active_store: {
         id: number;
         name: string;
-        quantity: number | null;
     } | null;
 }>();
 
@@ -143,23 +146,15 @@ useBoundLocale();
             <div class="grid gap-4 sm:grid-cols-3">
                 <Card padded>
                     <CardHeader>
-                        <CardDescription>{{
-                            active_store
-                                ? active_store.name
-                                : t('items.metrics.quantity')
-                        }}</CardDescription>
+                        <CardDescription>
+                            {{ t('items.columns.quantity') }}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <p
                             class="font-heading text-2xl font-bold tracking-tight text-on-surface"
                         >
-                            {{
-                                formatNumber(
-                                    active_store
-                                        ? (active_store.quantity ?? 0)
-                                        : item.warehouse_quantity,
-                                )
-                            }}
+                            {{ formatNumber(item.total_quantity) }}
                         </p>
                         <p
                             v-if="item.unit"

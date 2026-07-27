@@ -24,4 +24,10 @@ return [
         'secret' => $env->mustParseNullableString('AWS_SECRET_ACCESS_KEY'),
         'region' => $env->mustParseNullableString('AWS_DEFAULT_REGION'),
     ],
+
+    'slack' => [
+        'notifications' => [
+            'bot_user_oauth_token' => $env->parseNullableString('SLACK_BOT_USER_OAUTH_TOKEN'),
+        ],
+    ],
 ];

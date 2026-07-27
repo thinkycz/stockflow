@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Validation;
 
 use App\Enums\AdjustmentReasonEnum;
+use App\Enums\StockMovementClassificationEnum;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\User;
 use Thinkycz\LaravelCore\Validation\BaseValidity;
@@ -118,7 +119,7 @@ class StockMovementValidity
      */
     public function rowQuantity(): Validity
     {
-        return $this->baseValidity->make()->integer(999999, 1);
+        return $this->baseValidity->make()->numeric(999999999.999, 0.001)->decimal(0, 3);
     }
 
     /**
@@ -126,7 +127,7 @@ class StockMovementValidity
      */
     public function rowQuantityAfter(): Validity
     {
-        return $this->baseValidity->make()->integer(999999, 0);
+        return $this->baseValidity->make()->numeric(999999999.999, 0)->decimal(0, 3);
     }
 
     /**
@@ -135,6 +136,14 @@ class StockMovementValidity
     public function rowAdjustmentReason(): Validity
     {
         return $this->baseValidity->make()->inString(AdjustmentReasonEnum::values());
+    }
+
+    /**
+     * Inventory and consumption classification rules.
+     */
+    public function rowClassification(): Validity
+    {
+        return $this->baseValidity->make()->inString(StockMovementClassificationEnum::values());
     }
 
     /**

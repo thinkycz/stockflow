@@ -13,17 +13,14 @@ use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Thinkycz\LaravelCore\Support\Typer;
 
 class ItemShowController
 {
     /**
      * Show item details + movement history.
      *
-     * Movements are filtered to the active store when one is resolved,
-     * so the user sees only the movements that affected the currently
-     * selected store. The active store's quantity is highlighted in the
-     * store quantities table.
+     * Quantities and movement history include every store. The active store is
+     * only highlighted in the per-store breakdown.
      */
     public function __invoke(Request $request, Item $item): Response
     {
@@ -33,14 +30,6 @@ class ItemShowController
         $item->loadMissing(['storeItems.store']);
 
         $movementsQuery = $item->stockMovements();
-
-        if ($activeStore instanceof Store) {
-            $storeId = $activeStore->getKey();
-            $movementsQuery->where(static function ($query) use ($storeId): void {
-                $query->where('store_id', $storeId)
-                    ->orWhere('source_store_id', $storeId);
-            });
-        }
 
         $movementsQuery->select([
             'stock_movements.id',
@@ -83,28 +72,17 @@ class ItemShowController
             ];
         })->all();
 
-        $activeStoreQuantity = null;
-        if ($activeStore instanceof Store) {
-            $raw = StoreItem::query()
-                ->where('item_id', $item->getKey())
-                ->where('store_id', $activeStore->getKey())
-                ->value('quantity');
-            $activeStoreQuantity = $raw !== null ? Typer::parseInt($raw) : 0;
-        }
-
         return Inertia::render('items/Show', [
             'item' => [
                 'id' => $item->getKey(),
                 'title' => $item->getTitle(),
                 'sku' => $item->getSku(),
                 'unit' => $item->getUnit(),
-                'warehouse_quantity' => $item->getWarehouseQuantity(),
                 'total_quantity' => $item->getTotalQuantity(),
                 'purchase_price' => $item->getPurchasePrice(),
                 'total_value' => $item->getTotalValue(),
                 'description' => $item->getDescription(),
                 'status' => $item->getStockStatus()->value,
-                'created_at' => $item->getCreatedAt()->toJSON(),
             ],
             'store_quantities' => $storeQuantities,
             'movements' => $movements,
@@ -112,7 +90,6 @@ class ItemShowController
                 ? [
                     'id' => $activeStore->getKey(),
                     'name' => $activeStore->getName(),
-                    'quantity' => $activeStoreQuantity,
                 ]
                 : null,
         ]);

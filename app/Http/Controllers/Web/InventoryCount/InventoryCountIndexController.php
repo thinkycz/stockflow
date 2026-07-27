@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\InventoryCount;
 
+use App\Enums\StockMovementClassificationEnum;
+use App\Models\InventorySession;
+use App\Models\InventorySessionItem;
 use App\Models\Store;
 use App\Models\User;
 use App\Services\InventorySessionService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
+use Thinkycz\LaravelCore\Support\Typer;
 
 class InventoryCountIndexController
 {
@@ -42,6 +47,8 @@ class InventoryCountIndexController
             $rows = $service->buildStoreView($scopeUser, $store);
         }
 
+        $draft = $store instanceof Store ? $service->activeDraft($user, $store) : null;
+
         return Inertia::render('inventory-counts/Index', [
             'store' => $store instanceof Store ? [
                 'id' => $store->getKey(),
@@ -52,6 +59,22 @@ class InventoryCountIndexController
                 'store_id' => $store?->getKey(),
             ],
             'is_admin' => $user->isAdmin(),
+            'default_counted_on' => Carbon::now()->toDateString(),
+            'draft' => $draft instanceof InventorySession ? [
+                'id' => $draft->getKey(),
+                'started_at' => $draft->getStartedAt()->toJSON(),
+                'rows' => $draft->getItems()->map(static fn(InventorySessionItem $row): array => [
+                    'item_id' => $row->getItemId(),
+                    'quantity' => $row->getQuantity(),
+                    'classification' => $row->getClassification()?->value,
+                    'note' => $row->getNote(),
+                    'client_version' => Typer::parseInt($row->getAttribute('client_version')),
+                ])->values()->all(),
+            ] : null,
+            'classifications' => \array_map(
+                static fn(StockMovementClassificationEnum $classification): string => $classification->value,
+                StockMovementClassificationEnum::cases(),
+            ),
         ]);
     }
 }

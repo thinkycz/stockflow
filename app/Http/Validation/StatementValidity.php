@@ -122,4 +122,12 @@ class StatementValidity
     {
         return $this->baseValidity->make()->boolean();
     }
+
+    /**
+     * Whether eligible current-day attendances should be closed after save.
+     */
+    public function closeAttendances(): Validity
+    {
+        return $this->baseValidity->make()->boolean();
+    }
 }

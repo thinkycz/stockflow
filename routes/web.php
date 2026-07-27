@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Web\Attendance\AttendanceActionController;
+use App\Http\Controllers\Web\Attendance\AttendanceCorrectionController;
+use App\Http\Controllers\Web\Attendance\AttendanceIndexController;
+use App\Http\Controllers\Web\Attendance\AttendancePrintController;
+use App\Http\Controllers\Web\Attendance\AttendanceReportController;
 use App\Http\Controllers\Web\Auth\EmailVerificationConfirmController;
 use App\Http\Controllers\Web\Auth\ForgotPasswordController;
 use App\Http\Controllers\Web\Auth\LoginController;
@@ -13,24 +18,40 @@ use App\Http\Controllers\Web\InventoryCount\InventoryCountHistoryController;
 use App\Http\Controllers\Web\InventoryCount\InventoryCountIndexController;
 use App\Http\Controllers\Web\InventoryCount\InventoryCountShowController;
 use App\Http\Controllers\Web\InventoryCount\InventoryCountUpdateController;
+use App\Http\Controllers\Web\InventoryCount\InventoryDraftCancelController;
+use App\Http\Controllers\Web\InventoryCount\InventoryDraftCloseController;
+use App\Http\Controllers\Web\InventoryCount\InventoryDraftRowController;
+use App\Http\Controllers\Web\InventoryCount\InventoryDraftStartController;
 use App\Http\Controllers\Web\Item\ItemCreateController;
 use App\Http\Controllers\Web\Item\ItemDestroyController;
 use App\Http\Controllers\Web\Item\ItemEditController;
 use App\Http\Controllers\Web\Item\ItemIndexController;
 use App\Http\Controllers\Web\Item\ItemSearchController;
 use App\Http\Controllers\Web\Item\ItemShowController;
+use App\Http\Controllers\Web\Noticeboard\NoticeboardCardController;
 use App\Http\Controllers\Web\Report\ReportController;
 use App\Http\Controllers\Web\Report\StatisticsController;
 use App\Http\Controllers\Web\Settings\SettingsController;
+use App\Http\Controllers\Web\Shift\SharedShiftIndexController;
+use App\Http\Controllers\Web\Shift\ShiftDestroyController;
+use App\Http\Controllers\Web\Shift\ShiftIndexController;
+use App\Http\Controllers\Web\Shift\ShiftQuickAddController;
+use App\Http\Controllers\Web\Shift\ShiftShareController;
+use App\Http\Controllers\Web\Shift\ShiftStoreController;
+use App\Http\Controllers\Web\Shift\ShiftUpdateController;
+use App\Http\Controllers\Web\ShiftPreset\ShiftPresetDestroyController;
+use App\Http\Controllers\Web\ShiftPreset\ShiftPresetStoreController;
+use App\Http\Controllers\Web\ShiftPreset\ShiftPresetUpdateController;
 use App\Http\Controllers\Web\Statement\StatementClearController;
 use App\Http\Controllers\Web\Statement\StatementHistoryController;
 use App\Http\Controllers\Web\Statement\StatementIndexController;
+use App\Http\Controllers\Web\Statement\StatementTodayUpdateController;
 use App\Http\Controllers\Web\Statement\StatementUpdateController;
 use App\Http\Controllers\Web\Statement\StatementVersionRestoreController;
 use App\Http\Controllers\Web\Statement\StatementVersionShowController;
 use App\Http\Controllers\Web\StockMovement\StockMovementCreateController;
-use App\Http\Controllers\Web\StockMovement\StockMovementDestroyController;
 use App\Http\Controllers\Web\StockMovement\StockMovementIndexController;
+use App\Http\Controllers\Web\StockMovement\StockMovementReverseController;
 use App\Http\Controllers\Web\StockMovement\StockMovementShowController;
 use App\Http\Controllers\Web\Store\StoreCreateController;
 use App\Http\Controllers\Web\Store\StoreDestroyController;
@@ -42,6 +63,10 @@ use App\Http\Controllers\Web\User\UserCreateController;
 use App\Http\Controllers\Web\User\UserDestroyController;
 use App\Http\Controllers\Web\User\UserEditController;
 use App\Http\Controllers\Web\User\UserIndexController;
+use App\Http\Controllers\Web\Worker\WorkerCreateController;
+use App\Http\Controllers\Web\Worker\WorkerDestroyController;
+use App\Http\Controllers\Web\Worker\WorkerEditController;
+use App\Http\Controllers\Web\Worker\WorkerIndexController;
 use App\Http\Middleware\EnsureInertiaUserIsAuthenticated;
 use App\Models\User;
 use Illuminate\Routing\Router;
@@ -68,15 +93,22 @@ Resolver::resolveRouteRegistrar()
 
 Resolver::resolveRouteRegistrar()->get('email/verify', EmailVerificationConfirmController::class)->name('email.verify');
 
+Resolver::resolveRouteRegistrar()->get('public/shifts/{token}', SharedShiftIndexController::class)->name('public-shifts.index');
+
 Resolver::resolveRouteRegistrar()
     ->middleware(EnsureInertiaUserIsAuthenticated::class)
     ->group(static function (Router $router): void {
         $router->post('logout', LogoutController::class)->name('logout');
         $router->get('dashboard', DashboardController::class)->name('dashboard');
+        $router->post('noticeboard-cards', [NoticeboardCardController::class, 'store'])->name('noticeboard-cards.store');
+        $router->put('noticeboard-cards/{noticeboardCard}', [NoticeboardCardController::class, 'update'])->whereNumber('noticeboardCard')->name('noticeboard-cards.update');
+        $router->delete('noticeboard-cards/{noticeboardCard}', [NoticeboardCardController::class, 'destroy'])->whereNumber('noticeboardCard')->name('noticeboard-cards.destroy');
+        $router->get('noticeboard-cards/{noticeboardCard}/image', [NoticeboardCardController::class, 'image'])->whereNumber('noticeboardCard')->name('noticeboard-cards.image');
 
         // Statements (admin + limited)
         $router->get('statements', StatementIndexController::class)->name('statements.index');
         $router->put('statements/{statement}', StatementUpdateController::class)->whereNumber('statement')->name('statements.update');
+        $router->put('statements/{statement}/today', StatementTodayUpdateController::class)->whereNumber('statement')->name('statements.today.update');
         $router->post('statements/{statement}/clear', StatementClearController::class)->whereNumber('statement')->name('statements.clear');
         $router->get('statements/{statement}/history', StatementHistoryController::class)->whereNumber('statement')->name('statements.history');
         $router->get('statements/versions/{version}', StatementVersionShowController::class)->whereNumber('version')->name('statements.versions.show');
@@ -85,25 +117,46 @@ Resolver::resolveRouteRegistrar()
         // Inventory counts (admin + limited)
         $router->get('inventory-counts', InventoryCountIndexController::class)->name('inventory-counts.index');
         $router->post('inventory-counts', InventoryCountUpdateController::class)->name('inventory-counts.update');
+        $router->post('inventory-counts/drafts', InventoryDraftStartController::class)->name('inventory-counts.drafts.start');
+        $router->put('inventory-counts/drafts/{session}/rows', InventoryDraftRowController::class)->whereNumber('session')->name('inventory-counts.drafts.rows.update');
+        $router->post('inventory-counts/drafts/{session}/close', InventoryDraftCloseController::class)->whereNumber('session')->name('inventory-counts.drafts.close');
+        $router->post('inventory-counts/drafts/{session}/cancel', InventoryDraftCancelController::class)->whereNumber('session')->name('inventory-counts.drafts.cancel');
         $router->get('inventory-counts/history', InventoryCountHistoryController::class)->name('inventory-counts.history');
         $router->get('inventory-counts/{session}', InventoryCountShowController::class)->whereNumber('session')->name('inventory-counts.show');
+
+        // Manual consumption (admin + limited assigned-store users)
+        $router->get('stock-movements/create', [StockMovementCreateController::class, 'create'])->name('stock-movements.create');
+        $router->post('stock-movements', [StockMovementCreateController::class, 'store'])->name('stock-movements.store');
+        $router->get('items/search', ItemSearchController::class)->name('items.search');
+
+        // Shifts (admin + limited view)
+        $router->get('shifts', ShiftIndexController::class)->name('shifts.index');
+
+        // Attendance (admin + limited assigned-store users)
+        $router->get('attendance', AttendanceIndexController::class)->name('attendance.index');
+        $router->post('attendance/actions', AttendanceActionController::class)->name('attendance.actions.store');
 
         // Settings
         $router->get('verify-email', [VerifyEmailController::class, 'create'])->name('verify-email.show');
         $router->post('verify-email', [VerifyEmailController::class, 'store'])->name('verify-email.store');
-        $router->get('settings', [SettingsController::class, 'edit'])->name('settings.show');
-        $router->post('settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
-        $router->post('settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
     });
 
 Resolver::resolveRouteRegistrar()
     ->middleware([EnsureInertiaUserIsAuthenticated::class, 'admin'])
     ->group(static function (Router $router): void {
+        // Settings
+        $router->get('settings', [SettingsController::class, 'edit'])->name('settings.show');
+        $router->post('settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
+        $router->post('settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
+
+        // Noticeboard moderation
+        $router->post('noticeboard-cards/{noticeboardCard}/restore', [NoticeboardCardController::class, 'restore'])->whereNumber('noticeboardCard')->name('noticeboard-cards.restore');
+        $router->delete('noticeboard-cards/{noticeboardCard}/force', [NoticeboardCardController::class, 'forceDestroy'])->whereNumber('noticeboardCard')->name('noticeboard-cards.force-destroy');
+
         // Items
         $router->get('items', ItemIndexController::class)->name('items.index');
         $router->get('items/create', [ItemCreateController::class, 'create'])->name('items.create');
         $router->post('items', [ItemCreateController::class, 'store'])->name('items.store');
-        $router->get('items/search', ItemSearchController::class)->name('items.search');
         $router->get('items/{item}', ItemShowController::class)->whereNumber('item')->name('items.show');
         $router->get('items/{item}/edit', [ItemEditController::class, 'edit'])->whereNumber('item')->name('items.edit');
         $router->put('items/{item}', [ItemEditController::class, 'update'])->whereNumber('item')->name('items.update');
@@ -121,10 +174,8 @@ Resolver::resolveRouteRegistrar()
 
         // Stock movements
         $router->get('stock-movements', StockMovementIndexController::class)->name('stock-movements.index');
-        $router->get('stock-movements/create', [StockMovementCreateController::class, 'create'])->name('stock-movements.create');
-        $router->post('stock-movements', [StockMovementCreateController::class, 'store'])->name('stock-movements.store');
         $router->get('stock-movements/{stockMovement}', StockMovementShowController::class)->whereNumber('stockMovement')->name('stock-movements.show');
-        $router->delete('stock-movements/{stockMovement}', StockMovementDestroyController::class)->whereNumber('stockMovement')->name('stock-movements.destroy');
+        $router->post('stock-movements/{stockMovement}/reverse', StockMovementReverseController::class)->whereNumber('stockMovement')->name('stock-movements.reverse');
 
         // Reports
         $router->get('reports', ReportController::class)->name('reports.index');
@@ -137,4 +188,31 @@ Resolver::resolveRouteRegistrar()
         $router->get('users/{user}/edit', [UserEditController::class, 'edit'])->whereNumber('user')->name('users.edit');
         $router->put('users/{user}', [UserEditController::class, 'update'])->whereNumber('user')->name('users.update');
         $router->delete('users/{user}', UserDestroyController::class)->whereNumber('user')->name('users.destroy');
+
+        // Workers
+        $router->get('workers', WorkerIndexController::class)->name('workers.index');
+        $router->get('workers/create', [WorkerCreateController::class, 'create'])->name('workers.create');
+        $router->post('workers', [WorkerCreateController::class, 'store'])->name('workers.store');
+        $router->get('workers/{worker}/edit', [WorkerEditController::class, 'edit'])->whereNumber('worker')->name('workers.edit');
+        $router->put('workers/{worker}', [WorkerEditController::class, 'update'])->whereNumber('worker')->name('workers.update');
+        $router->delete('workers/{worker}', WorkerDestroyController::class)->whereNumber('worker')->name('workers.destroy');
+
+        // Shifts (admin write)
+        $router->post('shifts', ShiftStoreController::class)->name('shifts.store');
+        $router->post('shifts/quick-add', ShiftQuickAddController::class)->name('shifts.quick-add');
+        $router->post('shifts/share', ShiftShareController::class)->name('shifts.share');
+        $router->put('shifts/{shift}', ShiftUpdateController::class)->whereNumber('shift')->name('shifts.update');
+        $router->delete('shifts/{shift}', ShiftDestroyController::class)->whereNumber('shift')->name('shifts.destroy');
+
+        // Shift presets (admin write)
+        $router->post('shift-presets', ShiftPresetStoreController::class)->name('shift-presets.store');
+        $router->put('shift-presets/{shiftPreset}', ShiftPresetUpdateController::class)->whereNumber('shiftPreset')->name('shift-presets.update');
+        $router->delete('shift-presets/{shiftPreset}', ShiftPresetDestroyController::class)->whereNumber('shiftPreset')->name('shift-presets.destroy');
+
+        // Attendance corrections and reports (admin only)
+        $router->get('attendance/report', AttendanceReportController::class)->name('attendance.report');
+        $router->get('attendance/print', AttendancePrintController::class)->name('attendance.print');
+        $router->post('attendance/corrections', [AttendanceCorrectionController::class, 'store'])->name('attendance.corrections.store');
+        $router->put('attendance/sessions/{attendanceSession}', [AttendanceCorrectionController::class, 'update'])->whereNumber('attendanceSession')->name('attendance.sessions.update');
+        $router->post('attendance/sessions/{attendanceSession}/void', [AttendanceCorrectionController::class, 'void'])->whereNumber('attendanceSession')->name('attendance.sessions.void');
     });

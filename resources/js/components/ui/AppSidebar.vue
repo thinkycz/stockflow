@@ -4,9 +4,14 @@ import {
     ArrowLeftRight,
     BarChart3,
     Boxes,
+    CalendarDays,
+    ClipboardCheck,
     ClipboardList,
+    HardHat,
     LayoutDashboard,
     LogOut,
+    PackageMinus,
+    PackagePlus,
     Receipt,
     Settings as SettingsIcon,
     Store as StoreIcon,
@@ -19,6 +24,11 @@ import Brand from '@/components/ui/Brand.vue';
 import StoreSwitcher from '@/components/ui/StoreSwitcher.vue';
 import { useRoute } from '@/composables/useRoute';
 import { useSharedProps } from '@/composables/useSharedProps';
+import {
+    canViewShiftCalendar,
+    storeSectionNavigationKeys,
+    type StoreSectionNavigationKey,
+} from '@/lib/sidebar-navigation';
 
 withDefaults(
     defineProps<{
@@ -46,38 +56,97 @@ type NavItem = {
     active: boolean;
 };
 
-const adminStoreNavItems = computed<NavItem[]>(() => [
-    {
-        key: 'statements',
-        href: route('statements.index'),
-        label: t('nav.statements'),
-        icon: Receipt,
-        active: activeUrl.value.startsWith('/statements'),
-    },
-    {
-        key: 'inventory_counts',
-        href: route('inventory-counts.index'),
-        label: t('nav.inventory_counts'),
-        icon: ClipboardList,
-        active: activeUrl.value.startsWith('/inventory-counts'),
-    },
-    {
-        key: 'reports',
-        href: route('reports.index'),
-        label: t('nav.reports'),
-        icon: BarChart3,
-        active:
-            activeUrl.value === '/reports' ||
-            activeUrl.value.startsWith('/reports?'),
-    },
-    {
-        key: 'statistics',
-        href: route('reports.statistics'),
-        label: t('nav.statistics'),
-        icon: TrendingUp,
-        active: activeUrl.value.startsWith('/reports/statistics'),
-    },
-]);
+const shiftNavItem = computed<NavItem>(() => ({
+    key: 'shifts',
+    href: route('shifts.index'),
+    label: t('nav.shifts'),
+    icon: CalendarDays,
+    active: activeUrl.value.startsWith('/shifts'),
+}));
+
+const attendanceNavItem = computed<NavItem>(() => ({
+    key: 'attendance',
+    href: route('attendance.index'),
+    label: t('nav.attendance'),
+    icon: ClipboardCheck,
+    active: activeUrl.value.startsWith('/attendance'),
+}));
+
+const dashboardNavItem = computed<NavItem>(() => ({
+    key: 'dashboard',
+    href: route('dashboard'),
+    label: t('nav.dashboard'),
+    icon: LayoutDashboard,
+    active:
+        activeUrl.value === '/dashboard' ||
+        activeUrl.value.startsWith('/dashboard?'),
+}));
+
+const storeNavItemsByKey = computed<Record<StoreSectionNavigationKey, NavItem>>(
+    () => ({
+        dashboard: dashboardNavItem.value,
+        incoming: {
+            key: 'incoming',
+            href: route('stock-movements.create', { mode: 'incoming' }),
+            label: t('nav.incoming'),
+            icon: PackagePlus,
+            active: activeUrl.value.startsWith(
+                '/stock-movements/create?mode=incoming',
+            ),
+        },
+        consumption: {
+            key: 'consumption',
+            href: route('stock-movements.create', { mode: 'consumption' }),
+            label: t('nav.consumption'),
+            icon: PackageMinus,
+            active:
+                activeUrl.value.startsWith('/stock-movements/create') &&
+                !activeUrl.value.includes('mode=incoming'),
+        },
+        statements: {
+            key: 'statements',
+            href: route('statements.index'),
+            label: t('nav.statements'),
+            icon: Receipt,
+            active: activeUrl.value.startsWith('/statements'),
+        },
+        inventory_counts: {
+            key: 'inventory_counts',
+            href: route('inventory-counts.index'),
+            label: t('nav.inventory_counts'),
+            icon: ClipboardList,
+            active: activeUrl.value.startsWith('/inventory-counts'),
+        },
+        reports: {
+            key: 'reports',
+            href: route('reports.index'),
+            label: t('nav.reports'),
+            icon: BarChart3,
+            active:
+                activeUrl.value === '/reports' ||
+                activeUrl.value.startsWith('/reports?'),
+        },
+        statistics: {
+            key: 'statistics',
+            href: route('reports.statistics'),
+            label: t('nav.statistics'),
+            icon: TrendingUp,
+            active: activeUrl.value.startsWith('/reports/statistics'),
+        },
+        shifts: shiftNavItem.value,
+        attendance: attendanceNavItem.value,
+    }),
+);
+
+const storeNavItems = computed<NavItem[]>(() =>
+    storeSectionNavigationKeys(
+        isAdmin.value,
+        canViewShiftCalendar(
+            isAdmin.value,
+            auth.value.user?.assigned_store_id ?? null,
+        ),
+    ).map((key) => storeNavItemsByKey.value[key]),
+);
 
 const adminManagementNavItems = computed<NavItem[]>(() => [
     {
@@ -108,32 +177,12 @@ const adminManagementNavItems = computed<NavItem[]>(() => [
         icon: Users,
         active: activeUrl.value.startsWith('/users'),
     },
-]);
-
-const dashboardNavItem = computed<NavItem>(() => ({
-    key: 'dashboard',
-    href: route('dashboard'),
-    label: t('nav.dashboard'),
-    icon: LayoutDashboard,
-    active:
-        activeUrl.value === '/dashboard' ||
-        activeUrl.value.startsWith('/dashboard?'),
-}));
-
-const limitedStoreNavItems = computed<NavItem[]>(() => [
     {
-        key: 'statements',
-        href: route('statements.index'),
-        label: t('nav.statements'),
-        icon: Receipt,
-        active: activeUrl.value.startsWith('/statements'),
-    },
-    {
-        key: 'inventory_counts',
-        href: route('inventory-counts.index'),
-        label: t('nav.inventory_counts'),
-        icon: ClipboardList,
-        active: activeUrl.value.startsWith('/inventory-counts'),
+        key: 'workers',
+        href: route('workers.index'),
+        label: t('nav.workers'),
+        icon: HardHat,
+        active: activeUrl.value.startsWith('/workers'),
     },
 ]);
 
@@ -155,7 +204,7 @@ const navSections = computed<NavSection[]>(() => {
             {
                 key: 'store',
                 label: t('nav.section.store'),
-                items: adminStoreNavItems.value,
+                items: storeNavItems.value,
                 showStoreSwitcher: true,
             },
         ];
@@ -165,7 +214,7 @@ const navSections = computed<NavSection[]>(() => {
         {
             key: 'store',
             label: t('nav.section.store'),
-            items: limitedStoreNavItems.value,
+            items: storeNavItems.value,
             showStoreSwitcher: true,
         },
     ];
@@ -194,23 +243,10 @@ function logout(): void {
         </div>
 
         <nav class="flex-1 space-y-4 overflow-y-auto">
-            <Link
-                :key="dashboardNavItem.key"
-                :href="dashboardNavItem.href"
-                :class="[
-                    'flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold transition',
-                    dashboardNavItem.active
-                        ? 'bg-surface-container-lowest text-primary shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)]'
-                        : 'text-on-surface-variant hover:bg-surface-container-low',
-                ]"
-            >
-                <component :is="dashboardNavItem.icon" :size="16" />
-                {{ dashboardNavItem.label }}
-            </Link>
-
             <div
                 v-for="section in navSections"
                 :key="section.key"
+                :data-testid="`nav-section-${section.key}`"
                 class="space-y-1"
             >
                 <p
@@ -227,6 +263,7 @@ function logout(): void {
                     v-for="item in section.items"
                     :key="item.key"
                     :href="item.href"
+                    :data-testid="`nav-item-${item.key}`"
                     :class="[
                         'flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold transition',
                         item.active
@@ -263,7 +300,7 @@ function logout(): void {
 
             <div class="flex shrink-0 items-center gap-1">
                 <Link
-                    v-if="auth.user"
+                    v-if="isAdmin"
                     :href="route('settings.show')"
                     :class="[
                         'rounded-lg p-1.5 transition-colors',

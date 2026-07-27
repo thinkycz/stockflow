@@ -5,15 +5,74 @@ declare(strict_types=1);
 use App\Models\InventorySession;
 use App\Models\InventorySessionItem;
 use App\Models\Item;
+use App\Models\StockMovement;
 use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Models\StoreItem;
+use App\Notifications\OperationalActivitySlackNotification;
 use App\Services\InventorySessionService;
+use App\Services\StockMovementService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Notification;
+use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Typer;
 
 \beforeEach(function (): void {
     Carbon::setTestNow(Carbon::parse('2026-06-24 10:00:00'));
+});
+
+\test('only finalized inventory paths notify once each', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $user->getKey(), 'slack_channel' => '#praha']);
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
+    StoreItem::factory()->create(['store_id' => $store->getKey(), 'item_id' => $item->getKey(), 'quantity' => 5]);
+    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
+
+    $service->createSession($user, $store, [[
+        'item_id' => $item->getKey(),
+        'quantity' => 6,
+        'classification' => 'inventory_correction',
+    ]]);
+
+    $cancelled = $service->startDraft($user, $store);
+    $service->saveDraftRow($user, $cancelled, ['item_id' => $item->getKey(), 'quantity' => 6, 'client_version' => 1]);
+    $service->cancelDraft($user, $cancelled);
+
+    $closed = $service->startDraft($user, $store);
+    $service->saveDraftRow($user, $closed, ['item_id' => $item->getKey(), 'quantity' => 7, 'client_version' => 1, 'classification' => 'inventory_correction']);
+    $service->closeDraft($user, $closed);
+
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 2);
+});
+
+\test('inventory differences create one immutable reconciliation with signed classifications', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $user->getKey()]);
+    $decreased = Item::factory()->create(['user_id' => $user->getKey()]);
+    $increased = Item::factory()->create(['user_id' => $user->getKey()]);
+    $unchanged = Item::factory()->create(['user_id' => $user->getKey()]);
+    foreach ([$decreased, $increased, $unchanged] as $item) {
+        StoreItem::factory()->create(['store_id' => $store->getKey(), 'item_id' => $item->getKey(), 'quantity' => 10]);
+    }
+
+    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
+    $session = $service->createSession($user, $store, [
+        ['item_id' => $decreased->getKey(), 'quantity' => 7],
+        ['item_id' => $increased->getKey(), 'quantity' => 12],
+        ['item_id' => $unchanged->getKey(), 'quantity' => 10],
+    ]);
+
+    $movement = StockMovement::query()->where('inventory_session_id', $session->getKey())->firstOrFail();
+    $rows = StockMovementItem::query()->where('stock_movement_id', $movement->getKey())->orderBy('item_id')->get();
+
+    \expect($movement->getType()->value)->toBe('inventory_reconciliation');
+    \expect($rows)->toHaveCount(2);
+    \expect($rows->firstWhere('item_id', $decreased->getKey())?->getQuantityDifference())->toBe(-3);
+    \expect($rows->firstWhere('item_id', $decreased->getKey())?->getClassification()?->value)->toBe('consumption');
+    \expect($rows->firstWhere('item_id', $increased->getKey())?->getQuantityDifference())->toBe(2);
+    \expect($rows->firstWhere('item_id', $increased->getKey())?->getClassification()?->value)->toBe('inventory_correction');
 });
 
 \afterEach(function (): void {
@@ -279,7 +338,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($rows[1]['previous'])->toBeNull();
 });
 
-\test('consumptionLastDays sums negative differences from outgoing movements only', function (): void {
+\test('closed inventory intervals count consumption but never transfers', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $retail = Store::factory()->create([
         'user_id' => $user->getKey(),
@@ -287,56 +346,32 @@ use Thinkycz\LaravelCore\Support\Typer;
     ]);
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
 
-    // Incoming movement should not count as consumption.
-    $incoming = Database\Factories\StockMovementFactory::new()
-        ->incoming()
-        ->byUser($user)
-        ->create([
-            'user_id' => $user->getKey(),
-            'store_id' => $retail->getKey(),
-            'created_at' => Carbon::now()->subDays(5),
-        ]);
-    StockMovementItem::factory()->create([
-        'stock_movement_id' => $incoming->getKey(),
-        'item_id' => $item->getKey(),
-        'quantity_difference' => 20,
-    ]);
-
-    // Outgoing movement in the window — contributes to consumption.
-    $outgoing = Database\Factories\StockMovementFactory::new()
-        ->outgoing($retail)
-        ->byUser($user)
-        ->create([
-            'user_id' => $user->getKey(),
-            'source_store_id' => $retail->getKey(),
-            'created_at' => Carbon::now()->subDays(10),
-        ]);
-    StockMovementItem::factory()->create([
-        'stock_movement_id' => $outgoing->getKey(),
-        'item_id' => $item->getKey(),
-        'quantity_difference' => -5,
-    ]);
-
-    // Outgoing movement outside the window — should be ignored.
-    $oldOutgoing = Database\Factories\StockMovementFactory::new()
-        ->outgoing($retail)
-        ->byUser($user)
-        ->create([
-            'user_id' => $user->getKey(),
-            'source_store_id' => $retail->getKey(),
-            'created_at' => Carbon::now()->subDays(40),
-        ]);
-    StockMovementItem::factory()->create([
-        'stock_movement_id' => $oldOutgoing->getKey(),
-        'item_id' => $item->getKey(),
-        'quantity_difference' => -100,
-    ]);
-
     $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
+    $movements = Typer::assertInstance(\app(StockMovementService::class), StockMovementService::class);
+    Carbon::setTestNow('2026-06-10 10:00:00');
+    $service->createSession($user, $retail, [['item_id' => $item->getKey(), 'quantity' => 20]]);
+
+    Carbon::setTestNow('2026-06-17 10:00:00');
+    $movements->createMovement([
+        'mode' => 'transfer',
+        'source_store_id' => $retail->getKey(),
+        'store_id' => $warehouse->getKey(),
+        'items' => [['item_id' => $item->getKey(), 'quantity' => 3]],
+    ], $user);
+    $movements->createMovement([
+        'mode' => 'consumption',
+        'store_id' => $retail->getKey(),
+        'items' => [['item_id' => $item->getKey(), 'quantity' => 2]],
+    ], $user);
+
+    Carbon::setTestNow('2026-06-24 10:00:00');
+    $service->createSession($user, $retail, [['item_id' => $item->getKey(), 'quantity' => 14]]);
     $consumption = $service->consumptionLastDays($retail, $item, 30);
 
-    \expect($consumption['quantity'])->toBe(5);
-    \expect((float) $consumption['per_day'])->toBe(5 / 30);
+    // 2 manual consumption + 1 unexplained inventory decrease. The transfer of 3 is excluded.
+    \expect($consumption['quantity'])->toBe(3);
+    \expect((float) $consumption['coverage_days'])->toBe(14.0);
+    \expect($consumption['per_day'])->toBe(3 / 14);
 });
 
 \test('predictedRunOut returns days_left based on current quantity and consumption', function (): void {
@@ -347,33 +382,17 @@ use Thinkycz\LaravelCore\Support\Typer;
     ]);
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
 
-    StoreItem::query()->create([
-        'store_id' => $retail->getKey(),
-        'item_id' => $item->getKey(),
-        'quantity' => 15,
-    ]);
-
-    $outgoing = Database\Factories\StockMovementFactory::new()
-        ->outgoing($retail)
-        ->byUser($user)
-        ->create([
-            'user_id' => $user->getKey(),
-            'source_store_id' => $retail->getKey(),
-            'created_at' => Carbon::now()->subDays(2),
-        ]);
-    StockMovementItem::factory()->create([
-        'stock_movement_id' => $outgoing->getKey(),
-        'item_id' => $item->getKey(),
-        'quantity_difference' => -30,
-    ]);
-
     $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
+    Carbon::setTestNow('2026-06-10 10:00:00');
+    $service->createSession($user, $retail, [['item_id' => $item->getKey(), 'quantity' => 30]]);
+    Carbon::setTestNow('2026-06-24 10:00:00');
+    $service->createSession($user, $retail, [['item_id' => $item->getKey(), 'quantity' => 16]]);
     $prediction = $service->predictedRunOut($retail, $item, 30);
 
-    \expect($prediction['current'])->toBe(15);
+    \expect($prediction['current'])->toBe(16);
     \expect($prediction['status'])->toBe('ok');
     \expect((float) $prediction['per_day'])->toBe(1.0);
-    \expect($prediction['days_left'])->toBe(15);
+    \expect($prediction['days_left'])->toBe(16);
 });
 
 \test('predictedRunOut flags out of stock as out', function (): void {
@@ -444,4 +463,52 @@ use Thinkycz\LaravelCore\Support\Typer;
         static fn(array $row): bool => $row['value'] !== null,
     ));
     \expect($filled)->toHaveCount(2);
+});
+
+\test('draft reconciliation preserves movements posted after a row was counted', function (): void {
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
+    StoreItem::query()->create(['store_id' => $store->getKey(), 'item_id' => $item->getKey(), 'quantity' => 10]);
+    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
+    $draft = $service->startDraft($user, $store);
+    $service->saveDraftRow($user, $draft, [
+        'item_id' => $item->getKey(), 'quantity' => 7, 'classification' => 'consumption', 'client_version' => 1,
+    ]);
+
+    Typer::assertInstance(\app(StockMovementService::class), StockMovementService::class)->createMovement([
+        'mode' => 'incoming', 'store_id' => $store->getKey(),
+        'items' => [['item_id' => $item->getKey(), 'quantity' => 5]],
+    ], $user);
+    $service->closeDraft($user, $draft);
+
+    \expect((int) StoreItem::query()->where('store_id', $store->getKey())->where('item_id', $item->getKey())->value('quantity'))->toBe(12)
+        ->and($draft->fresh()?->getStatus())->toBe('closed');
+});
+
+\test('draft is unique per store and stale autosave cannot overwrite a newer row', function (): void {
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
+    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
+    $draft = $service->startDraft($user, $store);
+
+    \expect($service->startDraft($user, $store)->getKey())->toBe($draft->getKey());
+    $service->saveDraftRow($user, $draft, ['item_id' => $item->getKey(), 'quantity' => 8, 'client_version' => 2]);
+    $row = $service->saveDraftRow($user, $draft, ['item_id' => $item->getKey(), 'quantity' => 3, 'client_version' => 1]);
+
+    \expect($row->getQuantity())->toBe(8)
+        ->and(InventorySession::query()->where('active_store_key', $store->getKey())->count())->toBe(1);
+});
+
+\test('closing a partial draft leaves uncounted items untouched', function (): void {
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+    $counted = Item::factory()->create(['user_id' => $user->getKey()]);
+    $untouched = Item::factory()->create(['user_id' => $user->getKey()]);
+    StoreItem::query()->create(['store_id' => $store->getKey(), 'item_id' => $counted->getKey(), 'quantity' => 10]);
+    StoreItem::query()->create(['store_id' => $store->getKey(), 'item_id' => $untouched->getKey(), 'quantity' => 9]);
+    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
+    $draft = $service->startDraft($user, $store);
+    $service->saveDraftRow($user, $draft, ['item_id' => $counted->getKey(), 'quantity' => 7, 'client_version' => 1]);
+    $service->closeDraft($user, $draft);
+
+    \expect((int) StoreItem::query()->where('store_id', $store->getKey())->where('item_id', $untouched->getKey())->value('quantity'))->toBe(9);
 });

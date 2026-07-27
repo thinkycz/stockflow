@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowLeft, ArrowLeftRight, Trash2 } from '@lucide/vue';
+import { ArrowLeft, ArrowLeftRight, Undo2 } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
@@ -13,7 +13,13 @@ import DataTable from '@/components/ui/DataTable.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
-import { formatDate, formatMoney, formatNumber } from '@/lib/format';
+import {
+    formatDate,
+    formatMoney,
+    formatSignedMoney,
+    formatSignedNumber,
+    formatStockQuantity,
+} from '@/lib/format';
 
 type Row = {
     id: number;
@@ -22,25 +28,43 @@ type Row = {
     item_sku: string | null;
     quantity: number | null;
     total: number;
+    signed_total: number;
     quantity_before: number | null;
     quantity_after: number | null;
     quantity_difference: number | null;
     adjustment_reason: string | null;
+    classification: string | null;
 };
 
 defineProps<{
     movement: {
         id: number;
         number: string;
-        type: 'incoming' | 'outgoing' | 'adjustment';
-        display_label_key: 'incoming' | 'outgoing' | 'transfer' | 'adjustment';
+        type:
+            | 'incoming'
+            | 'transfer'
+            | 'consumption'
+            | 'adjustment'
+            | 'inventory_reconciliation'
+            | 'reversal';
+        display_label_key:
+            | 'incoming'
+            | 'transfer'
+            | 'consumption'
+            | 'adjustment'
+            | 'inventory_reconciliation'
+            | 'reversal';
         note: string | null;
         store_id: number | null;
         store_name: string | null;
         source_store_id: number | null;
         source_store_name: string | null;
-        total_quantity: number;
         total_value: number;
+        net_value: number;
+        reversal_of_id: number | null;
+        reversal_reason: string | null;
+        reversed_at: string | null;
+        can_reverse: boolean;
         created_by: string | null;
         created_at: string;
     };
@@ -53,11 +77,12 @@ useBoundLocale();
 
 const route = useRoute();
 
-function destroyMovement(id: number): void {
-    if (!window.confirm(t('stock_movements.confirm_delete'))) {
+function reverseMovement(id: number): void {
+    const reason = window.prompt(t('stock_movements.reversal_reason_prompt'));
+    if (reason === null || reason.trim() === '') {
         return;
     }
-    router.delete(route('stock-movements.destroy', id));
+    router.post(route('stock-movements.reverse', id), { reason });
 }
 </script>
 
@@ -96,7 +121,7 @@ function destroyMovement(id: number): void {
                         {{ formatDate(movement.created_at) }} ·
                         <span
                             v-if="
-                                movement.type === 'outgoing' &&
+                                movement.type === 'transfer' &&
                                 movement.source_store_name
                             "
                             >{{ movement.source_store_name }} →
@@ -111,31 +136,33 @@ function destroyMovement(id: number): void {
                 </div>
                 <div class="flex items-center gap-2">
                     <Button
+                        v-if="movement.can_reverse"
                         variant="danger"
                         type="button"
-                        @click="destroyMovement(movement.id)"
+                        @click="reverseMovement(movement.id)"
                     >
-                        <Trash2 :size="14" />
-                        {{ t('common.delete') }}
+                        <Undo2 :size="14" />
+                        {{ t('stock_movements.reverse') }}
                     </Button>
                 </div>
             </div>
 
-            <div class="grid gap-4 sm:grid-cols-3">
-                <Card padded>
-                    <CardHeader>
-                        <CardDescription>{{
-                            t('stock_movements.detail.total_quantity')
-                        }}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p
-                            class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                        >
-                            {{ formatNumber(movement.total_quantity) }}
-                        </p>
-                    </CardContent>
-                </Card>
+            <Card v-if="movement.reversed_at || movement.reversal_of_id" padded>
+                <p class="text-sm text-on-surface-variant">
+                    {{
+                        movement.reversal_of_id
+                            ? t('stock_movements.reversal_of', {
+                                  id: movement.reversal_of_id,
+                              })
+                            : t('stock_movements.reversed')
+                    }}
+                    <span v-if="movement.reversal_reason">
+                        · {{ movement.reversal_reason }}
+                    </span>
+                </p>
+            </Card>
+
+            <div class="grid gap-4 sm:grid-cols-2">
                 <Card padded>
                     <CardHeader>
                         <CardDescription>{{
@@ -146,7 +173,11 @@ function destroyMovement(id: number): void {
                         <p
                             class="font-heading text-2xl font-bold tracking-tight text-on-surface"
                         >
-                            {{ formatMoney(movement.total_value) }}
+                            {{
+                                movement.type === 'inventory_reconciliation'
+                                    ? formatSignedMoney(movement.net_value)
+                                    : formatMoney(movement.total_value)
+                            }}
                         </p>
                     </CardContent>
                 </Card>
@@ -179,7 +210,12 @@ function destroyMovement(id: number): void {
                     </CardTitle>
                 </CardHeader>
                 <div class="overflow-x-auto">
-                    <DataTable v-if="movement.type === 'adjustment'">
+                    <DataTable
+                        v-if="
+                            movement.type === 'adjustment' ||
+                            movement.type === 'inventory_reconciliation'
+                        "
+                    >
                         <thead>
                             <tr>
                                 <th>{{ t('stock_movements.detail.item') }}</th>
@@ -192,6 +228,11 @@ function destroyMovement(id: number): void {
                                 </th>
                                 <th class="text-right">
                                     {{ t('stock_movements.detail.difference') }}
+                                </th>
+                                <th class="text-right">
+                                    {{
+                                        t('stock_movements.detail.value_change')
+                                    }}
                                 </th>
                                 <th>
                                     {{ t('stock_movements.detail.reason') }}
@@ -211,7 +252,9 @@ function destroyMovement(id: number): void {
                                 <td class="text-right text-on-surface-variant">
                                     {{
                                         row.quantity_before !== null
-                                            ? formatNumber(row.quantity_before)
+                                            ? formatStockQuantity(
+                                                  row.quantity_before,
+                                              )
                                             : '—'
                                     }}
                                 </td>
@@ -220,7 +263,9 @@ function destroyMovement(id: number): void {
                                 >
                                     {{
                                         row.quantity_after !== null
-                                            ? formatNumber(row.quantity_after)
+                                            ? formatStockQuantity(
+                                                  row.quantity_after,
+                                              )
                                             : '—'
                                     }}
                                 </td>
@@ -234,19 +279,35 @@ function destroyMovement(id: number): void {
                                 >
                                     {{
                                         row.quantity_difference !== null
-                                            ? formatNumber(
+                                            ? formatSignedNumber(
                                                   row.quantity_difference,
                                               )
                                             : '—'
                                     }}
                                 </td>
+                                <td
+                                    class="text-right font-semibold"
+                                    :class="
+                                        row.signed_total >= 0
+                                            ? 'text-emerald-600'
+                                            : 'text-rose-600'
+                                    "
+                                >
+                                    {{ formatSignedMoney(row.signed_total) }}
+                                </td>
                                 <td class="text-xs text-on-surface-variant">
                                     {{
-                                        row.adjustment_reason
+                                        movement.type ===
+                                            'inventory_reconciliation' &&
+                                        row.classification
                                             ? t(
-                                                  `stock_movements.reasons.${row.adjustment_reason}`,
+                                                  `stock_movements.reasons.${row.classification}`,
                                               )
-                                            : '—'
+                                            : row.adjustment_reason
+                                              ? t(
+                                                    `stock_movements.reasons.${row.adjustment_reason}`,
+                                                )
+                                              : '—'
                                     }}
                                 </td>
                             </tr>
@@ -280,7 +341,7 @@ function destroyMovement(id: number): void {
                                 >
                                     {{
                                         row.quantity !== null
-                                            ? formatNumber(row.quantity)
+                                            ? formatStockQuantity(row.quantity)
                                             : '—'
                                     }}
                                 </td>

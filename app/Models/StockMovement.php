@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\StockMovementOriginEnum;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\Concerns\BelongsToUser;
 use Database\Factories\StockMovementFactory;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Pivot;
+use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Models\BaseModel;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -47,7 +49,7 @@ class StockMovement extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'user_id', 'number', 'type', 'store_id', 'source_store_id', 'note', 'created_by', 'total_quantity', 'total_value', 'created_at', 'updated_at']);
+        return $query->select(['id', 'user_id', 'number', 'type', 'occurred_at', 'origin', 'inventory_session_id', 'reversal_of_id', 'store_id', 'source_store_id', 'note', 'reversal_reason', 'reversed_at', 'created_by', 'total_quantity', 'items_count', 'total_value', 'created_at', 'updated_at']);
     }
 
     /**
@@ -77,7 +79,7 @@ class StockMovement extends BaseModel
      */
     public static function scopeFromDate(Builder $query, string $date): void
     {
-        $query->where('created_at', '>=', $date);
+        $query->where('occurred_at', '>=', $date);
     }
 
     /**
@@ -87,7 +89,15 @@ class StockMovement extends BaseModel
      */
     public static function scopeUntilDate(Builder $query, string $date): void
     {
-        $query->where('created_at', '<=', $date);
+        $query->where('occurred_at', '<=', $date);
+    }
+
+    /**
+     * Owning user id.
+     */
+    public function getUserId(): int
+    {
+        return Typer::assertInt($this->getAttribute('user_id'));
     }
 
     /**
@@ -101,7 +111,7 @@ class StockMovement extends BaseModel
     }
 
     /**
-     * Source warehouse relationship (outgoing transfers).
+     * Source store relationship for transfers.
      *
      * @return BelongsTo<Store, $this>
      */
@@ -118,6 +128,24 @@ class StockMovement extends BaseModel
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Inventory session that generated this reconciliation.
+     *
+     * @return BelongsTo<InventorySession, $this>
+     */
+    public function inventorySession(): BelongsTo
+    {
+        return $this->belongsTo(InventorySession::class, 'inventory_session_id');
+    }
+
+    /**
+     * @return BelongsTo<StockMovement, $this>
+     */
+    public function reversalOf(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'reversal_of_id');
     }
 
     /**
@@ -268,27 +296,65 @@ class StockMovement extends BaseModel
     }
 
     /**
-     * Display label key for UI (incoming, outgoing, transfer, adjustment).
+     * Display label key for UI.
      */
     public function getDisplayLabelKey(): string
     {
-        $type = $this->getType();
+        return $this->getType()->value;
+    }
 
-        if ($type === StockMovementTypeEnum::ADJUSTMENT) {
-            return 'adjustment';
+    /**
+     * Time when the stock event occurred.
+     */
+    public function getOccurredAt(): Carbon
+    {
+        return Typer::assertCarbon($this->getAttribute('occurred_at'));
+    }
+
+    /**
+     * Origin of the movement.
+     */
+    public function getOrigin(): StockMovementOriginEnum
+    {
+        $value = $this->getAttribute('origin');
+
+        if ($value instanceof StockMovementOriginEnum) {
+            return $value;
         }
 
-        if ($type === StockMovementTypeEnum::INCOMING) {
-            return 'incoming';
-        }
+        return StockMovementOriginEnum::from(Typer::assertString($value));
+    }
 
-        $sourceStore = $this->resolveSourceStore();
+    /**
+     * Linked inventory session id.
+     */
+    public function getInventorySessionId(): int|null
+    {
+        return $this->assertNullableInt('inventory_session_id');
+    }
 
-        if ($sourceStore instanceof Store && !$sourceStore->isWarehouse()) {
-            return 'transfer';
-        }
+    /**
+     * Original movement id when this row is a reversal.
+     */
+    public function getReversalOfId(): int|null
+    {
+        return $this->assertNullableInt('reversal_of_id');
+    }
 
-        return 'outgoing';
+    /**
+     * Administrator-provided reversal reason.
+     */
+    public function getReversalReason(): string|null
+    {
+        return $this->assertNullableString('reversal_reason');
+    }
+
+    /**
+     * Timestamp marking an original movement as reversed.
+     */
+    public function getReversedAt(): Carbon|null
+    {
+        return Typer::assertNullableCarbon($this->getAttribute('reversed_at'));
     }
 
     /**
@@ -348,6 +414,20 @@ class StockMovement extends BaseModel
     }
 
     /**
+     * Net signed value for inventory reconciliation movements.
+     */
+    public function getNetValue(): float
+    {
+        if ($this->getType() !== StockMovementTypeEnum::INVENTORY_RECONCILIATION) {
+            return $this->getTotalValue();
+        }
+
+        return \round($this->getMovementItems()->sum(
+            static fn(StockMovementItem $item): float => $item->getSignedTotal(),
+        ), 2);
+    }
+
+    /**
      * Item count getter.
      */
     public function getItemsCount(): int
@@ -356,6 +436,11 @@ class StockMovement extends BaseModel
 
         if ($count !== null) {
             return Typer::assertInt($count);
+        }
+
+        $persistedCount = $this->getAttribute('items_count');
+        if ($persistedCount !== null) {
+            return Typer::assertInt($persistedCount);
         }
 
         return $this->movementItems()->count();
@@ -369,31 +454,11 @@ class StockMovement extends BaseModel
     protected function casts(): array
     {
         return [
+            'occurred_at' => 'datetime',
+            'reversed_at' => 'datetime',
             'total_quantity' => 'integer',
             'total_value' => 'decimal:2',
         ];
-    }
-
-    /**
-     * Resolve the source store, eager-loading the relation if needed.
-     */
-    private function resolveSourceStore(): Store|null
-    {
-        if ($this->relationLoaded('sourceStore')) {
-            $source = $this->getRelation('sourceStore');
-
-            return $source instanceof Store ? $source : null;
-        }
-
-        $sourceId = $this->getSourceStoreId();
-
-        if ($sourceId === null) {
-            return null;
-        }
-
-        $userId = Typer::assertInt($this->getAttribute('user_id'));
-
-        return Store::query()->where('user_id', $userId)->find($sourceId);
     }
 
     /**

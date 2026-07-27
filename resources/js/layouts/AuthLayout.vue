@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import Brand from '@/components/ui/Brand.vue';
-import FlashAlerts from '@/components/ui/FlashAlerts.vue';
+import FlashToasts from '@/components/ui/FlashToasts.vue';
 import { useRoute } from '@/composables/useRoute';
 
 defineProps<{
@@ -41,7 +41,7 @@ const route = useRoute();
                     </div>
                 </div>
 
-                <FlashAlerts />
+                <FlashToasts />
 
                 <!-- Form Slot -->
                 <slot />

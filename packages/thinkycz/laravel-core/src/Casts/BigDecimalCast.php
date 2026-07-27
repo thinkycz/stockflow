@@ -31,6 +31,8 @@ class BigDecimalCast implements CastsAttributes, ComparesCastableAttributes
         protected int $scale = 0,
         string $roundingMode = RoundingMode::HalfUp->name,
     ) {
+        $this->scale = \max(0, $scale);
+
         try {
             $this->roundingMode = Typer::assertInstance(\constant(RoundingMode::class . "::{$roundingMode}"), RoundingMode::class);
         } catch (Throwable $th) {
@@ -63,10 +65,10 @@ class BigDecimalCast implements CastsAttributes, ComparesCastableAttributes
         }
 
         if (!$value instanceof BigNumber) {
-            $value = BigDecimal::of($value);
+            $value = BigDecimal::of(\is_float($value) ? (string) $value : $value);
         }
 
-        return $value->toScale($this->scale, $this->roundingMode);
+        return $value->toScale(\max(0, $this->scale), $this->roundingMode);
     }
 
     /**
@@ -89,7 +91,7 @@ class BigDecimalCast implements CastsAttributes, ComparesCastableAttributes
             $value = BigDecimal::of($value);
         }
 
-        return $value->toScale($this->scale, $this->roundingMode);
+        return $value->toScale(\max(0, $this->scale), $this->roundingMode);
     }
 
     /**
@@ -110,20 +112,20 @@ class BigDecimalCast implements CastsAttributes, ComparesCastableAttributes
                 throw new LogicException(static::class . ' try to compare unsupported value type: ' . \gettype($firstValue));
             }
 
-            $firstValue = BigDecimal::of($firstValue);
+            $firstValue = BigDecimal::of(\is_float($firstValue) ? (string) $firstValue : $firstValue);
         }
 
-        $firstValue = $firstValue->toScale($this->scale, $this->roundingMode);
+        $firstValue = $firstValue->toScale(\max(0, $this->scale), $this->roundingMode);
 
         if (!$secondValue instanceof BigNumber) {
             if (!\is_string($secondValue) && !\is_int($secondValue) && !\is_float($secondValue)) {
                 throw new LogicException(static::class . ' try to compare unsupported value type: ' . \gettype($secondValue));
             }
 
-            $secondValue = BigDecimal::of($secondValue);
+            $secondValue = BigDecimal::of(\is_float($secondValue) ? (string) $secondValue : $secondValue);
         }
 
-        $secondValue = $secondValue->toScale($this->scale, $this->roundingMode);
+        $secondValue = $secondValue->toScale(\max(0, $this->scale), $this->roundingMode);
 
         return $firstValue->isEqualTo($secondValue);
     }

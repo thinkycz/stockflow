@@ -82,10 +82,25 @@ use Thinkycz\LaravelCore\Support\Typer;
     $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
     $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $limited = Typer::assertInstance(UserFactory::new()->limited($store)->createOne(), User::class);
+    $item = Item::factory()->create([
+        'user_id' => $admin->getKey(),
+        'title' => 'Limited User Item',
+    ]);
 
     $session = InventorySession::factory()->forStore($store)->byUser($admin)->create();
+    InventorySessionItem::factory()->create([
+        'session_id' => $session->getKey(),
+        'item_id' => $item->getKey(),
+        'quantity' => 5,
+    ]);
 
-    $this->actingAs($limited)
+    $response = $this->actingAs($limited)
         ->get(\route('inventory-counts.show', ['session' => $session->getKey()]))
         ->assertOk();
+
+    $response->assertInertia(static fn($page) => $page
+        ->has('rows', 1)
+        ->where('rows.0.item_id', $item->getKey())
+        ->where('rows.0.title', 'Limited User Item')
+        ->where('rows.0.current', 5));
 });

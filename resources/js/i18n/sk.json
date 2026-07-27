@@ -11,12 +11,17 @@
         "dashboard": "Nástenka",
         "inventory": "Inventár",
         "stock_movements": "Skladové pohyby",
+        "incoming": "Príjem tovaru",
+        "consumption": "Výdaj / spotreba",
         "stores": "Predajne",
         "statements": "Výkazy",
         "inventory_counts": "Inventúra",
         "reports": "Reporty",
         "statistics": "Štatistika",
+        "shifts": "Smeny",
+        "attendance": "Dochádzka",
         "users": "Používatelia",
+        "workers": "Brigádnici",
         "settings": "Nastavenia",
         "profile": "Profil",
         "password": "Heslo",
@@ -46,7 +51,8 @@
         "previous": "Predchádzajúce",
         "next": "Ďalej",
         "decrease": "Znížiť",
-        "increase": "Zvýšiť"
+        "increase": "Zvýšiť",
+        "dismiss_notification": "Zavrieť oznámenie"
     },
     "auth": {
         "login": {
@@ -92,6 +98,72 @@
             "submit": "Aktualizovať heslo"
         }
     },
+    "noticeboard": {
+        "title": "Nástenka",
+        "subtitle": "Kartičky a oznámenia pre aktívnu predajňu.",
+        "no_store": "Pred pridaním kartičky vyberte predajňu.",
+        "add": "Pridať kartičku",
+        "show_all": "Zobraziť celé",
+        "restore": "Obnoviť",
+        "force_delete": "Definitívne zmazať",
+        "deleted_user": "Zmazaný používateľ",
+        "expires": "Platí do {date}",
+        "updated_by": "Naposledy upravil(a) {email}, {date}",
+        "confirm_trash": "Presunúť kartičku do koša?",
+        "confirm_force_delete": "Definitívne zmazať kartičku? Túto akciu nemožno vrátiť.",
+        "filters": {
+            "search": "Hľadať v kartičkách…",
+            "all_labels": "Všetky štítky"
+        },
+        "status": {
+            "active": "Aktívne",
+            "expired": "Expirované",
+            "trash": "Kôš"
+        },
+        "labels": {
+            "information": "Informácie",
+            "important": "Dôležité",
+            "task": "Úloha",
+            "event": "Udalosť"
+        },
+        "colors": {
+            "yellow": "Žltá",
+            "pink": "Ružová",
+            "blue": "Modrá",
+            "green": "Zelená",
+            "purple": "Fialová"
+        },
+        "empty": {
+            "title": "Žiadne kartičky",
+            "description": "Pre zvolené filtre tu zatiaľ nie sú žiadne kartičky."
+        },
+        "form": {
+            "create_title": "Nová kartička",
+            "edit_title": "Upraviť kartičku",
+            "title": "Nadpis",
+            "content": "Obsah",
+            "label": "Štítok",
+            "color": "Farba",
+            "expires_on": "Platí do",
+            "image": "Obrázok",
+            "choose_image": "Vybrať obrázok",
+            "remove_image": "Odobrať obrázok"
+        },
+        "editor": {
+            "text_size": "Veľkosť textu",
+            "size_small": "Malý",
+            "size_normal": "Normálny",
+            "size_large": "Veľký",
+            "bold": "Tučné",
+            "italic": "Kurzíva",
+            "underline": "Podčiarknutie",
+            "bullet_list": "Odrážky",
+            "ordered_list": "Číslovanie",
+            "link": "Odkaz",
+            "link_prompt": "Zadajte adresu odkazu",
+            "clear": "Zrušiť formátovanie"
+        }
+    },
     "dashboard": {
         "title": "Nástenka",
         "subtitle": "Prehľad o aktuálnom stave zásob a nedávnej aktivite pre vybranú predajňu.",
@@ -103,17 +175,61 @@
             "title": "Vyberte predajňu",
             "description": "Nástenka zobrazuje dáta vždy len pre jednu predajňu. Vyberte aktívnu predajňu v sidebare."
         },
+        "actions": {
+            "subtitle": "Vyberte akciu, ktorú chcete vykonať pre svoju pobočku.",
+            "current_store": "Aktuálna predajňa",
+            "incoming": {
+                "title": "Príjem tovaru",
+                "description": "Pridajte prijatý tovar do zásob svojej pobočky."
+            },
+            "consumption": {
+                "title": "Výdaj tovaru",
+                "description": "Odpíšte vydaný alebo spotrebovaný tovar zo zásob."
+            },
+            "statements": {
+                "title": "Výkazy",
+                "description": "Zadajte a spravujte denné tržby pobočky."
+            },
+            "inventory": {
+                "title": "Inventúra",
+                "description": "Spustite inventúru alebo otvorte históriu počítania."
+            },
+            "shifts": {
+                "title": "Zmeny",
+                "description": "Zobrazte plán zmien pre svoju pobočku."
+            },
+            "attendance": {
+                "title": "Dochádzka",
+                "description": "Zaznamenajte príchody, prestávky a odchody."
+            }
+        },
+        "operations": {
+            "title": "Dnešná prevádzka",
+            "subtitle": "Aktuálny prehľad zmien a dochádzky na vašej pobočke.",
+            "current_shift": "Aktuálna zmena",
+            "no_current_shift": "Práve nie je naplánovaná žiadna zmena.",
+            "next_shift": "Ďalšia zmena",
+            "no_next_shift": "Žiadna ďalšia zmena nie je naplánovaná.",
+            "attendance": "Dochádzka teraz",
+            "no_attendance": "Nikto zatiaľ nemá zaznamenaný príchod.",
+            "stale_attendance": "Staršie neuzavreté dochádzky na preverenie: {count}",
+            "status": {
+                "present": "Prítomný",
+                "break": "Prestávka"
+            }
+        },
         "metrics": {
             "inventory_value": "Hodnota zásob",
             "items_count": "Položiek v predajni",
-            "low_stock": "Nízke zásoby",
+            "low_stock": "Riziko do 7 dní",
+            "last_inventory": "Posledná inventúra",
             "today_movements": "Dnešné pohyby"
         },
         "month_flow": {
             "title": "Mesačný pohyb",
-            "subtitle": "Súčet hodnôt príjmov a výdajov za aktuálny mesiac.",
-            "incoming": "Príjem",
-            "outgoing": "Výdaj"
+            "subtitle": "Nákupy a skutočná spotreba za aktuálny mesiac.",
+            "incoming": "Nákupy",
+            "outgoing": "Spotreba"
         },
         "stock_status": {
             "title": "Stav zásob",
@@ -121,11 +237,11 @@
         },
         "top_consumed": {
             "title": "Najviac odoberané",
-            "subtitle": "Top 5 položiek podľa množstva za posledných 30 dní.",
+            "subtitle": "Top 5 položiek podľa evidovanej spotreby za posledných 30 dní.",
             "item": "Položka",
             "quantity": "Množstvo",
             "value": "Hodnota",
-            "empty": "Za posledných 30 dní neboli žiadne výdaje."
+            "empty": "Za posledných 30 dní nebola evidovaná žiadna spotreba."
         },
         "statements": {
             "title": "Posledné výkazy",
@@ -170,16 +286,26 @@
         "status": {
             "in_stock": "Skladom",
             "low_stock": "Nízky stav",
-            "out_of_stock": "Vypredané"
+            "out_of_stock": "Vypredané",
+            "ok": "V poriadku",
+            "due_soon": "Riziko do 7 dní",
+            "out": "Vypredané",
+            "no_data": "Nedostatok dát"
         },
         "columns": {
             "title": "Položka",
             "sku": "SKU",
             "unit": "Jedn.",
             "quantity": "Množstvo",
+            "total_quantity": "Celkové množstvo",
             "price": "Cena",
             "total_value": "Hodnota",
             "status": "Stav",
+            "inventory_value": "Hodnota zásob",
+            "sku_count": "Počet SKU",
+            "out_of_stock": "Vypredané",
+            "risk_count": "Riziko do 7 dní",
+            "last_inventory": "Posledná inventúra",
             "actions": "Akcie",
             "description": "Popis"
         },
@@ -189,13 +315,15 @@
         "store_quantities_subtitle": "Aktuálne množstvo položky v jednotlivých predajniach.",
         "no_store_stock": "Zatiaľ nie je evidované množstvo v žiadnej predajni.",
         "metrics": {
-            "quantity": "Množstvo vo sklade",
+            "quantity": "Celkové množstvo",
             "unit_price": "Jednotková cena",
             "total_value": "Celková hodnota"
         },
         "active_store": "Aktívna pobočka"
     },
     "stores": {
+        "slack_channel_placeholder": "#predajna-bratislava alebo C0123456789",
+        "slack_channel_help": "Voliteľný názov alebo ID Slack kanála pre prevádzkové oznámenia.",
         "title": "Predajne",
         "subtitle": "Spravujte svoje predajne a sledujte, čo prijali.",
         "title_create": "Pridať novú predajňu",
@@ -233,7 +361,8 @@
         },
         "confirm_delete": "Naozaj chcete zmazať túto predajňu?",
         "metrics": {
-            "outgoing_movements": "Výdajové pohyby",
+            "outgoing_movements": "Presuny von",
+            "transfer_out_movements": "Presuny von",
             "received_quantity": "Celkom prijaté",
             "received_value": "Celková hodnota príjmu"
         },
@@ -243,18 +372,26 @@
             "status": "Stav",
             "is_warehouse": "Táto predajňa je sklad",
             "notes": "Poznámky",
+            "slack_channel": "Slack kanál",
             "movements": "Pohyby",
             "received_value": "Hodnota príjmu",
-            "outgoing_value": "Hodnota výdaja",
+            "outgoing_value": "Hodnota presunov von",
+            "transfer_out_value": "Hodnota presunov von",
             "item": "Položka",
             "sku": "SKU",
             "total_quantity": "Celkom množstvo",
             "total_value": "Celková hodnota",
+            "inventory_value": "Aktuálna hodnota zásob",
+            "sku_count": "Počet SKU",
+            "out_of_stock": "Vypredané",
+            "risk_count": "Riziko do 7 dní",
+            "last_inventory": "Posledná inventúra",
             "actions": "Akcie",
             "sparkline": "Vývoj (30 dní)",
             "last_count": "Naposledy napočítané",
             "avg_daily_consumption": "Priem. spotreba / deň",
-            "days_until_restock": "Dní do vypredania"
+            "days_until_restock": "Dní do vypredania",
+            "days_until_stockout": "Dní do vypredania"
         }
     },
     "stock_movements": {
@@ -265,6 +402,11 @@
         "title_adjustment": "Ručná úprava",
         "subtitle_adjustment": "Nastavte nové množstvo a dôvod pre každú položku v predajni.",
         "open_adjustment": "Ručná úprava",
+        "title_incoming": "Príjem tovaru",
+        "subtitle_incoming": "Naskladnite prijatý tovar priamo na svoju pobočku.",
+        "title_consumption": "Výdaj / spotreba",
+        "subtitle_consumption": "Odpíšte skutočne spotrebovaný tovar z jednej predajne.",
+        "open_consumption": "Výdaj / spotreba",
         "back_to_transfer": "Späť na presun",
         "create_new": "Nový pohyb",
         "back_to_list": "Späť na pohyby",
@@ -273,11 +415,20 @@
             "incoming": "Naskladnenie",
             "outgoing": "Vyskladnenie",
             "transfer": "Presun medzi predajňami",
-            "adjustment": "Ručná úprava"
+            "consumption": "Spotreba",
+            "adjustment": "Ručná úprava",
+            "inventory_reconciliation": "Inventúrne vyrovnanie",
+            "reversal": "Storno"
         },
         "filter": {
+            "search": "Hľadať",
+            "type": "Typ",
             "all_types": "Všetky typy",
             "all_stores": "Všetky predajne",
+            "source": "Zdroj",
+            "all_sources": "Všetky zdroje",
+            "destination": "Cieľ",
+            "all_destinations": "Všetky ciele",
             "date_from": "Od",
             "date_to": "Do"
         },
@@ -295,9 +446,13 @@
             "source_warehouse": "Zdrojový sklad",
             "destination_store": "Cieľová predajňa",
             "adjustment_store": "Upravovaná predajňa",
+            "incoming_store": "Pobočka príjmu",
+            "consumption_store": "Predajňa spotreby",
             "select_store": "Vyberte predajňu",
             "select_warehouse": "Vyberte sklad",
             "note": "Poznámka / referencia",
+            "occurred_at": "Dátum a čas udalosti",
+            "occurred_at_help": "Pre aktuálny čas nechajte prázdne. Staršia udalosť musí byť po poslednej uzavretej inventúre všetkých dotknutých položiek.",
             "items": "Položky pohybu",
             "item": "Položka",
             "select_item": "Vyberte položku",
@@ -321,6 +476,7 @@
             "value": "Celková hodnota"
         },
         "reasons": {
+            "consumption": "Spotreba",
             "initial_stock": "Počiatočný stav",
             "missing": "Chýbajúce",
             "stolen": "Odcudzené",
@@ -336,6 +492,10 @@
             "would_be_negative": "Tento pohyb nie je možné zmazať, pretože by množstvo \":title\" v \":store\" kleslo pod nulu."
         },
         "confirm_delete": "Naozaj chcete zmazať tento skladový pohyb?",
+        "reverse": "Stornovať",
+        "reversal_reason_prompt": "Uveďte dôvod storna:",
+        "reversed": "Tento pohyb bol stornovaný.",
+        "reversal_of": "Storno pohybu #{id}",
         "detail": {
             "title": "Pohyb č.",
             "items": "Položky pohybu",
@@ -346,6 +506,7 @@
             "before": "Pred",
             "after": "Po",
             "difference": "Rozdiel",
+            "value_change": "Zmena hodnoty",
             "reason": "Dôvod",
             "total_quantity": "Celkové množstvo",
             "total_value": "Celková hodnota",
@@ -370,7 +531,7 @@
     },
     "reports": {
         "title": "Reporty",
-        "subtitle": "Rýchly prehľad o stave zásob a trendoch pohybov.",
+        "subtitle": "Finančný prehľad tržieb, provízií a odhadovanej marže zo skutočnej spotreby.",
         "inventory_value": "Aktuálna hodnota zásob",
         "monthly_incoming": "Príjem tento mesiac",
         "monthly_outgoing": "Výdaj tento mesiac",
@@ -404,11 +565,12 @@
             "period_all_time": "Celé obdobie",
             "empty": "Vyberte predajňu a obdobie, aby sa zobrazili dáta.",
             "total_revenue": "Celkové tržby",
-            "investment": "Investícia do tovaru",
+            "investment": "Náklad skutočnej spotreby",
+            "inventory_coverage": "Pokrytie: {days} dní / {items} položiek",
             "provisions": "Provízie platieb",
             "card_provision": "karta (1 %)",
             "marketplace_provision": "marketplace (30 %)",
-            "gross_margin": "Hrubá marža",
+            "gross_margin": "Odhadovaná hrubá marža",
             "margin_percent": "Percentuálna marža",
             "daily_average": "Denný priemer",
             "days_with_revenue": "Dní s tržbami",
@@ -419,8 +581,8 @@
             "channel_bars": "Tržby podľa kanálov"
         },
         "statistics": {
-            "title": "Štatistika pobočky",
-            "subtitle": "Predaj, príjem, výdaj, stav zásob a predikcia naskladnenia pre vybranú pobočku.",
+            "title": "Skladová štatistika",
+            "subtitle": "Spotreba, presuny, stav zásob a predikcia vypredania pre vybranú pobočku.",
             "store": "Pobočka",
             "period": "Obdobie (dní)",
             "apply": "Použiť",
@@ -446,6 +608,28 @@
                 "value": "Hodnota zásob",
                 "items": "Položiek na sklade"
             },
+            "consumption": { "title": "Náklad spotreby" },
+            "risk": { "title": "Ohrozené položky" },
+            "coverage": {
+                "title": "Pokrytie inventúrami",
+                "last_inventory": "Posledná inventúra"
+            },
+            "flows": {
+                "receipts": "Nákupy / príjmy",
+                "transfer_in": "Presuny dovnútra",
+                "transfer_out": "Presuny von"
+            },
+            "items": {
+                "title": "Spotreba a predikcie položiek",
+                "subtitle": "Množstvá sú vždy zobrazené vo vlastnej jednotke položky.",
+                "item": "Položka",
+                "current": "Aktuálny stav",
+                "consumed": "Spotreba",
+                "average": "Priemer za deň",
+                "stockout": "Predikované vypredanie",
+                "status": "Stav"
+            },
+            "classifications": { "title": "Straty a korekcie podľa dôvodu" },
             "top_consumed": {
                 "title": "Najviac spotrebované položky",
                 "subtitle": "Položky s najväčšou absolútnou zmenou v období.",
@@ -458,7 +642,8 @@
             "charts": {
                 "daily": "Denný príjem vs. výdaj",
                 "incoming": "Príjem",
-                "outgoing": "Výdaj"
+                "outgoing": "Výdaj",
+                "consumption": "Náklad spotreby po týždňoch"
             },
             "empty": "Vyberte pobočku na zobrazenie štatistík."
         }
@@ -484,6 +669,22 @@
         "store": "Predajňa",
         "month": "Mesiac",
         "select_store": "Vyberte predajňu",
+        "quick_entry": {
+            "title": "Dnešný výkaz",
+            "description": "Rýchle zadanie tržieb za {date}.",
+            "total": "Dnešný súčet",
+            "save": "Uložiť dnešné údaje"
+        },
+        "attendance_close": {
+            "title": "Ukončiť aktívnu dochádzku brigádnikov?",
+            "description": "Títo brigádnici majú stále aktívnu dochádzku:",
+            "workers": "Brigádnici",
+            "active_status": "Aktívna dochádzka",
+            "on_break": "Na prestávke",
+            "worked_time": "Odpracované",
+            "save_only": "Iba uložiť",
+            "save_and_close": "Uložiť a ukončiť všetko"
+        },
         "columns": {
             "day": "Deň",
             "cash": "Hotovosť",
@@ -546,11 +747,33 @@
             "unit": "Jedn.",
             "current": "Aktuálne množstvo",
             "previous": "Posledná inventúra",
+            "stock_levels": "Stav zásob",
+            "current_short": "Aktuálne",
+            "previous_short": "Posledná inventúra",
             "new_quantity": "Nové množstvo",
-            "note": "Poznámka"
+            "note": "Poznámka",
+            "difference": "Rozdiel",
+            "reason": "Dôvod"
         },
         "actions": {
-            "save": "Uložiť inventúru"
+            "start": "Začať inventúru",
+            "save": "Uložiť inventúru",
+            "cancel": "Zrušiť inventúru"
+        },
+        "cancel_modal": {
+            "title": "Zrušiť inventúru?",
+            "description": "Naozaj chcete túto inventúru zrušiť? Prídete o všetky doteraz uložené hodnoty a túto akciu nemožno vrátiť späť.",
+            "confirm": "Áno, zrušiť inventúru"
+        },
+        "date": {
+            "label": "Dátum inventúry",
+            "help": "Dátum sa stane platným až po uložení celej inventúry. Dovtedy sa pri otvorení formulára ponúkne dnešný dátum."
+        },
+        "autosave": {
+            "idle": "Neuložené",
+            "saving": "Ukladám…",
+            "saved": "Uložené",
+            "error": "Chyba ukladania"
         },
         "status": {
             "ok": "OK",
@@ -609,11 +832,18 @@
     "users": {
         "title": "Používatelia",
         "subtitle": "Spravujte používateľské účty a priradenie k predajniam.",
+        "search_placeholder": "Hľadať používateľov podľa e-mailu...",
+        "empty": {
+            "title": "Zatiaľ žiadni používatelia",
+            "description": "Pridajte prvého používateľa.",
+            "search_description": "Skúste upraviť hľadaný e-mail."
+        },
         "columns": {
             "email": "E-mail",
             "role": "Rola",
             "store": "Predajňa",
-            "created": "Vytvorený"
+            "created": "Vytvorený",
+            "actions": "Akcie"
         },
         "role": {
             "admin": "Administrátor",
@@ -646,6 +876,182 @@
             "deleted": "Používateľ bol zmazaný.",
             "cannot_delete_admin": "Hlavného administrátora nie je možné zmazať.",
             "cannot_modify_admin_role": "Hlavný administrátor má vždy rolu administrátora."
+        }
+    },
+    "workers": {
+        "title": "Brigádnici",
+        "subtitle": "Spravujte brigádnikov a ich hodinové sadzby v CZK.",
+        "title_create": "Pridať brigádnika",
+        "subtitle_create": "Vytvorte nového brigádnika s menom, priezviskom a hodinovou sadzbou.",
+        "title_edit": "Upraviť brigádnika",
+        "subtitle_edit": "Aktualizujte údaje brigádnika.",
+        "add_worker": "Pridať brigádnika",
+        "search_placeholder": "Hľadať brigádnikov...",
+        "confirm_delete": "Naozaj chcete zmazať tohto brigádnika?",
+        "empty": {
+            "title": "Zatiaľ žiadni brigádnici",
+            "description": "Pridajte svojho prvého brigádnika."
+        },
+        "columns": {
+            "first_name": "Meno",
+            "last_name": "Priezvisko",
+            "hourly_rate": "Hodinová sadzba (CZK)",
+            "actions": "Akcie"
+        }
+    },
+    "shifts": {
+        "title": "Smeny",
+        "subtitle": "Kalendár smien brigádnikov pre aktívnu predajňu.",
+        "prev_month": "Predchádzajúci mesiac",
+        "next_month": "Ďalší mesiac",
+        "no_store": "Najprv vyberte predajňu.",
+        "day_title": "Smieny pre {date}",
+        "existing_shifts": "Existujúce smeny",
+        "add_shift": "Pridať smenu",
+        "edit_shift": "Upraviť smenu",
+        "select_worker": "Vyberte brigádnika",
+        "confirm_delete": "Naozaj chcete zmazať túto smenu?",
+        "read_only_notice": "Smieny môže spravovať iba administrátor.",
+        "copy_public_link": "Kopírovať verejný odkaz",
+        "public_link_copied": "Verejný odkaz skopírovaný",
+        "public_link_error": "Verejný odkaz sa nepodarilo skopírovať.",
+        "overlap_confirm": "Táto smena sa prekrýva s inou smenou. Napriek tomu ju uložiť?",
+        "mobile": {
+            "view_label": "Zobrazenie mobilného kalendára",
+            "day_view": "Deň",
+            "month_view": "Celý mesiac",
+            "full_calendar": "Kalendár celého mesiaca",
+            "selected_day": "Vybraný deň",
+            "no_shifts": "Na tento deň nie sú smeny"
+        },
+        "presets": {
+            "title": "Prednastavené smeny",
+            "manage": "Spravovať predvoľby",
+            "empty": "Zatiaľ nie sú žiadne predvoľby. Nižšie pridajte prvú smenu pre aktívnu prevádzku.",
+            "add": "Pridať predvoľbu",
+            "edit": "Upraviť predvoľbu",
+            "name": "Názov predvoľby",
+            "confirm_delete": "Odstrániť túto predvoľbu? Už priradené smeny sa nezmenia."
+        },
+        "quick_add": {
+            "employee": "Zamestnanec",
+            "preset": "Prednastavená smena",
+            "select_preset": "Vyberte predvoľbu",
+            "no_presets": "Nie sú nastavené žiadne predvoľby",
+            "configure_first": "Najprv nastavte predvoľbu",
+            "start": "Spustiť rýchle pridávanie",
+            "done": "Hotovo",
+            "active_help": "Kliknutím na dni v kalendári priradíte vybranú smenu.",
+            "created": "Smena bola pridaná.",
+            "exists": "Táto smena je už priradená.",
+            "conflict": "Smena nebola pridaná pre konflikt.",
+            "failed": "Smenu sa nepodarilo pridať.",
+            "overlap_confirm": "Smena sa prekrýva s {conflicts}. Napriek tomu ju pridať?"
+        },
+        "public_title": "Kalendár smien — {store}",
+        "public_subtitle": "Kalendár smien zamestnancov iba na čítanie.",
+        "summary": {
+            "title": "Mesačný prehľad",
+            "subtitle": "Naplánované hodiny a odhadovaná mzda za {month}.",
+            "worker": "Zamestnanec",
+            "hours": "Naplánované hodiny",
+            "salary": "Celková mzda"
+        },
+        "columns": {
+            "worker": "Brigádnik",
+            "start_time": "Začiatok",
+            "end_time": "Koniec"
+        }
+    },
+    "attendance": {
+        "title": "Dochádzka",
+        "subtitle": "Príchody, prestávky a odchody brigádnikov pre aktívnu predajňu.",
+        "worker": "Brigádnik",
+        "select_worker": "Vyberte brigádnika",
+        "today": "Dnešná dochádzka",
+        "today_help": "Rýchly prehľad dnešných príchodov, prestávok a odchodov.",
+        "empty_today": "Dnes zatiaľ nebola zaznamenaná žiadna dochádzka.",
+        "retail_required": "Dochádzka je dostupná iba pre aktívnu maloobchodnú predajňu.",
+        "break": "Prestávka",
+        "breaks": "Prestávky",
+        "break_count": "Prestávky: {count}",
+        "table": {
+            "work": "Pracovný čas",
+            "worked": "Odpracované bez prestávok",
+            "status": "Stav",
+            "no_breaks": "Bez prestávky"
+        },
+        "duration": {
+            "less_than_minute": "menej ako 1 min"
+        },
+        "now": "teraz",
+        "arrived_at": "Príchod o {time}",
+        "stale_help": "Tento pracovný blok zostal otvorený z predchádzajúceho dňa a musí ho opraviť administrátor.",
+        "status": {
+            "absent": "Mimo práce",
+            "present": "Práve pracuje",
+            "break": "Na prestávke",
+            "stale": "Vyžaduje opravu",
+            "active": "Aktívny",
+            "working": "Pracuje",
+            "completed": "Ukončené"
+        },
+        "timer": {
+            "select": "Najprv vyberte brigádnika",
+            "working": "Odpracovaný čas dnes",
+            "break": "Dĺžka aktuálnej prestávky",
+            "absent": "Smena ešte nezačala",
+            "stale": "Neuzavretý blok"
+        },
+        "store_state": {
+            "occupied": "Obsluha prítomná",
+            "empty": "Bez obsluhy",
+            "unclear": "Nejasný stav"
+        },
+        "store_state_description": {
+            "occupied": "V predajni je aspoň jeden brigádnik, ktorý nie je na prestávke.",
+            "empty": "Predajňa je práve bez aktívnej obsluhy. Skontrolujte, či je tento stav očakávaný.",
+            "unclear": "Existuje neuzavretý záznam z predchádzajúceho dňa. Stav obsluhy nie je možné spoľahlivo určiť."
+        },
+        "actions": {
+            "arrival": "Príchod",
+            "break_start": "Začať prestávku",
+            "break_end": "Návrat",
+            "departure": "Odchod"
+        },
+        "no_shift": {
+            "title": "Brigádnik nemá aktuálnu smenu",
+            "description": "Vybraný brigádnik nemá smenu v párovacom okne. Chcete príchod napriek tomu zaznamenať?",
+            "confirm": "Zaznamenať príchod"
+        },
+        "report": {
+            "title": "Mesačný výkaz",
+            "help": "Filtre, súhrn a všetky záznamy na jednom mieste.",
+            "back": "Späť na dochádzku",
+            "month": "Mesiac",
+            "all_workers": "Všetci brigádnici",
+            "print": "Tlač",
+            "print_title": "Výkaz dochádzky",
+            "actual": "Skutočnosť",
+            "planned": "Plán",
+            "difference": "Odchýlka",
+            "wage": "Odmena",
+            "date": "Dátum",
+            "interval": "Interval",
+            "breaks_total": "Prestávky celkom",
+            "total_actual": "Celkom odpracované",
+            "total_planned": "Celkom naplánované",
+            "total_wage": "Orientačná odmena",
+            "empty": "Pre zvolené filtre nie sú žiadne záznamy.",
+            "incomplete": "Neúplné bloky: {count}"
+        },
+        "correction": {
+            "create": "Doplniť záznam",
+            "edit": "Opraviť záznam",
+            "void": "Zneplatniť",
+            "reason": "Dôvod opravy",
+            "reason_prompt": "Zadajte dôvod zneplatnenia",
+            "add_break": "Pridať prestávku"
         }
     }
 }

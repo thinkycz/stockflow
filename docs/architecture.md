@@ -3,16 +3,16 @@
 ## High-level
 
 This project is a Laravel 13 + Inertia 3 + Vue 3 inventory starter with
-**per-user data isolation** within one deployment. Each authenticated user
-owns their own stores, item catalog, and stock movements. Quantity is tracked
-per store via `store_items`. Users can mark any store as a **warehouse** (`is_warehouse`);
-a default Warehouse is auto-created on registration. On the create form, movement
-type is **inferred** from source and destination: no source + destination =
-incoming (receipt/purchase); source + different destination = outgoing (warehouse
-source displays as dispatch, retail source as store transfer). Manual adjustment
-is a separate explicit mode (`?mode=adjustment`) that posts `type: adjustment`.
-Stock can move between any owned stores; quantity is checked at the source store
-for outgoing transfers.
+**one company per deployment**. The main administrator owns stores, catalog,
+and stock movements; limited users resolve that owner and are pinned to an
+assigned branch. Quantity is tracked
+per store via `store_items`; the immutable stock ledger records `incoming`,
+`transfer`, `consumption`, `adjustment`, `inventory_reconciliation`, and
+`reversal` events.
+A transfer only changes location and never counts as consumption. Physical
+inventory creates a snapshot and, for non-zero differences, a linked inventory
+reconciliation in the same transaction. See
+[`docs/adr/0001-unified-stock-ledger.md`](adr/0001-unified-stock-ledger.md).
 
 The backend ships with two HTTP surfaces and one framework helper package; the
 frontend is a Vite-built Vue 3 app that consumes Inertia pages from the
@@ -26,13 +26,14 @@ množství** (read-only — the current on-hand value in `store_items`),
 **Poslední množství** (read-only — the value recorded in the previous
 inventory session for the same store/item) and **Nové množství** (the
 input — what becomes the new on-hand value when the form is saved).
-Saving the form creates a new `inventory_sessions` header and one
-`inventory_session_items` row per recorded item inside a single
-transaction; the matching `store_items` row is upserted so the single
-source of truth for "what is on the shelf right now" stays on
-`store_items`. Statistical columns (average consumption, days until
-restock, status, sparkline, last count) live on the store detail page
-instead.
+Opening the page can resume its store's single active draft. Rows autosave
+with a row-specific count time and client version. Closing the draft creates
+the final session and reconciliation in one transaction. Every row stores
+expected, counted, and difference values. A
+non-zero difference creates a linked ledger line with a reason; negative rows
+default to consumption and positive rows to inventory correction. The matching
+current `store_items` row receives only the difference, preserving movements
+posted after that row was counted.
 
 `/inventory-counts/{session}` is the read-only detail of one inventory
 session. It lists every item in alphabetical order with the value
@@ -46,17 +47,12 @@ page. The page is accessible to both the main admin and limited users;
 limited users are pinned to their assigned store, and visitors without
 an `assigned_store_id` are refused (403).
 
-`/reports/statistics` aggregates three data sources for the selected
-branch over a configurable window (default 30 days):
-
-- `StatementDay` rows for revenue, channel breakdown, and daily totals.
-- `StockMovement` rows for incoming (received) and outgoing (consumed /
-  transferred) volume and value.
-- `store_items` joined with `items` for the current inventory value.
-
-The store detail page computes per-item average daily consumption from
-outgoing movements in the window and predicts when the branch will
-run out, so the operator can plan restocking.
+`/reports` is financial: revenue, channels, fees, actual consumption cost and
+estimated gross margin with inventory-coverage information.
+`/reports/statistics` is inventory-only: current value, receipts, transfers,
+consumption trend, losses/corrections, data coverage and per-item stockout
+forecast. Forecasts use closed physical-count intervals, at most eight and 56
+days, and require at least seven covered days.
 
 ```mermaid
 flowchart LR
@@ -200,6 +196,26 @@ provisions **limited users** (`is_admin = false`,
 `parent_user_id = admin.id`, `assigned_store_id = one-of-admin-stores`)
 from the `/users` section.
 
+### Docházka brigádníků
+
+`/attendance` je provozní docházka aktivní maloobchodní prodejny. Adminský
+měsíční výkaz a auditované opravy jsou oddělené na `/attendance/report`, aby
+provozní obrazovka zůstala zaměřená pouze na aktuální obsluhu. Pracovní
+blok (`attendance_sessions`) začíná příchodem a končí odchodem; libovolný počet
+uzavřených pauz ukládá `attendance_breaks`. Unikátní nullable klíče
+`active_worker_id` a `active_session_id` databázově brání souběžným otevřeným
+blokům jednoho brigádníka a souběžným pauzám jednoho bloku.
+
+Časy jsou UTC timestampy, zatímco párování plánovaných směn, hranice dne a UI
+používají `Europe/Prague`. Příchod snapshotuje plán a sazbu odpovídající směny;
+report proto zůstává historicky stabilní. Obsazenost se neukládá duplicitně,
+ale odvozuje se ze všech otevřených bloků a pauz prodejny. Neuzavřený blok z
+předchozího lokálního dne vytváří stav `unclear` a nevstupuje do odměny.
+
+Adminské doplnění, změna a zneplatnění ukládá důvod a stav před/po změně do
+`attendance_audits`. Omezené účty mohou zapisovat běžné události jen pro svou
+přiřazenou prodejnu; report, sazby, tisk a opravy jsou admin-only.
+
 - Limited users are pinned to one store and only see Dashboard, Výkazy
   (Statements), Inventura, and Settings in `AppLayout.vue`. The store
   select on `/statements` and `/inventory-counts` is fixed; cross-store
@@ -217,6 +233,36 @@ from the `/users` section.
   through the parent admin, so a limited user only ever sees and writes
   to their assigned store while the admin keeps a single owner of the
   underlying data.
+
+## Virtuální nástěnka
+
+Dashboard obsahuje nad provozními přehledy store-scoped virtuální nástěnku.
+`noticeboard_cards.user_id` drží firemního vlastníka, `store_id` určuje
+publikum a `created_by_user_id` / `updated_by_user_id` zachovávají atribuci.
+Admin i omezený uživatel mohou upravit nebo soft-delete libovolnou kartičku
+své aktuální či přiřazené prodejny; koš, obnova a definitivní odstranění jsou
+admin-only.
+
+Rich-text se před uložením sanitizuje explicitním serverovým whitelistem a
+pro hledání se ukládá samostatný čistý text. `lock_version` zabraňuje
+přepsání souběžné změny. Volitelná expirace pouze přesouvá kartu do filtru
+Expirované a není totožná se smazáním. Privátní obrázek se vydává přes
+autorizovaný store-scoped endpoint. Soft-deleted záznamy starší 30 dní
+odstraňuje denní příkaz `stockflow:prune-noticeboard-cards`.
+
+Nástěnka je vizuálně plochá část dashboardu bez vnořených panelů; pastelové
+karty používají stejné zaoblení, border a stín jako ostatní systémové karty.
+Admin dashboard ponechává pouze kompaktní provozní metriky a poslední pohyby.
+Detailní tok, skladový rozpad a spotřební analytika patří na
+`/reports/statistics`.
+
+Navigační položka Nástěnka je první v sekci Prodejna. Sdílený helper
+`sidebar-navigation.ts` definuje jak pořadí položek této sekce, tak klasifikaci
+store-scoped URL. `AppLayout.vue` používá tutéž klasifikaci k centrálnímu
+zobrazení informačního pillu aktivní prodejny na Nástěnce, výkazech,
+inventurách, reportech, statistikách, směnách a docházce. U omezeného uživatele
+zahrnuje také formuláře příjmu a výdeje; adminské stránky Správy zůstávají bez
+pillu.
 
 ## Inventory history
 
@@ -251,13 +297,12 @@ truth for these views.
 the current per-store stock snapshot and its per-item statistics. The
 inventory table on that page renders the per-item Množství
 (`store_items.quantity`), Hodnota (`quantity × items.purchase_price`),
-Stav (`ItemStockStatusEnum::fromQuantity($quantity)` — in_stock /
-low_stock / out_of_stock), Vývoj (30 dní)
+Stav (`ok`, `due_soon`, `out`, or `no_data` from the forecast), Vývoj (30 dní)
 (`InventorySessionService::sparklineForItem` reading the
 `inventory_session_items` history), Naposledy napočítáno (timestamp of
 the most recent `inventory_sessions` row that contains the item for
 this store), Prům. spotřeba / den (average daily consumption computed
-from outgoing movements in the configured window) and Dnů do
+from closed inventory intervals plus explicit consumption) and Dnů do
 vyprodání (predicted days of stock left based on current quantity
 and average consumption). The `/items` index never carries these
 columns because they belong to the `store_items` link, not the item
@@ -270,4 +315,4 @@ All UI dates use the `useCzechDate()` composable
 `dd.MM.yyyy` (or `dd.MM.yyyy HH:mm` for timestamps) regardless of the
 active UI locale. The backend always returns ISO 8601 strings; the
 frontend formats on the client. `resources/js/lib/format.ts` also uses
-`Intl.DateTimeFormat('cs-CZ', …)` so legacy call sites stay consistent.
+`Intl.DateTimeFormat` with `cs-CZ`, `sk-SK`, or `en-GB` according to the active UI locale; application timestamps use `Europe/Prague`.

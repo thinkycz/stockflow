@@ -7,13 +7,14 @@ namespace App\Http\Controllers\Web\Store;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\StoreValidity;
 use App\Models\Store;
+use App\Models\StoreItem;
 use App\Models\User;
-use Illuminate\Database\Query\Builder as QueryBuilder;
+use App\Services\InventorySessionService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use stdClass;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class StoreIndexController
@@ -28,7 +29,7 @@ class StoreIndexController
     /**
      * Show the stores list with per-store totals.
      */
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, InventorySessionService $inventoryService): Response
     {
         $user = User::mustAuth();
         $storeValidity = StoreValidity::inject($user->getKey());
@@ -47,40 +48,35 @@ class StoreIndexController
             Store::scopeSearch($query, $search);
         }
 
-        $stores = $query->get();
+        $paginator = $query->paginate(self::TAKE)->withQueryString();
+        $stores = $paginator->getCollection();
 
         $storeIds = $stores->pluck('id')->all();
 
-        /** @var array<int, stdClass> $metricsRows */
-        $metricsRows = $storeIds === []
-            ? []
-            : DB::table('stock_movements')
-                ->where(function (QueryBuilder $q) use ($storeIds): void {
-                    $q->whereIn('store_id', $storeIds)
-                        ->orWhereIn('source_store_id', $storeIds);
-                })
-                ->selectRaw('
-                    source_store_id,
-                    store_id,
-                    type,
-                    SUM(CASE WHEN type = \'incoming\' THEN total_quantity ELSE 0 END) as total_received_quantity,
-                    SUM(CASE WHEN type = \'incoming\' THEN total_value ELSE 0 END) as total_received_value,
-                    SUM(CASE WHEN type = \'outgoing\' THEN total_value ELSE 0 END) as total_outgoing_value,
-                    COUNT(*) as movements_count
-                ')
-                ->groupBy('source_store_id', 'store_id', 'type')
-                ->get()
-                ->all();
+        $allStoreItems = StoreItem::query()->whereIn('store_id', $storeIds)->with('item')->get();
+        $lastInventories = DB::table('inventory_sessions')
+            ->whereIn('store_id', $storeIds)
+            ->where('status', 'closed')
+            ->selectRaw('store_id, MAX(counted_at) AS last_counted_at')
+            ->groupBy('store_id')
+            ->pluck('last_counted_at', 'store_id');
 
-        $aggregated = $this->aggregateStoreMetrics($metricsRows);
-
-        $rows = $stores->map(function (Store $store) use ($aggregated): array {
-            $metrics = $aggregated[$store->getKey()] ?? [
-                'movements_count' => 0,
-                'total_received_quantity' => 0,
-                'total_received_value' => 0.0,
-                'total_outgoing_value' => 0.0,
-            ];
+        $rows = $stores->map(function (Store $store) use ($allStoreItems, $inventoryService, $lastInventories): array {
+            /** @var Collection<array-key, StoreItem> $storeItems */
+            $storeItems = new Collection($allStoreItems->where('store_id', $store->getKey())->values()->all());
+            $predictions = $inventoryService->predictionsForStore($store, $storeItems);
+            $inventoryValue = 0.0;
+            $out = 0;
+            $risk = 0;
+            foreach ($storeItems as $storeItem) {
+                $inventoryValue += $storeItem->getQuantity() * $storeItem->getItem()->getPurchasePrice();
+                if ($storeItem->getQuantity() <= 0) {
+                    ++$out;
+                }
+                if ($predictions[$storeItem->getItemId()]['status'] === InventorySessionService::STATUS_SOON) {
+                    ++$risk;
+                }
+            }
 
             return [
                 'id' => $store->getKey(),
@@ -88,58 +84,23 @@ class StoreIndexController
                 'address' => $store->getAddress(),
                 'status' => $store->getStatus()->value,
                 'is_warehouse' => $store->isWarehouse(),
-                'movements_count' => $metrics['movements_count'],
-                'total_received_quantity' => $metrics['total_received_quantity'],
-                'total_received_value' => $metrics['total_received_value'],
-                'total_outgoing_value' => $metrics['total_outgoing_value'],
+                'inventory_value' => \round($inventoryValue, 2),
+                'sku_count' => $storeItems->count(),
+                'out_of_stock' => $out,
+                'risk_count' => $risk,
+                'last_inventory_at' => Typer::parseNullableString($lastInventories->get($store->getKey())),
             ];
         })->all();
 
         return Inertia::render('stores/Index', [
             'stores' => $rows,
             'search' => $search,
+            'pagination' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
         ]);
-    }
-
-    /**
-     * Aggregate the per-store metrics from a single grouped query.
-     *
-     * Each movement row contributes to one of two buckets per store:
-     *  - incoming movements count for the destination store (store_id)
-     *  - outgoing movements count for the source store (source_store_id)
-     *
-     * @param array<int, stdClass> $rows
-     *
-     * @return array<int, array<string, float|int>>
-     */
-    private function aggregateStoreMetrics(array $rows): array
-    {
-        $aggregated = [];
-
-        foreach ($rows as $row) {
-            $rowValues = (array) $row;
-            $storeId = Typer::parseInt($rowValues['store_id'] ?? null);
-            $sourceStoreId = Typer::parseInt($rowValues['source_store_id'] ?? null);
-            $type = Typer::assertString($rowValues['type'] ?? null);
-
-            $bucketId = $type === 'incoming' ? $storeId : $sourceStoreId;
-            if ($bucketId === 0) {
-                continue;
-            }
-
-            $bucket = $aggregated[$bucketId] ?? [
-                'movements_count' => 0,
-                'total_received_quantity' => 0,
-                'total_received_value' => 0.0,
-                'total_outgoing_value' => 0.0,
-            ];
-            $bucket['movements_count'] += Typer::parseInt($rowValues['movements_count'] ?? null);
-            $bucket['total_received_quantity'] += Typer::parseInt($rowValues['total_received_quantity'] ?? null);
-            $bucket['total_received_value'] += Typer::parseFloat($rowValues['total_received_value'] ?? null);
-            $bucket['total_outgoing_value'] += Typer::parseFloat($rowValues['total_outgoing_value'] ?? null);
-            $aggregated[$bucketId] = $bucket;
-        }
-
-        return $aggregated;
     }
 }

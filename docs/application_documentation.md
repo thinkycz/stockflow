@@ -12,15 +12,16 @@
 
 ## Packages
 
-| package                         | description                         |
-| ------------------------------- | ----------------------------------- |
-| `thinkycz/laravel-core`         | internal Laravel core package       |
-| `inertiajs/inertia-laravel`     | Laravel server adapter for Inertia  |
-| `@inertiajs/vue3`               | Vue client adapter for Inertia      |
-| `@inertiajs/vite`               | Inertia Vite integration            |
-| `vue`                           | frontend framework                  |
-| `tailwindcss`                   | styling system                      |
-| `class-variance-authority/clsx` | shadcn-vue-compatible class helpers |
+| package                              | description                         |
+| ------------------------------------ | ----------------------------------- |
+| `thinkycz/laravel-core`              | internal Laravel core package       |
+| `inertiajs/inertia-laravel`          | Laravel server adapter for Inertia  |
+| `laravel/slack-notification-channel` | queued operational Slack messages   |
+| `@inertiajs/vue3`                    | Vue client adapter for Inertia      |
+| `@inertiajs/vite`                    | Inertia Vite integration            |
+| `vue`                                | frontend framework                  |
+| `tailwindcss`                        | styling system                      |
+| `class-variance-authority/clsx`      | shadcn-vue-compatible class helpers |
 
 ## Runtime services
 
@@ -34,6 +35,9 @@
 - Inertia web app:
     - `/login`, `/forgot-password`, `/reset-password`
     - `/dashboard`
+        - store-scoped virtual noticeboard for admin and limited users
+        - active/expired filters, label search, and 24-card pagination
+        - shared create/edit/soft-delete; admin-only trash restore and purge
     - `/inventory`, `/stock-movements`, `/stores`
     - `/statements` (POST `/statements/{statement}` and `/statements/{statement}/clear`)
     - `/inventory-counts` (POST `/inventory-counts` to persist a new session)
@@ -46,6 +50,10 @@
     - `/verify-email`
     - `/settings`
     - POST form actions: `/settings/profile`, `/settings/password`
+- The sidebar places Noticeboard first in the Store section. `AppLayout`
+  displays a read-only active-store pill on Store-section pages and their
+  details; it is hidden on Management and Settings pages and when no active
+  store exists.
 - Minimal API compatibility:
     - `/api/v1/auth/*`
     - `/api/v1/me/*`
@@ -63,9 +71,13 @@
 - Registration has been removed. The single main admin account (`test@test.com`)
   is seeded by `UserSeeder` and provisions additional limited accounts from the
   `/users` section. Limited users are pinned to exactly one store
-  (`assigned_store_id`) and may only see Dashboard, Výkazy (Statements),
-  Inventura, and Settings — the store select is fixed and any cross-store
-  access returns 403.
+  (`assigned_store_id`) and may only see Dashboard, Příjem zboží,
+  Výdej / spotřeba, Výkazy (Statements), Inventura, Směny, Docházka, and
+  Settings. Their Dashboard does not expose inventory statistics and instead
+  provides a store-scoped live operations summary (current and next shifts,
+  current attendance, breaks, and stale attendance warnings) plus four compact
+  actions for receipt, consumption, statements, and inventory. Store-scoped inputs are fixed and any
+  cross-store access returns 403.
 
 ## Cookies
 
@@ -99,6 +111,16 @@ Copy `.env.example` to `.env` and set:
 - `REDIS_USERNAME`, `REDIS_PASSWORD` when Redis requires credentials
 - `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`
 - `TRUSTED_PROXIES`
+- `SLACK_BOT_USER_OAUTH_TOKEN` when store-specific Slack notifications are enabled
+
+## Slack notifications
+
+- Each store may define its own optional Slack channel name or ID in the store administration form.
+- A single deployment-wide bot token is read from `SLACK_BOT_USER_OAUTH_TOKEN`; no default channel is used.
+- Attendance, finalized inventory, statement mutations, and manual stock movements produce queued Czech operational messages after the surrounding database transaction commits.
+- Transfers are routed to both affected stores. Stores sharing the same configured channel receive one message for that activity.
+- Missing tokens/channels and Slack enqueue failures do not change the result of the underlying application action.
+- The Slack App must be installed in the workspace and invited to every configured private channel. Queue workers must be running to deliver messages.
 
 ## Deferred
 
@@ -109,11 +131,29 @@ Copy `.env.example` to `.env` and set:
 ## Inventory semantics
 
 - Items are the catalog (`items` table): name, SKU, unit, purchase price.
+- Deleting an item soft-deletes it from the active catalog when completed inventory rows reference it. Completed inventory history remains readable, while rows from open inventory drafts are removed. Items with stock-movement history remain protected from deletion.
   They do not carry stock on their own.
 - Per-store stock lives on `store_items` (`store_id`, `item_id`, `quantity`).
   Quantity is the single source of truth for "what is on the shelf right
   now" and is updated transactionally by `InventorySessionService` and
   `StockMovementService`.
+- The single stock ledger uses these terms consistently:
+    - **příjem / incoming** — externally received goods added directly to one
+      store.
+    - **spotřeba / consumption** — goods that actually left inventory through
+      operation; it affects consumption cost and forecast.
+    - **přesun / transfer** — stock relocated between two stores; it has zero
+      company-level consumption impact.
+    - **inventurní vyrovnání / inventory reconciliation** — immutable ledger
+      evidence for a physical-count difference.
+- Limited users have focused `/stock-movements/create?mode=incoming` and
+  `?mode=consumption` forms. Both are server-pinned to `assigned_store_id`;
+  transfer, adjustment, cross-store, and backdated submissions remain
+  forbidden.
+- An open inventory draft has no finalized `counted_at`. The inventory form
+  defaults to today's date on every open, permits a past date, and persists the
+  selected date only when the entire draft is closed. Drafts never appear in
+  inventory history, dashboard last-inventory data, or statistics.
 - `/items` (Inventář) is a pure catalog list — it never exposes
   per-store quantity, value, or status. Those are properties of the
   `store_items` link, so they only render inside a store context.
@@ -121,16 +161,15 @@ Copy `.env.example` to `.env` and set:
   sense. The inventory table there exposes:
     - **Množství** (current `store_items.quantity`)
     - **Hodnota** (`quantity × items.purchase_price`)
-    - **Stav** (`ItemStockStatusEnum::fromQuantity($quantity)` — in_stock /
-      low_stock / out_of_stock)
+    - **Stav** (`ok`, `due_soon`, `out`, or `no_data` from the stockout forecast)
     - **Vývoj (30 dní)** (30-day sparkline via
       `InventorySessionService::sparklineForItem`, sourced from
       `inventory_session_items`)
     - **Naposledy napočítáno** (timestamp of the most recent
       `inventory_sessions` row that contains the item for this store,
       formatted via `useCzechDate`).
-    - **Prům. spotřeba / den** (average daily consumption computed from
-      outgoing movements in the configured window).
+    - **Prům. spotřeba / den** (average daily consumption from closed
+      inventory intervals and explicit consumption; transfers are excluded).
     - **Dnů do vyprodání** (predicted days of stock left, derived from
       current quantity and average consumption).
 - `/inventory-counts` is the focused data-entry surface. Each row is one
@@ -142,10 +181,13 @@ Copy `.env.example` to `.env` and set:
       there is none).
     - **Nové množství** — the input that becomes the new on-hand value
       when the form is saved.
-      Saving creates a new `inventory_sessions` header plus its
-      `inventory_session_items` rows and upserts the matching
-      `store_items.quantity`, all in one transaction. Statistical columns
-      are not rendered on this page — they live on the store detail page.
+      Saving creates a new `inventory_sessions` header, snapshot rows, and one
+      linked inventory reconciliation for non-zero differences, then sets
+      `store_items.quantity` to the counted value, all in one transaction.
+- Historical snapshots are reconciled with
+  `php artisan stockflow:backfill-inventory-consumption --dry-run`; after review,
+  rerun without `--dry-run`. The command is idempotent and never changes current
+  `store_items` quantities.
 - `/inventory-counts/{session}` is the read-only detail of one
   inventory session. It lists every recorded item in alphabetical
   order with the new value and the previous value, so the operator can

@@ -27,6 +27,7 @@ class StoreFactory extends Factory
             'status' => StoreStatusEnum::ACTIVE->value,
             'is_warehouse' => false,
             'notes' => null,
+            'slack_channel' => null,
         ];
     }
 

@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Web\InventoryCount;
+
+use App\Models\InventorySession;
+use App\Models\User;
+use App\Services\InventorySessionService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Thinkycz\LaravelCore\Support\Typer;
+
+class InventoryDraftRowController
+{
+    /**
+     * Autosave one counted inventory row.
+     */
+    public function __invoke(Request $request, InventorySessionService $service): JsonResponse
+    {
+        $user = User::mustAuth();
+        $session = InventorySession::query()
+            ->where('user_id', $user->resolveScopeUser()->getKey())
+            ->whereKey(Typer::parseInt($request->route('session')))
+            ->first();
+
+        if (!$session instanceof InventorySession) {
+            \abort(404);
+        }
+
+        $validated = $request->validate([
+            'item_id' => ['required', 'integer'],
+            'quantity' => ['required', 'numeric', 'min:0'],
+            'classification' => ['nullable', 'string'],
+            'note' => ['nullable', 'string'],
+            'client_version' => ['required', 'integer', 'min:1'],
+        ]);
+        $row = $service->saveDraftRow($user, $session, Typer::assertArray($validated));
+
+        return new JsonResponse([
+            'saved' => true,
+            'client_version' => Typer::parseInt($row->getAttribute('client_version')),
+            'counted_at' => $row->getCountedAt()?->toJSON(),
+            'expected_quantity' => $row->getExpectedQuantity(),
+            'difference' => $row->getQuantityDifference(),
+        ]);
+    }
+}

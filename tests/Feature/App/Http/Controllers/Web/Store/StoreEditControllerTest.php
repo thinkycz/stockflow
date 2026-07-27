@@ -20,6 +20,7 @@ use App\Models\Store;
     $store = Store::factory()->create([
         'user_id' => $user->getKey(),
         'name' => 'Old Name',
+        'slack_channel' => '#old-channel',
     ]);
 
     $this->be($user, 'users')->put("/stores/{$store->getKey()}", [
@@ -27,12 +28,14 @@ use App\Models\Store;
         'address' => 'Updated',
         'status' => StoreStatusEnum::ACTIVE->value,
         'notes' => null,
+        'slack_channel' => ' C9876543210 ',
         'is_warehouse' => false,
     ])->assertRedirect();
 
     $store->refresh();
     \expect($store->getName())->toBe('New Name');
     \expect($store->getAddress())->toBe('Updated');
+    \expect($store->getSlackChannel())->toBe('C9876543210');
 });
 
 \test('cannot edit a store belonging to another user', function (): void {

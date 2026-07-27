@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { getIntlLocale } from '@/i18n';
 
 type ChartType = 'line' | 'bar' | 'pie';
 
@@ -162,9 +163,12 @@ const lineGeometry = computed(
                 : '';
         const yTicks = [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
             const y = padding.top + innerH - ratio * innerH;
-            const labelValue = (effectiveMax * ratio).toLocaleString('cs-CZ', {
-                maximumFractionDigits: 0,
-            });
+            const labelValue = (effectiveMax * ratio).toLocaleString(
+                getIntlLocale(),
+                {
+                    maximumFractionDigits: 0,
+                },
+            );
             return { y, label: labelValue };
         });
         return { path, area, points, yTicks };
@@ -200,13 +204,13 @@ const chartWidth = 720;
                     { y: props.height - 28, label: '0' },
                     {
                         y: (props.height - 28) * 0.5,
-                        label: (max / 2).toLocaleString('cs-CZ', {
+                        label: (max / 2).toLocaleString(getIntlLocale(), {
                             maximumFractionDigits: 0,
                         }),
                     },
                     {
                         y: 16,
-                        label: max.toLocaleString('cs-CZ', {
+                        label: max.toLocaleString(getIntlLocale(), {
                             maximumFractionDigits: 0,
                         }),
                     },
@@ -225,13 +229,13 @@ const chartWidth = 720;
                     { y: props.height - 28, label: '0' },
                     {
                         y: (props.height - 28) * 0.5,
-                        label: (max / 2).toLocaleString('cs-CZ', {
+                        label: (max / 2).toLocaleString(getIntlLocale(), {
                             maximumFractionDigits: 0,
                         }),
                     },
                     {
                         y: 16,
-                        label: max.toLocaleString('cs-CZ', {
+                        label: max.toLocaleString(getIntlLocale(), {
                             maximumFractionDigits: 0,
                         }),
                     },
@@ -260,7 +264,7 @@ const chartWidth = 720;
                     text-anchor="middle"
                 >
                     {{
-                        bar.value.toLocaleString('cs-CZ', {
+                        bar.value.toLocaleString(getIntlLocale(), {
                             maximumFractionDigits: 0,
                         })
                     }}

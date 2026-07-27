@@ -14,24 +14,12 @@ test.describe('Auth flow', () => {
         ).toBeVisible();
     });
 
-    test('guest can view the register page', async ({ page }) => {
-        await page.goto('/register');
-
-        await expect(page).toHaveTitle(/Create account/);
-        await expect(page.getByLabel('Email')).toBeVisible();
-        await expect(
-            page.getByLabel('Password', { exact: true }),
-        ).toBeVisible();
-        await expect(page.getByLabel('Confirm password')).toBeVisible();
-        await expect(page.getByLabel('Locale')).toBeVisible();
-        await expect(
-            page.getByRole('button', { name: 'Register' }),
-        ).toBeVisible();
+    test('public registration is unavailable', async ({ page }) => {
+        const response = await page.goto('/register');
+        expect(response?.status()).toBe(404);
     });
 
-    test('login form has links to forgot password and register', async ({
-        page,
-    }) => {
+    test('login form links only to password recovery', async ({ page }) => {
         await page.goto('/login');
 
         await expect(
@@ -39,7 +27,7 @@ test.describe('Auth flow', () => {
         ).toBeVisible();
         await expect(
             page.getByRole('link', { name: 'Create account' }),
-        ).toBeVisible();
+        ).toHaveCount(0);
     });
 
     test('forgot password page is reachable', async ({ page }) => {

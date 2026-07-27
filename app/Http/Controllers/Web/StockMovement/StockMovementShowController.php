@@ -26,10 +26,12 @@ class StockMovementShowController
                 'item_sku' => $row->getItem()->getSku(),
                 'quantity' => $row->getQuantity(),
                 'total' => $row->getTotal(),
+                'signed_total' => $row->getSignedTotal(),
                 'quantity_before' => $row->getQuantityBefore(),
                 'quantity_after' => $row->getQuantityAfter(),
                 'quantity_difference' => $row->getQuantityDifference(),
                 'adjustment_reason' => $row->getAdjustmentReason()?->value,
+                'classification' => $row->getClassification()?->value,
             ];
         })->all();
 
@@ -46,8 +48,15 @@ class StockMovementShowController
                 'source_store_name' => $stockMovement->getSourceStore()?->getName(),
                 'total_quantity' => $stockMovement->getTotalQuantity(),
                 'total_value' => $stockMovement->getTotalValue(),
+                'net_value' => $stockMovement->getNetValue(),
+                'reversal_of_id' => $stockMovement->getReversalOfId(),
+                'reversal_reason' => $stockMovement->getReversalReason(),
+                'reversed_at' => $stockMovement->getReversedAt()?->toJSON(),
+                'can_reverse' => $stockMovement->getOrigin()->value === 'manual' &&
+                    !\in_array($stockMovement->getType()->value, ['inventory_reconciliation', 'reversal'], true) &&
+                    $stockMovement->getReversedAt() === null,
                 'created_by' => $stockMovement->getCreator()?->getEmail(),
-                'created_at' => $stockMovement->getCreatedAt()->toJSON(),
+                'created_at' => $stockMovement->getOccurredAt()->toJSON(),
             ],
             'rows' => $rows,
         ]);

@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Pencil, Plus, Search, Trash2 } from '@lucide/vue';
+import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
+import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
+import Input from '@/components/ui/Input.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useCzechDate } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
@@ -25,7 +29,7 @@ type Filters = {
     search: string | null;
 };
 
-defineProps<{
+const props = defineProps<{
     users: UserRow[];
     filters: Filters;
 }>();
@@ -34,8 +38,24 @@ const { t } = useI18n();
 const route = useRoute();
 const page = usePage<SharedProps>();
 const { formatCzechDateTime } = useCzechDate();
+const searchTerm = ref<string>(props.filters.search ?? '');
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
 useBoundLocale();
+
+watch(searchTerm, (value) => {
+    if (searchTimer !== null) {
+        clearTimeout(searchTimer);
+    }
+
+    searchTimer = setTimeout(() => {
+        router.get(
+            route('users.index'),
+            { search: value || undefined },
+            { preserveState: true, preserveScroll: true },
+        );
+    }, 300);
+});
 
 function confirmDelete(user: UserRow): void {
     if (!window.confirm(t('users.confirm_delete_with_data'))) {
@@ -52,7 +72,7 @@ const currentUserId = (): number | null => page.props.auth?.user?.id ?? null;
     <AppLayout :title="t('users.title')">
         <Head :title="t('users.title')" />
 
-        <div class="mx-auto flex w-full max-w-5xl flex-col gap-6">
+        <div class="flex flex-col gap-6">
             <header
                 class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
             >
@@ -67,54 +87,79 @@ const currentUserId = (): number | null => page.props.auth?.user?.id ?? null;
                     </p>
                 </div>
                 <Link :href="route('users.create')">
-                    <Button>{{ t('users.create.title') }}</Button>
+                    <Button>
+                        <Plus :size="14" />
+                        {{ t('users.create.title') }}
+                    </Button>
                 </Link>
             </header>
 
             <Card padded>
+                <div class="relative flex-1">
+                    <Search
+                        :size="14"
+                        class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
+                    />
+                    <Input
+                        v-model="searchTerm"
+                        type="search"
+                        :placeholder="t('users.search_placeholder')"
+                        class="pl-9"
+                    />
+                </div>
+            </Card>
+
+            <Card padded>
                 <EmptyState
                     v-if="users.length === 0"
-                    :title="t('users.title')"
-                    :description="
-                        t('inventory_counts.history.empty.description')
+                    :title="
+                        props.filters.search
+                            ? t('common.no_results')
+                            : t('users.empty.title')
                     "
-                />
+                    :description="
+                        props.filters.search
+                            ? t('users.empty.search_description')
+                            : t('users.empty.description')
+                    "
+                >
+                    <template v-if="!props.filters.search" #action>
+                        <Link :href="route('users.create')">
+                            <Button>
+                                <Plus :size="14" />
+                                {{ t('users.create.title') }}
+                            </Button>
+                        </Link>
+                    </template>
+                </EmptyState>
 
                 <div v-else class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead
-                            class="border-b border-outline-glass text-xs uppercase tracking-wide text-on-surface-variant"
-                        >
+                    <DataTable>
+                        <thead>
                             <tr>
-                                <th class="px-3 py-2 font-semibold">
+                                <th>
                                     {{ t('users.columns.email') }}
                                 </th>
-                                <th class="px-3 py-2 font-semibold">
+                                <th>
                                     {{ t('users.columns.role') }}
                                 </th>
-                                <th class="px-3 py-2 font-semibold">
+                                <th>
                                     {{ t('users.columns.store') }}
                                 </th>
-                                <th class="px-3 py-2 font-semibold">
+                                <th>
                                     {{ t('users.columns.created') }}
                                 </th>
-                                <th class="px-3 py-2 text-right font-semibold">
-                                    &nbsp;
+                                <th class="w-0 text-right">
+                                    {{ t('users.columns.actions') }}
                                 </th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-outline-glass/70">
-                            <tr
-                                v-for="user in users"
-                                :key="user.id"
-                                class="hover:bg-surface-variant/30"
-                            >
-                                <td
-                                    class="px-3 py-3 font-medium text-on-surface"
-                                >
+                        <tbody>
+                            <tr v-for="user in users" :key="user.id">
+                                <td class="font-semibold text-on-surface">
                                     {{ user.email }}
                                 </td>
-                                <td class="px-3 py-3">
+                                <td>
                                     <Badge
                                         :variant="
                                             user.is_admin
@@ -129,7 +174,7 @@ const currentUserId = (): number | null => page.props.auth?.user?.id ?? null;
                                         }}
                                     </Badge>
                                 </td>
-                                <td class="px-3 py-3 text-on-surface">
+                                <td class="text-on-surface">
                                     <span v-if="user.assigned_store_name">{{
                                         user.assigned_store_name
                                     }}</span>
@@ -137,18 +182,22 @@ const currentUserId = (): number | null => page.props.auth?.user?.id ?? null;
                                         >—</span
                                     >
                                 </td>
-                                <td class="px-3 py-3 text-on-surface-variant">
+                                <td class="text-on-surface-variant">
                                     {{ formatCzechDateTime(user.created_at) }}
                                 </td>
-                                <td class="px-3 py-3 text-right">
+                                <td>
                                     <div
-                                        class="flex items-center justify-end gap-2"
+                                        class="flex items-center justify-end gap-1"
                                     >
                                         <Link
                                             :href="route('users.edit', user.id)"
                                         >
-                                            <Button variant="secondary">
-                                                {{ t('common.edit') }}
+                                            <Button
+                                                variant="ghost"
+                                                type="button"
+                                                :aria-label="t('common.edit')"
+                                            >
+                                                <Pencil :size="14" />
                                             </Button>
                                         </Link>
                                         <Button
@@ -156,16 +205,18 @@ const currentUserId = (): number | null => page.props.auth?.user?.id ?? null;
                                                 !user.is_admin &&
                                                 user.id !== currentUserId()
                                             "
-                                            variant="danger"
+                                            variant="ghost"
+                                            type="button"
+                                            :aria-label="t('common.delete')"
                                             @click="confirmDelete(user)"
                                         >
-                                            {{ t('users.actions.delete') }}
+                                            <Trash2 :size="14" />
                                         </Button>
                                     </div>
                                 </td>
                             </tr>
                         </tbody>
-                    </table>
+                    </DataTable>
                 </div>
             </Card>
         </div>

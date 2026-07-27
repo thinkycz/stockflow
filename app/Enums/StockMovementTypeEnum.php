@@ -8,9 +8,15 @@ enum StockMovementTypeEnum: string
 {
     case INCOMING = 'incoming';
 
-    case OUTGOING = 'outgoing';
+    case TRANSFER = 'transfer';
+
+    case CONSUMPTION = 'consumption';
 
     case ADJUSTMENT = 'adjustment';
+
+    case INVENTORY_RECONCILIATION = 'inventory_reconciliation';
+
+    case REVERSAL = 'reversal';
 
     /**
      * Get possible values.
@@ -29,8 +35,11 @@ enum StockMovementTypeEnum: string
     {
         return match ($this) {
             self::INCOMING => 'IN',
-            self::OUTGOING => 'OUT',
+            self::TRANSFER => 'TR',
+            self::CONSUMPTION => 'CON',
             self::ADJUSTMENT => 'ADJ',
+            self::INVENTORY_RECONCILIATION => 'REC',
+            self::REVERSAL => 'REV',
         };
     }
 }

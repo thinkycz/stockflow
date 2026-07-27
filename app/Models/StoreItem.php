@@ -114,9 +114,11 @@ class StoreItem extends BaseModel
     /**
      * Quantity getter.
      */
-    public function getQuantity(): int
+    public function getQuantity(): float|int
     {
-        return Typer::assertInt($this->getAttribute('quantity'));
+        $value = (float) Typer::assertScalar($this->getAttribute('quantity'));
+
+        return $value === \floor($value) ? (int) $value : $value;
     }
 
     /**
@@ -126,8 +128,6 @@ class StoreItem extends BaseModel
      */
     protected function casts(): array
     {
-        return [
-            'quantity' => 'integer',
-        ];
+        return [];
     }
 }

@@ -2,11 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Models\AttendanceBreak;
+use App\Models\AttendanceSession;
 use App\Models\Statement;
 use App\Models\StatementDay;
 use App\Models\Store;
 use App\Models\User;
+use App\Models\Worker;
 use Database\Factories\UserFactory;
+use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Support\Typer;
 
 \test('guest is redirected from statements to login', function (): void {
@@ -25,7 +29,8 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response->assertOk();
     $response->assertJsonPath('component', 'statements/Index');
     $response->assertJsonPath('props.filters.store_id', $retail->getKey());
-    $response->assertJsonCount(30, 'props.days');
+    $response->assertJsonCount(Carbon::now()->daysInMonth, 'props.days');
+    $response->assertJsonPath('props.active_attendances', []);
     \expect($response->json('props.statement.id'))->toBeInt();
 });
 
@@ -44,7 +49,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     )->assertOk();
 
     \expect(Statement::query()->count())->toBe(1);
-    \expect(StatementDay::query()->count())->toBe(30);
+    \expect(StatementDay::query()->count())->toBe(Carbon::now()->daysInMonth);
 });
 
 \test('statement is reused on subsequent visits', function (): void {
@@ -81,6 +86,45 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($response->json('props.days'))->toHaveCount(28);
 });
 
+\test('statements expose todays row independently from the selected month', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-07-23 10:00:00', 'Europe/Prague'));
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+
+    $response = $this->be($user, 'users')->get(
+        '/statements?store_id=' . $store->getKey() . '&year=2026&month=6',
+        $this->inertiaHeaders(),
+    );
+
+    $response->assertOk()
+        ->assertJsonPath('props.filters.month', 6)
+        ->assertJsonPath('props.today_statement.store_id', $store->getKey())
+        ->assertJsonPath('props.today_statement.year', 2026)
+        ->assertJsonPath('props.today_statement.month', 7)
+        ->assertJsonPath('props.today_day.date', '2026-07-23')
+        ->assertJsonPath('props.today_day.total', 0);
+
+    Carbon::setTestNow();
+});
+
+\test('statements expose entered values for todays panel visibility decision', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-07-23 10:00:00', 'Europe/Prague'));
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+    $statement = Statement::factory()->forStore($store)->forMonth(2026, 7)->create();
+    StatementDay::factory()->for($statement, 'statement')->create([
+        'date' => '2026-07-23',
+        'cash' => 100,
+        'total' => 100,
+    ]);
+
+    $this->be($user, 'users')
+        ->get('/statements?store_id=' . $store->getKey(), $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.today_day.cash', 100)
+        ->assertJsonPath('props.today_day.total', 100);
+
+    Carbon::setTestNow();
+});
+
 \test('statements index is isolated per user', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     [$other] = \createIsolatedUserWithWarehouse();
@@ -110,6 +154,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response->assertOk();
     $response->assertJsonPath('props.filters.store_id', $own->getKey());
     $response->assertJsonPath('props.is_admin', false);
+    $response->assertJsonPath('props.active_attendances', []);
 
     // A `?store_id=` override for a non-assigned store is silently
     // ignored — the resolver always pins limited users to their
@@ -118,6 +163,81 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->get('/statements?store_id=' . $other->getKey(), $this->inertiaHeaders());
     $overrideResponse->assertOk();
     $overrideResponse->assertJsonPath('props.filters.store_id', $own->getKey());
+});
+
+\test('limited users and admins see all active current-day attendance employees ordered by name', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-07-23 10:00:00', 'Europe/Prague'));
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $limited = Typer::assertInstance(UserFactory::new()->limited($store)->createOne(), User::class);
+    $zoe = Worker::factory()->create([
+        'user_id' => $admin->getKey(),
+        'first_name' => 'Zoe',
+        'last_name' => 'Adams',
+    ]);
+    $alice = Worker::factory()->create([
+        'user_id' => $admin->getKey(),
+        'first_name' => 'Alice',
+        'last_name' => 'Brown',
+    ]);
+    $stale = Worker::factory()->create([
+        'user_id' => $admin->getKey(),
+        'first_name' => 'Stale',
+        'last_name' => 'Worker',
+    ]);
+
+    foreach ([$alice, $zoe] as $worker) {
+        AttendanceSession::query()->create([
+            'user_id' => $admin->getKey(),
+            'store_id' => $store->getKey(),
+            'worker_id' => $worker->getKey(),
+            'created_by_user_id' => $limited->getKey(),
+            'active_worker_id' => $worker->getKey(),
+            'hourly_rate' => $worker->getHourlyRate(),
+            'started_at' => Carbon::parse('2026-07-23 08:00:00', 'Europe/Prague')->utc(),
+        ]);
+    }
+    $aliceSession = AttendanceSession::query()->where('worker_id', $alice->getKey())->firstOrFail();
+    AttendanceBreak::query()->create([
+        'attendance_session_id' => $aliceSession->getKey(),
+        'created_by_user_id' => $limited->getKey(),
+        'active_session_id' => null,
+        'started_at' => Carbon::parse('2026-07-23 09:00:00', 'Europe/Prague')->utc(),
+        'ended_at' => Carbon::parse('2026-07-23 09:15:00', 'Europe/Prague')->utc(),
+    ]);
+    AttendanceSession::query()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $stale->getKey(),
+        'created_by_user_id' => $limited->getKey(),
+        'active_worker_id' => $stale->getKey(),
+        'hourly_rate' => $stale->getHourlyRate(),
+        'started_at' => Carbon::parse('2026-07-22 08:00:00', 'Europe/Prague')->utc(),
+    ]);
+
+    $response = $this->be($limited, 'users')->get('/statements', $this->inertiaHeaders());
+
+    $response->assertOk()
+        ->assertJsonCount(2, 'props.active_attendances')
+        ->assertJsonPath('props.active_attendances.0.worker_id', $zoe->getKey())
+        ->assertJsonPath('props.active_attendances.0.worker_name', 'Zoe Adams')
+        ->assertJsonPath('props.active_attendances.0.worked_seconds', 7200)
+        ->assertJsonPath('props.active_attendances.0.is_on_break', false)
+        ->assertJsonPath('props.active_attendances.1.worker_id', $alice->getKey())
+        ->assertJsonPath('props.active_attendances.1.worker_name', 'Alice Brown')
+        ->assertJsonPath('props.active_attendances.1.worked_seconds', 6300)
+        ->assertJsonPath('props.active_attendances.1.is_on_break', false);
+
+    $this->be($admin, 'users')
+        ->get('/statements?store_id=' . $store->getKey(), $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonCount(2, 'props.active_attendances')
+        ->assertJsonPath('props.active_attendances.0.worker_id', $zoe->getKey())
+        ->assertJsonPath('props.active_attendances.0.worker_name', 'Zoe Adams')
+        ->assertJsonPath('props.active_attendances.1.worker_id', $alice->getKey())
+        ->assertJsonPath('props.active_attendances.1.worker_name', 'Alice Brown');
+
+    Carbon::setTestNow();
 });
 
 \test('limited user without an assigned store is refused', function (): void {

@@ -1,155 +1,107 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import {
-    ArrowDownToLine,
-    ArrowUpFromLine,
-    Boxes,
-    CircleDollarSign,
-    ShoppingCart,
-} from '@lucide/vue';
-import { computed, ref, watch } from 'vue';
+import { Boxes, CircleDollarSign, TriangleAlert, Database } from '@lucide/vue';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Card from '@/components/ui/Card.vue';
+import CardDescription from '@/components/ui/CardDescription.vue';
 import CardHeader from '@/components/ui/CardHeader.vue';
 import CardTitle from '@/components/ui/CardTitle.vue';
-import CardDescription from '@/components/ui/CardDescription.vue';
 import Chart from '@/components/ui/Chart.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
-import MetricCard from '@/components/ui/MetricCard.vue';
 import Input from '@/components/ui/Input.vue';
+import MetricCard from '@/components/ui/MetricCard.vue';
+import StatusBadge from '@/components/ui/StatusBadge.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
-import { formatMoney } from '@/lib/format';
+import { formatDate, formatMoney, formatNumber } from '@/lib/format';
 
-type ChannelTotals = {
-    cash: number;
-    card: number;
-    wolt: number;
-    bolt: number;
-    bolt_cash: number;
-    foodora: number;
-};
-
-type SalesSummary = {
-    total: number;
-    count: number;
-    channels: ChannelTotals;
-    daily: Array<{ label: string; value: number }>;
-};
-
-type MovementSummary = {
-    quantity: number;
-    value: number;
-    movements: number;
-};
-
-type InventorySummary = {
-    items: number;
-    value: number;
-};
-
-type TopConsumedItem = {
+type ItemRow = {
     item_id: number;
     title: string;
     sku: string | null;
-    total_quantity: number;
-    total_value: number;
-    rows_count: number;
-};
-
-type DailyPoint = {
-    label: string;
-    incoming: number;
-    outgoing: number;
+    unit: string | null;
+    current_quantity: number;
+    consumed_quantity: number;
+    consumed_value: number;
+    avg_daily_consumption: number;
+    coverage_days: number;
+    days_until_stockout: number | null;
+    projected_stockout_at: string | null;
+    status: 'ok' | 'due_soon' | 'out' | 'no_data';
 };
 
 const props = defineProps<{
     store: { id: number; name: string } | null;
     period_days: number;
-    sales: SalesSummary;
-    incoming: MovementSummary;
-    outgoing: MovementSummary;
-    current_inventory: InventorySummary;
-    top_consumed: TopConsumedItem[];
-    daily_series: DailyPoint[];
+    current_inventory: { sku_count: number; value: number };
+    consumption: { value: number; affected_skus: number };
+    flows: {
+        receipts_value: number;
+        receipts_count: number;
+        transfer_in_value: number;
+        transfer_in_count: number;
+        transfer_out_value: number;
+        transfer_out_count: number;
+    };
+    risk: { due_soon: number; out: number; no_data: number };
+    data_quality: {
+        last_inventory_at: string | null;
+        average_coverage_days: number;
+        covered_items: number;
+    };
+    classified_changes: Array<{
+        classification: string;
+        rows_count: number;
+        value: number;
+    }>;
+    consumption_series: Array<{ label: string; value: number }>;
+    items: ItemRow[];
     filters: { store_id: number | null; period_days: number };
 }>();
 
 const { t } = useI18n();
-
 useBoundLocale();
-
 const route = useRoute();
+const period = ref(String(props.period_days));
 
-const incomingSeries = computed(() =>
-    props.daily_series.map((point) => ({
-        label: point.label,
-        value: point.incoming,
-    })),
-);
+function applyPeriod(): void {
+    router.get(
+        route('reports.statistics'),
+        { period_days: Number(period.value || props.period_days) },
+        { preserveState: true, preserveScroll: true },
+    );
+}
 
-const outgoingSeries = computed(() =>
-    props.daily_series.map((point) => ({
-        label: point.label,
-        value: point.outgoing,
-    })),
-);
-
-const channelSlices = computed(() => {
-    const channels = props.sales.channels;
-    return [
-        { label: t('statements.columns.cash'), value: channels.cash },
-        { label: t('statements.columns.card'), value: channels.card },
-        { label: t('statements.columns.wolt'), value: channels.wolt },
-        { label: t('statements.columns.bolt'), value: channels.bolt },
-        { label: t('statements.columns.bolt_cash'), value: channels.bolt_cash },
-        { label: t('statements.columns.foodora'), value: channels.foodora },
-    ];
-});
-
-const periodInput = ref<string>(String(props.filters.period_days));
-let periodTimer: ReturnType<typeof setTimeout> | null = null;
-
-watch(periodInput, (value) => {
-    if (periodTimer !== null) {
-        clearTimeout(periodTimer);
-    }
-    periodTimer = setTimeout(() => {
-        const period = Math.max(7, Math.min(365, Number(value) || 30));
-        router.get(
-            route('reports.statistics'),
-            { store_id: props.filters.store_id, period_days: period },
-            { preserveState: true, preserveScroll: true },
-        );
-    }, 400);
-});
-
-function formatCount(value: number): string {
-    return value.toLocaleString('cs-CZ', { maximumFractionDigits: 0 });
+function quantityWithUnit(value: number, unit: string | null): string {
+    return `${formatNumber(value)}${unit ? ` ${unit}` : ''}`;
 }
 </script>
 
 <template>
     <AppLayout :title="t('reports.statistics.title')">
         <Head :title="t('reports.statistics.title')" />
-
         <div class="flex flex-col gap-6">
-            <header>
-                <h1
-                    class="font-heading text-2xl font-bold tracking-tight text-on-surface"
+            <header
+                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            >
+                <div>
+                    <h1
+                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
+                    >
+                        {{ t('reports.statistics.title') }}
+                    </h1>
+                    <p class="mt-1 text-sm text-on-surface-variant">
+                        {{ t('reports.statistics.subtitle') }}
+                    </p>
+                </div>
+                <form
+                    class="flex items-end gap-2"
+                    @submit.prevent="applyPeriod"
                 >
-                    {{ t('reports.statistics.title') }}
-                </h1>
-                <p class="mt-1 text-sm text-on-surface-variant">
-                    {{ t('reports.statistics.subtitle') }}
-                </p>
-            </header>
-
-            <Card padded>
-                <div class="grid gap-4 lg:max-w-md">
-                    <div class="space-y-2">
+                    <div class="space-y-1">
                         <label
                             for="statistics_period"
                             class="text-xs font-semibold text-on-surface-variant"
@@ -158,15 +110,20 @@ function formatCount(value: number): string {
                         </label>
                         <Input
                             id="statistics_period"
-                            v-model="periodInput"
+                            v-model="period"
                             type="number"
                             min="7"
                             max="365"
-                            step="1"
                         />
                     </div>
-                </div>
-            </Card>
+                    <button
+                        class="h-10 rounded-xl bg-primary px-4 text-xs font-semibold text-white"
+                        type="submit"
+                    >
+                        {{ t('reports.statistics.apply') }}
+                    </button>
+                </form>
+            </header>
 
             <EmptyState
                 v-if="!props.store"
@@ -177,157 +134,206 @@ function formatCount(value: number): string {
             <template v-else>
                 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <MetricCard
-                        :title="t('reports.statistics.sales.title')"
-                        :value="formatMoney(props.sales.total)"
-                    >
-                        <template #icon>
-                            <CircleDollarSign :size="14" />
-                        </template>
-                    </MetricCard>
-                    <MetricCard
-                        :title="t('reports.statistics.incoming.title')"
-                        :value="formatMoney(props.incoming.value)"
-                    >
-                        <template #icon>
-                            <ArrowDownToLine :size="14" />
-                        </template>
-                    </MetricCard>
-                    <MetricCard
-                        :title="t('reports.statistics.outgoing.title')"
-                        :value="formatMoney(props.outgoing.value)"
-                    >
-                        <template #icon>
-                            <ArrowUpFromLine :size="14" />
-                        </template>
-                    </MetricCard>
-                    <MetricCard
                         :title="t('reports.statistics.current_inventory.title')"
                         :value="formatMoney(props.current_inventory.value)"
                     >
-                        <template #icon>
-                            <Boxes :size="14" />
-                        </template>
+                        <template #icon><Boxes :size="14" /></template>
                     </MetricCard>
+                    <MetricCard
+                        :title="t('reports.statistics.consumption.title')"
+                        :value="formatMoney(props.consumption.value)"
+                    >
+                        <template #icon
+                            ><CircleDollarSign :size="14"
+                        /></template>
+                    </MetricCard>
+                    <MetricCard
+                        :title="t('reports.statistics.risk.title')"
+                        :value="
+                            formatNumber(props.risk.due_soon + props.risk.out)
+                        "
+                    >
+                        <template #icon><TriangleAlert :size="14" /></template>
+                    </MetricCard>
+                    <MetricCard
+                        :title="t('reports.statistics.coverage.title')"
+                        :value="`${props.data_quality.average_coverage_days} d`"
+                    >
+                        <template #icon><Database :size="14" /></template>
+                    </MetricCard>
+                </div>
+
+                <div class="grid gap-4 lg:grid-cols-3">
+                    <Card padded>
+                        <CardHeader
+                            ><CardTitle>{{
+                                t('reports.statistics.flows.receipts')
+                            }}</CardTitle></CardHeader
+                        >
+                        <p class="font-heading text-xl font-bold">
+                            {{ formatMoney(props.flows.receipts_value) }}
+                        </p>
+                        <CardDescription>{{
+                            formatNumber(props.flows.receipts_count)
+                        }}</CardDescription>
+                    </Card>
+                    <Card padded>
+                        <CardHeader
+                            ><CardTitle>{{
+                                t('reports.statistics.flows.transfer_in')
+                            }}</CardTitle></CardHeader
+                        >
+                        <p class="font-heading text-xl font-bold">
+                            {{ formatMoney(props.flows.transfer_in_value) }}
+                        </p>
+                        <CardDescription>{{
+                            formatNumber(props.flows.transfer_in_count)
+                        }}</CardDescription>
+                    </Card>
+                    <Card padded>
+                        <CardHeader
+                            ><CardTitle>{{
+                                t('reports.statistics.flows.transfer_out')
+                            }}</CardTitle></CardHeader
+                        >
+                        <p class="font-heading text-xl font-bold">
+                            {{ formatMoney(props.flows.transfer_out_value) }}
+                        </p>
+                        <CardDescription>{{
+                            formatNumber(props.flows.transfer_out_count)
+                        }}</CardDescription>
+                    </Card>
                 </div>
 
                 <Card padded>
                     <CardHeader>
                         <CardTitle>{{
-                            t('reports.statistics.charts.daily')
+                            t('reports.statistics.charts.consumption')
                         }}</CardTitle>
                         <CardDescription>
-                            {{ props.store.name }} ·
-                            {{ formatCount(props.incoming.movements) }} /
-                            {{ formatCount(props.outgoing.movements) }}
+                            {{
+                                t('reports.statistics.coverage.last_inventory')
+                            }}:
+                            {{
+                                props.data_quality.last_inventory_at
+                                    ? formatDate(
+                                          props.data_quality.last_inventory_at,
+                                      )
+                                    : '—'
+                            }}
                         </CardDescription>
                     </CardHeader>
-                    <div class="grid gap-6 lg:grid-cols-2">
-                        <Chart
-                            type="bar"
-                            :title="t('reports.statistics.charts.incoming')"
-                            :data="incomingSeries"
-                            :height="220"
-                            :empty-text="
-                                t('reports.statistics.charts.incoming')
-                            "
-                        />
-                        <Chart
-                            type="bar"
-                            :title="t('reports.statistics.charts.outgoing')"
-                            :data="outgoingSeries"
-                            :height="220"
-                            :empty-text="
-                                t('reports.statistics.charts.outgoing')
-                            "
-                        />
-                    </div>
+                    <Chart
+                        type="bar"
+                        :title="t('reports.statistics.charts.consumption')"
+                        :data="props.consumption_series"
+                        :empty-text="t('reports.statistics.empty')"
+                    />
                 </Card>
 
                 <Card padded>
                     <CardHeader>
-                        <CardTitle>
-                            {{ t('reports.statistics.top_consumed.title') }}
-                        </CardTitle>
-                        <CardDescription>
-                            {{ t('reports.statistics.top_consumed.subtitle') }}
-                        </CardDescription>
+                        <CardTitle>{{
+                            t('reports.statistics.items.title')
+                        }}</CardTitle>
+                        <CardDescription>{{
+                            t('reports.statistics.items.subtitle')
+                        }}</CardDescription>
                     </CardHeader>
                     <div class="overflow-x-auto">
-                        <DataTable class="[&_td]:px-2 [&_th]:px-2">
+                        <DataTable>
                             <thead>
                                 <tr>
-                                    <th class="min-w-[12rem] text-left">
+                                    <th>
+                                        {{ t('reports.statistics.items.item') }}
+                                    </th>
+                                    <th class="text-right">
                                         {{
                                             t(
-                                                'reports.statistics.top_consumed.item',
+                                                'reports.statistics.items.current',
                                             )
                                         }}
                                     </th>
-                                    <th class="min-w-[8rem] text-left">
+                                    <th class="text-right">
                                         {{
                                             t(
-                                                'reports.statistics.top_consumed.sku',
+                                                'reports.statistics.items.consumed',
                                             )
                                         }}
                                     </th>
-                                    <th class="min-w-[8rem] text-right">
+                                    <th class="text-right">
                                         {{
                                             t(
-                                                'reports.statistics.top_consumed.quantity',
+                                                'reports.statistics.items.average',
                                             )
                                         }}
                                     </th>
-                                    <th class="min-w-[8rem] text-right">
+                                    <th class="text-right">
                                         {{
                                             t(
-                                                'reports.statistics.top_consumed.value',
+                                                'reports.statistics.items.stockout',
                                             )
                                         }}
                                     </th>
-                                    <th class="min-w-[6rem] text-right">
+                                    <th>
                                         {{
-                                            t(
-                                                'reports.statistics.top_consumed.rows',
-                                            )
+                                            t('reports.statistics.items.status')
                                         }}
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-if="props.top_consumed.length === 0">
-                                    <td
-                                        colspan="5"
-                                        class="py-6 text-center text-xs text-on-surface-variant"
-                                    >
-                                        —
-                                    </td>
-                                </tr>
                                 <tr
-                                    v-for="item in props.top_consumed"
+                                    v-for="item in props.items"
                                     :key="item.item_id"
                                 >
-                                    <td class="font-semibold text-on-surface">
-                                        {{ item.title }}
+                                    <td>
+                                        <div class="font-semibold">
+                                            {{ item.title }}
+                                        </div>
+                                        <div
+                                            class="font-mono text-xs text-on-surface-variant"
+                                        >
+                                            {{ item.sku ?? '—' }}
+                                        </div>
                                     </td>
-                                    <td
-                                        class="font-mono text-xs text-on-surface-variant"
-                                    >
-                                        {{ item.sku ?? '–' }}
+                                    <td class="text-right">
+                                        {{
+                                            quantityWithUnit(
+                                                item.current_quantity,
+                                                item.unit,
+                                            )
+                                        }}
                                     </td>
-                                    <td
-                                        class="text-right text-xs text-on-surface-variant"
-                                    >
-                                        {{ formatCount(item.total_quantity) }}
+                                    <td class="text-right">
+                                        {{
+                                            quantityWithUnit(
+                                                item.consumed_quantity,
+                                                item.unit,
+                                            )
+                                        }}
                                     </td>
-                                    <td
-                                        class="text-right text-xs font-semibold text-on-surface"
-                                    >
-                                        {{ formatMoney(item.total_value) }}
+                                    <td class="text-right">
+                                        {{
+                                            item.avg_daily_consumption > 0
+                                                ? quantityWithUnit(
+                                                      item.avg_daily_consumption,
+                                                      item.unit,
+                                                  )
+                                                : '—'
+                                        }}
                                     </td>
-                                    <td
-                                        class="text-right text-xs text-on-surface-variant"
-                                    >
-                                        {{ formatCount(item.rows_count) }}
+                                    <td class="text-right">
+                                        {{
+                                            item.projected_stockout_at
+                                                ? formatDate(
+                                                      item.projected_stockout_at,
+                                                  )
+                                                : '—'
+                                        }}
+                                    </td>
+                                    <td>
+                                        <StatusBadge :status="item.status" />
                                     </td>
                                 </tr>
                             </tbody>
@@ -336,23 +342,46 @@ function formatCount(value: number): string {
                 </Card>
 
                 <Card padded>
-                    <CardHeader>
-                        <CardTitle>{{
-                            t('reports.statistics.sales.title')
-                        }}</CardTitle>
-                        <CardDescription>
-                            <ShoppingCart :size="12" class="inline-block" />
-                            {{ formatCount(props.sales.count) }}
-                            {{ t('reports.statistics.sales.count') }}
-                        </CardDescription>
-                    </CardHeader>
-                    <Chart
-                        type="pie"
-                        :title="t('reports.statistics.sales.title')"
-                        :data="channelSlices"
-                        :height="220"
-                        :empty-text="t('reports.statistics.sales.title')"
-                    />
+                    <CardHeader
+                        ><CardTitle>{{
+                            t('reports.statistics.classifications.title')
+                        }}</CardTitle></CardHeader
+                    >
+                    <div class="overflow-x-auto">
+                        <DataTable>
+                            <thead>
+                                <tr>
+                                    <th>{{ t('reports.reason') }}</th>
+                                    <th class="text-right">
+                                        {{ t('reports.movements') }}
+                                    </th>
+                                    <th class="text-right">
+                                        {{ t('reports.value') }}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="row in props.classified_changes"
+                                    :key="row.classification"
+                                >
+                                    <td>
+                                        {{
+                                            t(
+                                                `stock_movements.reasons.${row.classification}`,
+                                            )
+                                        }}
+                                    </td>
+                                    <td class="text-right">
+                                        {{ formatNumber(row.rows_count) }}
+                                    </td>
+                                    <td class="text-right">
+                                        {{ formatMoney(row.value) }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </DataTable>
+                    </div>
                 </Card>
             </template>
         </div>

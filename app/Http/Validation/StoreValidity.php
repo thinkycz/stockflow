@@ -66,6 +66,14 @@ class StoreValidity
     }
 
     /**
+     * Slack channel validation rules.
+     */
+    public function slackChannel(): Validity
+    {
+        return $this->baseValidity->make()->varchar(100);
+    }
+
+    /**
      * Warehouse flag validation rules.
      */
     public function isWarehouse(): Validity

@@ -7,6 +7,22 @@ export const SUPPORTED_LOCALES = ['en', 'cs', 'sk'] as const;
 
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
+let activeLocale: SupportedLocale = 'en';
+
+export function setActiveLocale(locale: SupportedLocale): void {
+    activeLocale = locale;
+}
+
+export function getIntlLocale(): 'cs-CZ' | 'sk-SK' | 'en-GB' {
+    const locales: Record<SupportedLocale, 'cs-CZ' | 'sk-SK' | 'en-GB'> = {
+        cs: 'cs-CZ',
+        sk: 'sk-SK',
+        en: 'en-GB',
+    };
+
+    return locales[activeLocale];
+}
+
 export function isSupportedLocale(value: string): value is SupportedLocale {
     return (SUPPORTED_LOCALES as readonly string[]).includes(value);
 }
@@ -20,6 +36,7 @@ export const messages = {
 export type MessageSchema = typeof en;
 
 export function createAppI18n(locale: string) {
+    setActiveLocale(isSupportedLocale(locale) ? locale : 'en');
     return createI18n<[MessageSchema], SupportedLocale>({
         legacy: false,
         locale: isSupportedLocale(locale) ? locale : 'en',

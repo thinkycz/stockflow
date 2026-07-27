@@ -1,11 +1,8 @@
 /**
- * Czech date formatting helpers.
+ * Legacy-named date formatting helpers using the active UI locale.
  *
- * The application presents dates exclusively in the Czech `dd.MM.yyyy`
- * format (with `dd.MM.yyyy HH:mm` for timestamps) regardless of the
- * active UI locale. The backend always emits ISO 8601 strings so we
- * format on the frontend using `Intl.DateTimeFormat` with a fixed
- * locale tag.
+ * The backend always emits ISO 8601 strings. The formatter resolves the
+ * current locale for every call so switching language updates dates too.
  *
  * Use `formatCzechDate`, `formatCzechDateTime`, or
  * `formatCzechDateRange` rather than `Date.toLocaleDateString()` —
@@ -14,20 +11,7 @@
 
 const EMPTY = '—';
 
-const dateFormatter = new Intl.DateTimeFormat('cs-CZ', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-});
-
-const dateTimeFormatter = new Intl.DateTimeFormat('cs-CZ', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-});
+import { getIntlLocale } from '@/i18n';
 
 /**
  * Parse a backend date string (ISO 8601 or `YYYY-MM-DD`) into a Date.
@@ -58,7 +42,12 @@ export function formatCzechDate(
         return EMPTY;
     }
 
-    return dateFormatter.format(date);
+    return new Intl.DateTimeFormat(getIntlLocale(), {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: 'Europe/Prague',
+    }).format(date);
 }
 
 /**
@@ -74,7 +63,15 @@ export function formatCzechDateTime(
         return EMPTY;
     }
 
-    return dateTimeFormatter.format(date);
+    return new Intl.DateTimeFormat(getIntlLocale(), {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Europe/Prague',
+    }).format(date);
 }
 
 /**

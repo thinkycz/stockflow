@@ -7,6 +7,7 @@ use App\Models\StockMovement;
 use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Models\StoreItem;
+use Database\Factories\UserFactory;
 
 \test('cannot delete a store with inventory', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
@@ -104,4 +105,19 @@ use App\Models\StoreItem;
         ->assertRedirect('/stores');
 
     \expect(Store::query()->where('id', $store->getKey())->exists())->toBeFalse();
+});
+
+\test('cannot delete a store assigned to a limited user', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create([
+        'user_id' => $admin->getKey(),
+        'is_warehouse' => false,
+    ]);
+    UserFactory::new()->limited($store)->createOne();
+
+    $this->be($admin, 'users')
+        ->delete("/stores/{$store->getKey()}")
+        ->assertStatus(422);
+
+    \expect(Store::query()->whereKey($store->getKey())->exists())->toBeTrue();
 });

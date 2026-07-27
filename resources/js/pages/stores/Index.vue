@@ -10,9 +10,10 @@ import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Input from '@/components/ui/Input.vue';
+import Pagination from '@/components/ui/Pagination.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
-import { formatMoney } from '@/lib/format';
+import { formatDate, formatMoney } from '@/lib/format';
 
 type StoreRow = {
     id: number;
@@ -20,15 +21,22 @@ type StoreRow = {
     address: string | null;
     status: 'active' | 'inactive';
     is_warehouse: boolean;
-    movements_count: number;
-    total_received_quantity: number;
-    total_received_value: number;
-    total_outgoing_value: number;
+    inventory_value: number;
+    sku_count: number;
+    out_of_stock: number;
+    risk_count: number;
+    last_inventory_at: string | null;
 };
 
 const props = defineProps<{
     stores: StoreRow[];
     search: string;
+    pagination: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+    };
 }>();
 
 const { t } = useI18n();
@@ -128,13 +136,19 @@ function destroyStore(id: number): void {
                                 <th>{{ t('stores.columns.address') }}</th>
                                 <th>{{ t('stores.columns.status') }}</th>
                                 <th class="text-right">
-                                    {{ t('stores.columns.movements') }}
+                                    {{ t('stores.columns.inventory_value') }}
                                 </th>
                                 <th class="text-right">
-                                    {{ t('stores.columns.received_value') }}
+                                    {{ t('stores.columns.sku_count') }}
                                 </th>
                                 <th class="text-right">
-                                    {{ t('stores.columns.outgoing_value') }}
+                                    {{ t('stores.columns.out_of_stock') }}
+                                </th>
+                                <th class="text-right">
+                                    {{ t('stores.columns.risk_count') }}
+                                </th>
+                                <th>
+                                    {{ t('stores.columns.last_inventory') }}
                                 </th>
                                 <th class="w-0">
                                     {{ t('stores.columns.actions') }}
@@ -189,19 +203,21 @@ function destroyStore(id: number): void {
                                 <td
                                     class="text-right font-semibold text-on-surface"
                                 >
-                                    {{ store.movements_count }}
+                                    {{ formatMoney(store.inventory_value) }}
                                 </td>
                                 <td
                                     class="text-right font-semibold text-on-surface"
                                 >
-                                    {{
-                                        formatMoney(store.total_received_value)
-                                    }}
+                                    {{ store.sku_count }}
                                 </td>
                                 <td class="text-right text-on-surface-variant">
-                                    {{
-                                        formatMoney(store.total_outgoing_value)
-                                    }}
+                                    {{ store.out_of_stock }}
+                                </td>
+                                <td class="text-right text-on-surface-variant">
+                                    {{ store.risk_count }}
+                                </td>
+                                <td class="text-xs text-on-surface-variant">
+                                    {{ formatDate(store.last_inventory_at) }}
                                 </td>
                                 <td>
                                     <div class="flex items-center gap-1">
@@ -233,6 +249,16 @@ function destroyStore(id: number): void {
                     </DataTable>
                 </div>
             </Card>
+
+            <Pagination
+                v-if="stores.length > 0"
+                :current-page="pagination.current_page"
+                :last-page="pagination.last_page"
+                :total="pagination.total"
+                :per-page="pagination.per_page"
+                :base-url="route('stores.index')"
+                :query-params="{ search: searchTerm || undefined }"
+            />
         </div>
     </AppLayout>
 </template>

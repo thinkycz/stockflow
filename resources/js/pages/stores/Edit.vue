@@ -8,6 +8,7 @@ import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Select from '@/components/ui/Select.vue';
+import Textarea from '@/components/ui/Textarea.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 
@@ -16,6 +17,7 @@ type StoreFields = {
     address: string;
     status: string;
     notes: string;
+    slack_channel: string;
     is_warehouse: boolean;
 };
 
@@ -26,6 +28,7 @@ const props = defineProps<{
         address: string | null;
         status: 'active' | 'inactive';
         notes: string | null;
+        slack_channel: string | null;
         is_warehouse: boolean;
     };
 }>();
@@ -41,6 +44,7 @@ const form = useForm<StoreFields>({
     address: props.store.address ?? '',
     status: props.store.status,
     notes: props.store.notes ?? '',
+    slack_channel: props.store.slack_channel ?? '',
     is_warehouse: props.store.is_warehouse,
 });
 
@@ -114,19 +118,33 @@ function submit(): void {
                     </div>
 
                     <div class="space-y-2">
+                        <Label for="slack_channel">{{
+                            t('stores.columns.slack_channel')
+                        }}</Label>
+                        <Input
+                            id="slack_channel"
+                            v-model="form.slack_channel"
+                            type="text"
+                            maxlength="100"
+                            :placeholder="t('stores.slack_channel_placeholder')"
+                        />
+                        <p class="text-xs text-on-surface-variant">
+                            {{ t('stores.slack_channel_help') }}
+                        </p>
+                        <FieldError :message="form.errors.slack_channel" />
+                    </div>
+
+                    <div class="space-y-2">
                         <Label for="notes">{{
                             t('stores.columns.notes')
                         }}</Label>
-                        <textarea
+                        <Textarea
                             id="notes"
                             v-model="form.notes"
-                            rows="4"
-                            :aria-invalid="
-                                form.errors.notes ? 'true' : undefined
-                            "
-                            aria-describedby="notes-error"
-                            class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-xs text-on-surface outline-none transition placeholder:text-on-surface-variant/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
-                        ></textarea>
+                            :rows="4"
+                            :invalid="Boolean(form.errors.notes)"
+                            described-by="notes-error"
+                        />
                         <FieldError
                             id="notes-error"
                             :message="form.errors.notes"

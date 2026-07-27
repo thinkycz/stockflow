@@ -3,8 +3,14 @@ import { computed } from 'vue';
 import Badge from '@/components/ui/Badge.vue';
 import { useI18n } from 'vue-i18n';
 
-type MovementType = 'incoming' | 'outgoing' | 'adjustment';
-type LabelKey = 'incoming' | 'outgoing' | 'transfer' | 'adjustment';
+type MovementType =
+    | 'incoming'
+    | 'transfer'
+    | 'consumption'
+    | 'adjustment'
+    | 'inventory_reconciliation'
+    | 'reversal';
+type LabelKey = MovementType;
 
 const props = defineProps<{
     type: MovementType;
@@ -18,11 +24,23 @@ const resolvedLabelKey = computed<LabelKey>(
 );
 
 const variant = computed<'incoming' | 'outgoing' | 'adjustment'>(() => {
-    if (resolvedLabelKey.value === 'transfer') {
+    if (
+        resolvedLabelKey.value === 'transfer' ||
+        resolvedLabelKey.value === 'consumption'
+    ) {
         return 'outgoing';
     }
 
-    return props.type;
+    if (
+        resolvedLabelKey.value === 'inventory_reconciliation' ||
+        resolvedLabelKey.value === 'reversal'
+    ) {
+        return 'adjustment';
+    }
+
+    return props.type === 'incoming' || props.type === 'adjustment'
+        ? props.type
+        : 'outgoing';
 });
 
 const label = computed<string>(() =>

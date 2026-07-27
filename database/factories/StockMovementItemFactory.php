@@ -26,6 +26,8 @@ class StockMovementItemFactory extends Factory
             'stock_movement_id' => StockMovement::factory(),
             'item_id' => Item::factory(),
             'quantity' => $this->faker->randomFloat(3, 1, 50),
+            'unit_cost' => $this->faker->randomFloat(4, 1, 100),
+            'unit_cost_estimated' => false,
             'total' => $this->faker->randomFloat(2, 1, 5000),
             'quantity_before' => null,
             'quantity_after' => null,

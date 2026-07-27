@@ -1,43 +1,19 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import {
-    Layers,
-    TrendingUp,
-    TrendingDown,
-    Sliders,
-    Boxes,
-    Receipt,
-} from '@lucide/vue';
+import { Receipt } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Card from '@/components/ui/Card.vue';
-import CardContent from '@/components/ui/CardContent.vue';
 import CardDescription from '@/components/ui/CardDescription.vue';
 import CardHeader from '@/components/ui/CardHeader.vue';
 import CardTitle from '@/components/ui/CardTitle.vue';
 import Chart from '@/components/ui/Chart.vue';
-import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
-import { formatMoney, formatMonth, formatNumber } from '@/lib/format';
-
-type MostMoved = {
-    item_id: number;
-    item_title: string;
-    item_sku: string | null;
-    total_quantity: number;
-    total_value: number;
-    rows_count: number;
-};
-
-type AdjustmentSummary = {
-    reason: string;
-    rows_count: number;
-    total_quantity: number;
-};
+import { formatMoney, formatMonth } from '@/lib/format';
 
 type StatementChannel = {
     cash: number;
@@ -69,18 +45,15 @@ type StatementReport = {
     channels: StatementChannel;
     daily: Array<{ label: string; value: number }>;
     days_with_revenue: number;
+    inventory_coverage: {
+        average_days: number;
+        covered_items: number;
+        last_inventory_at: string | null;
+    };
 };
 
 const props = defineProps<{
     active_store: { id: number; name: string } | null;
-    inventory_value: number;
-    monthly: {
-        incoming: number;
-        outgoing: number;
-    };
-    most_moved: MostMoved[];
-    adjustments: AdjustmentSummary[];
-    reasons: string[];
     statement_report: StatementReport;
     statement_filter: {
         all_time: boolean;
@@ -212,25 +185,14 @@ function toggleAllTime(): void {
         <Head :title="t('reports.title')" />
 
         <div class="flex flex-col gap-6">
-            <header
-                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
-            >
-                <div>
-                    <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                    >
-                        {{ t('reports.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('reports.subtitle') }}
-                    </p>
-                </div>
-                <p
-                    v-if="props.active_store"
-                    class="text-sm font-semibold text-on-surface-variant"
-                    data-testid="active-store"
+            <header>
+                <h1
+                    class="font-heading text-2xl font-bold tracking-tight text-on-surface"
                 >
-                    {{ props.active_store.name }}
+                    {{ t('reports.title') }}
+                </h1>
+                <p class="mt-1 text-sm text-on-surface-variant">
+                    {{ t('reports.subtitle') }}
                 </p>
             </header>
 
@@ -241,54 +203,6 @@ function toggleAllTime(): void {
             />
 
             <template v-else>
-                <div class="grid gap-4 sm:grid-cols-3">
-                    <Card padded>
-                        <CardHeader>
-                            <CardDescription>{{
-                                t('reports.inventory_value')
-                            }}</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p
-                                class="flex items-center gap-2 font-heading text-2xl font-bold tracking-tight text-on-surface"
-                            >
-                                <Layers :size="18" class="text-primary" />
-                                {{ formatMoney(inventory_value) }}
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card padded>
-                        <CardHeader>
-                            <CardDescription>
-                                {{ t('reports.monthly_incoming') }}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p
-                                class="flex items-center gap-2 font-heading text-2xl font-bold tracking-tight text-emerald-600"
-                            >
-                                <TrendingUp :size="18" />
-                                {{ formatMoney(monthly.incoming) }}
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card padded>
-                        <CardHeader>
-                            <CardDescription>
-                                {{ t('reports.monthly_outgoing') }}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p
-                                class="flex items-center gap-2 font-heading text-2xl font-bold tracking-tight text-rose-600"
-                            >
-                                <TrendingDown :size="18" />
-                                {{ formatMoney(monthly.outgoing) }}
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-
                 <Card padded>
                     <div
                         class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
@@ -341,7 +255,7 @@ function toggleAllTime(): void {
                     <p
                         class="mb-4 text-xs font-semibold uppercase tracking-wider text-on-surface-variant"
                     >
-                        {{ props.active_store.name }} · {{ periodLabel }}
+                        {{ periodLabel }}
                     </p>
 
                     <div
@@ -373,6 +287,18 @@ function toggleAllTime(): void {
                                 class="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant"
                             >
                                 {{ t('reports.statements.investment') }}
+                            </p>
+                            <p
+                                class="mt-0.5 text-[10px] font-mono text-on-surface-variant"
+                            >
+                                {{
+                                    t('reports.statements.inventory_coverage', {
+                                        days: props.statement_report
+                                            .inventory_coverage.average_days,
+                                        items: props.statement_report
+                                            .inventory_coverage.covered_items,
+                                    })
+                                }}
                             </p>
                             <p
                                 class="mt-1 font-heading text-lg font-bold text-on-surface"
@@ -569,138 +495,6 @@ function toggleAllTime(): void {
                             :series="channelData"
                             :empty-text="t('reports.statements.empty')"
                         />
-                    </div>
-                </Card>
-
-                <Card padded>
-                    <CardHeader>
-                        <CardTitle>
-                            <span class="flex items-center gap-2">
-                                <Boxes
-                                    :size="14"
-                                    class="text-on-surface-variant"
-                                />
-                                {{ t('reports.most_moved') }}
-                            </span>
-                        </CardTitle>
-                        <CardDescription>{{
-                            t('reports.most_moved_subtitle')
-                        }}</CardDescription>
-                    </CardHeader>
-                    <EmptyState
-                        v-if="most_moved.length === 0"
-                        :title="t('reports.empty.movements')"
-                    />
-                    <div v-else class="overflow-x-auto">
-                        <DataTable>
-                            <thead>
-                                <tr>
-                                    <th>{{ t('reports.item') }}</th>
-                                    <th>{{ t('reports.sku') }}</th>
-                                    <th class="text-right">
-                                        {{ t('reports.movements') }}
-                                    </th>
-                                    <th class="text-right">
-                                        {{ t('reports.quantity') }}
-                                    </th>
-                                    <th class="text-right">
-                                        {{ t('reports.value') }}
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                                    v-for="row in most_moved"
-                                    :key="row.item_id"
-                                >
-                                    <td class="font-semibold text-on-surface">
-                                        {{ row.item_title }}
-                                    </td>
-                                    <td
-                                        class="font-mono text-xs text-on-surface-variant"
-                                    >
-                                        {{ row.item_sku ?? '—' }}
-                                    </td>
-                                    <td
-                                        class="text-right font-semibold text-on-surface"
-                                    >
-                                        {{ row.rows_count }}
-                                    </td>
-                                    <td
-                                        class="text-right font-semibold text-on-surface"
-                                    >
-                                        {{ formatNumber(row.total_quantity) }}
-                                    </td>
-                                    <td
-                                        class="text-right text-on-surface-variant"
-                                    >
-                                        {{ formatMoney(row.total_value) }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </DataTable>
-                    </div>
-                </Card>
-
-                <Card padded>
-                    <CardHeader>
-                        <CardTitle>
-                            <span class="flex items-center gap-2">
-                                <Sliders
-                                    :size="14"
-                                    class="text-on-surface-variant"
-                                />
-                                {{ t('reports.adjustments_by_reason') }}
-                            </span>
-                        </CardTitle>
-                        <CardDescription>{{
-                            t('reports.adjustments_by_reason_subtitle')
-                        }}</CardDescription>
-                    </CardHeader>
-                    <EmptyState
-                        v-if="adjustments.length === 0"
-                        :title="t('reports.empty.adjustments')"
-                    />
-                    <div v-else class="overflow-x-auto">
-                        <DataTable>
-                            <thead>
-                                <tr>
-                                    <th>{{ t('reports.reason') }}</th>
-                                    <th class="text-right">
-                                        {{ t('reports.adjustment_count') }}
-                                    </th>
-                                    <th class="text-right">
-                                        {{ t('reports.quantity') }}
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                                    v-for="row in adjustments"
-                                    :key="row.reason"
-                                >
-                                    <td class="font-semibold text-on-surface">
-                                        {{
-                                            row.reason
-                                                ? t(
-                                                      `stock_movements.reasons.${row.reason}`,
-                                                  )
-                                                : '—'
-                                        }}
-                                    </td>
-                                    <td
-                                        class="text-right font-semibold text-on-surface"
-                                    >
-                                        {{ row.rows_count }}
-                                    </td>
-                                    <td
-                                        class="text-right text-on-surface-variant"
-                                    >
-                                        {{ formatNumber(row.total_quantity) }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </DataTable>
                     </div>
                 </Card>
             </template>

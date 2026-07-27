@@ -15,6 +15,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'address' => 'Hlavní 1, Brno',
         'status' => StoreStatusEnum::ACTIVE->value,
         'notes' => 'Open Mon-Fri',
+        'slack_channel' => 'C0123456789',
         'is_warehouse' => false,
     ]), Store::class);
 
@@ -22,6 +23,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($store->getAddress())->toBe('Hlavní 1, Brno');
     \expect($store->getStatus())->toBe(StoreStatusEnum::ACTIVE);
     \expect($store->getNotes())->toBe('Open Mon-Fri');
+    \expect($store->getSlackChannel())->toBe('C0123456789');
     \expect($store->isWarehouse())->toBeFalse();
     \expect($store->getUserId())->toBeInt();
 });

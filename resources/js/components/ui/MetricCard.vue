@@ -11,7 +11,7 @@ defineProps<{
     <dl
         :class="
             cn(
-                'rounded-2xl border border-outline-glass bg-surface-container-lowest p-5 shadow-sm',
+                'rounded-2xl border border-outline-glass bg-surface-container-lowest p-4 shadow-sm',
             )
         "
     >
@@ -26,7 +26,7 @@ defineProps<{
             </span>
         </div>
         <dd
-            class="mt-2 font-heading text-2xl font-bold tracking-tight text-on-surface"
+            class="mt-1.5 font-heading text-xl font-bold tracking-tight text-on-surface"
         >
             {{ value }}
         </dd>

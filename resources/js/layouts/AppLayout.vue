@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
-import { Menu, X } from '@lucide/vue';
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import { Menu, Store as StoreIcon, X } from '@lucide/vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppSidebar from '@/components/ui/AppSidebar.vue';
 import Brand from '@/components/ui/Brand.vue';
 import FlashToasts from '@/components/ui/FlashToasts.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
+import { useSharedProps } from '@/composables/useSharedProps';
+import { isStoreSectionUrl } from '@/lib/sidebar-navigation';
 
 defineProps<{
     title: string;
@@ -18,6 +20,13 @@ const { t } = useI18n();
 useBoundLocale();
 
 const route = useRoute();
+const { activeStore, auth } = useSharedProps();
+const activeUrl = computed(() => usePage().url);
+const showStoreContext = computed(
+    () =>
+        activeStore.value !== null &&
+        isStoreSectionUrl(activeUrl.value, auth.value.user?.is_admin === true),
+);
 
 const mobileNavOpen = ref(false);
 
@@ -139,6 +148,23 @@ function onBackdropKeydown(event: KeyboardEvent): void {
 
                 <div class="z-10 flex flex-1 flex-col max-w-7xl w-full mx-auto">
                     <FlashToasts mobile-header-offset />
+
+                    <div
+                        v-if="showStoreContext && activeStore"
+                        class="mb-4 flex justify-end"
+                    >
+                        <span
+                            data-testid="active-store-pill"
+                            :aria-label="`${t('store_switcher.label')}: ${activeStore.name}`"
+                            class="inline-flex max-w-full items-center gap-2 rounded-full border border-outline-glass bg-surface-container-lowest px-3 py-1.5 text-xs font-semibold text-on-surface shadow-sm"
+                        >
+                            <StoreIcon
+                                :size="14"
+                                class="shrink-0 text-primary"
+                            />
+                            <span class="truncate">{{ activeStore.name }}</span>
+                        </span>
+                    </div>
 
                     <div class="flex-1">
                         <slot />

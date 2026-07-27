@@ -234,6 +234,36 @@ přiřazenou prodejnu; report, sazby, tisk a opravy jsou admin-only.
   to their assigned store while the admin keeps a single owner of the
   underlying data.
 
+## Virtuální nástěnka
+
+Dashboard obsahuje nad provozními přehledy store-scoped virtuální nástěnku.
+`noticeboard_cards.user_id` drží firemního vlastníka, `store_id` určuje
+publikum a `created_by_user_id` / `updated_by_user_id` zachovávají atribuci.
+Admin i omezený uživatel mohou upravit nebo soft-delete libovolnou kartičku
+své aktuální či přiřazené prodejny; koš, obnova a definitivní odstranění jsou
+admin-only.
+
+Rich-text se před uložením sanitizuje explicitním serverovým whitelistem a
+pro hledání se ukládá samostatný čistý text. `lock_version` zabraňuje
+přepsání souběžné změny. Volitelná expirace pouze přesouvá kartu do filtru
+Expirované a není totožná se smazáním. Privátní obrázek se vydává přes
+autorizovaný store-scoped endpoint. Soft-deleted záznamy starší 30 dní
+odstraňuje denní příkaz `stockflow:prune-noticeboard-cards`.
+
+Nástěnka je vizuálně plochá část dashboardu bez vnořených panelů; pastelové
+karty používají stejné zaoblení, border a stín jako ostatní systémové karty.
+Admin dashboard ponechává pouze kompaktní provozní metriky a poslední pohyby.
+Detailní tok, skladový rozpad a spotřební analytika patří na
+`/reports/statistics`.
+
+Navigační položka Nástěnka je první v sekci Prodejna. Sdílený helper
+`sidebar-navigation.ts` definuje jak pořadí položek této sekce, tak klasifikaci
+store-scoped URL. `AppLayout.vue` používá tutéž klasifikaci k centrálnímu
+zobrazení informačního pillu aktivní prodejny na Nástěnce, výkazech,
+inventurách, reportech, statistikách, směnách a docházce. U omezeného uživatele
+zahrnuje také formuláře příjmu a výdeje; adminské stránky Správy zůstávají bez
+pillu.
+
 ## Inventory history
 
 `inventory_sessions` is the header of one physical count: it records

@@ -110,5 +110,13 @@
     "Slack item count": "Počet položiek",
     "Slack total quantity": "Celkové množstvo",
     "Slack total value": "Celková hodnota",
-    "Open in StockFlow": "Otvoriť v StockFlow"
+    "Open in StockFlow": "Otvoriť v StockFlow",
+    "The card content must contain visible text.": "Obsah kartičky musí obsahovať viditeľný text.",
+    "This card changed while you were editing it. Refresh and try again.": "Kartička sa počas úprav zmenila. Obnovte stránku a skúste to znova.",
+    "Card created.": "Kartička bola vytvorená.",
+    "Card updated.": "Kartička bola upravená.",
+    "Card moved to trash.": "Kartička bola presunutá do koša.",
+    "Card restored.": "Kartička bola obnovená.",
+    "Card permanently deleted.": "Kartička bola definitívne zmazaná.",
+    "The card image could not be deleted.": "Obrázok kartičky sa nepodarilo zmazať."
 }

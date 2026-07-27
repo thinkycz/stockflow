@@ -98,6 +98,72 @@
             "submit": "Aktualizovat heslo"
         }
     },
+    "noticeboard": {
+        "title": "Nástěnka",
+        "subtitle": "Kartičky a oznámení pro aktuální prodejnu.",
+        "no_store": "Pro přidávání kartiček nejdříve vyberte prodejnu.",
+        "add": "Přidat kartičku",
+        "show_all": "Zobrazit celé",
+        "restore": "Obnovit",
+        "force_delete": "Definitivně smazat",
+        "deleted_user": "Smazaný uživatel",
+        "expires": "Platí do {date}",
+        "updated_by": "Naposledy upravil(a) {email}, {date}",
+        "confirm_trash": "Přesunout kartičku do koše?",
+        "confirm_force_delete": "Definitivně smazat kartičku? Tuto akci nelze vrátit.",
+        "filters": {
+            "search": "Hledat v kartičkách…",
+            "all_labels": "Všechny štítky"
+        },
+        "status": {
+            "active": "Aktivní",
+            "expired": "Expirované",
+            "trash": "Koš"
+        },
+        "labels": {
+            "information": "Informace",
+            "important": "Důležité",
+            "task": "Úkol",
+            "event": "Událost"
+        },
+        "colors": {
+            "yellow": "Žlutá",
+            "pink": "Růžová",
+            "blue": "Modrá",
+            "green": "Zelená",
+            "purple": "Fialová"
+        },
+        "empty": {
+            "title": "Žádné kartičky",
+            "description": "Pro zvolené filtry zde zatím nejsou žádné kartičky."
+        },
+        "form": {
+            "create_title": "Nová kartička",
+            "edit_title": "Upravit kartičku",
+            "title": "Titulek",
+            "content": "Obsah",
+            "label": "Štítek",
+            "color": "Barva",
+            "expires_on": "Platí do",
+            "image": "Obrázek",
+            "choose_image": "Vybrat obrázek",
+            "remove_image": "Odebrat obrázek"
+        },
+        "editor": {
+            "text_size": "Velikost textu",
+            "size_small": "Malý",
+            "size_normal": "Normální",
+            "size_large": "Velký",
+            "bold": "Tučné",
+            "italic": "Kurzíva",
+            "underline": "Podtržení",
+            "bullet_list": "Odrážky",
+            "ordered_list": "Číslování",
+            "link": "Odkaz",
+            "link_prompt": "Zadejte adresu odkazu",
+            "clear": "Zrušit formátování"
+        }
+    },
     "dashboard": {
         "title": "Nástěnka",
         "subtitle": "Přehled o aktuálním stavu zásob a nedávné aktivitě pro vybranou prodejnu.",

@@ -28,6 +28,7 @@ use App\Http\Controllers\Web\Item\ItemEditController;
 use App\Http\Controllers\Web\Item\ItemIndexController;
 use App\Http\Controllers\Web\Item\ItemSearchController;
 use App\Http\Controllers\Web\Item\ItemShowController;
+use App\Http\Controllers\Web\Noticeboard\NoticeboardCardController;
 use App\Http\Controllers\Web\Report\ReportController;
 use App\Http\Controllers\Web\Report\StatisticsController;
 use App\Http\Controllers\Web\Settings\SettingsController;
@@ -99,6 +100,10 @@ Resolver::resolveRouteRegistrar()
     ->group(static function (Router $router): void {
         $router->post('logout', LogoutController::class)->name('logout');
         $router->get('dashboard', DashboardController::class)->name('dashboard');
+        $router->post('noticeboard-cards', [NoticeboardCardController::class, 'store'])->name('noticeboard-cards.store');
+        $router->put('noticeboard-cards/{noticeboardCard}', [NoticeboardCardController::class, 'update'])->whereNumber('noticeboardCard')->name('noticeboard-cards.update');
+        $router->delete('noticeboard-cards/{noticeboardCard}', [NoticeboardCardController::class, 'destroy'])->whereNumber('noticeboardCard')->name('noticeboard-cards.destroy');
+        $router->get('noticeboard-cards/{noticeboardCard}/image', [NoticeboardCardController::class, 'image'])->whereNumber('noticeboardCard')->name('noticeboard-cards.image');
 
         // Statements (admin + limited)
         $router->get('statements', StatementIndexController::class)->name('statements.index');
@@ -143,6 +148,10 @@ Resolver::resolveRouteRegistrar()
         $router->get('settings', [SettingsController::class, 'edit'])->name('settings.show');
         $router->post('settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
         $router->post('settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
+
+        // Noticeboard moderation
+        $router->post('noticeboard-cards/{noticeboardCard}/restore', [NoticeboardCardController::class, 'restore'])->whereNumber('noticeboardCard')->name('noticeboard-cards.restore');
+        $router->delete('noticeboard-cards/{noticeboardCard}/force', [NoticeboardCardController::class, 'forceDestroy'])->whereNumber('noticeboardCard')->name('noticeboard-cards.force-destroy');
 
         // Items
         $router->get('items', ItemIndexController::class)->name('items.index');

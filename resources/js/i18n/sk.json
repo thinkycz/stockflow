@@ -98,6 +98,72 @@
             "submit": "Aktualizovať heslo"
         }
     },
+    "noticeboard": {
+        "title": "Nástenka",
+        "subtitle": "Kartičky a oznámenia pre aktívnu predajňu.",
+        "no_store": "Pred pridaním kartičky vyberte predajňu.",
+        "add": "Pridať kartičku",
+        "show_all": "Zobraziť celé",
+        "restore": "Obnoviť",
+        "force_delete": "Definitívne zmazať",
+        "deleted_user": "Zmazaný používateľ",
+        "expires": "Platí do {date}",
+        "updated_by": "Naposledy upravil(a) {email}, {date}",
+        "confirm_trash": "Presunúť kartičku do koša?",
+        "confirm_force_delete": "Definitívne zmazať kartičku? Túto akciu nemožno vrátiť.",
+        "filters": {
+            "search": "Hľadať v kartičkách…",
+            "all_labels": "Všetky štítky"
+        },
+        "status": {
+            "active": "Aktívne",
+            "expired": "Expirované",
+            "trash": "Kôš"
+        },
+        "labels": {
+            "information": "Informácie",
+            "important": "Dôležité",
+            "task": "Úloha",
+            "event": "Udalosť"
+        },
+        "colors": {
+            "yellow": "Žltá",
+            "pink": "Ružová",
+            "blue": "Modrá",
+            "green": "Zelená",
+            "purple": "Fialová"
+        },
+        "empty": {
+            "title": "Žiadne kartičky",
+            "description": "Pre zvolené filtre tu zatiaľ nie sú žiadne kartičky."
+        },
+        "form": {
+            "create_title": "Nová kartička",
+            "edit_title": "Upraviť kartičku",
+            "title": "Nadpis",
+            "content": "Obsah",
+            "label": "Štítok",
+            "color": "Farba",
+            "expires_on": "Platí do",
+            "image": "Obrázok",
+            "choose_image": "Vybrať obrázok",
+            "remove_image": "Odobrať obrázok"
+        },
+        "editor": {
+            "text_size": "Veľkosť textu",
+            "size_small": "Malý",
+            "size_normal": "Normálny",
+            "size_large": "Veľký",
+            "bold": "Tučné",
+            "italic": "Kurzíva",
+            "underline": "Podčiarknutie",
+            "bullet_list": "Odrážky",
+            "ordered_list": "Číslovanie",
+            "link": "Odkaz",
+            "link_prompt": "Zadajte adresu odkazu",
+            "clear": "Zrušiť formátovanie"
+        }
+    },
     "dashboard": {
         "title": "Nástenka",
         "subtitle": "Prehľad o aktuálnom stave zásob a nedávnej aktivite pre vybranú predajňu.",

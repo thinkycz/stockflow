@@ -35,6 +35,9 @@
 - Inertia web app:
     - `/login`, `/forgot-password`, `/reset-password`
     - `/dashboard`
+        - store-scoped virtual noticeboard for admin and limited users
+        - active/expired filters, label search, and 24-card pagination
+        - shared create/edit/soft-delete; admin-only trash restore and purge
     - `/inventory`, `/stock-movements`, `/stores`
     - `/statements` (POST `/statements/{statement}` and `/statements/{statement}/clear`)
     - `/inventory-counts` (POST `/inventory-counts` to persist a new session)
@@ -47,6 +50,10 @@
     - `/verify-email`
     - `/settings`
     - POST form actions: `/settings/profile`, `/settings/password`
+- The sidebar places Noticeboard first in the Store section. `AppLayout`
+  displays a read-only active-store pill on Store-section pages and their
+  details; it is hidden on Management and Settings pages and when no active
+  store exists.
 - Minimal API compatibility:
     - `/api/v1/auth/*`
     - `/api/v1/me/*`
@@ -68,8 +75,8 @@
   Výdej / spotřeba, Výkazy (Statements), Inventura, Směny, Docházka, and
   Settings. Their Dashboard does not expose inventory statistics and instead
   provides a store-scoped live operations summary (current and next shifts,
-  current attendance, breaks, and stale attendance warnings) plus direct action
-  cards for the six store workflows. Store-scoped inputs are fixed and any
+  current attendance, breaks, and stale attendance warnings) plus four compact
+  actions for receipt, consumption, statements, and inventory. Store-scoped inputs are fixed and any
   cross-store access returns 403.
 
 ## Cookies

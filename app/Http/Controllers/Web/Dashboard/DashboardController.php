@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Dashboard;
 
+use App\Enums\NoticeboardCardColorEnum;
+use App\Enums\NoticeboardCardLabelEnum;
 use App\Enums\StockMovementTypeEnum;
+use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
+use App\Http\Validation\NoticeboardCardValidity;
 use App\Models\AttendanceSession;
 use App\Models\InventorySession;
+use App\Models\NoticeboardCard;
 use App\Models\Shift;
 use App\Models\Statement;
 use App\Models\StockMovement;
@@ -25,10 +30,13 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use stdClass;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class DashboardController
 {
+    use ValidatesWebRequests;
+
     /**
      * Render the dashboard for the currently active store.
      *
@@ -40,6 +48,7 @@ class DashboardController
     {
         $user = User::mustAuth();
         $activeStore = ActiveStoreResolver::resolve($request, $user);
+        $noticeboard = $this->noticeboard($request, $user, $activeStore);
 
         if (!$user->isAdmin()) {
             return Inertia::render('Dashboard', [
@@ -56,6 +65,7 @@ class DashboardController
                     ? $this->limitedOperations($user->resolveScopeUser(), $activeStore)
                     : null,
                 'is_admin' => false,
+                'noticeboard' => $noticeboard,
             ]);
         }
 
@@ -67,7 +77,7 @@ class DashboardController
         $thirtyDaysAgoString = $now->copy()->subDays(30)->toDateTimeString();
 
         if (!$activeStore instanceof Store) {
-            return Inertia::render('Dashboard', $this->emptyPayload());
+            return Inertia::render('Dashboard', $this->emptyPayload($noticeboard));
         }
 
         $storeId = $activeStore->getKey();
@@ -197,6 +207,7 @@ class DashboardController
             'recent_statements' => $recentStatements,
             'operations' => null,
             'is_admin' => true,
+            'noticeboard' => $noticeboard,
         ]);
     }
 
@@ -320,9 +331,11 @@ class DashboardController
      * metrics are zeroed out and lists are empty so the page can
      * render without errors.
      *
+     * @param array<string, mixed> $noticeboard
+     *
      * @return array<string, mixed>
      */
-    private function emptyPayload(): array
+    private function emptyPayload(array $noticeboard): array
     {
         return [
             'active_store' => null,
@@ -346,6 +359,102 @@ class DashboardController
             'recent_statements' => [],
             'operations' => null,
             'is_admin' => true,
+            'noticeboard' => $noticeboard,
+        ];
+    }
+
+    /**
+     * Build the paginated noticeboard payload for the current store.
+     *
+     * @return array<string, mixed>
+     */
+    private function noticeboard(Request $request, User $user, Store|null $store): array
+    {
+        $validity = NoticeboardCardValidity::inject();
+        $validated = $this->validateRequest($request, [
+            'status' => $validity->status()->nullable()->toArray(),
+            'label' => $validity->label()->nullable()->toArray(),
+            'search' => $validity->search()->nullable()->toArray(),
+        ]);
+        $status = $validated->assertNullableString('status') ?? 'active';
+        $label = $validated->assertNullableString('label');
+        $search = $validated->assertNullableString('search') ?? '';
+
+        if ($status === 'trash' && !$user->isAdmin()) {
+            \abort(403);
+        }
+
+        if (!$store instanceof Store) {
+            return [
+                'cards' => [],
+                'filters' => ['status' => $status, 'label' => $label, 'search' => $search],
+                'pagination' => ['current_page' => 1, 'last_page' => 1, 'per_page' => 24, 'total' => 0],
+                'labels' => NoticeboardCardLabelEnum::values(),
+                'colors' => NoticeboardCardColorEnum::values(),
+                'can_view_trash' => $user->isAdmin(),
+            ];
+        }
+
+        $query = $status === 'trash'
+            ? NoticeboardCard::query()->onlyTrashed()
+            : NoticeboardCard::query();
+        NoticeboardCard::scopeForUser($query, $user->resolveScopeUser());
+        NoticeboardCard::scopeForStore($query, $store->getKey());
+        NoticeboardCard::querySelect($query);
+        $query->with(['creator', 'updater']);
+
+        if ($status === 'active') {
+            $query->where(static function (Builder $query): void {
+                $query->whereNull('expires_at')->orWhere('expires_at', '>', Carbon::now()->utc());
+            });
+        } elseif ($status === 'expired') {
+            $query->whereNotNull('expires_at')->where('expires_at', '<=', Carbon::now()->utc());
+        }
+
+        if ($label !== null) {
+            $query->where('label', $label);
+        }
+
+        if ($search !== '') {
+            NoticeboardCard::scopeSearch($query, $search);
+        }
+
+        $paginator = $query->orderByDesc('created_at')->orderByDesc('id')->paginate(24)->withQueryString();
+        $cards = $paginator->getCollection()->map(static function (NoticeboardCard $card): array {
+            $creator = $card->getCreator();
+            $updater = $card->getUpdater();
+
+            return [
+                'id' => $card->getKey(),
+                'title' => $card->getTitle(),
+                'body_html' => $card->getBodyHtml(),
+                'label' => $card->getLabel()->value,
+                'color' => $card->getColor()->value,
+                'image_url' => $card->getImagePath() === null
+                    ? null
+                    : Resolver::resolveUrlGenerator()->route('noticeboard-cards.image', $card->getKey()),
+                'expires_on' => $card->getExpiresAt()?->setTimezone('Europe/Prague')->toDateString(),
+                'created_at' => $card->getCreatedAt()->toJSON(),
+                'updated_at' => $card->getUpdatedAt()->toJSON(),
+                'deleted_at' => $card->getDeletedAt()?->toJSON(),
+                'created_by_email' => $creator?->getEmail(),
+                'updated_by_email' => $updater?->getEmail(),
+                'version' => $card->getLockVersion(),
+            ];
+        })->all();
+
+        return [
+            'cards' => $cards,
+            'filters' => ['status' => $status, 'label' => $label, 'search' => $search],
+            'pagination' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+            'labels' => NoticeboardCardLabelEnum::values(),
+            'colors' => NoticeboardCardColorEnum::values(),
+            'can_view_trash' => $user->isAdmin(),
         ];
     }
 

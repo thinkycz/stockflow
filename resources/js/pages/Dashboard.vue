@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import {
     ArrowLeftRight,
     ArrowDownToLine,
     ArrowRight,
     ArrowUpFromLine,
     Boxes,
-    CalendarDays,
     CalendarRange,
     CircleDollarSign,
     Clock3,
@@ -18,7 +17,6 @@ import {
     PackageMinus,
     PackagePlus,
     Receipt,
-    Store as StoreIcon,
     TrendingDown,
     Users,
 } from '@lucide/vue';
@@ -33,6 +31,8 @@ import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import MetricCard from '@/components/ui/MetricCard.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
+import NoticeboardSection from '@/components/noticeboard/NoticeboardSection.vue';
+import type { NoticeboardPayload } from '@/components/noticeboard/NoticeboardSection.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import {
@@ -121,6 +121,7 @@ const props = defineProps<{
     recent_statements: RecentStatement[];
     operations: Operations | null;
     is_admin: boolean;
+    noticeboard: NoticeboardPayload;
 }>();
 
 const { t, locale } = useI18n();
@@ -158,20 +159,6 @@ const limitedActions = computed(() => [
         description: t('dashboard.actions.inventory.description'),
         icon: ClipboardList,
     },
-    {
-        key: 'shifts',
-        href: route('shifts.index'),
-        title: t('dashboard.actions.shifts.title'),
-        description: t('dashboard.actions.shifts.description'),
-        icon: CalendarDays,
-    },
-    {
-        key: 'attendance',
-        href: route('attendance.index'),
-        title: t('dashboard.actions.attendance.title'),
-        description: t('dashboard.actions.attendance.description'),
-        icon: ClipboardCheck,
-    },
 ]);
 
 const totalTracked = computed(
@@ -195,36 +182,12 @@ function statementPeriodLabel(statement: RecentStatement): string {
 </script>
 
 <template>
-    <AppLayout :title="t('dashboard.title')">
-        <Head :title="t('dashboard.title')" />
-
+    <AppLayout :title="t('noticeboard.title')">
         <div class="flex flex-col gap-6">
-            <header>
-                <h1
-                    class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                >
-                    {{ t('dashboard.title') }}
-                </h1>
-                <p class="mt-1 text-sm text-on-surface-variant">
-                    {{
-                        props.is_admin
-                            ? t('dashboard.subtitle')
-                            : t('dashboard.actions.subtitle')
-                    }}
-                </p>
-                <div
-                    v-if="!props.is_admin && props.active_store"
-                    class="mt-3 inline-flex items-center gap-2 rounded-full border border-outline-glass bg-surface-container-low px-3 py-1.5 text-sm"
-                >
-                    <StoreIcon :size="15" class="text-primary" />
-                    <span class="text-on-surface-variant">
-                        {{ t('dashboard.actions.current_store') }}:
-                    </span>
-                    <span class="font-semibold text-on-surface">
-                        {{ props.active_store.name }}
-                    </span>
-                </div>
-            </header>
+            <NoticeboardSection
+                :noticeboard="props.noticeboard"
+                :active-store="props.active_store"
+            />
 
             <template v-if="!props.is_admin">
                 <section v-if="operations" class="flex flex-col gap-4">
@@ -379,32 +342,27 @@ function statementPeriodLabel(statement: RecentStatement): string {
                     </div>
                 </section>
 
-                <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                     <Link
                         v-for="action in limitedActions"
                         :key="action.key"
                         :href="action.href"
-                        class="group flex min-h-36 items-start gap-4 rounded-2xl border border-outline-glass bg-surface-container-lowest p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                        class="group flex items-center gap-3 rounded-2xl border border-outline-glass bg-surface-container-lowest p-3 shadow-sm transition hover:border-primary/35 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                     >
                         <span
-                            class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-on-primary"
+                            class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-on-primary"
                         >
-                            <component :is="action.icon" :size="22" />
+                            <component :is="action.icon" :size="18" />
                         </span>
-                        <span class="flex min-w-0 flex-1 flex-col">
+                        <span class="min-w-0 flex-1">
                             <span
-                                class="flex items-center justify-between gap-3 font-heading text-base font-bold text-on-surface"
+                                class="flex items-center justify-between gap-3 font-heading text-sm font-bold text-on-surface"
                             >
                                 {{ action.title }}
                                 <ArrowRight
-                                    :size="17"
+                                    :size="15"
                                     class="shrink-0 text-on-surface-variant transition group-hover:translate-x-1 group-hover:text-primary"
                                 />
-                            </span>
-                            <span
-                                class="mt-2 text-sm leading-relaxed text-on-surface-variant"
-                            >
-                                {{ action.description }}
                             </span>
                         </span>
                     </Link>
@@ -418,7 +376,7 @@ function statementPeriodLabel(statement: RecentStatement): string {
             />
 
             <template v-else-if="metrics && stock_status">
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <MetricCard
                         :title="t('dashboard.metrics.inventory_value')"
                         :value="formatMoney(metrics.inventory_value)"
@@ -457,7 +415,17 @@ function statementPeriodLabel(statement: RecentStatement): string {
                     </MetricCard>
                 </div>
 
-                <div class="grid gap-4 lg:grid-cols-2">
+                <div class="flex justify-end">
+                    <Link
+                        :href="route('reports.statistics')"
+                        class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+                    >
+                        {{ t('nav.statistics') }}
+                        <ArrowRight :size="15" />
+                    </Link>
+                </div>
+
+                <div class="hidden">
                     <Card padded>
                         <CardHeader>
                             <CardTitle>
@@ -660,7 +628,7 @@ function statementPeriodLabel(statement: RecentStatement): string {
                     </Card>
                 </div>
 
-                <div class="grid gap-4 lg:grid-cols-3">
+                <div class="hidden">
                     <Card padded class="lg:col-span-2">
                         <CardHeader>
                             <CardTitle>

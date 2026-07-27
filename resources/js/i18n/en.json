@@ -8,7 +8,7 @@
             "store": "Store",
             "management": "Management"
         },
-        "dashboard": "Dashboard",
+        "dashboard": "Noticeboard",
         "inventory": "Inventory",
         "stock_movements": "Stock movements",
         "incoming": "Goods receipt",
@@ -98,8 +98,74 @@
             "submit": "Update password"
         }
     },
+    "noticeboard": {
+        "title": "Noticeboard",
+        "subtitle": "Cards and announcements for the active store.",
+        "no_store": "Select a store before adding cards.",
+        "add": "Add card",
+        "show_all": "Show all",
+        "restore": "Restore",
+        "force_delete": "Delete permanently",
+        "deleted_user": "Deleted user",
+        "expires": "Expires {date}",
+        "updated_by": "Last updated by {email}, {date}",
+        "confirm_trash": "Move this card to trash?",
+        "confirm_force_delete": "Delete this card permanently? This cannot be undone.",
+        "filters": {
+            "search": "Search cards…",
+            "all_labels": "All labels"
+        },
+        "status": {
+            "active": "Active",
+            "expired": "Expired",
+            "trash": "Trash"
+        },
+        "labels": {
+            "information": "Information",
+            "important": "Important",
+            "task": "Task",
+            "event": "Event"
+        },
+        "colors": {
+            "yellow": "Yellow",
+            "pink": "Pink",
+            "blue": "Blue",
+            "green": "Green",
+            "purple": "Purple"
+        },
+        "empty": {
+            "title": "No cards",
+            "description": "There are no cards matching the selected filters."
+        },
+        "form": {
+            "create_title": "New card",
+            "edit_title": "Edit card",
+            "title": "Title",
+            "content": "Content",
+            "label": "Label",
+            "color": "Color",
+            "expires_on": "Expires on",
+            "image": "Image",
+            "choose_image": "Choose image",
+            "remove_image": "Remove image"
+        },
+        "editor": {
+            "text_size": "Text size",
+            "size_small": "Small",
+            "size_normal": "Normal",
+            "size_large": "Large",
+            "bold": "Bold",
+            "italic": "Italic",
+            "underline": "Underline",
+            "bullet_list": "Bullet list",
+            "ordered_list": "Numbered list",
+            "link": "Link",
+            "link_prompt": "Enter the link address",
+            "clear": "Clear formatting"
+        }
+    },
     "dashboard": {
-        "title": "Dashboard",
+        "title": "Noticeboard",
         "subtitle": "Overview of current inventory health and recent activity for the selected store.",
         "welcome": "Authenticated user",
         "settings_heading": "Settings",

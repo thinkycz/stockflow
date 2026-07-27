@@ -6,6 +6,7 @@ use App\Enums\StockMovementClassificationEnum;
 use App\Models\AttendanceBreak;
 use App\Models\AttendanceSession;
 use App\Models\Item;
+use App\Models\NoticeboardCard;
 use App\Models\Shift;
 use App\Models\Statement;
 use App\Models\StockMovement;
@@ -280,6 +281,81 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response->assertJsonPath('props.operations.attendance.workers.0.worker_name', 'Anna Nováková');
 
     CarbonImmutable::setTestNow();
+});
+
+\test('dashboard noticeboard filters active expired searched and trashed cards for the active store', function (): void {
+    [$admin, $store] = \createIsolatedUserWithWarehouse();
+    $otherStore = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $admin->setActiveStoreId($store->getKey());
+    $active = NoticeboardCard::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'created_by_user_id' => $admin->getKey(),
+        'updated_by_user_id' => $admin->getKey(),
+        'title' => 'Hledaný aktivní záznam',
+        'body_text' => 'porada',
+        'label' => 'important',
+        'expires_at' => null,
+    ]);
+    $expired = NoticeboardCard::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'created_by_user_id' => $admin->getKey(),
+        'updated_by_user_id' => $admin->getKey(),
+        'title' => 'Starý záznam',
+        'expires_at' => CarbonImmutable::now()->subDay(),
+    ]);
+    NoticeboardCard::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $otherStore->getKey(),
+        'created_by_user_id' => $admin->getKey(),
+        'updated_by_user_id' => $admin->getKey(),
+        'title' => 'Cizí záznam',
+    ]);
+    $trashed = NoticeboardCard::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'created_by_user_id' => $admin->getKey(),
+        'updated_by_user_id' => $admin->getKey(),
+    ]);
+    $trashed->delete();
+
+    $activeResponse = $this->be($admin, 'users')->get('/dashboard?search=porada&label=important', $this->inertiaHeaders());
+    $activeResponse->assertOk();
+    \expect($activeResponse->json('props.noticeboard.cards'))->toHaveCount(1)
+        ->and($activeResponse->json('props.noticeboard.cards.0.id'))->toBe($active->getKey());
+
+    $expiredResponse = $this->be($admin, 'users')->get('/dashboard?status=expired', $this->inertiaHeaders());
+    \expect(\array_column($expiredResponse->json('props.noticeboard.cards'), 'id'))->toBe([$expired->getKey()]);
+
+    $trashResponse = $this->be($admin, 'users')->get('/dashboard?status=trash', $this->inertiaHeaders());
+    \expect(\array_column($trashResponse->json('props.noticeboard.cards'), 'id'))->toBe([$trashed->getKey()]);
+});
+
+\test('limited user cannot open the noticeboard trash filter', function (): void {
+    [$admin, $store] = \createIsolatedUserWithWarehouse();
+    $limited = UserFactory::new()->limited($store)->createOne();
+
+    $this->be($limited, 'users')->get('/dashboard?status=trash', $this->inertiaHeaders())->assertForbidden();
+});
+
+\test('dashboard noticeboard paginates twenty four newest cards at a time', function (): void {
+    [$admin, $store] = \createIsolatedUserWithWarehouse();
+    $admin->setActiveStoreId($store->getKey());
+    NoticeboardCard::factory()->count(25)->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'created_by_user_id' => $admin->getKey(),
+        'updated_by_user_id' => $admin->getKey(),
+    ]);
+
+    $first = $this->be($admin, 'users')->get('/dashboard', $this->inertiaHeaders());
+    $second = $this->be($admin, 'users')->get('/dashboard?page=2', $this->inertiaHeaders());
+
+    \expect($first->json('props.noticeboard.cards'))->toHaveCount(24)
+        ->and($first->json('props.noticeboard.pagination.total'))->toBe(25)
+        ->and($first->json('props.noticeboard.pagination.per_page'))->toBe(24)
+        ->and($second->json('props.noticeboard.cards'))->toHaveCount(1);
 });
 
 \test('dashboard scopes recent statements to the active store', function (): void {

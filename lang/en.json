@@ -110,5 +110,13 @@
     "Slack item count": "Items",
     "Slack total quantity": "Total quantity",
     "Slack total value": "Total value",
-    "Open in StockFlow": "Open in StockFlow"
+    "Open in StockFlow": "Open in StockFlow",
+    "The card content must contain visible text.": "The card content must contain visible text.",
+    "This card changed while you were editing it. Refresh and try again.": "This card changed while you were editing it. Refresh and try again.",
+    "Card created.": "Card created.",
+    "Card updated.": "Card updated.",
+    "Card moved to trash.": "Card moved to trash.",
+    "Card restored.": "Card restored.",
+    "Card permanently deleted.": "Card permanently deleted.",
+    "The card image could not be deleted.": "The card image could not be deleted."
 }

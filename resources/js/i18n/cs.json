@@ -103,12 +103,8 @@
         "subtitle": "Kartičky a oznámení pro aktuální prodejnu.",
         "no_store": "Pro přidávání kartiček nejdříve vyberte prodejnu.",
         "add": "Přidat kartičku",
-        "show_all": "Zobrazit celé",
         "restore": "Obnovit",
         "force_delete": "Definitivně smazat",
-        "deleted_user": "Smazaný uživatel",
-        "expires": "Platí do {date}",
-        "updated_by": "Naposledy upravil(a) {email}, {date}",
         "confirm_trash": "Přesunout kartičku do koše?",
         "confirm_force_delete": "Definitivně smazat kartičku? Tuto akci nelze vrátit.",
         "filters": {

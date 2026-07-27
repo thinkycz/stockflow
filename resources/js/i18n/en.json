@@ -103,12 +103,8 @@
         "subtitle": "Cards and announcements for the active store.",
         "no_store": "Select a store before adding cards.",
         "add": "Add card",
-        "show_all": "Show all",
         "restore": "Restore",
         "force_delete": "Delete permanently",
-        "deleted_user": "Deleted user",
-        "expires": "Expires {date}",
-        "updated_by": "Last updated by {email}, {date}",
         "confirm_trash": "Move this card to trash?",
         "confirm_force_delete": "Delete this card permanently? This cannot be undone.",
         "filters": {

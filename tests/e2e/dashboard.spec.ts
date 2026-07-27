@@ -172,10 +172,7 @@ test('noticeboard editor, preview, detail, filters and validation work together'
     await card
         .getByText('Formatted E2E notice content', { exact: true })
         .click();
-    await expect(
-        page.getByText(/Last updated by .*test@test\.com/),
-    ).toBeVisible();
-    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
 
     await page.getByPlaceholder('Search cards…').fill('Formatted E2E notice');
     await page.waitForURL(/search=Formatted(\+|%20)E2E(\+|%20)notice/);

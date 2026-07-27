@@ -4,7 +4,6 @@ import {
     ArchiveRestore,
     CalendarDays,
     CircleCheck,
-    Eye,
     ImagePlus,
     Info,
     Pencil,
@@ -24,7 +23,6 @@ import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import RichTextEditor from '@/components/noticeboard/RichTextEditor.vue';
 import { useRoute } from '@/composables/useRoute';
-import { formatDateTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 export type NoticeboardCard = {
@@ -35,11 +33,6 @@ export type NoticeboardCard = {
     size: 'small' | 'medium' | 'large';
     image_url: string | null;
     expires_on: string | null;
-    created_at: string;
-    updated_at: string;
-    deleted_at: string | null;
-    created_by_email: string | null;
-    updated_by_email: string | null;
     version: number;
 };
 
@@ -70,7 +63,6 @@ const props = defineProps<{
 const { t } = useI18n();
 const route = useRoute();
 const formOpen = ref(false);
-const detailCard = ref<NoticeboardCard | null>(null);
 const editingCard = ref<NoticeboardCard | null>(null);
 const search = ref(props.noticeboard.filters.search);
 const label = ref(props.noticeboard.filters.label ?? '');
@@ -148,7 +140,6 @@ function openCreate(): void {
 }
 
 function openEdit(card: NoticeboardCard): void {
-    detailCard.value = null;
     editingCard.value = card;
     form.clearErrors();
     form.body_html = card.body_html;
@@ -250,7 +241,7 @@ function cardClass(
     size: NoticeboardCard['size'],
 ): string {
     return cn(
-        'group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border p-5 shadow-sm transition hover:border-primary/25 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
+        'group relative flex flex-col overflow-hidden rounded-2xl border p-5 shadow-sm transition hover:border-primary/25 hover:shadow-md',
         {
             yellow: 'border-amber-200/80 bg-amber-50',
             pink: 'border-pink-200/80 bg-pink-50',
@@ -362,9 +353,6 @@ function cardClass(
                     :class="cardClass(card.color, card.size)"
                     :data-card-color="card.color"
                     :data-card-size="card.size"
-                    tabindex="0"
-                    @click="detailCard = card"
-                    @keydown.enter="detailCard = card"
                 >
                     <div class="flex items-start justify-between gap-3">
                         <span
@@ -429,25 +417,9 @@ function cardClass(
                         class="mt-4 h-32 w-full rounded-xl object-cover"
                     />
                     <div
-                        class="noticeboard-rich-text mt-4 max-h-36 overflow-hidden text-sm leading-relaxed text-slate-700"
+                        class="noticeboard-rich-text mt-4 max-h-48 overflow-y-auto pr-1 text-sm leading-relaxed text-slate-700"
                         v-html="card.body_html"
                     />
-                    <div
-                        class="mt-auto flex items-end justify-between gap-3 border-t border-black/5 pt-4 text-[11px] text-slate-600"
-                    >
-                        <span>
-                            {{
-                                card.updated_by_email ??
-                                t('noticeboard.deleted_user')
-                            }}
-                        </span>
-                        <span
-                            class="inline-flex items-center gap-1 font-semibold"
-                        >
-                            <Eye :size="12" />
-                            {{ t('noticeboard.show_all') }}
-                        </span>
-                    </div>
                 </article>
             </div>
 
@@ -663,62 +635,6 @@ function cardClass(
                 </Button>
             </div>
         </form>
-    </Modal>
-
-    <Modal
-        :open="detailCard !== null"
-        :title="
-            detailCard ? t(`noticeboard.labels.${detailCard.label}`) : undefined
-        "
-        class="max-h-[92vh] max-w-3xl overflow-y-auto"
-        @close="detailCard = null"
-    >
-        <template v-if="detailCard">
-            <div v-if="detailCard.expires_on" class="mb-4">
-                <span class="text-xs text-on-surface-variant">
-                    {{
-                        t('noticeboard.expires', {
-                            date: detailCard.expires_on,
-                        })
-                    }}
-                </span>
-            </div>
-            <img
-                v-if="detailCard.image_url"
-                :src="detailCard.image_url"
-                :alt="t(`noticeboard.labels.${detailCard.label}`)"
-                class="mb-5 max-h-[28rem] w-full rounded-2xl object-contain"
-            />
-            <div
-                class="noticeboard-rich-text text-sm leading-relaxed text-on-surface"
-                v-html="detailCard.body_html"
-            />
-            <div
-                class="mt-6 border-t border-outline-glass pt-4 text-xs text-on-surface-variant"
-            >
-                {{
-                    t('noticeboard.updated_by', {
-                        email:
-                            detailCard.updated_by_email ??
-                            t('noticeboard.deleted_user'),
-                        date: formatDateTime(detailCard.updated_at),
-                    })
-                }}
-            </div>
-            <div
-                v-if="noticeboard.filters.status !== 'trash'"
-                class="mt-5 flex justify-end gap-2"
-            >
-                <Button variant="secondary" @click="openEdit(detailCard)">
-                    <Pencil :size="14" />
-                    {{ t('common.edit') }}
-                </Button>
-                <Button variant="danger" @click="trash(detailCard)">
-                    <Trash2 :size="14" />
-                    {{ t('common.delete') }}
-                </Button>
-            </div>
-        </template>
     </Modal>
 </template>
 

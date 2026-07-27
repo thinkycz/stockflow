@@ -103,12 +103,8 @@
         "subtitle": "Kartičky a oznámenia pre aktívnu predajňu.",
         "no_store": "Pred pridaním kartičky vyberte predajňu.",
         "add": "Pridať kartičku",
-        "show_all": "Zobraziť celé",
         "restore": "Obnoviť",
         "force_delete": "Definitívne zmazať",
-        "deleted_user": "Zmazaný používateľ",
-        "expires": "Platí do {date}",
-        "updated_by": "Naposledy upravil(a) {email}, {date}",
         "confirm_trash": "Presunúť kartičku do koša?",
         "confirm_force_delete": "Definitívne zmazať kartičku? Túto akciu nemožno vrátiť.",
         "filters": {

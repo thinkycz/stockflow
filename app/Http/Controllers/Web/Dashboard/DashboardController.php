@@ -403,7 +403,6 @@ class DashboardController
         NoticeboardCard::scopeForUser($query, $user->resolveScopeUser());
         NoticeboardCard::scopeForStore($query, $store->getKey());
         NoticeboardCard::querySelect($query);
-        $query->with(['creator', 'updater']);
 
         if ($status === 'active') {
             $query->where(static function (Builder $query): void {
@@ -423,9 +422,6 @@ class DashboardController
 
         $paginator = $query->orderByDesc('created_at')->orderByDesc('id')->paginate(24)->withQueryString();
         $cards = $paginator->getCollection()->map(static function (NoticeboardCard $card): array {
-            $creator = $card->getCreator();
-            $updater = $card->getUpdater();
-
             return [
                 'id' => $card->getKey(),
                 'body_html' => $card->getBodyHtml(),
@@ -436,11 +432,6 @@ class DashboardController
                     ? null
                     : Resolver::resolveUrlGenerator()->route('noticeboard-cards.image', $card->getKey()),
                 'expires_on' => $card->getExpiresAt()?->setTimezone('Europe/Prague')->toDateString(),
-                'created_at' => $card->getCreatedAt()->toJSON(),
-                'updated_at' => $card->getUpdatedAt()->toJSON(),
-                'deleted_at' => $card->getDeletedAt()?->toJSON(),
-                'created_by_email' => $creator?->getEmail(),
-                'updated_by_email' => $updater?->getEmail(),
                 'version' => $card->getLockVersion(),
             ];
         })->all();

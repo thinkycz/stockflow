@@ -6,6 +6,7 @@ namespace App\Http\Validation;
 
 use App\Enums\NoticeboardCardColorEnum;
 use App\Enums\NoticeboardCardLabelEnum;
+use App\Enums\NoticeboardCardSizeEnum;
 use Thinkycz\LaravelCore\Validation\BaseValidity;
 use Thinkycz\LaravelCore\Validation\Validity;
 
@@ -62,6 +63,14 @@ class NoticeboardCardValidity
     public function color(): Validity
     {
         return $this->baseValidity->make()->string(32)->in(NoticeboardCardColorEnum::values());
+    }
+
+    /**
+     * Card display size.
+     */
+    public function size(): Validity
+    {
+        return $this->baseValidity->make()->string(16)->in(NoticeboardCardSizeEnum::values());
     }
 
     /**

@@ -23,6 +23,7 @@ import DataTable from '@/components/ui/DataTable.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
+import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import ShiftMonthCalendar from '@/components/ShiftMonthCalendar.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { showErrorToast, showSuccessToast } from '@/composables/useClientToast';
@@ -760,6 +761,7 @@ async function copyText(value: string): Promise<void> {
                     <p class="mt-1 text-sm text-on-surface-variant">
                         {{ t('shifts.subtitle') }}
                     </p>
+                    <StoreContextIndicator />
                 </div>
                 <div
                     v-if="store && is_admin"

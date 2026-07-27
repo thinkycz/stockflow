@@ -2,22 +2,26 @@
 import { router, useForm } from '@inertiajs/vue3';
 import {
     ArchiveRestore,
+    CalendarDays,
+    CircleCheck,
     Eye,
     ImagePlus,
+    Info,
     Pencil,
     Plus,
     Search,
     Trash2,
+    TriangleAlert,
 } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Input from '@/components/ui/Input.vue';
 import Modal from '@/components/ui/Modal.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import Select from '@/components/ui/Select.vue';
+import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import RichTextEditor from '@/components/noticeboard/RichTextEditor.vue';
 import { useRoute } from '@/composables/useRoute';
 import { formatDateTime } from '@/lib/format';
@@ -29,6 +33,7 @@ export type NoticeboardCard = {
     body_html: string;
     label: 'information' | 'important' | 'task' | 'event';
     color: 'yellow' | 'pink' | 'blue' | 'green' | 'purple';
+    size: 'small' | 'medium' | 'large';
     image_url: string | null;
     expires_on: string | null;
     created_at: string;
@@ -54,6 +59,7 @@ export type NoticeboardPayload = {
     };
     labels: NoticeboardCard['label'][];
     colors: NoticeboardCard['color'][];
+    sizes: NoticeboardCard['size'][];
     can_view_trash: boolean;
 };
 
@@ -77,6 +83,7 @@ const form = useForm({
     body_html: '<p></p>',
     label: 'information',
     color: 'yellow',
+    size: 'medium',
     expires_on: '',
     image: null as File | null,
     remove_image: false,
@@ -90,20 +97,6 @@ const labelOptions = computed(() => [
         label: t(`noticeboard.labels.${value}`),
     })),
 ]);
-
-const formLabelOptions = computed(() =>
-    props.noticeboard.labels.map((value) => ({
-        value,
-        label: t(`noticeboard.labels.${value}`),
-    })),
-);
-
-const colorOptions = computed(() =>
-    props.noticeboard.colors.map((value) => ({
-        value,
-        label: t(`noticeboard.colors.${value}`),
-    })),
-);
 
 watch(
     () => props.noticeboard.filters,
@@ -164,6 +157,7 @@ function openEdit(card: NoticeboardCard): void {
     form.body_html = card.body_html;
     form.label = card.label;
     form.color = card.color;
+    form.size = card.size;
     form.expires_on = card.expires_on ?? '';
     form.image = null;
     form.remove_image = false;
@@ -235,9 +229,31 @@ function forceDestroy(card: NoticeboardCard): void {
     });
 }
 
-function cardClass(color: NoticeboardCard['color']): string {
+function labelIcon(labelValue: NoticeboardCard['label']) {
+    return {
+        information: Info,
+        important: TriangleAlert,
+        task: CircleCheck,
+        event: CalendarDays,
+    }[labelValue];
+}
+
+function colorSwatchClass(color: NoticeboardCard['color']): string {
+    return {
+        yellow: 'bg-amber-300',
+        pink: 'bg-pink-300',
+        blue: 'bg-sky-300',
+        green: 'bg-emerald-300',
+        purple: 'bg-violet-300',
+    }[color];
+}
+
+function cardClass(
+    color: NoticeboardCard['color'],
+    size: NoticeboardCard['size'],
+): string {
     return cn(
-        'group relative flex min-h-60 cursor-pointer flex-col overflow-hidden rounded-2xl border p-5 shadow-sm transition hover:border-primary/25 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
+        'group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border p-5 shadow-sm transition hover:border-primary/25 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
         {
             yellow: 'border-amber-200/80 bg-amber-50',
             pink: 'border-pink-200/80 bg-pink-50',
@@ -245,6 +261,11 @@ function cardClass(color: NoticeboardCard['color']): string {
             green: 'border-emerald-200/80 bg-emerald-50',
             purple: 'border-violet-200/80 bg-violet-50',
         }[color],
+        {
+            small: 'min-h-48',
+            medium: 'min-h-60 sm:col-span-2',
+            large: 'min-h-72 sm:col-span-2 xl:col-span-4',
+        }[size],
     );
 }
 </script>
@@ -265,6 +286,7 @@ function cardClass(color: NoticeboardCard['color']): string {
                             : t('noticeboard.no_store')
                     }}
                 </p>
+                <StoreContextIndicator />
             </div>
             <Button :disabled="!activeStore" @click="openCreate">
                 <Plus :size="16" />
@@ -335,20 +357,30 @@ function cardClass(color: NoticeboardCard['color']): string {
 
             <div
                 v-else
-                class="grid items-start gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                class="grid items-start gap-5 sm:grid-cols-2 xl:grid-cols-4"
             >
                 <article
                     v-for="card in noticeboard.cards"
                     :key="card.id"
-                    :class="cardClass(card.color)"
+                    :class="cardClass(card.color, card.size)"
+                    :data-card-color="card.color"
+                    :data-card-size="card.size"
                     tabindex="0"
                     @click="detailCard = card"
                     @keydown.enter="detailCard = card"
                 >
                     <div class="flex items-start justify-between gap-3">
-                        <Badge variant="neutral">
+                        <span
+                            class="inline-flex items-center gap-1.5 rounded-full bg-white/60 px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm"
+                            :title="t(`noticeboard.labels.${card.label}`)"
+                        >
+                            <component
+                                :is="labelIcon(card.label)"
+                                :size="15"
+                                aria-hidden="true"
+                            />
                             {{ t(`noticeboard.labels.${card.label}`) }}
-                        </Badge>
+                        </span>
                         <div
                             class="flex opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                             @click.stop
@@ -487,27 +519,98 @@ function cardClass(color: NoticeboardCard['color']): string {
                 </p>
             </div>
 
-            <div class="grid gap-4 sm:grid-cols-3">
-                <div>
-                    <label class="mb-1.5 block text-xs font-semibold">
+            <div class="grid gap-5 sm:grid-cols-2">
+                <fieldset>
+                    <legend class="mb-2 block text-xs font-semibold">
                         {{ t('noticeboard.form.label') }}
-                    </label>
-                    <Select
-                        v-model="form.label"
-                        :options="formLabelOptions"
-                        required
-                    />
-                </div>
-                <div>
-                    <label class="mb-1.5 block text-xs font-semibold">
+                    </legend>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="labelValue in noticeboard.labels"
+                            :key="labelValue"
+                            type="button"
+                            :aria-label="t(`noticeboard.labels.${labelValue}`)"
+                            :title="t(`noticeboard.labels.${labelValue}`)"
+                            :aria-pressed="form.label === labelValue"
+                            :class="[
+                                'flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition',
+                                form.label === labelValue
+                                    ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary/15'
+                                    : 'border-outline-glass bg-white text-on-surface-variant hover:border-primary/40 hover:text-primary',
+                            ]"
+                            @click="form.label = labelValue"
+                        >
+                            <component
+                                :is="labelIcon(labelValue)"
+                                :size="17"
+                                aria-hidden="true"
+                            />
+                            {{ t(`noticeboard.labels.${labelValue}`) }}
+                        </button>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend class="mb-2 block text-xs font-semibold">
                         {{ t('noticeboard.form.color') }}
-                    </label>
-                    <Select
-                        v-model="form.color"
-                        :options="colorOptions"
-                        required
-                    />
-                </div>
+                    </legend>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="color in noticeboard.colors"
+                            :key="color"
+                            type="button"
+                            :aria-label="t(`noticeboard.colors.${color}`)"
+                            :title="t(`noticeboard.colors.${color}`)"
+                            :aria-pressed="form.color === color"
+                            class="flex size-10 items-center justify-center rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            @click="form.color = color"
+                        >
+                            <span
+                                :class="[
+                                    'size-7 rounded-full border-2 border-white shadow-sm transition',
+                                    colorSwatchClass(color),
+                                    form.color === color
+                                        ? 'scale-110 ring-2 ring-primary ring-offset-2'
+                                        : 'hover:scale-105',
+                                ]"
+                            />
+                        </button>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend class="mb-2 block text-xs font-semibold">
+                        {{ t('noticeboard.form.size') }}
+                    </legend>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="size in noticeboard.sizes"
+                            :key="size"
+                            type="button"
+                            :aria-pressed="form.size === size"
+                            :class="[
+                                'flex min-w-20 flex-col items-center gap-1.5 rounded-xl border px-3 py-2 text-[11px] font-semibold transition',
+                                form.size === size
+                                    ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary/15'
+                                    : 'border-outline-glass bg-white text-on-surface-variant hover:border-primary/40',
+                            ]"
+                            @click="form.size = size"
+                        >
+                            <span
+                                :class="[
+                                    'rounded-sm bg-current opacity-70',
+                                    {
+                                        small: 'h-2.5 w-4',
+                                        medium: 'h-3 w-6',
+                                        large: 'h-3.5 w-8',
+                                    }[size],
+                                ]"
+                            />
+                            {{ t(`noticeboard.sizes.${size}`) }}
+                        </button>
+                    </div>
+                </fieldset>
+
                 <div>
                     <label
                         for="noticeboard-expiration"
@@ -597,9 +700,17 @@ function cardClass(color: NoticeboardCard['color']): string {
     >
         <template v-if="detailCard">
             <div class="mb-4 flex flex-wrap items-center gap-2">
-                <Badge variant="neutral">
+                <span
+                    class="inline-flex items-center gap-1.5 rounded-full bg-surface-container-low px-2.5 py-1.5 text-xs font-semibold text-on-surface-variant"
+                    :title="t(`noticeboard.labels.${detailCard.label}`)"
+                >
+                    <component
+                        :is="labelIcon(detailCard.label)"
+                        :size="16"
+                        aria-hidden="true"
+                    />
                     {{ t(`noticeboard.labels.${detailCard.label}`) }}
-                </Badge>
+                </span>
                 <span
                     v-if="detailCard.expires_on"
                     class="text-xs text-on-surface-variant"

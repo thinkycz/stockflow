@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Web\Noticeboard;
 
 use App\Enums\FilesystemDiskEnum;
+use App\Enums\NoticeboardCardSizeEnum;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\NoticeboardCardValidity;
 use App\Models\NoticeboardCard;
@@ -38,6 +39,7 @@ class NoticeboardCardController
             'body_html' => $validity->bodyHtml()->required()->toArray(),
             'label' => $validity->label()->required()->toArray(),
             'color' => $validity->color()->required()->toArray(),
+            'size' => $validity->size()->nullable()->toArray(),
             'expires_on' => $validity->expiresOn()->nullable()->toArray(),
             'image' => $validity->image()->nullable()->toArray(),
         ]);
@@ -50,6 +52,7 @@ class NoticeboardCardController
                 $validated->assertString('body_html'),
                 $validated->assertString('label'),
                 $validated->assertString('color'),
+                $validated->assertNullableString('size') ?? NoticeboardCardSizeEnum::Medium->value,
                 $validated->assertNullableString('expires_on'),
                 $validated->assertNullableFile('image'),
             );
@@ -76,6 +79,7 @@ class NoticeboardCardController
             'body_html' => $validity->bodyHtml()->required()->toArray(),
             'label' => $validity->label()->required()->toArray(),
             'color' => $validity->color()->required()->toArray(),
+            'size' => $validity->size()->nullable()->toArray(),
             'expires_on' => $validity->expiresOn()->nullable()->toArray(),
             'image' => $validity->image()->nullable()->toArray(),
             'remove_image' => $validity->removeImage()->nullable()->toArray(),
@@ -90,6 +94,7 @@ class NoticeboardCardController
                 $validated->assertString('body_html'),
                 $validated->assertString('label'),
                 $validated->assertString('color'),
+                $validated->assertNullableString('size') ?? $card->getSize()->value,
                 $validated->assertNullableString('expires_on'),
                 $validated->assertNullableFile('image'),
                 $validated->parseBool('remove_image'),

@@ -6,6 +6,7 @@ namespace Database\Factories;
 
 use App\Enums\NoticeboardCardColorEnum;
 use App\Enums\NoticeboardCardLabelEnum;
+use App\Enums\NoticeboardCardSizeEnum;
 use App\Models\NoticeboardCard;
 use App\Models\Store;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -35,6 +36,7 @@ class NoticeboardCardFactory extends Factory
             'body_text' => $this->faker->sentence(),
             'label' => NoticeboardCardLabelEnum::Information->value,
             'color' => NoticeboardCardColorEnum::Yellow->value,
+            'size' => NoticeboardCardSizeEnum::Medium->value,
             'expires_at' => null,
             'lock_version' => 1,
         ];

@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
+import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { formatCzechDateTime } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
@@ -64,6 +65,7 @@ const totals = computed(() => ({
                     <p class="mt-1 text-sm text-on-surface-variant">
                         {{ t('statements.history.subtitle') }}
                     </p>
+                    <StoreContextIndicator />
                 </div>
                 <Link
                     :href="

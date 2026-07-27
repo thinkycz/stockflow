@@ -295,6 +295,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'title' => 'Hledaný aktivní záznam',
         'body_text' => 'porada',
         'label' => 'important',
+        'size' => 'large',
         'expires_at' => null,
     ]);
     $expired = NoticeboardCard::factory()->create([
@@ -323,7 +324,8 @@ use Thinkycz\LaravelCore\Support\Typer;
     $activeResponse = $this->be($admin, 'users')->get('/dashboard?search=porada&label=important', $this->inertiaHeaders());
     $activeResponse->assertOk();
     \expect($activeResponse->json('props.noticeboard.cards'))->toHaveCount(1)
-        ->and($activeResponse->json('props.noticeboard.cards.0.id'))->toBe($active->getKey());
+        ->and($activeResponse->json('props.noticeboard.cards.0.id'))->toBe($active->getKey())
+        ->and($activeResponse->json('props.noticeboard.cards.0.size'))->toBe('large');
 
     $expiredResponse = $this->be($admin, 'users')->get('/dashboard?status=expired', $this->inertiaHeaders());
     \expect(\array_column($expiredResponse->json('props.noticeboard.cards'), 'id'))->toBe([$expired->getKey()]);

@@ -9,6 +9,7 @@ import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
+import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import {
     formatCzechDate,
@@ -104,6 +105,7 @@ const totals = computed(() => ({
                     <p class="mt-1 text-sm text-on-surface-variant">
                         {{ t('inventory_counts.history.subtitle') }}
                     </p>
+                    <StoreContextIndicator />
                 </div>
                 <Link :href="route('inventory-counts.index')">
                     <Button variant="secondary">

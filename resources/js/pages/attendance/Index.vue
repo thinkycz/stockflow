@@ -18,6 +18,7 @@ import Card from '@/components/ui/Card.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import Select from '@/components/ui/Select.vue';
+import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useRoute } from '@/composables/useRoute';
 
 type Worker = { id: number; first_name: string; last_name: string };
@@ -216,6 +217,7 @@ onUnmounted(() => {
                     <p class="text-sm text-on-surface-variant">
                         {{ t('attendance.subtitle') }}
                     </p>
+                    <StoreContextIndicator />
                 </div>
                 <Link
                     v-if="is_admin && store && !store.is_warehouse"

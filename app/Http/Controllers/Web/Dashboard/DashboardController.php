@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Web\Dashboard;
 
 use App\Enums\NoticeboardCardColorEnum;
 use App\Enums\NoticeboardCardLabelEnum;
+use App\Enums\NoticeboardCardSizeEnum;
 use App\Enums\StockMovementTypeEnum;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\NoticeboardCardValidity;
@@ -391,6 +392,7 @@ class DashboardController
                 'pagination' => ['current_page' => 1, 'last_page' => 1, 'per_page' => 24, 'total' => 0],
                 'labels' => NoticeboardCardLabelEnum::values(),
                 'colors' => NoticeboardCardColorEnum::values(),
+                'sizes' => NoticeboardCardSizeEnum::values(),
                 'can_view_trash' => $user->isAdmin(),
             ];
         }
@@ -430,6 +432,7 @@ class DashboardController
                 'body_html' => $card->getBodyHtml(),
                 'label' => $card->getLabel()->value,
                 'color' => $card->getColor()->value,
+                'size' => $card->getSize()->value,
                 'image_url' => $card->getImagePath() === null
                     ? null
                     : Resolver::resolveUrlGenerator()->route('noticeboard-cards.image', $card->getKey()),
@@ -454,6 +457,7 @@ class DashboardController
             ],
             'labels' => NoticeboardCardLabelEnum::values(),
             'colors' => NoticeboardCardColorEnum::values(),
+            'sizes' => NoticeboardCardSizeEnum::values(),
             'can_view_trash' => $user->isAdmin(),
         ];
     }

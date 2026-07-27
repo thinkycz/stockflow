@@ -28,6 +28,7 @@ class NoticeboardCardService
         string $bodyHtml,
         string $label,
         string $color,
+        string $size,
         string|null $expiresOn,
         UploadedFile|null $image,
     ): NoticeboardCard {
@@ -45,6 +46,7 @@ class NoticeboardCardService
                 'body_text' => $content['text'],
                 'label' => $label,
                 'color' => $color,
+                'size' => $size,
                 'image_path' => $imageData['path'],
                 'image_mime' => $imageData['mime'],
                 'expires_at' => $this->expiration($expiresOn),
@@ -67,6 +69,7 @@ class NoticeboardCardService
         string $bodyHtml,
         string $label,
         string $color,
+        string $size,
         string|null $expiresOn,
         UploadedFile|null $image,
         bool $removeImage,
@@ -84,6 +87,7 @@ class NoticeboardCardService
                 $content,
                 $label,
                 $color,
+                $size,
                 $expiresOn,
                 $imageData,
                 $removeImage,
@@ -106,6 +110,7 @@ class NoticeboardCardService
                 $locked->setAttribute('body_text', $content['text']);
                 $locked->setAttribute('label', $label);
                 $locked->setAttribute('color', $color);
+                $locked->setAttribute('size', $size);
                 $locked->setAttribute('expires_at', $this->expiration($expiresOn));
                 $locked->setAttribute('updated_by_user_id', $actor->getKey());
                 $locked->setAttribute('lock_version', $lockVersion + 1);

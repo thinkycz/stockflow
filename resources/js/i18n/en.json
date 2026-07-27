@@ -133,6 +133,11 @@
             "green": "Green",
             "purple": "Purple"
         },
+        "sizes": {
+            "small": "Small",
+            "medium": "Medium",
+            "large": "Large"
+        },
         "empty": {
             "title": "No cards",
             "description": "There are no cards matching the selected filters."
@@ -144,6 +149,7 @@
             "content": "Content",
             "label": "Label",
             "color": "Color",
+            "size": "Card size",
             "expires_on": "Expires on",
             "image": "Image",
             "choose_image": "Choose image",

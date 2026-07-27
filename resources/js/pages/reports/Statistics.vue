@@ -14,6 +14,7 @@ import EmptyState from '@/components/ui/EmptyState.vue';
 import Input from '@/components/ui/Input.vue';
 import MetricCard from '@/components/ui/MetricCard.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
+import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { formatDate, formatMoney, formatNumber } from '@/lib/format';
@@ -96,6 +97,7 @@ function quantityWithUnit(value: number, unit: string | null): string {
                     <p class="mt-1 text-sm text-on-surface-variant">
                         {{ t('reports.statistics.subtitle') }}
                     </p>
+                    <StoreContextIndicator />
                 </div>
                 <form
                     class="flex items-end gap-2"

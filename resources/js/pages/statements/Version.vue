@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
+import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { formatCzechDateTime } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
@@ -133,6 +134,7 @@ function restore(): void {
                         >#{{ version.id }}</span
                     >
                 </h1>
+                <StoreContextIndicator />
                 <div
                     class="flex flex-wrap items-center gap-2 text-xs text-on-surface-variant"
                 >

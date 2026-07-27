@@ -415,16 +415,6 @@ function statementPeriodLabel(statement: RecentStatement): string {
                     </MetricCard>
                 </div>
 
-                <div class="flex justify-end">
-                    <Link
-                        :href="route('reports.statistics')"
-                        class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
-                    >
-                        {{ t('nav.statistics') }}
-                        <ArrowRight :size="15" />
-                    </Link>
-                </div>
-
                 <div class="hidden">
                     <Card padded>
                         <CardHeader>

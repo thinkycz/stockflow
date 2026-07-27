@@ -20,6 +20,11 @@ test('noticeboard uses one store-scoped heading and navigation context', async (
     );
 
     const storeSection = page.getByTestId('nav-section-store');
+    const sidebarSections = page.locator('aside [data-testid^="nav-section-"]');
+    await expect(sidebarSections.first()).toHaveAttribute(
+        'data-testid',
+        'nav-section-store',
+    );
     await expect(
         storeSection.locator('[data-testid^="nav-item-"]').first(),
     ).toHaveAttribute('data-testid', 'nav-item-dashboard');
@@ -35,7 +40,7 @@ test('noticeboard uses one store-scoped heading and navigation context', async (
     ).toHaveCount(0);
     await expect(
         page.getByRole('main').getByRole('link', { name: 'Statistics' }),
-    ).toBeVisible();
+    ).toHaveCount(0);
 
     await page.goto('/statements');
     await expect(page.getByTestId('active-store-pill')).toContainText(
@@ -140,6 +145,9 @@ test('noticeboard editor, preview, detail, filters and validation work together'
     await page.getByLabel('Title').fill('Formatted E2E notice');
     await page.getByRole('button', { name: 'Bold' }).click();
     await page.locator('.noticeboard-editor').fill('Formatted E2E content');
+    await page.getByRole('button', { name: 'Task', exact: true }).click();
+    await page.getByRole('button', { name: 'Blue', exact: true }).click();
+    await page.getByRole('button', { name: 'Large', exact: true }).click();
     await page.locator('input[type="file"]').setInputFiles({
         name: 'preview.png',
         mimeType: 'image/png',
@@ -157,6 +165,9 @@ test('noticeboard editor, preview, detail, filters and validation work together'
     await expect(card.getByText('Formatted E2E content')).toBeVisible();
     await expect(card.locator('strong')).toHaveText('Formatted E2E content');
     await expect(card.locator('img')).toBeVisible();
+    await expect(card).toHaveAttribute('data-card-color', 'blue');
+    await expect(card).toHaveAttribute('data-card-size', 'large');
+    await expect(card.getByText('Task', { exact: true })).toBeVisible();
 
     await card.getByRole('heading', { name: 'Formatted E2E notice' }).click();
     await expect(

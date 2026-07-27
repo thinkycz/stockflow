@@ -10,6 +10,7 @@ import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import Select from '@/components/ui/Select.vue';
+import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useRoute } from '@/composables/useRoute';
 import { formatMoney } from '@/lib/format';
 
@@ -159,6 +160,7 @@ function removeBreak(index: number): void {
                     <p class="mt-1 text-sm text-on-surface-variant">
                         {{ t('attendance.report.help') }}
                     </p>
+                    <StoreContextIndicator />
                 </div>
                 <Link :href="route('attendance.index')">
                     <Button variant="secondary">

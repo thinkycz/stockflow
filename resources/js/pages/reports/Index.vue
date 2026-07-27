@@ -11,6 +11,7 @@ import CardTitle from '@/components/ui/CardTitle.vue';
 import Chart from '@/components/ui/Chart.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Select from '@/components/ui/Select.vue';
+import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { formatMoney, formatMonth } from '@/lib/format';
@@ -194,6 +195,7 @@ function toggleAllTime(): void {
                 <p class="mt-1 text-sm text-on-surface-variant">
                     {{ t('reports.subtitle') }}
                 </p>
+                <StoreContextIndicator />
             </header>
 
             <EmptyState

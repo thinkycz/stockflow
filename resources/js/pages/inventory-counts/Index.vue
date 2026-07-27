@@ -10,6 +10,7 @@ import DataTable from '@/components/ui/DataTable.vue';
 import Input from '@/components/ui/Input.vue';
 import Modal from '@/components/ui/Modal.vue';
 import Select from '@/components/ui/Select.vue';
+import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { formatNumber as formatLocalizedNumber } from '@/lib/format';
@@ -305,6 +306,7 @@ async function cancelDraft(): Promise<void> {
                     <p class="mt-1 text-sm text-on-surface-variant">
                         {{ t('inventory_counts.subtitle') }}
                     </p>
+                    <StoreContextIndicator />
                 </div>
                 <Link :href="route('inventory-counts.history')">
                     <Button variant="secondary">

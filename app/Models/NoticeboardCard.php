@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\NoticeboardCardColorEnum;
 use App\Enums\NoticeboardCardLabelEnum;
+use App\Enums\NoticeboardCardSizeEnum;
 use App\Models\Concerns\BelongsToUser;
 use Database\Factories\NoticeboardCardFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -62,7 +63,7 @@ class NoticeboardCard extends BaseModel
     {
         return $query->select([
             'id', 'user_id', 'store_id', 'created_by_user_id', 'updated_by_user_id',
-            'title', 'body_html', 'body_text', 'label', 'color', 'image_path',
+            'title', 'body_html', 'body_text', 'label', 'color', 'size', 'image_path',
             'image_mime', 'expires_at', 'lock_version', 'created_at', 'updated_at', 'deleted_at',
         ]);
     }
@@ -143,6 +144,14 @@ class NoticeboardCard extends BaseModel
     public function getColor(): NoticeboardCardColorEnum
     {
         return Typer::assertInstance($this->getAttribute('color'), NoticeboardCardColorEnum::class);
+    }
+
+    /**
+     * Card display size.
+     */
+    public function getSize(): NoticeboardCardSizeEnum
+    {
+        return Typer::assertInstance($this->getAttribute('size'), NoticeboardCardSizeEnum::class);
     }
 
     /**
@@ -227,6 +236,7 @@ class NoticeboardCard extends BaseModel
         return [
             'label' => NoticeboardCardLabelEnum::class,
             'color' => NoticeboardCardColorEnum::class,
+            'size' => NoticeboardCardSizeEnum::class,
             'expires_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];

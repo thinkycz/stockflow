@@ -12,6 +12,7 @@ import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Modal from '@/components/ui/Modal.vue';
 import Select from '@/components/ui/Select.vue';
+import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { formatCzechDate } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
@@ -427,6 +428,7 @@ function submitPendingSave(closeAttendances: boolean): void {
                     <p class="mt-1 text-sm text-on-surface-variant">
                         {{ t('statements.subtitle') }}
                     </p>
+                    <StoreContextIndicator />
                 </div>
                 <Link
                     v-if="props.statement"

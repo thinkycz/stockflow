@@ -133,6 +133,11 @@
             "green": "Zelená",
             "purple": "Fialová"
         },
+        "sizes": {
+            "small": "Malá",
+            "medium": "Stredná",
+            "large": "Veľká"
+        },
         "empty": {
             "title": "Žiadne kartičky",
             "description": "Pre zvolené filtre tu zatiaľ nie sú žiadne kartičky."
@@ -144,6 +149,7 @@
             "content": "Obsah",
             "label": "Štítok",
             "color": "Farba",
+            "size": "Veľkosť kartičky",
             "expires_on": "Platí do",
             "image": "Obrázok",
             "choose_image": "Vybrať obrázok",

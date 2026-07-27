@@ -15,6 +15,7 @@ import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
 import Select from '@/components/ui/Select.vue';
+import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { formatMoney, formatNumber } from '@/lib/format';
@@ -496,6 +497,7 @@ watch(
                     <p class="mt-1 text-sm text-on-surface-variant">
                         {{ pageSubtitle }}
                     </p>
+                    <StoreContextIndicator v-if="!props.is_admin" />
                 </div>
                 <div v-if="props.is_admin" class="flex items-center gap-2">
                     <Link

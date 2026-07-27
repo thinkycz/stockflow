@@ -197,15 +197,15 @@ const navSections = computed<NavSection[]>(() => {
     if (isAdmin.value) {
         return [
             {
-                key: 'management',
-                label: t('nav.section.management'),
-                items: adminManagementNavItems.value,
-            },
-            {
                 key: 'store',
                 label: t('nav.section.store'),
                 items: storeNavItems.value,
                 showStoreSwitcher: true,
+            },
+            {
+                key: 'management',
+                label: t('nav.section.management'),
+                items: adminManagementNavItems.value,
             },
         ];
     }

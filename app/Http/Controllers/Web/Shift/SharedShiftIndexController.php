@@ -6,7 +6,9 @@ namespace App\Http\Controllers\Web\Shift;
 
 use App\Models\Shift;
 use App\Models\Store;
+use App\Models\User;
 use App\Models\Worker;
+use App\Services\ShiftOverviewService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
@@ -41,10 +43,10 @@ class SharedShiftIndexController
         Worker::scopeForUser($workerQuery, $store->getUserId());
         Worker::querySelect($workerQuery);
 
-        $workers = [];
-
-        foreach ($workerQuery->get() as $worker) {
-            $workers[$worker->getKey()] = [
+        $workerModels = $workerQuery->orderBy('last_name')->orderBy('first_name')->get();
+        $workersById = [];
+        foreach ($workerModels as $worker) {
+            $workersById[$worker->getKey()] = [
                 'name' => $worker->getFullName(),
                 'color' => $worker->getCalendarColor(),
             ];
@@ -57,9 +59,16 @@ class SharedShiftIndexController
         Shift::querySelect($shiftQuery);
         $shiftQuery->orderBy('date')->orderBy('start_time');
 
-        $shifts = $shiftQuery->take(self::TAKE)->get()->map(
-            static function (Shift $shift) use ($workers): array {
-                $worker = $workers[$shift->getWorkerId()] ?? null;
+        $shiftModels = $shiftQuery->take(self::TAKE)->get();
+        $owner = User::query()->whereKey($store->getUserId())->first();
+        if (!$owner instanceof User) {
+            \abort(404);
+        }
+        $overview = (new ShiftOverviewService())->build($owner, $store, $shiftModels, $workerModels, false);
+        $shifts = $shiftModels->map(
+            static function (Shift $shift) use ($workersById, $overview): array {
+                $worker = $workersById[$shift->getWorkerId()] ?? null;
+                $rating = $overview['ratings'][$shift->getKey()];
 
                 return [
                     'id' => $shift->getKey(),
@@ -68,6 +77,11 @@ class SharedShiftIndexController
                     'date' => $shift->getDate(),
                     'start_time' => $shift->getStartTimeShort(),
                     'end_time' => $shift->getEndTimeShort(),
+                    'attendance_rating' => [
+                        'state' => $rating['state'],
+                        'score' => $rating['score'],
+                        'band' => $rating['band'],
+                    ],
                 ];
             },
         )->all();
@@ -77,6 +91,7 @@ class SharedShiftIndexController
                 'name' => $store->getName(),
             ],
             'shifts' => $shifts,
+            'monthly_summary' => $overview['monthly_summary'],
             'filters' => [
                 'year' => $year,
                 'month' => $month,

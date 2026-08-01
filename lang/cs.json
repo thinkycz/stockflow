@@ -118,5 +118,17 @@
     "Card moved to trash.": "Kartička byla přesunuta do koše.",
     "Card restored.": "Kartička byla obnovena.",
     "Card permanently deleted.": "Kartička byla definitivně smazána.",
-    "The card image could not be deleted.": "Obrázek kartičky se nepodařilo smazat."
+    "The card image could not be deleted.": "Obrázek kartičky se nepodařilo smazat.",
+    "The selected calculated row no longer exists.": "Vybraný vypočtený řádek již neexistuje.",
+    "The financial report does not exist.": "Finanční report neexistuje.",
+    "The financial report is closed. Reopen it before making changes.": "Finanční report je uzavřený. Před změnami jej znovu otevřete.",
+    "The row date must be inside the selected month.": "Datum řádku musí spadat do vybraného měsíce.",
+    "Financial override saved.": "Upravená částka byla uložena.",
+    "Financial override removed.": "Upravená částka byla zrušena.",
+    "Manual financial row created.": "Ruční finanční řádek byl vytvořen.",
+    "Manual financial row saved.": "Ruční finanční řádek byl uložen.",
+    "Manual financial row deleted.": "Ruční finanční řádek byl smazán.",
+    "Copied :count manual financial rows.": "Zkopírováno ručních finančních řádků: :count.",
+    "Financial report closed.": "Finanční report byl uzavřen.",
+    "Financial report reopened.": "Finanční report byl znovu otevřen."
 }

@@ -15,8 +15,8 @@ import {
     Receipt,
     Settings as SettingsIcon,
     Store as StoreIcon,
-    TrendingUp,
     Users,
+    WalletCards,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -126,15 +126,15 @@ const storeNavItemsByKey = computed<Record<StoreSectionNavigationKey, NavItem>>(
                 activeUrl.value === '/reports' ||
                 activeUrl.value.startsWith('/reports?'),
         },
-        statistics: {
-            key: 'statistics',
-            href: route('reports.statistics'),
-            label: t('nav.statistics'),
-            icon: TrendingUp,
-            active: activeUrl.value.startsWith('/reports/statistics'),
-        },
         shifts: shiftNavItem.value,
         attendance: attendanceNavItem.value,
+        income_expenses: {
+            key: 'income_expenses',
+            href: route('income-expenses.index'),
+            label: t('nav.income_expenses'),
+            icon: WalletCards,
+            active: activeUrl.value.startsWith('/income-expenses'),
+        },
     }),
 );
 

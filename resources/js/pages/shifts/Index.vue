@@ -20,17 +20,17 @@ import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
-import DataTable from '@/components/ui/DataTable.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import ShiftMonthCalendar from '@/components/ShiftMonthCalendar.vue';
+import ShiftMonthlySummaryTable from '@/components/ShiftMonthlySummaryTable.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { showErrorToast, showSuccessToast } from '@/composables/useClientToast';
 import { useRoute } from '@/composables/useRoute';
-import { formatMoney } from '@/lib/format';
 import { sortShiftsByTime } from '@/lib/shift-calendar';
+import type { MonthlyShiftSummary } from '@/types/shifts';
 
 type Worker = {
     id: number;
@@ -71,32 +71,11 @@ type CalendarShift = Shift & {
     worker_color: string;
 };
 
-type WorkerSummary = {
-    worker_id: number;
-    worker_name: string;
-    color: string;
-    hours: number;
-    salary: number;
-};
-
 type ShiftPreset = {
     id: number;
     name: string;
     start_time: string;
     end_time: string;
-};
-
-type AttendanceSummary = {
-    worker_id: number;
-    worker_name: string;
-    color: string;
-    average_score: number | null;
-    evaluated_shifts: number;
-    good_shifts: number;
-    late_arrivals: number;
-    early_departures: number;
-    break_issues: number;
-    absences: number;
 };
 
 const props = defineProps<{
@@ -109,8 +88,7 @@ const props = defineProps<{
         month: number;
     };
     is_admin: boolean;
-    attendance_summary: AttendanceSummary[];
-    worker_summary?: WorkerSummary[];
+    monthly_summary: MonthlyShiftSummary[];
     shift_presets?: ShiftPreset[];
 }>();
 
@@ -123,18 +101,9 @@ const route = useRoute();
 const year = ref<number>(props.filters.year);
 const month = ref<number>(props.filters.month);
 const localShifts = ref<Shift[]>([...props.shifts]);
-const localWorkerSummary = ref<WorkerSummary[]>([
-    ...(props.worker_summary ?? []),
+const localMonthlySummary = ref<MonthlyShiftSummary[]>([
+    ...props.monthly_summary,
 ]);
-const summaryTotals = computed(() =>
-    localWorkerSummary.value.reduce(
-        (totals, row) => ({
-            hours: totals.hours + row.hours,
-            salary: totals.salary + row.salary,
-        }),
-        { hours: 0, salary: 0 },
-    ),
-);
 
 watch(
     () => props.shifts,
@@ -144,9 +113,9 @@ watch(
 );
 
 watch(
-    () => props.worker_summary,
+    () => props.monthly_summary,
     (summary) => {
-        localWorkerSummary.value = [...(summary ?? [])];
+        localMonthlySummary.value = [...summary];
     },
 );
 
@@ -322,13 +291,6 @@ function navigateMonth(delta: number): void {
         { month: newMonth, year: newYear },
         { preserveState: true, preserveScroll: true },
     );
-}
-
-function formatHours(value: number): string {
-    return new Intl.NumberFormat(locale.value, {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-    }).format(value);
 }
 
 function ratingClass(rating: AttendanceRating | undefined): string {
@@ -697,17 +659,17 @@ async function quickAddShift(
 
         localShifts.value = [...localShifts.value, response.data.shift];
         const contribution = response.data.contribution;
-        const summary = localWorkerSummary.value.find(
+        const summary = localMonthlySummary.value.find(
             (row) => row.worker_id === response.data.shift.worker_id,
         );
 
         if (summary !== undefined && contribution !== undefined) {
-            localWorkerSummary.value = localWorkerSummary.value.map((row) =>
+            localMonthlySummary.value = localMonthlySummary.value.map((row) =>
                 row.worker_id === summary.worker_id
                     ? {
                           ...row,
                           hours: row.hours + contribution.minutes / 60,
-                          salary: row.salary + contribution.salary,
+                          salary: (row.salary ?? 0) + contribution.salary,
                       }
                     : row,
             );
@@ -717,14 +679,21 @@ async function quickAddShift(
             );
 
             if (worker !== undefined) {
-                localWorkerSummary.value = [
-                    ...localWorkerSummary.value,
+                localMonthlySummary.value = [
+                    ...localMonthlySummary.value,
                     {
                         worker_id: worker.id,
                         worker_name: `${worker.first_name} ${worker.last_name}`,
                         color: worker.color,
                         hours: contribution.minutes / 60,
                         salary: contribution.salary,
+                        average_score: null,
+                        evaluated_shifts: 0,
+                        good_shifts: 0,
+                        late_arrivals: 0,
+                        early_departures: 0,
+                        break_issues: 0,
+                        absences: 0,
                     },
                 ];
             }
@@ -826,11 +795,12 @@ async function copyText(value: string): Promise<void> {
                     <StoreContextIndicator />
                 </div>
                 <div
-                    v-if="store && is_admin"
+                    v-if="store"
                     class="flex flex-col items-start gap-2 sm:items-end"
                 >
                     <div class="flex flex-wrap gap-2">
                         <Button
+                            v-if="is_admin"
                             variant="secondary"
                             type="button"
                             @click="openPresetModal"
@@ -1033,179 +1003,10 @@ async function copyText(value: string): Promise<void> {
                     </div>
                 </div>
 
-                <div
-                    v-if="attendance_summary.length === 0"
-                    class="rounded-xl bg-surface-container-low px-4 py-6 text-center text-sm text-on-surface-variant"
-                >
-                    {{ t('shifts.rating.summary.empty') }}
-                </div>
-                <div v-else class="overflow-x-auto">
-                    <DataTable>
-                        <thead>
-                            <tr>
-                                <th>{{ t('shifts.rating.summary.worker') }}</th>
-                                <th class="text-right">
-                                    {{ t('shifts.rating.summary.score') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('shifts.rating.summary.good') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('shifts.rating.summary.late') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('shifts.rating.summary.early') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('shifts.rating.summary.breaks') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('shifts.rating.summary.absences') }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="row in attendance_summary"
-                                :key="row.worker_id"
-                            >
-                                <td>
-                                    <div
-                                        class="flex items-center gap-2 font-semibold text-on-surface"
-                                    >
-                                        <span
-                                            class="size-2.5 shrink-0 rounded-full"
-                                            :style="{
-                                                backgroundColor: row.color,
-                                            }"
-                                            aria-hidden="true"
-                                        />
-                                        {{ row.worker_name }}
-                                    </div>
-                                </td>
-                                <td class="text-right">
-                                    <span
-                                        v-if="row.average_score !== null"
-                                        class="inline-flex rounded-full px-2.5 py-1 text-xs font-bold"
-                                        :class="
-                                            row.average_score >= 90
-                                                ? 'bg-emerald-100 text-emerald-800'
-                                                : row.average_score >= 70
-                                                  ? 'bg-amber-100 text-amber-800'
-                                                  : 'bg-rose-100 text-rose-800'
-                                        "
-                                    >
-                                        {{ row.average_score }}/100
-                                    </span>
-                                    <span
-                                        v-else
-                                        class="text-xs text-on-surface-variant"
-                                    >
-                                        {{ t('shifts.rating.summary.no_data') }}
-                                    </span>
-                                </td>
-                                <td class="text-right font-semibold">
-                                    {{ row.good_shifts }}/{{
-                                        row.evaluated_shifts
-                                    }}
-                                </td>
-                                <td class="text-right">
-                                    {{ row.late_arrivals }}
-                                </td>
-                                <td class="text-right">
-                                    {{ row.early_departures }}
-                                </td>
-                                <td class="text-right">
-                                    {{ row.break_issues }}
-                                </td>
-                                <td class="text-right">
-                                    {{ row.absences }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </DataTable>
-                </div>
-            </Card>
-
-            <Card v-if="store && is_admin" padded>
-                <div class="mb-4">
-                    <h2 class="font-heading text-lg font-bold text-on-surface">
-                        {{ t('shifts.summary.title') }}
-                    </h2>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{
-                            t('shifts.summary.subtitle', {
-                                month: currentMonthLabel,
-                            })
-                        }}
-                    </p>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <DataTable>
-                        <thead>
-                            <tr>
-                                <th>{{ t('shifts.summary.worker') }}</th>
-                                <th class="text-right">
-                                    {{ t('shifts.summary.hours') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('shifts.summary.salary') }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="row in localWorkerSummary"
-                                :key="row.worker_id"
-                            >
-                                <td>
-                                    <div
-                                        class="flex items-center gap-2 font-semibold text-on-surface"
-                                    >
-                                        <span
-                                            class="size-2.5 shrink-0 rounded-full"
-                                            :style="{
-                                                backgroundColor: row.color,
-                                            }"
-                                            aria-hidden="true"
-                                        />
-                                        {{ row.worker_name }}
-                                    </div>
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ formatHours(row.hours) }} h
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ formatMoney(row.salary) }}
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <th
-                                    class="border-t border-outline-glass pt-2 text-left text-xs font-semibold text-on-surface-variant"
-                                >
-                                    Σ
-                                </th>
-                                <th
-                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                >
-                                    {{ formatHours(summaryTotals.hours) }} h
-                                </th>
-                                <th
-                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface"
-                                >
-                                    {{ formatMoney(summaryTotals.salary) }}
-                                </th>
-                            </tr>
-                        </tfoot>
-                    </DataTable>
-                </div>
+                <ShiftMonthlySummaryTable
+                    :rows="localMonthlySummary"
+                    :show-salary="is_admin"
+                />
             </Card>
         </div>
 

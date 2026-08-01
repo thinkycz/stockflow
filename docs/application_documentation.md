@@ -43,7 +43,8 @@
     - `/inventory-counts` (POST `/inventory-counts` to persist a new session)
     - `/inventory-counts/history` (admin + limited, default 90-day window)
     - `/inventory-counts/{session}` (read-only session detail)
-    - `/reports`, `/reports/statistics`
+    - `/reports` — unified monthly financial and inventory reporting;
+      `/reports/statistics` is a compatibility redirect
     - `/users` admin CRUD (GET index, GET `/create`, POST store, GET `/users/{id}/edit`,
       PUT `/users/{id}`, DELETE `/users/{id}`) — wrapped by the
       `EnsureUserIsAdmin` middleware (alias `admin`).
@@ -79,9 +80,11 @@
   actions for receipt, consumption, statements, and inventory. Store-scoped inputs are fixed and any
   cross-store access returns 403.
 - The authenticated Shifts page shows a dynamic 0–100 attendance rating for
-  completed shifts and a per-worker monthly quality summary. Limited users can
-  inspect rating reasons but cannot see salary data; the public shared calendar
-  never receives attendance ratings.
+  completed shifts and one per-worker monthly table combining assigned hours
+  with attendance quality. Limited users can inspect rating reasons and copy a
+  stable public link for their assigned store, but cannot see salary data. The
+  public shared calendar shows score badges and the same aggregate table
+  without salary or detailed per-shift penalty reasons.
 
 ## Cookies
 
@@ -157,7 +160,7 @@ Copy `.env.example` to `.env` and set:
 - An open inventory draft has no finalized `counted_at`. The inventory form
   defaults to today's date on every open, permits a past date, and persists the
   selected date only when the entire draft is closed. Drafts never appear in
-  inventory history, dashboard last-inventory data, or statistics.
+  inventory history, dashboard last-inventory data, or reports.
 - `/items` (Inventář) is a pure catalog list — it never exposes
   per-store quantity, value, or status. Those are properties of the
   `store_items` link, so they only render inside a store context.

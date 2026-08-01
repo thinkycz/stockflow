@@ -23,6 +23,17 @@ describe('sidebar navigation', () => {
         expect(storeSectionNavigationKeys(false, true)[0]).toBe('dashboard');
     });
 
+    test('places income and expenses after attendance for admins only', () => {
+        const admin = storeSectionNavigationKeys(true, true);
+        const limited = storeSectionNavigationKeys(false, true);
+
+        expect(admin.indexOf('income_expenses')).toBe(
+            admin.indexOf('attendance') + 1,
+        );
+        expect(limited).not.toContain('income_expenses');
+        expect(admin).not.toContain('statistics');
+    });
+
     test('classifies admin store section pages including child routes', () => {
         expect(isStoreSectionUrl('/dashboard?status=active', true)).toBe(true);
         expect(isStoreSectionUrl('/statements/history', true)).toBe(true);
@@ -30,6 +41,9 @@ describe('sidebar navigation', () => {
         expect(isStoreSectionUrl('/reports/statistics', true)).toBe(true);
         expect(isStoreSectionUrl('/shifts?month=7', true)).toBe(true);
         expect(isStoreSectionUrl('/attendance/report', true)).toBe(true);
+        expect(isStoreSectionUrl('/income-expenses?year=2026', true)).toBe(
+            true,
+        );
         expect(isStoreSectionUrl('/reports-archive', true)).toBe(false);
     });
 

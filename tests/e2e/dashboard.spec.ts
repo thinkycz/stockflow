@@ -48,8 +48,19 @@ test('noticeboard uses one store-scoped heading and navigation context', async (
     );
 
     await page.goto('/reports/statistics');
+    await expect(page).toHaveURL(/\/reports$/);
     await expect(page.getByTestId('active-store-pill')).toContainText(
         'Brno pobočka',
+    );
+    await expect(page.getByTestId('nav-item-statistics')).toHaveCount(0);
+    await expect(page.getByRole('tab', { name: 'Finance' })).toHaveAttribute(
+        'aria-selected',
+        'true',
+    );
+    await page.getByRole('tab', { name: 'Inventory' }).click();
+    await expect(page.getByRole('tab', { name: 'Inventory' })).toHaveAttribute(
+        'aria-selected',
+        'true',
     );
 
     await page.goto('/items');

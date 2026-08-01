@@ -118,5 +118,17 @@
     "Card moved to trash.": "Card moved to trash.",
     "Card restored.": "Card restored.",
     "Card permanently deleted.": "Card permanently deleted.",
-    "The card image could not be deleted.": "The card image could not be deleted."
+    "The card image could not be deleted.": "The card image could not be deleted.",
+    "The selected calculated row no longer exists.": "The selected calculated row no longer exists.",
+    "The financial report does not exist.": "The financial report does not exist.",
+    "The financial report is closed. Reopen it before making changes.": "The financial report is closed. Reopen it before making changes.",
+    "The row date must be inside the selected month.": "The row date must be inside the selected month.",
+    "Financial override saved.": "Financial override saved.",
+    "Financial override removed.": "Financial override removed.",
+    "Manual financial row created.": "Manual financial row created.",
+    "Manual financial row saved.": "Manual financial row saved.",
+    "Manual financial row deleted.": "Manual financial row deleted.",
+    "Copied :count manual financial rows.": "Copied :count manual financial rows.",
+    "Financial report closed.": "Financial report closed.",
+    "Financial report reopened.": "Financial report reopened."
 }

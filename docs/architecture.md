@@ -47,12 +47,14 @@ page. The page is accessible to both the main admin and limited users;
 limited users are pinned to their assigned store, and visitors without
 an `assigned_store_id` are refused (403).
 
-`/reports` is financial: revenue, channels, fees, actual consumption cost and
-estimated gross margin with inventory-coverage information.
-`/reports/statistics` is inventory-only: current value, receipts, transfers,
-consumption trend, losses/corrections, data coverage and per-item stockout
-forecast. Forecasts use closed physical-count intervals, at most eight and 56
-days, and require at least seven covered days.
+`/reports` is the single admin reporting surface. One active-store and calendar-
+month filter drives revenue, channels, fees, actual consumption cost, estimated
+gross margin, receipts, transfers, losses/corrections, data coverage, and per-
+item stockout forecasts. Closed months reconstruct stock at month end by rolling
+back later ledger effects; their value is an estimate using current purchase
+prices. Forecasts use only closed physical-count intervals available at the
+report cutoff, at most eight and 56 days, and require at least seven covered
+days. `/reports/statistics` remains only as a compatibility redirect.
 
 ```mermaid
 flowchart LR
@@ -220,8 +222,12 @@ přiřazenou prodejnu; report, sazby, tisk a opravy jsou admin-only.
 napárovaných nezneplatněných bloků a pauz. Skóre se neukládá, takže auditovaná
 oprava docházky se ihned projeví. Historické směny používají snapshot plánu;
 více pracovních bloků se spojí a mezery mezi nimi se počítají jako pauzy.
-Přihlášený admin i omezený účet vidí rating na `/shifts`, finanční souhrn však
-zůstává admin-only a veřejný kalendář rating nepublikuje.
+`ShiftOverviewService` spojuje rating s naplánovanými hodinami do jediného
+`monthly_summary`, který používá přihlášená i veřejná stránka. Adminský řádek
+navíc obsahuje `salary`; omezený účet ani veřejný token tento klíč nedostanou.
+Veřejný kalendář publikuje pouze stav, skóre a pásmo směny, nikoli konkrétní
+důvody nebo časové odchylky. Omezený účet může vytvořit stabilní veřejný token
+jen pro svou přiřazenou prodejnu přes `ActiveStoreResolver`.
 
 - Limited users are pinned to one store and only see Dashboard, Výkazy
   (Statements), Inventura, and Settings in `AppLayout.vue`. The store
@@ -260,14 +266,14 @@ odstraňuje denní příkaz `stockflow:prune-noticeboard-cards`.
 Nástěnka je vizuálně plochá část dashboardu bez vnořených panelů; pastelové
 karty používají stejné zaoblení, border a stín jako ostatní systémové karty.
 Admin dashboard ponechává pouze kompaktní provozní metriky a poslední pohyby.
-Detailní tok, skladový rozpad a spotřební analytika patří na
-`/reports/statistics`.
+Detailní finanční tok, skladový rozpad a spotřební analytika patří na
+jednotnou stránku `/reports`.
 
 Navigační položka Nástěnka je první v sekci Prodejna. Sdílený helper
 `sidebar-navigation.ts` definuje jak pořadí položek této sekce, tak klasifikaci
 store-scoped URL. `AppLayout.vue` používá tutéž klasifikaci k centrálnímu
 zobrazení informačního pillu aktivní prodejny na Nástěnce, výkazech,
-inventurách, reportech, statistikách, směnách a docházce. U omezeného uživatele
+inventurách, reportech, směnách a docházce. U omezeného uživatele
 zahrnuje také formuláře příjmu a výdeje; adminské stránky Správy zůstávají bez
 pillu.
 

@@ -41,17 +41,29 @@ use Thinkycz\LaravelCore\Support\Resolver;
         ->and($secondUrl)->toBe($firstUrl);
 });
 
-\test('limited user cannot create a public shift calendar link', function (): void {
+\test('limited user creates and reuses a public link only for the assigned store', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create([
         'user_id' => $admin->getKey(),
         'is_warehouse' => false,
     ]);
+    $otherStore = Store::factory()->create([
+        'user_id' => $admin->getKey(),
+        'is_warehouse' => false,
+    ]);
     $limited = UserFactory::new()->limited($store)->createOne();
 
-    $this->be($limited, 'users')
+    $firstResponse = $this->be($limited, 'users')
+        ->postJson('/shifts/share?store_id=' . $otherStore->getKey())
+        ->assertOk();
+    $firstToken = $store->refresh()->getShiftShareToken();
+    $secondResponse = $this->be($limited, 'users')
         ->postJson('/shifts/share')
-        ->assertRedirect('/dashboard');
+        ->assertOk();
 
-    \expect($store->refresh()->getShiftShareToken())->toBeNull();
+    \expect($firstToken)->not->toBeNull()
+        ->and($firstResponse->json('url'))->toBe(Resolver::resolveUrlGenerator()->to('public/shifts/' . $firstToken))
+        ->and($secondResponse->json('url'))->toBe($firstResponse->json('url'))
+        ->and($store->refresh()->getShiftShareToken())->toBe($firstToken)
+        ->and($otherStore->refresh()->getShiftShareToken())->toBeNull();
 });

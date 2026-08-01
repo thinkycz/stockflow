@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Unified `/reports` page with one monthly filter, shared financial/inventory
+  summary, accessible Finance and Inventory tabs, historical month-end stock,
+  and a compatibility redirect from `/reports/statistics`.
+
 - 90 PHPUnit feature tests / 198 assertions (up from 14 / 45 in baseline).
 - 16 Playwright e2e tests covering register, login, logout, password reset,
   profile update, locale switch, email verification flash, and protected

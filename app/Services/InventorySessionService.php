@@ -426,9 +426,16 @@ class InventorySessionService
      *
      * @return array<int, array{quantity: float|int, per_day: float, coverage_days: float}>
      */
-    public function consumptionForItems(Store $store, array $itemIds, int $days = self::CONSUMPTION_WINDOW_DAYS, int $maximumIntervals = self::MAXIMUM_INTERVALS): array
+    public function consumptionForItems(
+        Store $store,
+        array $itemIds,
+        int $days = self::CONSUMPTION_WINDOW_DAYS,
+        int $maximumIntervals = self::MAXIMUM_INTERVALS,
+        Carbon|null $asOf = null,
+    ): array
     {
-        $since = Carbon::now()->subDays($days)->startOfDay();
+        $asOf ??= Carbon::now();
+        $since = $asOf->copy()->subDays($days)->startOfDay();
         $intervals = DB::table('inventory_session_items')
             ->join('inventory_sessions', 'inventory_sessions.id', '=', 'inventory_session_items.session_id')
             ->where('inventory_sessions.user_id', $store->getUserId())
@@ -437,6 +444,7 @@ class InventorySessionService
             ->whereIn('inventory_session_items.item_id', $itemIds)
             ->whereNotNull('inventory_session_items.observation_started_at')
             ->where('inventory_sessions.counted_at', '>=', $since->toDateTimeString())
+            ->where('inventory_sessions.counted_at', '<=', $asOf->toDateTimeString())
             ->orderByDesc('inventory_sessions.counted_at')
             ->get([
                 'inventory_session_items.item_id',
@@ -488,6 +496,7 @@ class InventorySessionService
                 ->whereNull('stock_movements.reversed_at')
                 ->whereIn('stock_movement_items.item_id', $itemIds)
                 ->where('stock_movements.occurred_at', '>=', $since->toDateTimeString())
+                ->where('stock_movements.occurred_at', '<=', $asOf->toDateTimeString())
                 ->get(['stock_movement_items.item_id', 'stock_movements.occurred_at', 'stock_movement_items.quantity']);
             foreach ($manualRows as $manualRow) {
                 $itemId = Typer::parseInt($manualRow->item_id);
@@ -549,6 +558,30 @@ class InventorySessionService
                 $storeItem->getQuantity(),
                 $consumption[$storeItem->getItemId()],
             );
+        }
+
+        return $result;
+    }
+
+    /**
+     * Forecast supplied item quantities using only data available at a cutoff.
+     *
+     * @param array<int, float|int> $quantities
+     *
+     * @return array<int, array{current: float|int, per_day: float, coverage_days: float, days_left: int|null, projected_stockout_at: string|null, status: string}>
+     */
+    public function predictionsForQuantities(Store $store, array $quantities, Carbon $asOf): array
+    {
+        $consumption = $this->consumptionForItems(
+            $store,
+            \array_keys($quantities),
+            self::CONSUMPTION_WINDOW_DAYS,
+            self::MAXIMUM_INTERVALS,
+            $asOf,
+        );
+        $result = [];
+        foreach ($quantities as $itemId => $quantity) {
+            $result[$itemId] = $this->predictionFromConsumption($quantity, $consumption[$itemId], $asOf);
         }
 
         return $result;
@@ -789,8 +822,9 @@ class InventorySessionService
      *
      * @return array{current: float|int, per_day: float, coverage_days: float, days_left: int|null, projected_stockout_at: string|null, status: string}
      */
-    private function predictionFromConsumption(float|int $current, array $consumption): array
+    private function predictionFromConsumption(float|int $current, array $consumption, Carbon|null $asOf = null): array
     {
+        $asOf ??= Carbon::now();
         $perDay = $consumption['per_day'];
 
         if ($current <= 0) {
@@ -799,7 +833,7 @@ class InventorySessionService
                 'per_day' => $perDay,
                 'coverage_days' => $consumption['coverage_days'],
                 'days_left' => 0,
-                'projected_stockout_at' => Carbon::now()->toDateString(),
+                'projected_stockout_at' => $asOf->toDateString(),
                 'status' => self::STATUS_OUT,
             ];
         }
@@ -823,7 +857,7 @@ class InventorySessionService
             'per_day' => $perDay,
             'coverage_days' => $consumption['coverage_days'],
             'days_left' => $daysLeft,
-            'projected_stockout_at' => Carbon::now()->addDays($daysLeft)->toDateString(),
+            'projected_stockout_at' => $asOf->copy()->addDays($daysLeft)->toDateString(),
             'status' => $status,
         ];
     }

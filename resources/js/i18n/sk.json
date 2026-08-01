@@ -20,6 +20,7 @@
         "statistics": "Štatistika",
         "shifts": "Smeny",
         "attendance": "Dochádzka",
+        "income_expenses": "Príjmy a výdavky",
         "users": "Používatelia",
         "workers": "Brigádnici",
         "settings": "Nastavenia",
@@ -82,6 +83,51 @@
             "title": "Overiť e-mail",
             "description": "Overenie e-mailu je riadené core notifikačným tokom. Odošlite novú overovaciu správu, ak aktuálny používateľ stále potrebuje overiť svoju adresu.",
             "submit": "Odoslať overovací e-mail"
+        }
+    },
+    "income_expenses": {
+        "title": "Príjmy a výdavky",
+        "subtitle": "Mesačný finančný report pre predajňu {store}.",
+        "month": "Mesiac",
+        "status": { "open": "Otvorený", "closed": "Uzavretý" },
+        "total_income": "Príjmy celkom",
+        "total_expenses": "Výdavky celkom",
+        "profit": "Výsledok",
+        "sections": { "income": "Príjmy", "expense": "Výdavky" },
+        "rows_count": "{count} riadkov",
+        "date": "Dátum",
+        "item": "Položka",
+        "source": "Zdroj",
+        "calculated": "Vypočítané",
+        "effective": "Použité",
+        "actions": "Akcie",
+        "amount": "Suma",
+        "direction": "Typ",
+        "note": "Poznámka",
+        "add_row": "Pridať riadok",
+        "edit_row": "Upraviť riadok",
+        "copy_previous": "Kopírovať minulý mesiac",
+        "close": "Uzavrieť mesiac",
+        "reopen": "Znovu otvoriť",
+        "override": "Upraviť sumu",
+        "reset": "Vrátiť výpočet",
+        "overridden": "Ručne upravené",
+        "override_title": "Upraviť sumu – {item}",
+        "override_help": "Pôvodný automatický výpočet je {calculated}. Ručná suma zostane platná, kým ju nezrušíte.",
+        "commission_detail": "Hrubá tržba {gross}, provízia {rate} % ({commission})",
+        "wage_detail": "Naplánovaných {hours} hodín",
+        "open_document": "Otvoriť doklad",
+        "empty": "V tejto časti nie sú žiadne riadky.",
+        "confirm_delete": "Naozaj chcete tento ručný riadok odstrániť?",
+        "confirm_close": "Uzavrieť mesiac a zmraziť aktuálne hodnoty?",
+        "confirm_reopen": "Znovu otvoriť mesiac a obnoviť automatické hodnoty zo zdrojov?",
+        "warehouse_title": "Vyberte predajňu",
+        "warehouse_description": "Finančný report nie je dostupný pre centrálny sklad.",
+        "source_types": {
+            "revenue": "Tržba",
+            "stock_movement": "Skladový doklad",
+            "wage": "Mzda",
+            "manual": "Ručné"
         }
     },
     "settings": {
@@ -531,6 +577,20 @@
     "reports": {
         "title": "Reporty",
         "subtitle": "Finančný prehľad tržieb, provízií a odhadovanej marže zo skutočnej spotreby.",
+        "unified_subtitle": "Financie a skladové hospodárenie za rovnaké mesačné obdobie.",
+        "summary": {
+            "title": "Súhrn obdobia",
+            "revenue": "Celkové tržby",
+            "margin": "Odhadovaná hrubá marža",
+            "consumption": "Náklad spotreby",
+            "inventory": "Hodnota zásob na konci obdobia",
+            "inventory_estimate": "Historická hodnota zásob je odhad vypočítaný z množstva na konci obdobia a aktuálnych nákupných cien."
+        },
+        "tabs": {
+            "label": "Časť reportu",
+            "finance": "Financie",
+            "inventory": "Sklad"
+        },
         "inventory_value": "Aktuálna hodnota zásob",
         "monthly_incoming": "Príjem tento mesiac",
         "monthly_outgoing": "Výdaj tento mesiac",
@@ -948,7 +1008,7 @@
             "overlap_confirm": "Smena sa prekrýva s {conflicts}. Napriek tomu ju pridať?"
         },
         "public_title": "Kalendár smien — {store}",
-        "public_subtitle": "Kalendár smien zamestnancov iba na čítanie.",
+        "public_subtitle": "Verejný kalendár smien so skóre a mesačným prehľadom kvality dochádzky.",
         "summary": {
             "title": "Mesačný prehľad",
             "subtitle": "Naplánované hodiny a odhadovaná mzda za {month}.",
@@ -979,17 +1039,20 @@
                 "absence": "Bez zaznamenanej dochádzky"
             },
             "summary": {
-                "title": "Kvalita dochádzky",
-                "subtitle": "Transparentné hodnotenie dokončených zmien za {month}.",
+                "title": "Mesačný prehľad a kvalita dochádzky",
+                "subtitle": "Naplánované hodiny a transparentné hodnotenie dokončených zmien za {month}.",
                 "worker": "Zamestnanec",
+                "hours": "Naplánované hodiny",
                 "score": "Priemerné skóre",
                 "good": "Dobré zmeny",
                 "late": "Neskoré príchody",
                 "early": "Skoršie odchody",
                 "breaks": "Problémy s prestávkami",
                 "absences": "Absencie",
+                "salary": "Celková mzda",
                 "empty": "V tomto mesiaci nie sú žiadne zmeny na vyhodnotenie.",
-                "no_data": "Bez údajov"
+                "no_data": "Bez údajov",
+                "aggregate_score_note": "Celkové priemerné skóre sa z priemerov zamestnancov nepočíta."
             }
         },
         "columns": {

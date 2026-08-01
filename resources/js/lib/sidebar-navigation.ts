@@ -12,9 +12,9 @@ export type StoreSectionNavigationKey =
     | 'statements'
     | 'inventory_counts'
     | 'reports'
-    | 'statistics'
     | 'shifts'
-    | 'attendance';
+    | 'attendance'
+    | 'income_expenses';
 
 export function storeSectionNavigationKeys(
     isAdmin: boolean,
@@ -26,9 +26,9 @@ export function storeSectionNavigationKeys(
             'statements',
             'inventory_counts',
             'reports',
-            'statistics',
             'shifts',
             'attendance',
+            'income_expenses',
         ];
     }
 
@@ -54,7 +54,8 @@ export function isStoreSectionUrl(url: string, isAdmin: boolean): boolean {
         isRouteOrChild('/inventory-counts') ||
         isRouteOrChild('/reports') ||
         isRouteOrChild('/shifts') ||
-        isRouteOrChild('/attendance')
+        isRouteOrChild('/attendance') ||
+        isRouteOrChild('/income-expenses')
     ) {
         return true;
     }

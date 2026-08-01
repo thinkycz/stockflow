@@ -9,7 +9,7 @@ use App\Models\ShiftPreset;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\AttendanceRatingService;
+use App\Services\ShiftOverviewService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -40,10 +40,7 @@ class ShiftIndexController
         $month = Typer::parseNullableInt($request->query('month')) ?? $now->month;
 
         $shifts = [];
-        $minutesByWorker = [];
-        $salaryByWorker = [];
         $attendanceRatings = [];
-        $attendanceRatingSummary = [];
         /** @var Collection<int, Shift> $shiftModels */
         $shiftModels = new Collection();
 
@@ -56,23 +53,13 @@ class ShiftIndexController
             $query->orderBy('date')->orderBy('start_time');
 
             $shiftModels = $query->take(self::TAKE)->get();
-            $ratingResult = (new AttendanceRatingService())->build($scopeUser, $store, $shiftModels);
-            $attendanceRatings = $ratingResult['ratings'];
-            $attendanceRatingSummary = $ratingResult['summary'];
-
             foreach ($shiftModels as $shift) {
-                $workerId = $shift->getWorkerId();
-                $durationMinutes = $shift->getDurationMinutes();
-                $minutesByWorker[$workerId] = ($minutesByWorker[$workerId] ?? 0) + $durationMinutes;
-                $salaryByWorker[$workerId] = ($salaryByWorker[$workerId] ?? 0)
-                    + (($durationMinutes / 60) * $shift->getHourlyRate());
                 $shifts[] = [
                     'id' => $shift->getKey(),
-                    'worker_id' => $workerId,
+                    'worker_id' => $shift->getWorkerId(),
                     'date' => $shift->getDate(),
                     'start_time' => $shift->getStartTimeShort(),
                     'end_time' => $shift->getEndTimeShort(),
-                    'attendance_rating' => $attendanceRatings[$shift->getKey()],
                 ];
             }
         }
@@ -81,7 +68,15 @@ class ShiftIndexController
         Worker::scopeForUser($workerQuery, $scopeUser);
         Worker::querySelect($workerQuery);
         $workerModels = $workerQuery->orderBy('last_name')->orderBy('first_name')->get();
-        $workerModelsById = $workerModels->keyBy(static fn(Worker $worker): int => $worker->getKey());
+        $overview = $store instanceof Store
+            ? (new ShiftOverviewService())->build($scopeUser, $store, $shiftModels, $workerModels, $user->isAdmin())
+            : ['ratings' => [], 'monthly_summary' => []];
+        $attendanceRatings = $overview['ratings'];
+        foreach ($shifts as &$shift) {
+            $shift['attendance_rating'] = $attendanceRatings[$shift['id']];
+        }
+        unset($shift);
+
         $workers = $workerModels->map(
             static function (Worker $worker): array {
                 return [
@@ -106,28 +101,7 @@ class ShiftIndexController
                 'month' => $month,
             ],
             'is_admin' => $user->isAdmin(),
-            'attendance_summary' => \array_values(\array_filter(\array_map(
-                static function (array $row) use ($workerModelsById): array|null {
-                    $worker = $workerModelsById->get($row['worker_id']);
-                    if (!$worker instanceof Worker) {
-                        return null;
-                    }
-
-                    return [
-                        'worker_id' => $worker->getKey(),
-                        'worker_name' => $worker->getFullName(),
-                        'color' => $worker->getCalendarColor(),
-                        'average_score' => $row['average_score'],
-                        'evaluated_shifts' => $row['evaluated_shifts'],
-                        'good_shifts' => $row['good_shifts'],
-                        'late_arrivals' => $row['late_arrivals'],
-                        'early_departures' => $row['early_departures'],
-                        'break_issues' => $row['break_issues'],
-                        'absences' => $row['absences'],
-                    ];
-                },
-                $attendanceRatingSummary,
-            ))),
+            'monthly_summary' => $overview['monthly_summary'],
         ];
 
         if ($user->isAdmin()) {
@@ -151,21 +125,6 @@ class ShiftIndexController
                     'start_time' => $preset->getStartTimeShort(),
                     'end_time' => $preset->getEndTimeShort(),
                 ])
-                ->all();
-            $props['worker_summary'] = $workerModels
-                ->filter(static fn(Worker $worker): bool => isset($minutesByWorker[$worker->getKey()]))
-                ->values()
-                ->map(static function (Worker $worker) use ($minutesByWorker, $salaryByWorker): array {
-                    $hours = ($minutesByWorker[$worker->getKey()] ?? 0) / 60;
-
-                    return [
-                        'worker_id' => $worker->getKey(),
-                        'worker_name' => $worker->getFullName(),
-                        'color' => $worker->getCalendarColor(),
-                        'hours' => $hours,
-                        'salary' => \round($salaryByWorker[$worker->getKey()] ?? 0, 2),
-                    ];
-                })
                 ->all();
         }
 

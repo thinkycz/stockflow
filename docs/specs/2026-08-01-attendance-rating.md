@@ -2,9 +2,9 @@
 
 ## Cíl
 
-Přihlášeným administrátorům a omezeným účtům prodejny zobrazit u skončených
-směn transparentní skóre docházky 0–100. Veřejný kalendář ani mzdy omezeným
-účtům nezpřístupňovat.
+Přihlášeným administrátorům, omezeným účtům prodejny a návštěvníkům veřejného
+kalendáře zobrazit u skončených směn transparentní skóre docházky 0–100. Mzdy
+zůstávají dostupné pouze administrátorovi.
 
 ## Pravidla
 
@@ -27,7 +27,11 @@ směn transparentní skóre docházky 0–100. Veřejný kalendář ani mzdy ome
 
 - Kalendář ukazuje stav a skóre jednotlivé směny s textovým přístupným popisem.
 - Detail dne vysvětlí odchylky a je pro omezený účet pouze ke čtení.
-- Samostatný měsíční souhrn ukazuje skóre, dobré směny, pozdní příchody,
-  předčasné odchody, problémy s pauzami a absence.
-- Finanční souhrn zůstává pouze administrátorovi.
+- Jeden měsíční souhrn ukazuje plánované hodiny, skóre, dobré směny, pozdní
+  příchody, předčasné odchody, problémy s pauzami a absence.
+- Administrátor vidí ve společném souhrnu navíc pouze celkovou mzdu.
+- Veřejný kalendář ukazuje skóre směn a stejný měsíční souhrn bez mezd a bez
+  detailních důvodů jednotlivé penalizace.
+- Omezený účet může vytvořit nebo zkopírovat veřejný odkaz pouze své přiřazené
+  prodejny.
 - Výpočet je dynamický, tenantově oddělený a bez N+1 dotazů.

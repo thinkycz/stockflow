@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\DB;
 
     $urls = [
         \route('dashboard'),
-        \route('reports.statistics', ['store_id' => $store->getKey()]),
+        \route('reports.index', ['store_id' => $store->getKey()]),
         \route('inventory-counts.index', ['store_id' => $store->getKey()]),
         \route('stores.show', $store),
     ];

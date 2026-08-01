@@ -211,6 +211,7 @@ use Thinkycz\LaravelCore\Support\Config;
         'classification' => StockMovementClassificationEnum::CONSUMPTION->value,
         'total' => 20.0,
     ]);
+    $consumption->update(['reversed_at' => '2026-07-02 10:00:00']);
 
     $transfer = StockMovement::factory()->transfer($warehouse)->byUser($user)->create([
         'user_id' => $user->getKey(),

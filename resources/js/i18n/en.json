@@ -20,6 +20,7 @@
         "statistics": "Statistics",
         "shifts": "Shifts",
         "attendance": "Attendance",
+        "income_expenses": "Income & expenses",
         "users": "Users",
         "workers": "Workers",
         "settings": "Settings",
@@ -82,6 +83,51 @@
             "title": "Verify email",
             "description": "Email verification is powered by the core notification flow. Send a fresh verification message when the current user still needs to verify their address.",
             "submit": "Send verification email"
+        }
+    },
+    "income_expenses": {
+        "title": "Income & expenses",
+        "subtitle": "Monthly financial report for {store}.",
+        "month": "Month",
+        "status": { "open": "Open", "closed": "Closed" },
+        "total_income": "Total income",
+        "total_expenses": "Total expenses",
+        "profit": "Profit",
+        "sections": { "income": "Income", "expense": "Expenses" },
+        "rows_count": "{count} rows",
+        "date": "Date",
+        "item": "Item",
+        "source": "Source",
+        "calculated": "Calculated",
+        "effective": "Used",
+        "actions": "Actions",
+        "amount": "Amount",
+        "direction": "Type",
+        "note": "Note",
+        "add_row": "Add row",
+        "edit_row": "Edit row",
+        "copy_previous": "Copy previous month",
+        "close": "Close month",
+        "reopen": "Reopen",
+        "override": "Edit amount",
+        "reset": "Restore calculation",
+        "overridden": "Manually adjusted",
+        "override_title": "Edit amount – {item}",
+        "override_help": "The original calculation is {calculated}. The manual amount remains active until reset.",
+        "commission_detail": "Gross revenue {gross}, commission {rate}% ({commission})",
+        "wage_detail": "{hours} hours scheduled",
+        "open_document": "Open document",
+        "empty": "There are no rows in this section.",
+        "confirm_delete": "Delete this manual row?",
+        "confirm_close": "Close the month and freeze the current values?",
+        "confirm_reopen": "Reopen the month and refresh automatic values from their sources?",
+        "warehouse_title": "Select a retail store",
+        "warehouse_description": "The financial report is not available for the central warehouse.",
+        "source_types": {
+            "revenue": "Revenue",
+            "stock_movement": "Stock document",
+            "wage": "Wage",
+            "manual": "Manual"
         }
     },
     "settings": {
@@ -531,6 +577,20 @@
     "reports": {
         "title": "Reports",
         "subtitle": "Financial overview of revenue, fees, and estimated margin from actual consumption.",
+        "unified_subtitle": "Finance and inventory performance for the same monthly period.",
+        "summary": {
+            "title": "Period summary",
+            "revenue": "Total revenue",
+            "margin": "Estimated gross margin",
+            "consumption": "Consumption cost",
+            "inventory": "Period-end inventory value",
+            "inventory_estimate": "Historical inventory value is an estimate based on period-end quantities and current purchase prices."
+        },
+        "tabs": {
+            "label": "Report section",
+            "finance": "Finance",
+            "inventory": "Inventory"
+        },
         "inventory_value": "Current inventory value",
         "monthly_incoming": "Incoming this month",
         "monthly_outgoing": "Outgoing this month",
@@ -948,7 +1008,7 @@
             "overlap_confirm": "This overlaps {conflicts}. Add it anyway?"
         },
         "public_title": "Shift calendar — {store}",
-        "public_subtitle": "Read-only employee shift calendar.",
+        "public_subtitle": "Public shift calendar with attendance scores and a monthly quality summary.",
         "summary": {
             "title": "Monthly summary",
             "subtitle": "Assigned hours and estimated salary for {month}.",
@@ -979,17 +1039,20 @@
                 "absence": "No attendance recorded"
             },
             "summary": {
-                "title": "Attendance quality",
-                "subtitle": "Transparent rating of completed shifts for {month}.",
+                "title": "Monthly summary and attendance quality",
+                "subtitle": "Assigned hours and transparent ratings of completed shifts for {month}.",
                 "worker": "Employee",
+                "hours": "Assigned hours",
                 "score": "Average score",
                 "good": "Good shifts",
                 "late": "Late arrivals",
                 "early": "Early departures",
                 "breaks": "Break issues",
                 "absences": "Absences",
+                "salary": "Total salary",
                 "empty": "There are no shifts to evaluate this month.",
-                "no_data": "No data"
+                "no_data": "No data",
+                "aggregate_score_note": "The overall average score is not calculated from employee averages."
             }
         },
         "columns": {

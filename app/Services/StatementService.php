@@ -586,7 +586,6 @@ class StatementService
         $query = DB::table('stock_movement_items')
             ->join('stock_movements', 'stock_movements.id', '=', 'stock_movement_items.stock_movement_id')
             ->where('stock_movements.user_id', $userId)
-            ->whereNull('stock_movements.reversed_at')
             ->where(static function (QueryBuilder $query): void {
                 $query->where('stock_movements.type', StockMovementTypeEnum::CONSUMPTION->value)
                     ->orWhere(static function (QueryBuilder $query): void {
@@ -594,6 +593,15 @@ class StatementService
                             ->where('stock_movement_items.classification', 'consumption');
                     });
             });
+
+        if ($periodEnd instanceof Carbon) {
+            $query->where(static function (QueryBuilder $query) use ($periodEnd): void {
+                $query->whereNull('stock_movements.reversed_at')
+                    ->orWhere('stock_movements.reversed_at', '>', $periodEnd->toDateTimeString());
+            });
+        } else {
+            $query->whereNull('stock_movements.reversed_at');
+        }
 
         if ($storeId !== null) {
             $query->where('stock_movements.store_id', $storeId);

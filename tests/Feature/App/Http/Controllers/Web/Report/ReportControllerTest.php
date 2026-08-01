@@ -11,23 +11,34 @@ use Database\Factories\UserFactory;
     $this->get('/reports')->assertRedirect('/login');
 });
 
-\test('reports expose only the financial statement payload', function (): void {
+\test('reports expose a unified monthly financial and inventory payload', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
 
-    $response = $this->be($user, 'users')->get('/reports', $this->inertiaHeaders());
+    $response = $this->be($user, 'users')->get('/reports?year=2026&month=7', $this->inertiaHeaders());
 
     $response->assertOk();
     $response->assertJsonPath('component', 'reports/Index');
     $response->assertJsonStructure([
         'props' => [
             'active_store',
-            'statement_report' => ['totals', 'channels', 'daily'],
-            'statement_filter',
+            'filter' => ['store_id', 'year', 'month'],
+            'summary' => ['total_revenue', 'gross_margin', 'consumption_cost', 'inventory_value'],
+            'financial_report' => ['totals', 'channels', 'daily'],
+            'inventory_report' => [
+                'as_of',
+                'current_inventory',
+                'consumption',
+                'flows',
+                'risk',
+                'data_quality',
+                'classified_changes',
+                'consumption_series',
+                'items',
+            ],
         ],
     ]);
-    $response->assertJsonMissingPath('props.inventory_value');
-    $response->assertJsonMissingPath('props.most_moved');
-    $response->assertJsonMissingPath('props.adjustments');
+    $response->assertJsonPath('props.filter.year', 2026);
+    $response->assertJsonPath('props.filter.month', 7);
 });
 
 \test('reports scope financial data to the active store', function (): void {
@@ -44,16 +55,17 @@ use Database\Factories\UserFactory;
         $this->inertiaHeaders(),
     );
 
-    \expect((float) $response->json('props.statement_report.totals.total_revenue'))->toBe(100.0);
+    \expect((float) $response->json('props.financial_report.totals.total_revenue'))->toBe(100.0);
     \expect($response->json('props.active_store.id'))->toBe($warehouse->getKey());
 });
 
-\test('reports render a financial payload without an active store', function (): void {
+\test('reports render an empty unified payload without an active store', function (): void {
     $user = UserFactory::new()->admin()->createOne();
 
     $response = $this->be($user, 'users')->get('/reports', $this->inertiaHeaders());
 
     $response->assertOk();
     \expect($response->json('props.active_store'))->toBeNull();
-    \expect((float) $response->json('props.statement_report.totals.total_revenue'))->toBe(0.0);
+    \expect((float) $response->json('props.financial_report.totals.total_revenue'))->toBe(0.0);
+    \expect((float) $response->json('props.inventory_report.current_inventory.value'))->toBe(0.0);
 });

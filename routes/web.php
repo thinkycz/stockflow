@@ -14,6 +14,10 @@ use App\Http\Controllers\Web\Auth\LogoutController;
 use App\Http\Controllers\Web\Auth\ResetPasswordController;
 use App\Http\Controllers\Web\Auth\VerifyEmailController;
 use App\Http\Controllers\Web\Dashboard\DashboardController;
+use App\Http\Controllers\Web\IncomeExpense\IncomeExpenseIndexController;
+use App\Http\Controllers\Web\IncomeExpense\IncomeExpenseLifecycleController;
+use App\Http\Controllers\Web\IncomeExpense\IncomeExpenseManualRowController;
+use App\Http\Controllers\Web\IncomeExpense\IncomeExpenseOverrideController;
 use App\Http\Controllers\Web\InventoryCount\InventoryCountHistoryController;
 use App\Http\Controllers\Web\InventoryCount\InventoryCountIndexController;
 use App\Http\Controllers\Web\InventoryCount\InventoryCountShowController;
@@ -131,6 +135,7 @@ Resolver::resolveRouteRegistrar()
 
         // Shifts (admin + limited view)
         $router->get('shifts', ShiftIndexController::class)->name('shifts.index');
+        $router->post('shifts/share', ShiftShareController::class)->name('shifts.share');
 
         // Attendance (admin + limited assigned-store users)
         $router->get('attendance', AttendanceIndexController::class)->name('attendance.index');
@@ -151,6 +156,17 @@ Resolver::resolveRouteRegistrar()
 
         // Noticeboard moderation
         $router->post('noticeboard-cards/{noticeboardCard}/restore', [NoticeboardCardController::class, 'restore'])->whereNumber('noticeboardCard')->name('noticeboard-cards.restore');
+
+        // Monthly store income and expenses
+        $router->get('income-expenses', IncomeExpenseIndexController::class)->name('income-expenses.index');
+        $router->post('income-expenses/overrides', [IncomeExpenseOverrideController::class, 'store'])->name('income-expenses.overrides.store');
+        $router->delete('income-expenses/overrides', [IncomeExpenseOverrideController::class, 'destroy'])->name('income-expenses.overrides.destroy');
+        $router->post('income-expenses/manual-rows', [IncomeExpenseManualRowController::class, 'store'])->name('income-expenses.manual-rows.store');
+        $router->put('income-expenses/manual-rows/{manualRow}', [IncomeExpenseManualRowController::class, 'update'])->whereNumber('manualRow')->name('income-expenses.manual-rows.update');
+        $router->delete('income-expenses/manual-rows/{manualRow}', [IncomeExpenseManualRowController::class, 'destroy'])->whereNumber('manualRow')->name('income-expenses.manual-rows.destroy');
+        $router->post('income-expenses/copy-previous', [IncomeExpenseLifecycleController::class, 'copyPrevious'])->name('income-expenses.copy-previous');
+        $router->post('income-expenses/close', [IncomeExpenseLifecycleController::class, 'close'])->name('income-expenses.close');
+        $router->post('income-expenses/reopen', [IncomeExpenseLifecycleController::class, 'reopen'])->name('income-expenses.reopen');
         $router->delete('noticeboard-cards/{noticeboardCard}/force', [NoticeboardCardController::class, 'forceDestroy'])->whereNumber('noticeboardCard')->name('noticeboard-cards.force-destroy');
 
         // Items
@@ -200,7 +216,6 @@ Resolver::resolveRouteRegistrar()
         // Shifts (admin write)
         $router->post('shifts', ShiftStoreController::class)->name('shifts.store');
         $router->post('shifts/quick-add', ShiftQuickAddController::class)->name('shifts.quick-add');
-        $router->post('shifts/share', ShiftShareController::class)->name('shifts.share');
         $router->put('shifts/{shift}', ShiftUpdateController::class)->whereNumber('shift')->name('shifts.update');
         $router->delete('shifts/{shift}', ShiftDestroyController::class)->whereNumber('shift')->name('shifts.destroy');
 

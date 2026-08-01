@@ -6,12 +6,14 @@ namespace App\Http\Controllers\Web\Report;
 
 use App\Models\Store;
 use App\Models\User;
+use App\Services\InventoryReportService;
 use App\Services\StatementService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class ReportController
@@ -23,58 +25,42 @@ class ReportController
      * store. Without an active store the page returns an empty payload
      * and the frontend renders an explanatory empty state.
      */
-    public function __invoke(Request $request, StatementService $statementService): Response
+    public function __invoke(Request $request): Response
     {
         $user = User::mustAuth();
         $now = Carbon::now();
-        $allTime = $request->query('all_time') === '1' || $request->query('period') === 'all';
-        $year = $allTime ? null : (Typer::parseNullableInt($request->query('year')) ?? $now->year);
-        $month = $allTime ? null : (Typer::parseNullableInt($request->query('month')) ?? $now->month);
-
+        $year = Typer::parseNullableInt($request->query('year')) ?? $now->year;
+        $month = Typer::parseNullableInt($request->query('month')) ?? $now->month;
+        $start = $now->copy()->setDate($year, $month, 1)->startOfMonth();
+        $end = $start->copy()->endOfMonth();
+        $cutoff = $end->isFuture() ? $now : $end;
         $activeStore = ActiveStoreResolver::resolve($request, $user);
-
-        if (!$activeStore instanceof Store) {
-            return Inertia::render('reports/Index', $this->emptyPayload($user, $statementService, $allTime, $year, $month));
-        }
-
-        $storeId = $activeStore->getKey();
-        $statementReport = $statementService->buildReport($user, $storeId, $year, $month);
+        $statementService = Resolver::resolve(StatementService::class);
+        $inventoryService = Resolver::resolve(InventoryReportService::class);
+        $financialReport = $statementService->buildReport($user, $activeStore?->getKey(), $year, $month);
+        $inventoryReport = $activeStore instanceof Store
+            ? $inventoryService->build($user, $activeStore, $start, $cutoff)
+            : $inventoryService->empty($cutoff);
+        $inventoryCurrent = Typer::assertArray($inventoryReport['current_inventory']);
 
         return Inertia::render('reports/Index', [
-            'active_store' => [
+            'active_store' => $activeStore instanceof Store ? [
                 'id' => $activeStore->getKey(),
                 'name' => $activeStore->getName(),
-            ],
-            'statement_report' => $statementReport,
-            'statement_filter' => [
-                'all_time' => $allTime,
-                'store_id' => $storeId,
+            ] : null,
+            'filter' => [
+                'store_id' => $activeStore?->getKey(),
                 'year' => $year,
                 'month' => $month,
             ],
+            'summary' => [
+                'total_revenue' => $financialReport['totals']['total_revenue'],
+                'gross_margin' => $financialReport['totals']['gross_margin'],
+                'consumption_cost' => $financialReport['totals']['investment'],
+                'inventory_value' => Typer::parseFloat($inventoryCurrent['value']),
+            ],
+            'financial_report' => $financialReport,
+            'inventory_report' => $inventoryReport,
         ]);
-    }
-
-    /**
-     * Build the payload that the frontend renders when no store is
-     * active. Numeric metrics are zeroed out and lists are empty so
-     * the page is safe to render without errors.
-     *
-     * @return array<string, mixed>
-     */
-    private function emptyPayload(User $user, StatementService $statementService, bool $allTime, int|null $year, int|null $month): array
-    {
-        $statementReport = $statementService->buildReport($user, null, $year, $month);
-
-        return [
-            'active_store' => null,
-            'statement_report' => $statementReport,
-            'statement_filter' => [
-                'all_time' => $allTime,
-                'store_id' => null,
-                'year' => $year,
-                'month' => $month,
-            ],
-        ];
     }
 }

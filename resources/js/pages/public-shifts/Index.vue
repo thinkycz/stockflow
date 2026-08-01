@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { CalendarDays, ChevronLeft, ChevronRight } from '@lucide/vue';
+import { CalendarDays, ChevronLeft, ChevronRight, Gauge } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import ShiftMonthCalendar from '@/components/ShiftMonthCalendar.vue';
+import ShiftMonthlySummaryTable from '@/components/ShiftMonthlySummaryTable.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { sortShiftsByTime } from '@/lib/shift-calendar';
+import type { MonthlyShiftSummary } from '@/types/shifts';
 
 type Shift = {
     id: number;
@@ -17,6 +19,11 @@ type Shift = {
     date: string;
     start_time: string;
     end_time: string;
+    attendance_rating: {
+        state: 'future' | 'pending' | 'scored';
+        score: number | null;
+        band: 'good' | 'warning' | 'poor' | null;
+    };
 };
 
 type CalendarDay = {
@@ -29,6 +36,7 @@ type CalendarDay = {
 const props = defineProps<{
     store: { name: string };
     shifts: Shift[];
+    monthly_summary: MonthlyShiftSummary[];
     filters: {
         year: number;
         month: number;
@@ -212,6 +220,32 @@ function navigateMonth(delta: number): void {
                     :days="calendarDays"
                     :weekday-labels="weekdayLabels"
                 />
+            </Card>
+
+            <Card padded>
+                <div class="mb-4 flex items-start gap-3">
+                    <span
+                        class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-fixed text-primary"
+                    >
+                        <Gauge :size="20" />
+                    </span>
+                    <div>
+                        <h2
+                            class="font-heading text-lg font-bold text-on-surface"
+                        >
+                            {{ t('shifts.rating.summary.title') }}
+                        </h2>
+                        <p class="mt-1 text-sm text-on-surface-variant">
+                            {{
+                                t('shifts.rating.summary.subtitle', {
+                                    month: currentMonthLabel,
+                                })
+                            }}
+                        </p>
+                    </div>
+                </div>
+
+                <ShiftMonthlySummaryTable :rows="monthly_summary" />
             </Card>
         </div>
     </main>

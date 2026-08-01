@@ -15,6 +15,11 @@ test('admin manages and closes a monthly financial report while limited users ar
     await expect(
         page.getByRole('heading', { name: 'Income & expenses' }),
     ).toBeVisible();
+    const cashRow = page.getByTestId('financial-row-revenue-cash');
+    await expect(cashRow.getByRole('link', { name: 'Cash' })).toHaveAttribute(
+        'href',
+        /\/statements\?.*year=2030.*month=1/,
+    );
 
     await page.getByRole('button', { name: 'Add row' }).click();
     await page.getByLabel('Type').selectOption('income');
@@ -25,7 +30,6 @@ test('admin manages and closes a monthly financial report while limited users ar
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByText('E2E extra income')).toBeVisible();
 
-    const cashRow = page.getByTestId('financial-row-revenue-cash');
     await cashRow.getByRole('button', { name: 'Edit amount' }).click();
     await page.getByLabel('Used').fill('50');
     await page.getByRole('button', { name: 'Save' }).click();

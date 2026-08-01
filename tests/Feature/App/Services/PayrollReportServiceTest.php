@@ -172,3 +172,53 @@ use Illuminate\Validation\ValidationException;
             'Invalid',
         ))->toThrow(ValidationException::class);
 });
+
+\test('monthly wage override replaces planned hours and rate and can be reset', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    Shift::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $worker->getKey(),
+        'date' => '2026-07-10',
+        'start_time' => '08:00',
+        'end_time' => '10:00',
+        'hourly_rate' => 100,
+    ]);
+    $service = new PayrollReportService();
+
+    $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 3.5, 120);
+    $payslip = $service->build($admin, $store, 2026, 7)['payslips'][0];
+
+    \expect($payslip['wage_overridden'])->toBeTrue()
+        ->and($payslip['payable_hours'])->toBe(3.5)
+        ->and($payslip['payable_hourly_rate'])->toBe(120.0)
+        ->and($payslip['base_amount'])->toBe(420.0)
+        ->and($payslip['final_amount'])->toBe(420.0);
+
+    $service->deleteWageOverride($admin, $store, 2026, 7, $worker->getKey());
+    $resetPayslip = $service->build($admin, $store, 2026, 7)['payslips'][0];
+
+    \expect($resetPayslip['wage_overridden'])->toBeFalse()
+        ->and($resetPayslip['base_amount'])->toBe(200.0);
+
+    $service->createAdjustment(
+        $admin,
+        $store,
+        2026,
+        7,
+        $worker,
+        PayrollAdjustmentTypeEnum::DEDUCTION,
+        150,
+        'Advance',
+    );
+    \expect(fn() => $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 1, 100))
+        ->toThrow(ValidationException::class);
+
+    $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 3.5, 120);
+    $service->close($admin, $store, 2026, 7);
+    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['base_amount'])->toEqual(420.0)
+        ->and(fn() => $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 4, 120))
+        ->toThrow(ValidationException::class);
+});

@@ -9,6 +9,7 @@ use App\Enums\PayrollReportStatusEnum;
 use App\Models\FinancialReport;
 use App\Models\PayrollAdjustment;
 use App\Models\PayrollReport;
+use App\Models\PayrollWageOverride;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\User;
@@ -41,6 +42,7 @@ class PayrollReportService
         Shift::querySelect($shiftQuery);
         $shifts = $shiftQuery->orderBy('date')->orderBy('start_time')->get();
         $adjustments = $report instanceof PayrollReport ? $report->getAdjustments() : new Collection();
+        $wageOverrides = $report instanceof PayrollReport ? $report->getWageOverrides() : new Collection();
         $attendanceRows = (new AttendanceReportService())->build(
             $admin,
             $store,
@@ -50,6 +52,7 @@ class PayrollReportService
         $workerIds = \array_values(\array_unique([
             ...$shifts->map(static fn(Shift $shift): int => $shift->getWorkerId())->all(),
             ...$adjustments->map(static fn(PayrollAdjustment $adjustment): int => $adjustment->getWorkerId())->all(),
+            ...$wageOverrides->map(static fn(PayrollWageOverride $override): int => $override->getWorkerId())->all(),
             ...\array_map(static fn(array $row): int => $row['worker_id'], $attendanceRows),
         ]));
 
@@ -62,6 +65,9 @@ class PayrollReportService
         foreach ($workers->sortBy(static fn(Worker $worker): string => $worker->getLastName() . $worker->getFirstName()) as $worker) {
             $workerShifts = $shifts->where('worker_id', $worker->getKey());
             $workerAdjustments = $adjustments->where('worker_id', $worker->getKey());
+            $wageOverride = $wageOverrides->first(
+                static fn(PayrollWageOverride $override): bool => $override->getWorkerId() === $worker->getKey(),
+            );
             $workerAttendance = \array_values(\array_filter(
                 $attendanceRows,
                 static fn(array $row): bool => $row['worker_id'] === $worker->getKey(),
@@ -99,6 +105,15 @@ class PayrollReportService
                     'difference_seconds' => $incomplete ? null : $actualSeconds - ($minutes * 60),
                     'attendance_incomplete' => $incomplete,
                 ];
+            }
+
+            $automaticBaseAmount = $baseAmount;
+            $automaticHours = \round($plannedMinutes / 60, 2);
+            $automaticHourlyRate = $automaticHours > 0
+                ? \round($automaticBaseAmount / $automaticHours, 2)
+                : 0.0;
+            if ($wageOverride instanceof PayrollWageOverride) {
+                $baseAmount = \round($wageOverride->getHours() * $wageOverride->getHourlyRate(), 2);
             }
 
             $tipAmount = 0.0;
@@ -140,6 +155,10 @@ class PayrollReportService
                 'worker_name' => $worker->getFullName(),
                 'planned_minutes' => $plannedMinutes,
                 'actual_seconds' => $actualSeconds,
+                'automatic_base_amount' => $automaticBaseAmount,
+                'payable_hours' => $wageOverride instanceof PayrollWageOverride ? $wageOverride->getHours() : $automaticHours,
+                'payable_hourly_rate' => $wageOverride instanceof PayrollWageOverride ? $wageOverride->getHourlyRate() : $automaticHourlyRate,
+                'wage_overridden' => $wageOverride instanceof PayrollWageOverride,
                 'base_amount' => $baseAmount,
                 'tip_amount' => $tipAmount,
                 'deduction_amount' => $deductionAmount,
@@ -157,6 +176,53 @@ class PayrollReportService
             'month' => $month,
             'payslips' => $payslips,
         ], $this->reportMeta($report));
+    }
+
+    /**
+     * Create or replace a worker's monthly wage override.
+     */
+    public function upsertWageOverride(
+        User $admin,
+        Store $store,
+        int $year,
+        int $month,
+        Worker $worker,
+        float $hours,
+        float $hourlyRate,
+    ): void {
+        DB::transaction(function () use ($admin, $store, $year, $month, $worker, $hours, $hourlyRate): void {
+            $report = $this->openReport($admin, $store, $year, $month);
+            $this->assertWorker($admin, $worker);
+            $payslip = $this->payslipForWorker($this->build($admin, $store, $year, $month), $worker->getKey());
+            $baseAmount = \round($hours * $hourlyRate, 2);
+            if ($hours < 0 || $hourlyRate < 0 || $baseAmount
+                + Typer::parseFloat($payslip['tip_amount'] ?? 0)
+                - Typer::parseFloat($payslip['deduction_amount'] ?? 0) < 0) {
+                $this->fail('hours', Typer::assertString(\__('The wage override cannot make the final payroll amount negative.')));
+            }
+            $report->wageOverrides()->updateOrCreate(
+                ['worker_id' => $worker->getKey()],
+                ['hours' => \round($hours, 2), 'hourly_rate' => \round($hourlyRate, 2)],
+            );
+        });
+    }
+
+    /**
+     * Restore a worker's automatic monthly wage calculation.
+     */
+    public function deleteWageOverride(User $admin, Store $store, int $year, int $month, int $workerId): void
+    {
+        DB::transaction(function () use ($admin, $store, $year, $month, $workerId): void {
+            $report = $this->openReport($admin, $store, $year, $month);
+            $override = $report->wageOverrides()->where('worker_id', $workerId)->firstOrFail();
+            $payslip = $this->payslipForWorker($this->build($admin, $store, $year, $month), $workerId);
+            if (Typer::parseFloat($payslip['automatic_base_amount'] ?? 0)
+                + Typer::parseFloat($payslip['tip_amount'] ?? 0)
+                - Typer::parseFloat($payslip['deduction_amount'] ?? 0) < 0) {
+                $this->fail('hours', Typer::assertString(\__('Restoring automatic wages cannot make the final payroll amount negative.')));
+            }
+            $override->delete();
+        });
     }
 
     /**

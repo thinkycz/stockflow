@@ -9,5 +9,7 @@
 | R5     | written spec | Hromadný i jednotlivý tisk                       | 2     | print route/page        | verified | verification record | page break na brigádníka             |
 | R6     | written spec | Finance čerpají pásky a dodržují pořadí uzavření | 3     | FinancialReportService  | verified | verification record | finanční override zůstává            |
 | R7     | written spec | CZ/EN/SK UI a plná verifikace                    | 2–4   | i18n, checks, E2E       | verified | verification record | žádný designový zdroj                |
+| R8     | follow-up    | Ruční měsíční hodiny a sazba s resetem           | ext.  | servis, CRUD, UI        | verified | verification record | přepisuje automatický základ         |
+| R9     | follow-up    | Zjednodušený tisk čtyř výsledných hodnot         | ext.  | print route/page        | verified | verification record | bez tabulky směn a docházky          |
 
 Verifikační záznam: `docs/verification/2026-08-01-payroll.md`.

@@ -59,6 +59,16 @@
 
 - Viz `docs/verification/2026-08-01-payroll.md`.
 
+## Rozšíření: ruční mzdový základ a jednoduchý tisk
+
+- Status: completed
+- Tasks:
+    - [x] Měsíční override hodin a hodinové sazby s možností resetu
+    - [x] Zamknutí override při uzavření a zahrnutí do snapshotu
+    - [x] Detailní a zjednodušená varianta individuálního i hromadného tisku
+    - [x] Regresní testy a aktualizovaný verifikační záznam
+- Blockers: žádné
+
 ## Next
 
-- Nasadit migraci v cílovém prostředí.
+- Nasadit novou databázovou migraci v cílovém prostředí.

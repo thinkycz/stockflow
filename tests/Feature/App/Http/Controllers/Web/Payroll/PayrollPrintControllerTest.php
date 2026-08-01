@@ -33,4 +33,8 @@ use App\Models\Worker;
         ->assertOk()
         ->assertJsonCount(1, 'props.payroll_report.payslips')
         ->assertJsonPath('props.payroll_report.payslips.0.worker_id', $first->getKey());
+
+    $this->be($admin, 'users')->get($base . '&simple=1', $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.simple', true);
 });

@@ -10,6 +10,7 @@ import DataTable from '@/components/ui/DataTable.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
+import MonthPicker from '@/components/ui/MonthPicker.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useRoute } from '@/composables/useRoute';
@@ -184,10 +185,10 @@ function removeBreak(index: number): void {
                             <Label for="report-month">{{
                                 t('attendance.report.month')
                             }}</Label>
-                            <Input
+                            <MonthPicker
                                 id="report-month"
                                 v-model="reportMonth"
-                                type="month"
+                                class="w-full"
                             />
                         </div>
                         <div class="flex flex-col gap-1 xl:w-64">

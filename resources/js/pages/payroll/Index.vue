@@ -18,6 +18,7 @@ import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
+import MonthPicker from '@/components/ui/MonthPicker.vue';
 import Select from '@/components/ui/Select.vue';
 import { useRoute } from '@/composables/useRoute';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -37,6 +38,7 @@ const props = defineProps<{
 const { t, locale } = useI18n();
 const route = useRoute();
 const adjustmentModalOpen = ref(false);
+const wageModalOpen = ref(false);
 const editingAdjustment = ref<PayrollAdjustment | null>(null);
 const selectedPayslip = ref<Payslip | null>(null);
 const lifecycleProcessing = ref(false);
@@ -47,6 +49,13 @@ const adjustmentForm = useForm({
     type: 'tip' as 'tip' | 'deduction',
     amount: '',
     reason: '',
+});
+const wageForm = useForm({
+    year: props.filters.year,
+    month: props.filters.month,
+    worker_id: 0,
+    hours: '',
+    hourly_rate: '',
 });
 
 function monthValue(): string {
@@ -83,8 +92,7 @@ function time(value: string | null): string {
     }).format(new Date(value));
 }
 
-function changeMonth(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
+function changeMonth(value: string): void {
     const [year, month] = value.split('-').map(Number);
     if (year && month) {
         router.get(
@@ -134,6 +142,36 @@ function deleteAdjustment(adjustment: PayrollAdjustment): void {
     });
 }
 
+function openWageOverride(payslip: Payslip): void {
+    selectedPayslip.value = payslip;
+    wageForm.clearErrors();
+    wageForm.year = props.filters.year;
+    wageForm.month = props.filters.month;
+    wageForm.worker_id = payslip.worker_id;
+    wageForm.hours = String(payslip.payable_hours);
+    wageForm.hourly_rate = String(payslip.payable_hourly_rate);
+    wageModalOpen.value = true;
+}
+
+function submitWageOverride(): void {
+    wageForm.put(route('payroll.wage-override.update'), {
+        onSuccess: () => (wageModalOpen.value = false),
+    });
+}
+
+function resetWageOverride(): void {
+    if (!selectedPayslip.value) return;
+    if (!window.confirm(t('payroll.confirm_reset_wage'))) return;
+    router.delete(route('payroll.wage-override.destroy'), {
+        data: {
+            year: props.filters.year,
+            month: props.filters.month,
+            worker_id: selectedPayslip.value.worker_id,
+        },
+        onSuccess: () => (wageModalOpen.value = false),
+    });
+}
+
 function lifecycle(action: 'close' | 'reopen'): void {
     if (!window.confirm(t('payroll.confirm_' + action))) return;
     lifecycleProcessing.value = true;
@@ -180,10 +218,8 @@ function lifecycle(action: 'close' | 'reopen'): void {
                     </p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <Input
-                        type="month"
+                    <MonthPicker
                         :model-value="monthValue()"
-                        class="w-44"
                         :aria-label="t('payroll.month')"
                         @change="changeMonth"
                     />
@@ -198,7 +234,26 @@ function lifecycle(action: 'close' | 'reopen'): void {
                         target="_blank"
                     >
                         <Button variant="secondary">
-                            <Printer :size="15" />{{ t('payroll.print_all') }}
+                            <Printer :size="15" />{{
+                                t('payroll.print_detailed_all')
+                            }}
+                        </Button>
+                    </Link>
+                    <Link
+                        v-if="payroll_report"
+                        :href="
+                            route('payroll.print', {
+                                year: filters.year,
+                                month: filters.month,
+                                simple: 1,
+                            })
+                        "
+                        target="_blank"
+                    >
+                        <Button variant="secondary">
+                            <Printer :size="15" />{{
+                                t('payroll.print_simple_all')
+                            }}
                         </Button>
                     </Link>
                     <Button
@@ -442,7 +497,18 @@ function lifecycle(action: 'close' | 'reopen'): void {
                             {{ duration(payslip.actual_seconds) }}
                         </td>
                         <td class="px-5 py-4 text-right">
-                            {{ formatMoney(payslip.base_amount) }}
+                            <div>{{ formatMoney(payslip.base_amount) }}</div>
+                            <div class="mt-1 text-xs text-on-surface-variant">
+                                {{ payslip.payable_hours }} h ×
+                                {{ formatMoney(payslip.payable_hourly_rate) }}
+                            </div>
+                            <Badge
+                                v-if="payslip.wage_overridden"
+                                variant="warning"
+                                class="mt-1"
+                            >
+                                {{ t('payroll.wage_overridden') }}
+                            </Badge>
                         </td>
                         <td class="px-5 py-4 text-right text-xs">
                             <div class="text-emerald-700">
@@ -457,6 +523,15 @@ function lifecycle(action: 'close' | 'reopen'): void {
                         </td>
                         <td class="px-5 py-4">
                             <div class="flex justify-end gap-1">
+                                <Button
+                                    v-if="payroll_report.status === 'open'"
+                                    variant="ghost"
+                                    class="h-8 px-2"
+                                    :title="t('payroll.edit_wage')"
+                                    @click="openWageOverride(payslip)"
+                                >
+                                    <Pencil :size="14" />
+                                </Button>
                                 <Button
                                     v-if="payroll_report.status === 'open'"
                                     variant="ghost"
@@ -479,6 +554,23 @@ function lifecycle(action: 'close' | 'reopen'): void {
                                 >
                                     <Button variant="ghost" class="h-8 px-2">
                                         <Printer :size="14" />
+                                    </Button>
+                                </Link>
+                                <Link
+                                    :href="
+                                        route('payroll.print', {
+                                            year: filters.year,
+                                            month: filters.month,
+                                            worker_id: payslip.worker_id,
+                                            simple: 1,
+                                        })
+                                    "
+                                    target="_blank"
+                                    :title="t('payroll.print_simple')"
+                                >
+                                    <Button variant="ghost" class="h-8 px-2">
+                                        <Printer :size="14" />
+                                        {{ t('payroll.simple') }}
                                     </Button>
                                 </Link>
                             </div>
@@ -566,6 +658,78 @@ function lifecycle(action: 'close' | 'reopen'): void {
                     <Button type="submit" :disabled="adjustmentForm.processing">
                         {{ t('common.save') }}
                     </Button>
+                </div>
+            </form>
+        </Modal>
+
+        <Modal
+            :open="wageModalOpen"
+            :title="t('payroll.edit_wage')"
+            @close="wageModalOpen = false"
+        >
+            <form class="space-y-4" @submit.prevent="submitWageOverride">
+                <p class="text-sm font-semibold">
+                    {{ selectedPayslip?.worker_name }}
+                </p>
+                <div class="space-y-2">
+                    <Label for="wage-hours" required>{{
+                        t('payroll.payable_hours')
+                    }}</Label>
+                    <Input
+                        id="wage-hours"
+                        v-model="wageForm.hours"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        required
+                    />
+                    <FieldError :message="wageForm.errors.hours" />
+                </div>
+                <div class="space-y-2">
+                    <Label for="wage-hourly-rate" required>{{
+                        t('payroll.hourly_rate')
+                    }}</Label>
+                    <Input
+                        id="wage-hourly-rate"
+                        v-model="wageForm.hourly_rate"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        required
+                    />
+                    <FieldError :message="wageForm.errors.hourly_rate" />
+                </div>
+                <p class="rounded-lg bg-surface-container-low p-3 text-sm">
+                    {{ t('payroll.base_amount') }}:
+                    <strong>
+                        {{
+                            formatMoney(
+                                Number(wageForm.hours || 0) *
+                                    Number(wageForm.hourly_rate || 0),
+                            )
+                        }}
+                    </strong>
+                </p>
+                <div class="flex justify-between gap-2 pt-2">
+                    <Button
+                        v-if="selectedPayslip?.wage_overridden"
+                        variant="secondary"
+                        @click="resetWageOverride"
+                    >
+                        {{ t('payroll.reset_wage') }}
+                    </Button>
+                    <span v-else />
+                    <div class="flex gap-2">
+                        <Button
+                            variant="secondary"
+                            @click="wageModalOpen = false"
+                        >
+                            {{ t('common.cancel') }}
+                        </Button>
+                        <Button type="submit" :disabled="wageForm.processing">
+                            {{ t('common.save') }}
+                        </Button>
+                    </div>
                 </div>
             </form>
         </Modal>

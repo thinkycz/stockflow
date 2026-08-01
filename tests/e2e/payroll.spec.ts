@@ -17,6 +17,12 @@ test('admin adjusts closes and prints payroll while limited users are denied', a
         .locator('[data-testid^="payroll-row-"]')
         .filter({ hasText: 'E2E Worker' });
     await expect(row).toBeVisible();
+    await row.getByTitle('Edit hours and rate').click();
+    await page.getByLabel('Payable hours').fill('10.5');
+    await page.getByLabel('Hourly rate').fill('150');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(row).toContainText('Manually adjusted');
+
     await row.getByRole('button', { name: 'Add adjustment' }).click();
     await page.getByLabel('Adjustment type').selectOption('tip');
     await page.getByLabel('Amount').fill('25');
@@ -25,9 +31,14 @@ test('admin adjusts closes and prints payroll while limited users are denied', a
     await expect(row).toContainText('E2E shared tips');
 
     const popupPromise = page.waitForEvent('popup');
-    await row.getByRole('link').click();
+    await row.getByRole('link', { name: 'Simple' }).click();
     const printPage = await popupPromise;
     await expect(printPage.getByText('Payslip', { exact: true })).toBeVisible();
+    await expect(printPage.getByText('Base pay')).toBeVisible();
+    await expect(printPage.getByText('Tips')).toBeVisible();
+    await expect(printPage.getByText('Deduction')).toBeVisible();
+    await expect(printPage.getByText('Final pay')).toBeVisible();
+    await expect(printPage.locator('table')).toHaveCount(0);
     await printPage.close();
 
     page.once('dialog', (dialog) => dialog.accept());

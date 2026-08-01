@@ -78,4 +78,20 @@ class PayrollReportValidity
     {
         return $this->baseValidity->make()->varchar(255);
     }
+
+    /**
+     * Payable hours rules.
+     */
+    public function hours(): Validity
+    {
+        return $this->baseValidity->make()->numeric(999999.99, 0)->addRule('decimal', [0, 2]);
+    }
+
+    /**
+     * Hourly rate rules.
+     */
+    public function hourlyRate(): Validity
+    {
+        return $this->baseValidity->make()->numeric(999999999999.99, 0)->addRule('decimal', [0, 2]);
+    }
 }

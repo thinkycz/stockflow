@@ -9,6 +9,7 @@ import type { PayrollReport } from '@/types/payroll';
 defineProps<{
     active_store: { id: number; name: string };
     payroll_report: PayrollReport;
+    simple: boolean;
 }>();
 
 const { t, locale } = useI18n();
@@ -57,7 +58,7 @@ onMounted(async () => {
                 </p>
             </header>
 
-            <DataTable density="compact">
+            <DataTable v-if="!simple" density="compact">
                 <thead>
                     <tr>
                         <th>{{ t('payroll.date') }}</th>
@@ -86,7 +87,7 @@ onMounted(async () => {
                 </tbody>
             </DataTable>
 
-            <section v-if="payslip.adjustments.length" class="mt-6">
+            <section v-if="!simple && payslip.adjustments.length" class="mt-6">
                 <h2 class="mb-2 text-lg font-bold">
                     {{ t('payroll.adjustments') }}
                 </h2>
@@ -120,13 +121,13 @@ onMounted(async () => {
             </section>
 
             <section class="mt-6 ml-auto w-full max-w-sm space-y-2 text-sm">
-                <div class="flex justify-between">
+                <div v-if="!simple" class="flex justify-between">
                     <span>{{ t('payroll.planned') }}</span>
                     <strong>{{
                         duration(payslip.planned_minutes * 60)
                     }}</strong>
                 </div>
-                <div class="flex justify-between">
+                <div v-if="!simple" class="flex justify-between">
                     <span>{{ t('payroll.actual') }}</span>
                     <strong>{{ duration(payslip.actual_seconds) }}</strong>
                 </div>
@@ -154,7 +155,9 @@ onMounted(async () => {
 
             <p
                 v-if="
-                    payslip.incomplete_count > 0 || payslip.unmatched_count > 0
+                    !simple &&
+                    (payslip.incomplete_count > 0 ||
+                        payslip.unmatched_count > 0)
                 "
                 class="mt-6 text-xs"
             >

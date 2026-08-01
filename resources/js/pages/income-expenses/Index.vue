@@ -23,6 +23,7 @@ import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
+import MonthPicker from '@/components/ui/MonthPicker.vue';
 import Select from '@/components/ui/Select.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
@@ -105,8 +106,7 @@ function date(value: string | null): string {
           );
 }
 
-function changeMonth(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
+function changeMonth(value: string): void {
     const [year, month] = value.split('-').map(Number);
     if (year && month) {
         router.get(
@@ -223,6 +223,28 @@ function rowSecondary(row: FinancialRow): string | null {
     }
     return row.note;
 }
+
+function rowHref(row: FinancialRow): string | null {
+    if (row.source_type === 'revenue') {
+        return route('statements.index', {
+            store_id: props.active_store?.id ?? null,
+            year: props.filters.year,
+            month: props.filters.month,
+        });
+    }
+    if (row.source_type === 'stock_movement' && row.details.movement_id) {
+        return route('stock-movements.show', Number(row.details.movement_id));
+    }
+    if (row.source_type === 'wage' && row.details.worker_id) {
+        return route('payroll.print', {
+            store_id: props.active_store?.id ?? null,
+            year: props.filters.year,
+            month: props.filters.month,
+            worker_id: Number(row.details.worker_id),
+        });
+    }
+    return null;
+}
 </script>
 
 <template>
@@ -264,10 +286,8 @@ function rowSecondary(row: FinancialRow): string | null {
                     </p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <Input
-                        type="month"
+                    <MonthPicker
                         :model-value="`${filters.year}-${String(filters.month).padStart(2, '0')}`"
-                        class="w-44"
                         :aria-label="t('income_expenses.month')"
                         @change="changeMonth"
                     />
@@ -416,7 +436,19 @@ function rowSecondary(row: FinancialRow): string | null {
                                     {{ date(row.occurred_on) }}
                                 </td>
                                 <td class="px-5 py-4">
-                                    <div class="font-semibold">
+                                    <Link
+                                        v-if="rowHref(row)"
+                                        :href="rowHref(row) ?? ''"
+                                        :target="
+                                            row.source_type === 'wage'
+                                                ? '_blank'
+                                                : undefined
+                                        "
+                                        class="font-semibold text-on-surface underline decoration-transparent underline-offset-4 transition-colors hover:text-primary hover:decoration-current"
+                                    >
+                                        {{ row.label }}
+                                    </Link>
+                                    <div v-else class="font-semibold">
                                         {{ row.label }}
                                     </div>
                                     <div
@@ -502,23 +534,6 @@ function rowSecondary(row: FinancialRow): string | null {
                                             /></Button>
                                         </template>
                                     </div>
-                                    <Link
-                                        v-if="
-                                            row.source_type ===
-                                                'stock_movement' &&
-                                            row.details.movement_id
-                                        "
-                                        :href="
-                                            route(
-                                                'stock-movements.show',
-                                                row.details.movement_id,
-                                            )
-                                        "
-                                        class="mt-1 block text-right text-xs font-semibold text-primary hover:underline"
-                                        >{{
-                                            t('income_expenses.open_document')
-                                        }}</Link
-                                    >
                                 </td>
                             </tr>
                             <tr v-if="section.rows.length === 0">

@@ -323,10 +323,12 @@ class FinancialReportService
                 Typer::parseFloat($payslip['final_amount'] ?? null),
                 [
                     'worker_id' => Typer::assertInt($payslip['worker_id'] ?? null),
-                    'minutes' => Typer::assertInt($payslip['planned_minutes'] ?? null),
+                    'minutes' => (int) \round(Typer::parseFloat($payslip['payable_hours'] ?? 0) * 60),
                     'base_amount' => Typer::parseFloat($payslip['base_amount'] ?? null),
                     'tip_amount' => Typer::parseFloat($payslip['tip_amount'] ?? null),
                     'deduction_amount' => Typer::parseFloat($payslip['deduction_amount'] ?? null),
+                    'hourly_rate' => Typer::parseFloat($payslip['payable_hourly_rate'] ?? 0),
+                    'wage_overridden' => Typer::assertBool($payslip['wage_overridden'] ?? false),
                 ],
             );
         }

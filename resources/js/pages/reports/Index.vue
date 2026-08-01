@@ -19,17 +19,12 @@ import Chart from '@/components/ui/Chart.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import MetricCard from '@/components/ui/MetricCard.vue';
-import Select from '@/components/ui/Select.vue';
+import MonthPicker from '@/components/ui/MonthPicker.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
-import {
-    formatDate,
-    formatMoney,
-    formatMonth,
-    formatNumber,
-} from '@/lib/format';
+import { formatDate, formatMoney, formatNumber } from '@/lib/format';
 
 type FinancialReport = {
     totals: {
@@ -106,7 +101,7 @@ const props = defineProps<{
     inventory_report: InventoryReport;
 }>();
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 useBoundLocale();
 const route = useRoute();
 const activeTab = ref<'finance' | 'inventory'>('finance');
@@ -116,20 +111,6 @@ const inventoryTab = ref<HTMLButtonElement | null>(null);
 const monthValue = computed(
     () => `${props.filter.year}-${String(props.filter.month).padStart(2, '0')}`,
 );
-const months = computed(() => {
-    const now = new Date();
-
-    return Array.from({ length: 12 }, (_, offset) => {
-        const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1;
-
-        return {
-            value: `${year}-${String(month).padStart(2, '0')}`,
-            label: formatMonth(year, month, locale.value),
-        };
-    });
-});
 const channelData = computed(() => [
     {
         key: 'cash',
@@ -169,10 +150,8 @@ const channelData = computed(() => [
     },
 ]);
 
-function selectMonth(value: string | number | null | undefined): void {
-    const [year, month] = String(value ?? '')
-        .split('-')
-        .map(Number);
+function selectMonth(value: string): void {
+    const [year, month] = value.split('-').map(Number);
     if (!year || !month) return;
     router.get(
         route('reports.index'),
@@ -221,11 +200,10 @@ function quantityWithUnit(value: number, unit: string | null): string {
                     >
                         {{ t('reports.statements.month') }}
                     </label>
-                    <Select
+                    <MonthPicker
                         id="report_month_filter"
                         :model-value="monthValue"
-                        :options="months"
-                        @update:model-value="selectMonth"
+                        @change="selectMonth"
                     />
                 </div>
             </header>

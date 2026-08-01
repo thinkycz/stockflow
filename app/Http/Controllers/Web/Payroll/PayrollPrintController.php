@@ -49,6 +49,7 @@ class PayrollPrintController
         return Inertia::render('payroll/Print', [
             'active_store' => ['id' => $store->getKey(), 'name' => $store->getName()],
             'payroll_report' => $report,
+            'simple' => $request->boolean('simple'),
         ]);
     }
 }

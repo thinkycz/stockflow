@@ -37,6 +37,7 @@ use App\Http\Controllers\Web\Payroll\PayrollAdjustmentController;
 use App\Http\Controllers\Web\Payroll\PayrollIndexController;
 use App\Http\Controllers\Web\Payroll\PayrollLifecycleController;
 use App\Http\Controllers\Web\Payroll\PayrollPrintController;
+use App\Http\Controllers\Web\Payroll\PayrollWageOverrideController;
 use App\Http\Controllers\Web\Report\ReportController;
 use App\Http\Controllers\Web\Report\StatisticsController;
 use App\Http\Controllers\Web\Settings\SettingsController;
@@ -167,6 +168,8 @@ Resolver::resolveRouteRegistrar()
         $router->post('payroll/adjustments', [PayrollAdjustmentController::class, 'store'])->name('payroll.adjustments.store');
         $router->put('payroll/adjustments/{payrollAdjustment}', [PayrollAdjustmentController::class, 'update'])->whereNumber('payrollAdjustment')->name('payroll.adjustments.update');
         $router->delete('payroll/adjustments/{payrollAdjustment}', [PayrollAdjustmentController::class, 'destroy'])->whereNumber('payrollAdjustment')->name('payroll.adjustments.destroy');
+        $router->put('payroll/wage-override', [PayrollWageOverrideController::class, 'update'])->name('payroll.wage-override.update');
+        $router->delete('payroll/wage-override', [PayrollWageOverrideController::class, 'destroy'])->name('payroll.wage-override.destroy');
         $router->post('payroll/close', [PayrollLifecycleController::class, 'close'])->name('payroll.close');
         $router->post('payroll/reopen', [PayrollLifecycleController::class, 'reopen'])->name('payroll.reopen');
 

@@ -82,6 +82,7 @@ use Illuminate\Validation\ValidationException;
         'hourly_rate' => 100,
     ]);
     $payroll = new PayrollReportService();
+    $payroll->upsertWageOverride($admin, $store, 2026, 7, $worker, 3.5, 120);
     $payroll->createAdjustment(
         $admin,
         $store,
@@ -97,7 +98,10 @@ use Illuminate\Validation\ValidationException;
     $wage = \collect($finance->build($admin, $store, 2026, 7)['expense_rows'])
         ->firstWhere('source_type', FinancialSourceTypeEnum::WAGE->value);
 
-    \expect($wage['calculated_amount'])->toBe(125.0)
+    \expect($wage['calculated_amount'])->toBe(445.0)
+        ->and($wage['details']['minutes'])->toBe(210)
+        ->and($wage['details']['hourly_rate'])->toBe(120.0)
+        ->and($wage['details']['wage_overridden'])->toBeTrue()
         ->and(fn() => $finance->close($admin, $store, 2026, 7))->toThrow(ValidationException::class);
 
     $payroll->close($admin, $store, 2026, 7);

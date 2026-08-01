@@ -36,6 +36,10 @@ export type Payslip = {
     worker_name: string;
     planned_minutes: number;
     actual_seconds: number;
+    automatic_base_amount: number;
+    payable_hours: number;
+    payable_hourly_rate: number;
+    wage_overridden: boolean;
     base_amount: number;
     tip_amount: number;
     deduction_amount: number;

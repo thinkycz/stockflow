@@ -11,12 +11,12 @@ import DataTable from '@/components/ui/DataTable.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Modal from '@/components/ui/Modal.vue';
-import Select from '@/components/ui/Select.vue';
+import MonthPicker from '@/components/ui/MonthPicker.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { formatCzechDate } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
-import { formatMoney, formatMonth } from '@/lib/format';
+import { formatMoney } from '@/lib/format';
 
 type DayRow = {
     id: number | null;
@@ -62,7 +62,7 @@ const props = defineProps<{
     active_attendances: ActiveAttendance[];
 }>();
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 
 useBoundLocale();
 
@@ -193,27 +193,13 @@ function attendanceDuration(seconds: number): string {
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
-const months = computed(() => {
-    const now = new Date();
-    const result: Array<{ value: string; label: string }> = [];
-    for (let offset = 0; offset < 12; offset++) {
-        const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const label = formatMonth(year, Number(month), locale.value);
-        result.push({ value: `${year}-${month}`, label });
-    }
-    return result;
-});
-
 const monthValue = computed(() => {
     const m = String(props.filters.month).padStart(2, '0');
     return `${props.filters.year}-${m}`;
 });
 
-function selectMonth(value: string | number | null | undefined): void {
-    const raw = value === null || value === undefined ? '' : String(value);
-    const [year, month] = raw.split('-').map((part: string) => Number(part));
+function selectMonth(value: string): void {
+    const [year, month] = value.split('-').map(Number);
     if (!year || !month) {
         return;
     }
@@ -534,11 +520,11 @@ function submitPendingSave(closeAttendances: boolean): void {
                         >
                             {{ t('statements.month') }}
                         </label>
-                        <Select
+                        <MonthPicker
                             id="statement_month"
                             :model-value="monthValue"
-                            :options="months"
-                            @update:model-value="selectMonth"
+                            class="w-full"
+                            @change="selectMonth"
                         />
                     </div>
                 </div>

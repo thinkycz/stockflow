@@ -45,6 +45,8 @@ test('admin manages and closes a monthly financial report while limited users ar
         page.getByRole('heading', { name: 'Recurring expenses' }),
     ).toBeVisible();
     await expect(page.getByTestId('active-store-pill')).toBeVisible();
+    await page.getByRole('button', { name: 'New expense' }).click();
+    await expect(page.getByLabel('Item')).toBeFocused();
     await page.getByLabel('Item').fill('E2E rent');
     await page.getByLabel('Amount').fill('1000');
     await page.getByLabel('Day of month').fill('31');

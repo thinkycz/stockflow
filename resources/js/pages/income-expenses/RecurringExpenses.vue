@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { CalendarClock, Pencil, Plus } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import BackLink from '@/components/ui/BackLink.vue';
 import Badge from '@/components/ui/Badge.vue';
@@ -82,6 +82,16 @@ function followingPeriod(value: string): string {
     return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
+function revealEditor(): void {
+    void nextTick(() => {
+        const editor = document.getElementById('recurring-expense-editor');
+        editor?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        editor
+            ?.querySelector<HTMLInputElement>('input')
+            ?.focus({ preventScroll: true });
+    });
+}
+
 function startCreate(): void {
     selectedExpense.value = null;
     editorMode.value = 'create';
@@ -91,6 +101,7 @@ function startCreate(): void {
     expenseForm.month = props.filters.month;
     expenseForm.effective_period = selectedPeriod();
     expenseForm.due_day = '1';
+    revealEditor();
 }
 
 function startChange(expense: RecurringExpense): void {
@@ -107,6 +118,7 @@ function startChange(expense: RecurringExpense): void {
         expense.starts_on > selectedPeriod()
             ? expense.starts_on
             : selectedPeriod();
+    revealEditor();
 }
 
 function startTermination(expense: RecurringExpense): void {
@@ -120,6 +132,7 @@ function startTermination(expense: RecurringExpense): void {
             ? expense.starts_on
             : selectedPeriod(),
     );
+    revealEditor();
 }
 
 function submitExpense(): void {
@@ -412,7 +425,10 @@ function period(value: string): string {
                         </div>
                     </Card>
 
-                    <Card class="lg:sticky lg:top-6">
+                    <Card
+                        id="recurring-expense-editor"
+                        class="scroll-mt-6 lg:sticky lg:top-6"
+                    >
                         <template v-if="editorMode !== 'terminate'">
                             <h2 class="font-heading text-lg font-bold">
                                 {{
@@ -496,6 +512,7 @@ function period(value: string): string {
                                     <MonthPicker
                                         id="recurring-effective"
                                         v-model="expenseForm.effective_period"
+                                        class="w-full"
                                     />
                                     <FieldError
                                         :message="
@@ -572,6 +589,7 @@ function period(value: string): string {
                                         v-model="
                                             terminationForm.ends_before_period
                                         "
+                                        class="w-full"
                                     />
                                     <FieldError
                                         :message="

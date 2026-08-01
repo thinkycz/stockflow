@@ -15,16 +15,17 @@ blockers remain.
     - Composer and npm audits reported no vulnerabilities.
     - PHP platform requirements and strict Composer validation passed.
     - Vue TypeScript checking and the production Vite build passed.
-    - Vitest passed 43 tests in 13 files.
-    - Pest passed 615 tests with 14,195 assertions.
+    - Vitest passed 44 tests in 14 files.
+    - Pest passed 617 tests with 14,252 assertions.
 - The focused Playwright scenario
   `tests/e2e/income-expenses.spec.ts` passed after the final build and covers
   navigation to the dedicated recurring-expense page, recurring-expense creation,
   a future effective change, exclusive termination, historical stability, absence
   of the previous-month copy button, manual-row creation, override editing,
   incoming/transfer direction labels, close/reopen, and limited-admin denial.
-- Focused financial tests pass the five revenue channels, monthly commission
-  rounding, Bolt cash inclusion, stock exclusions, multiple shift rates,
+- Focused financial tests pass the five revenue channels, platform-specific
+  marketplace rates (Bolt 35%, Wolt/Foodora 30%), monthly commission rounding,
+  Bolt cash inclusion, stock exclusions, multiple shift rates,
   stock movement source/destination metadata and snapshot persistence,
   override persistence/reset, closed snapshots, manual copy clamping and
   idempotency, recurring due-day clamping, version history, exclusive

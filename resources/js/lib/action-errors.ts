@@ -30,6 +30,10 @@ export function withActionErrorToast(options: VisitOptions = {}): VisitOptions {
 
     return {
         ...options,
+        headers: {
+            ...options.headers,
+            'X-StockFlow-Action': 'true',
+        },
         onError: (errors, metadata) => {
             const message = firstActionError(errors);
 

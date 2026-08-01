@@ -17,6 +17,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Thinkycz\LaravelCore\Exceptions\Handler;
 use Thinkycz\LaravelCore\Http\Middleware\AuthShouldUseMiddleware;
@@ -107,6 +108,16 @@ return Application::configure(basePath: \dirname(__DIR__))
             }
 
             $request = \request();
+
+            if ($request->header('X-StockFlow-Action') === 'true') {
+                foreach (Arr::flatten($exception->errors()) as $message) {
+                    if (\is_string($message) && $message !== '') {
+                        Inertia::flash('error', $message);
+
+                        break;
+                    }
+                }
+            }
 
             return Resolver::resolveRedirector()
                 ->to($exception->redirectTo ?? Resolver::resolveUrlGenerator()->previous())

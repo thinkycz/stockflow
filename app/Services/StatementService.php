@@ -31,10 +31,19 @@ class StatementService
     public const float CARD_PROVISION_RATE = 0.01;
 
     /**
-     * Provision rate charged on marketplace channels (Bolt, Bolt Cash,
-     * Wolt, Foodora). Only pure cash is exempt.
+     * Provision rate charged on Bolt and Bolt Cash revenue.
      */
-    public const float MARKETPLACE_PROVISION_RATE = 0.30;
+    public const float BOLT_PROVISION_RATE = 0.35;
+
+    /**
+     * Provision rate charged on Wolt revenue.
+     */
+    public const float WOLT_PROVISION_RATE = 0.30;
+
+    /**
+     * Provision rate charged on Foodora revenue.
+     */
+    public const float FOODORA_PROVISION_RATE = 0.30;
 
     /**
      * Upper bound for the number of versions shown in history lists.
@@ -388,10 +397,7 @@ class StatementService
 
         $investment = $this->calculateReportInvestment($user, $storeId, $year, $month);
         $cardProvision = \round($totals['card'] * self::CARD_PROVISION_RATE, 2);
-        $marketplaceProvision = \round(
-            ($totals['wolt'] + $totals['bolt'] + $totals['bolt_cash'] + $totals['foodora']) * self::MARKETPLACE_PROVISION_RATE,
-            2,
-        );
+        $marketplaceProvision = $this->marketplaceProvision($totals['wolt'], $totals['bolt'], $totals['bolt_cash'], $totals['foodora']);
         $provisions = \round($cardProvision + $marketplaceProvision, 2);
         $grossMargin = \round($totals['total_revenue'] - $investment - $provisions, 2);
         $marginPercent = $totals['total_revenue'] > 0 ? \round(($grossMargin / $totals['total_revenue']) * 100, 2) : 0.0;
@@ -480,10 +486,7 @@ class StatementService
         $totalRevenue = \round($totalRevenue, 2);
         $investment = \round($investment, 2);
         $cardProvision = \round($cardTotal * self::CARD_PROVISION_RATE, 2);
-        $marketplaceProvision = \round(
-            ($woltTotal + $boltTotal + $boltCashTotal + $foodoraTotal) * self::MARKETPLACE_PROVISION_RATE,
-            2,
-        );
+        $marketplaceProvision = $this->marketplaceProvision($woltTotal, $boltTotal, $boltCashTotal, $foodoraTotal);
         $provisions = \round($cardProvision + $marketplaceProvision, 2);
         $grossMargin = \round($totalRevenue - $investment - $provisions, 2);
         $marginPercent = $totalRevenue > 0 ? \round(($grossMargin / $totalRevenue) * 100, 2) : 0.0;
@@ -708,5 +711,18 @@ class StatementService
             'covered_items' => \count($secondsByItem),
             'last_inventory_at' => Typer::parseNullableString($lastInventory),
         ];
+    }
+
+    /**
+     * Calculate marketplace provisions using each platform's contracted rate.
+     */
+    private function marketplaceProvision(float $wolt, float $bolt, float $boltCash, float $foodora): float
+    {
+        return \round(
+            $wolt * self::WOLT_PROVISION_RATE
+                + ($bolt + $boltCash) * self::BOLT_PROVISION_RATE
+                + $foodora * self::FOODORA_PROVISION_RATE,
+            2,
+        );
     }
 }

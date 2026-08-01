@@ -29,7 +29,10 @@ use App\Services\PayrollReportService;
         ->post(
             '/income-expenses/close?store_id=' . $store->getKey(),
             ['year' => 2026, 'month' => 7],
-            $this->inertiaHeaders(),
+            [
+                ...$this->inertiaHeaders(),
+                'X-StockFlow-Action' => 'true',
+            ],
         );
 
     $response->assertRedirect($index)->assertSessionHasErrors('report');
@@ -37,6 +40,7 @@ use App\Services\PayrollReportService;
         ->assertOk()
         ->assertJsonPath('component', 'income-expenses/Index')
         ->assertJsonPath('props.auth.user.id', $admin->getKey())
+        ->assertJsonPath('props.flash.error', \__('Close the payroll report before closing the financial report.'))
         ->assertJsonPath('props.errors.report', \__('Close the payroll report before closing the financial report.'));
 });
 

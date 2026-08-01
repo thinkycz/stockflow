@@ -20,6 +20,8 @@ Globální handler nyní pro Inertia požadavky vrací redirect na explicitní `
 
 Přímé uživatelské mutace přes Inertia router používají sdílený wrapper, který zobrazí první validační zprávu jako trvalý červený toast a zachová původní `onError`. Formuláře přes `useForm` zůstávají bez tohoto wrapperu, aby chyby nebyly duplicitní vedle polí. API/JSON validace nadále vrací `422`.
 
+Původní varianta spoléhala jen na klientský `onError`. V reálném běhu mohl následný update Inertia props tento lokální toast přepsat, takže se zpráva nezobrazila. Wrapper proto samostatnou akci označí hlavičkou `X-StockFlow-Action`; globální handler pak první chybu přenese také přes standardní Inertia error flash. Klientský callback zůstává jako okamžitá zpětná vazba, serverový flash garantuje zobrazení po redirectu.
+
 ## Guardrail
 
 - Nevykreslovat stránkovou Inertia komponentu přímo z globálního handleru validačních výjimek.

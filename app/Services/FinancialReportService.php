@@ -36,10 +36,10 @@ class FinancialReportService
      */
     private const array REVENUE_RATES = [
         'cash' => 0.0,
-        'card' => 0.01,
-        'bolt' => 0.30,
-        'wolt' => 0.30,
-        'foodora' => 0.30,
+        'card' => StatementService::CARD_PROVISION_RATE,
+        'bolt' => StatementService::BOLT_PROVISION_RATE,
+        'wolt' => StatementService::WOLT_PROVISION_RATE,
+        'foodora' => StatementService::FOODORA_PROVISION_RATE,
     ];
 
     /**

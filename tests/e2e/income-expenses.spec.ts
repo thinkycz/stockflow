@@ -33,6 +33,9 @@ test('admin manages and closes a monthly financial report while limited users ar
         'href',
         /\/statements\?.*year=2030.*month=1/,
     );
+    await expect(page.getByTestId('financial-row-revenue-bolt')).toContainText(
+        'commission 35%',
+    );
     const incomingMovementRow = page.getByRole('row').filter({
         has: page.getByRole('link', { name: 'IN-2030-E2E', exact: true }),
     });

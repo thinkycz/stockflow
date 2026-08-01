@@ -252,17 +252,17 @@ use Thinkycz\LaravelCore\Support\Config;
     \expect($metrics['total_revenue'])->toBe(285.0);
     \expect($metrics['investment'])->toBe(100.0);
     \expect($metrics['card_provision'])->toBe(0.50);
-    \expect($metrics['marketplace_provision'])->toBe(48.0);
-    \expect($metrics['provisions'])->toBe(48.50);
-    \expect($metrics['gross_margin'])->toBe(136.50);
-    \expect($metrics['margin_percent'])->toBe(47.89);
+    \expect($metrics['marketplace_provision'])->toBe(51.0);
+    \expect($metrics['provisions'])->toBe(51.50);
+    \expect($metrics['gross_margin'])->toBe(133.50);
+    \expect($metrics['margin_percent'])->toBe(46.84);
     \expect($metrics['channels']['cash'])->toBe(75.0);
     \expect($metrics['channels']['wolt'])->toBe(50.0);
     \expect($metrics['channels']['bolt_cash'])->toBe(10.0);
     \expect($metrics['daily_average'])->toBe(142.5);
 });
 
-\test('buildMetrics deducts card provision at 1% and marketplace provision at 30%', function (): void {
+\test('buildMetrics deducts card and platform-specific marketplace provisions', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $user->getKey()]);
     $service = \app(StatementService::class);
@@ -276,9 +276,9 @@ use Thinkycz\LaravelCore\Support\Config;
     $metrics = $service->buildMetrics($statement, $statement->getDays(), 0.0);
 
     \expect($metrics['card_provision'])->toBe(10.0);
-    \expect($metrics['marketplace_provision'])->toBe(1200.0);
-    \expect($metrics['provisions'])->toBe(1210.0);
-    \expect($metrics['gross_margin'])->toBe(4790.0);
+    \expect($metrics['marketplace_provision'])->toBe(1300.0);
+    \expect($metrics['provisions'])->toBe(1310.0);
+    \expect($metrics['gross_margin'])->toBe(4690.0);
 });
 
 \test('buildMetrics leaves pure cash revenue free of provisions', function (): void {

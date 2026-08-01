@@ -7,6 +7,10 @@ describe('action validation errors', () => {
         const original = vi.fn();
         const options = withActionErrorToast({ onError: original });
 
+        expect(options.headers).toMatchObject({
+            'X-StockFlow-Action': 'true',
+        });
+
         const errors = {
             report: ['Close payroll first.'],
             other: ['Later.'],

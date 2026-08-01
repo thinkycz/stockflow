@@ -14,6 +14,7 @@ import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useDialog } from '@/composables/useDialog';
 import { useRoute } from '@/composables/useRoute';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { withActionErrorToast } from '@/lib/action-errors';
 import { formatMoney } from '@/lib/format';
 import type { PayrollReport } from '@/types/payroll';
 
@@ -61,7 +62,9 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
     router.post(
         route(`payroll.${action}`),
         { year: props.filters.year, month: props.filters.month },
-        { onFinish: () => (lifecycleProcessing.value = false) },
+        withActionErrorToast({
+            onFinish: () => (lifecycleProcessing.value = false),
+        }),
     );
 }
 </script>

@@ -25,6 +25,7 @@ import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import RichTextEditor from '@/components/noticeboard/RichTextEditor.vue';
 import { useRoute } from '@/composables/useRoute';
 import { useDialog } from '@/composables/useDialog';
+import { withActionErrorToast } from '@/lib/action-errors';
 import { cn } from '@/lib/utils';
 
 export type NoticeboardCard = {
@@ -206,18 +207,17 @@ async function trash(card: NoticeboardCard): Promise<void> {
         }))
     )
         return;
-    router.delete(route('noticeboard-cards.destroy', card.id), {
-        preserveScroll: true,
-    });
+    router.delete(
+        route('noticeboard-cards.destroy', card.id),
+        withActionErrorToast({ preserveScroll: true }),
+    );
 }
 
 function restore(card: NoticeboardCard): void {
     router.post(
         route('noticeboard-cards.restore', card.id),
         {},
-        {
-            preserveScroll: true,
-        },
+        withActionErrorToast({ preserveScroll: true }),
     );
 }
 
@@ -236,9 +236,10 @@ async function forceDestroy(card: NoticeboardCard): Promise<void> {
         }))
     )
         return;
-    router.delete(route('noticeboard-cards.force-destroy', card.id), {
-        preserveScroll: true,
-    });
+    router.delete(
+        route('noticeboard-cards.force-destroy', card.id),
+        withActionErrorToast({ preserveScroll: true }),
+    );
 }
 
 function labelIcon(labelValue: NoticeboardCard['label']) {

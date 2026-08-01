@@ -13,6 +13,7 @@ import SearchFilter from '@/components/ui/SearchFilter.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { useDialog } from '@/composables/useDialog';
+import { withActionErrorToast } from '@/lib/action-errors';
 import { formatDate, formatMoney } from '@/lib/format';
 
 type StoreRow = {
@@ -78,7 +79,7 @@ async function destroyStore(store: StoreRow): Promise<void> {
         }))
     )
         return;
-    router.delete(route('stores.destroy', store.id));
+    router.delete(route('stores.destroy', store.id), withActionErrorToast());
 }
 </script>
 

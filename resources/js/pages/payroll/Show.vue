@@ -17,6 +17,7 @@ import Select from '@/components/ui/Select.vue';
 import { useDialog } from '@/composables/useDialog';
 import { useRoute } from '@/composables/useRoute';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { withActionErrorToast } from '@/lib/action-errors';
 import { formatMoney } from '@/lib/format';
 import type { PayrollAdjustment, Payslip } from '@/types/payroll';
 
@@ -120,10 +121,13 @@ async function deleteAdjustment(adjustment: PayrollAdjustment): Promise<void> {
     )
         return;
 
-    router.delete(route('payroll.adjustments.destroy', adjustment.id), {
-        data: { year: props.filters.year, month: props.filters.month },
-        preserveScroll: true,
-    });
+    router.delete(
+        route('payroll.adjustments.destroy', adjustment.id),
+        withActionErrorToast({
+            data: { year: props.filters.year, month: props.filters.month },
+            preserveScroll: true,
+        }),
+    );
 }
 
 function openWageOverride(): void {
@@ -151,15 +155,18 @@ async function resetWageOverride(): Promise<void> {
     )
         return;
 
-    router.delete(route('payroll.wage-override.destroy'), {
-        data: {
-            year: props.filters.year,
-            month: props.filters.month,
-            worker_id: props.payslip.worker_id,
-        },
-        preserveScroll: true,
-        onSuccess: () => (wageModalOpen.value = false),
-    });
+    router.delete(
+        route('payroll.wage-override.destroy'),
+        withActionErrorToast({
+            data: {
+                year: props.filters.year,
+                month: props.filters.month,
+                worker_id: props.payslip.worker_id,
+            },
+            preserveScroll: true,
+            onSuccess: () => (wageModalOpen.value = false),
+        }),
+    );
 }
 </script>
 

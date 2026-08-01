@@ -17,6 +17,7 @@ import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useRoute } from '@/composables/useRoute';
 import { useDialog } from '@/composables/useDialog';
+import { withActionErrorToast } from '@/lib/action-errors';
 import { formatMoney } from '@/lib/format';
 
 type Worker = { id: number; first_name: string; last_name: string };
@@ -148,9 +149,11 @@ async function voidSession(id: number): Promise<void> {
         required: true,
     });
     if (reason?.trim()) {
-        router.post(route('attendance.sessions.void', id), {
-            reason: reason.trim(),
-        });
+        router.post(
+            route('attendance.sessions.void', id),
+            { reason: reason.trim() },
+            withActionErrorToast(),
+        );
     }
 }
 function addBreak(): void {

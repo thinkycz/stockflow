@@ -11,6 +11,7 @@ import SearchFilter from '@/components/ui/SearchFilter.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { useDialog } from '@/composables/useDialog';
+import { withActionErrorToast } from '@/lib/action-errors';
 import { formatMoney } from '@/lib/format';
 
 type WorkerRow = {
@@ -65,7 +66,7 @@ async function destroyWorker(worker: WorkerRow): Promise<void> {
         }))
     )
         return;
-    router.delete(route('workers.destroy', worker.id));
+    router.delete(route('workers.destroy', worker.id), withActionErrorToast());
 }
 </script>
 

@@ -15,8 +15,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
-use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Thinkycz\LaravelCore\Exceptions\Handler;
 use Thinkycz\LaravelCore\Http\Middleware\AuthShouldUseMiddleware;
@@ -26,6 +26,7 @@ use Thinkycz\LaravelCore\Http\Middleware\ValidateAcceptHeaderMiddleware;
 use Thinkycz\LaravelCore\Http\Middleware\ValidateContentTypeHeaderMiddleware;
 use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Env;
+use Thinkycz\LaravelCore\Support\Resolver;
 
 return Application::configure(basePath: \dirname(__DIR__))
     ->withRouting(
@@ -105,19 +106,22 @@ return Application::configure(basePath: \dirname(__DIR__))
                 return;
             }
 
-            $component = \request()->header('X-Inertia-Partial-Component') ?: match (\request()->path()) {
-                'verify-email' => 'auth/VerifyEmail',
-                'forgot-password' => 'auth/ForgotPassword',
-                'reset-password' => 'auth/ResetPassword',
-                'settings/profile', 'settings/password' => 'settings/Index',
-                default => 'auth/Login',
-            };
+            $request = \request();
 
-            $page = Inertia::render($component, [
-                'errors' => (object) $exception->errors(),
-            ])->toResponse(\request());
-
-            return $page->setStatusCode(422);
+            return Resolver::resolveRedirector()
+                ->to($exception->redirectTo ?? Resolver::resolveUrlGenerator()->previous())
+                ->withInput(Arr::except($request->input(), [
+                    'current_password',
+                    'current_password_confirmation',
+                    'password',
+                    'password_confirmation',
+                    'new_password',
+                    'new_password_confirmation',
+                ]))
+                ->withErrors(
+                    $exception->errors(),
+                    $exception->errorBag === '' ? 'default' : $exception->errorBag,
+                );
         });
     })
     ->create();

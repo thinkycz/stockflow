@@ -16,6 +16,7 @@ import MetricCard from '@/components/ui/MetricCard.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { useDialog } from '@/composables/useDialog';
+import { withActionErrorToast } from '@/lib/action-errors';
 import {
     formatDate,
     formatMoney,
@@ -94,9 +95,11 @@ async function reverseMovement(id: number): Promise<void> {
     if (reason === null || reason.trim() === '') {
         return;
     }
-    router.post(route('stock-movements.reverse', id), {
-        reason: reason.trim(),
-    });
+    router.post(
+        route('stock-movements.reverse', id),
+        { reason: reason.trim() },
+        withActionErrorToast(),
+    );
 }
 </script>
 

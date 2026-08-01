@@ -61,5 +61,5 @@ use App\Models\Worker;
             'first_name' => '',
             'last_name' => 'Novak',
             'hourly_rate' => 200,
-        ], $this->inertiaHeaders())->assertStatus(422);
+        ], $this->inertiaHeaders())->assertRedirect()->assertSessionHasErrors();
 });

@@ -20,19 +20,21 @@ use Illuminate\Validation\ValidationException;
 \test('build calculates revenue commissions stock documents and wages', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $admin->getKey(), 'name' => 'Retail']);
+    $sourceStore = Store::factory()->create(['user_id' => $admin->getKey(), 'name' => 'Warehouse']);
     $statement = Statement::factory()->forStore($store)->forMonth(2026, 7)->create();
     StatementDay::factory()->create([
         'statement_id' => $statement->getKey(), 'date' => '2026-07-10',
         'cash' => 100, 'card' => 100, 'bolt' => 100, 'bolt_cash' => 50,
         'wolt' => 100, 'foodora' => 100, 'total' => 550,
     ]);
-    StockMovement::factory()->create([
+    $incoming = StockMovement::factory()->create([
         'user_id' => $admin->getKey(), 'store_id' => $store->getKey(),
         'number' => 'IN-2026-0001', 'type' => StockMovementTypeEnum::INCOMING->value,
         'occurred_at' => '2026-07-12 10:00:00', 'total_value' => 40,
     ]);
-    StockMovement::factory()->create([
+    $transfer = StockMovement::factory()->create([
         'user_id' => $admin->getKey(), 'store_id' => $store->getKey(),
+        'source_store_id' => $sourceStore->getKey(),
         'number' => 'TR-2026-0001', 'type' => StockMovementTypeEnum::TRANSFER->value,
         'occurred_at' => '2026-07-13 10:00:00', 'total_value' => 30,
     ]);
@@ -56,7 +58,11 @@ use Illuminate\Validation\ValidationException;
         'date' => '2026-07-11', 'start_time' => '08:00', 'end_time' => '12:00', 'hourly_rate' => 100,
     ]);
 
-    $report = (new FinancialReportService())->build($admin, $store, 2026, 7);
+    $service = new FinancialReportService();
+    $report = $service->build($admin, $store, 2026, 7);
+    $stockRows = \collect($report['expense_rows'])->where('source_type', FinancialSourceTypeEnum::STOCK_MOVEMENT->value);
+    $incomingRow = $stockRows->firstWhere('source_key', (string) $incoming->getKey());
+    $transferRow = $stockRows->firstWhere('source_key', (string) $transfer->getKey());
 
     \expect($report['income_rows'])->toHaveCount(5)
         ->and($report['income_rows'][0]['effective_amount'])->toBe(100.0)
@@ -64,8 +70,21 @@ use Illuminate\Validation\ValidationException;
         ->and($report['income_rows'][2]['calculated_amount'])->toBe(105.0)
         ->and($report['totals']['income'])->toBe(444.0)
         ->and($report['expense_rows'])->toHaveCount(3)
+        ->and($incomingRow['details']['destination_store_name'])->toBe('Retail')
+        ->and($incomingRow['details'])->not->toHaveKey('source_store_name')
+        ->and($transferRow['details']['source_store_name'])->toBe('Warehouse')
+        ->and($transferRow['details']['destination_store_name'])->toBe('Retail')
         ->and($report['totals']['expenses'])->toBe(2070.0)
         ->and($report['totals']['profit'])->toBe(-1626.0);
+
+    (new PayrollReportService())->close($admin, $store, 2026, 7);
+    $service->close($admin, $store, 2026, 7);
+    $closedTransfer = \collect($service->build($admin, $store, 2026, 7)['expense_rows'])
+        ->where('source_type', FinancialSourceTypeEnum::STOCK_MOVEMENT->value)
+        ->firstWhere('source_key', (string) $transfer->getKey());
+
+    \expect($closedTransfer['details']['source_store_name'])->toBe('Warehouse')
+        ->and($closedTransfer['details']['destination_store_name'])->toBe('Retail');
 });
 
 \test('financial wages use payslip totals and closing requires closed payroll', function (): void {

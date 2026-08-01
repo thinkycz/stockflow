@@ -34,5 +34,5 @@ use App\Models\StoreItem;
         ->withHeaders(['X-CSRF-TOKEN' => 'test'])
         ->post('/items', [
             'purchase_price' => '9.99',
-        ], $this->inertiaHeaders())->assertStatus(422);
+        ], $this->inertiaHeaders())->assertRedirect()->assertSessionHasErrors();
 });

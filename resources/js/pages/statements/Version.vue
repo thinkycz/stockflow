@@ -11,6 +11,7 @@ import { useBoundLocale } from '@/composables/useBoundLocale';
 import { formatCzechDateTime } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
 import { useDialog } from '@/composables/useDialog';
+import { withActionErrorToast } from '@/lib/action-errors';
 import { formatMoney } from '@/lib/format';
 
 type VersionRow = {
@@ -114,7 +115,7 @@ async function restore(): Promise<void> {
     router.post(
         route('statements.versions.restore', { version: props.version.id }),
         {},
-        { preserveScroll: true },
+        withActionErrorToast({ preserveScroll: true }),
     );
 }
 </script>

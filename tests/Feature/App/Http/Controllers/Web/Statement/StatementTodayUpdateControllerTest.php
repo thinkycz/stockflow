@@ -64,7 +64,7 @@ use Thinkycz\LaravelCore\Support\Typer;
             'bolt_cash' => 0,
             'foodora' => 0,
         ])
-        ->assertStatus(422);
+        ->assertRedirect()->assertSessionHasErrors();
 
     \expect($statement->days()->whereDate('date', '2026-07-23')->firstOrFail()->getTotal())->toBe(0.0);
 });

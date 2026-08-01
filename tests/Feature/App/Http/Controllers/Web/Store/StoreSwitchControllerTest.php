@@ -74,7 +74,7 @@ use Thinkycz\LaravelCore\Support\Typer;
             'store_id' => $foreign->getKey(),
         ], $this->inertiaHeaders());
 
-    $response->assertStatus(422);
+    $response->assertRedirect()->assertSessionHasErrors();
 });
 
 \test('limited user is rejected when calling the switch endpoint', function (): void {

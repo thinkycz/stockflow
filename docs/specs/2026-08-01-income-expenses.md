@@ -11,7 +11,8 @@ and durable administrator overrides into one auditable result.
 - The page is available only to the main admin and uses the active retail store.
 - Revenue rows are Cash, Card, Bolt, Wolt, and Foodora. Monthly commission is
   0%, 1%, 30%, 30%, and 30% respectively; Bolt includes `bolt_cash`.
-- Each non-reversed incoming receipt or inbound transfer is an expense row.
+- Each non-reversed incoming receipt or inbound transfer is an expense row. Its
+  secondary text shows `Incoming → destination` or `source → destination`.
 - Wage rows use each worker's final payroll amount (planned-shift base plus
   payroll tips and deductions). Financial wage overrides remain supported.
 - Automatic rows expose their calculated value and can receive a persistent

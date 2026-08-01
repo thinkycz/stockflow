@@ -52,7 +52,7 @@ use App\Models\Store;
         'name' => 'Invalid Slack',
         'status' => StoreStatusEnum::ACTIVE->value,
         'slack_channel' => \str_repeat('x', 101),
-    ], $this->inertiaHeaders())->assertStatus(422);
+    ], $this->inertiaHeaders())->assertRedirect()->assertSessionHasErrors();
 });
 
 \test('user can create a second warehouse store', function (): void {
@@ -85,5 +85,5 @@ use App\Models\Store;
         ->post('/stores', [
             'name' => '',
             'status' => StoreStatusEnum::ACTIVE->value,
-        ], $this->inertiaHeaders())->assertStatus(422);
+        ], $this->inertiaHeaders())->assertRedirect()->assertSessionHasErrors();
 });

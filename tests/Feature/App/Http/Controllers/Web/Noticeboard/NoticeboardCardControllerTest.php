@@ -132,7 +132,7 @@ use Thinkycz\LaravelCore\Support\Typer;
             'lock_version' => 1,
         ]);
 
-    $response->assertStatus(422);
+    $response->assertRedirect()->assertSessionHasErrors();
     \expect($card->fresh()?->getTitle())->toBe('Newer title');
 });
 

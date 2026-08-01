@@ -405,6 +405,7 @@ class FinancialReportService
         StockMovement::scopeForUser($query, $admin);
         StockMovement::scopeForStore($query, $store->getKey());
         StockMovement::querySelect($query);
+        $query->with(['store', 'sourceStore']);
 
         return \array_values($query
             ->whereIn('type', [StockMovementTypeEnum::INCOMING->value, StockMovementTypeEnum::TRANSFER->value])
@@ -413,15 +414,27 @@ class FinancialReportService
             ->where('occurred_at', '<', $start->addMonth()->utc())
             ->orderBy('occurred_at')
             ->get()
-            ->map(fn(StockMovement $movement): array => $this->automaticRow(
-                FinancialDirectionEnum::EXPENSE,
-                FinancialSourceTypeEnum::STOCK_MOVEMENT,
-                (string) $movement->getKey(),
-                $movement->getNumber(),
-                $movement->getOccurredAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toDateString(),
-                \round(\abs($movement->getTotalValue()), 2),
-                ['movement_id' => $movement->getKey(), 'movement_type' => $movement->getType()->value],
-            ))
+            ->map(function (StockMovement $movement) use ($store): array {
+                $details = [
+                    'movement_id' => $movement->getKey(),
+                    'movement_type' => $movement->getType()->value,
+                    'destination_store_name' => $movement->getStore()?->getName() ?? $store->getName(),
+                ];
+                $sourceStore = $movement->getSourceStore();
+                if ($sourceStore instanceof Store) {
+                    $details['source_store_name'] = $sourceStore->getName();
+                }
+
+                return $this->automaticRow(
+                    FinancialDirectionEnum::EXPENSE,
+                    FinancialSourceTypeEnum::STOCK_MOVEMENT,
+                    (string) $movement->getKey(),
+                    $movement->getNumber(),
+                    $movement->getOccurredAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toDateString(),
+                    \round(\abs($movement->getTotalValue()), 2),
+                    $details,
+                );
+            })
             ->values()
             ->all());
     }

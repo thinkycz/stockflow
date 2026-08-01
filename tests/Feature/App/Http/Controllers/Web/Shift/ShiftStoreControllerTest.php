@@ -49,7 +49,7 @@ use App\Models\Worker;
             'date' => '2026-07-15',
             'start_time' => '10:00',
             'end_time' => '15:00',
-        ], $this->inertiaHeaders())->assertStatus(422);
+        ], $this->inertiaHeaders())->assertRedirect()->assertSessionHasErrors();
 });
 
 \test('date is required', function (): void {
@@ -65,7 +65,7 @@ use App\Models\Worker;
             'date' => '',
             'start_time' => '10:00',
             'end_time' => '15:00',
-        ], $this->inertiaHeaders())->assertStatus(422);
+        ], $this->inertiaHeaders())->assertRedirect()->assertSessionHasErrors();
 });
 
 \test('start_time must be a valid time format', function (): void {
@@ -81,7 +81,7 @@ use App\Models\Worker;
             'date' => '2026-07-15',
             'start_time' => 'not-a-time',
             'end_time' => '15:00',
-        ], $this->inertiaHeaders())->assertStatus(422);
+        ], $this->inertiaHeaders())->assertRedirect()->assertSessionHasErrors();
 });
 
 \test('shift times must use quarter-hour increments', function (): void {
@@ -96,7 +96,7 @@ use App\Models\Worker;
             'start_time' => '10:07',
             'end_time' => '15:00',
         ], $this->inertiaHeaders())
-        ->assertStatus(422);
+        ->assertRedirect()->assertSessionHasErrors();
 
     $this->assertDatabaseCount('shifts', 0);
 });
@@ -114,10 +114,7 @@ use App\Models\Worker;
             'end_time' => '10:00',
         ], $this->inertiaHeaders());
 
-    $response->assertStatus(422);
-    \expect($response->json('props.errors'))
-        ->toHaveKey('end_time')
-        ->not->toHaveKeys(['worker_id', 'date', 'start_time']);
+    $response->assertRedirect()->assertSessionHasErrors(['end_time']);
 
     $this->assertDatabaseCount('shifts', 0);
 });
@@ -142,7 +139,9 @@ use App\Models\Worker;
     ];
 
     $response = $this->be($admin, 'users')->post('/shifts', $payload, $this->inertiaHeaders());
-    $response->assertStatus(422)->assertJsonPath('props.errors.overlap.0', \__('This shift overlaps an existing assignment.'));
+    $response->assertRedirect()->assertSessionHasErrors([
+        'overlap' => \__('This shift overlaps an existing assignment.'),
+    ]);
     \expect(Shift::query()->count())->toBe(1);
 
     $this->be($admin, 'users')->post('/shifts', [...$payload, 'allow_overlap' => true], $this->inertiaHeaders())

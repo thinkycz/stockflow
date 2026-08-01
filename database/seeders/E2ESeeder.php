@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\StockMovementTypeEnum;
 use App\Models\AttendanceSession;
 use App\Models\Shift;
 use App\Models\ShiftPreset;
+use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
@@ -42,6 +44,36 @@ class E2ESeeder extends Seeder
 
         if (!$store instanceof Store) {
             return;
+        }
+
+        $warehouse = Store::query()
+            ->where('user_id', $user->getKey())
+            ->where('is_warehouse', true)
+            ->first();
+
+        StockMovement::query()->updateOrCreate(
+            ['number' => 'IN-2030-E2E'],
+            [
+                'user_id' => $user->getKey(),
+                'store_id' => $store->getKey(),
+                'source_store_id' => null,
+                'type' => StockMovementTypeEnum::INCOMING->value,
+                'occurred_at' => '2030-01-10 10:00:00',
+                'total_value' => 100,
+            ],
+        );
+        if ($warehouse instanceof Store) {
+            StockMovement::query()->updateOrCreate(
+                ['number' => 'TR-2030-E2E'],
+                [
+                    'user_id' => $user->getKey(),
+                    'store_id' => $store->getKey(),
+                    'source_store_id' => $warehouse->getKey(),
+                    'type' => StockMovementTypeEnum::TRANSFER->value,
+                    'occurred_at' => '2030-01-11 10:00:00',
+                    'total_value' => 200,
+                ],
+            );
         }
 
         $worker = Worker::query()->updateOrCreate(

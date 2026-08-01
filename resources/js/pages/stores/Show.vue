@@ -25,6 +25,7 @@ import { useBoundLocale } from '@/composables/useBoundLocale';
 import { formatCzechDateTime } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
 import { useDialog } from '@/composables/useDialog';
+import { withActionErrorToast } from '@/lib/action-errors';
 import { formatDateTime, formatMoney, formatNumber } from '@/lib/format';
 
 type MovementRow = {
@@ -123,7 +124,10 @@ async function destroyStore(): Promise<void> {
         }))
     )
         return;
-    router.delete(route('stores.destroy', props.store.id));
+    router.delete(
+        route('stores.destroy', props.store.id),
+        withActionErrorToast(),
+    );
 }
 </script>
 

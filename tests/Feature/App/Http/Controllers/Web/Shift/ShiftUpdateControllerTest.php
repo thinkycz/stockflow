@@ -114,8 +114,10 @@ use App\Models\Worker;
     ];
 
     $this->be($admin, 'users')->put("/shifts/{$shift->getKey()}", $payload, $this->inertiaHeaders())
-        ->assertStatus(422)
-        ->assertJsonPath('props.errors.overlap.0', \__('This shift overlaps an existing assignment.'));
+        ->assertRedirect()
+        ->assertSessionHasErrors([
+            'overlap' => \__('This shift overlaps an existing assignment.'),
+        ]);
     \expect($shift->refresh()->getStartTimeShort())->toBe('15:00');
 
     $this->be($admin, 'users')->put("/shifts/{$shift->getKey()}", [...$payload, 'allow_overlap' => true], $this->inertiaHeaders())

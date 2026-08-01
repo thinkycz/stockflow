@@ -45,7 +45,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'is_warehouse' => false,
     ]);
 
-    $response = $this->actingAs($admin)
+    $this->actingAs($admin)
         ->withHeaders($this->inertiaHeaders())
         ->post(\route('users.store'), [
             'email' => 'staff@example.com',
@@ -53,9 +53,8 @@ use Thinkycz\LaravelCore\Support\Typer;
             'password_confirmation' => 'secret123',
             'assigned_store_id' => $foreignStore->getKey(),
         ])
-        ->assertStatus(422);
-
-    \expect($response->json('props.errors.assigned_store_id'))->toBeArray();
+        ->assertRedirect()
+        ->assertSessionHasErrors(['assigned_store_id']);
     \expect(User::query()->where('email', 'staff@example.com')->exists())->toBeFalse();
 });
 
@@ -63,7 +62,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
     $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
 
-    $response = $this->actingAs($admin)
+    $this->actingAs($admin)
         ->withHeaders($this->inertiaHeaders())
         ->post(\route('users.store'), [
             'email' => 'staff@example.com',
@@ -71,9 +70,8 @@ use Thinkycz\LaravelCore\Support\Typer;
             'password_confirmation' => 'short',
             'assigned_store_id' => $store->getKey(),
         ])
-        ->assertStatus(422);
-
-    \expect($response->json('props.errors.password'))->toBeArray();
+        ->assertRedirect()
+        ->assertSessionHasErrors(['password']);
 });
 
 \test('email must be unique', function (): void {
@@ -81,7 +79,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     Typer::assertInstance(UserFactory::new()->createOne(['email' => 'taken@example.com']), User::class);
     $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
 
-    $response = $this->actingAs($admin)
+    $this->actingAs($admin)
         ->withHeaders($this->inertiaHeaders())
         ->post(\route('users.store'), [
             'email' => 'taken@example.com',
@@ -89,9 +87,8 @@ use Thinkycz\LaravelCore\Support\Typer;
             'password_confirmation' => 'secret123',
             'assigned_store_id' => $store->getKey(),
         ])
-        ->assertStatus(422);
-
-    \expect($response->json('props.errors.email'))->toBeArray();
+        ->assertRedirect()
+        ->assertSessionHasErrors(['email']);
 });
 
 \test('limited user cannot create other users', function (): void {

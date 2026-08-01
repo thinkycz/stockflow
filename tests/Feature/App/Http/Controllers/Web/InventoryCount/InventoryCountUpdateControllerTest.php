@@ -63,7 +63,7 @@ use App\Models\StoreItem;
                 ['item_id' => $item->getKey(), 'quantity' => 1],
             ],
         ])
-        ->assertStatus(422);
+        ->assertRedirect()->assertSessionHasErrors();
 });
 
 \test('update controller rejects another users item', function (): void {
@@ -80,7 +80,7 @@ use App\Models\StoreItem;
                 ['item_id' => $foreignItem->getKey(), 'quantity' => 1],
             ],
         ])
-        ->assertStatus(422);
+        ->assertRedirect()->assertSessionHasErrors();
 });
 
 \test('update controller requires at least one row', function (): void {
@@ -93,7 +93,7 @@ use App\Models\StoreItem;
             'store_id' => $store->getKey(),
             'rows' => [],
         ])
-        ->assertStatus(422);
+        ->assertRedirect()->assertSessionHasErrors();
 });
 
 \test('update controller rejects negative quantity', function (): void {
@@ -109,7 +109,7 @@ use App\Models\StoreItem;
                 ['item_id' => $item->getKey(), 'quantity' => -3],
             ],
         ])
-        ->assertStatus(422);
+        ->assertRedirect()->assertSessionHasErrors();
 });
 
 \test('update controller accepts null quantity per row and skips persisting it', function (): void {

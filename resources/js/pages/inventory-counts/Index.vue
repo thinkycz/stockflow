@@ -15,6 +15,7 @@ import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
+import { withActionErrorToast } from '@/lib/action-errors';
 import { formatNumber as formatLocalizedNumber } from '@/lib/format';
 
 type InventoryRow = {
@@ -211,9 +212,11 @@ function startDraft(): void {
     if (!props.store) {
         return;
     }
-    router.post(route('inventory-counts.drafts.start'), {
-        store_id: props.store.id,
-    });
+    router.post(
+        route('inventory-counts.drafts.start'),
+        { store_id: props.store.id },
+        withActionErrorToast(),
+    );
 }
 
 function autosave(itemId: number): void {
@@ -257,9 +260,9 @@ async function save(): Promise<void> {
     router.post(
         route('inventory-counts.drafts.close', props.draft.id),
         { counted_on: inventoryDate.value },
-        {
+        withActionErrorToast({
             onFinish: () => (submitting.value = false),
-        },
+        }),
     );
 }
 
@@ -283,10 +286,10 @@ async function cancelDraft(): Promise<void> {
     router.post(
         route('inventory-counts.drafts.cancel', props.draft.id),
         {},
-        {
+        withActionErrorToast({
             onSuccess: () => (cancelModalOpen.value = false),
             onFinish: () => (cancelling.value = false),
-        },
+        }),
     );
 }
 </script>

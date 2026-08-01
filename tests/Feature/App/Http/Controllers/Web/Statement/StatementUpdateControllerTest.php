@@ -100,7 +100,7 @@ use Thinkycz\LaravelCore\Support\Typer;
                 ],
             ],
         ])
-        ->assertStatus(422);
+        ->assertRedirect()->assertSessionHasErrors();
 });
 
 \test('update controller rejects another user\'s statement', function (): void {

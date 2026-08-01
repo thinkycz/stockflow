@@ -31,6 +31,7 @@ import Textarea from '@/components/ui/Textarea.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { useDialog } from '@/composables/useDialog';
+import { withActionErrorToast } from '@/lib/action-errors';
 
 type FinancialRow = {
     id: string;
@@ -169,7 +170,9 @@ async function deleteManual(row: FinancialRow): Promise<void> {
     }
     router.delete(
         route('income-expenses.manual-rows.destroy', row.manual_row_id),
-        { data: { year: props.filters.year, month: props.filters.month } },
+        withActionErrorToast({
+            data: { year: props.filters.year, month: props.filters.month },
+        }),
     );
 }
 
@@ -193,14 +196,17 @@ function submitOverride(): void {
 
 function resetOverride(row: FinancialRow): void {
     if (row.source_type === null || row.source_key === null) return;
-    router.delete(route('income-expenses.overrides.destroy'), {
-        data: {
-            year: props.filters.year,
-            month: props.filters.month,
-            source_type: row.source_type,
-            source_key: row.source_key,
-        },
-    });
+    router.delete(
+        route('income-expenses.overrides.destroy'),
+        withActionErrorToast({
+            data: {
+                year: props.filters.year,
+                month: props.filters.month,
+                source_type: row.source_type,
+                source_key: row.source_key,
+            },
+        }),
+    );
 }
 
 async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
@@ -230,11 +236,26 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
     router.post(
         route(`income-expenses.${action}`),
         { year: props.filters.year, month: props.filters.month },
-        { onFinish: () => (lifecycleProcessing.value = false) },
+        withActionErrorToast({
+            onFinish: () => (lifecycleProcessing.value = false),
+        }),
     );
 }
 
 function rowSecondary(row: FinancialRow): string | null {
+    if (row.source_type === 'stock_movement') {
+        const source =
+            row.details.movement_type === 'incoming'
+                ? t('stock_movements.types.incoming')
+                : String(row.details.source_store_name ?? '—');
+        const destination = String(
+            row.details.destination_store_name ??
+                props.active_store?.name ??
+                '—',
+        );
+
+        return `${source} → ${destination}`;
+    }
     if (row.source_type === 'revenue') {
         return t('income_expenses.commission_detail', {
             gross: money(Number(row.details.gross_amount ?? 0)),

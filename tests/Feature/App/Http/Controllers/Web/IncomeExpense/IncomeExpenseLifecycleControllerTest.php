@@ -19,6 +19,27 @@ use App\Services\PayrollReportService;
     \expect(FinancialReport::query()->firstOrFail()->isClosed())->toBeFalse();
 });
 
+\test('failed close returns to the report with errors and keeps the admin authenticated', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $index = '/income-expenses?store_id=' . $store->getKey() . '&year=2026&month=7';
+
+    $response = $this->be($admin, 'users')
+        ->from($index)
+        ->post(
+            '/income-expenses/close?store_id=' . $store->getKey(),
+            ['year' => 2026, 'month' => 7],
+            $this->inertiaHeaders(),
+        );
+
+    $response->assertRedirect($index)->assertSessionHasErrors('report');
+    $this->get($index, $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('component', 'income-expenses/Index')
+        ->assertJsonPath('props.auth.user.id', $admin->getKey())
+        ->assertJsonPath('props.errors.report', \__('Close the payroll report before closing the financial report.'));
+});
+
 \test('copy previous action is idempotent', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $admin->getKey()]);

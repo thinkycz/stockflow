@@ -104,32 +104,38 @@ use Thinkycz\LaravelCore\Support\Typer;
     $user = Typer::assertInstance(UserFactory::new()->admin()->createOne([
         'email' => 'me@example.com',
     ]), User::class);
+    UserFactory::new()->createOne(['email' => 'taken@example.com']);
 
-    // A duplicate email must trigger a 422 with the Inertia component
-    // pointing back at the actual settings page (settings/Index), not
-    // the legacy settings/Profile component the bootstrap match
-    // expression used to map to.
-    $response = $this->be($user, 'users')
+    $this->be($user, 'users')
+        ->from('/settings')
         ->post('/settings/profile', [
             'email' => 'taken@example.com',
+            'locale' => 'en',
         ], $this->inertiaHeaders())
-        ->assertStatus(422);
+        ->assertRedirect('/settings')
+        ->assertSessionHasErrors(['email']);
 
-    $response->assertJsonPath('component', 'settings/Index');
+    $this->get('/settings', $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('component', 'settings/Index');
 });
 
 \test('validation failure on password re-renders the unified settings page', function (): void {
     $user = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
 
-    $response = $this->be($user, 'users')
+    $this->be($user, 'users')
+        ->from('/settings')
         ->post('/settings/password', [
             'password' => 'not-the-current-password',
             'new_password' => 'whatever',
             'new_password_confirmation' => 'whatever',
         ], $this->inertiaHeaders())
-        ->assertStatus(422);
+        ->assertRedirect('/settings')
+        ->assertSessionHasErrors(['password']);
 
-    $response->assertJsonPath('component', 'settings/Index');
+    $this->get('/settings', $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('component', 'settings/Index');
 });
 
 \test('limited user cannot open settings', function (): void {

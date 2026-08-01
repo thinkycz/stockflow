@@ -108,9 +108,7 @@ use Database\Factories\UserFactory;
             ],
         ]);
 
-    $response->assertStatus(422);
-    $errors = $response->json('props.errors') ?? $response->json('errors') ?? [];
-    \expect($errors)->toHaveKey('store_id');
+    $response->assertRedirect()->assertSessionHasErrors(['store_id']);
 });
 
 \test('transfer rejects identical source and destination stores', function (): void {
@@ -134,9 +132,7 @@ use Database\Factories\UserFactory;
             ]],
         ]);
 
-    $response->assertStatus(422);
-    $errors = $response->json('props.errors') ?? $response->json('errors') ?? [];
-    \expect($errors)->toHaveKey('store_id');
+    $response->assertRedirect()->assertSessionHasErrors(['store_id']);
 });
 
 \test('outgoing quantity exceeding warehouse stock is rejected', function (): void {
@@ -167,9 +163,7 @@ use Database\Factories\UserFactory;
             ],
         ]);
 
-    $response->assertStatus(422);
-    $errors = $response->json('props.errors') ?? $response->json('errors') ?? [];
-    \expect($errors)->toHaveKey('items');
+    $response->assertRedirect()->assertSessionHasErrors(['items']);
 });
 
 \test('user can create an adjustment stock movement', function (): void {

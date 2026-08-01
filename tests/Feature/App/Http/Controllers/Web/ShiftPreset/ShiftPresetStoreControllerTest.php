@@ -30,13 +30,13 @@ use Database\Factories\UserFactory;
         'name' => 'Invalid step',
         'start_time' => '10:07',
         'end_time' => '15:00',
-    ], $this->inertiaHeaders())->assertStatus(422);
+    ], $this->inertiaHeaders())->assertRedirect()->assertSessionHasErrors();
 
     $this->be($admin, 'users')->post('/shift-presets', [
         'name' => 'Overnight',
         'start_time' => '21:00',
         'end_time' => '05:00',
-    ], $this->inertiaHeaders())->assertStatus(422);
+    ], $this->inertiaHeaders())->assertRedirect()->assertSessionHasErrors();
 
     \expect(ShiftPreset::query()->count())->toBe(0);
 });
@@ -54,7 +54,7 @@ use Database\Factories\UserFactory;
         'name' => 'Morning',
         'start_time' => '12:00',
         'end_time' => '18:00',
-    ], $this->inertiaHeaders())->assertStatus(422);
+    ], $this->inertiaHeaders())->assertRedirect()->assertSessionHasErrors();
 
     \expect(ShiftPreset::query()->count())->toBe(1);
 });

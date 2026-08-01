@@ -13,6 +13,7 @@ import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useCzechDate } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
 import { useDialog } from '@/composables/useDialog';
+import { withActionErrorToast } from '@/lib/action-errors';
 import type { SharedProps } from '@/types';
 
 type UserRow = {
@@ -79,7 +80,7 @@ async function confirmDelete(user: UserRow): Promise<void> {
     )
         return;
 
-    router.delete(route('users.destroy', user.id));
+    router.delete(route('users.destroy', user.id), withActionErrorToast());
 }
 
 const currentUserId = (): number | null => page.props.auth?.user?.id ?? null;

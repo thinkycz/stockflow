@@ -32,15 +32,14 @@ use Thinkycz\LaravelCore\Support\Typer;
     $foreign = Store::factory()->create(['user_id' => $otherAdmin->getKey(), 'is_warehouse' => false]);
     $limited = Typer::assertInstance(UserFactory::new()->limited($storeA)->createOne(), User::class);
 
-    $response = $this->actingAs($admin)
+    $this->actingAs($admin)
         ->withHeaders($this->inertiaHeaders())
         ->put(\route('users.update', $limited), [
             'email' => $limited->getEmail(),
             'assigned_store_id' => $foreign->getKey(),
         ])
-        ->assertStatus(422);
-
-    \expect($response->json('props.errors.assigned_store_id'))->toBeArray();
+        ->assertRedirect()
+        ->assertSessionHasErrors(['assigned_store_id']);
     $limited->refresh();
     \expect($limited->getAssignedStoreId())->toBe($storeA->getKey());
 });

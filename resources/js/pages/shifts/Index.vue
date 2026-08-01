@@ -33,6 +33,7 @@ import { useBoundLocale } from '@/composables/useBoundLocale';
 import { showErrorToast, showSuccessToast } from '@/composables/useClientToast';
 import { useDialog } from '@/composables/useDialog';
 import { useRoute } from '@/composables/useRoute';
+import { withActionErrorToast } from '@/lib/action-errors';
 import { sortShiftsByTime } from '@/lib/shift-calendar';
 import type { MonthlyShiftSummary } from '@/types/shifts';
 
@@ -513,7 +514,7 @@ async function deleteShift(id: number): Promise<void> {
             month: month.value,
             year: year.value,
         }),
-        { preserveState: true },
+        withActionErrorToast({ preserveState: true }),
     );
 }
 
@@ -614,7 +615,10 @@ async function deletePreset(preset: ShiftPreset): Promise<void> {
             month: month.value,
             year: year.value,
         }),
-        { preserveState: true, preserveScroll: true },
+        withActionErrorToast({
+            preserveState: true,
+            preserveScroll: true,
+        }),
     );
 }
 

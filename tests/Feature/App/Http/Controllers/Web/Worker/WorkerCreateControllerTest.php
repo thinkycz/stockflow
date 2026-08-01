@@ -47,7 +47,7 @@ use Thinkycz\LaravelCore\Support\Typer;
             'first_name' => '',
             'last_name' => 'Novak',
             'hourly_rate' => 200,
-        ], $this->inertiaHeaders())->assertStatus(422);
+        ], $this->inertiaHeaders())->assertRedirect()->assertSessionHasErrors();
 });
 
 \test('last name is required', function (): void {
@@ -60,7 +60,7 @@ use Thinkycz\LaravelCore\Support\Typer;
             'first_name' => 'Jan',
             'last_name' => '',
             'hourly_rate' => 200,
-        ], $this->inertiaHeaders())->assertStatus(422);
+        ], $this->inertiaHeaders())->assertRedirect()->assertSessionHasErrors();
 });
 
 \test('hourly rate must be numeric', function (): void {
@@ -73,7 +73,7 @@ use Thinkycz\LaravelCore\Support\Typer;
             'first_name' => 'Jan',
             'last_name' => 'Novak',
             'hourly_rate' => 'not-a-number',
-        ], $this->inertiaHeaders())->assertStatus(422);
+        ], $this->inertiaHeaders())->assertRedirect()->assertSessionHasErrors();
 });
 
 \test('limited user cannot create workers', function (): void {

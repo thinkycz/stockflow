@@ -33,6 +33,14 @@ test('admin manages and closes a monthly financial report while limited users ar
         'href',
         /\/statements\?.*year=2030.*month=1/,
     );
+    const incomingMovementRow = page.getByRole('row').filter({
+        has: page.getByRole('link', { name: 'IN-2030-E2E', exact: true }),
+    });
+    const transferMovementRow = page.getByRole('row').filter({
+        has: page.getByRole('link', { name: 'TR-2030-E2E', exact: true }),
+    });
+    await expect(incomingMovementRow).toContainText('Incoming → Brno pobočka');
+    await expect(transferMovementRow).toContainText('Warehouse → Brno pobočka');
 
     await page.getByRole('button', { name: 'Recurring expenses' }).click();
     await page.waitForURL(
@@ -107,6 +115,25 @@ test('admin manages and closes a monthly financial report while limited users ar
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(cashRow).toContainText('50.00');
     await expect(cashRow).toContainText('Manually adjusted');
+
+    await page.getByRole('button', { name: 'Close month' }).click();
+    await confirmDialog(page, 'Close month');
+    await expect(
+        page.getByRole('alert').filter({
+            hasText:
+                'Close the payroll report before closing the financial report.',
+        }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(
+        (url) =>
+            url.pathname === '/income-expenses' &&
+            url.searchParams.get('year') === '2030' &&
+            url.searchParams.get('month') === '1',
+    );
+    await expect(
+        page.getByRole('heading', { name: 'Income & expenses' }),
+    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Log in' })).toHaveCount(0);
 
     await page.goto('/payroll?year=2030&month=1');
     await page.getByRole('button', { name: 'Close month' }).click();

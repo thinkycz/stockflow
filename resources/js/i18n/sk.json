@@ -956,6 +956,42 @@
             "hours": "Naplánované hodiny",
             "salary": "Celková mzda"
         },
+        "rating": {
+            "score_label": "{score}/100",
+            "state": {
+                "future": "Zatiaľ nehodnotené",
+                "pending": "Čaká na uzavretie dochádzky"
+            },
+            "band": {
+                "good": "Dobrá dochádzka",
+                "warning": "Dochádzka s výhradami",
+                "poor": "Dochádzka vyžaduje zlepšenie"
+            },
+            "arrival_offset": "Odchýlka príchodu: {value}",
+            "departure_offset": "Odchýlka odchodu: {value}",
+            "break_detail": "Prestávky: {minutes} min ({count})",
+            "no_issues": "Bez zistených problémov.",
+            "reasons": {
+                "late_arrival": "Neskorý príchod",
+                "early_departure": "Predčasný odchod",
+                "excessive_break_duration": "Príliš dlhé prestávky",
+                "excessive_break_count": "Príliš veľa prestávok",
+                "absence": "Bez zaznamenanej dochádzky"
+            },
+            "summary": {
+                "title": "Kvalita dochádzky",
+                "subtitle": "Transparentné hodnotenie dokončených zmien za {month}.",
+                "worker": "Zamestnanec",
+                "score": "Priemerné skóre",
+                "good": "Dobré zmeny",
+                "late": "Neskoré príchody",
+                "early": "Skoršie odchody",
+                "breaks": "Problémy s prestávkami",
+                "absences": "Absencie",
+                "empty": "V tomto mesiaci nie sú žiadne zmeny na vyhodnotenie.",
+                "no_data": "Bez údajov"
+            }
+        },
         "columns": {
             "worker": "Brigádnik",
             "start_time": "Začiatok",

@@ -78,6 +78,10 @@
   current attendance, breaks, and stale attendance warnings) plus four compact
   actions for receipt, consumption, statements, and inventory. Store-scoped inputs are fixed and any
   cross-store access returns 403.
+- The authenticated Shifts page shows a dynamic 0–100 attendance rating for
+  completed shifts and a per-worker monthly quality summary. Limited users can
+  inspect rating reasons but cannot see salary data; the public shared calendar
+  never receives attendance ratings.
 
 ## Cookies
 

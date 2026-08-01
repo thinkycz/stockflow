@@ -5,6 +5,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Check,
+    Gauge,
     Link2,
     Pencil,
     Plus,
@@ -44,6 +45,25 @@ type Shift = {
     date: string;
     start_time: string;
     end_time: string;
+    attendance_rating?: AttendanceRating;
+};
+
+type AttendanceRatingReason =
+    | 'late_arrival'
+    | 'early_departure'
+    | 'excessive_break_duration'
+    | 'excessive_break_count'
+    | 'absence';
+
+type AttendanceRating = {
+    state: 'future' | 'pending' | 'scored';
+    score: number | null;
+    band: 'good' | 'warning' | 'poor' | null;
+    reason_codes: AttendanceRatingReason[];
+    arrival_offset_minutes: number | null;
+    departure_offset_minutes: number | null;
+    break_minutes: number;
+    break_count: number;
 };
 
 type CalendarShift = Shift & {
@@ -66,6 +86,19 @@ type ShiftPreset = {
     end_time: string;
 };
 
+type AttendanceSummary = {
+    worker_id: number;
+    worker_name: string;
+    color: string;
+    average_score: number | null;
+    evaluated_shifts: number;
+    good_shifts: number;
+    late_arrivals: number;
+    early_departures: number;
+    break_issues: number;
+    absences: number;
+};
+
 const props = defineProps<{
     store: { id: number; name: string } | null;
     shifts: Shift[];
@@ -76,6 +109,7 @@ const props = defineProps<{
         month: number;
     };
     is_admin: boolean;
+    attendance_summary: AttendanceSummary[];
     worker_summary?: WorkerSummary[];
     shift_presets?: ShiftPreset[];
 }>();
@@ -297,6 +331,35 @@ function formatHours(value: number): string {
     }).format(value);
 }
 
+function ratingClass(rating: AttendanceRating | undefined): string {
+    if (rating?.band === 'good') return 'bg-emerald-100 text-emerald-800';
+    if (rating?.band === 'warning') return 'bg-amber-100 text-amber-800';
+    if (rating?.band === 'poor') return 'bg-rose-100 text-rose-800';
+
+    return 'bg-surface-container-high text-on-surface-variant';
+}
+
+function ratingStateLabel(rating: AttendanceRating | undefined): string {
+    if (rating === undefined || rating.state === 'future') {
+        return t('shifts.rating.state.future');
+    }
+    if (rating.state === 'pending') {
+        return t('shifts.rating.state.pending');
+    }
+
+    return t(`shifts.rating.band.${rating.band ?? 'poor'}`);
+}
+
+function ratingReasonLabel(reason: AttendanceRatingReason): string {
+    return t(`shifts.rating.reasons.${reason}`);
+}
+
+function formatOffset(value: number): string {
+    if (value > 0) return `+${value} min`;
+    if (value < 0) return `−${Math.abs(value)} min`;
+    return '0 min';
+}
+
 // --- Modal / shift form ---
 
 const modalOpen = ref<boolean>(false);
@@ -341,7 +404,6 @@ const modalShifts = computed<CalendarShift[]>(() => {
 });
 
 function openDayModal(date: string): void {
-    if (!props.is_admin) return;
     modalDate.value = date;
     editingShiftId.value = null;
     form.reset();
@@ -592,9 +654,9 @@ function stopQuickAdd(): void {
 function handleDayClick(
     day: Pick<CalendarDay, 'date' | 'isCurrentMonth'>,
 ): void {
-    if (!day.isCurrentMonth || !props.is_admin) return;
+    if (!day.isCurrentMonth) return;
 
-    if (quickAddActive.value) {
+    if (quickAddActive.value && props.is_admin) {
         void quickAddShift(day.date);
         return;
     }
@@ -940,11 +1002,129 @@ async function copyText(value: string): Promise<void> {
                     v-else
                     :days="calendarDays"
                     :weekday-labels="weekdayLabels"
-                    :interactive="is_admin"
+                    :interactive="true"
+                    :editable="is_admin"
                     :quick-add-active="quickAddActive"
                     :pending-dates="pendingDates"
                     @activate="handleDayClick"
                 />
+            </Card>
+
+            <Card v-if="store" padded>
+                <div class="mb-4 flex items-start gap-3">
+                    <span
+                        class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-fixed text-primary"
+                    >
+                        <Gauge :size="20" />
+                    </span>
+                    <div>
+                        <h2
+                            class="font-heading text-lg font-bold text-on-surface"
+                        >
+                            {{ t('shifts.rating.summary.title') }}
+                        </h2>
+                        <p class="mt-1 text-sm text-on-surface-variant">
+                            {{
+                                t('shifts.rating.summary.subtitle', {
+                                    month: currentMonthLabel,
+                                })
+                            }}
+                        </p>
+                    </div>
+                </div>
+
+                <div
+                    v-if="attendance_summary.length === 0"
+                    class="rounded-xl bg-surface-container-low px-4 py-6 text-center text-sm text-on-surface-variant"
+                >
+                    {{ t('shifts.rating.summary.empty') }}
+                </div>
+                <div v-else class="overflow-x-auto">
+                    <DataTable>
+                        <thead>
+                            <tr>
+                                <th>{{ t('shifts.rating.summary.worker') }}</th>
+                                <th class="text-right">
+                                    {{ t('shifts.rating.summary.score') }}
+                                </th>
+                                <th class="text-right">
+                                    {{ t('shifts.rating.summary.good') }}
+                                </th>
+                                <th class="text-right">
+                                    {{ t('shifts.rating.summary.late') }}
+                                </th>
+                                <th class="text-right">
+                                    {{ t('shifts.rating.summary.early') }}
+                                </th>
+                                <th class="text-right">
+                                    {{ t('shifts.rating.summary.breaks') }}
+                                </th>
+                                <th class="text-right">
+                                    {{ t('shifts.rating.summary.absences') }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="row in attendance_summary"
+                                :key="row.worker_id"
+                            >
+                                <td>
+                                    <div
+                                        class="flex items-center gap-2 font-semibold text-on-surface"
+                                    >
+                                        <span
+                                            class="size-2.5 shrink-0 rounded-full"
+                                            :style="{
+                                                backgroundColor: row.color,
+                                            }"
+                                            aria-hidden="true"
+                                        />
+                                        {{ row.worker_name }}
+                                    </div>
+                                </td>
+                                <td class="text-right">
+                                    <span
+                                        v-if="row.average_score !== null"
+                                        class="inline-flex rounded-full px-2.5 py-1 text-xs font-bold"
+                                        :class="
+                                            row.average_score >= 90
+                                                ? 'bg-emerald-100 text-emerald-800'
+                                                : row.average_score >= 70
+                                                  ? 'bg-amber-100 text-amber-800'
+                                                  : 'bg-rose-100 text-rose-800'
+                                        "
+                                    >
+                                        {{ row.average_score }}/100
+                                    </span>
+                                    <span
+                                        v-else
+                                        class="text-xs text-on-surface-variant"
+                                    >
+                                        {{ t('shifts.rating.summary.no_data') }}
+                                    </span>
+                                </td>
+                                <td class="text-right font-semibold">
+                                    {{ row.good_shifts }}/{{
+                                        row.evaluated_shifts
+                                    }}
+                                </td>
+                                <td class="text-right">
+                                    {{ row.late_arrivals }}
+                                </td>
+                                <td class="text-right">
+                                    {{ row.early_departures }}
+                                </td>
+                                <td class="text-right">
+                                    {{ row.break_issues }}
+                                </td>
+                                <td class="text-right">
+                                    {{ row.absences }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </DataTable>
+                </div>
             </Card>
 
             <Card v-if="store && is_admin" padded>
@@ -1047,13 +1227,105 @@ async function copyText(value: string): Promise<void> {
                         class="flex items-center justify-between rounded-lg border border-l-4 border-outline-glass px-3 py-2"
                         :style="{ borderLeftColor: shift.worker_color }"
                     >
-                        <div class="text-sm">
-                            <span class="font-semibold text-on-surface">
-                                {{ shift.start_time }}–{{ shift.end_time }}
-                            </span>
-                            <span class="ml-2 text-on-surface-variant">
-                                {{ shift.worker_name }}
-                            </span>
+                        <div class="min-w-0 flex-1 text-sm">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="font-semibold text-on-surface">
+                                    {{ shift.start_time }}–{{ shift.end_time }}
+                                </span>
+                                <span class="text-on-surface-variant">
+                                    {{ shift.worker_name }}
+                                </span>
+                                <span
+                                    class="rounded-full px-2 py-0.5 text-xs font-bold"
+                                    :class="
+                                        ratingClass(shift.attendance_rating)
+                                    "
+                                >
+                                    {{
+                                        shift.attendance_rating?.score !==
+                                            null &&
+                                        shift.attendance_rating?.score !==
+                                            undefined
+                                            ? t('shifts.rating.score_label', {
+                                                  score: shift.attendance_rating
+                                                      .score,
+                                              })
+                                            : ratingStateLabel(
+                                                  shift.attendance_rating,
+                                              )
+                                    }}
+                                </span>
+                            </div>
+                            <div
+                                v-if="
+                                    shift.attendance_rating?.state === 'scored'
+                                "
+                                class="mt-2 space-y-1 text-xs text-on-surface-variant"
+                            >
+                                <p
+                                    v-if="
+                                        shift.attendance_rating
+                                            .arrival_offset_minutes !== null
+                                    "
+                                >
+                                    {{
+                                        t('shifts.rating.arrival_offset', {
+                                            value: formatOffset(
+                                                shift.attendance_rating
+                                                    .arrival_offset_minutes,
+                                            ),
+                                        })
+                                    }}
+                                </p>
+                                <p
+                                    v-if="
+                                        shift.attendance_rating
+                                            .departure_offset_minutes !== null
+                                    "
+                                >
+                                    {{
+                                        t('shifts.rating.departure_offset', {
+                                            value: formatOffset(
+                                                shift.attendance_rating
+                                                    .departure_offset_minutes,
+                                            ),
+                                        })
+                                    }}
+                                </p>
+                                <p>
+                                    {{
+                                        t('shifts.rating.break_detail', {
+                                            minutes:
+                                                shift.attendance_rating
+                                                    .break_minutes,
+                                            count: shift.attendance_rating
+                                                .break_count,
+                                        })
+                                    }}
+                                </p>
+                                <ul
+                                    v-if="
+                                        shift.attendance_rating.reason_codes
+                                            .length > 0
+                                    "
+                                    class="mt-2 space-y-1"
+                                >
+                                    <li
+                                        v-for="reason in shift.attendance_rating
+                                            .reason_codes"
+                                        :key="reason"
+                                        class="font-semibold text-on-surface"
+                                    >
+                                        • {{ ratingReasonLabel(reason) }}
+                                    </li>
+                                </ul>
+                                <p
+                                    v-else
+                                    class="font-semibold text-emerald-700"
+                                >
+                                    {{ t('shifts.rating.no_issues') }}
+                                </p>
+                            </div>
                         </div>
                         <div v-if="is_admin" class="flex items-center gap-1">
                             <Button

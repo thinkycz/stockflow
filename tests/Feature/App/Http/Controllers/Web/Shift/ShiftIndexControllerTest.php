@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Models\AttendanceSession;
 use App\Models\Shift;
 use App\Models\ShiftPreset;
 use App\Models\Store;
 use App\Models\Worker;
 use Database\Factories\UserFactory;
+use Illuminate\Support\Carbon;
 
 \test('admin sees shifts for the active store in the calendar', function (): void {
     [$admin, $warehouse] = \createIsolatedUserWithWarehouse();
@@ -136,6 +138,41 @@ use Database\Factories\UserFactory;
     $response->assertJsonMissingPath('props.worker_summary');
     $response->assertJsonMissingPath('props.shift_presets');
     $response->assertJsonPath('props.is_admin', false);
+});
+
+\test('limited user sees attendance ratings without financial summary', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $worker = Worker::factory()->create([
+        'user_id' => $admin->getKey(), 'first_name' => 'Anna', 'last_name' => 'Adams',
+    ]);
+    $limited = UserFactory::new()->limited($store)->createOne();
+    $shift = Shift::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
+        'date' => '2026-07-15', 'start_time' => '08:00', 'end_time' => '16:00',
+    ]);
+    AttendanceSession::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
+        'shift_id' => $shift->getKey(), 'scheduled_date' => '2026-07-15',
+        'scheduled_start_time' => '08:00', 'scheduled_end_time' => '16:00',
+        'started_at' => '2026-07-15 06:00:00', 'ended_at' => '2026-07-15 14:00:00',
+    ]);
+    Carbon::setTestNow('2026-07-31 10:00:00 UTC');
+
+    $response = $this->be($limited, 'users')->get(
+        \route('shifts.index', ['year' => 2026, 'month' => 7]),
+        $this->inertiaHeaders(),
+    );
+
+    $response->assertOk();
+    $response->assertJsonPath('props.shifts.0.attendance_rating.score', 100);
+    $response->assertJsonPath('props.shifts.0.attendance_rating.band', 'good');
+    $response->assertJsonPath('props.attendance_summary.0.worker_name', 'Anna Adams');
+    $response->assertJsonPath('props.attendance_summary.0.average_score', 100);
+    $response->assertJsonPath('props.attendance_summary.0.good_shifts', 1);
+    $response->assertJsonMissingPath('props.worker_summary');
+
+    Carbon::setTestNow();
 });
 
 \test('guest is redirected to the login screen', function (): void {

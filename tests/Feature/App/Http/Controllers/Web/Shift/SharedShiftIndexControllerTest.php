@@ -38,6 +38,7 @@ use App\Models\Worker;
     $response->assertJsonPath('props.shifts.0.date', '2026-07-15');
     $response->assertJsonPath('props.shifts.0.start_time', '09:00');
     $response->assertJsonPath('props.shifts.0.end_time', '16:00');
+    $response->assertJsonMissingPath('props.shifts.0.attendance_rating');
 });
 
 \test('shared calendar excludes shifts from another store', function (): void {

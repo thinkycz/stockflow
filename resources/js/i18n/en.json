@@ -956,6 +956,42 @@
             "hours": "Assigned hours",
             "salary": "Total salary"
         },
+        "rating": {
+            "score_label": "{score}/100",
+            "state": {
+                "future": "Not rated yet",
+                "pending": "Waiting for attendance to close"
+            },
+            "band": {
+                "good": "Good attendance",
+                "warning": "Attendance with concerns",
+                "poor": "Attendance needs improvement"
+            },
+            "arrival_offset": "Arrival difference: {value}",
+            "departure_offset": "Departure difference: {value}",
+            "break_detail": "Breaks: {minutes} min ({count})",
+            "no_issues": "No attendance issues found.",
+            "reasons": {
+                "late_arrival": "Late arrival",
+                "early_departure": "Early departure",
+                "excessive_break_duration": "Breaks were too long",
+                "excessive_break_count": "Too many breaks",
+                "absence": "No attendance recorded"
+            },
+            "summary": {
+                "title": "Attendance quality",
+                "subtitle": "Transparent rating of completed shifts for {month}.",
+                "worker": "Employee",
+                "score": "Average score",
+                "good": "Good shifts",
+                "late": "Late arrivals",
+                "early": "Early departures",
+                "breaks": "Break issues",
+                "absences": "Absences",
+                "empty": "There are no shifts to evaluate this month.",
+                "no_data": "No data"
+            }
+        },
         "columns": {
             "worker": "Worker",
             "start_time": "Start",

@@ -956,6 +956,42 @@
             "hours": "Naplánované hodiny",
             "salary": "Celková mzda"
         },
+        "rating": {
+            "score_label": "{score}/100",
+            "state": {
+                "future": "Zatím nehodnoceno",
+                "pending": "Čeká na uzavření docházky"
+            },
+            "band": {
+                "good": "Dobrá docházka",
+                "warning": "Docházka s výhradami",
+                "poor": "Docházka vyžaduje zlepšení"
+            },
+            "arrival_offset": "Odchylka příchodu: {value}",
+            "departure_offset": "Odchylka odchodu: {value}",
+            "break_detail": "Pauzy: {minutes} min ({count})",
+            "no_issues": "Bez zjištěných problémů.",
+            "reasons": {
+                "late_arrival": "Pozdní příchod",
+                "early_departure": "Předčasný odchod",
+                "excessive_break_duration": "Příliš dlouhé pauzy",
+                "excessive_break_count": "Příliš mnoho pauz",
+                "absence": "Bez zaznamenané docházky"
+            },
+            "summary": {
+                "title": "Kvalita docházky",
+                "subtitle": "Transparentní hodnocení dokončených směn za {month}.",
+                "worker": "Zaměstnanec",
+                "score": "Průměrné skóre",
+                "good": "Dobré směny",
+                "late": "Pozdní příchody",
+                "early": "Dřívější odchody",
+                "breaks": "Problémy s pauzami",
+                "absences": "Absence",
+                "empty": "V tomto měsíci nejsou žádné směny k vyhodnocení.",
+                "no_data": "Bez dat"
+            }
+        },
         "columns": {
             "worker": "Brigádník",
             "start_time": "Začátek",

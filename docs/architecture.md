@@ -216,6 +216,13 @@ Adminské doplnění, změna a zneplatnění ukládá důvod a stav před/po zm�
 `attendance_audits`. Omezené účty mohou zapisovat běžné události jen pro svou
 přiřazenou prodejnu; report, sazby, tisk a opravy jsou admin-only.
 
+`AttendanceRatingService` dávkově odvozuje hodnocení skončených směn z jejich
+napárovaných nezneplatněných bloků a pauz. Skóre se neukládá, takže auditovaná
+oprava docházky se ihned projeví. Historické směny používají snapshot plánu;
+více pracovních bloků se spojí a mezery mezi nimi se počítají jako pauzy.
+Přihlášený admin i omezený účet vidí rating na `/shifts`, finanční souhrn však
+zůstává admin-only a veřejný kalendář rating nepublikuje.
+
 - Limited users are pinned to one store and only see Dashboard, Výkazy
   (Statements), Inventura, and Settings in `AppLayout.vue`. The store
   select on `/statements` and `/inventory-counts` is fixed; cross-store

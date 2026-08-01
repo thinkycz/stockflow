@@ -9,6 +9,11 @@ type CalendarShift = {
     worker_color: string;
     start_time: string;
     end_time: string;
+    attendance_rating?: {
+        state: 'future' | 'pending' | 'scored';
+        score: number | null;
+        band: 'good' | 'warning' | 'poor' | null;
+    };
 };
 
 type CalendarDay = {
@@ -23,11 +28,13 @@ const props = withDefaults(
         days: CalendarDay[];
         weekdayLabels: string[];
         interactive?: boolean;
+        editable?: boolean;
         quickAddActive?: boolean;
         pendingDates?: ReadonlySet<string>;
     }>(),
     {
         interactive: false,
+        editable: false,
         quickAddActive: false,
         pendingDates: () => new Set<string>(),
     },
@@ -93,9 +100,30 @@ function selectMobileDay(day: CalendarDay): void {
     if (!day.isCurrentMonth) return;
 
     selectedDate.value = day.date;
-    if (props.quickAddActive && props.interactive) {
+    if (props.quickAddActive && props.editable) {
         emit('activate', day);
     }
+}
+
+function ratingLabel(shift: CalendarShift): string {
+    const rating = shift.attendance_rating;
+    if (rating === undefined || rating.state === 'future') {
+        return t('shifts.rating.state.future');
+    }
+    if (rating.state === 'pending') {
+        return t('shifts.rating.state.pending');
+    }
+
+    return t('shifts.rating.score_label', { score: rating.score });
+}
+
+function ratingClass(shift: CalendarShift): string {
+    const rating = shift.attendance_rating;
+    if (rating?.band === 'good') return 'bg-emerald-100 text-emerald-800';
+    if (rating?.band === 'warning') return 'bg-amber-100 text-amber-800';
+    if (rating?.band === 'poor') return 'bg-rose-100 text-rose-800';
+
+    return 'bg-surface-container-high text-on-surface-variant';
 }
 
 function activateDay(day: CalendarDay): void {
@@ -178,7 +206,7 @@ function formatDateKey(date: Date): string {
                         class="animate-spin text-primary"
                     />
                     <CalendarPlus
-                        v-else-if="interactive && day.isCurrentMonth"
+                        v-else-if="editable && day.isCurrentMonth"
                         :size="14"
                         class="text-on-surface-variant/0 transition group-hover:text-primary/60"
                     />
@@ -200,9 +228,24 @@ function formatDateKey(date: Date): string {
                             {{ shift.start_time }}–{{ shift.end_time }}
                         </div>
                         <div
-                            class="mt-0.5 truncate text-[10px] text-on-surface-variant"
+                            class="mt-0.5 flex items-center justify-between gap-1 text-[10px] text-on-surface-variant"
                         >
-                            {{ shift.worker_name }}
+                            <span class="truncate">{{
+                                shift.worker_name
+                            }}</span>
+                            <span
+                                class="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold"
+                                :class="ratingClass(shift)"
+                                :aria-label="ratingLabel(shift)"
+                            >
+                                {{
+                                    shift.attendance_rating?.score ??
+                                    (shift.attendance_rating?.state ===
+                                    'pending'
+                                        ? '…'
+                                        : '—')
+                                }}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -319,7 +362,7 @@ function formatDateKey(date: Date): string {
                         </h3>
                     </div>
                     <button
-                        v-if="interactive && !quickAddActive"
+                        v-if="editable && !quickAddActive"
                         type="button"
                         class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-md transition active:scale-95"
                         :aria-label="t('shifts.add_shift')"
@@ -333,10 +376,12 @@ function formatDateKey(date: Date): string {
                     v-if="selectedDay.shifts.length > 0"
                     class="divide-y divide-outline-glass"
                 >
-                    <article
+                    <button
                         v-for="shift in selectedDay.shifts"
                         :key="shift.id"
-                        class="flex items-center gap-3 px-4 py-3.5"
+                        type="button"
+                        class="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-surface-container-low"
+                        @click="activateDay(selectedDay)"
                     >
                         <span
                             class="h-10 w-1 shrink-0 rounded-full"
@@ -355,7 +400,19 @@ function formatDateKey(date: Date): string {
                                 {{ shift.start_time }}–{{ shift.end_time }}
                             </p>
                         </div>
-                    </article>
+                        <span
+                            class="shrink-0 rounded-full px-2 py-1 text-xs font-bold"
+                            :class="ratingClass(shift)"
+                            :aria-label="ratingLabel(shift)"
+                        >
+                            {{
+                                shift.attendance_rating?.score ??
+                                (shift.attendance_rating?.state === 'pending'
+                                    ? '…'
+                                    : '—')
+                            }}
+                        </span>
+                    </button>
                 </div>
                 <div
                     v-else
@@ -370,7 +427,7 @@ function formatDateKey(date: Date): string {
                         {{ t('shifts.mobile.no_shifts') }}
                     </p>
                     <button
-                        v-if="interactive && !quickAddActive"
+                        v-if="editable && !quickAddActive"
                         type="button"
                         class="mt-3 text-xs font-bold text-primary underline-offset-4 hover:underline"
                         @click="activateDay(selectedDay)"
@@ -456,9 +513,21 @@ function formatDateKey(date: Date): string {
                                         }}
                                     </div>
                                     <div
-                                        class="mt-0.5 truncate text-[9px] text-on-surface-variant"
+                                        class="mt-0.5 flex items-center justify-between gap-1 text-[9px] text-on-surface-variant"
                                     >
-                                        {{ shift.worker_name }}
+                                        <span class="truncate">{{
+                                            shift.worker_name
+                                        }}</span>
+                                        <span
+                                            class="shrink-0 rounded-full px-1 py-0.5 text-[8px] font-bold"
+                                            :class="ratingClass(shift)"
+                                            :aria-label="ratingLabel(shift)"
+                                        >
+                                            {{
+                                                shift.attendance_rating
+                                                    ?.score ?? '—'
+                                            }}
+                                        </span>
                                     </div>
                                 </div>
                             </div>

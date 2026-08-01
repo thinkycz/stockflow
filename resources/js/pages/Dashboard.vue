@@ -33,6 +33,8 @@ import MetricCard from '@/components/ui/MetricCard.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
 import NoticeboardSection from '@/components/noticeboard/NoticeboardSection.vue';
 import type { NoticeboardPayload } from '@/components/noticeboard/NoticeboardSection.vue';
+import DashboardChecklistSection from '@/components/checklists/DashboardChecklistSection.vue';
+import type { ChecklistDashboardPayload } from '@/components/checklists/DashboardChecklistSection.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import {
@@ -122,6 +124,7 @@ const props = defineProps<{
     operations: Operations | null;
     is_admin: boolean;
     noticeboard: NoticeboardPayload;
+    checklists: ChecklistDashboardPayload | null;
 }>();
 
 const { t, locale } = useI18n();
@@ -187,6 +190,11 @@ function statementPeriodLabel(statement: RecentStatement): string {
             <NoticeboardSection
                 :noticeboard="props.noticeboard"
                 :active-store="props.active_store"
+            />
+
+            <DashboardChecklistSection
+                v-if="props.checklists"
+                :checklists="props.checklists"
             />
 
             <template v-if="!props.is_admin">

@@ -21,6 +21,7 @@ use App\Models\StoreItem;
 use App\Models\User;
 use App\Models\Worker;
 use App\Services\AttendanceService;
+use App\Services\ChecklistService;
 use App\Services\InventorySessionService;
 use App\Support\ActiveStoreResolver;
 use Carbon\CarbonImmutable;
@@ -50,6 +51,7 @@ class DashboardController
         $user = User::mustAuth();
         $activeStore = ActiveStoreResolver::resolve($request, $user);
         $noticeboard = $this->noticeboard($request, $user, $activeStore);
+        $checklists = $activeStore instanceof Store ? (new ChecklistService())->dashboardPayload($activeStore, $user) : null;
 
         if (!$user->isAdmin()) {
             return Inertia::render('Dashboard', [
@@ -67,6 +69,7 @@ class DashboardController
                     : null,
                 'is_admin' => false,
                 'noticeboard' => $noticeboard,
+                'checklists' => $checklists,
             ]);
         }
 
@@ -209,6 +212,7 @@ class DashboardController
             'operations' => null,
             'is_admin' => true,
             'noticeboard' => $noticeboard,
+            'checklists' => $checklists,
         ]);
     }
 
@@ -361,6 +365,7 @@ class DashboardController
             'operations' => null,
             'is_admin' => true,
             'noticeboard' => $noticeboard,
+            'checklists' => null,
         ];
     }
 

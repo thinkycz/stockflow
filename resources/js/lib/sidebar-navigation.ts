@@ -14,6 +14,7 @@ export type StoreSectionNavigationKey =
     | 'reports'
     | 'shifts'
     | 'attendance'
+    | 'checklists'
     | 'payroll'
     | 'income_expenses';
 
@@ -29,6 +30,7 @@ export function storeSectionNavigationKeys(
             'reports',
             'shifts',
             'attendance',
+            'checklists',
             'payroll',
             'income_expenses',
         ];
@@ -57,6 +59,7 @@ export function isStoreSectionUrl(url: string, isAdmin: boolean): boolean {
         isRouteOrChild('/reports') ||
         isRouteOrChild('/shifts') ||
         isRouteOrChild('/attendance') ||
+        isRouteOrChild('/checklists') ||
         isRouteOrChild('/payroll') ||
         isRouteOrChild('/income-expenses')
     ) {

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Console\Commands\BackfillInventoryConsumptionCommand;
+use App\Console\Commands\GenerateDailyChecklistsCommand;
 use App\Console\Commands\PruneNoticeboardCardsCommand;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -65,6 +66,7 @@ return Application::configure(basePath: \dirname(__DIR__))
     ])
     ->withCommands([
         BackfillInventoryConsumptionCommand::class,
+        GenerateDailyChecklistsCommand::class,
         PruneNoticeboardCardsCommand::class,
     ])
     ->withSchedule(static function (Schedule $schedule): void {
@@ -87,6 +89,12 @@ return Application::configure(basePath: \dirname(__DIR__))
         $schedule
             ->command('stockflow:prune-noticeboard-cards')
             ->dailyAt('03:30')
+            ->timezone($timezone)
+            ->runInBackground();
+
+        $schedule
+            ->command('stockflow:generate-daily-checklists')
+            ->dailyAt('00:05')
             ->timezone($timezone)
             ->runInBackground();
     })

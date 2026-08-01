@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Models\BaseModel;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -49,7 +50,7 @@ class Store extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'user_id', 'name', 'address', 'status', 'is_warehouse', 'notes', 'slack_channel', 'shift_share_token', 'created_at', 'updated_at']);
+        return $query->select(['id', 'user_id', 'name', 'address', 'status', 'is_warehouse', 'notes', 'slack_channel', 'shift_share_token', 'checklists_initialized_at', 'created_at', 'updated_at']);
     }
 
     /**
@@ -238,6 +239,14 @@ class Store extends BaseModel
     }
 
     /**
+     * Timestamp proving that default checklist templates were considered for this store.
+     */
+    public function getChecklistsInitializedAt(): Carbon|null
+    {
+        return $this->assertNullableCarbon('checklists_initialized_at');
+    }
+
+    /**
      * User id getter.
      */
     public function getUserId(): int
@@ -255,6 +264,7 @@ class Store extends BaseModel
         return [
             'status' => StoreStatusEnum::class,
             'is_warehouse' => 'boolean',
+            'checklists_initialized_at' => 'datetime',
         ];
     }
 }

@@ -153,5 +153,10 @@
     "Payroll adjustment saved.": "Úprava odměny byla uložena.",
     "Payroll adjustment deleted.": "Úprava odměny byla smazána.",
     "Payroll report closed.": "Výplatní report byl uzavřen.",
-    "Payroll report reopened.": "Výplatní report byl znovu otevřen."
+    "Payroll report reopened.": "Výplatní report byl znovu otevřen.",
+    "Checklist template saved.": "Šablona checklistu byla uložena.",
+    "Checklist updated.": "Checklist byl aktualizován.",
+    "Checklist day excused.": "Den byl označen jako neprovozní.",
+    "Checklist day restored.": "Omluvení dne bylo zrušeno.",
+    "The checklist was changed by another user. Refresh and try again.": "Checklist mezitím změnil jiný uživatel. Obnovte stránku a zkuste to znovu."
 }

@@ -201,6 +201,21 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($response->json('props.is_admin'))->toBeFalse();
 });
 
+\test('retail dashboard exposes both daily checklist cards and workers', function (): void {
+    CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-08-03 09:00:00', 'Europe/Prague'));
+    $admin = UserFactory::new()->admin()->createOne();
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $admin->setActiveStoreId($store->getKey());
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey(), 'first_name' => 'Anna', 'last_name' => 'Nováková']);
+
+    $response = $this->be($admin, 'users')->get('/dashboard', $this->inertiaHeaders());
+
+    $response->assertOk();
+    \expect($response->json('props.checklists.shifts.morning.items'))->toHaveCount(10)
+        ->and($response->json('props.checklists.shifts.afternoon.items'))->toHaveCount(12)
+        ->and($response->json('props.checklists.workers.0.id'))->toBe($worker->getKey());
+});
+
 \test('limited dashboard shows current operations for its assigned store', function (): void {
     CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-07-22 10:00:00', 'Europe/Prague'));
 

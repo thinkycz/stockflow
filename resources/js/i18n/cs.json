@@ -20,6 +20,7 @@
         "statistics": "Statistika",
         "shifts": "Směny",
         "attendance": "Docházka",
+        "checklists": "Checklisty",
         "payroll": "Výplatní pásky",
         "income_expenses": "Příjmy a výdaje",
         "users": "Uživatelé",
@@ -1157,6 +1158,53 @@
             "worker": "Brigádník",
             "start_time": "Začátek",
             "end_time": "Konec"
+        }
+    },
+    "checklists": {
+        "title": "Checklisty",
+        "subtitle": "Spravujte každodenní a týdenní úkoly aktivní provozovny.",
+        "dashboard_title": "Dnešní checklisty",
+        "dashboard_subtitle": "Ranní a odpolední úkoly pro {date}",
+        "retail_required": "Checklisty jsou dostupné pouze pro maloobchodní provozovnu.",
+        "retail_required_help": "V sidebaru vyberte aktivní prodejnu, která není skladem.",
+        "tabs": { "templates": "Šablony", "history": "Historie" },
+        "every_day": "Každý den",
+        "shifts": { "morning": "Ranní směna", "afternoon": "Odpolední směna" },
+        "weekdays": {
+            "1": "Pondělí",
+            "2": "Úterý",
+            "3": "Středa",
+            "4": "Čtvrtek",
+            "5": "Pátek",
+            "6": "Sobota",
+            "7": "Neděle"
+        },
+        "status": {
+            "not_configured": "Nenakonfigurováno",
+            "in_progress": "Probíhá",
+            "completed": "Splněno",
+            "incomplete": "Nesplněno",
+            "excused": "Neprovozní den"
+        },
+        "select_worker": "Právě plní brigádník",
+        "add_task": "Přidat úkol",
+        "task": "Úkol",
+        "no_tasks": "Pro tuto směnu nejsou nastavené žádné úkoly.",
+        "excused_reason": "Neprovozní den: {reason}",
+        "history": {
+            "from": "Od",
+            "to": "Do",
+            "status": "Stav",
+            "worker": "Brigádník",
+            "all_workers": "Všichni brigádníci",
+            "all_statuses": "Všechny stavy",
+            "date": "Datum",
+            "detail": "Detail checklistu",
+            "empty": "Historie je prázdná",
+            "empty_help": "Pro zvolené filtry nejsou žádné checklisty.",
+            "excuse": "Označit jako neprovozní",
+            "restore": "Zrušit omluvení",
+            "reason_help": "Zadejte důvod této auditované změny."
         }
     },
     "attendance": {

@@ -153,5 +153,10 @@
     "Payroll adjustment saved.": "Payroll adjustment saved.",
     "Payroll adjustment deleted.": "Payroll adjustment deleted.",
     "Payroll report closed.": "Payroll report closed.",
-    "Payroll report reopened.": "Payroll report reopened."
+    "Payroll report reopened.": "Payroll report reopened.",
+    "Checklist template saved.": "Checklist template saved.",
+    "Checklist updated.": "Checklist updated.",
+    "Checklist day excused.": "Checklist day excused.",
+    "Checklist day restored.": "Checklist day restored.",
+    "The checklist was changed by another user. Refresh and try again.": "The checklist was changed by another user. Refresh and try again."
 }

@@ -20,6 +20,7 @@
         "statistics": "Štatistika",
         "shifts": "Smeny",
         "attendance": "Dochádzka",
+        "checklists": "Checklisty",
         "payroll": "Výplatné pásky",
         "income_expenses": "Príjmy a výdavky",
         "users": "Používatelia",
@@ -1157,6 +1158,56 @@
             "worker": "Brigádnik",
             "start_time": "Začiatok",
             "end_time": "Koniec"
+        }
+    },
+    "checklists": {
+        "title": "Checklisty",
+        "subtitle": "Spravujte každodenné a týždenné úlohy aktívnej prevádzky.",
+        "dashboard_title": "Dnešné checklisty",
+        "dashboard_subtitle": "Ranné a popoludňajšie úlohy pre {date}",
+        "retail_required": "Checklisty sú dostupné iba pre maloobchodnú prevádzku.",
+        "retail_required_help": "V sidebare vyberte aktívnu predajňu, ktorá nie je skladom.",
+        "tabs": { "templates": "Šablóny", "history": "História" },
+        "every_day": "Každý deň",
+        "shifts": {
+            "morning": "Ranná smena",
+            "afternoon": "Popoludňajšia smena"
+        },
+        "weekdays": {
+            "1": "Pondelok",
+            "2": "Utorok",
+            "3": "Streda",
+            "4": "Štvrtok",
+            "5": "Piatok",
+            "6": "Sobota",
+            "7": "Nedeľa"
+        },
+        "status": {
+            "not_configured": "Nenakonfigurované",
+            "in_progress": "Prebieha",
+            "completed": "Splnené",
+            "incomplete": "Nesplnené",
+            "excused": "Neprevádzkový deň"
+        },
+        "select_worker": "Práve plní brigádnik",
+        "add_task": "Pridať úlohu",
+        "task": "Úloha",
+        "no_tasks": "Pre túto smenu nie sú nastavené žiadne úlohy.",
+        "excused_reason": "Neprevádzkový deň: {reason}",
+        "history": {
+            "from": "Od",
+            "to": "Do",
+            "status": "Stav",
+            "worker": "Brigádnik",
+            "all_workers": "Všetci brigádnici",
+            "all_statuses": "Všetky stavy",
+            "date": "Dátum",
+            "detail": "Detail checklistu",
+            "empty": "História je prázdna",
+            "empty_help": "Pre zvolené filtre nie sú žiadne checklisty.",
+            "excuse": "Označiť ako neprevádzkový",
+            "restore": "Zrušiť ospravedlnenie",
+            "reason_help": "Zadajte dôvod tejto auditovanej zmeny."
         }
     },
     "attendance": {

@@ -13,6 +13,10 @@ use App\Http\Controllers\Web\Auth\LoginController;
 use App\Http\Controllers\Web\Auth\LogoutController;
 use App\Http\Controllers\Web\Auth\ResetPasswordController;
 use App\Http\Controllers\Web\Auth\VerifyEmailController;
+use App\Http\Controllers\Web\Checklist\ChecklistDayExcuseController;
+use App\Http\Controllers\Web\Checklist\ChecklistIndexController;
+use App\Http\Controllers\Web\Checklist\ChecklistItemController;
+use App\Http\Controllers\Web\Checklist\ChecklistTemplateController;
 use App\Http\Controllers\Web\Dashboard\DashboardController;
 use App\Http\Controllers\Web\IncomeExpense\IncomeExpenseIndexController;
 use App\Http\Controllers\Web\IncomeExpense\IncomeExpenseLifecycleController;
@@ -148,6 +152,9 @@ Resolver::resolveRouteRegistrar()
         $router->get('attendance', AttendanceIndexController::class)->name('attendance.index');
         $router->post('attendance/actions', AttendanceActionController::class)->name('attendance.actions.store');
 
+        // Store checklists (admin + limited completion)
+        $router->put('checklist-items/{checklistItem}', ChecklistItemController::class)->whereNumber('checklistItem')->name('checklist-items.update');
+
         // Settings
         $router->get('verify-email', [VerifyEmailController::class, 'create'])->name('verify-email.show');
         $router->post('verify-email', [VerifyEmailController::class, 'store'])->name('verify-email.store');
@@ -253,4 +260,10 @@ Resolver::resolveRouteRegistrar()
         $router->post('attendance/corrections', [AttendanceCorrectionController::class, 'store'])->name('attendance.corrections.store');
         $router->put('attendance/sessions/{attendanceSession}', [AttendanceCorrectionController::class, 'update'])->whereNumber('attendanceSession')->name('attendance.sessions.update');
         $router->post('attendance/sessions/{attendanceSession}/void', [AttendanceCorrectionController::class, 'void'])->whereNumber('attendanceSession')->name('attendance.sessions.void');
+
+        // Store checklist administration
+        $router->get('checklists', ChecklistIndexController::class)->name('checklists.index');
+        $router->put('checklists/templates', ChecklistTemplateController::class)->name('checklists.templates.update');
+        $router->put('checklist-days/{checklistDay}/excuse', [ChecklistDayExcuseController::class, 'update'])->whereNumber('checklistDay')->name('checklist-days.excuse');
+        $router->delete('checklist-days/{checklistDay}/excuse', [ChecklistDayExcuseController::class, 'destroy'])->whereNumber('checklistDay')->name('checklist-days.excuse.destroy');
     });

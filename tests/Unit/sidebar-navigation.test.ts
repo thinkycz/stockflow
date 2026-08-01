@@ -27,7 +27,10 @@ describe('sidebar navigation', () => {
         const admin = storeSectionNavigationKeys(true, true);
         const limited = storeSectionNavigationKeys(false, true);
 
-        expect(admin.indexOf('payroll')).toBe(admin.indexOf('attendance') + 1);
+        expect(admin.indexOf('checklists')).toBe(
+            admin.indexOf('attendance') + 1,
+        );
+        expect(admin.indexOf('payroll')).toBe(admin.indexOf('checklists') + 1);
         expect(admin.indexOf('income_expenses')).toBe(
             admin.indexOf('payroll') + 1,
         );
@@ -43,6 +46,7 @@ describe('sidebar navigation', () => {
         expect(isStoreSectionUrl('/reports/statistics', true)).toBe(true);
         expect(isStoreSectionUrl('/shifts?month=7', true)).toBe(true);
         expect(isStoreSectionUrl('/attendance/report', true)).toBe(true);
+        expect(isStoreSectionUrl('/checklists?tab=history', true)).toBe(true);
         expect(isStoreSectionUrl('/payroll?year=2026', true)).toBe(true);
         expect(isStoreSectionUrl('/income-expenses?year=2026', true)).toBe(
             true,

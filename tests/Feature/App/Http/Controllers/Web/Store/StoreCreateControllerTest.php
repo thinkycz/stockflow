@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Enums\StoreStatusEnum;
+use App\Models\ChecklistDay;
+use App\Models\ChecklistTemplateTask;
 use App\Models\Store;
 
 \test('store create form is reachable', function (): void {
@@ -33,6 +35,8 @@ use App\Models\Store;
     \expect($store)->not->toBeNull();
     \expect($store->getUserId())->toBe($user->getKey());
     \expect($store->getSlackChannel())->toBe('#prodejna-praha');
+    \expect(ChecklistTemplateTask::query()->where('store_id', $store->getKey())->count())->toBe(53);
+    \expect(ChecklistDay::query()->where('store_id', $store->getKey())->count())->toBe(1);
     \assertInertiaFlash($response, 'success', \__('Store created.'));
 });
 

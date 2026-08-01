@@ -20,6 +20,7 @@
         "statistics": "Statistics",
         "shifts": "Shifts",
         "attendance": "Attendance",
+        "checklists": "Checklists",
         "payroll": "Payslips",
         "income_expenses": "Income & expenses",
         "users": "Users",
@@ -1157,6 +1158,56 @@
             "worker": "Worker",
             "start_time": "Start",
             "end_time": "End"
+        }
+    },
+    "checklists": {
+        "title": "Checklists",
+        "subtitle": "Manage daily and weekly tasks for the active store.",
+        "dashboard_title": "Today's checklists",
+        "dashboard_subtitle": "Morning and afternoon tasks for {date}",
+        "retail_required": "Checklists are available only for a retail store.",
+        "retail_required_help": "Select an active non-warehouse store in the sidebar.",
+        "tabs": { "templates": "Templates", "history": "History" },
+        "every_day": "Every day",
+        "shifts": {
+            "morning": "Morning shift",
+            "afternoon": "Afternoon shift"
+        },
+        "weekdays": {
+            "1": "Monday",
+            "2": "Tuesday",
+            "3": "Wednesday",
+            "4": "Thursday",
+            "5": "Friday",
+            "6": "Saturday",
+            "7": "Sunday"
+        },
+        "status": {
+            "not_configured": "Not configured",
+            "in_progress": "In progress",
+            "completed": "Completed",
+            "incomplete": "Incomplete",
+            "excused": "Closed day"
+        },
+        "select_worker": "Worker currently completing",
+        "add_task": "Add task",
+        "task": "Task",
+        "no_tasks": "No tasks are configured for this shift.",
+        "excused_reason": "Closed day: {reason}",
+        "history": {
+            "from": "From",
+            "to": "To",
+            "status": "Status",
+            "worker": "Worker",
+            "all_workers": "All workers",
+            "all_statuses": "All statuses",
+            "date": "Date",
+            "detail": "Checklist detail",
+            "empty": "History is empty",
+            "empty_help": "No checklists match the selected filters.",
+            "excuse": "Mark as closed",
+            "restore": "Revoke excuse",
+            "reason_help": "Enter the reason for this audited change."
         }
     },
     "attendance": {

@@ -10,6 +10,7 @@ import {
     HardHat,
     HandCoins,
     LayoutDashboard,
+    ListChecks,
     LogOut,
     PackageMinus,
     PackagePlus,
@@ -129,6 +130,13 @@ const storeNavItemsByKey = computed<Record<StoreSectionNavigationKey, NavItem>>(
         },
         shifts: shiftNavItem.value,
         attendance: attendanceNavItem.value,
+        checklists: {
+            key: 'checklists',
+            href: route('checklists.index'),
+            label: t('nav.checklists'),
+            icon: ListChecks,
+            active: activeUrl.value.startsWith('/checklists'),
+        },
         payroll: {
             key: 'payroll',
             href: route('payroll.index'),

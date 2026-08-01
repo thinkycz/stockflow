@@ -11,5 +11,8 @@
 | R7     | written spec | CZ/EN/SK UI a plná verifikace                    | 2–4   | i18n, checks, E2E       | verified | verification record | žádný designový zdroj                |
 | R8     | follow-up    | Ruční měsíční hodiny a sazba s resetem           | ext.  | servis, CRUD, UI        | verified | verification record | přepisuje automatický základ         |
 | R9     | follow-up    | Zjednodušený tisk čtyř výsledných hodnot         | ext.  | print route/page        | verified | verification record | bez tabulky směn a docházky          |
+| R10    | follow-up    | Stručný přehled s jedinou akcí Detail            | ext.  | index UI                | verified | verification record | bez vnořených tabulek                |
+| R11    | follow-up    | Dedikovaný admin detail výplatní pásky           | ext.  | route, controller, page | verified | verification record | zachová kontext měsíce a prodejny    |
+| R12    | follow-up    | Jedno přístupné menu pro obě varianty tisku      | ext.  | print menu              | verified | verification record | hromadně i jednotlivě                |
 
 Verifikační záznam: `docs/verification/2026-08-01-payroll.md`.

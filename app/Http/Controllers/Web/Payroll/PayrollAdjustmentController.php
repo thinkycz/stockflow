@@ -43,7 +43,7 @@ class PayrollAdjustmentController
         );
         Inertia::flash('success', \__('Payroll adjustment created.'));
 
-        return $this->redirect($payload);
+        return Resolver::resolveRedirector()->back();
     }
 
     /**
@@ -66,7 +66,7 @@ class PayrollAdjustmentController
         );
         Inertia::flash('success', \__('Payroll adjustment saved.'));
 
-        return $this->redirect($payload);
+        return Resolver::resolveRedirector()->back();
     }
 
     /**
@@ -86,7 +86,7 @@ class PayrollAdjustmentController
         );
         Inertia::flash('success', \__('Payroll adjustment deleted.'));
 
-        return $this->redirect($period);
+        return Resolver::resolveRedirector()->back();
     }
 
     /**
@@ -103,17 +103,6 @@ class PayrollAdjustmentController
             'type' => $validity->type()->required()->toArray(),
             'amount' => $validity->amount()->required()->toArray(),
             'reason' => $validity->reason()->required()->toArray(),
-        ]);
-    }
-
-    /**
-     * Redirect to the selected payroll month.
-     */
-    private function redirect(Parser $period): RedirectResponse
-    {
-        return Resolver::resolveRedirector()->route('payroll.index', [
-            'year' => $period->parseInt('year'),
-            'month' => $period->parseInt('month'),
         ]);
     }
 }

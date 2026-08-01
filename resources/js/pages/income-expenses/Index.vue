@@ -27,6 +27,7 @@ import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import MonthPicker from '@/components/ui/MonthPicker.vue';
 import Select from '@/components/ui/Select.vue';
+import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
@@ -226,12 +227,15 @@ function changeMonth(value: string): void {
     }
 }
 
-function openManual(row: FinancialRow | null = null): void {
+function openManual(
+    row: FinancialRow | null = null,
+    direction: 'income' | 'expense' = 'expense',
+): void {
     editingManualRow.value = row;
     manualForm.clearErrors();
     manualForm.year = props.filters.year;
     manualForm.month = props.filters.month;
-    manualForm.direction = row?.direction ?? 'expense';
+    manualForm.direction = row?.direction ?? direction;
     manualForm.label = row?.label ?? '';
     manualForm.occurred_on =
         row?.occurred_on ??
@@ -415,6 +419,7 @@ function rowHref(row: FinancialRow): string | null {
                             })
                         }}
                     </p>
+                    <StoreContextIndicator />
                 </div>
                 <div class="flex flex-wrap items-end gap-2">
                     <FilterField
@@ -444,11 +449,6 @@ function rowHref(row: FinancialRow): string | null {
                         >
                             <Copy :size="15" />{{
                                 t('income_expenses.copy_previous')
-                            }}
-                        </Button>
-                        <Button variant="secondary" @click="openManual()">
-                            <Plus :size="15" />{{
-                                t('income_expenses.add_row')
                             }}
                         </Button>
                         <Button
@@ -537,11 +537,28 @@ function rowHref(row: FinancialRow): string | null {
                         <h2 class="font-heading text-lg font-bold">
                             {{ t(`income_expenses.sections.${section.key}`) }}
                         </h2>
-                        <span class="text-xs text-on-surface-variant">{{
-                            t('income_expenses.rows_count', {
-                                count: section.rows.length,
-                            })
-                        }}</span>
+                        <Button
+                            v-if="financial_report.report.status === 'open'"
+                            variant="secondary"
+                            size="compact"
+                            @click="
+                                openManual(
+                                    null,
+                                    section.key === 'income'
+                                        ? 'income'
+                                        : 'expense',
+                                )
+                            "
+                        >
+                            <Plus :size="14" />
+                            {{
+                                t(
+                                    section.key === 'income'
+                                        ? 'income_expenses.add_income'
+                                        : 'income_expenses.add_expense',
+                                )
+                            }}
+                        </Button>
                     </div>
                     <DataTable table-class="md:min-w-[760px]">
                         <thead
@@ -938,7 +955,11 @@ function rowHref(row: FinancialRow): string | null {
             :title="
                 editingManualRow
                     ? t('income_expenses.edit_row')
-                    : t('income_expenses.add_row')
+                    : t(
+                          manualForm.direction === 'income'
+                              ? 'income_expenses.add_income'
+                              : 'income_expenses.add_expense',
+                      )
             "
             @close="manualModalOpen = false"
         >

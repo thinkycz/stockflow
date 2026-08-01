@@ -179,6 +179,22 @@ class PayrollReportService
     }
 
     /**
+     * Build one worker's payslip in a store and month.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function buildDetail(User $admin, Store $store, int $year, int $month, int $workerId): array|null
+    {
+        $report = $this->build($admin, $store, $year, $month);
+        $payslip = $this->payslipForWorker($report, $workerId);
+
+        return $payslip === [] ? null : [
+            'report' => $report,
+            'payslip' => $payslip,
+        ];
+    }
+
+    /**
      * Create or replace a worker's monthly wage override.
      */
     public function upsertWageOverride(

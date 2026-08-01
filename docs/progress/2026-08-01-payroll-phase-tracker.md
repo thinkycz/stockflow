@@ -2,8 +2,8 @@
 
 ## Status
 
-- Current phase: Dokončeno
-- Overall status: verified
+- Current phase: Rozšíření — zjednodušený přehled a detail pásky
+- Overall status: completed
 - Last updated: 2026-08-01
 
 ## Fáze 1: Doména a výpočty
@@ -71,4 +71,15 @@
 
 ## Next
 
-- Nasadit novou databázovou migraci v cílovém prostředí.
+- Žádné otevřené implementační kroky.
+
+## Rozšíření: zjednodušený přehled a detail pásky
+
+- Status: completed
+- Tasks:
+    - [x] Admin-only detailní route s izolací prodejny a měsíce
+    - [x] Stručný přehled s jedinou akcí Detail
+    - [x] Přesun editací, docházky a úprav na detailní stránku
+    - [x] Jedno přístupné tiskové menu pro obě varianty
+    - [x] Controller, frontend a E2E regrese
+- Blockers: žádné

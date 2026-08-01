@@ -8,9 +8,13 @@ const source = readFileSync(
 );
 
 describe('attendance table contract', () => {
-    test('uses one standalone DataTable without a Card wrapper', () => {
+    test('keeps the DataTable standalone below a separate timer Card', () => {
         expect(source).toContain('<DataTable');
-        expect(source).not.toContain('<Card');
+        expect(source).toContain('<Card');
+        expect(source).toContain('data-testid="attendance-timer-panel"');
+        expect(source.indexOf('</Card>')).toBeLessThan(
+            source.indexOf('<DataTable'),
+        );
         expect(source).toContain('attendance_rows');
     });
 

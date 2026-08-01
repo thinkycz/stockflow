@@ -1,36 +1,21 @@
 <script setup lang="ts">
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import {
-    LockKeyhole,
-    Pencil,
-    Plus,
-    Printer,
-    Trash2,
-    UnlockKeyhole,
-} from '@lucide/vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { LockKeyhole, UnlockKeyhole } from '@lucide/vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PayrollPrintMenu from '@/components/payroll/PayrollPrintMenu.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
-import FieldError from '@/components/ui/FieldError.vue';
 import FilterField from '@/components/ui/FilterField.vue';
-import Input from '@/components/ui/Input.vue';
-import Label from '@/components/ui/Label.vue';
-import Modal from '@/components/ui/Modal.vue';
 import MonthPicker from '@/components/ui/MonthPicker.vue';
-import Select from '@/components/ui/Select.vue';
-import { useRoute } from '@/composables/useRoute';
+import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useDialog } from '@/composables/useDialog';
+import { useRoute } from '@/composables/useRoute';
 import AppLayout from '@/layouts/AppLayout.vue';
-import Alert from '@/components/ui/Alert.vue';
 import { formatMoney } from '@/lib/format';
-import type {
-    PayrollAdjustment,
-    PayrollReport,
-    Payslip,
-} from '@/types/payroll';
+import type { PayrollReport } from '@/types/payroll';
 
 const props = defineProps<{
     active_store: { id: number; name: string; is_warehouse: boolean } | null;
@@ -41,170 +26,40 @@ const props = defineProps<{
 const { t, locale } = useI18n();
 const route = useRoute();
 const dialog = useDialog();
-const adjustmentModalOpen = ref(false);
-const wageModalOpen = ref(false);
-const editingAdjustment = ref<PayrollAdjustment | null>(null);
-const selectedPayslip = ref<Payslip | null>(null);
 const lifecycleProcessing = ref(false);
-const adjustmentForm = useForm({
-    year: props.filters.year,
-    month: props.filters.month,
-    worker_id: 0,
-    type: 'tip' as 'tip' | 'deduction',
-    amount: '',
-    reason: '',
-});
-const wageForm = useForm({
-    year: props.filters.year,
-    month: props.filters.month,
-    worker_id: 0,
-    hours: '',
-    hourly_rate: '',
-});
 
 function monthValue(): string {
-    return (
-        String(props.filters.year) +
-        '-' +
-        String(props.filters.month).padStart(2, '0')
-    );
-}
-
-function duration(seconds: number | null): string {
-    if (seconds === null) return '—';
-    const minutes = Math.round(Math.abs(seconds) / 60);
-    const sign = seconds < 0 ? '−' : '';
-    return (
-        sign +
-        String(Math.floor(minutes / 60)) +
-        ':' +
-        String(minutes % 60).padStart(2, '0')
-    );
-}
-
-function date(value: string): string {
-    return new Intl.DateTimeFormat(locale.value).format(
-        new Date(value + 'T12:00:00'),
-    );
-}
-
-function time(value: string | null): string {
-    if (value === null) return '—';
-    return new Intl.DateTimeFormat(locale.value, {
-        hour: '2-digit',
-        minute: '2-digit',
-    }).format(new Date(value));
+    return `${props.filters.year}-${String(props.filters.month).padStart(2, '0')}`;
 }
 
 function changeMonth(value: string): void {
     const [year, month] = value.split('-').map(Number);
-    if (year && month) {
-        router.get(
-            route('payroll.index'),
-            { year, month },
-            { preserveState: true },
-        );
-    }
+    if (!year || !month) return;
+    router.get(
+        route('payroll.index'),
+        { year, month, store_id: props.active_store?.id ?? null },
+        { preserveState: true },
+    );
 }
 
-function openAdjustment(
-    payslip: Payslip,
-    adjustment: PayrollAdjustment | null = null,
-): void {
-    selectedPayslip.value = payslip;
-    editingAdjustment.value = adjustment;
-    adjustmentForm.clearErrors();
-    adjustmentForm.year = props.filters.year;
-    adjustmentForm.month = props.filters.month;
-    adjustmentForm.worker_id = payslip.worker_id;
-    adjustmentForm.type = adjustment?.type ?? 'tip';
-    adjustmentForm.amount = adjustment ? String(adjustment.amount) : '';
-    adjustmentForm.reason = adjustment?.reason ?? '';
-    adjustmentModalOpen.value = true;
-}
-
-function submitAdjustment(): void {
-    const options = {
-        onSuccess: () => {
-            adjustmentModalOpen.value = false;
-        },
-    };
-    if (editingAdjustment.value !== null) {
-        adjustmentForm.put(
-            route('payroll.adjustments.update', editingAdjustment.value.id),
-            options,
-        );
-        return;
-    }
-    adjustmentForm.post(route('payroll.adjustments.store'), options);
-}
-
-async function deleteAdjustment(adjustment: PayrollAdjustment): Promise<void> {
-    if (
-        !(await dialog.confirm({
-            title: `${t('common.delete')}: ${adjustment.reason}`,
-            message: t('payroll.confirm_delete_adjustment'),
-            confirmLabel: t('common.delete'),
-            variant: 'danger',
-        }))
-    )
-        return;
-    router.delete(route('payroll.adjustments.destroy', adjustment.id), {
-        data: { year: props.filters.year, month: props.filters.month },
-    });
-}
-
-function openWageOverride(payslip: Payslip): void {
-    selectedPayslip.value = payslip;
-    wageForm.clearErrors();
-    wageForm.year = props.filters.year;
-    wageForm.month = props.filters.month;
-    wageForm.worker_id = payslip.worker_id;
-    wageForm.hours = String(payslip.payable_hours);
-    wageForm.hourly_rate = String(payslip.payable_hourly_rate);
-    wageModalOpen.value = true;
-}
-
-function submitWageOverride(): void {
-    wageForm.put(route('payroll.wage-override.update'), {
-        onSuccess: () => (wageModalOpen.value = false),
-    });
-}
-
-async function resetWageOverride(): Promise<void> {
-    if (!selectedPayslip.value) return;
-    if (
-        !(await dialog.confirm({
-            title: selectedPayslip.value.worker_name,
-            message: t('payroll.confirm_reset_wage'),
-            confirmLabel: t('common.confirm'),
-            variant: 'warning',
-        }))
-    )
-        return;
-    router.delete(route('payroll.wage-override.destroy'), {
-        data: {
-            year: props.filters.year,
-            month: props.filters.month,
-            worker_id: selectedPayslip.value.worker_id,
-        },
-        onSuccess: () => (wageModalOpen.value = false),
-    });
+function hours(value: number): string {
+    return `${new Intl.NumberFormat(locale.value, { maximumFractionDigits: 2 }).format(value)} h`;
 }
 
 async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
     if (
         !(await dialog.confirm({
             title: t(`payroll.${action}`),
-            message: t('payroll.confirm_' + action),
+            message: t(`payroll.confirm_${action}`),
             confirmLabel: t(`payroll.${action}`),
             variant: action === 'close' ? 'warning' : 'default',
         }))
     )
         return;
+
     lifecycleProcessing.value = true;
     router.post(
-        route('payroll.' + action),
+        route(`payroll.${action}`),
         { year: props.filters.year, month: props.filters.month },
         { onFinish: () => (lifecycleProcessing.value = false) },
     );
@@ -234,7 +89,7 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                                     : 'warning'
                             "
                         >
-                            {{ t('payroll.status.' + payroll_report.status) }}
+                            {{ t(`payroll.status.${payroll_report.status}`) }}
                         </Badge>
                     </div>
                     <p class="mt-1 text-sm text-on-surface-variant">
@@ -244,6 +99,7 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                             })
                         }}
                     </p>
+                    <StoreContextIndicator />
                 </div>
                 <div class="flex flex-wrap items-end gap-2">
                     <FilterField
@@ -256,39 +112,24 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                             @change="changeMonth"
                         />
                     </FilterField>
-                    <Link
+                    <PayrollPrintMenu
                         v-if="payroll_report"
-                        :href="
+                        :detailed-href="
                             route('payroll.print', {
                                 year: filters.year,
                                 month: filters.month,
+                                store_id: active_store?.id ?? null,
                             })
                         "
-                        target="_blank"
-                    >
-                        <Button variant="secondary">
-                            <Printer :size="15" />{{
-                                t('payroll.print_detailed_all')
-                            }}
-                        </Button>
-                    </Link>
-                    <Link
-                        v-if="payroll_report"
-                        :href="
+                        :simple-href="
                             route('payroll.print', {
                                 year: filters.year,
                                 month: filters.month,
+                                store_id: active_store?.id ?? null,
                                 simple: 1,
                             })
                         "
-                        target="_blank"
-                    >
-                        <Button variant="secondary">
-                            <Printer :size="15" />{{
-                                t('payroll.print_simple_all')
-                            }}
-                        </Button>
-                    </Link>
+                    />
                     <Button
                         v-if="payroll_report?.status === 'open'"
                         variant="warning"
@@ -314,25 +155,23 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                 :description="t('payroll.warehouse_description')"
             />
 
-            <DataTable v-else table-class="md:min-w-[980px]">
+            <DataTable v-else table-class="md:min-w-[900px]">
                 <thead
-                    class="bg-surface-container-low text-[11px] uppercase tracking-wider text-on-surface-variant"
+                    class="bg-surface-container-low text-[11px] tracking-wider text-on-surface-variant uppercase"
                 >
                     <tr>
-                        <th class="px-5 py-3">
-                            {{ t('payroll.worker') }}
-                        </th>
+                        <th class="px-5 py-3">{{ t('payroll.worker') }}</th>
                         <th class="px-5 py-3 text-right">
-                            {{ t('payroll.planned') }}
-                        </th>
-                        <th class="px-5 py-3 text-right">
-                            {{ t('payroll.actual') }}
+                            {{ t('payroll.payable_hours') }}
                         </th>
                         <th class="px-5 py-3 text-right">
                             {{ t('payroll.base_amount') }}
                         </th>
                         <th class="px-5 py-3 text-right">
-                            {{ t('payroll.adjustments') }}
+                            {{ t('payroll.adjustment_types.tip') }}
+                        </th>
+                        <th class="px-5 py-3 text-right">
+                            {{ t('payroll.adjustment_types.deduction') }}
                         </th>
                         <th class="px-5 py-3 text-right">
                             {{ t('payroll.final_amount') }}
@@ -346,267 +185,61 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                     <tr
                         v-for="payslip in payroll_report.payslips"
                         :key="payslip.worker_id"
-                        :data-testid="'payroll-row-' + payslip.worker_id"
-                        class="align-top"
+                        :data-testid="`payroll-row-${payslip.worker_id}`"
                     >
                         <td data-mobile-layout="stack" class="px-5 py-4">
-                            <details>
-                                <summary
-                                    class="cursor-pointer font-semibold text-on-surface"
+                            <div class="font-semibold text-on-surface">
+                                {{ payslip.worker_name }}
+                            </div>
+                            <div class="mt-1 flex flex-wrap gap-1">
+                                <Badge
+                                    v-if="payslip.wage_overridden"
+                                    variant="warning"
                                 >
-                                    {{ payslip.worker_name }}
-                                </summary>
-                                <div class="mt-4 space-y-4">
-                                    <Alert
-                                        v-if="
-                                            payslip.incomplete_count > 0 ||
-                                            payslip.unmatched_count > 0
-                                        "
-                                        variant="warning"
-                                    >
-                                        {{
-                                            t('payroll.attendance_warning', {
-                                                incomplete:
-                                                    payslip.incomplete_count,
-                                                unmatched:
-                                                    payslip.unmatched_count,
-                                            })
-                                        }}
-                                    </Alert>
-                                    <DataTable
-                                        density="compact"
-                                        variant="nested"
-                                        table-class="text-xs md:min-w-[650px]"
-                                    >
-                                        <thead>
-                                            <tr>
-                                                <th>
-                                                    {{ t('payroll.date') }}
-                                                </th>
-                                                <th>
-                                                    {{ t('payroll.interval') }}
-                                                </th>
-                                                <th>
-                                                    {{ t('payroll.planned') }}
-                                                </th>
-                                                <th>
-                                                    {{ t('payroll.rate') }}
-                                                </th>
-                                                <th>
-                                                    {{ t('payroll.amount') }}
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr
-                                                v-for="shift in payslip.shifts"
-                                                :key="shift.id"
-                                            >
-                                                <td>
-                                                    {{ date(shift.date) }}
-                                                </td>
-                                                <td>
-                                                    {{ shift.start_time }}–{{
-                                                        shift.end_time
-                                                    }}
-                                                </td>
-                                                <td>
-                                                    {{
-                                                        duration(
-                                                            shift.planned_minutes *
-                                                                60,
-                                                        )
-                                                    }}
-                                                </td>
-                                                <td>
-                                                    {{
-                                                        formatMoney(
-                                                            shift.hourly_rate,
-                                                        )
-                                                    }}
-                                                </td>
-                                                <td>
-                                                    {{
-                                                        formatMoney(
-                                                            shift.amount,
-                                                        )
-                                                    }}
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </DataTable>
-                                    <div
-                                        v-if="payslip.attendance.length"
-                                        class="text-xs text-on-surface-variant"
-                                    >
-                                        <p class="mb-2 font-semibold">
-                                            {{
-                                                t('payroll.attendance_records')
-                                            }}
-                                        </p>
-                                        <div
-                                            v-for="row in payslip.attendance"
-                                            :key="row.id"
-                                        >
-                                            {{ date(row.date) }} ·
-                                            {{ time(row.started_at) }}–{{
-                                                time(row.ended_at)
-                                            }}
-                                            ·
-                                            {{ duration(row.actual_seconds) }}
-                                            <span
-                                                v-if="row.shift_id === null"
-                                                class="font-semibold text-amber-700"
-                                            >
-                                                {{ t('payroll.unmatched') }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div
-                                        v-if="payslip.adjustments.length"
-                                        class="space-y-2"
-                                    >
-                                        <div
-                                            v-for="adjustment in payslip.adjustments"
-                                            :key="adjustment.id"
-                                            class="flex items-center justify-between gap-3 rounded-lg bg-surface-container-low px-3 py-2 text-xs"
-                                        >
-                                            <span>
-                                                {{
-                                                    t(
-                                                        'payroll.adjustment_types.' +
-                                                            adjustment.type,
-                                                    )
-                                                }}
-                                                ·
-                                                {{ adjustment.reason }}
-                                                ·
-                                                {{
-                                                    formatMoney(
-                                                        adjustment.amount,
-                                                    )
-                                                }}
-                                            </span>
-                                            <span
-                                                v-if="
-                                                    payroll_report.status ===
-                                                    'open'
-                                                "
-                                                class="flex gap-1"
-                                            >
-                                                <Button
-                                                    variant="ghost"
-                                                    class="h-7 px-2"
-                                                    @click="
-                                                        openAdjustment(
-                                                            payslip,
-                                                            adjustment,
-                                                        )
-                                                    "
-                                                >
-                                                    <Pencil :size="13" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    class="h-7 px-2 text-error-red"
-                                                    @click="
-                                                        deleteAdjustment(
-                                                            adjustment,
-                                                        )
-                                                    "
-                                                >
-                                                    <Trash2 :size="13" />
-                                                </Button>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </details>
+                                    {{ t('payroll.wage_overridden') }}
+                                </Badge>
+                                <Badge
+                                    v-if="
+                                        payslip.incomplete_count > 0 ||
+                                        payslip.unmatched_count > 0
+                                    "
+                                    variant="warning"
+                                >
+                                    {{
+                                        t('payroll.attendance_needs_attention')
+                                    }}
+                                </Badge>
+                            </div>
                         </td>
                         <td class="px-5 py-4 text-right">
-                            {{ duration(payslip.planned_minutes * 60) }}
+                            {{ hours(payslip.payable_hours) }}
                         </td>
                         <td class="px-5 py-4 text-right">
-                            {{ duration(payslip.actual_seconds) }}
+                            {{ formatMoney(payslip.base_amount) }}
                         </td>
-                        <td class="px-5 py-4 text-right">
-                            <div>{{ formatMoney(payslip.base_amount) }}</div>
-                            <div class="mt-1 text-xs text-on-surface-variant">
-                                {{ payslip.payable_hours }} h ×
-                                {{ formatMoney(payslip.payable_hourly_rate) }}
-                            </div>
-                            <Badge
-                                v-if="payslip.wage_overridden"
-                                variant="warning"
-                                class="mt-1"
-                            >
-                                {{ t('payroll.wage_overridden') }}
-                            </Badge>
+                        <td class="px-5 py-4 text-right text-emerald-700">
+                            {{ formatMoney(payslip.tip_amount) }}
                         </td>
-                        <td class="px-5 py-4 text-right text-xs">
-                            <div class="text-emerald-700">
-                                +{{ formatMoney(payslip.tip_amount) }}
-                            </div>
-                            <div class="text-rose-700">
-                                −{{ formatMoney(payslip.deduction_amount) }}
-                            </div>
+                        <td class="px-5 py-4 text-right text-rose-700">
+                            {{ formatMoney(payslip.deduction_amount) }}
                         </td>
                         <td class="px-5 py-4 text-right font-bold text-primary">
                             {{ formatMoney(payslip.final_amount) }}
                         </td>
-                        <td class="px-5 py-4">
-                            <div class="flex justify-end gap-1">
-                                <Button
-                                    v-if="payroll_report.status === 'open'"
-                                    variant="ghost"
-                                    class="h-8 px-2"
-                                    :title="t('payroll.edit_wage')"
-                                    @click="openWageOverride(payslip)"
-                                >
-                                    <Pencil :size="14" />
-                                </Button>
-                                <Button
-                                    v-if="payroll_report.status === 'open'"
-                                    variant="ghost"
-                                    class="h-8 px-2"
-                                    @click="openAdjustment(payslip, null)"
-                                >
-                                    <Plus :size="14" />{{
-                                        t('payroll.add_adjustment')
-                                    }}
-                                </Button>
-                                <Link
-                                    :href="
-                                        route('payroll.print', {
-                                            year: filters.year,
-                                            month: filters.month,
-                                            worker_id: payslip.worker_id,
-                                        })
-                                    "
-                                    target="_blank"
-                                >
-                                    <Button variant="ghost" class="h-8 px-2">
-                                        <Printer :size="14" />
-                                    </Button>
-                                </Link>
-                                <Link
-                                    :href="
-                                        route('payroll.print', {
-                                            year: filters.year,
-                                            month: filters.month,
-                                            worker_id: payslip.worker_id,
-                                            simple: 1,
-                                        })
-                                    "
-                                    target="_blank"
-                                    :title="t('payroll.print_simple')"
-                                >
-                                    <Button variant="ghost" class="h-8 px-2">
-                                        <Printer :size="14" />
-                                        {{ t('payroll.simple') }}
-                                    </Button>
-                                </Link>
-                            </div>
+                        <td class="px-5 py-4 text-right">
+                            <Link
+                                :href="
+                                    route('payroll.show', {
+                                        worker: payslip.worker_id,
+                                        year: filters.year,
+                                        month: filters.month,
+                                        store_id: active_store?.id ?? null,
+                                    })
+                                "
+                                class="inline-flex h-8 items-center justify-center rounded-xl border border-outline-glass bg-white px-2.5 text-xs font-semibold text-on-surface transition hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2"
+                            >
+                                {{ t('common.detail') }}
+                            </Link>
                         </td>
                     </tr>
                     <tr v-if="payroll_report.payslips.length === 0">
@@ -622,158 +255,5 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                 </tbody>
             </DataTable>
         </div>
-
-        <Modal
-            :open="adjustmentModalOpen"
-            :title="
-                editingAdjustment
-                    ? t('payroll.edit_adjustment')
-                    : t('payroll.add_adjustment')
-            "
-            @close="adjustmentModalOpen = false"
-        >
-            <form class="space-y-4" @submit.prevent="submitAdjustment">
-                <p class="text-sm font-semibold">
-                    {{ selectedPayslip?.worker_name }}
-                </p>
-                <div class="space-y-2">
-                    <Label for="adjustment-type" required>{{
-                        t('payroll.adjustment_type')
-                    }}</Label>
-                    <Select
-                        id="adjustment-type"
-                        v-model="adjustmentForm.type"
-                        :options="[
-                            {
-                                value: 'tip',
-                                label: t('payroll.adjustment_types.tip'),
-                            },
-                            {
-                                value: 'deduction',
-                                label: t('payroll.adjustment_types.deduction'),
-                            },
-                        ]"
-                    />
-                    <FieldError :message="adjustmentForm.errors.type" />
-                </div>
-                <div class="space-y-2">
-                    <Label for="adjustment-amount" required>{{
-                        t('payroll.amount')
-                    }}</Label>
-                    <Input
-                        id="adjustment-amount"
-                        v-model="adjustmentForm.amount"
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        required
-                    />
-                    <FieldError :message="adjustmentForm.errors.amount" />
-                </div>
-                <div class="space-y-2">
-                    <Label for="adjustment-reason" required>{{
-                        t('payroll.reason')
-                    }}</Label>
-                    <Input
-                        id="adjustment-reason"
-                        v-model="adjustmentForm.reason"
-                        required
-                    />
-                    <FieldError :message="adjustmentForm.errors.reason" />
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <Button
-                        variant="secondary"
-                        @click="adjustmentModalOpen = false"
-                    >
-                        {{ t('common.cancel') }}
-                    </Button>
-                    <Button type="submit" :disabled="adjustmentForm.processing">
-                        {{ t('common.save') }}
-                    </Button>
-                </div>
-            </form>
-        </Modal>
-
-        <Modal
-            :open="wageModalOpen"
-            :title="t('payroll.edit_wage')"
-            @close="wageModalOpen = false"
-        >
-            <form class="space-y-4" @submit.prevent="submitWageOverride">
-                <p class="text-sm font-semibold">
-                    {{ selectedPayslip?.worker_name }}
-                </p>
-                <div class="space-y-2">
-                    <Label for="wage-hours" required>{{
-                        t('payroll.payable_hours')
-                    }}</Label>
-                    <Input
-                        id="wage-hours"
-                        v-model="wageForm.hours"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        required
-                    />
-                    <FieldError :message="wageForm.errors.hours" />
-                </div>
-                <div class="space-y-2">
-                    <Label for="wage-hourly-rate" required>{{
-                        t('payroll.hourly_rate')
-                    }}</Label>
-                    <Input
-                        id="wage-hourly-rate"
-                        v-model="wageForm.hourly_rate"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        required
-                    />
-                    <FieldError :message="wageForm.errors.hourly_rate" />
-                </div>
-                <p class="rounded-lg bg-surface-container-low p-3 text-sm">
-                    {{ t('payroll.base_amount') }}:
-                    <strong>
-                        {{
-                            formatMoney(
-                                Number(wageForm.hours || 0) *
-                                    Number(wageForm.hourly_rate || 0),
-                            )
-                        }}
-                    </strong>
-                </p>
-                <div class="flex justify-between gap-2 pt-2">
-                    <Button
-                        v-if="selectedPayslip?.wage_overridden"
-                        variant="secondary"
-                        @click="resetWageOverride"
-                    >
-                        {{ t('payroll.reset_wage') }}
-                    </Button>
-                    <span v-else />
-                    <div class="flex gap-2">
-                        <Button
-                            variant="secondary"
-                            @click="wageModalOpen = false"
-                        >
-                            {{ t('common.cancel') }}
-                        </Button>
-                        <Button type="submit" :disabled="wageForm.processing">
-                            {{ t('common.save') }}
-                        </Button>
-                    </div>
-                </div>
-            </form>
-        </Modal>
     </AppLayout>
 </template>
-
-<style scoped>
-details table th,
-details table td {
-    border-bottom: 1px solid rgb(226 232 240 / 0.8);
-    padding: 0.45rem;
-    text-align: left;
-}
-</style>

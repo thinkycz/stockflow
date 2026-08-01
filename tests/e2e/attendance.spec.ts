@@ -21,8 +21,15 @@ test('attendance transitions are controlled directly from the worker row', async
 
     await row.getByRole('button', { name: 'Arrival' }).click();
     await expect(row).toContainText('Working now');
+    const timerPanel = page.getByTestId('attendance-timer-panel');
+    await timerPanel.getByLabel('Worker').selectOption({
+        label: 'Scheduled Worker',
+    });
+    await expect(timerPanel).toContainText('Time worked today');
+    await expect(timerPanel.locator('p.font-mono')).toHaveText(/^00:00:\d{2}$/);
     await row.getByRole('button', { name: 'Start break' }).click();
     await expect(row).toContainText('On a break');
+    await expect(timerPanel).toContainText('Current break duration');
     await row.getByRole('button', { name: 'Return' }).click();
     await expect(row).toContainText('Working now');
     await row.getByRole('button', { name: 'Departure' }).click();

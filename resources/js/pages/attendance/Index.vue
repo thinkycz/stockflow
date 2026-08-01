@@ -17,6 +17,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Alert from '@/components/ui/Alert.vue';
 import Button from '@/components/ui/Button.vue';
+import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Label from '@/components/ui/Label.vue';
@@ -63,6 +64,14 @@ const dialog = useDialog();
 const nowMs = ref(Date.now());
 const offScheduleOpen = ref(false);
 const offScheduleWorkerId = ref('');
+const timerWorkerId = ref(
+    String(
+        props.attendance_rows.find((row) => row.status !== 'absent')
+            ?.worker_id ??
+            props.attendance_rows[0]?.worker_id ??
+            '',
+    ),
+);
 const pendingWorkerId = ref<number | null>(null);
 const actionForm = useForm({
     worker_id: '',
@@ -76,6 +85,30 @@ const offScheduleOptions = computed(() =>
         label: worker.name,
     })),
 );
+const timerWorkerOptions = computed(() =>
+    props.attendance_rows.map((row) => ({
+        value: String(row.worker_id),
+        label: row.worker_name,
+    })),
+);
+const timerRow = computed(() =>
+    props.attendance_rows.find(
+        (row) => row.worker_id === Number(timerWorkerId.value),
+    ),
+);
+const timerSession = computed(() =>
+    timerRow.value?.sessions.find((session) => session.ended_at === null),
+);
+const timerOpenBreak = computed(() =>
+    timerSession.value?.breaks.find((pause) => pause.ended_at === null),
+);
+const timerSeconds = computed(() => {
+    const row = timerRow.value;
+    if (!row) return 0;
+    if (row.status === 'break' && timerOpenBreak.value)
+        return intervalSeconds(timerOpenBreak.value.started_at, null);
+    return workedSeconds(row);
+});
 
 function timeOnly(value: string | null): string {
     if (value === null) return t('attendance.now');
@@ -125,6 +158,13 @@ function conciseDuration(seconds: number): string {
     if (hours === 0) return `${minutes} min`;
     if (remainingMinutes === 0) return `${hours} h`;
     return `${hours} h ${remainingMinutes} min`;
+}
+
+function liveDuration(seconds: number): string {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
 function allBreaks(row: AttendanceRow): BreakRow[] {
@@ -233,19 +273,6 @@ onUnmounted(() => {
                     <StoreContextIndicator />
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <Button
-                        v-if="
-                            store &&
-                            !store.is_warehouse &&
-                            off_schedule_workers.length > 0
-                        "
-                        size="compact"
-                        variant="secondary"
-                        @click="offScheduleOpen = true"
-                    >
-                        <LogIn :size="14" />
-                        {{ t('attendance.actions.off_schedule_arrival') }}
-                    </Button>
                     <Link
                         v-if="is_admin && store && !store.is_warehouse"
                         :href="route('attendance.report')"
@@ -297,6 +324,108 @@ onUnmounted(() => {
                         </p>
                     </div>
                 </div>
+
+                <Card padded data-testid="attendance-timer-panel">
+                    <div
+                        class="grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(20rem,1.15fr)]"
+                    >
+                        <div class="flex flex-col justify-center gap-4">
+                            <div class="space-y-2">
+                                <Label for="attendance-timer-worker">{{
+                                    t('attendance.worker')
+                                }}</Label>
+                                <Select
+                                    id="attendance-timer-worker"
+                                    v-model="timerWorkerId"
+                                    :placeholder="t('attendance.select_worker')"
+                                    :options="timerWorkerOptions"
+                                />
+                            </div>
+                            <Button
+                                variant="secondary"
+                                class="w-full sm:w-fit"
+                                :disabled="off_schedule_workers.length === 0"
+                                @click="offScheduleOpen = true"
+                            >
+                                <LogIn :size="15" />
+                                {{
+                                    t('attendance.actions.off_schedule_arrival')
+                                }}
+                            </Button>
+                        </div>
+
+                        <div
+                            class="flex min-h-48 flex-col items-center justify-center rounded-2xl border px-6 py-8 text-center"
+                            :class="
+                                timerRow?.status === 'present'
+                                    ? 'border-emerald-200 bg-emerald-50'
+                                    : timerRow?.status === 'break' ||
+                                        timerRow?.status === 'stale'
+                                      ? 'border-warning-amber/25 bg-warning-amber/5'
+                                      : 'border-outline-glass bg-surface-container-low'
+                            "
+                        >
+                            <Clock3
+                                :size="22"
+                                class="mb-3"
+                                :class="
+                                    timerRow?.status === 'present'
+                                        ? 'text-emerald-700'
+                                        : timerRow?.status === 'break' ||
+                                            timerRow?.status === 'stale'
+                                          ? 'text-warning-amber'
+                                          : 'text-on-surface-variant'
+                                "
+                            />
+                            <p
+                                class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant"
+                            >
+                                {{
+                                    !timerRow
+                                        ? t('attendance.timer.select')
+                                        : timerRow.status === 'present'
+                                          ? t('attendance.timer.working')
+                                          : timerRow.status === 'break'
+                                            ? t('attendance.timer.break')
+                                            : timerRow.status === 'stale'
+                                              ? t('attendance.timer.stale')
+                                              : t('attendance.timer.absent')
+                                }}
+                            </p>
+                            <p
+                                v-if="
+                                    timerRow?.status === 'present' ||
+                                    timerRow?.status === 'break'
+                                "
+                                class="mt-2 font-mono text-4xl font-bold tracking-tight text-on-surface tabular-nums sm:text-5xl"
+                            >
+                                {{ liveDuration(timerSeconds) }}
+                            </p>
+                            <p
+                                v-else
+                                class="mt-2 text-lg font-semibold text-on-surface"
+                            >
+                                {{
+                                    timerRow
+                                        ? t(
+                                              `attendance.status.${timerRow.status}`,
+                                          )
+                                        : t('attendance.select_worker')
+                                }}
+                            </p>
+                            <p
+                                v-if="timerSession"
+                                class="mt-3 text-xs text-on-surface-variant"
+                            >
+                                {{
+                                    t('attendance.arrived_at', {
+                                        time: timeOnly(timerSession.started_at),
+                                    })
+                                }}
+                            </p>
+                        </div>
+                    </div>
+                </Card>
 
                 <section aria-labelledby="attendance-today-title">
                     <div class="mb-4">

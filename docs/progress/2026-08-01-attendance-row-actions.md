@@ -8,6 +8,7 @@
 | Off-schedule arrival dialog     | Complete | Filtered payload and browser test        |
 | Mobile and browser verification | Complete | Four targeted Playwright scenarios       |
 | Full repository checks          | Complete | `make fix` and `make check` passed       |
+| Timer overview panel            | Complete | Restored above the standalone table      |
 
 ## Constraints
 

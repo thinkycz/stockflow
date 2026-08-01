@@ -24,6 +24,7 @@ test('admin manages and closes a monthly financial report while limited users ar
     await expect(
         page.getByRole('heading', { name: 'Income & expenses' }),
     ).toBeVisible();
+    await expect(page.getByTestId('active-store-pill')).toBeVisible();
     const cashRow = page.getByTestId('financial-row-revenue-cash');
     await expect(cashRow.getByRole('link', { name: 'Cash' })).toHaveAttribute(
         'href',
@@ -31,7 +32,10 @@ test('admin manages and closes a monthly financial report while limited users ar
     );
 
     await page.getByRole('button', { name: 'Recurring expenses' }).click();
-    await page.getByRole('button', { name: 'Add expense' }).click();
+    await page
+        .getByLabel('Recurring expenses')
+        .getByRole('button', { name: 'Add expense' })
+        .click();
     await page.getByLabel('Item').fill('E2E rent');
     await page.getByLabel('Amount').fill('1000');
     await page.getByLabel('Day of month').fill('31');
@@ -74,8 +78,8 @@ test('admin manages and closes a monthly financial report while limited users ar
         page.getByTestId(/financial-row-recurring_expense-/),
     ).toContainText('1,000.00');
 
-    await page.getByRole('button', { name: 'Add row' }).click();
-    await page.getByLabel('Type').selectOption('income');
+    await page.getByRole('button', { name: 'Add income' }).click();
+    await expect(page.getByLabel('Type')).toHaveValue('income');
     await page.getByLabel('Date').fill('2030-01-15');
     await page.getByLabel('Item').fill('E2E extra income');
     await page.getByLabel('Amount').fill('125.50');

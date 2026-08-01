@@ -41,7 +41,7 @@ class PayrollWageOverrideController
         );
         Inertia::flash('success', \__('Payroll wage override saved.'));
 
-        return $this->redirect($payload);
+        return Resolver::resolveRedirector()->back();
     }
 
     /**
@@ -61,7 +61,7 @@ class PayrollWageOverrideController
         );
         Inertia::flash('success', \__('Automatic payroll calculation restored.'));
 
-        return $this->redirect($payload);
+        return Resolver::resolveRedirector()->back();
     }
 
     /**
@@ -91,17 +91,6 @@ class PayrollWageOverrideController
             'year' => $validity->year()->required()->toArray(),
             'month' => $validity->month()->required()->toArray(),
             'worker_id' => $validity->workerId()->required()->toArray(),
-        ]);
-    }
-
-    /**
-     * Redirect to the selected payroll month.
-     */
-    private function redirect(Parser $period): RedirectResponse
-    {
-        return Resolver::resolveRedirector()->route('payroll.index', [
-            'year' => $period->parseInt('year'),
-            'month' => $period->parseInt('month'),
         ]);
     }
 }

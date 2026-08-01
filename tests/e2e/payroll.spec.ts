@@ -21,27 +21,43 @@ test('admin adjusts closes and prints payroll while limited users are denied', a
     await expect(page.getByTestId('nav-item-payroll')).toBeVisible();
     await page.goto('/payroll?year=2026&month=8');
     await expect(page.getByRole('heading', { name: 'Payslips' })).toBeVisible();
+    await expect(page.getByTestId('active-store-pill')).toBeVisible();
 
     const row = page
         .locator('[data-testid^="payroll-row-"]')
         .filter({ hasText: 'E2E Worker' });
     await expect(row).toBeVisible();
-    await row.getByTitle('Edit hours and rate').click();
+    await expect(row.getByRole('link')).toHaveCount(1);
+    await expect(row.getByRole('link', { name: 'Detail' })).toBeVisible();
+    await row.getByRole('link', { name: 'Detail' }).click();
+    await page.waitForURL((url) => {
+        return (
+            /\/payroll\/workers\/\d+$/.test(url.pathname) &&
+            url.searchParams.get('year') === '2026' &&
+            url.searchParams.get('month') === '8'
+        );
+    });
+    await expect(
+        page.getByRole('heading', { name: 'E2E Worker' }),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Edit hours and rate' }).click();
     await page.getByLabel('Payable hours').fill('10.5');
     await page.getByLabel('Hourly rate').fill('150');
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(row).toContainText('Manually adjusted');
+    await expect(page.getByText('Manually adjusted')).toBeVisible();
 
-    await row.getByRole('button', { name: 'Add adjustment' }).click();
+    await page.getByRole('button', { name: 'Add adjustment' }).first().click();
     await page.getByLabel('Adjustment type').selectOption('tip');
     await page.getByLabel('Amount').fill('25');
     await page.getByLabel('Reason').fill('E2E shared tips');
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(row).toContainText('E2E shared tips');
+    await expect(page.getByText('E2E shared tips')).toBeVisible();
 
-    const popupPromise = page.waitForEvent('popup');
-    await row.getByRole('link', { name: 'Simple' }).click();
-    const printPage = await popupPromise;
+    let popupPromise = page.waitForEvent('popup');
+    await page.getByRole('button', { name: 'Print', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Print simple payslip' }).click();
+    let printPage = await popupPromise;
     await expect(printPage.getByText('Payslip', { exact: true })).toBeVisible();
     await expect(printPage.getByText('Base pay')).toBeVisible();
     await expect(printPage.getByText('Tips')).toBeVisible();
@@ -50,9 +66,44 @@ test('admin adjusts closes and prints payroll while limited users are denied', a
     await expect(printPage.locator('table')).toHaveCount(0);
     await printPage.close();
 
+    popupPromise = page.waitForEvent('popup');
+    await page.getByRole('button', { name: 'Print', exact: true }).click();
+    await page
+        .getByRole('menuitem', { name: 'Print detailed payslip' })
+        .click();
+    printPage = await popupPromise;
+    await expect(printPage.getByText('Payslip', { exact: true })).toBeVisible();
+    await expect(printPage.locator('table')).not.toHaveCount(0);
+    await printPage.close();
+
+    await page.getByRole('link', { name: 'Back to payslip overview' }).click();
+    await expect(page.getByRole('heading', { name: 'Payslips' })).toBeVisible();
+    await expect(
+        page
+            .locator('[data-testid^="payroll-row-"]')
+            .filter({ hasText: 'E2E Worker' }),
+    ).toContainText('Manually adjusted');
+
     await page.getByRole('button', { name: 'Close month' }).click();
     await confirmDialog(page, 'Close month');
     await expect(page.getByText('Closed', { exact: true })).toBeVisible();
+
+    await page
+        .locator('[data-testid^="payroll-row-"]')
+        .filter({ hasText: 'E2E Worker' })
+        .getByRole('link', { name: 'Detail' })
+        .click();
+    await expect(page.getByText('Closed', { exact: true })).toBeVisible();
+    await expect(
+        page.getByRole('button', { name: 'Edit hours and rate' }),
+    ).toHaveCount(0);
+    await expect(
+        page.getByRole('button', { name: 'Add adjustment' }),
+    ).toHaveCount(0);
+    await expect(
+        page.getByRole('button', { name: 'Print', exact: true }),
+    ).toBeVisible();
+    await page.getByRole('link', { name: 'Back to payslip overview' }).click();
 
     await page.getByRole('button', { name: 'Reopen' }).click();
     await confirmDialog(page, 'Reopen');

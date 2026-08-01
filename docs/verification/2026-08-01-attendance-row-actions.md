@@ -5,7 +5,8 @@
 The attendance page is driven by one standalone responsive table. It groups
 today's shifts by worker, keeps active unscheduled workers visible, exposes all
 valid attendance transitions in the row, and presents monthly attendance
-quality accessibly.
+quality accessibly. A separate panel above the table shows a selected worker's
+live work or break timer and provides the off-schedule arrival action.
 
 ## Evidence
 
@@ -16,8 +17,9 @@ quality accessibly.
 - `npm run test:unit -- tests/Unit/attendance-table-contract.test.ts`
   passed three table-contract tests.
 - `npx playwright test tests/e2e/attendance.spec.ts` passed four Chromium
-  scenarios covering transitions, off-schedule and outside-window
-  confirmations, and the 390 px layout without horizontal overflow.
+  scenarios covering the restored live timer, transitions, off-schedule and
+  outside-window confirmations, and the 390 px layout without horizontal
+  overflow.
 - A screenshot from the mobile browser run was inspected for the standalone
   card presentation, visible labels, quality indicator, status, and actions.
 

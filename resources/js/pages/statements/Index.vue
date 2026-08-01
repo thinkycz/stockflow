@@ -238,6 +238,10 @@ function rowTotal(row: DayRow): number {
     );
 }
 
+function rowCashTotal(row: DayRow): number {
+    return Number(row.cash || 0) + Number(row.bolt_cash || 0);
+}
+
 const showTodayPanel = computed(
     () =>
         props.today_statement !== null &&
@@ -553,238 +557,261 @@ function submitPendingSave(closeAttendances: boolean): void {
             </div>
 
             <template v-else>
-                <Card padded>
-                    <div class="overflow-x-auto">
-                        <DataTable class="[&_td]:px-2 [&_th]:px-2">
-                            <thead>
-                                <tr>
-                                    <th class="min-w-[6rem]">
-                                        {{ t('statements.columns.day') }}
-                                    </th>
-                                    <th class="min-w-[7rem] text-right">
-                                        {{ t('statements.columns.cash') }}
-                                    </th>
-                                    <th class="min-w-[7rem] text-right">
-                                        {{ t('statements.columns.card') }}
-                                    </th>
-                                    <th class="min-w-[7rem] text-right">
-                                        {{ t('statements.columns.wolt') }}
-                                    </th>
-                                    <th class="min-w-[7rem] text-right">
-                                        {{ t('statements.columns.bolt') }}
-                                    </th>
-                                    <th class="min-w-[7rem] text-right">
-                                        {{ t('statements.columns.bolt_cash') }}
-                                    </th>
-                                    <th class="min-w-[7rem] text-right">
-                                        {{ t('statements.columns.foodora') }}
-                                    </th>
-                                    <th class="min-w-[7rem] text-right">
-                                        {{ t('statements.columns.total') }}
-                                    </th>
-                                    <th
-                                        v-if="props.is_admin"
-                                        class="min-w-[5rem] text-center"
+                <section class="space-y-4">
+                    <DataTable density="compact">
+                        <thead>
+                            <tr>
+                                <th class="min-w-[6rem]">
+                                    {{ t('statements.columns.day') }}
+                                </th>
+                                <th class="min-w-[7rem] text-right">
+                                    {{ t('statements.columns.cash') }}
+                                </th>
+                                <th class="min-w-[7rem] text-right">
+                                    {{ t('statements.columns.card') }}
+                                </th>
+                                <th class="min-w-[7rem] text-right">
+                                    {{ t('statements.columns.wolt') }}
+                                </th>
+                                <th class="min-w-[7rem] text-right">
+                                    {{ t('statements.columns.bolt') }}
+                                </th>
+                                <th class="min-w-[7rem] text-right">
+                                    {{ t('statements.columns.bolt_cash') }}
+                                </th>
+                                <th class="min-w-[7rem] text-right">
+                                    {{ t('statements.columns.foodora') }}
+                                </th>
+                                <th class="min-w-[7rem] text-right">
+                                    {{ t('statements.columns.total') }}
+                                </th>
+                                <th
+                                    v-if="props.is_admin"
+                                    class="min-w-[5rem] text-center"
+                                >
+                                    {{ t('statements.columns.cash_checked') }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="day in editingRows"
+                                :key="editingKey(day)"
+                            >
+                                <td
+                                    class="font-mono text-xs text-on-surface-variant"
+                                >
+                                    {{ formatCzechDate(day.date) }}
+                                </td>
+                                <td class="text-right">
+                                    <Input
+                                        :model-value="String(day.cash || 0)"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        class="text-right"
+                                        @update:model-value="
+                                            (value) =>
+                                                updateEditing(
+                                                    editingKey(day),
+                                                    'cash',
+                                                    String(value),
+                                                )
+                                        "
+                                    />
+                                </td>
+                                <td class="text-right">
+                                    <Input
+                                        :model-value="String(day.card || 0)"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        class="text-right"
+                                        @update:model-value="
+                                            (value) =>
+                                                updateEditing(
+                                                    editingKey(day),
+                                                    'card',
+                                                    String(value),
+                                                )
+                                        "
+                                    />
+                                </td>
+                                <td class="text-right">
+                                    <Input
+                                        :model-value="String(day.wolt || 0)"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        class="text-right"
+                                        @update:model-value="
+                                            (value) =>
+                                                updateEditing(
+                                                    editingKey(day),
+                                                    'wolt',
+                                                    String(value),
+                                                )
+                                        "
+                                    />
+                                </td>
+                                <td class="text-right">
+                                    <Input
+                                        :model-value="String(day.bolt || 0)"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        class="text-right"
+                                        @update:model-value="
+                                            (value) =>
+                                                updateEditing(
+                                                    editingKey(day),
+                                                    'bolt',
+                                                    String(value),
+                                                )
+                                        "
+                                    />
+                                </td>
+                                <td class="text-right">
+                                    <Input
+                                        :model-value="
+                                            String(day.bolt_cash || 0)
+                                        "
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        class="text-right"
+                                        @update:model-value="
+                                            (value) =>
+                                                updateEditing(
+                                                    editingKey(day),
+                                                    'bolt_cash',
+                                                    String(value),
+                                                )
+                                        "
+                                    />
+                                </td>
+                                <td class="text-right">
+                                    <Input
+                                        :model-value="String(day.foodora || 0)"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        class="text-right"
+                                        @update:model-value="
+                                            (value) =>
+                                                updateEditing(
+                                                    editingKey(day),
+                                                    'foodora',
+                                                    String(value),
+                                                )
+                                        "
+                                    />
+                                </td>
+                                <td
+                                    class="text-right font-semibold text-on-surface"
+                                >
+                                    <div>
+                                        {{ formatMoney(rowTotal(day)) }}
+                                    </div>
+                                    <div
+                                        class="mt-0.5 text-[0.65rem] font-normal text-on-surface-variant"
                                     >
                                         {{
-                                            t('statements.columns.cash_checked')
+                                            t(
+                                                'statements.columns.cash_of_total',
+                                                {
+                                                    amount: formatMoney(
+                                                        rowCashTotal(day),
+                                                    ),
+                                                },
+                                            )
                                         }}
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                                    v-for="day in editingRows"
-                                    :key="editingKey(day)"
+                                    </div>
+                                </td>
+                                <td v-if="props.is_admin" class="text-center">
+                                    <input
+                                        type="checkbox"
+                                        :checked="day.cash_checked"
+                                        class="h-4 w-4 cursor-pointer rounded border-outline-glass text-primary focus:ring-primary"
+                                        @change="
+                                            (event) =>
+                                                updateEditing(
+                                                    editingKey(day),
+                                                    'cash_checked',
+                                                    (
+                                                        event.target as HTMLInputElement
+                                                    ).checked,
+                                                )
+                                        "
+                                    />
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th
+                                    class="text-left text-xs font-semibold text-on-surface-variant"
                                 >
-                                    <td
-                                        class="font-mono text-xs text-on-surface-variant"
-                                    >
-                                        {{ formatCzechDate(day.date) }}
-                                    </td>
-                                    <td class="text-right">
-                                        <Input
-                                            :model-value="String(day.cash || 0)"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            class="text-right"
-                                            @update:model-value="
-                                                (value) =>
-                                                    updateEditing(
-                                                        editingKey(day),
-                                                        'cash',
-                                                        String(value),
-                                                    )
-                                            "
-                                        />
-                                    </td>
-                                    <td class="text-right">
-                                        <Input
-                                            :model-value="String(day.card || 0)"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            class="text-right"
-                                            @update:model-value="
-                                                (value) =>
-                                                    updateEditing(
-                                                        editingKey(day),
-                                                        'card',
-                                                        String(value),
-                                                    )
-                                            "
-                                        />
-                                    </td>
-                                    <td class="text-right">
-                                        <Input
-                                            :model-value="String(day.wolt || 0)"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            class="text-right"
-                                            @update:model-value="
-                                                (value) =>
-                                                    updateEditing(
-                                                        editingKey(day),
-                                                        'wolt',
-                                                        String(value),
-                                                    )
-                                            "
-                                        />
-                                    </td>
-                                    <td class="text-right">
-                                        <Input
-                                            :model-value="String(day.bolt || 0)"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            class="text-right"
-                                            @update:model-value="
-                                                (value) =>
-                                                    updateEditing(
-                                                        editingKey(day),
-                                                        'bolt',
-                                                        String(value),
-                                                    )
-                                            "
-                                        />
-                                    </td>
-                                    <td class="text-right">
-                                        <Input
-                                            :model-value="
-                                                String(day.bolt_cash || 0)
-                                            "
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            class="text-right"
-                                            @update:model-value="
-                                                (value) =>
-                                                    updateEditing(
-                                                        editingKey(day),
-                                                        'bolt_cash',
-                                                        String(value),
-                                                    )
-                                            "
-                                        />
-                                    </td>
-                                    <td class="text-right">
-                                        <Input
-                                            :model-value="
-                                                String(day.foodora || 0)
-                                            "
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            class="text-right"
-                                            @update:model-value="
-                                                (value) =>
-                                                    updateEditing(
-                                                        editingKey(day),
-                                                        'foodora',
-                                                        String(value),
-                                                    )
-                                            "
-                                        />
-                                    </td>
-                                    <td
-                                        class="text-right font-semibold text-on-surface"
-                                    >
-                                        {{ formatMoney(rowTotal(day)) }}
-                                    </td>
-                                    <td
-                                        v-if="props.is_admin"
-                                        class="text-center"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            :checked="day.cash_checked"
-                                            class="h-4 w-4 cursor-pointer rounded border-outline-glass text-primary focus:ring-primary"
-                                            @change="
-                                                (event) =>
-                                                    updateEditing(
-                                                        editingKey(day),
-                                                        'cash_checked',
-                                                        (
-                                                            event.target as HTMLInputElement
-                                                        ).checked,
-                                                    )
-                                            "
-                                        />
-                                    </td>
-                                </tr>
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <th
-                                        class="border-t border-outline-glass pt-2 text-left text-xs font-semibold text-on-surface-variant"
-                                    >
-                                        Σ
-                                    </th>
-                                    <th
-                                        class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                    >
-                                        {{ formatMoney(totals.cash) }}
-                                    </th>
-                                    <th
-                                        class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                    >
-                                        {{ formatMoney(totals.card) }}
-                                    </th>
-                                    <th
-                                        class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                    >
-                                        {{ formatMoney(totals.wolt) }}
-                                    </th>
-                                    <th
-                                        class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                    >
-                                        {{ formatMoney(totals.bolt) }}
-                                    </th>
-                                    <th
-                                        class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                    >
-                                        {{ formatMoney(totals.bolt_cash) }}
-                                    </th>
-                                    <th
-                                        class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                    >
-                                        {{ formatMoney(totals.foodora) }}
-                                    </th>
-                                    <th
-                                        class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface"
-                                    >
+                                    Σ
+                                </th>
+                                <th
+                                    class="text-right text-xs font-semibold text-on-surface-variant"
+                                >
+                                    {{ formatMoney(totals.cash) }}
+                                </th>
+                                <th
+                                    class="text-right text-xs font-semibold text-on-surface-variant"
+                                >
+                                    {{ formatMoney(totals.card) }}
+                                </th>
+                                <th
+                                    class="text-right text-xs font-semibold text-on-surface-variant"
+                                >
+                                    {{ formatMoney(totals.wolt) }}
+                                </th>
+                                <th
+                                    class="text-right text-xs font-semibold text-on-surface-variant"
+                                >
+                                    {{ formatMoney(totals.bolt) }}
+                                </th>
+                                <th
+                                    class="text-right text-xs font-semibold text-on-surface-variant"
+                                >
+                                    {{ formatMoney(totals.bolt_cash) }}
+                                </th>
+                                <th
+                                    class="text-right text-xs font-semibold text-on-surface-variant"
+                                >
+                                    {{ formatMoney(totals.foodora) }}
+                                </th>
+                                <th
+                                    class="text-right text-xs font-semibold text-on-surface"
+                                >
+                                    <div>
                                         {{ formatMoney(totals.total) }}
-                                    </th>
-                                    <th
-                                        v-if="props.is_admin"
-                                        class="border-t border-outline-glass pt-2"
-                                    ></th>
-                                </tr>
-                            </tfoot>
-                        </DataTable>
-                    </div>
+                                    </div>
+                                    <div
+                                        class="mt-0.5 text-[0.65rem] font-normal text-on-surface-variant"
+                                    >
+                                        {{
+                                            t(
+                                                'statements.columns.cash_of_total',
+                                                {
+                                                    amount: formatMoney(
+                                                        totals.cash +
+                                                            totals.bolt_cash,
+                                                    ),
+                                                },
+                                            )
+                                        }}
+                                    </div>
+                                </th>
+                                <th v-if="props.is_admin">
+                                    {{ t('statements.columns.cash_checked') }}
+                                </th>
+                            </tr>
+                        </tfoot>
+                    </DataTable>
 
                     <div
                         class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end"
@@ -798,7 +825,7 @@ function submitPendingSave(closeAttendances: boolean): void {
                             {{ t('statements.actions.save') }}
                         </Button>
                     </div>
-                </Card>
+                </section>
             </template>
         </div>
 

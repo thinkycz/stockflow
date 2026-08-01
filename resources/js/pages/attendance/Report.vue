@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
+import DataTable from '@/components/ui/DataTable.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
@@ -269,139 +270,125 @@ function removeBreak(index: number): void {
                     </div>
                 </Card>
 
-                <Card padded>
-                    <div class="overflow-x-auto">
-                        <table class="w-full min-w-[1160px] text-left text-xs">
-                            <thead>
-                                <tr class="border-b border-outline-glass">
-                                    <th class="py-3">
-                                        {{ t('attendance.report.date') }}
-                                    </th>
-                                    <th>{{ t('attendance.worker') }}</th>
-                                    <th>
-                                        {{ t('attendance.report.interval') }}
-                                    </th>
-                                    <th>{{ t('attendance.breaks') }}</th>
-                                    <th>
-                                        {{ t('attendance.report.planned') }}
-                                    </th>
-                                    <th>{{ t('attendance.report.actual') }}</th>
-                                    <th>
-                                        {{ t('attendance.report.difference') }}
-                                    </th>
-                                    <th>{{ t('attendance.report.wage') }}</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                                    v-for="row in report.rows"
-                                    :key="row.id"
-                                    class="border-b border-outline-glass/60 last:border-0"
-                                    :class="row.voided ? 'opacity-50' : ''"
+                <DataTable
+                    density="compact"
+                    table-class="text-xs md:min-w-[1160px]"
+                >
+                    <thead>
+                        <tr>
+                            <th class="py-3">
+                                {{ t('attendance.report.date') }}
+                            </th>
+                            <th>{{ t('attendance.worker') }}</th>
+                            <th>
+                                {{ t('attendance.report.interval') }}
+                            </th>
+                            <th>{{ t('attendance.breaks') }}</th>
+                            <th>
+                                {{ t('attendance.report.planned') }}
+                            </th>
+                            <th>{{ t('attendance.report.actual') }}</th>
+                            <th>
+                                {{ t('attendance.report.difference') }}
+                            </th>
+                            <th>{{ t('attendance.report.wage') }}</th>
+                            <th>
+                                <span class="sr-only">{{
+                                    t('common.actions')
+                                }}</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="row in report.rows"
+                            :key="row.id"
+                            :class="row.voided ? 'opacity-50' : ''"
+                        >
+                            <td class="py-3">{{ row.date }}</td>
+                            <td class="font-medium">
+                                {{ row.worker_name }}
+                            </td>
+                            <td>
+                                <span :class="row.voided ? 'line-through' : ''">
+                                    {{ timeOnly(row.started_at) }} –
+                                    {{ timeOnly(row.ended_at) }}
+                                </span>
+                            </td>
+                            <td class="min-w-56 py-2 pr-4">
+                                <span
+                                    v-if="row.breaks.length === 0"
+                                    class="text-on-surface-variant"
+                                    >{{ t('attendance.table.no_breaks') }}</span
                                 >
-                                    <td class="py-3">{{ row.date }}</td>
-                                    <td class="font-medium">
-                                        {{ row.worker_name }}
-                                    </td>
-                                    <td>
-                                        <span
-                                            :class="
-                                                row.voided ? 'line-through' : ''
-                                            "
-                                        >
-                                            {{ timeOnly(row.started_at) }} –
-                                            {{ timeOnly(row.ended_at) }}
-                                        </span>
-                                    </td>
-                                    <td class="min-w-56 py-2 pr-4">
-                                        <span
-                                            v-if="row.breaks.length === 0"
-                                            class="text-on-surface-variant"
-                                            >{{
-                                                t('attendance.table.no_breaks')
-                                            }}</span
-                                        >
-                                        <div v-else class="space-y-1.5">
-                                            <div
-                                                v-for="(
-                                                    pause, index
-                                                ) in row.breaks"
-                                                :key="`${pause.started_at}-${index}`"
-                                                class="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-amber-950"
-                                            >
-                                                <span
-                                                    class="flex items-center gap-1.5 font-medium"
-                                                >
-                                                    <Coffee :size="13" />
-                                                    {{
-                                                        timeOnly(
-                                                            pause.started_at,
-                                                        )
-                                                    }}–{{
-                                                        timeOnly(pause.ended_at)
-                                                    }}
-                                                </span>
-                                                <span class="text-amber-800">{{
-                                                    duration(pause.seconds)
-                                                }}</span>
-                                            </div>
-                                            <p
-                                                class="text-right font-semibold text-on-surface-variant"
-                                            >
-                                                {{
-                                                    t(
-                                                        'attendance.report.breaks_total',
-                                                    )
-                                                }}:
-                                                {{
-                                                    duration(row.break_seconds)
-                                                }}
-                                            </p>
-                                        </div>
-                                    </td>
-                                    <td>{{ duration(row.planned_seconds) }}</td>
-                                    <td>{{ duration(row.actual_seconds) }}</td>
-                                    <td>
-                                        {{ duration(row.difference_seconds) }}
-                                    </td>
-                                    <td>
-                                        {{
-                                            row.wage === null
-                                                ? '—'
-                                                : formatMoney(row.wage)
-                                        }}
-                                    </td>
-                                    <td class="space-x-2">
-                                        <button
-                                            class="font-semibold text-primary"
-                                            @click="openEdit(row)"
-                                        >
-                                            {{ t('common.edit') }}
-                                        </button>
-                                        <button
-                                            v-if="!row.voided"
-                                            class="font-semibold text-error-red"
-                                            @click="voidSession(row.id)"
-                                        >
-                                            {{
-                                                t('attendance.correction.void')
-                                            }}
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr v-if="report.rows.length === 0">
-                                    <td
-                                        colspan="9"
-                                        class="py-10 text-center text-sm text-on-surface-variant"
+                                <div v-else class="space-y-1.5">
+                                    <div
+                                        v-for="(pause, index) in row.breaks"
+                                        :key="`${pause.started_at}-${index}`"
+                                        class="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-amber-950"
                                     >
-                                        {{ t('attendance.report.empty') }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </Card>
+                                        <span
+                                            class="flex items-center gap-1.5 font-medium"
+                                        >
+                                            <Coffee :size="13" />
+                                            {{ timeOnly(pause.started_at) }}–{{
+                                                timeOnly(pause.ended_at)
+                                            }}
+                                        </span>
+                                        <span class="text-amber-800">{{
+                                            duration(pause.seconds)
+                                        }}</span>
+                                    </div>
+                                    <p
+                                        class="text-right font-semibold text-on-surface-variant"
+                                    >
+                                        {{
+                                            t('attendance.report.breaks_total')
+                                        }}:
+                                        {{ duration(row.break_seconds) }}
+                                    </p>
+                                </div>
+                            </td>
+                            <td>{{ duration(row.planned_seconds) }}</td>
+                            <td>{{ duration(row.actual_seconds) }}</td>
+                            <td>
+                                {{ duration(row.difference_seconds) }}
+                            </td>
+                            <td>
+                                {{
+                                    row.wage === null
+                                        ? '—'
+                                        : formatMoney(row.wage)
+                                }}
+                            </td>
+                            <td class="space-x-2">
+                                <button
+                                    class="font-semibold text-primary"
+                                    @click="openEdit(row)"
+                                >
+                                    {{ t('common.edit') }}
+                                </button>
+                                <button
+                                    v-if="!row.voided"
+                                    class="font-semibold text-error-red"
+                                    @click="voidSession(row.id)"
+                                >
+                                    {{ t('attendance.correction.void') }}
+                                </button>
+                            </td>
+                        </tr>
+                        <tr v-if="report.rows.length === 0">
+                            <td
+                                colspan="9"
+                                data-label=""
+                                data-mobile-layout="stack"
+                                class="py-10 text-center text-sm text-on-surface-variant"
+                            >
+                                {{ t('attendance.report.empty') }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </DataTable>
             </template>
         </div>
 

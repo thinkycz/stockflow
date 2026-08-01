@@ -369,242 +369,215 @@ async function cancelDraft(): Promise<void> {
                 </p>
             </div>
 
-            <Card v-else padded>
+            <section v-else class="space-y-4">
                 <div v-if="!draft" class="py-8 text-center">
                     <Button type="button" @click="startDraft">
                         {{ t('inventory_counts.actions.start') }}
                     </Button>
                 </div>
-                <div class="overflow-x-auto">
-                    <DataTable v-if="draft" class="[&_td]:px-2 [&_th]:px-2">
-                        <thead>
-                            <tr>
-                                <th class="min-w-[14rem] text-left">
-                                    {{ t('inventory_counts.columns.item') }}
-                                </th>
-                                <th class="min-w-[9rem] text-left">
-                                    {{
-                                        t(
-                                            'inventory_counts.columns.stock_levels',
-                                        )
-                                    }}
-                                </th>
-                                <th class="min-w-[16rem] text-right">
-                                    {{
-                                        t(
-                                            'inventory_counts.columns.new_quantity',
-                                        )
-                                    }}
-                                </th>
-                                <th class="min-w-[12rem] text-left">
-                                    {{ t('inventory_counts.columns.reason') }}
-                                </th>
-                                <th class="min-w-[12rem] text-left">
-                                    {{ t('inventory_counts.columns.note') }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="row in props.rows" :key="row.item_id">
-                                <td>
-                                    <div class="font-semibold text-on-surface">
-                                        {{ row.title }}
-                                    </div>
-                                    <div
-                                        v-if="row.sku"
-                                        class="font-mono text-xs text-on-surface-variant"
-                                    >
-                                        {{ row.sku }}
-                                    </div>
-                                </td>
-                                <td>
-                                    <dl class="space-y-1.5">
-                                        <div>
-                                            <dt
-                                                class="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant"
-                                            >
-                                                {{
-                                                    t(
-                                                        'inventory_counts.columns.current_short',
-                                                    )
-                                                }}
-                                            </dt>
-                                            <dd
-                                                class="font-semibold text-on-surface"
-                                            >
-                                                {{
-                                                    formatWithUnit(
-                                                        row.current,
-                                                        row.unit,
-                                                    )
-                                                }}
-                                            </dd>
-                                        </div>
-                                        <div>
-                                            <dt
-                                                class="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant"
-                                            >
-                                                {{
-                                                    t(
-                                                        'inventory_counts.columns.previous_short',
-                                                    )
-                                                }}
-                                            </dt>
-                                            <dd
-                                                class="text-xs text-on-surface-variant"
-                                            >
-                                                {{
-                                                    formatWithUnit(
-                                                        row.previous,
-                                                        row.unit,
-                                                    )
-                                                }}
-                                            </dd>
-                                        </div>
-                                    </dl>
-                                </td>
-                                <td class="text-right">
-                                    <div
-                                        class="inline-flex flex-col items-end gap-1"
-                                    >
-                                        <div
-                                            class="inline-flex items-center justify-end gap-1"
-                                        >
-                                            <button
-                                                type="button"
-                                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-outline-glass bg-surface-container-lowest text-on-surface-variant transition hover:bg-primary/5 hover:text-primary active:scale-95"
-                                                :aria-label="
-                                                    t('common.decrease')
-                                                "
-                                                :data-testid="`dec-${row.item_id}`"
-                                                @click="
-                                                    adjustQuantity(
-                                                        row.item_id,
-                                                        -1,
-                                                    )
-                                                "
-                                            >
-                                                <Minus :size="14" />
-                                            </button>
-                                            <Input
-                                                :model-value="
-                                                    editing[row.item_id]
-                                                        ?.quantity ?? ''
-                                                "
-                                                type="number"
-                                                inputmode="decimal"
-                                                step="0.001"
-                                                min="0"
-                                                :placeholder="
-                                                    String(row.current)
-                                                "
-                                                :data-testid="`qty-${row.item_id}`"
-                                                class="w-24 text-center"
-                                                @update:model-value="
-                                                    (value) =>
-                                                        setQuantity(
-                                                            row.item_id,
-                                                            value,
-                                                        )
-                                                "
-                                                @blur="autosave(row.item_id)"
-                                                @keydown.tab="
-                                                    focusAdjacentQuantity(
-                                                        $event,
-                                                        row.item_id,
-                                                    )
-                                                "
-                                            />
-                                            <button
-                                                type="button"
-                                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-outline-glass bg-surface-container-lowest text-on-surface-variant transition hover:bg-primary/5 hover:text-primary active:scale-95"
-                                                :aria-label="
-                                                    t('common.increase')
-                                                "
-                                                :data-testid="`inc-${row.item_id}`"
-                                                @click="
-                                                    adjustQuantity(
-                                                        row.item_id,
-                                                        1,
-                                                    )
-                                                "
-                                            >
-                                                <Plus :size="14" />
-                                            </button>
-                                        </div>
-                                        <span
-                                            class="text-[10px] font-semibold"
-                                            :class="
-                                                difference(row.item_id) < 0
-                                                    ? 'text-rose-600'
-                                                    : difference(row.item_id) >
-                                                        0
-                                                      ? 'text-emerald-600'
-                                                      : 'text-on-surface-variant'
-                                            "
+                <DataTable v-if="draft" density="compact">
+                    <thead>
+                        <tr>
+                            <th class="min-w-[14rem] text-left">
+                                {{ t('inventory_counts.columns.item') }}
+                            </th>
+                            <th class="min-w-[9rem] text-left">
+                                {{ t('inventory_counts.columns.stock_levels') }}
+                            </th>
+                            <th class="min-w-[16rem] text-right">
+                                {{ t('inventory_counts.columns.new_quantity') }}
+                            </th>
+                            <th class="min-w-[12rem] text-left">
+                                {{ t('inventory_counts.columns.reason') }}
+                            </th>
+                            <th class="min-w-[12rem] text-left">
+                                {{ t('inventory_counts.columns.note') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in props.rows" :key="row.item_id">
+                            <td>
+                                <div class="font-semibold text-on-surface">
+                                    {{ row.title }}
+                                </div>
+                                <div
+                                    v-if="row.sku"
+                                    class="font-mono text-xs text-on-surface-variant"
+                                >
+                                    {{ row.sku }}
+                                </div>
+                            </td>
+                            <td>
+                                <dl class="space-y-1.5">
+                                    <div>
+                                        <dt
+                                            class="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant"
                                         >
                                             {{
                                                 t(
-                                                    'inventory_counts.columns.difference',
+                                                    'inventory_counts.columns.current_short',
                                                 )
-                                            }}:
+                                            }}
+                                        </dt>
+                                        <dd
+                                            class="font-semibold text-on-surface"
+                                        >
                                             {{
-                                                difference(row.item_id) > 0
-                                                    ? '+'
-                                                    : ''
-                                            }}{{ difference(row.item_id) }}
-                                        </span>
+                                                formatWithUnit(
+                                                    row.current,
+                                                    row.unit,
+                                                )
+                                            }}
+                                        </dd>
                                     </div>
-                                </td>
-                                <td>
-                                    <Select
-                                        v-if="difference(row.item_id) !== 0"
-                                        :model-value="
-                                            editing[row.item_id]?.classification
-                                        "
-                                        :options="
-                                            classificationOptions(row.item_id)
-                                        "
-                                        @update:model-value="
-                                            setClassification(
-                                                row.item_id,
-                                                $event,
-                                            )
-                                        "
-                                        @blur="autosave(row.item_id)"
-                                    />
-                                    <span
-                                        v-else
-                                        class="text-xs text-on-surface-variant"
-                                        >—</span
+                                    <div>
+                                        <dt
+                                            class="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant"
+                                        >
+                                            {{
+                                                t(
+                                                    'inventory_counts.columns.previous_short',
+                                                )
+                                            }}
+                                        </dt>
+                                        <dd
+                                            class="text-xs text-on-surface-variant"
+                                        >
+                                            {{
+                                                formatWithUnit(
+                                                    row.previous,
+                                                    row.unit,
+                                                )
+                                            }}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </td>
+                            <td class="text-right">
+                                <div
+                                    class="inline-flex flex-col items-end gap-1"
+                                >
+                                    <div
+                                        class="inline-flex items-center justify-end gap-1"
                                     >
-                                </td>
-                                <td>
-                                    <Input
-                                        :model-value="
-                                            editing[row.item_id]?.note ?? ''
-                                        "
-                                        type="text"
-                                        @update:model-value="
-                                            (value) =>
-                                                setNote(row.item_id, value)
-                                        "
-                                        @blur="autosave(row.item_id)"
-                                    />
+                                        <button
+                                            type="button"
+                                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-outline-glass bg-surface-container-lowest text-on-surface-variant transition hover:bg-primary/5 hover:text-primary active:scale-95"
+                                            :aria-label="t('common.decrease')"
+                                            :data-testid="`dec-${row.item_id}`"
+                                            @click="
+                                                adjustQuantity(row.item_id, -1)
+                                            "
+                                        >
+                                            <Minus :size="14" />
+                                        </button>
+                                        <Input
+                                            :model-value="
+                                                editing[row.item_id]
+                                                    ?.quantity ?? ''
+                                            "
+                                            type="number"
+                                            inputmode="decimal"
+                                            step="0.001"
+                                            min="0"
+                                            :placeholder="String(row.current)"
+                                            :data-testid="`qty-${row.item_id}`"
+                                            class="w-24 text-center"
+                                            @update:model-value="
+                                                (value) =>
+                                                    setQuantity(
+                                                        row.item_id,
+                                                        value,
+                                                    )
+                                            "
+                                            @blur="autosave(row.item_id)"
+                                            @keydown.tab="
+                                                focusAdjacentQuantity(
+                                                    $event,
+                                                    row.item_id,
+                                                )
+                                            "
+                                        />
+                                        <button
+                                            type="button"
+                                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-outline-glass bg-surface-container-lowest text-on-surface-variant transition hover:bg-primary/5 hover:text-primary active:scale-95"
+                                            :aria-label="t('common.increase')"
+                                            :data-testid="`inc-${row.item_id}`"
+                                            @click="
+                                                adjustQuantity(row.item_id, 1)
+                                            "
+                                        >
+                                            <Plus :size="14" />
+                                        </button>
+                                    </div>
                                     <span
-                                        class="mt-1 block text-[10px] text-on-surface-variant"
+                                        class="text-[10px] font-semibold"
+                                        :class="
+                                            difference(row.item_id) < 0
+                                                ? 'text-rose-600'
+                                                : difference(row.item_id) > 0
+                                                  ? 'text-emerald-600'
+                                                  : 'text-on-surface-variant'
+                                        "
                                     >
                                         {{
                                             t(
-                                                `inventory_counts.autosave.${saveState[row.item_id] ?? 'idle'}`,
+                                                'inventory_counts.columns.difference',
                                             )
-                                        }}
+                                        }}:
+                                        {{
+                                            difference(row.item_id) > 0
+                                                ? '+'
+                                                : ''
+                                        }}{{ difference(row.item_id) }}
                                     </span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </DataTable>
-                </div>
+                                </div>
+                            </td>
+                            <td>
+                                <Select
+                                    v-if="difference(row.item_id) !== 0"
+                                    :model-value="
+                                        editing[row.item_id]?.classification
+                                    "
+                                    :options="
+                                        classificationOptions(row.item_id)
+                                    "
+                                    @update:model-value="
+                                        setClassification(row.item_id, $event)
+                                    "
+                                    @blur="autosave(row.item_id)"
+                                />
+                                <span
+                                    v-else
+                                    class="text-xs text-on-surface-variant"
+                                    >—</span
+                                >
+                            </td>
+                            <td>
+                                <Input
+                                    :model-value="
+                                        editing[row.item_id]?.note ?? ''
+                                    "
+                                    type="text"
+                                    @update:model-value="
+                                        (value) => setNote(row.item_id, value)
+                                    "
+                                    @blur="autosave(row.item_id)"
+                                />
+                                <span
+                                    class="mt-1 block text-[10px] text-on-surface-variant"
+                                >
+                                    {{
+                                        t(
+                                            `inventory_counts.autosave.${saveState[row.item_id] ?? 'idle'}`,
+                                        )
+                                    }}
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </DataTable>
 
                 <div
                     v-if="draft"
@@ -633,7 +606,7 @@ async function cancelDraft(): Promise<void> {
                         {{ t('inventory_counts.actions.save') }}
                     </Button>
                 </div>
-            </Card>
+            </section>
 
             <Modal
                 :open="cancelModalOpen"

@@ -32,6 +32,12 @@ test('admin manages and closes a monthly financial report while limited users ar
     await expect(cashRow).toContainText('50.00');
     await expect(cashRow).toContainText('Manually adjusted');
 
+    await page.goto('/payroll?year=2030&month=1');
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.getByRole('button', { name: 'Close month' }).click();
+    await expect(page.getByText('Closed', { exact: true })).toBeVisible();
+    await page.goto('/income-expenses?year=2030&month=1');
+
     page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: 'Close month' }).click();
     await expect(page.getByText('Closed', { exact: true })).toBeVisible();

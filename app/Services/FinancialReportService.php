@@ -11,15 +11,15 @@ use App\Enums\StockMovementTypeEnum;
 use App\Models\FinancialReport;
 use App\Models\FinancialReportManualRow;
 use App\Models\FinancialReportOverride;
-use App\Models\Shift;
+use App\Models\PayrollReport;
 use App\Models\Statement;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
-use App\Models\Worker;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Thinkycz\LaravelCore\Support\Thrower;
+use Thinkycz\LaravelCore\Support\Typer;
 
 /**
  * @phpstan-type FinancialRow array{id: string, kind: string, direction: string, source_type: string|null, source_key: string|null, label: string, occurred_on: string|null, calculated_amount: float, override_amount: float|null, effective_amount: float, note: string|null, details: array<string, mixed>, manual_row_id?: int}
@@ -193,6 +193,16 @@ class FinancialReportService
     public function close(User $admin, Store $store, int $year, int $month): void
     {
         DB::transaction(function () use ($admin, $store, $year, $month): void {
+            $payrollQuery = PayrollReport::query();
+            PayrollReport::scopeForUser($payrollQuery, $admin);
+            $payrollReport = $payrollQuery
+                ->where('store_id', $store->getKey())
+                ->where('year', $year)
+                ->where('month', $month)
+                ->first();
+            if (!$payrollReport instanceof PayrollReport || !$payrollReport->isClosed()) {
+                Thrower::default()->message('report', Typer::assertString(\__('Close the payroll report before closing the financial report.')))->throw();
+            }
             $report = $this->openReport($admin, $store, $year, $month);
             $report = FinancialReport::query()->lockForUpdate()->findOrFail($report->getKey());
             if ($report->isClosed()) {
@@ -300,37 +310,25 @@ class FinancialReportService
      */
     private function wageRows(User $admin, Store $store, int $year, int $month): array
     {
-        $shiftQuery = Shift::query();
-        Shift::scopeForUser($shiftQuery, $admin);
-        Shift::scopeForStore($shiftQuery, $store->getKey());
-        Shift::scopeForMonth($shiftQuery, $year, $month);
-        Shift::querySelect($shiftQuery);
-        $shifts = $shiftQuery->get();
-        $workerIds = $shifts->map(static fn(Shift $shift): int => $shift->getWorkerId())->unique()->values()->all();
-        $workerQuery = Worker::query();
-        Worker::scopeForUser($workerQuery, $admin);
-        Worker::querySelect($workerQuery);
-        $workers = $workerQuery->whereKey($workerIds)->get()->keyBy(static fn(Worker $worker): int => $worker->getKey());
-        $totals = [];
-        $minutes = [];
-
-        foreach ($shifts as $shift) {
-            $workerId = $shift->getWorkerId();
-            $duration = \max(0, $shift->getDurationMinutes());
-            $minutes[$workerId] = ($minutes[$workerId] ?? 0) + $duration;
-            $totals[$workerId] = ($totals[$workerId] ?? 0.0) + (($duration / 60) * $shift->getHourlyRate());
-        }
-
         $rows = [];
-        foreach ($totals as $workerId => $amount) {
-            $worker = $workers->get($workerId);
-            if (!$worker instanceof Worker) {
-                continue;
-            }
-            $rows[] = $this->automaticRow(FinancialDirectionEnum::EXPENSE, FinancialSourceTypeEnum::WAGE, (string) $workerId, $worker->getFullName(), null, \round($amount, 2), [
-                'worker_id' => $workerId,
-                'minutes' => $minutes[$workerId],
-            ]);
+        $payroll = (new PayrollReportService())->build($admin, $store, $year, $month);
+        foreach (Typer::assertArray($payroll['payslips'] ?? null) as $value) {
+            $payslip = Typer::assertStringKeyArray(Typer::assertArray($value));
+            $rows[] = $this->automaticRow(
+                FinancialDirectionEnum::EXPENSE,
+                FinancialSourceTypeEnum::WAGE,
+                (string) Typer::assertInt($payslip['worker_id'] ?? null),
+                Typer::assertString($payslip['worker_name'] ?? null),
+                null,
+                Typer::parseFloat($payslip['final_amount'] ?? null),
+                [
+                    'worker_id' => Typer::assertInt($payslip['worker_id'] ?? null),
+                    'minutes' => Typer::assertInt($payslip['planned_minutes'] ?? null),
+                    'base_amount' => Typer::parseFloat($payslip['base_amount'] ?? null),
+                    'tip_amount' => Typer::parseFloat($payslip['tip_amount'] ?? null),
+                    'deduction_amount' => Typer::parseFloat($payslip['deduction_amount'] ?? null),
+                ],
+            );
         }
 
         return $rows;

@@ -608,7 +608,7 @@ function statementPeriodLabel(statement: RecentStatement): string {
                 </div>
 
                 <div class="hidden">
-                    <Card padded class="lg:col-span-2">
+                    <section class="space-y-4 lg:col-span-2">
                         <CardHeader>
                             <CardTitle>
                                 <span class="flex items-center gap-2">
@@ -627,68 +627,52 @@ function statementPeriodLabel(statement: RecentStatement): string {
                             v-if="top_consumed.length === 0"
                             :title="t('dashboard.top_consumed.empty')"
                         />
-                        <div v-else class="overflow-x-auto">
-                            <DataTable>
-                                <thead>
-                                    <tr>
-                                        <th>
-                                            {{
-                                                t('dashboard.top_consumed.item')
-                                            }}
-                                        </th>
-                                        <th class="text-right">
-                                            {{
-                                                t(
-                                                    'dashboard.top_consumed.quantity',
-                                                )
-                                            }}
-                                        </th>
-                                        <th class="text-right">
-                                            {{
-                                                t(
-                                                    'dashboard.top_consumed.value',
-                                                )
-                                            }}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr
-                                        v-for="item in top_consumed"
-                                        :key="item.item_id"
+                        <DataTable v-else>
+                            <thead>
+                                <tr>
+                                    <th>
+                                        {{ t('dashboard.top_consumed.item') }}
+                                    </th>
+                                    <th class="text-right">
+                                        {{
+                                            t('dashboard.top_consumed.quantity')
+                                        }}
+                                    </th>
+                                    <th class="text-right">
+                                        {{ t('dashboard.top_consumed.value') }}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="item in top_consumed"
+                                    :key="item.item_id"
+                                >
+                                    <td class="font-semibold text-on-surface">
+                                        <div class="flex flex-col">
+                                            <span>{{ item.title }}</span>
+                                            <span
+                                                v-if="item.sku"
+                                                class="font-mono text-[10px] font-normal text-on-surface-variant"
+                                            >
+                                                {{ item.sku }}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td
+                                        class="text-right font-mono text-xs text-on-surface-variant"
                                     >
-                                        <td
-                                            class="font-semibold text-on-surface"
-                                        >
-                                            <div class="flex flex-col">
-                                                <span>{{ item.title }}</span>
-                                                <span
-                                                    v-if="item.sku"
-                                                    class="font-mono text-[10px] font-normal text-on-surface-variant"
-                                                >
-                                                    {{ item.sku }}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td
-                                            class="text-right font-mono text-xs text-on-surface-variant"
-                                        >
-                                            {{
-                                                formatNumber(
-                                                    item.total_quantity,
-                                                )
-                                            }}
-                                        </td>
-                                        <td
-                                            class="text-right font-semibold text-on-surface"
-                                        >
-                                            {{ formatMoney(item.total_value) }}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </DataTable>
-                        </div>
-                    </Card>
+                                        {{ formatNumber(item.total_quantity) }}
+                                    </td>
+                                    <td
+                                        class="text-right font-semibold text-on-surface"
+                                    >
+                                        {{ formatMoney(item.total_value) }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </DataTable>
+                    </section>
 
                     <Card padded>
                         <CardHeader>
@@ -758,7 +742,7 @@ function statementPeriodLabel(statement: RecentStatement): string {
                     </Card>
                 </div>
 
-                <Card padded>
+                <section class="space-y-4">
                     <CardHeader>
                         <CardTitle>{{ t('dashboard.recent.title') }}</CardTitle>
                         <CardDescription>{{
@@ -769,62 +753,54 @@ function statementPeriodLabel(statement: RecentStatement): string {
                         v-if="recent_movements.length === 0"
                         :title="t('dashboard.recent.empty')"
                     />
-                    <div v-else class="overflow-x-auto">
-                        <DataTable>
-                            <thead>
-                                <tr>
-                                    <th>
-                                        {{ t('dashboard.recent.number') }}
-                                    </th>
-                                    <th>
-                                        {{ t('dashboard.recent.type') }}
-                                    </th>
-                                    <th class="text-right">
-                                        {{ t('dashboard.recent.value') }}
-                                    </th>
-                                    <th>
-                                        {{ t('dashboard.recent.date') }}
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                                    v-for="movement in recent_movements"
-                                    :key="movement.id"
-                                >
-                                    <td>
-                                        <Link
-                                            :href="
-                                                route(
-                                                    'stock-movements.show',
-                                                    movement.id,
-                                                )
-                                            "
-                                            class="font-mono text-xs font-semibold text-on-surface hover:text-primary"
-                                        >
-                                            {{ movement.number }}
-                                        </Link>
-                                    </td>
-                                    <td>
-                                        <MovementTypeBadge
-                                            :type="movement.type"
-                                        />
-                                    </td>
-                                    <td
-                                        class="text-right text-on-surface-variant"
+                    <DataTable v-else>
+                        <thead>
+                            <tr>
+                                <th>
+                                    {{ t('dashboard.recent.number') }}
+                                </th>
+                                <th>
+                                    {{ t('dashboard.recent.type') }}
+                                </th>
+                                <th class="text-right">
+                                    {{ t('dashboard.recent.value') }}
+                                </th>
+                                <th>
+                                    {{ t('dashboard.recent.date') }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="movement in recent_movements"
+                                :key="movement.id"
+                            >
+                                <td>
+                                    <Link
+                                        :href="
+                                            route(
+                                                'stock-movements.show',
+                                                movement.id,
+                                            )
+                                        "
+                                        class="font-mono text-xs font-semibold text-on-surface hover:text-primary"
                                     >
-                                        {{ formatMoney(movement.total_value) }}
-                                    </td>
-                                    <td class="text-xs text-on-surface-variant">
-                                        {{
-                                            formatDateTime(movement.created_at)
-                                        }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </DataTable>
-                    </div>
-                </Card>
+                                        {{ movement.number }}
+                                    </Link>
+                                </td>
+                                <td>
+                                    <MovementTypeBadge :type="movement.type" />
+                                </td>
+                                <td class="text-right text-on-surface-variant">
+                                    {{ formatMoney(movement.total_value) }}
+                                </td>
+                                <td class="text-xs text-on-surface-variant">
+                                    {{ formatDateTime(movement.created_at) }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </DataTable>
+                </section>
             </template>
         </div>
     </AppLayout>

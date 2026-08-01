@@ -88,28 +88,221 @@
 }
 
 @layer components {
+    .data-table-frame {
+        @apply overflow-hidden rounded-2xl border border-outline-glass bg-surface-container-lowest;
+    }
+
+    .data-table-frame--nested {
+        @apply rounded-xl;
+    }
+
+    .data-table-scroll {
+        @apply overflow-x-auto;
+    }
+
     .data-table {
-        @apply w-full border-separate text-left;
+        @apply w-full border-collapse text-left text-sm;
         border-spacing: 0;
     }
 
     .data-table thead th {
-        @apply sticky top-0 z-10 border-b border-outline-glass bg-surface-container-lowest/95 px-4 py-3 text-[11px] font-medium tracking-wider text-on-surface-variant uppercase backdrop-blur;
-    }
-
-    .data-table tbody tr {
-        @apply transition-colors;
-    }
-
-    .data-table tbody tr:hover {
-        @apply bg-surface-container-low;
+        @apply sticky top-0 z-10 border-b border-outline-glass bg-surface-container-low px-5 py-3 text-[11px] font-medium tracking-wider text-on-surface-variant uppercase;
     }
 
     .data-table tbody td {
-        @apply border-b border-outline-glass px-4 py-4 align-middle text-sm text-on-surface;
+        @apply border-b border-outline-glass px-5 py-4 align-middle text-sm text-on-surface;
     }
 
     .data-table tbody tr:last-child td {
         @apply border-b-0;
+    }
+
+    .data-table tfoot th,
+    .data-table tfoot td {
+        @apply border-t border-outline-glass bg-surface-container-low px-5 py-3 text-sm font-semibold text-on-surface;
+    }
+
+    .data-table--compact thead th,
+    .data-table--compact tbody td,
+    .data-table--compact tfoot th,
+    .data-table--compact tfoot td {
+        @apply px-3 py-3;
+    }
+}
+
+@media (max-width: 767px) {
+    .data-table-frame {
+        overflow: visible;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+    }
+
+    .data-table-scroll {
+        overflow: visible;
+    }
+
+    .data-table,
+    .data-table tbody,
+    .data-table tfoot,
+    .data-table tr {
+        display: block;
+        width: 100%;
+        min-width: 0 !important;
+    }
+
+    .data-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .data-table tbody,
+    .data-table tfoot {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .data-table tfoot {
+        margin-top: 0.75rem;
+    }
+
+    .data-table tbody tr,
+    .data-table tfoot tr {
+        overflow: hidden;
+        border: 1px solid var(--color-outline-glass);
+        border-radius: 0.75rem;
+        background: var(--color-surface-container-lowest);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .data-table tbody td,
+    .data-table tfoot th,
+    .data-table tfoot td,
+    .data-table--compact tbody td,
+    .data-table--compact tfoot th,
+    .data-table--compact tfoot td {
+        display: grid;
+        grid-template-columns: minmax(7rem, 40%) minmax(0, 1fr);
+        gap: 0.75rem;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 0;
+        border-bottom: 1px solid var(--color-outline-glass);
+        background: transparent;
+        text-align: right;
+    }
+
+    .data-table tbody td:last-child,
+    .data-table tfoot th:last-child,
+    .data-table tfoot td:last-child {
+        border-bottom: 0;
+    }
+
+    .data-table tbody td::before,
+    .data-table tfoot th::before,
+    .data-table tfoot td::before {
+        content: attr(data-label);
+        align-self: center;
+        text-align: left;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        line-height: 1rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--color-on-surface-variant);
+    }
+
+    .data-table [data-mobile-layout='stack'] {
+        grid-template-columns: minmax(0, 1fr);
+        text-align: left;
+    }
+
+    .data-table [data-mobile-hidden] {
+        display: none;
+    }
+}
+
+@media print {
+    .data-table-frame,
+    .data-table-frame--nested {
+        overflow: visible;
+        border: 1px solid #cbd5e1;
+        border-radius: 0;
+        background: #fff;
+        box-shadow: none;
+    }
+
+    .data-table-scroll {
+        overflow: visible;
+    }
+
+    .data-table {
+        display: table;
+        width: 100%;
+        min-width: 0 !important;
+        border-collapse: collapse;
+        color: #000;
+    }
+
+    .data-table thead {
+        position: static;
+        display: table-header-group;
+        width: auto;
+        height: auto;
+        margin: 0;
+        overflow: visible;
+        clip: auto;
+        white-space: normal;
+    }
+
+    .data-table tbody {
+        display: table-row-group;
+    }
+
+    .data-table tfoot {
+        display: table-footer-group;
+    }
+
+    .data-table tr {
+        display: table-row;
+        break-inside: avoid;
+        box-shadow: none;
+    }
+
+    .data-table thead th,
+    .data-table tbody td,
+    .data-table tfoot th,
+    .data-table tfoot td,
+    .data-table--compact thead th,
+    .data-table--compact tbody td,
+    .data-table--compact tfoot th,
+    .data-table--compact tfoot td {
+        position: static;
+        display: table-cell;
+        width: auto;
+        padding: 0.5rem;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        color: #000;
+        text-align: inherit;
+    }
+
+    .data-table thead th,
+    .data-table tfoot th,
+    .data-table tfoot td {
+        background: #f1f5f9;
+    }
+
+    .data-table tbody td::before,
+    .data-table tfoot th::before,
+    .data-table tfoot td::before {
+        content: none;
     }
 }

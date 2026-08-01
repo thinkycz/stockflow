@@ -4,7 +4,6 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
-import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
@@ -82,7 +81,7 @@ const totals = computed(() => ({
                 </Link>
             </header>
 
-            <Card padded>
+            <section class="space-y-4">
                 <div
                     class="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-on-surface-variant"
                 >
@@ -100,79 +99,63 @@ const totals = computed(() => ({
                     :description="t('statements.history.empty.description')"
                 />
 
-                <div v-else class="overflow-x-auto">
-                    <DataTable class="[&_td]:px-2 [&_th]:px-2">
-                        <thead>
-                            <tr>
-                                <th class="min-w-[12rem] text-left">
-                                    {{
-                                        t(
-                                            'statements.history.columns.snapshot_at',
-                                        )
-                                    }}
-                                </th>
-                                <th class="min-w-[8rem] text-right">
-                                    {{
-                                        t(
-                                            'statements.history.columns.day_count',
-                                        )
-                                    }}
-                                </th>
-                                <th class="min-w-[14rem] text-left">
-                                    {{ t('statements.history.columns.note') }}
-                                </th>
-                                <th class="min-w-[14rem] text-left">
-                                    {{
-                                        t(
-                                            'statements.history.columns.created_by',
-                                        )
-                                    }}
-                                </th>
-                                <th class="min-w-[8rem] text-right">
-                                    {{ t('statements.history.columns.open') }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="row in props.rows"
-                                :key="row.id"
-                                class="border-b border-outline-glass/40 last:border-b-0"
+                <DataTable v-else density="compact">
+                    <thead>
+                        <tr>
+                            <th class="min-w-[12rem] text-left">
+                                {{
+                                    t('statements.history.columns.snapshot_at')
+                                }}
+                            </th>
+                            <th class="min-w-[8rem] text-right">
+                                {{ t('statements.history.columns.day_count') }}
+                            </th>
+                            <th class="min-w-[14rem] text-left">
+                                {{ t('statements.history.columns.note') }}
+                            </th>
+                            <th class="min-w-[14rem] text-left">
+                                {{ t('statements.history.columns.created_by') }}
+                            </th>
+                            <th class="min-w-[8rem] text-right">
+                                {{ t('statements.history.columns.open') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in props.rows" :key="row.id">
+                            <td
+                                class="font-mono text-xs text-on-surface-variant"
                             >
-                                <td
-                                    class="font-mono text-xs text-on-surface-variant"
+                                {{ formatCzechDateTime(row.snapshot_at) }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ row.day_count }}
+                            </td>
+                            <td class="text-xs text-on-surface-variant">
+                                {{ row.note ?? '—' }}
+                            </td>
+                            <td class="text-xs text-on-surface-variant">
+                                {{ row.created_by_email ?? '—' }}
+                            </td>
+                            <td class="text-right">
+                                <Link
+                                    :href="
+                                        route('statements.versions.show', {
+                                            version: row.id,
+                                        })
+                                    "
                                 >
-                                    {{ formatCzechDateTime(row.snapshot_at) }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ row.day_count }}
-                                </td>
-                                <td class="text-xs text-on-surface-variant">
-                                    {{ row.note ?? '—' }}
-                                </td>
-                                <td class="text-xs text-on-surface-variant">
-                                    {{ row.created_by_email ?? '—' }}
-                                </td>
-                                <td class="text-right">
-                                    <Link
-                                        :href="
-                                            route('statements.versions.show', {
-                                                version: row.id,
-                                            })
-                                        "
-                                    >
-                                        <Button variant="secondary">
-                                            {{ t('statements.history.open') }} →
-                                        </Button>
-                                    </Link>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </DataTable>
-                </div>
-            </Card>
+                                    <Button variant="secondary">
+                                        {{ t('statements.history.open') }} →
+                                    </Button>
+                                </Link>
+                            </td>
+                        </tr>
+                    </tbody>
+                </DataTable>
+            </section>
         </div>
     </AppLayout>
 </template>

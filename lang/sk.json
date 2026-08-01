@@ -130,5 +130,17 @@
     "Manual financial row deleted.": "Ručný finančný riadok bol odstránený.",
     "Copied :count manual financial rows.": "Skopírovaných ručných finančných riadkov: :count.",
     "Financial report closed.": "Finančný report bol uzavretý.",
-    "Financial report reopened.": "Finančný report bol znovu otvorený."
+    "Financial report reopened.": "Finančný report bol znovu otvorený.",
+    "Close the payroll report before closing the financial report.": "Pred uzavretím finančného reportu uzavrite výplatný report.",
+    "The adjustment amount must be greater than zero.": "Suma úpravy musí byť väčšia ako nula.",
+    "The deduction cannot make the final payroll amount negative.": "Zrážka nesmie znížiť výslednú výplatu pod nulu.",
+    "The adjustment cannot make the final payroll amount negative.": "Úprava nesmie znížiť výslednú výplatu pod nulu.",
+    "The payroll report is closed. Reopen it before making changes.": "Výplatný report je uzavretý. Pred zmenami ho znovu otvorte.",
+    "The payroll report does not exist.": "Výplatný report neexistuje.",
+    "Reopen the financial report before reopening payroll.": "Pred znovuotvorením výplatného reportu otvorte finančný report.",
+    "Payroll adjustment created.": "Úprava odmeny bola vytvorená.",
+    "Payroll adjustment saved.": "Úprava odmeny bola uložená.",
+    "Payroll adjustment deleted.": "Úprava odmeny bola zmazaná.",
+    "Payroll report closed.": "Výplatný report bol uzavretý.",
+    "Payroll report reopened.": "Výplatný report bol znovu otvorený."
 }

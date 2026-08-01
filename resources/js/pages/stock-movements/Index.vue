@@ -314,7 +314,7 @@ watch(
                 </div>
             </Card>
 
-            <Card padded>
+            <section class="space-y-4">
                 <EmptyState
                     v-if="movements.length === 0"
                     :title="t('stock_movements.empty.title')"
@@ -329,117 +329,106 @@ watch(
                         </Link>
                     </template>
                 </EmptyState>
-                <div v-else class="overflow-x-auto">
-                    <DataTable>
-                        <thead>
-                            <tr>
-                                <th>
-                                    {{ t('stock_movements.columns.number') }}
-                                </th>
-                                <th>{{ t('stock_movements.columns.type') }}</th>
-                                <th>
-                                    {{ t('stock_movements.columns.source') }}
-                                </th>
-                                <th>
-                                    {{
-                                        t('stock_movements.columns.destination')
-                                    }}
-                                </th>
-                                <th class="text-right">
-                                    {{
-                                        t('stock_movements.columns.items_count')
-                                    }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('stock_movements.columns.value') }}
-                                </th>
-                                <th>{{ t('stock_movements.columns.date') }}</th>
-                                <th>
-                                    {{
-                                        t('stock_movements.columns.created_by')
-                                    }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="movement in movements"
-                                :key="movement.id"
+                <DataTable v-else>
+                    <thead>
+                        <tr>
+                            <th>
+                                {{ t('stock_movements.columns.number') }}
+                            </th>
+                            <th>{{ t('stock_movements.columns.type') }}</th>
+                            <th>
+                                {{ t('stock_movements.columns.source') }}
+                            </th>
+                            <th>
+                                {{ t('stock_movements.columns.destination') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('stock_movements.columns.items_count') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('stock_movements.columns.value') }}
+                            </th>
+                            <th>{{ t('stock_movements.columns.date') }}</th>
+                            <th>
+                                {{ t('stock_movements.columns.created_by') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="movement in movements" :key="movement.id">
+                            <td>
+                                <Link
+                                    :href="
+                                        route(
+                                            'stock-movements.show',
+                                            movement.id,
+                                        )
+                                    "
+                                    class="font-mono text-xs font-semibold text-on-surface hover:text-primary"
+                                >
+                                    {{ movement.number }}
+                                </Link>
+                            </td>
+                            <td>
+                                <MovementTypeBadge
+                                    :type="movement.type"
+                                    :label-key="movement.display_label_key"
+                                />
+                            </td>
+                            <td class="text-xs text-on-surface-variant">
+                                {{ movement.source_store_name ?? '—' }}
+                            </td>
+                            <td class="text-xs text-on-surface-variant">
+                                {{ movement.store_name ?? '—' }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
                             >
-                                <td>
-                                    <Link
-                                        :href="
-                                            route(
-                                                'stock-movements.show',
-                                                movement.id,
-                                            )
-                                        "
-                                        class="font-mono text-xs font-semibold text-on-surface hover:text-primary"
-                                    >
-                                        {{ movement.number }}
-                                    </Link>
-                                </td>
-                                <td>
-                                    <MovementTypeBadge
-                                        :type="movement.type"
-                                        :label-key="movement.display_label_key"
-                                    />
-                                </td>
-                                <td class="text-xs text-on-surface-variant">
-                                    {{ movement.source_store_name ?? '—' }}
-                                </td>
-                                <td class="text-xs text-on-surface-variant">
-                                    {{ movement.store_name ?? '—' }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ movement.items_count }}
-                                </td>
-                                <td class="text-right text-on-surface-variant">
-                                    {{
-                                        movement.type ===
-                                        'inventory_reconciliation'
-                                            ? formatSignedMoney(
-                                                  movement.net_value,
-                                              )
-                                            : formatMoney(movement.total_value)
-                                    }}
-                                </td>
-                                <td class="text-xs text-on-surface-variant">
-                                    {{ formatDate(movement.created_at) }}
-                                </td>
-                                <td class="text-xs text-on-surface-variant">
-                                    {{ movement.created_by ?? '—' }}
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <th
-                                    colspan="4"
-                                    class="border-t border-outline-glass pt-2 text-left text-xs font-semibold text-on-surface-variant"
-                                >
-                                    Σ
-                                </th>
-                                <th
-                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                >
-                                    {{ totals.items_count }}
-                                </th>
-                                <th
-                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface"
-                                >
-                                    {{ formatMoney(totals.total_value) }}
-                                </th>
-                                <th
-                                    colspan="2"
-                                    class="border-t border-outline-glass pt-2"
-                                ></th>
-                            </tr>
-                        </tfoot>
-                    </DataTable>
-                </div>
+                                {{ movement.items_count }}
+                            </td>
+                            <td class="text-right text-on-surface-variant">
+                                {{
+                                    movement.type === 'inventory_reconciliation'
+                                        ? formatSignedMoney(movement.net_value)
+                                        : formatMoney(movement.total_value)
+                                }}
+                            </td>
+                            <td class="text-xs text-on-surface-variant">
+                                {{ formatDate(movement.created_at) }}
+                            </td>
+                            <td class="text-xs text-on-surface-variant">
+                                {{ movement.created_by ?? '—' }}
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th
+                                colspan="4"
+                                data-label=""
+                                data-mobile-hidden
+                                class="text-left text-xs font-semibold text-on-surface-variant"
+                            >
+                                Σ
+                            </th>
+                            <th
+                                class="text-right text-xs font-semibold text-on-surface-variant"
+                            >
+                                {{ totals.items_count }}
+                            </th>
+                            <th
+                                class="text-right text-xs font-semibold text-on-surface"
+                            >
+                                {{ formatMoney(totals.total_value) }}
+                            </th>
+                            <th
+                                colspan="2"
+                                data-label=""
+                                data-mobile-hidden
+                            ></th>
+                        </tr>
+                    </tfoot>
+                </DataTable>
 
                 <Pagination
                     v-if="movements.length > 0"
@@ -459,7 +448,7 @@ watch(
                     }"
                     class="mt-4"
                 />
-            </Card>
+            </section>
         </div>
     </AppLayout>
 </template>

@@ -928,8 +928,8 @@ async function copyText(value: string): Promise<void> {
                 </div>
             </Card>
 
-            <Card padded class="p-4 sm:p-6">
-                <div class="mb-4 flex items-center justify-between">
+            <section class="space-y-4">
+                <div class="flex items-center justify-between px-1">
                     <div class="flex items-center gap-2">
                         <CalendarDays
                             :size="18"
@@ -963,7 +963,7 @@ async function copyText(value: string): Promise<void> {
 
                 <div
                     v-if="!store"
-                    class="py-12 text-center text-sm text-on-surface-variant"
+                    class="rounded-2xl border border-outline-glass bg-surface-container-lowest py-12 text-center text-sm text-on-surface-variant"
                 >
                     {{ t('shifts.no_store') }}
                 </div>
@@ -978,9 +978,9 @@ async function copyText(value: string): Promise<void> {
                     :pending-dates="pendingDates"
                     @activate="handleDayClick"
                 />
-            </Card>
+            </section>
 
-            <Card v-if="store" padded>
+            <section v-if="store" class="space-y-4">
                 <div class="mb-4 flex items-start gap-3">
                     <span
                         class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-fixed text-primary"
@@ -1007,7 +1007,7 @@ async function copyText(value: string): Promise<void> {
                     :rows="localMonthlySummary"
                     :show-salary="is_admin"
                 />
-            </Card>
+            </section>
         </div>
 
         <Modal

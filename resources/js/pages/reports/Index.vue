@@ -525,7 +525,7 @@ function quantityWithUnit(value: number, unit: string | null): string {
                             :empty-text="t('reports.statistics.empty')"
                         />
                     </Card>
-                    <Card padded>
+                    <section class="space-y-4">
                         <CardHeader
                             ><CardTitle>{{
                                 t('reports.statistics.items.title')
@@ -534,158 +534,145 @@ function quantityWithUnit(value: number, unit: string | null): string {
                                 t('reports.statistics.items.subtitle')
                             }}</CardDescription></CardHeader
                         >
-                        <div class="overflow-x-auto">
-                            <DataTable>
-                                <thead>
-                                    <tr>
-                                        <th>
-                                            {{
-                                                t(
-                                                    'reports.statistics.items.item',
-                                                )
-                                            }}
-                                        </th>
-                                        <th class="text-right">
-                                            {{
-                                                t(
-                                                    'reports.statistics.items.current',
-                                                )
-                                            }}
-                                        </th>
-                                        <th class="text-right">
-                                            {{
-                                                t(
-                                                    'reports.statistics.items.consumed',
-                                                )
-                                            }}
-                                        </th>
-                                        <th class="text-right">
-                                            {{
-                                                t(
-                                                    'reports.statistics.items.average',
-                                                )
-                                            }}
-                                        </th>
-                                        <th class="text-right">
-                                            {{
-                                                t(
-                                                    'reports.statistics.items.stockout',
-                                                )
-                                            }}
-                                        </th>
-                                        <th>
-                                            {{
-                                                t(
-                                                    'reports.statistics.items.status',
-                                                )
-                                            }}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr
-                                        v-for="item in props.inventory_report
-                                            .items"
-                                        :key="item.item_id"
-                                    >
-                                        <td>
-                                            <div class="font-semibold">
-                                                {{ item.title }}
-                                            </div>
-                                            <div
-                                                class="font-mono text-xs text-on-surface-variant"
-                                            >
-                                                {{ item.sku ?? '—' }}
-                                            </div>
-                                        </td>
-                                        <td class="text-right">
-                                            {{
-                                                quantityWithUnit(
-                                                    item.current_quantity,
-                                                    item.unit,
-                                                )
-                                            }}
-                                        </td>
-                                        <td class="text-right">
-                                            {{
-                                                quantityWithUnit(
-                                                    item.consumed_quantity,
-                                                    item.unit,
-                                                )
-                                            }}
-                                        </td>
-                                        <td class="text-right">
-                                            {{
-                                                item.avg_daily_consumption > 0
-                                                    ? quantityWithUnit(
-                                                          item.avg_daily_consumption,
-                                                          item.unit,
-                                                      )
-                                                    : '—'
-                                            }}
-                                        </td>
-                                        <td class="text-right">
-                                            {{
-                                                item.projected_stockout_at
-                                                    ? formatDate(
-                                                          item.projected_stockout_at,
-                                                      )
-                                                    : '—'
-                                            }}
-                                        </td>
-                                        <td>
-                                            <StatusBadge
-                                                :status="item.status"
-                                            />
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </DataTable>
-                        </div>
-                    </Card>
-                    <Card padded>
+                        <DataTable>
+                            <thead>
+                                <tr>
+                                    <th>
+                                        {{ t('reports.statistics.items.item') }}
+                                    </th>
+                                    <th class="text-right">
+                                        {{
+                                            t(
+                                                'reports.statistics.items.current',
+                                            )
+                                        }}
+                                    </th>
+                                    <th class="text-right">
+                                        {{
+                                            t(
+                                                'reports.statistics.items.consumed',
+                                            )
+                                        }}
+                                    </th>
+                                    <th class="text-right">
+                                        {{
+                                            t(
+                                                'reports.statistics.items.average',
+                                            )
+                                        }}
+                                    </th>
+                                    <th class="text-right">
+                                        {{
+                                            t(
+                                                'reports.statistics.items.stockout',
+                                            )
+                                        }}
+                                    </th>
+                                    <th>
+                                        {{
+                                            t('reports.statistics.items.status')
+                                        }}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="item in props.inventory_report.items"
+                                    :key="item.item_id"
+                                >
+                                    <td>
+                                        <div class="font-semibold">
+                                            {{ item.title }}
+                                        </div>
+                                        <div
+                                            class="font-mono text-xs text-on-surface-variant"
+                                        >
+                                            {{ item.sku ?? '—' }}
+                                        </div>
+                                    </td>
+                                    <td class="text-right">
+                                        {{
+                                            quantityWithUnit(
+                                                item.current_quantity,
+                                                item.unit,
+                                            )
+                                        }}
+                                    </td>
+                                    <td class="text-right">
+                                        {{
+                                            quantityWithUnit(
+                                                item.consumed_quantity,
+                                                item.unit,
+                                            )
+                                        }}
+                                    </td>
+                                    <td class="text-right">
+                                        {{
+                                            item.avg_daily_consumption > 0
+                                                ? quantityWithUnit(
+                                                      item.avg_daily_consumption,
+                                                      item.unit,
+                                                  )
+                                                : '—'
+                                        }}
+                                    </td>
+                                    <td class="text-right">
+                                        {{
+                                            item.projected_stockout_at
+                                                ? formatDate(
+                                                      item.projected_stockout_at,
+                                                  )
+                                                : '—'
+                                        }}
+                                    </td>
+                                    <td>
+                                        <StatusBadge :status="item.status" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </DataTable>
+                    </section>
+                    <section class="space-y-4">
                         <CardHeader
                             ><CardTitle>{{
                                 t('reports.statistics.classifications.title')
                             }}</CardTitle></CardHeader
                         >
-                        <div class="overflow-x-auto">
-                            <DataTable
-                                ><thead>
-                                    <tr>
-                                        <th>{{ t('reports.reason') }}</th>
-                                        <th class="text-right">
-                                            {{ t('reports.movements') }}
-                                        </th>
-                                        <th class="text-right">
-                                            {{ t('reports.value') }}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr
-                                        v-for="row in props.inventory_report
-                                            .classified_changes"
-                                        :key="row.classification"
-                                    >
-                                        <td>
-                                            {{
-                                                t(
-                                                    `stock_movements.reasons.${row.classification}`,
-                                                )
-                                            }}
-                                        </td>
-                                        <td class="text-right">
-                                            {{ formatNumber(row.rows_count) }}
-                                        </td>
-                                        <td class="text-right">
-                                            {{ formatMoney(row.value) }}
-                                        </td>
-                                    </tr>
-                                </tbody></DataTable
-                            >
-                        </div>
-                    </Card>
+                        <DataTable
+                            ><thead>
+                                <tr>
+                                    <th>{{ t('reports.reason') }}</th>
+                                    <th class="text-right">
+                                        {{ t('reports.movements') }}
+                                    </th>
+                                    <th class="text-right">
+                                        {{ t('reports.value') }}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="row in props.inventory_report
+                                        .classified_changes"
+                                    :key="row.classification"
+                                >
+                                    <td>
+                                        {{
+                                            t(
+                                                `stock_movements.reasons.${row.classification}`,
+                                            )
+                                        }}
+                                    </td>
+                                    <td class="text-right">
+                                        {{ formatNumber(row.rows_count) }}
+                                    </td>
+                                    <td class="text-right">
+                                        {{ formatMoney(row.value) }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </DataTable>
+                    </section>
                 </section>
             </template>
         </div>

@@ -33,6 +33,10 @@ use App\Http\Controllers\Web\Item\ItemIndexController;
 use App\Http\Controllers\Web\Item\ItemSearchController;
 use App\Http\Controllers\Web\Item\ItemShowController;
 use App\Http\Controllers\Web\Noticeboard\NoticeboardCardController;
+use App\Http\Controllers\Web\Payroll\PayrollAdjustmentController;
+use App\Http\Controllers\Web\Payroll\PayrollIndexController;
+use App\Http\Controllers\Web\Payroll\PayrollLifecycleController;
+use App\Http\Controllers\Web\Payroll\PayrollPrintController;
 use App\Http\Controllers\Web\Report\ReportController;
 use App\Http\Controllers\Web\Report\StatisticsController;
 use App\Http\Controllers\Web\Settings\SettingsController;
@@ -158,6 +162,14 @@ Resolver::resolveRouteRegistrar()
         $router->post('noticeboard-cards/{noticeboardCard}/restore', [NoticeboardCardController::class, 'restore'])->whereNumber('noticeboardCard')->name('noticeboard-cards.restore');
 
         // Monthly store income and expenses
+        $router->get('payroll', PayrollIndexController::class)->name('payroll.index');
+        $router->get('payroll/print', PayrollPrintController::class)->name('payroll.print');
+        $router->post('payroll/adjustments', [PayrollAdjustmentController::class, 'store'])->name('payroll.adjustments.store');
+        $router->put('payroll/adjustments/{payrollAdjustment}', [PayrollAdjustmentController::class, 'update'])->whereNumber('payrollAdjustment')->name('payroll.adjustments.update');
+        $router->delete('payroll/adjustments/{payrollAdjustment}', [PayrollAdjustmentController::class, 'destroy'])->whereNumber('payrollAdjustment')->name('payroll.adjustments.destroy');
+        $router->post('payroll/close', [PayrollLifecycleController::class, 'close'])->name('payroll.close');
+        $router->post('payroll/reopen', [PayrollLifecycleController::class, 'reopen'])->name('payroll.reopen');
+
         $router->get('income-expenses', IncomeExpenseIndexController::class)->name('income-expenses.index');
         $router->post('income-expenses/overrides', [IncomeExpenseOverrideController::class, 'store'])->name('income-expenses.overrides.store');
         $router->delete('income-expenses/overrides', [IncomeExpenseOverrideController::class, 'destroy'])->name('income-expenses.overrides.destroy');

@@ -241,7 +241,7 @@ function destroyStore(id: number): void {
                 </Card>
             </div>
 
-            <Card padded>
+            <section class="space-y-4">
                 <CardHeader>
                     <CardTitle>{{ t('stores.inventory') }}</CardTitle>
                     <CardDescription>{{
@@ -252,88 +252,80 @@ function destroyStore(id: number): void {
                     v-if="inventory.length === 0"
                     :title="t('stores.inventory_empty')"
                 />
-                <div v-else class="overflow-x-auto">
-                    <DataTable>
-                        <thead>
-                            <tr>
-                                <th>{{ t('stores.columns.item') }}</th>
-                                <th>{{ t('stores.columns.sku') }}</th>
-                                <th class="text-right">
-                                    {{ t('stores.columns.total_quantity') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('stores.columns.total_value') }}
-                                </th>
-                                <th>{{ t('stores.columns.status') }}</th>
-                                <th>{{ t('stores.columns.sparkline') }}</th>
-                                <th>{{ t('stores.columns.last_count') }}</th>
-                                <th class="text-right">
-                                    {{
-                                        t(
-                                            'stores.columns.avg_daily_consumption',
-                                        )
-                                    }}
-                                </th>
-                                <th class="text-right">
-                                    {{
-                                        t('stores.columns.days_until_stockout')
-                                    }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="row in inventory" :key="row.item_id">
-                                <td>{{ row.item_title }}</td>
-                                <td class="font-mono text-xs">
-                                    {{ row.item_sku ?? '—' }}
-                                </td>
-                                <td class="text-right font-semibold">
-                                    {{ row.quantity }}
-                                </td>
-                                <td class="text-right">
-                                    {{ formatMoney(row.total_value) }}
-                                </td>
-                                <td>
-                                    <StatusBadge :status="row.status" />
-                                </td>
-                                <td>
-                                    <Sparkline
-                                        :data="row.sparkline"
-                                        :width="120"
-                                        :height="32"
-                                    />
-                                </td>
-                                <td class="text-xs text-on-surface-variant">
-                                    {{ formatCzechDateTime(row.last_count_at) }}
-                                </td>
-                                <td
-                                    class="text-right text-xs text-on-surface-variant"
-                                >
-                                    {{
-                                        row.avg_daily_consumption > 0
-                                            ? formatNumber(
-                                                  row.avg_daily_consumption,
-                                                  2,
-                                              )
-                                            : '—'
-                                    }}
-                                </td>
-                                <td
-                                    class="text-right text-xs text-on-surface-variant"
-                                >
-                                    {{
-                                        row.days_until_stockout !== null
-                                            ? `${row.days_until_stockout} d`
-                                            : '—'
-                                    }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </DataTable>
-                </div>
-            </Card>
+                <DataTable v-else>
+                    <thead>
+                        <tr>
+                            <th>{{ t('stores.columns.item') }}</th>
+                            <th>{{ t('stores.columns.sku') }}</th>
+                            <th class="text-right">
+                                {{ t('stores.columns.total_quantity') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('stores.columns.total_value') }}
+                            </th>
+                            <th>{{ t('stores.columns.status') }}</th>
+                            <th>{{ t('stores.columns.sparkline') }}</th>
+                            <th>{{ t('stores.columns.last_count') }}</th>
+                            <th class="text-right">
+                                {{ t('stores.columns.avg_daily_consumption') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('stores.columns.days_until_stockout') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in inventory" :key="row.item_id">
+                            <td>{{ row.item_title }}</td>
+                            <td class="font-mono text-xs">
+                                {{ row.item_sku ?? '—' }}
+                            </td>
+                            <td class="text-right font-semibold">
+                                {{ row.quantity }}
+                            </td>
+                            <td class="text-right">
+                                {{ formatMoney(row.total_value) }}
+                            </td>
+                            <td>
+                                <StatusBadge :status="row.status" />
+                            </td>
+                            <td>
+                                <Sparkline
+                                    :data="row.sparkline"
+                                    :width="120"
+                                    :height="32"
+                                />
+                            </td>
+                            <td class="text-xs text-on-surface-variant">
+                                {{ formatCzechDateTime(row.last_count_at) }}
+                            </td>
+                            <td
+                                class="text-right text-xs text-on-surface-variant"
+                            >
+                                {{
+                                    row.avg_daily_consumption > 0
+                                        ? formatNumber(
+                                              row.avg_daily_consumption,
+                                              2,
+                                          )
+                                        : '—'
+                                }}
+                            </td>
+                            <td
+                                class="text-right text-xs text-on-surface-variant"
+                            >
+                                {{
+                                    row.days_until_stockout !== null
+                                        ? `${row.days_until_stockout} d`
+                                        : '—'
+                                }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </DataTable>
+            </section>
 
-            <Card padded>
+            <section class="space-y-4">
                 <CardHeader>
                     <CardTitle>
                         <span class="flex items-center gap-2">
@@ -353,56 +345,51 @@ function destroyStore(id: number): void {
                     :title="t('stores.items_empty.title')"
                     :description="t('stores.items_empty.description')"
                 />
-                <div v-else class="overflow-x-auto">
-                    <DataTable>
-                        <thead>
-                            <tr>
-                                <th>{{ t('stores.columns.item') }}</th>
-                                <th>{{ t('stores.columns.sku') }}</th>
-                                <th class="text-right">
-                                    {{ t('stores.columns.movements') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('stores.columns.total_quantity') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('stores.columns.total_value') }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="row in items_received"
-                                :key="row.item_id"
+                <DataTable v-else>
+                    <thead>
+                        <tr>
+                            <th>{{ t('stores.columns.item') }}</th>
+                            <th>{{ t('stores.columns.sku') }}</th>
+                            <th class="text-right">
+                                {{ t('stores.columns.movements') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('stores.columns.total_quantity') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('stores.columns.total_value') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in items_received" :key="row.item_id">
+                            <td class="font-semibold text-on-surface">
+                                {{ row.item_title }}
+                            </td>
+                            <td
+                                class="font-mono text-xs text-on-surface-variant"
                             >
-                                <td class="font-semibold text-on-surface">
-                                    {{ row.item_title }}
-                                </td>
-                                <td
-                                    class="font-mono text-xs text-on-surface-variant"
-                                >
-                                    {{ row.item_sku ?? '—' }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ row.movements_count }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ row.total_quantity }}
-                                </td>
-                                <td class="text-right text-on-surface-variant">
-                                    {{ formatMoney(row.total_value) }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </DataTable>
-                </div>
-            </Card>
+                                {{ row.item_sku ?? '—' }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ row.movements_count }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ row.total_quantity }}
+                            </td>
+                            <td class="text-right text-on-surface-variant">
+                                {{ formatMoney(row.total_value) }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </DataTable>
+            </section>
 
-            <Card padded>
+            <section class="space-y-4">
                 <CardHeader>
                     <CardTitle>
                         <span class="flex items-center gap-2">
@@ -419,60 +406,55 @@ function destroyStore(id: number): void {
                     :title="t('stores.movements_empty.title')"
                     :description="t('stores.movements_empty.description')"
                 />
-                <div v-else class="overflow-x-auto">
-                    <DataTable>
-                        <thead>
-                            <tr>
-                                <th>
-                                    {{ t('stock_movements.columns.number') }}
-                                </th>
-                                <th>{{ t('stock_movements.columns.type') }}</th>
-                                <th class="text-right">
-                                    {{ t('stock_movements.columns.quantity') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('stock_movements.columns.value') }}
-                                </th>
-                                <th>{{ t('stock_movements.columns.date') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="movement in movements"
-                                :key="movement.id"
-                            >
-                                <td>
-                                    <Link
-                                        :href="
-                                            route(
-                                                'stock-movements.show',
-                                                movement.id,
-                                            )
-                                        "
-                                        class="font-mono text-xs font-semibold text-on-surface hover:text-primary"
-                                    >
-                                        {{ movement.number }}
-                                    </Link>
-                                </td>
-                                <td>
-                                    <MovementTypeBadge :type="movement.type" />
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
+                <DataTable v-else>
+                    <thead>
+                        <tr>
+                            <th>
+                                {{ t('stock_movements.columns.number') }}
+                            </th>
+                            <th>{{ t('stock_movements.columns.type') }}</th>
+                            <th class="text-right">
+                                {{ t('stock_movements.columns.quantity') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('stock_movements.columns.value') }}
+                            </th>
+                            <th>{{ t('stock_movements.columns.date') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="movement in movements" :key="movement.id">
+                            <td>
+                                <Link
+                                    :href="
+                                        route(
+                                            'stock-movements.show',
+                                            movement.id,
+                                        )
+                                    "
+                                    class="font-mono text-xs font-semibold text-on-surface hover:text-primary"
                                 >
-                                    {{ movement.total_quantity }}
-                                </td>
-                                <td class="text-right text-on-surface-variant">
-                                    {{ formatMoney(movement.total_value) }}
-                                </td>
-                                <td class="text-xs text-on-surface-variant">
-                                    {{ formatDateTime(movement.created_at) }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </DataTable>
-                </div>
-            </Card>
+                                    {{ movement.number }}
+                                </Link>
+                            </td>
+                            <td>
+                                <MovementTypeBadge :type="movement.type" />
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ movement.total_quantity }}
+                            </td>
+                            <td class="text-right text-on-surface-variant">
+                                {{ formatMoney(movement.total_value) }}
+                            </td>
+                            <td class="text-xs text-on-surface-variant">
+                                {{ formatDateTime(movement.created_at) }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </DataTable>
+            </section>
         </div>
     </AppLayout>
 </template>

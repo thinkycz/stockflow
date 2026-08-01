@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\FinancialDirectionEnum;
 use App\Enums\FinancialSourceTypeEnum;
+use App\Enums\PayrollAdjustmentTypeEnum;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\FinancialReportManualRow;
 use App\Models\Shift;
@@ -13,6 +14,8 @@ use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\Worker;
 use App\Services\FinancialReportService;
+use App\Services\PayrollReportService;
+use Illuminate\Validation\ValidationException;
 
 \test('build calculates revenue commissions stock documents and wages', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
@@ -65,6 +68,44 @@ use App\Services\FinancialReportService;
         ->and($report['totals']['profit'])->toBe(-1626.0);
 });
 
+\test('financial wages use payslip totals and closing requires closed payroll', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    Shift::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $worker->getKey(),
+        'date' => '2026-07-10',
+        'start_time' => '08:00',
+        'end_time' => '09:00',
+        'hourly_rate' => 100,
+    ]);
+    $payroll = new PayrollReportService();
+    $payroll->createAdjustment(
+        $admin,
+        $store,
+        2026,
+        7,
+        $worker,
+        PayrollAdjustmentTypeEnum::TIP,
+        25,
+        'Shared tips',
+    );
+    $finance = new FinancialReportService();
+
+    $wage = \collect($finance->build($admin, $store, 2026, 7)['expense_rows'])
+        ->firstWhere('source_type', FinancialSourceTypeEnum::WAGE->value);
+
+    \expect($wage['calculated_amount'])->toBe(125.0)
+        ->and(fn() => $finance->close($admin, $store, 2026, 7))->toThrow(ValidationException::class);
+
+    $payroll->close($admin, $store, 2026, 7);
+    $finance->close($admin, $store, 2026, 7);
+
+    \expect($finance->build($admin, $store, 2026, 7)['report']['status'])->toBe('closed');
+});
+
 \test('revenue commission is rounded once from the monthly gross amount', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $admin->getKey()]);
@@ -90,6 +131,7 @@ use App\Services\FinancialReportService;
     $day->update(['cash' => 200, 'total' => 200]);
     \expect($service->build($admin, $store, 2026, 7)['income_rows'][0]['effective_amount'])->toBe(80.0);
 
+    (new PayrollReportService())->close($admin, $store, 2026, 7);
     $service->close($admin, $store, 2026, 7);
     $day->update(['cash' => 300, 'total' => 300]);
     \expect($service->build($admin, $store, 2026, 7)['income_rows'][0]['calculated_amount'])->toEqual(200.0);

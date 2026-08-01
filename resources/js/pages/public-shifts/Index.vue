@@ -4,7 +4,6 @@ import { CalendarDays, ChevronLeft, ChevronRight, Gauge } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
-import Card from '@/components/ui/Card.vue';
 import ShiftMonthCalendar from '@/components/ShiftMonthCalendar.vue';
 import ShiftMonthlySummaryTable from '@/components/ShiftMonthlySummaryTable.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
@@ -189,8 +188,8 @@ function navigateMonth(delta: number): void {
                 </p>
             </header>
 
-            <Card padded class="p-4 sm:p-6">
-                <div class="mb-4 flex items-center justify-between gap-3">
+            <section class="space-y-4">
+                <div class="flex items-center justify-between gap-3 px-1">
                     <h2
                         class="font-heading text-lg font-bold capitalize text-on-surface sm:text-xl"
                     >
@@ -220,9 +219,9 @@ function navigateMonth(delta: number): void {
                     :days="calendarDays"
                     :weekday-labels="weekdayLabels"
                 />
-            </Card>
+            </section>
 
-            <Card padded>
+            <section class="space-y-4">
                 <div class="mb-4 flex items-start gap-3">
                     <span
                         class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-fixed text-primary"
@@ -246,7 +245,7 @@ function navigateMonth(delta: number): void {
                 </div>
 
                 <ShiftMonthlySummaryTable :rows="monthly_summary" />
-            </Card>
+            </section>
         </div>
     </main>
 </template>

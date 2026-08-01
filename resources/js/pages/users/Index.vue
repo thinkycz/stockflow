@@ -109,7 +109,7 @@ const currentUserId = (): number | null => page.props.auth?.user?.id ?? null;
                 </div>
             </Card>
 
-            <Card padded>
+            <section class="space-y-4">
                 <EmptyState
                     v-if="users.length === 0"
                     :title="
@@ -133,92 +133,86 @@ const currentUserId = (): number | null => page.props.auth?.user?.id ?? null;
                     </template>
                 </EmptyState>
 
-                <div v-else class="overflow-x-auto">
-                    <DataTable>
-                        <thead>
-                            <tr>
-                                <th>
-                                    {{ t('users.columns.email') }}
-                                </th>
-                                <th>
-                                    {{ t('users.columns.role') }}
-                                </th>
-                                <th>
-                                    {{ t('users.columns.store') }}
-                                </th>
-                                <th>
-                                    {{ t('users.columns.created') }}
-                                </th>
-                                <th class="w-0 text-right">
-                                    {{ t('users.columns.actions') }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="user in users" :key="user.id">
-                                <td class="font-semibold text-on-surface">
-                                    {{ user.email }}
-                                </td>
-                                <td>
-                                    <Badge
-                                        :variant="
-                                            user.is_admin
-                                                ? 'success'
-                                                : 'neutral'
-                                        "
-                                    >
-                                        {{
-                                            user.is_admin
-                                                ? t('users.role.admin')
-                                                : t('users.role.limited')
-                                        }}
-                                    </Badge>
-                                </td>
-                                <td class="text-on-surface">
-                                    <span v-if="user.assigned_store_name">{{
-                                        user.assigned_store_name
-                                    }}</span>
-                                    <span v-else class="text-on-surface-variant"
-                                        >—</span
-                                    >
-                                </td>
-                                <td class="text-on-surface-variant">
-                                    {{ formatCzechDateTime(user.created_at) }}
-                                </td>
-                                <td>
-                                    <div
-                                        class="flex items-center justify-end gap-1"
-                                    >
-                                        <Link
-                                            :href="route('users.edit', user.id)"
-                                        >
-                                            <Button
-                                                variant="ghost"
-                                                type="button"
-                                                :aria-label="t('common.edit')"
-                                            >
-                                                <Pencil :size="14" />
-                                            </Button>
-                                        </Link>
+                <DataTable v-else>
+                    <thead>
+                        <tr>
+                            <th>
+                                {{ t('users.columns.email') }}
+                            </th>
+                            <th>
+                                {{ t('users.columns.role') }}
+                            </th>
+                            <th>
+                                {{ t('users.columns.store') }}
+                            </th>
+                            <th>
+                                {{ t('users.columns.created') }}
+                            </th>
+                            <th class="w-0 text-right">
+                                {{ t('users.columns.actions') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="user in users" :key="user.id">
+                            <td class="font-semibold text-on-surface">
+                                {{ user.email }}
+                            </td>
+                            <td>
+                                <Badge
+                                    :variant="
+                                        user.is_admin ? 'success' : 'neutral'
+                                    "
+                                >
+                                    {{
+                                        user.is_admin
+                                            ? t('users.role.admin')
+                                            : t('users.role.limited')
+                                    }}
+                                </Badge>
+                            </td>
+                            <td class="text-on-surface">
+                                <span v-if="user.assigned_store_name">{{
+                                    user.assigned_store_name
+                                }}</span>
+                                <span v-else class="text-on-surface-variant"
+                                    >—</span
+                                >
+                            </td>
+                            <td class="text-on-surface-variant">
+                                {{ formatCzechDateTime(user.created_at) }}
+                            </td>
+                            <td>
+                                <div
+                                    class="flex items-center justify-end gap-1"
+                                >
+                                    <Link :href="route('users.edit', user.id)">
                                         <Button
-                                            v-if="
-                                                !user.is_admin &&
-                                                user.id !== currentUserId()
-                                            "
                                             variant="ghost"
                                             type="button"
-                                            :aria-label="t('common.delete')"
-                                            @click="confirmDelete(user)"
+                                            :aria-label="t('common.edit')"
                                         >
-                                            <Trash2 :size="14" />
+                                            <Pencil :size="14" />
                                         </Button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </DataTable>
-                </div>
-            </Card>
+                                    </Link>
+                                    <Button
+                                        v-if="
+                                            !user.is_admin &&
+                                            user.id !== currentUserId()
+                                        "
+                                        variant="ghost"
+                                        type="button"
+                                        :aria-label="t('common.delete')"
+                                        @click="confirmDelete(user)"
+                                    >
+                                        <Trash2 :size="14" />
+                                    </Button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </DataTable>
+            </section>
         </div>
     </AppLayout>
 </template>

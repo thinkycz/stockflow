@@ -17,6 +17,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
+import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
@@ -214,8 +215,10 @@ function rowSecondary(row: FinancialRow): string | null {
         });
     }
     if (row.source_type === 'wage') {
-        return t('income_expenses.wage_detail', {
-            hours: (Number(row.details.minutes ?? 0) / 60).toFixed(2),
+        return t('income_expenses.payroll_wage_detail', {
+            base: money(Number(row.details.base_amount ?? 0)),
+            tips: money(Number(row.details.tip_amount ?? 0)),
+            deductions: money(Number(row.details.deduction_amount ?? 0)),
         });
     }
     return row.note;
@@ -363,11 +366,9 @@ function rowSecondary(row: FinancialRow): string | null {
                         { key: 'expense', rows: financial_report.expense_rows },
                     ]"
                     :key="section.key"
-                    class="overflow-hidden rounded-2xl border border-outline-glass bg-surface-container-lowest"
+                    class="space-y-4"
                 >
-                    <div
-                        class="flex items-center justify-between border-b border-outline-glass px-5 py-4"
-                    >
+                    <div class="flex items-center justify-between px-1">
                         <h2 class="font-heading text-lg font-bold">
                             {{ t(`income_expenses.sections.${section.key}`) }}
                         </h2>
@@ -377,172 +378,161 @@ function rowSecondary(row: FinancialRow): string | null {
                             })
                         }}</span>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full min-w-[760px] text-left text-sm">
-                            <thead
-                                class="bg-surface-container-low text-[11px] uppercase tracking-wider text-on-surface-variant"
+                    <DataTable table-class="md:min-w-[760px]">
+                        <thead
+                            class="bg-surface-container-low text-[11px] uppercase tracking-wider text-on-surface-variant"
+                        >
+                            <tr>
+                                <th class="px-5 py-3">
+                                    {{ t('income_expenses.date') }}
+                                </th>
+                                <th class="px-5 py-3">
+                                    {{ t('income_expenses.item') }}
+                                </th>
+                                <th class="px-5 py-3">
+                                    {{ t('income_expenses.source') }}
+                                </th>
+                                <th class="px-5 py-3 text-right">
+                                    {{ t('income_expenses.calculated') }}
+                                </th>
+                                <th class="px-5 py-3 text-right">
+                                    {{ t('income_expenses.effective') }}
+                                </th>
+                                <th class="px-5 py-3 text-right">
+                                    {{ t('income_expenses.actions') }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="row in section.rows"
+                                :key="row.id"
+                                :data-testid="`financial-row-${row.id.replace(':', '-')}`"
+                                class="align-top"
                             >
-                                <tr>
-                                    <th class="px-5 py-3">
-                                        {{ t('income_expenses.date') }}
-                                    </th>
-                                    <th class="px-5 py-3">
-                                        {{ t('income_expenses.item') }}
-                                    </th>
-                                    <th class="px-5 py-3">
-                                        {{ t('income_expenses.source') }}
-                                    </th>
-                                    <th class="px-5 py-3 text-right">
-                                        {{ t('income_expenses.calculated') }}
-                                    </th>
-                                    <th class="px-5 py-3 text-right">
-                                        {{ t('income_expenses.effective') }}
-                                    </th>
-                                    <th class="px-5 py-3 text-right">
-                                        {{ t('income_expenses.actions') }}
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-outline-glass">
-                                <tr
-                                    v-for="row in section.rows"
-                                    :key="row.id"
-                                    :data-testid="`financial-row-${row.id.replace(':', '-')}`"
-                                    class="align-top"
+                                <td
+                                    class="whitespace-nowrap px-5 py-4 text-on-surface-variant"
                                 >
-                                    <td
-                                        class="whitespace-nowrap px-5 py-4 text-on-surface-variant"
+                                    {{ date(row.occurred_on) }}
+                                </td>
+                                <td class="px-5 py-4">
+                                    <div class="font-semibold">
+                                        {{ row.label }}
+                                    </div>
+                                    <div
+                                        v-if="rowSecondary(row)"
+                                        class="mt-1 max-w-xl text-xs text-on-surface-variant"
                                     >
-                                        {{ date(row.occurred_on) }}
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <div class="font-semibold">
-                                            {{ row.label }}
-                                        </div>
-                                        <div
-                                            v-if="rowSecondary(row)"
-                                            class="mt-1 max-w-xl text-xs text-on-surface-variant"
-                                        >
-                                            {{ rowSecondary(row) }}
-                                        </div>
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <Badge variant="neutral">{{
-                                            t(
-                                                `income_expenses.source_types.${row.kind === 'manual' ? 'manual' : row.source_type}`,
-                                            )
-                                        }}</Badge>
-                                    </td>
-                                    <td
-                                        class="px-5 py-4 text-right text-on-surface-variant"
+                                        {{ rowSecondary(row) }}
+                                    </div>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <Badge variant="neutral">{{
+                                        t(
+                                            `income_expenses.source_types.${row.kind === 'manual' ? 'manual' : row.source_type}`,
+                                        )
+                                    }}</Badge>
+                                </td>
+                                <td
+                                    class="px-5 py-4 text-right text-on-surface-variant"
+                                >
+                                    {{ money(row.calculated_amount) }}
+                                </td>
+                                <td class="px-5 py-4 text-right font-semibold">
+                                    <span
+                                        :class="
+                                            row.override_amount !== null
+                                                ? 'text-amber-700'
+                                                : ''
+                                        "
+                                        >{{ money(row.effective_amount) }}</span
                                     >
-                                        {{ money(row.calculated_amount) }}
-                                    </td>
-                                    <td
-                                        class="px-5 py-4 text-right font-semibold"
+                                    <div
+                                        v-if="row.override_amount !== null"
+                                        class="text-[10px] uppercase tracking-wide text-amber-700"
                                     >
-                                        <span
-                                            :class="
-                                                row.override_amount !== null
-                                                    ? 'text-amber-700'
-                                                    : ''
-                                            "
-                                            >{{
-                                                money(row.effective_amount)
-                                            }}</span
+                                        {{ t('income_expenses.overridden') }}
+                                    </div>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <div
+                                        v-if="
+                                            financial_report.report.status ===
+                                            'open'
+                                        "
+                                        class="flex justify-end gap-1"
+                                    >
+                                        <template
+                                            v-if="row.kind === 'automatic'"
                                         >
-                                        <div
-                                            v-if="row.override_amount !== null"
-                                            class="text-[10px] uppercase tracking-wide text-amber-700"
-                                        >
-                                            {{
-                                                t('income_expenses.overridden')
-                                            }}
-                                        </div>
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <div
-                                            v-if="
-                                                financial_report.report
-                                                    .status === 'open'
-                                            "
-                                            class="flex justify-end gap-1"
-                                        >
-                                            <template
-                                                v-if="row.kind === 'automatic'"
+                                            <Button
+                                                variant="ghost"
+                                                class="h-8 px-2"
+                                                @click="openOverride(row)"
+                                                ><Pencil :size="14" />{{
+                                                    t(
+                                                        'income_expenses.override',
+                                                    )
+                                                }}</Button
                                             >
-                                                <Button
-                                                    variant="ghost"
-                                                    class="h-8 px-2"
-                                                    @click="openOverride(row)"
-                                                    ><Pencil :size="14" />{{
-                                                        t(
-                                                            'income_expenses.override',
-                                                        )
-                                                    }}</Button
-                                                >
-                                                <Button
-                                                    v-if="
-                                                        row.override_amount !==
-                                                        null
-                                                    "
-                                                    variant="ghost"
-                                                    class="h-8 px-2"
-                                                    @click="resetOverride(row)"
-                                                    ><RotateCcw :size="14" />{{
-                                                        t(
-                                                            'income_expenses.reset',
-                                                        )
-                                                    }}</Button
-                                                >
-                                            </template>
-                                            <template v-else>
-                                                <Button
-                                                    variant="ghost"
-                                                    class="h-8 px-2"
-                                                    @click="openManual(row)"
-                                                    ><Pencil :size="14"
-                                                /></Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    class="h-8 px-2 text-error-red"
-                                                    @click="deleteManual(row)"
-                                                    ><Trash2 :size="14"
-                                                /></Button>
-                                            </template>
-                                        </div>
-                                        <Link
-                                            v-if="
-                                                row.source_type ===
-                                                    'stock_movement' &&
-                                                row.details.movement_id
-                                            "
-                                            :href="
-                                                route(
-                                                    'stock-movements.show',
-                                                    row.details.movement_id,
-                                                )
-                                            "
-                                            class="mt-1 block text-right text-xs font-semibold text-primary hover:underline"
-                                            >{{
-                                                t(
-                                                    'income_expenses.open_document',
-                                                )
-                                            }}</Link
-                                        >
-                                    </td>
-                                </tr>
-                                <tr v-if="section.rows.length === 0">
-                                    <td
-                                        colspan="6"
-                                        class="px-5 py-10 text-center text-on-surface-variant"
+                                            <Button
+                                                v-if="
+                                                    row.override_amount !== null
+                                                "
+                                                variant="ghost"
+                                                class="h-8 px-2"
+                                                @click="resetOverride(row)"
+                                                ><RotateCcw :size="14" />{{
+                                                    t('income_expenses.reset')
+                                                }}</Button
+                                            >
+                                        </template>
+                                        <template v-else>
+                                            <Button
+                                                variant="ghost"
+                                                class="h-8 px-2"
+                                                @click="openManual(row)"
+                                                ><Pencil :size="14"
+                                            /></Button>
+                                            <Button
+                                                variant="ghost"
+                                                class="h-8 px-2 text-error-red"
+                                                @click="deleteManual(row)"
+                                                ><Trash2 :size="14"
+                                            /></Button>
+                                        </template>
+                                    </div>
+                                    <Link
+                                        v-if="
+                                            row.source_type ===
+                                                'stock_movement' &&
+                                            row.details.movement_id
+                                        "
+                                        :href="
+                                            route(
+                                                'stock-movements.show',
+                                                row.details.movement_id,
+                                            )
+                                        "
+                                        class="mt-1 block text-right text-xs font-semibold text-primary hover:underline"
+                                        >{{
+                                            t('income_expenses.open_document')
+                                        }}</Link
                                     >
-                                        {{ t('income_expenses.empty') }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                                </td>
+                            </tr>
+                            <tr v-if="section.rows.length === 0">
+                                <td
+                                    colspan="6"
+                                    data-label=""
+                                    data-mobile-layout="stack"
+                                    class="px-5 py-10 text-center text-on-surface-variant"
+                                >
+                                    {{ t('income_expenses.empty') }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </DataTable>
                 </section>
             </template>
         </div>

@@ -130,5 +130,17 @@
     "Manual financial row deleted.": "Manual financial row deleted.",
     "Copied :count manual financial rows.": "Copied :count manual financial rows.",
     "Financial report closed.": "Financial report closed.",
-    "Financial report reopened.": "Financial report reopened."
+    "Financial report reopened.": "Financial report reopened.",
+    "Close the payroll report before closing the financial report.": "Close the payroll report before closing the financial report.",
+    "The adjustment amount must be greater than zero.": "The adjustment amount must be greater than zero.",
+    "The deduction cannot make the final payroll amount negative.": "The deduction cannot make the final payroll amount negative.",
+    "The adjustment cannot make the final payroll amount negative.": "The adjustment cannot make the final payroll amount negative.",
+    "The payroll report is closed. Reopen it before making changes.": "The payroll report is closed. Reopen it before making changes.",
+    "The payroll report does not exist.": "The payroll report does not exist.",
+    "Reopen the financial report before reopening payroll.": "Reopen the financial report before reopening payroll.",
+    "Payroll adjustment created.": "Payroll adjustment created.",
+    "Payroll adjustment saved.": "Payroll adjustment saved.",
+    "Payroll adjustment deleted.": "Payroll adjustment deleted.",
+    "Payroll report closed.": "Payroll report closed.",
+    "Payroll report reopened.": "Payroll report reopened."
 }

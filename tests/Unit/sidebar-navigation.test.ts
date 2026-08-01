@@ -23,13 +23,15 @@ describe('sidebar navigation', () => {
         expect(storeSectionNavigationKeys(false, true)[0]).toBe('dashboard');
     });
 
-    test('places income and expenses after attendance for admins only', () => {
+    test('places payroll before income and expenses for admins only', () => {
         const admin = storeSectionNavigationKeys(true, true);
         const limited = storeSectionNavigationKeys(false, true);
 
+        expect(admin.indexOf('payroll')).toBe(admin.indexOf('attendance') + 1);
         expect(admin.indexOf('income_expenses')).toBe(
-            admin.indexOf('attendance') + 1,
+            admin.indexOf('payroll') + 1,
         );
+        expect(limited).not.toContain('payroll');
         expect(limited).not.toContain('income_expenses');
         expect(admin).not.toContain('statistics');
     });
@@ -41,6 +43,7 @@ describe('sidebar navigation', () => {
         expect(isStoreSectionUrl('/reports/statistics', true)).toBe(true);
         expect(isStoreSectionUrl('/shifts?month=7', true)).toBe(true);
         expect(isStoreSectionUrl('/attendance/report', true)).toBe(true);
+        expect(isStoreSectionUrl('/payroll?year=2026', true)).toBe(true);
         expect(isStoreSectionUrl('/income-expenses?year=2026', true)).toBe(
             true,
         );

@@ -3,7 +3,6 @@ import { Head, Link } from '@inertiajs/vue3';
 import { ArrowLeft } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
-import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
@@ -88,70 +87,60 @@ const route = useRoute();
                 </p>
             </div>
 
-            <Card padded>
-                <div class="overflow-x-auto">
-                    <DataTable class="[&_td]:px-2 [&_th]:px-2">
-                        <thead>
-                            <tr>
-                                <th class="min-w-[12rem] text-left">
-                                    {{ t('inventory_counts.columns.item') }}
-                                </th>
-                                <th class="min-w-[8rem] text-left">
-                                    {{ t('inventory_counts.columns.sku') }}
-                                </th>
-                                <th class="min-w-[5rem] text-left">
-                                    {{ t('inventory_counts.columns.unit') }}
-                                </th>
-                                <th class="min-w-[8rem] text-right">
-                                    {{ t('inventory_counts.columns.previous') }}
-                                </th>
-                                <th class="min-w-[9rem] text-right">
-                                    {{
-                                        t(
-                                            'inventory_counts.columns.new_quantity',
-                                        )
-                                    }}
-                                </th>
-                                <th class="min-w-[12rem] text-left">
-                                    {{ t('inventory_counts.columns.note') }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="row in rows"
-                                :key="row.item_id"
-                                class="border-b border-outline-glass/40 last:border-b-0"
+            <section class="space-y-4">
+                <DataTable density="compact">
+                    <thead>
+                        <tr>
+                            <th class="min-w-[12rem] text-left">
+                                {{ t('inventory_counts.columns.item') }}
+                            </th>
+                            <th class="min-w-[8rem] text-left">
+                                {{ t('inventory_counts.columns.sku') }}
+                            </th>
+                            <th class="min-w-[5rem] text-left">
+                                {{ t('inventory_counts.columns.unit') }}
+                            </th>
+                            <th class="min-w-[8rem] text-right">
+                                {{ t('inventory_counts.columns.previous') }}
+                            </th>
+                            <th class="min-w-[9rem] text-right">
+                                {{ t('inventory_counts.columns.new_quantity') }}
+                            </th>
+                            <th class="min-w-[12rem] text-left">
+                                {{ t('inventory_counts.columns.note') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in rows" :key="row.item_id">
+                            <td class="font-semibold text-on-surface">
+                                {{ row.title }}
+                            </td>
+                            <td
+                                class="font-mono text-xs text-on-surface-variant"
                             >
-                                <td class="font-semibold text-on-surface">
-                                    {{ row.title }}
-                                </td>
-                                <td
-                                    class="font-mono text-xs text-on-surface-variant"
-                                >
-                                    {{ row.sku ?? '—' }}
-                                </td>
-                                <td class="text-xs text-on-surface-variant">
-                                    {{ row.unit ?? '—' }}
-                                </td>
-                                <td
-                                    class="text-right text-xs text-on-surface-variant"
-                                >
-                                    {{ row.previous ?? '—' }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ row.current }}
-                                </td>
-                                <td class="text-xs text-on-surface-variant">
-                                    {{ row.note ?? '—' }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </DataTable>
-                </div>
-            </Card>
+                                {{ row.sku ?? '—' }}
+                            </td>
+                            <td class="text-xs text-on-surface-variant">
+                                {{ row.unit ?? '—' }}
+                            </td>
+                            <td
+                                class="text-right text-xs text-on-surface-variant"
+                            >
+                                {{ row.previous ?? '—' }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ row.current }}
+                            </td>
+                            <td class="text-xs text-on-surface-variant">
+                                {{ row.note ?? '—' }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </DataTable>
+            </section>
         </div>
     </AppLayout>
 </template>

@@ -11,12 +11,16 @@ use App\Models\User;
 use App\Models\Worker;
 use Carbon\CarbonImmutable;
 
+/**
+ * @phpstan-type AttendanceReportRow array{id: int, worker_id: int, shift_id: int|null, worker_name: string, date: string, started_at: string, ended_at: string|null, breaks: list<array{started_at: string, ended_at: string|null, seconds: int}>, break_seconds: int, actual_seconds: int|null, planned_seconds: int|null, difference_seconds: int|null, hourly_rate: float, wage: float|null, stale: bool, voided: bool}
+ * @phpstan-type AttendanceSummaryRow array{worker_id: int, worker_name: string, actual_seconds: int, planned_seconds: int, difference_seconds: int, wage: float, incomplete_count: int}
+ */
 class AttendanceReportService
 {
     /**
      * Build report rows and per-worker totals for one month.
      *
-     * @return array{month: string, rows: list<array<string, mixed>>, summary: list<array<string, mixed>>}
+     * @return array{month: string, rows: list<AttendanceReportRow>, summary: list<AttendanceSummaryRow>}
      */
     public function build(User $owner, Store $store, string $month, int|null $workerId): array
     {
@@ -89,6 +93,7 @@ class AttendanceReportService
             $rows[] = [
                 'id' => $session->getKey(),
                 'worker_id' => $worker->getKey(),
+                'shift_id' => $session->getShiftId(),
                 'worker_name' => $worker->getFullName(),
                 'date' => $session->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toDateString(),
                 'started_at' => $session->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toIso8601String(),

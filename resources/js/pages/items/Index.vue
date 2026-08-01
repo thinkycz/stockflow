@@ -125,7 +125,7 @@ function destroyItem(id: number): void {
                 </div>
             </Card>
 
-            <Card padded>
+            <section class="space-y-4">
                 <LoadingState
                     v-if="submitting"
                     :label="t('common.loading')"
@@ -145,89 +145,89 @@ function destroyItem(id: number): void {
                         </Link>
                     </template>
                 </EmptyState>
-                <div v-else class="overflow-x-auto">
-                    <DataTable>
-                        <thead>
-                            <tr>
-                                <th class="w-10"></th>
-                                <th>{{ t('items.columns.title') }}</th>
-                                <th>{{ t('items.columns.sku') }}</th>
-                                <th class="text-right">
-                                    {{ t('items.columns.total_quantity') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('items.columns.price') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('items.columns.actions') }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="item in items" :key="item.id">
-                                <td>
-                                    <div
-                                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container text-on-surface-variant"
-                                    >
-                                        <Boxes :size="14" />
-                                    </div>
-                                </td>
-                                <td>
-                                    <Link
-                                        :href="route('items.show', item.id)"
-                                        class="font-semibold text-on-surface hover:text-primary"
-                                    >
-                                        {{ item.title }}
-                                    </Link>
-                                    <p
-                                        v-if="item.unit"
-                                        class="text-xs text-on-surface-variant"
-                                    >
-                                        {{ item.unit }}
-                                    </p>
-                                </td>
-                                <td
-                                    class="font-mono text-xs text-on-surface-variant"
+                <DataTable v-else>
+                    <thead>
+                        <tr>
+                            <th class="w-10">
+                                <span class="sr-only">{{
+                                    t('items.columns.title')
+                                }}</span>
+                            </th>
+                            <th>{{ t('items.columns.title') }}</th>
+                            <th>{{ t('items.columns.sku') }}</th>
+                            <th class="text-right">
+                                {{ t('items.columns.total_quantity') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('items.columns.price') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('items.columns.actions') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="item in items" :key="item.id">
+                            <td data-mobile-hidden>
+                                <div
+                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container text-on-surface-variant"
                                 >
-                                    {{ item.sku ?? '—' }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
+                                    <Boxes :size="14" />
+                                </div>
+                            </td>
+                            <td>
+                                <Link
+                                    :href="route('items.show', item.id)"
+                                    class="font-semibold text-on-surface hover:text-primary"
                                 >
-                                    {{ formatNumber(item.total_quantity) }}
-                                </td>
-                                <td class="text-right text-on-surface-variant">
-                                    {{ formatMoney(item.purchase_price) }}
-                                </td>
-                                <td>
-                                    <div
-                                        class="flex items-center justify-end gap-1"
-                                    >
-                                        <Link
-                                            :href="route('items.edit', item.id)"
-                                        >
-                                            <Button
-                                                variant="ghost"
-                                                type="button"
-                                                :aria-label="t('common.edit')"
-                                            >
-                                                <Pencil :size="14" />
-                                            </Button>
-                                        </Link>
+                                    {{ item.title }}
+                                </Link>
+                                <p
+                                    v-if="item.unit"
+                                    class="text-xs text-on-surface-variant"
+                                >
+                                    {{ item.unit }}
+                                </p>
+                            </td>
+                            <td
+                                class="font-mono text-xs text-on-surface-variant"
+                            >
+                                {{ item.sku ?? '—' }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ formatNumber(item.total_quantity) }}
+                            </td>
+                            <td class="text-right text-on-surface-variant">
+                                {{ formatMoney(item.purchase_price) }}
+                            </td>
+                            <td>
+                                <div
+                                    class="flex items-center justify-end gap-1"
+                                >
+                                    <Link :href="route('items.edit', item.id)">
                                         <Button
                                             variant="ghost"
                                             type="button"
-                                            :aria-label="t('common.delete')"
-                                            @click="destroyItem(item.id)"
+                                            :aria-label="t('common.edit')"
                                         >
-                                            <Trash2 :size="14" />
+                                            <Pencil :size="14" />
                                         </Button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </DataTable>
-                </div>
+                                    </Link>
+                                    <Button
+                                        variant="ghost"
+                                        type="button"
+                                        :aria-label="t('common.delete')"
+                                        @click="destroyItem(item.id)"
+                                    >
+                                        <Trash2 :size="14" />
+                                    </Button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </DataTable>
 
                 <Pagination
                     v-if="items.length > 0"
@@ -239,7 +239,7 @@ function destroyItem(id: number): void {
                     :query-params="{ search: search }"
                     class="mt-4"
                 />
-            </Card>
+            </section>
         </div>
     </AppLayout>
 </template>

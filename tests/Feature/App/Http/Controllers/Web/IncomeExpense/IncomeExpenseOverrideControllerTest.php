@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\FinancialReportOverride;
 use App\Models\Store;
 use App\Services\FinancialReportService;
+use App\Services\PayrollReportService;
 use Database\Factories\UserFactory;
 
 \test('admin can store and remove a calculated row override', function (): void {
@@ -24,6 +25,7 @@ use Database\Factories\UserFactory;
     $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $url = '/income-expenses/overrides?store_id=' . $store->getKey();
     $payload = ['year' => 2026, 'month' => 7, 'source_type' => 'revenue', 'source_key' => 'cash', 'amount' => 500];
+    (new PayrollReportService())->close($admin, $store, 2026, 7);
     (new FinancialReportService())->close($admin, $store, 2026, 7);
 
     $this->be($admin, 'users')->post($url, $payload)->assertUnprocessable();

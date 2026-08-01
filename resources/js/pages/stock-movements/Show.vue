@@ -197,7 +197,7 @@ function reverseMovement(id: number): void {
                 </Card>
             </div>
 
-            <Card padded>
+            <section class="space-y-4">
                 <CardHeader>
                     <CardTitle>
                         <span class="flex items-center gap-2">
@@ -209,152 +209,148 @@ function reverseMovement(id: number): void {
                         </span>
                     </CardTitle>
                 </CardHeader>
-                <div class="overflow-x-auto">
-                    <DataTable
-                        v-if="
-                            movement.type === 'adjustment' ||
-                            movement.type === 'inventory_reconciliation'
-                        "
-                    >
-                        <thead>
-                            <tr>
-                                <th>{{ t('stock_movements.detail.item') }}</th>
-                                <th>{{ t('stock_movements.detail.sku') }}</th>
-                                <th class="text-right">
-                                    {{ t('stock_movements.detail.before') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('stock_movements.detail.after') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('stock_movements.detail.difference') }}
-                                </th>
-                                <th class="text-right">
-                                    {{
-                                        t('stock_movements.detail.value_change')
-                                    }}
-                                </th>
-                                <th>
-                                    {{ t('stock_movements.detail.reason') }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="row in rows" :key="row.id">
-                                <td class="font-semibold text-on-surface">
-                                    {{ row.item_title }}
-                                </td>
-                                <td
-                                    class="font-mono text-xs text-on-surface-variant"
-                                >
-                                    {{ row.item_sku ?? '—' }}
-                                </td>
-                                <td class="text-right text-on-surface-variant">
-                                    {{
-                                        row.quantity_before !== null
-                                            ? formatStockQuantity(
-                                                  row.quantity_before,
-                                              )
-                                            : '—'
-                                    }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{
-                                        row.quantity_after !== null
-                                            ? formatStockQuantity(
-                                                  row.quantity_after,
-                                              )
-                                            : '—'
-                                    }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold"
-                                    :class="
-                                        (row.quantity_difference ?? 0) >= 0
-                                            ? 'text-emerald-600'
-                                            : 'text-rose-600'
-                                    "
-                                >
-                                    {{
-                                        row.quantity_difference !== null
-                                            ? formatSignedNumber(
-                                                  row.quantity_difference,
-                                              )
-                                            : '—'
-                                    }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold"
-                                    :class="
-                                        row.signed_total >= 0
-                                            ? 'text-emerald-600'
-                                            : 'text-rose-600'
-                                    "
-                                >
-                                    {{ formatSignedMoney(row.signed_total) }}
-                                </td>
-                                <td class="text-xs text-on-surface-variant">
-                                    {{
-                                        movement.type ===
-                                            'inventory_reconciliation' &&
-                                        row.classification
-                                            ? t(
-                                                  `stock_movements.reasons.${row.classification}`,
-                                              )
-                                            : row.adjustment_reason
-                                              ? t(
-                                                    `stock_movements.reasons.${row.adjustment_reason}`,
-                                                )
-                                              : '—'
-                                    }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </DataTable>
-                    <DataTable v-else>
-                        <thead>
-                            <tr>
-                                <th>{{ t('stock_movements.detail.item') }}</th>
-                                <th>{{ t('stock_movements.detail.sku') }}</th>
-                                <th class="text-right">
-                                    {{ t('stock_movements.detail.quantity') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('stock_movements.detail.line_total') }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="row in rows" :key="row.id">
-                                <td class="font-semibold text-on-surface">
-                                    {{ row.item_title }}
-                                </td>
-                                <td
-                                    class="font-mono text-xs text-on-surface-variant"
-                                >
-                                    {{ row.item_sku ?? '—' }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{
-                                        row.quantity !== null
-                                            ? formatStockQuantity(row.quantity)
-                                            : '—'
-                                    }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ formatMoney(row.total) }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </DataTable>
-                </div>
-            </Card>
+                <DataTable
+                    v-if="
+                        movement.type === 'adjustment' ||
+                        movement.type === 'inventory_reconciliation'
+                    "
+                >
+                    <thead>
+                        <tr>
+                            <th>{{ t('stock_movements.detail.item') }}</th>
+                            <th>{{ t('stock_movements.detail.sku') }}</th>
+                            <th class="text-right">
+                                {{ t('stock_movements.detail.before') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('stock_movements.detail.after') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('stock_movements.detail.difference') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('stock_movements.detail.value_change') }}
+                            </th>
+                            <th>
+                                {{ t('stock_movements.detail.reason') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in rows" :key="row.id">
+                            <td class="font-semibold text-on-surface">
+                                {{ row.item_title }}
+                            </td>
+                            <td
+                                class="font-mono text-xs text-on-surface-variant"
+                            >
+                                {{ row.item_sku ?? '—' }}
+                            </td>
+                            <td class="text-right text-on-surface-variant">
+                                {{
+                                    row.quantity_before !== null
+                                        ? formatStockQuantity(
+                                              row.quantity_before,
+                                          )
+                                        : '—'
+                                }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{
+                                    row.quantity_after !== null
+                                        ? formatStockQuantity(
+                                              row.quantity_after,
+                                          )
+                                        : '—'
+                                }}
+                            </td>
+                            <td
+                                class="text-right font-semibold"
+                                :class="
+                                    (row.quantity_difference ?? 0) >= 0
+                                        ? 'text-emerald-600'
+                                        : 'text-rose-600'
+                                "
+                            >
+                                {{
+                                    row.quantity_difference !== null
+                                        ? formatSignedNumber(
+                                              row.quantity_difference,
+                                          )
+                                        : '—'
+                                }}
+                            </td>
+                            <td
+                                class="text-right font-semibold"
+                                :class="
+                                    row.signed_total >= 0
+                                        ? 'text-emerald-600'
+                                        : 'text-rose-600'
+                                "
+                            >
+                                {{ formatSignedMoney(row.signed_total) }}
+                            </td>
+                            <td class="text-xs text-on-surface-variant">
+                                {{
+                                    movement.type ===
+                                        'inventory_reconciliation' &&
+                                    row.classification
+                                        ? t(
+                                              `stock_movements.reasons.${row.classification}`,
+                                          )
+                                        : row.adjustment_reason
+                                          ? t(
+                                                `stock_movements.reasons.${row.adjustment_reason}`,
+                                            )
+                                          : '—'
+                                }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </DataTable>
+                <DataTable v-else>
+                    <thead>
+                        <tr>
+                            <th>{{ t('stock_movements.detail.item') }}</th>
+                            <th>{{ t('stock_movements.detail.sku') }}</th>
+                            <th class="text-right">
+                                {{ t('stock_movements.detail.quantity') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('stock_movements.detail.line_total') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in rows" :key="row.id">
+                            <td class="font-semibold text-on-surface">
+                                {{ row.item_title }}
+                            </td>
+                            <td
+                                class="font-mono text-xs text-on-surface-variant"
+                            >
+                                {{ row.item_sku ?? '—' }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{
+                                    row.quantity !== null
+                                        ? formatStockQuantity(row.quantity)
+                                        : '—'
+                                }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ formatMoney(row.total) }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </DataTable>
+            </section>
 
             <Card padded v-if="movement.note">
                 <CardHeader>

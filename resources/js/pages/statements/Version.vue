@@ -3,7 +3,6 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { ArrowLeft } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
-import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
@@ -56,6 +55,10 @@ function rowTotal(row: VersionRow): number {
         Number(row.bolt_cash || 0) +
         Number(row.foodora || 0)
     );
+}
+
+function rowCashTotal(row: VersionRow): number {
+    return Number(row.cash || 0) + Number(row.bolt_cash || 0);
 }
 
 function totals(): {
@@ -150,149 +153,165 @@ function restore(): void {
                 </div>
             </div>
 
-            <Card padded>
-                <div class="overflow-x-auto">
-                    <DataTable class="[&_td]:px-2 [&_th]:px-2">
-                        <thead>
-                            <tr>
-                                <th class="min-w-[6rem]">
-                                    {{ t('statements.columns.day') }}
-                                </th>
-                                <th class="min-w-[7rem] text-right">
-                                    {{ t('statements.columns.cash') }}
-                                </th>
-                                <th class="min-w-[7rem] text-right">
-                                    {{ t('statements.columns.card') }}
-                                </th>
-                                <th class="min-w-[7rem] text-right">
-                                    {{ t('statements.columns.wolt') }}
-                                </th>
-                                <th class="min-w-[7rem] text-right">
-                                    {{ t('statements.columns.bolt') }}
-                                </th>
-                                <th class="min-w-[7rem] text-right">
-                                    {{ t('statements.columns.bolt_cash') }}
-                                </th>
-                                <th class="min-w-[7rem] text-right">
-                                    {{ t('statements.columns.foodora') }}
-                                </th>
-                                <th class="min-w-[7rem] text-right">
-                                    {{ t('statements.columns.total') }}
-                                </th>
-                                <th
-                                    v-if="props.is_admin"
-                                    class="min-w-[5rem] text-center"
-                                >
-                                    {{ t('statements.columns.cash_checked') }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="row in props.rows"
-                                :key="row.date"
-                                class="border-b border-outline-glass/40 last:border-b-0"
+            <section class="space-y-4">
+                <DataTable density="compact">
+                    <thead>
+                        <tr>
+                            <th class="min-w-[6rem]">
+                                {{ t('statements.columns.day') }}
+                            </th>
+                            <th class="min-w-[7rem] text-right">
+                                {{ t('statements.columns.cash') }}
+                            </th>
+                            <th class="min-w-[7rem] text-right">
+                                {{ t('statements.columns.card') }}
+                            </th>
+                            <th class="min-w-[7rem] text-right">
+                                {{ t('statements.columns.wolt') }}
+                            </th>
+                            <th class="min-w-[7rem] text-right">
+                                {{ t('statements.columns.bolt') }}
+                            </th>
+                            <th class="min-w-[7rem] text-right">
+                                {{ t('statements.columns.bolt_cash') }}
+                            </th>
+                            <th class="min-w-[7rem] text-right">
+                                {{ t('statements.columns.foodora') }}
+                            </th>
+                            <th class="min-w-[7rem] text-right">
+                                {{ t('statements.columns.total') }}
+                            </th>
+                            <th
+                                v-if="props.is_admin"
+                                class="min-w-[5rem] text-center"
                             >
-                                <td
-                                    class="font-mono text-xs text-on-surface-variant"
+                                {{ t('statements.columns.cash_checked') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in props.rows" :key="row.date">
+                            <td
+                                class="font-mono text-xs text-on-surface-variant"
+                            >
+                                {{ row.date }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ formatMoney(row.cash) }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ formatMoney(row.card) }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ formatMoney(row.wolt) }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ formatMoney(row.bolt) }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ formatMoney(row.bolt_cash) }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ formatMoney(row.foodora) }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                <div>{{ formatMoney(row.total) }}</div>
+                                <div
+                                    class="mt-0.5 text-[0.65rem] font-normal text-on-surface-variant"
                                 >
-                                    {{ row.date }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
+                                    {{
+                                        t('statements.columns.cash_of_total', {
+                                            amount: formatMoney(
+                                                rowCashTotal(row),
+                                            ),
+                                        })
+                                    }}
+                                </div>
+                            </td>
+                            <td v-if="props.is_admin" class="text-center">
+                                <input
+                                    type="checkbox"
+                                    :checked="row.cash_checked"
+                                    disabled
+                                    class="h-4 w-4 cursor-default rounded border-outline-glass text-primary"
+                                />
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th
+                                class="text-left text-xs font-semibold text-on-surface-variant"
+                            >
+                                Σ
+                            </th>
+                            <th
+                                class="text-right text-xs font-semibold text-on-surface-variant"
+                            >
+                                {{ formatMoney(totals().cash) }}
+                            </th>
+                            <th
+                                class="text-right text-xs font-semibold text-on-surface-variant"
+                            >
+                                {{ formatMoney(totals().card) }}
+                            </th>
+                            <th
+                                class="text-right text-xs font-semibold text-on-surface-variant"
+                            >
+                                {{ formatMoney(totals().wolt) }}
+                            </th>
+                            <th
+                                class="text-right text-xs font-semibold text-on-surface-variant"
+                            >
+                                {{ formatMoney(totals().bolt) }}
+                            </th>
+                            <th
+                                class="text-right text-xs font-semibold text-on-surface-variant"
+                            >
+                                {{ formatMoney(totals().bolt_cash) }}
+                            </th>
+                            <th
+                                class="text-right text-xs font-semibold text-on-surface-variant"
+                            >
+                                {{ formatMoney(totals().foodora) }}
+                            </th>
+                            <th
+                                class="text-right text-xs font-semibold text-on-surface"
+                            >
+                                <div>{{ formatMoney(totals().total) }}</div>
+                                <div
+                                    class="mt-0.5 text-[0.65rem] font-normal text-on-surface-variant"
                                 >
-                                    {{ formatMoney(row.cash) }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ formatMoney(row.card) }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ formatMoney(row.wolt) }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ formatMoney(row.bolt) }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ formatMoney(row.bolt_cash) }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ formatMoney(row.foodora) }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ formatMoney(row.total) }}
-                                </td>
-                                <td v-if="props.is_admin" class="text-center">
-                                    <input
-                                        type="checkbox"
-                                        :checked="row.cash_checked"
-                                        disabled
-                                        class="h-4 w-4 cursor-default rounded border-outline-glass text-primary"
-                                    />
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <th
-                                    class="border-t border-outline-glass pt-2 text-left text-xs font-semibold text-on-surface-variant"
-                                >
-                                    Σ
-                                </th>
-                                <th
-                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                >
-                                    {{ formatMoney(totals().cash) }}
-                                </th>
-                                <th
-                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                >
-                                    {{ formatMoney(totals().card) }}
-                                </th>
-                                <th
-                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                >
-                                    {{ formatMoney(totals().wolt) }}
-                                </th>
-                                <th
-                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                >
-                                    {{ formatMoney(totals().bolt) }}
-                                </th>
-                                <th
-                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                >
-                                    {{ formatMoney(totals().bolt_cash) }}
-                                </th>
-                                <th
-                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface-variant"
-                                >
-                                    {{ formatMoney(totals().foodora) }}
-                                </th>
-                                <th
-                                    class="border-t border-outline-glass pt-2 text-right text-xs font-semibold text-on-surface"
-                                >
-                                    {{ formatMoney(totals().total) }}
-                                </th>
-                                <th
-                                    v-if="props.is_admin"
-                                    class="border-t border-outline-glass pt-2"
-                                ></th>
-                            </tr>
-                        </tfoot>
-                    </DataTable>
-                </div>
+                                    {{
+                                        t('statements.columns.cash_of_total', {
+                                            amount: formatMoney(
+                                                totals().cash +
+                                                    totals().bolt_cash,
+                                            ),
+                                        })
+                                    }}
+                                </div>
+                            </th>
+                            <th v-if="props.is_admin">
+                                {{ t('statements.columns.cash_checked') }}
+                            </th>
+                        </tr>
+                    </tfoot>
+                </DataTable>
 
                 <div
                     class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end"
@@ -305,7 +324,7 @@ function restore(): void {
                         {{ t('statements.history.restore') }}
                     </button>
                 </div>
-            </Card>
+            </section>
         </div>
     </AppLayout>
 </template>

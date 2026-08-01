@@ -12,14 +12,15 @@ and durable administrator overrides into one auditable result.
 - Revenue rows are Cash, Card, Bolt, Wolt, and Foodora. Monthly commission is
   0%, 1%, 30%, 30%, and 30% respectively; Bolt includes `bolt_cash`.
 - Each non-reversed incoming receipt or inbound transfer is an expense row.
-- Planned wages are aggregated per worker from shift duration and the rate
-  snapshotted on each shift.
+- Wage rows use each worker's final payroll amount (planned-shift base plus
+  payroll tips and deductions). Financial wage overrides remain supported.
 - Automatic rows expose their calculated value and can receive a persistent
   effective-value override.
 - Manual income and expense rows have a label, date, amount, and optional note.
 - Manual rows can be copied idempotently from the previous month.
 - Closing a month freezes a complete snapshot and locks mutations. Reopening
   restores live source calculations while preserving overrides and manual rows.
+- Closing requires the matching payroll report to be closed first.
 - The warehouse has no report; limited users have no navigation or route access.
 - All money is CZK with two-decimal output; VAT is not calculated separately.
 

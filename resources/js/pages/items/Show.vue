@@ -189,7 +189,7 @@ useBoundLocale();
                 </Card>
             </div>
 
-            <Card padded>
+            <section class="space-y-4">
                 <CardHeader>
                     <CardTitle>{{ t('items.store_quantities') }}</CardTitle>
                     <CardDescription>{{
@@ -201,70 +201,66 @@ useBoundLocale();
                         v-if="store_quantities.length === 0"
                         :title="t('items.no_store_stock')"
                     />
-                    <div v-else class="overflow-x-auto">
-                        <DataTable>
-                            <thead>
-                                <tr>
-                                    <th>{{ t('stores.columns.name') }}</th>
-                                    <th class="text-right">
-                                        {{ t('items.metrics.quantity') }}
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                                    v-for="row in store_quantities"
-                                    :key="row.store_id"
-                                    :class="
-                                        active_store &&
-                                        row.store_id === active_store.id
-                                            ? 'bg-primary/5'
-                                            : ''
-                                    "
-                                >
-                                    <td>
-                                        <span class="flex items-center gap-2">
-                                            <StoreIcon
-                                                v-if="
-                                                    active_store &&
-                                                    row.store_id ===
-                                                        active_store.id
-                                                "
-                                                :size="12"
-                                                class="text-primary"
-                                            />
-                                            {{ row.store_name }}
-                                            <Badge
-                                                v-if="row.is_warehouse"
-                                                variant="neutral"
-                                                class="ml-1"
-                                            >
-                                                {{ t('stores.warehouse') }}
-                                            </Badge>
-                                            <Badge
-                                                v-if="
-                                                    active_store &&
-                                                    row.store_id ===
-                                                        active_store.id
-                                                "
-                                                variant="success"
-                                                class="ml-1"
-                                            >
-                                                {{ t('items.active_store') }}
-                                            </Badge>
-                                        </span>
-                                    </td>
-                                    <td class="text-right font-semibold">
-                                        {{ formatNumber(row.quantity) }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </DataTable>
-                    </div>
+                    <DataTable v-else>
+                        <thead>
+                            <tr>
+                                <th>{{ t('stores.columns.name') }}</th>
+                                <th class="text-right">
+                                    {{ t('items.metrics.quantity') }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="row in store_quantities"
+                                :key="row.store_id"
+                                :class="
+                                    active_store &&
+                                    row.store_id === active_store.id
+                                        ? 'bg-primary/5'
+                                        : ''
+                                "
+                            >
+                                <td>
+                                    <span class="flex items-center gap-2">
+                                        <StoreIcon
+                                            v-if="
+                                                active_store &&
+                                                row.store_id === active_store.id
+                                            "
+                                            :size="12"
+                                            class="text-primary"
+                                        />
+                                        {{ row.store_name }}
+                                        <Badge
+                                            v-if="row.is_warehouse"
+                                            variant="neutral"
+                                            class="ml-1"
+                                        >
+                                            {{ t('stores.warehouse') }}
+                                        </Badge>
+                                        <Badge
+                                            v-if="
+                                                active_store &&
+                                                row.store_id === active_store.id
+                                            "
+                                            variant="success"
+                                            class="ml-1"
+                                        >
+                                            {{ t('items.active_store') }}
+                                        </Badge>
+                                    </span>
+                                </td>
+                                <td class="text-right font-semibold">
+                                    {{ formatNumber(row.quantity) }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </DataTable>
                 </CardContent>
-            </Card>
+            </section>
 
-            <Card padded>
+            <section class="space-y-4">
                 <CardHeader>
                     <CardTitle>
                         <span class="flex items-center gap-2">
@@ -284,63 +280,55 @@ useBoundLocale();
                     :title="t('items.movements_empty.title')"
                     :description="t('items.movements_empty.description')"
                 />
-                <div v-else class="overflow-x-auto">
-                    <DataTable>
-                        <thead>
-                            <tr>
-                                <th>
-                                    {{ t('stock_movements.columns.number') }}
-                                </th>
-                                <th>{{ t('stock_movements.columns.type') }}</th>
-                                <th class="text-right">
-                                    {{ t('stock_movements.columns.quantity') }}
-                                </th>
-                                <th>{{ t('stock_movements.columns.date') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="movement in movements"
-                                :key="movement.id"
-                            >
-                                <td>
-                                    <Link
-                                        :href="
-                                            route(
-                                                'stock-movements.show',
-                                                movement.id,
-                                            )
-                                        "
-                                        class="font-mono text-xs font-semibold text-on-surface hover:text-primary"
-                                    >
-                                        {{ movement.number }}
-                                    </Link>
-                                </td>
-                                <td>
-                                    <MovementTypeBadge :type="movement.type" />
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
+                <DataTable v-else>
+                    <thead>
+                        <tr>
+                            <th>
+                                {{ t('stock_movements.columns.number') }}
+                            </th>
+                            <th>{{ t('stock_movements.columns.type') }}</th>
+                            <th class="text-right">
+                                {{ t('stock_movements.columns.quantity') }}
+                            </th>
+                            <th>{{ t('stock_movements.columns.date') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="movement in movements" :key="movement.id">
+                            <td>
+                                <Link
+                                    :href="
+                                        route(
+                                            'stock-movements.show',
+                                            movement.id,
+                                        )
+                                    "
+                                    class="font-mono text-xs font-semibold text-on-surface hover:text-primary"
                                 >
-                                    {{
-                                        movement.type === 'adjustment'
-                                            ? formatNumber(
-                                                  movement.quantity_difference ??
-                                                      0,
-                                              )
-                                            : formatNumber(
-                                                  movement.quantity ?? 0,
-                                              )
-                                    }}
-                                </td>
-                                <td class="text-xs text-on-surface-variant">
-                                    {{ formatDateTime(movement.created_at) }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </DataTable>
-                </div>
-            </Card>
+                                    {{ movement.number }}
+                                </Link>
+                            </td>
+                            <td>
+                                <MovementTypeBadge :type="movement.type" />
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{
+                                    movement.type === 'adjustment'
+                                        ? formatNumber(
+                                              movement.quantity_difference ?? 0,
+                                          )
+                                        : formatNumber(movement.quantity ?? 0)
+                                }}
+                            </td>
+                            <td class="text-xs text-on-surface-variant">
+                                {{ formatDateTime(movement.created_at) }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </DataTable>
+            </section>
         </div>
     </AppLayout>
 </template>

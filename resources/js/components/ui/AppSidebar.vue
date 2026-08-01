@@ -8,6 +8,7 @@ import {
     ClipboardCheck,
     ClipboardList,
     HardHat,
+    HandCoins,
     LayoutDashboard,
     LogOut,
     PackageMinus,
@@ -128,6 +129,13 @@ const storeNavItemsByKey = computed<Record<StoreSectionNavigationKey, NavItem>>(
         },
         shifts: shiftNavItem.value,
         attendance: attendanceNavItem.value,
+        payroll: {
+            key: 'payroll',
+            href: route('payroll.index'),
+            label: t('nav.payroll'),
+            icon: HandCoins,
+            active: activeUrl.value.startsWith('/payroll'),
+        },
         income_expenses: {
             key: 'income_expenses',
             href: route('income-expenses.index'),

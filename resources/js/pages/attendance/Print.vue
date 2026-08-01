@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import { nextTick, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import DataTable from '@/components/ui/DataTable.vue';
 import { formatMoney } from '@/lib/format';
 
 type Row = {
@@ -79,7 +80,7 @@ onMounted(async () => {
                 {{ t('attendance.report.wage') }}:
                 {{ formatMoney(summary.wage) }}
             </p>
-            <table class="w-full border-collapse text-sm">
+            <DataTable density="compact">
                 <thead>
                     <tr>
                         <th>{{ t('attendance.report.date') }}</th>
@@ -130,17 +131,11 @@ onMounted(async () => {
                         </td>
                     </tr>
                 </tbody>
-            </table>
+            </DataTable>
         </section>
     </main>
 </template>
 <style scoped>
-th,
-td {
-    border: 1px solid #cbd5e1;
-    padding: 0.5rem;
-    text-align: left;
-}
 @media print {
     main {
         max-width: none;

@@ -112,7 +112,7 @@ function destroyStore(id: number): void {
                 </div>
             </Card>
 
-            <Card padded>
+            <section class="space-y-4">
                 <EmptyState
                     v-if="stores.length === 0"
                     :title="t('stores.empty.title')"
@@ -127,128 +127,126 @@ function destroyStore(id: number): void {
                         </Link>
                     </template>
                 </EmptyState>
-                <div v-else class="overflow-x-auto">
-                    <DataTable>
-                        <thead>
-                            <tr>
-                                <th class="w-10"></th>
-                                <th>{{ t('stores.columns.name') }}</th>
-                                <th>{{ t('stores.columns.address') }}</th>
-                                <th>{{ t('stores.columns.status') }}</th>
-                                <th class="text-right">
-                                    {{ t('stores.columns.inventory_value') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('stores.columns.sku_count') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('stores.columns.out_of_stock') }}
-                                </th>
-                                <th class="text-right">
-                                    {{ t('stores.columns.risk_count') }}
-                                </th>
-                                <th>
-                                    {{ t('stores.columns.last_inventory') }}
-                                </th>
-                                <th class="w-0">
-                                    {{ t('stores.columns.actions') }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="store in stores" :key="store.id">
-                                <td>
-                                    <div
-                                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container text-on-surface-variant"
+                <DataTable v-else>
+                    <thead>
+                        <tr>
+                            <th class="w-10">
+                                <span class="sr-only">{{
+                                    t('stores.columns.name')
+                                }}</span>
+                            </th>
+                            <th>{{ t('stores.columns.name') }}</th>
+                            <th>{{ t('stores.columns.address') }}</th>
+                            <th>{{ t('stores.columns.status') }}</th>
+                            <th class="text-right">
+                                {{ t('stores.columns.inventory_value') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('stores.columns.sku_count') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('stores.columns.out_of_stock') }}
+                            </th>
+                            <th class="text-right">
+                                {{ t('stores.columns.risk_count') }}
+                            </th>
+                            <th>
+                                {{ t('stores.columns.last_inventory') }}
+                            </th>
+                            <th class="w-0">
+                                {{ t('stores.columns.actions') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="store in stores" :key="store.id">
+                            <td data-mobile-hidden>
+                                <div
+                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container text-on-surface-variant"
+                                >
+                                    <StoreIcon :size="14" />
+                                </div>
+                            </td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <Link
+                                        :href="route('stores.show', store.id)"
+                                        class="font-semibold text-on-surface hover:text-primary"
                                     >
-                                        <StoreIcon :size="14" />
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="flex items-center gap-2">
-                                        <Link
-                                            :href="
-                                                route('stores.show', store.id)
-                                            "
-                                            class="font-semibold text-on-surface hover:text-primary"
-                                        >
-                                            {{ store.name }}
-                                        </Link>
-                                        <Badge
-                                            v-if="store.is_warehouse"
-                                            variant="neutral"
-                                        >
-                                            {{ t('stores.warehouse') }}
-                                        </Badge>
-                                    </div>
-                                </td>
-                                <td class="text-xs text-on-surface-variant">
-                                    {{ store.address ?? '—' }}
-                                </td>
-                                <td>
+                                        {{ store.name }}
+                                    </Link>
                                     <Badge
-                                        :variant="
-                                            store.status === 'active'
-                                                ? 'success'
-                                                : 'neutral'
-                                        "
+                                        v-if="store.is_warehouse"
+                                        variant="neutral"
                                     >
-                                        {{
-                                            store.status === 'active'
-                                                ? t('stores.status.active')
-                                                : t('stores.status.inactive')
-                                        }}
+                                        {{ t('stores.warehouse') }}
                                     </Badge>
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
+                                </div>
+                            </td>
+                            <td class="text-xs text-on-surface-variant">
+                                {{ store.address ?? '—' }}
+                            </td>
+                            <td>
+                                <Badge
+                                    :variant="
+                                        store.status === 'active'
+                                            ? 'success'
+                                            : 'neutral'
+                                    "
                                 >
-                                    {{ formatMoney(store.inventory_value) }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ store.sku_count }}
-                                </td>
-                                <td class="text-right text-on-surface-variant">
-                                    {{ store.out_of_stock }}
-                                </td>
-                                <td class="text-right text-on-surface-variant">
-                                    {{ store.risk_count }}
-                                </td>
-                                <td class="text-xs text-on-surface-variant">
-                                    {{ formatDate(store.last_inventory_at) }}
-                                </td>
-                                <td>
-                                    <div class="flex items-center gap-1">
-                                        <Link
-                                            :href="
-                                                route('stores.edit', store.id)
-                                            "
-                                        >
-                                            <Button
-                                                variant="ghost"
-                                                type="button"
-                                                :aria-label="t('common.edit')"
-                                            >
-                                                <Pencil :size="14" />
-                                            </Button>
-                                        </Link>
+                                    {{
+                                        store.status === 'active'
+                                            ? t('stores.status.active')
+                                            : t('stores.status.inactive')
+                                    }}
+                                </Badge>
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ formatMoney(store.inventory_value) }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ store.sku_count }}
+                            </td>
+                            <td class="text-right text-on-surface-variant">
+                                {{ store.out_of_stock }}
+                            </td>
+                            <td class="text-right text-on-surface-variant">
+                                {{ store.risk_count }}
+                            </td>
+                            <td class="text-xs text-on-surface-variant">
+                                {{ formatDate(store.last_inventory_at) }}
+                            </td>
+                            <td>
+                                <div class="flex items-center gap-1">
+                                    <Link
+                                        :href="route('stores.edit', store.id)"
+                                    >
                                         <Button
                                             variant="ghost"
                                             type="button"
-                                            :aria-label="t('common.delete')"
-                                            @click="destroyStore(store.id)"
+                                            :aria-label="t('common.edit')"
                                         >
-                                            <Trash2 :size="14" />
+                                            <Pencil :size="14" />
                                         </Button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </DataTable>
-                </div>
-            </Card>
+                                    </Link>
+                                    <Button
+                                        variant="ghost"
+                                        type="button"
+                                        :aria-label="t('common.delete')"
+                                        @click="destroyStore(store.id)"
+                                    >
+                                        <Trash2 :size="14" />
+                                    </Button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </DataTable>
+            </section>
 
             <Pagination
                 v-if="stores.length > 0"

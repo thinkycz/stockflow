@@ -662,7 +662,7 @@ watch(
                     </div>
                 </Card>
 
-                <Card padded>
+                <section class="space-y-4">
                     <CardHeader class="mb-3">
                         <div
                             class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
@@ -702,175 +702,163 @@ watch(
                         </div>
                     </CardHeader>
 
-                    <div class="overflow-x-auto">
-                        <DataTable class="[&_td]:px-2 [&_th]:px-2">
-                            <thead>
-                                <tr>
-                                    <th class="min-w-[14rem]">
-                                        {{ t('stock_movements.form.item') }}
-                                    </th>
-                                    <th class="min-w-[6rem] text-right">
-                                        {{
+                    <DataTable density="compact">
+                        <thead>
+                            <tr>
+                                <th class="min-w-[14rem]">
+                                    {{ t('stock_movements.form.item') }}
+                                </th>
+                                <th class="min-w-[6rem] text-right">
+                                    {{
+                                        t(
+                                            'stock_movements.form.current_quantity',
+                                        )
+                                    }}
+                                </th>
+                                <th
+                                    v-if="!isAdjustmentMode"
+                                    class="min-w-[7rem]"
+                                >
+                                    {{
+                                        t(
+                                            removesStock
+                                                ? 'stock_movements.form.quantity_out'
+                                                : 'stock_movements.form.quantity_in',
+                                        )
+                                    }}
+                                </th>
+                                <th v-else class="min-w-[7rem]">
+                                    {{
+                                        t('stock_movements.form.quantity_after')
+                                    }}
+                                </th>
+                                <th
+                                    v-if="removesStock"
+                                    class="min-w-[6rem] text-right"
+                                >
+                                    {{ t('stock_movements.form.remaining') }}
+                                </th>
+                                <th
+                                    v-if="isAdjustmentMode"
+                                    class="min-w-[6rem] text-right"
+                                >
+                                    {{ t('stock_movements.form.difference') }}
+                                </th>
+                                <th
+                                    v-if="isAdjustmentMode"
+                                    class="min-w-[9rem]"
+                                >
+                                    {{ t('stock_movements.form.reason') }}
+                                </th>
+                                <th
+                                    v-if="!isAdjustmentMode"
+                                    class="min-w-[6rem] text-right"
+                                >
+                                    {{ t('stock_movements.form.line_total') }}
+                                </th>
+                                <th class="w-0">
+                                    <span class="sr-only">{{
+                                        t('common.actions')
+                                    }}</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="row in rows" :key="row.id">
+                                <td>
+                                    <Combobox
+                                        v-model="row.item_id"
+                                        :items="availableItems"
+                                        :loading="searchLoading"
+                                        :placeholder="
                                             t(
-                                                'stock_movements.form.current_quantity',
+                                                'stock_movements.form.select_item',
                                             )
-                                        }}
-                                    </th>
-                                    <th
-                                        v-if="!isAdjustmentMode"
-                                        class="min-w-[7rem]"
-                                    >
-                                        {{
-                                            t(
-                                                removesStock
-                                                    ? 'stock_movements.form.quantity_out'
-                                                    : 'stock_movements.form.quantity_in',
-                                            )
-                                        }}
-                                    </th>
-                                    <th v-else class="min-w-[7rem]">
-                                        {{
-                                            t(
-                                                'stock_movements.form.quantity_after',
-                                            )
-                                        }}
-                                    </th>
-                                    <th
-                                        v-if="removesStock"
-                                        class="min-w-[6rem] text-right"
-                                    >
-                                        {{
-                                            t('stock_movements.form.remaining')
-                                        }}
-                                    </th>
-                                    <th
-                                        v-if="isAdjustmentMode"
-                                        class="min-w-[6rem] text-right"
-                                    >
-                                        {{
-                                            t('stock_movements.form.difference')
-                                        }}
-                                    </th>
-                                    <th
-                                        v-if="isAdjustmentMode"
-                                        class="min-w-[9rem]"
-                                    >
-                                        {{ t('stock_movements.form.reason') }}
-                                    </th>
-                                    <th
-                                        v-if="!isAdjustmentMode"
-                                        class="min-w-[6rem] text-right"
-                                    >
-                                        {{
-                                            t('stock_movements.form.line_total')
-                                        }}
-                                    </th>
-                                    <th class="w-0"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="row in rows" :key="row.id">
-                                    <td>
-                                        <Combobox
-                                            v-model="row.item_id"
-                                            :items="availableItems"
-                                            :loading="searchLoading"
-                                            :placeholder="
-                                                t(
-                                                    'stock_movements.form.select_item',
-                                                )
-                                            "
-                                            required
-                                            @search="searchItems"
-                                            @select="
-                                                (item) =>
-                                                    onItemSelect(
-                                                        row,
-                                                        item as unknown as ItemOption,
-                                                    )
-                                            "
-                                        />
-                                    </td>
-                                    <td
-                                        class="text-right text-on-surface-variant"
-                                    >
-                                        {{
-                                            findItem(row.item_id)
-                                                ? formatNumber(
-                                                      displayedQuantity(row),
-                                                  )
-                                                : '—'
-                                        }}
-                                    </td>
-                                    <td v-if="!isAdjustmentMode">
-                                        <Input
-                                            v-model="row.quantity"
-                                            type="number"
-                                            step="0.001"
-                                            min="1"
-                                            :invalid="isOutOfStockError(row)"
-                                            required
-                                        />
-                                    </td>
-                                    <td v-else>
-                                        <Input
-                                            v-model="row.quantity_after"
-                                            type="number"
-                                            step="0.001"
-                                            min="0"
-                                            required
-                                        />
-                                    </td>
-                                    <td
-                                        v-if="isOutgoingTransfer"
-                                        class="text-right text-on-surface-variant"
-                                    >
-                                        {{
-                                            formatNumber(remainingQuantity(row))
-                                        }}
-                                    </td>
-                                    <td
-                                        v-if="isAdjustmentMode"
-                                        class="text-right font-semibold"
-                                        :class="
-                                            difference(row) >= 0
-                                                ? 'text-emerald-600'
-                                                : 'text-rose-600'
                                         "
-                                    >
-                                        {{ formatNumber(difference(row)) }}
-                                    </td>
-                                    <td v-if="isAdjustmentMode">
-                                        <Select
-                                            v-model="row.adjustment_reason"
-                                            :options="reasonOptions"
-                                            required
-                                        />
-                                    </td>
-                                    <td
-                                        v-if="!isAdjustmentMode"
-                                        class="text-right font-semibold text-on-surface"
-                                    >
-                                        {{ formatMoney(lineTotal(row)) }}
-                                    </td>
-                                    <td>
-                                        <button
-                                            type="button"
-                                            class="rounded-lg p-1.5 text-on-surface-variant transition hover:bg-rose-50 hover:text-error-red"
-                                            :aria-label="
-                                                t(
-                                                    'stock_movements.form.remove_row',
+                                        required
+                                        @search="searchItems"
+                                        @select="
+                                            (item) =>
+                                                onItemSelect(
+                                                    row,
+                                                    item as unknown as ItemOption,
                                                 )
-                                            "
-                                            @click="removeRow(row.id)"
-                                        >
-                                            <Trash2 :size="14" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </DataTable>
-                    </div>
+                                        "
+                                    />
+                                </td>
+                                <td class="text-right text-on-surface-variant">
+                                    {{
+                                        findItem(row.item_id)
+                                            ? formatNumber(
+                                                  displayedQuantity(row),
+                                              )
+                                            : '—'
+                                    }}
+                                </td>
+                                <td v-if="!isAdjustmentMode">
+                                    <Input
+                                        v-model="row.quantity"
+                                        type="number"
+                                        step="0.001"
+                                        min="1"
+                                        :invalid="isOutOfStockError(row)"
+                                        required
+                                    />
+                                </td>
+                                <td v-else>
+                                    <Input
+                                        v-model="row.quantity_after"
+                                        type="number"
+                                        step="0.001"
+                                        min="0"
+                                        required
+                                    />
+                                </td>
+                                <td
+                                    v-if="isOutgoingTransfer"
+                                    class="text-right text-on-surface-variant"
+                                >
+                                    {{ formatNumber(remainingQuantity(row)) }}
+                                </td>
+                                <td
+                                    v-if="isAdjustmentMode"
+                                    class="text-right font-semibold"
+                                    :class="
+                                        difference(row) >= 0
+                                            ? 'text-emerald-600'
+                                            : 'text-rose-600'
+                                    "
+                                >
+                                    {{ formatNumber(difference(row)) }}
+                                </td>
+                                <td v-if="isAdjustmentMode">
+                                    <Select
+                                        v-model="row.adjustment_reason"
+                                        :options="reasonOptions"
+                                        required
+                                    />
+                                </td>
+                                <td
+                                    v-if="!isAdjustmentMode"
+                                    class="text-right font-semibold text-on-surface"
+                                >
+                                    {{ formatMoney(lineTotal(row)) }}
+                                </td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="rounded-lg p-1.5 text-on-surface-variant transition hover:bg-rose-50 hover:text-error-red"
+                                        :aria-label="
+                                            t('stock_movements.form.remove_row')
+                                        "
+                                        @click="removeRow(row.id)"
+                                    >
+                                        <Trash2 :size="14" />
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </DataTable>
 
                     <div v-if="hasOutOfStockErrors" class="mt-3 space-y-1">
                         <div
@@ -915,7 +903,7 @@ watch(
                             </Button>
                         </div>
                     </div>
-                </Card>
+                </section>
             </form>
         </div>
     </AppLayout>

@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 use App\Models\FinancialReport;
 use App\Models\Store;
+use App\Services\PayrollReportService;
 
 \test('admin can close and reopen a report', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $url = '?store_id=' . $store->getKey();
     $payload = ['year' => 2026, 'month' => 7];
+    (new PayrollReportService())->close($admin, $store, 2026, 7);
 
     $this->be($admin, 'users')->post('/income-expenses/close' . $url, $payload)->assertRedirect();
     \expect(FinancialReport::query()->firstOrFail()->isClosed())->toBeTrue();

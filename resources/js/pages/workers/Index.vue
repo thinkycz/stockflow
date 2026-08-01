@@ -99,7 +99,7 @@ function destroyWorker(id: number): void {
                 </div>
             </Card>
 
-            <Card padded>
+            <section class="space-y-4">
                 <EmptyState
                     v-if="workers.length === 0"
                     :title="t('workers.empty.title')"
@@ -114,74 +114,70 @@ function destroyWorker(id: number): void {
                         </Link>
                     </template>
                 </EmptyState>
-                <div v-else class="overflow-x-auto">
-                    <DataTable>
-                        <thead>
-                            <tr>
-                                <th>
-                                    {{ t('workers.columns.first_name') }}
-                                </th>
-                                <th>{{ t('workers.columns.last_name') }}</th>
-                                <th class="text-right">
-                                    {{ t('workers.columns.hourly_rate') }}
-                                </th>
-                                <th class="w-0">
-                                    {{ t('workers.columns.actions') }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="worker in workers" :key="worker.id">
-                                <td class="font-semibold text-on-surface">
-                                    <div class="flex items-center gap-2">
-                                        <span
-                                            class="size-2.5 shrink-0 rounded-full"
-                                            :style="{
-                                                backgroundColor: worker.color,
-                                            }"
-                                            aria-hidden="true"
-                                        />
-                                        {{ worker.first_name }}
-                                    </div>
-                                </td>
-                                <td class="text-on-surface">
-                                    {{ worker.last_name }}
-                                </td>
-                                <td
-                                    class="text-right font-semibold text-on-surface"
-                                >
-                                    {{ formatMoney(worker.hourly_rate) }}
-                                </td>
-                                <td>
-                                    <div class="flex items-center gap-1">
-                                        <Link
-                                            :href="
-                                                route('workers.edit', worker.id)
-                                            "
-                                        >
-                                            <Button
-                                                variant="ghost"
-                                                type="button"
-                                                :aria-label="t('common.edit')"
-                                            >
-                                                <Pencil :size="14" />
-                                            </Button>
-                                        </Link>
+                <DataTable v-else>
+                    <thead>
+                        <tr>
+                            <th>
+                                {{ t('workers.columns.first_name') }}
+                            </th>
+                            <th>{{ t('workers.columns.last_name') }}</th>
+                            <th class="text-right">
+                                {{ t('workers.columns.hourly_rate') }}
+                            </th>
+                            <th class="w-0">
+                                {{ t('workers.columns.actions') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="worker in workers" :key="worker.id">
+                            <td class="font-semibold text-on-surface">
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        class="size-2.5 shrink-0 rounded-full"
+                                        :style="{
+                                            backgroundColor: worker.color,
+                                        }"
+                                        aria-hidden="true"
+                                    />
+                                    {{ worker.first_name }}
+                                </div>
+                            </td>
+                            <td class="text-on-surface">
+                                {{ worker.last_name }}
+                            </td>
+                            <td
+                                class="text-right font-semibold text-on-surface"
+                            >
+                                {{ formatMoney(worker.hourly_rate) }}
+                            </td>
+                            <td>
+                                <div class="flex items-center gap-1">
+                                    <Link
+                                        :href="route('workers.edit', worker.id)"
+                                    >
                                         <Button
                                             variant="ghost"
                                             type="button"
-                                            :aria-label="t('common.delete')"
-                                            @click="destroyWorker(worker.id)"
+                                            :aria-label="t('common.edit')"
                                         >
-                                            <Trash2 :size="14" />
+                                            <Pencil :size="14" />
                                         </Button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </DataTable>
-                </div>
-            </Card>
+                                    </Link>
+                                    <Button
+                                        variant="ghost"
+                                        type="button"
+                                        :aria-label="t('common.delete')"
+                                        @click="destroyWorker(worker.id)"
+                                    >
+                                        <Trash2 :size="14" />
+                                    </Button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </DataTable>
+            </section>
         </div>
     </AppLayout>
 </template>

@@ -20,14 +20,18 @@ import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
+import EmptyState from '@/components/ui/EmptyState.vue';
 import FieldError from '@/components/ui/FieldError.vue';
+import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
+import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import ShiftMonthCalendar from '@/components/ShiftMonthCalendar.vue';
 import ShiftMonthlySummaryTable from '@/components/ShiftMonthlySummaryTable.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { showErrorToast, showSuccessToast } from '@/composables/useClientToast';
+import { useDialog } from '@/composables/useDialog';
 import { useRoute } from '@/composables/useRoute';
 import { sortShiftsByTime } from '@/lib/shift-calendar';
 import type { MonthlyShiftSummary } from '@/types/shifts';
@@ -91,6 +95,8 @@ const props = defineProps<{
     monthly_summary: MonthlyShiftSummary[];
     shift_presets?: ShiftPreset[];
 }>();
+
+const dialog = useDialog();
 
 const { t, locale } = useI18n();
 
@@ -360,6 +366,23 @@ for (let h = 0; h < 24; h++) {
     }
 }
 
+const workerOptions = computed(() =>
+    props.workers.map((worker) => ({
+        value: String(worker.id),
+        label: `${worker.first_name} ${worker.last_name}`,
+    })),
+);
+const presetOptions = computed(() =>
+    (props.shift_presets ?? []).map((preset) => ({
+        value: String(preset.id),
+        label: `${preset.name} (${preset.start_time}–${preset.end_time})`,
+    })),
+);
+const timeSelectOptions = timeOptions.map((time) => ({
+    value: time,
+    label: time,
+}));
+
 const modalShifts = computed<CalendarShift[]>(() => {
     const day = calendarDays.value.find((d) => d.date === modalDate.value);
     return day?.shifts ?? [];
@@ -404,11 +427,18 @@ function closeModal(): void {
 }
 
 function submitShift(): void {
-    const confirmOverlap = (errors: Record<string, string>): void => {
+    const confirmOverlap = async (
+        errors: Record<string, string>,
+    ): Promise<void> => {
         if (
             errors.overlap !== undefined &&
             !form.allow_overlap &&
-            window.confirm(t('shifts.overlap_confirm'))
+            (await dialog.confirm({
+                title: t('common.confirm'),
+                message: t('shifts.overlap_confirm'),
+                confirmLabel: t('common.continue'),
+                variant: 'warning',
+            }))
         ) {
             form.allow_overlap = true;
             submitShift();
@@ -424,7 +454,7 @@ function submitShift(): void {
             }),
             {
                 preserveState: true,
-                onError: confirmOverlap,
+                onError: (errors) => void confirmOverlap(errors),
                 onSuccess: () => {
                     editingShiftId.value = null;
                     form.reset();
@@ -449,7 +479,7 @@ function submitShift(): void {
             }),
             {
                 preserveState: true,
-                onError: confirmOverlap,
+                onError: (errors) => void confirmOverlap(errors),
                 onSuccess: () => {
                     form.reset();
                     form.date = modalDate.value;
@@ -466,8 +496,17 @@ function submitShift(): void {
     }
 }
 
-function deleteShift(id: number): void {
-    if (!window.confirm(t('shifts.confirm_delete'))) return;
+async function deleteShift(id: number): Promise<void> {
+    if (
+        !(await dialog.confirm({
+            title: t('common.delete'),
+            message: t('shifts.confirm_delete'),
+            confirmLabel: t('common.delete'),
+            variant: 'danger',
+        }))
+    ) {
+        return;
+    }
     router.delete(
         route('shifts.destroy', {
             shift: id,
@@ -552,8 +591,17 @@ function submitPreset(): void {
     );
 }
 
-function deletePreset(preset: ShiftPreset): void {
-    if (!window.confirm(t('shifts.presets.confirm_delete'))) return;
+async function deletePreset(preset: ShiftPreset): Promise<void> {
+    if (
+        !(await dialog.confirm({
+            title: t('common.delete'),
+            message: `${preset.name}: ${t('shifts.presets.confirm_delete')}`,
+            confirmLabel: t('common.delete'),
+            variant: 'danger',
+        }))
+    ) {
+        return;
+    }
 
     if (selectedPresetId.value === String(preset.id)) {
         stopQuickAdd();
@@ -710,9 +758,12 @@ async function quickAddShift(
                     (conflict) => `${conflict.start_time}–${conflict.end_time}`,
                 )
                 .join(', ');
-            retryWithOverlap = window.confirm(
-                t('shifts.quick_add.overlap_confirm', { conflicts }),
-            );
+            retryWithOverlap = await dialog.confirm({
+                title: t('shifts.quick_add.conflict'),
+                message: t('shifts.quick_add.overlap_confirm', { conflicts }),
+                confirmLabel: t('common.continue'),
+                variant: 'warning',
+            });
             if (!retryWithOverlap) {
                 showErrorToast(t('shifts.quick_add.conflict'));
             }
@@ -838,54 +889,29 @@ async function copyText(value: string): Promise<void> {
                             <Label for="quick_worker">{{
                                 t('shifts.quick_add.employee')
                             }}</Label>
-                            <select
+                            <Select
                                 id="quick_worker"
                                 v-model="selectedWorkerId"
                                 :disabled="quickAddActive"
-                                class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-sm text-on-surface transition focus:border-primary focus:outline-none disabled:opacity-60"
-                            >
-                                <option value="" disabled>
-                                    {{ t('shifts.select_worker') }}
-                                </option>
-                                <option
-                                    v-for="worker in workers"
-                                    :key="worker.id"
-                                    :value="String(worker.id)"
-                                >
-                                    {{ worker.first_name }}
-                                    {{ worker.last_name }}
-                                </option>
-                            </select>
+                                :options="workerOptions"
+                                :placeholder="t('shifts.select_worker')"
+                            />
                         </div>
                         <div class="space-y-2">
                             <Label for="quick_preset">{{
                                 t('shifts.quick_add.preset')
                             }}</Label>
-                            <select
+                            <Select
                                 id="quick_preset"
                                 v-model="selectedPresetId"
                                 :disabled="quickAddActive"
-                                class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-sm text-on-surface transition focus:border-primary focus:outline-none disabled:opacity-60"
-                            >
-                                <option value="" disabled>
-                                    {{
-                                        shift_presets?.length
-                                            ? t(
-                                                  'shifts.quick_add.select_preset',
-                                              )
-                                            : t('shifts.quick_add.no_presets')
-                                    }}
-                                </option>
-                                <option
-                                    v-for="preset in shift_presets ?? []"
-                                    :key="preset.id"
-                                    :value="String(preset.id)"
-                                >
-                                    {{ preset.name }} ({{
-                                        preset.start_time
-                                    }}–{{ preset.end_time }})
-                                </option>
-                            </select>
+                                :options="presetOptions"
+                                :placeholder="
+                                    shift_presets?.length
+                                        ? t('shifts.quick_add.select_preset')
+                                        : t('shifts.quick_add.no_presets')
+                                "
+                            />
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center gap-3">
@@ -961,12 +987,7 @@ async function copyText(value: string): Promise<void> {
                     </div>
                 </div>
 
-                <div
-                    v-if="!store"
-                    class="rounded-2xl border border-outline-glass bg-surface-container-lowest py-12 text-center text-sm text-on-surface-variant"
-                >
-                    {{ t('shifts.no_store') }}
-                </div>
+                <EmptyState v-if="!store" :title="t('shifts.no_store')" />
 
                 <ShiftMonthCalendar
                     v-else
@@ -1179,23 +1200,13 @@ async function copyText(value: string): Promise<void> {
                         <Label for="worker_id" :required="true">{{
                             t('shifts.columns.worker')
                         }}</Label>
-                        <select
+                        <Select
                             id="worker_id"
                             v-model="form.worker_id"
                             required
-                            class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-sm text-on-surface transition focus:border-primary focus:outline-none"
-                        >
-                            <option value="" disabled>
-                                {{ t('shifts.select_worker') }}
-                            </option>
-                            <option
-                                v-for="worker in workers"
-                                :key="worker.id"
-                                :value="String(worker.id)"
-                            >
-                                {{ worker.first_name }} {{ worker.last_name }}
-                            </option>
-                        </select>
+                            :options="workerOptions"
+                            :placeholder="t('shifts.select_worker')"
+                        />
                         <FieldError :message="form.errors.worker_id" />
                     </div>
 
@@ -1204,40 +1215,24 @@ async function copyText(value: string): Promise<void> {
                             <Label for="start_time" :required="true">{{
                                 t('shifts.columns.start_time')
                             }}</Label>
-                            <select
+                            <Select
                                 id="start_time"
                                 v-model="form.start_time"
                                 required
-                                class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-sm text-on-surface transition focus:border-primary focus:outline-none"
-                            >
-                                <option
-                                    v-for="time in timeOptions"
-                                    :key="time"
-                                    :value="time"
-                                >
-                                    {{ time }}
-                                </option>
-                            </select>
+                                :options="timeSelectOptions"
+                            />
                             <FieldError :message="form.errors.start_time" />
                         </div>
                         <div class="space-y-2">
                             <Label for="end_time" :required="true">{{
                                 t('shifts.columns.end_time')
                             }}</Label>
-                            <select
+                            <Select
                                 id="end_time"
                                 v-model="form.end_time"
                                 required
-                                class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-sm text-on-surface transition focus:border-primary focus:outline-none"
-                            >
-                                <option
-                                    v-for="time in timeOptions"
-                                    :key="time"
-                                    :value="time"
-                                >
-                                    {{ time }}
-                                </option>
-                            </select>
+                                :options="timeSelectOptions"
+                            />
                             <FieldError :message="form.errors.end_time" />
                         </div>
                     </div>
@@ -1273,12 +1268,11 @@ async function copyText(value: string): Promise<void> {
             @close="closePresetModal"
         >
             <div class="space-y-5">
-                <div
+                <EmptyState
                     v-if="(shift_presets?.length ?? 0) === 0"
-                    class="rounded-xl bg-surface-container-low p-4 text-sm text-on-surface-variant"
-                >
-                    {{ t('shifts.presets.empty') }}
-                </div>
+                    :title="t('shifts.presets.empty')"
+                    density="compact"
+                />
                 <div v-else class="space-y-2">
                     <div
                         v-for="preset in shift_presets ?? []"
@@ -1339,13 +1333,12 @@ async function copyText(value: string): Promise<void> {
                         <Label for="preset_name" :required="true">{{
                             t('shifts.presets.name')
                         }}</Label>
-                        <input
+                        <Input
                             id="preset_name"
                             v-model="presetForm.name"
                             type="text"
                             maxlength="100"
                             required
-                            class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-sm text-on-surface transition focus:border-primary focus:outline-none"
                         />
                         <FieldError :message="presetForm.errors.name" />
                     </div>
@@ -1354,20 +1347,12 @@ async function copyText(value: string): Promise<void> {
                             <Label for="preset_start" :required="true">{{
                                 t('shifts.columns.start_time')
                             }}</Label>
-                            <select
+                            <Select
                                 id="preset_start"
                                 v-model="presetForm.start_time"
                                 required
-                                class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-sm text-on-surface focus:border-primary focus:outline-none"
-                            >
-                                <option
-                                    v-for="time in timeOptions"
-                                    :key="time"
-                                    :value="time"
-                                >
-                                    {{ time }}
-                                </option>
-                            </select>
+                                :options="timeSelectOptions"
+                            />
                             <FieldError
                                 :message="presetForm.errors.start_time"
                             />
@@ -1376,20 +1361,12 @@ async function copyText(value: string): Promise<void> {
                             <Label for="preset_end" :required="true">{{
                                 t('shifts.columns.end_time')
                             }}</Label>
-                            <select
+                            <Select
                                 id="preset_end"
                                 v-model="presetForm.end_time"
                                 required
-                                class="w-full rounded-xl border border-outline-glass bg-white px-3 py-2 text-sm text-on-surface focus:border-primary focus:outline-none"
-                            >
-                                <option
-                                    v-for="time in timeOptions"
-                                    :key="time"
-                                    :value="time"
-                                >
-                                    {{ time }}
-                                </option>
-                            </select>
+                                :options="timeSelectOptions"
+                            />
                             <FieldError :message="presetForm.errors.end_time" />
                         </div>
                     </div>

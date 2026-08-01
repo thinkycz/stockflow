@@ -7,7 +7,9 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
+import EmptyState from '@/components/ui/EmptyState.vue';
 import Input from '@/components/ui/Input.vue';
+import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
@@ -326,12 +328,9 @@ async function cancelDraft(): Promise<void> {
                             <CalendarDays :size="19" />
                         </span>
                         <div>
-                            <label
-                                for="inventory_counted_on"
-                                class="text-sm font-semibold text-on-surface"
-                            >
+                            <Label for="inventory_counted_on">
                                 {{ t('inventory_counts.date.label') }}
-                            </label>
+                            </Label>
                             <p class="mt-1 text-xs text-on-surface-variant">
                                 {{ t('inventory_counts.date.help') }}
                             </p>
@@ -348,26 +347,16 @@ async function cancelDraft(): Promise<void> {
                 </div>
             </Card>
 
-            <div
+            <EmptyState
                 v-if="!props.store"
-                class="rounded-2xl border border-outline-glass bg-surface-container-lowest p-8 text-center"
-            >
-                <p class="text-sm font-semibold text-on-surface">
-                    {{ t('inventory_counts.empty.title') }}
-                </p>
-                <p class="mt-1 text-xs text-on-surface-variant">
-                    {{ t('inventory_counts.empty.description') }}
-                </p>
-            </div>
+                :title="t('inventory_counts.empty.title')"
+                :description="t('inventory_counts.empty.description')"
+            />
 
-            <div
+            <EmptyState
                 v-else-if="hasNoItems"
-                class="rounded-2xl border border-outline-glass bg-surface-container-lowest p-8 text-center"
-            >
-                <p class="text-sm font-semibold text-on-surface">
-                    {{ t('inventory_counts.empty.no_items') }}
-                </p>
-            </div>
+                :title="t('inventory_counts.empty.no_items')"
+            />
 
             <section v-else class="space-y-4">
                 <div v-if="!draft" class="py-8 text-center">
@@ -461,9 +450,10 @@ async function cancelDraft(): Promise<void> {
                                     <div
                                         class="inline-flex items-center justify-end gap-1"
                                     >
-                                        <button
+                                        <Button
                                             type="button"
-                                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-outline-glass bg-surface-container-lowest text-on-surface-variant transition hover:bg-primary/5 hover:text-primary active:scale-95"
+                                            variant="secondary"
+                                            size="icon"
                                             :aria-label="t('common.decrease')"
                                             :data-testid="`dec-${row.item_id}`"
                                             @click="
@@ -471,7 +461,7 @@ async function cancelDraft(): Promise<void> {
                                             "
                                         >
                                             <Minus :size="14" />
-                                        </button>
+                                        </Button>
                                         <Input
                                             :model-value="
                                                 editing[row.item_id]
@@ -499,9 +489,10 @@ async function cancelDraft(): Promise<void> {
                                                 )
                                             "
                                         />
-                                        <button
+                                        <Button
                                             type="button"
-                                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-outline-glass bg-surface-container-lowest text-on-surface-variant transition hover:bg-primary/5 hover:text-primary active:scale-95"
+                                            variant="secondary"
+                                            size="icon"
                                             :aria-label="t('common.increase')"
                                             :data-testid="`inc-${row.item_id}`"
                                             @click="
@@ -509,7 +500,7 @@ async function cancelDraft(): Promise<void> {
                                             "
                                         >
                                             <Plus :size="14" />
-                                        </button>
+                                        </Button>
                                     </div>
                                     <span
                                         class="text-[10px] font-semibold"

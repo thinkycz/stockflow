@@ -2,16 +2,19 @@
 import { Inbox, Package, TrendingUp } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { cn } from '@/lib/utils';
 
 const props = withDefaults(
     defineProps<{
         title: string;
         description?: string;
         icon?: 'package' | 'inbox' | 'trending';
+        density?: 'default' | 'compact';
     }>(),
     {
         description: '',
         icon: 'package',
+        density: 'default',
     },
 );
 
@@ -32,13 +35,26 @@ const iconComponent = computed(() => {
 
 <template>
     <div
-        class="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-outline-glass bg-surface-container-lowest/50 px-6 py-12 text-center"
+        :class="
+            cn(
+                'flex flex-col items-center justify-center rounded-2xl border border-dashed border-outline-glass bg-surface-container-lowest/50 text-center',
+                density === 'compact' ? 'gap-2 px-4 py-6' : 'gap-3 px-6 py-12',
+            )
+        "
     >
         <div
             aria-hidden="true"
-            class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-container text-on-surface-variant"
+            :class="
+                cn(
+                    'flex items-center justify-center rounded-full bg-surface-container text-on-surface-variant',
+                    density === 'compact' ? 'size-9' : 'size-12',
+                )
+            "
         >
-            <component :is="iconComponent" :size="20" />
+            <component
+                :is="iconComponent"
+                :size="density === 'compact' ? 16 : 20"
+            />
         </div>
         <div>
             <p class="font-heading text-sm font-semibold text-on-surface">

@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
+import Checkbox from '@/components/ui/Checkbox.vue';
 import Card from '@/components/ui/Card.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
@@ -152,17 +153,9 @@ function submit(): void {
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <input
+                        <Checkbox
                             id="is_warehouse"
-                            type="checkbox"
-                            value="1"
-                            :checked="form.is_warehouse"
-                            class="size-4 rounded border-outline-glass text-primary focus:ring-primary/20"
-                            @change="
-                                form.is_warehouse = (
-                                    $event.target as HTMLInputElement
-                                ).checked
-                            "
+                            v-model="form.is_warehouse"
                         />
                         <Label for="is_warehouse">{{
                             t('stores.columns.is_warehouse')

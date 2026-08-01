@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DataTable from '@/components/ui/DataTable.vue';
+import EmptyState from '@/components/ui/EmptyState.vue';
 import { formatMoney } from '@/lib/format';
 import type { MonthlyShiftSummary } from '@/types/shifts';
 
@@ -49,12 +50,11 @@ function formatHours(value: number): string {
 </script>
 
 <template>
-    <div
+    <EmptyState
         v-if="rows.length === 0"
-        class="rounded-xl bg-surface-container-low px-4 py-6 text-center text-sm text-on-surface-variant"
-    >
-        {{ t('shifts.rating.summary.empty') }}
-    </div>
+        :title="t('shifts.rating.summary.empty')"
+        density="compact"
+    />
     <DataTable v-else>
         <thead>
             <tr>

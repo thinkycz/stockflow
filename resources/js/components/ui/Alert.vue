@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 const props = withDefaults(
     defineProps<{
-        variant?: 'success' | 'error' | 'info';
+        variant?: 'success' | 'error' | 'info' | 'warning';
     }>(),
     {
         variant: 'info',
@@ -14,6 +14,7 @@ const variants = {
     success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700',
     error: 'border-error-red/30 bg-error-red/10 text-error-red',
     info: 'border-outline-glass bg-surface-container-low text-on-surface-variant',
+    warning: 'border-amber-300 bg-amber-50 text-amber-900',
 };
 </script>
 

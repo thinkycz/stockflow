@@ -7,8 +7,11 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
+import Checkbox from '@/components/ui/Checkbox.vue';
 import DataTable from '@/components/ui/DataTable.vue';
+import EmptyState from '@/components/ui/EmptyState.vue';
 import FieldError from '@/components/ui/FieldError.vue';
+import FilterField from '@/components/ui/FilterField.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
@@ -424,16 +427,16 @@ function submitPendingSave(closeAttendances: boolean): void {
                 <div
                     class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
                 >
-                    <div class="flex flex-col gap-1">
-                        <Label for="statement_month">
-                            {{ t('statements.month') }}
-                        </Label>
+                    <FilterField
+                        for="statement_month"
+                        :label="t('statements.month')"
+                    >
                         <MonthPicker
                             id="statement_month"
                             :model-value="monthValue"
                             @change="selectMonth"
                         />
-                    </div>
+                    </FilterField>
                     <Link
                         v-if="props.statement"
                         :href="
@@ -494,12 +497,9 @@ function submitPendingSave(closeAttendances: boolean): void {
                             :key="field"
                             class="space-y-2"
                         >
-                            <label
-                                :for="`today_${field}`"
-                                class="text-xs font-semibold text-on-surface-variant"
-                            >
+                            <Label :for="`today_${field}`">
                                 {{ t(`statements.columns.${field}`) }}
-                            </label>
+                            </Label>
                             <Input
                                 :id="`today_${field}`"
                                 v-model="todayForm[field]"
@@ -526,17 +526,11 @@ function submitPendingSave(closeAttendances: boolean): void {
                 </form>
             </Card>
 
-            <div
+            <EmptyState
                 v-if="!props.statement"
-                class="rounded-2xl border border-outline-glass bg-surface-container-lowest p-8 text-center"
-            >
-                <p class="text-sm font-semibold text-on-surface">
-                    {{ t('statements.empty.title') }}
-                </p>
-                <p class="mt-1 text-xs text-on-surface-variant">
-                    {{ t('statements.empty.description') }}
-                </p>
-            </div>
+                :title="t('statements.empty.title')"
+                :description="t('statements.empty.description')"
+            />
 
             <template v-else>
                 <section class="space-y-4">
@@ -711,18 +705,14 @@ function submitPendingSave(closeAttendances: boolean): void {
                                     </div>
                                 </td>
                                 <td v-if="props.is_admin" class="text-center">
-                                    <input
-                                        type="checkbox"
-                                        :checked="day.cash_checked"
-                                        class="h-4 w-4 cursor-pointer rounded border-outline-glass text-primary focus:ring-primary"
-                                        @change="
-                                            (event) =>
+                                    <Checkbox
+                                        :model-value="day.cash_checked"
+                                        @update:model-value="
+                                            (value) =>
                                                 updateEditing(
                                                     editingKey(day),
                                                     'cash_checked',
-                                                    (
-                                                        event.target as HTMLInputElement
-                                                    ).checked,
+                                                    value,
                                                 )
                                         "
                                     />

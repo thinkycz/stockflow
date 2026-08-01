@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Pencil, Plus, Search, Trash2, Boxes } from '@lucide/vue';
+import { Pencil, Plus, Trash2, Boxes } from '@lucide/vue';
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
-import Input from '@/components/ui/Input.vue';
-import Label from '@/components/ui/Label.vue';
-import LoadingState from '@/components/ui/LoadingState.vue';
 import Pagination from '@/components/ui/Pagination.vue';
+import SearchFilter from '@/components/ui/SearchFilter.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
+import { useDialog } from '@/composables/useDialog';
 import { formatMoney, formatNumber } from '@/lib/format';
 
 type ItemRow = {
@@ -40,6 +39,7 @@ const { t } = useI18n();
 useBoundLocale();
 
 const route = useRoute();
+const dialog = useDialog();
 
 const searchTerm = ref<string>(props.search || '');
 const submitting = ref<boolean>(false);
@@ -65,11 +65,17 @@ watch(searchTerm, (value) => {
     }, 300);
 });
 
-function destroyItem(id: number): void {
-    if (!window.confirm(t('items.confirm_delete'))) {
+async function destroyItem(item: ItemRow): Promise<void> {
+    if (
+        !(await dialog.confirm({
+            title: `${t('common.delete')}: ${item.title}`,
+            message: t('items.confirm_delete'),
+            confirmLabel: t('common.delete'),
+            variant: 'danger',
+        }))
+    )
         return;
-    }
-    router.delete(route('items.destroy', id));
+    router.delete(route('items.destroy', item.id));
 }
 </script>
 
@@ -94,24 +100,14 @@ function destroyItem(id: number): void {
                 <div
                     class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
                 >
-                    <div class="flex w-full flex-col gap-1 sm:w-72">
-                        <Label for="items_search">{{
-                            t('common.search')
-                        }}</Label>
-                        <div class="relative">
-                            <Search
-                                :size="14"
-                                class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
-                            />
-                            <Input
-                                id="items_search"
-                                v-model="searchTerm"
-                                type="search"
-                                :placeholder="t('items.search_placeholder')"
-                                class="pl-9"
-                            />
-                        </div>
-                    </div>
+                    <SearchFilter
+                        id="items_search"
+                        v-model="searchTerm"
+                        :label="t('common.search')"
+                        :placeholder="t('items.search_placeholder')"
+                        :busy="submitting"
+                        class="w-full sm:w-72"
+                    />
                     <Link :href="route('items.create')">
                         <Button>
                             <Plus :size="14" />
@@ -122,13 +118,8 @@ function destroyItem(id: number): void {
             </header>
 
             <section class="space-y-4">
-                <LoadingState
-                    v-if="submitting"
-                    :label="t('common.loading')"
-                    inline
-                />
                 <EmptyState
-                    v-else-if="items.length === 0"
+                    v-if="items.length === 0"
                     :title="t('items.empty.title')"
                     :description="t('items.empty.description')"
                 >
@@ -215,7 +206,7 @@ function destroyItem(id: number): void {
                                         variant="ghost"
                                         type="button"
                                         :aria-label="t('common.delete')"
-                                        @click="destroyItem(item.id)"
+                                        @click="destroyItem(item)"
                                     >
                                         <Trash2 :size="14" />
                                     </Button>

@@ -41,6 +41,12 @@
     "common": {
         "save": "Uložiť",
         "cancel": "Zrušiť",
+        "confirm": "Potvrdiť",
+        "continue": "Pokračovať",
+        "type_to_confirm": "Pre potvrdenie napíšte „{value}“",
+        "confirmation_token": "VYMAZAŤ",
+        "reason": "Dôvod",
+        "link_address": "Adresa odkazu",
         "edit": "Upraviť",
         "delete": "Zmazať",
         "actions": "Akcie",

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import {
-    ArrowLeft,
     Package,
     Pencil,
     Store as StoreIcon,
@@ -11,20 +10,21 @@ import {
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Badge from '@/components/ui/Badge.vue';
+import BackLink from '@/components/ui/BackLink.vue';
 import Button from '@/components/ui/Button.vue';
-import Card from '@/components/ui/Card.vue';
-import CardContent from '@/components/ui/CardContent.vue';
 import CardDescription from '@/components/ui/CardDescription.vue';
 import CardHeader from '@/components/ui/CardHeader.vue';
 import CardTitle from '@/components/ui/CardTitle.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
+import MetricCard from '@/components/ui/MetricCard.vue';
 import Sparkline from '@/components/ui/Sparkline.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { formatCzechDateTime } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
+import { useDialog } from '@/composables/useDialog';
 import { formatDateTime, formatMoney, formatNumber } from '@/lib/format';
 
 type MovementRow = {
@@ -84,7 +84,7 @@ type InventoryRow = {
     projected_stockout_at: string | null;
 };
 
-defineProps<{
+const props = defineProps<{
     store: {
         id: number;
         name: string;
@@ -111,12 +111,19 @@ const { t } = useI18n();
 useBoundLocale();
 
 const route = useRoute();
+const dialog = useDialog();
 
-function destroyStore(id: number): void {
-    if (!window.confirm(t('stores.confirm_delete'))) {
+async function destroyStore(): Promise<void> {
+    if (
+        !(await dialog.confirm({
+            title: `${t('common.delete')}: ${props.store.name}`,
+            message: t('stores.confirm_delete'),
+            confirmLabel: t('common.delete'),
+            variant: 'danger',
+        }))
+    )
         return;
-    }
-    router.delete(route('stores.destroy', id));
+    router.delete(route('stores.destroy', props.store.id));
 }
 </script>
 
@@ -126,13 +133,9 @@ function destroyStore(id: number): void {
 
         <div class="flex flex-col gap-6">
             <div>
-                <Link
-                    :href="route('stores.index')"
-                    class="inline-flex items-center gap-1 text-xs font-semibold text-on-surface-variant hover:text-primary"
-                >
-                    <ArrowLeft :size="12" />
+                <BackLink :href="route('stores.index')">
                     {{ t('stores.back_to_list') }}
-                </Link>
+                </BackLink>
             </div>
 
             <div
@@ -188,7 +191,7 @@ function destroyStore(id: number): void {
                     <Button
                         variant="danger"
                         type="button"
-                        @click="destroyStore(store.id)"
+                        @click="destroyStore"
                     >
                         <Trash2 :size="14" />
                         {{ t('common.delete') }}
@@ -197,48 +200,18 @@ function destroyStore(id: number): void {
             </div>
 
             <div class="grid gap-4 sm:grid-cols-3">
-                <Card padded>
-                    <CardHeader>
-                        <CardDescription>{{
-                            t('stores.metrics.transfer_out_movements')
-                        }}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p
-                            class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                        >
-                            {{ metrics.total_transfer_out_movements }}
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card padded>
-                    <CardHeader>
-                        <CardDescription>{{
-                            t('stores.metrics.received_quantity')
-                        }}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p
-                            class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                        >
-                            {{ metrics.total_received_quantity }}
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card padded>
-                    <CardHeader>
-                        <CardDescription>{{
-                            t('stores.metrics.received_value')
-                        }}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p
-                            class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                        >
-                            {{ formatMoney(metrics.total_received_value) }}
-                        </p>
-                    </CardContent>
-                </Card>
+                <MetricCard
+                    :title="t('stores.metrics.transfer_out_movements')"
+                    :value="metrics.total_transfer_out_movements"
+                />
+                <MetricCard
+                    :title="t('stores.metrics.received_quantity')"
+                    :value="metrics.total_received_quantity"
+                />
+                <MetricCard
+                    :title="t('stores.metrics.received_value')"
+                    :value="formatMoney(metrics.total_received_value)"
+                />
             </div>
 
             <section class="space-y-4">

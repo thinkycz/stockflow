@@ -4,10 +4,12 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
+import BackLink from '@/components/ui/BackLink.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Input from '@/components/ui/Input.vue';
+import Label from '@/components/ui/Label.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
@@ -97,8 +99,11 @@ const totals = computed(() => ({
                 class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
             >
                 <div>
+                    <BackLink :href="route('inventory-counts.index')">
+                        {{ t('inventory_counts.title') }}
+                    </BackLink>
                     <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
+                        class="mt-2 font-heading text-2xl font-bold tracking-tight text-on-surface"
                     >
                         {{ t('inventory_counts.history.title') }}
                     </h1>
@@ -107,22 +112,14 @@ const totals = computed(() => ({
                     </p>
                     <StoreContextIndicator />
                 </div>
-                <Link :href="route('inventory-counts.index')">
-                    <Button variant="secondary">
-                        ← {{ t('inventory_counts.title') }}
-                    </Button>
-                </Link>
             </header>
 
             <Card padded>
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div class="space-y-2">
-                        <label
-                            for="history_item_id"
-                            class="text-xs font-semibold text-on-surface-variant"
-                        >
+                        <Label for="history_item_id">
                             {{ t('inventory_counts.history.filter.item') }}
-                        </label>
+                        </Label>
                         <Select
                             id="history_item_id"
                             :model-value="
@@ -147,12 +144,9 @@ const totals = computed(() => ({
                     </div>
 
                     <div class="space-y-2">
-                        <label
-                            for="history_from"
-                            class="text-xs font-semibold text-on-surface-variant"
-                        >
+                        <Label for="history_from">
                             {{ t('inventory_counts.history.filter.from') }}
-                        </label>
+                        </Label>
                         <Input
                             id="history_from"
                             v-model="fromInput"
@@ -160,12 +154,9 @@ const totals = computed(() => ({
                         />
                     </div>
                     <div class="space-y-2">
-                        <label
-                            for="history_to"
-                            class="text-xs font-semibold text-on-surface-variant"
-                        >
+                        <Label for="history_to">
                             {{ t('inventory_counts.history.filter.to') }}
-                        </label>
+                        </Label>
                         <Input id="history_to" v-model="toInput" type="date" />
                     </div>
                 </div>

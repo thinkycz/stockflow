@@ -197,6 +197,23 @@ $message)` helper asserts Inertia flash messages for both
 - Hardcoded user-facing strings in PHP or Vue are a code smell — move
   them to i18n.
 
+## UI Consistency
+
+- A single filter belongs in the page header. Multiple related filters
+  belong in one toolbar below the header.
+- Every filter has a visible localized label. Use `FilterField` for a
+  general filter and `SearchFilter` for search, including its loading state.
+- Use `MetricCard` for standard page metrics, `EmptyState` for page and
+  compact empty states, and `BackLink` above the title for detail, history,
+  and subordinate report navigation.
+- Use the shared `Input`, `Select`, `Checkbox`, `Label`, and `Button`
+  components for normal form controls. Native controls are reserved for
+  specialized widgets whose interaction model is owned by that widget.
+- Use `useDialog()` for confirmations and text prompts. Direct
+  `window.confirm()` and `window.prompt()` calls are forbidden.
+- Keep the right side of a page header for primary and contextual actions;
+  do not place back navigation there.
+
 ## Controllers, Authorization, Validation
 
 - Authorization and validation in the controller, not in request

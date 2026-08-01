@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 defineProps<{
     title: string;
     value: string | number;
+    description?: string;
 }>();
 </script>
 
@@ -29,6 +30,12 @@ defineProps<{
             class="mt-1.5 font-heading text-xl font-bold tracking-tight text-on-surface"
         >
             {{ value }}
+        </dd>
+        <dd
+            v-if="description || $slots.description"
+            class="mt-1 text-xs font-medium text-on-surface-variant"
+        >
+            <slot name="description">{{ description }}</slot>
         </dd>
     </dl>
 </template>

@@ -2,6 +2,7 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Alert from '@/components/ui/Alert.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import FieldError from '@/components/ui/FieldError.vue';
@@ -141,11 +142,9 @@ function submit(): void {
                         />
                     </div>
 
-                    <div
-                        class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800"
-                    >
+                    <Alert variant="warning">
                         {{ t('items.quantity_help') }}
-                    </div>
+                    </Alert>
 
                     <div
                         class="flex items-center justify-end gap-3 border-t border-outline-glass pt-4"

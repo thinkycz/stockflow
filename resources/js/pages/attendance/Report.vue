@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { ArrowLeft, Coffee, Plus, Printer } from '@lucide/vue';
+import { Coffee, Plus, Printer } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
+import BackLink from '@/components/ui/BackLink.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
+import FilterField from '@/components/ui/FilterField.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
@@ -14,6 +16,7 @@ import MonthPicker from '@/components/ui/MonthPicker.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useRoute } from '@/composables/useRoute';
+import { useDialog } from '@/composables/useDialog';
 import { formatMoney } from '@/lib/format';
 
 type Worker = { id: number; first_name: string; last_name: string };
@@ -52,6 +55,7 @@ const props = defineProps<{
 
 const { t, locale } = useI18n();
 const route = useRoute();
+const dialog = useDialog();
 const reportMonth = ref(props.filters?.month ?? '');
 const reportWorkerId = ref(
     props.filters?.worker_id === null || props.filters?.worker_id === undefined
@@ -134,9 +138,20 @@ function saveCorrection(): void {
         { onSuccess: () => (correctionOpen.value = false) },
     );
 }
-function voidSession(id: number): void {
-    const reason = window.prompt(t('attendance.correction.reason_prompt'));
-    if (reason) router.post(route('attendance.sessions.void', id), { reason });
+async function voidSession(id: number): Promise<void> {
+    const reason = await dialog.prompt({
+        title: t('attendance.correction.void'),
+        message: t('attendance.correction.reason_prompt'),
+        label: t('common.reason'),
+        confirmLabel: t('attendance.correction.void'),
+        variant: 'danger',
+        required: true,
+    });
+    if (reason?.trim()) {
+        router.post(route('attendance.sessions.void', id), {
+            reason: reason.trim(),
+        });
+    }
 }
 function addBreak(): void {
     correctionForm.breaks.push({ started_at: '', ended_at: '' });
@@ -154,8 +169,11 @@ function removeBreak(index: number): void {
                 class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
             >
                 <div>
+                    <BackLink :href="route('attendance.index')">
+                        {{ t('attendance.report.back') }}
+                    </BackLink>
                     <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
+                        class="mt-2 font-heading text-2xl font-bold tracking-tight text-on-surface"
                     >
                         {{ t('attendance.report.title') }}
                     </h1>
@@ -164,12 +182,6 @@ function removeBreak(index: number): void {
                     </p>
                     <StoreContextIndicator />
                 </div>
-                <Link :href="route('attendance.index')">
-                    <Button variant="secondary">
-                        <ArrowLeft :size="15" />
-                        {{ t('attendance.report.back') }}
-                    </Button>
-                </Link>
             </header>
 
             <Card v-if="!store || !filters || !report" padded>
@@ -181,16 +193,17 @@ function removeBreak(index: number): void {
             <template v-else>
                 <Card padded>
                     <div class="flex flex-col gap-3 xl:flex-row xl:items-end">
-                        <div class="flex flex-col gap-1 xl:w-48">
-                            <Label for="report-month">{{
-                                t('attendance.report.month')
-                            }}</Label>
+                        <FilterField
+                            for="report-month"
+                            :label="t('attendance.report.month')"
+                            class="xl:w-48"
+                        >
                             <MonthPicker
                                 id="report-month"
                                 v-model="reportMonth"
                                 class="w-full"
                             />
-                        </div>
+                        </FilterField>
                         <div class="flex flex-col gap-1 xl:w-64">
                             <Label for="report-worker">{{
                                 t('attendance.worker')
@@ -363,19 +376,22 @@ function removeBreak(index: number): void {
                                 }}
                             </td>
                             <td class="space-x-2">
-                                <button
-                                    class="font-semibold text-primary"
+                                <Button
+                                    variant="ghost"
+                                    size="compact"
                                     @click="openEdit(row)"
                                 >
                                     {{ t('common.edit') }}
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     v-if="!row.voided"
-                                    class="font-semibold text-error-red"
+                                    variant="ghost"
+                                    size="compact"
+                                    class="text-error-red hover:text-error-red"
                                     @click="voidSession(row.id)"
                                 >
                                     {{ t('attendance.correction.void') }}
-                                </button>
+                                </Button>
                             </td>
                         </tr>
                         <tr v-if="report.rows.length === 0">
@@ -438,13 +454,14 @@ function removeBreak(index: number): void {
                 <div class="space-y-2">
                     <div class="flex justify-between">
                         <Label>{{ t('attendance.breaks') }}</Label>
-                        <button
+                        <Button
                             type="button"
-                            class="text-xs text-primary"
+                            variant="ghost"
+                            size="compact"
                             @click="addBreak"
                         >
                             {{ t('attendance.correction.add_break') }}
-                        </button>
+                        </Button>
                     </div>
                     <div
                         v-for="(pause, index) in correctionForm.breaks"
@@ -461,13 +478,16 @@ function removeBreak(index: number): void {
                             type="datetime-local"
                             required
                         />
-                        <button
+                        <Button
                             type="button"
-                            class="text-error-red"
+                            variant="ghost"
+                            size="icon"
+                            class="size-8 text-error-red hover:text-error-red"
+                            :aria-label="t('common.delete')"
                             @click="removeBreak(index)"
                         >
                             ×
-                        </button>
+                        </Button>
                     </div>
                 </div>
                 <div>

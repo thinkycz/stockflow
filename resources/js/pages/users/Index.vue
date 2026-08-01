@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Pencil, Plus, Search, Trash2 } from '@lucide/vue';
+import { Pencil, Plus, Trash2 } from '@lucide/vue';
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -8,11 +8,11 @@ import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
-import Input from '@/components/ui/Input.vue';
-import Label from '@/components/ui/Label.vue';
+import SearchFilter from '@/components/ui/SearchFilter.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useCzechDate } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
+import { useDialog } from '@/composables/useDialog';
 import type { SharedProps } from '@/types';
 
 type UserRow = {
@@ -37,8 +37,10 @@ const props = defineProps<{
 const { t } = useI18n();
 const route = useRoute();
 const page = usePage<SharedProps>();
+const dialog = useDialog();
 const { formatCzechDateTime } = useCzechDate();
 const searchTerm = ref<string>(props.filters.search ?? '');
+const filtering = ref(false);
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
 useBoundLocale();
@@ -52,15 +54,30 @@ watch(searchTerm, (value) => {
         router.get(
             route('users.index'),
             { search: value || undefined },
-            { preserveState: true, preserveScroll: true },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onStart: () => (filtering.value = true),
+                onFinish: () => (filtering.value = false),
+            },
         );
     }, 300);
 });
 
-function confirmDelete(user: UserRow): void {
-    if (!window.confirm(t('users.confirm_delete_with_data'))) {
+async function confirmDelete(user: UserRow): Promise<void> {
+    if (
+        !(await dialog.confirm({
+            title: `${t('common.delete')}: ${user.email}`,
+            message: t('users.confirm_delete_with_data'),
+            confirmLabel: t('common.delete'),
+            variant: 'danger',
+            verification: {
+                label: t('common.type_to_confirm', { value: user.email }),
+                expected: user.email,
+            },
+        }))
+    )
         return;
-    }
 
     router.delete(route('users.destroy', user.id));
 }
@@ -89,24 +106,14 @@ const currentUserId = (): number | null => page.props.auth?.user?.id ?? null;
                 <div
                     class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
                 >
-                    <div class="flex w-full flex-col gap-1 sm:w-72">
-                        <Label for="users_search">{{
-                            t('common.search')
-                        }}</Label>
-                        <div class="relative">
-                            <Search
-                                :size="14"
-                                class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
-                            />
-                            <Input
-                                id="users_search"
-                                v-model="searchTerm"
-                                type="search"
-                                :placeholder="t('users.search_placeholder')"
-                                class="pl-9"
-                            />
-                        </div>
-                    </div>
+                    <SearchFilter
+                        id="users_search"
+                        v-model="searchTerm"
+                        :label="t('common.search')"
+                        :placeholder="t('users.search_placeholder')"
+                        :busy="filtering"
+                        class="w-full sm:w-72"
+                    />
                     <Link :href="route('users.create')">
                         <Button>
                             <Plus :size="14" />

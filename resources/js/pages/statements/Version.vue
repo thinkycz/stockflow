@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowLeft } from '@lucide/vue';
+import { Head, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
+import BackLink from '@/components/ui/BackLink.vue';
+import Button from '@/components/ui/Button.vue';
+import Checkbox from '@/components/ui/Checkbox.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { formatCzechDateTime } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
+import { useDialog } from '@/composables/useDialog';
 import { formatMoney } from '@/lib/format';
 
 type VersionRow = {
@@ -43,6 +46,7 @@ const props = defineProps<{
 
 const { t } = useI18n();
 const route = useRoute();
+const dialog = useDialog();
 
 useBoundLocale();
 
@@ -97,10 +101,16 @@ function totals(): {
     };
 }
 
-function restore(): void {
-    if (!window.confirm(t('statements.history.confirm_restore'))) {
+async function restore(): Promise<void> {
+    if (
+        !(await dialog.confirm({
+            title: t('statements.history.restore'),
+            message: t('statements.history.confirm_restore'),
+            confirmLabel: t('statements.history.restore'),
+            variant: 'warning',
+        }))
+    )
         return;
-    }
     router.post(
         route('statements.versions.restore', { version: props.version.id }),
         {},
@@ -115,17 +125,15 @@ function restore(): void {
 
         <div class="flex flex-col gap-6">
             <div>
-                <Link
+                <BackLink
                     :href="
                         route('statements.history', {
                             statement: props.statement.id,
                         })
                     "
-                    class="inline-flex items-center gap-1 text-xs font-semibold text-on-surface-variant hover:text-primary"
                 >
-                    <ArrowLeft :size="12" />
                     {{ t('statements.history.back') }}
-                </Link>
+                </BackLink>
             </div>
 
             <div class="flex flex-col gap-2">
@@ -243,11 +251,9 @@ function restore(): void {
                                 </div>
                             </td>
                             <td v-if="props.is_admin" class="text-center">
-                                <input
-                                    type="checkbox"
-                                    :checked="row.cash_checked"
+                                <Checkbox
+                                    :model-value="row.cash_checked"
                                     disabled
-                                    class="h-4 w-4 cursor-default rounded border-outline-glass text-primary"
                                 />
                             </td>
                         </tr>
@@ -316,13 +322,9 @@ function restore(): void {
                 <div
                     class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end"
                 >
-                    <button
-                        type="button"
-                        class="rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-on-primary transition hover:bg-primary/90"
-                        @click="restore"
-                    >
+                    <Button type="button" @click="restore">
                         {{ t('statements.history.restore') }}
-                    </button>
+                    </Button>
                 </div>
             </section>
         </div>

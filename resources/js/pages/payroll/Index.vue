@@ -15,13 +15,16 @@ import Button from '@/components/ui/Button.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import FieldError from '@/components/ui/FieldError.vue';
+import FilterField from '@/components/ui/FilterField.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import MonthPicker from '@/components/ui/MonthPicker.vue';
 import Select from '@/components/ui/Select.vue';
 import { useRoute } from '@/composables/useRoute';
+import { useDialog } from '@/composables/useDialog';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Alert from '@/components/ui/Alert.vue';
 import { formatMoney } from '@/lib/format';
 import type {
     PayrollAdjustment,
@@ -37,6 +40,7 @@ const props = defineProps<{
 
 const { t, locale } = useI18n();
 const route = useRoute();
+const dialog = useDialog();
 const adjustmentModalOpen = ref(false);
 const wageModalOpen = ref(false);
 const editingAdjustment = ref<PayrollAdjustment | null>(null);
@@ -135,8 +139,16 @@ function submitAdjustment(): void {
     adjustmentForm.post(route('payroll.adjustments.store'), options);
 }
 
-function deleteAdjustment(adjustment: PayrollAdjustment): void {
-    if (!window.confirm(t('payroll.confirm_delete_adjustment'))) return;
+async function deleteAdjustment(adjustment: PayrollAdjustment): Promise<void> {
+    if (
+        !(await dialog.confirm({
+            title: `${t('common.delete')}: ${adjustment.reason}`,
+            message: t('payroll.confirm_delete_adjustment'),
+            confirmLabel: t('common.delete'),
+            variant: 'danger',
+        }))
+    )
+        return;
     router.delete(route('payroll.adjustments.destroy', adjustment.id), {
         data: { year: props.filters.year, month: props.filters.month },
     });
@@ -159,9 +171,17 @@ function submitWageOverride(): void {
     });
 }
 
-function resetWageOverride(): void {
+async function resetWageOverride(): Promise<void> {
     if (!selectedPayslip.value) return;
-    if (!window.confirm(t('payroll.confirm_reset_wage'))) return;
+    if (
+        !(await dialog.confirm({
+            title: selectedPayslip.value.worker_name,
+            message: t('payroll.confirm_reset_wage'),
+            confirmLabel: t('common.confirm'),
+            variant: 'warning',
+        }))
+    )
+        return;
     router.delete(route('payroll.wage-override.destroy'), {
         data: {
             year: props.filters.year,
@@ -172,8 +192,16 @@ function resetWageOverride(): void {
     });
 }
 
-function lifecycle(action: 'close' | 'reopen'): void {
-    if (!window.confirm(t('payroll.confirm_' + action))) return;
+async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
+    if (
+        !(await dialog.confirm({
+            title: t(`payroll.${action}`),
+            message: t('payroll.confirm_' + action),
+            confirmLabel: t(`payroll.${action}`),
+            variant: action === 'close' ? 'warning' : 'default',
+        }))
+    )
+        return;
     lifecycleProcessing.value = true;
     router.post(
         route('payroll.' + action),
@@ -218,16 +246,16 @@ function lifecycle(action: 'close' | 'reopen'): void {
                     </p>
                 </div>
                 <div class="flex flex-wrap items-end gap-2">
-                    <div class="flex flex-col gap-1">
-                        <Label for="payroll_month">
-                            {{ t('payroll.month') }}
-                        </Label>
+                    <FilterField
+                        for="payroll_month"
+                        :label="t('payroll.month')"
+                    >
                         <MonthPicker
                             id="payroll_month"
                             :model-value="monthValue()"
                             @change="changeMonth"
                         />
-                    </div>
+                    </FilterField>
                     <Link
                         v-if="payroll_report"
                         :href="
@@ -329,12 +357,12 @@ function lifecycle(action: 'close' | 'reopen'): void {
                                     {{ payslip.worker_name }}
                                 </summary>
                                 <div class="mt-4 space-y-4">
-                                    <div
+                                    <Alert
                                         v-if="
                                             payslip.incomplete_count > 0 ||
                                             payslip.unmatched_count > 0
                                         "
-                                        class="rounded-xl bg-amber-50 p-3 text-xs text-amber-900"
+                                        variant="warning"
                                     >
                                         {{
                                             t('payroll.attendance_warning', {
@@ -344,7 +372,7 @@ function lifecycle(action: 'close' | 'reopen'): void {
                                                     payslip.unmatched_count,
                                             })
                                         }}
-                                    </div>
+                                    </Alert>
                                     <DataTable
                                         density="compact"
                                         variant="nested"

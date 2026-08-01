@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import {
-    ArrowLeft,
     Pencil,
     Boxes,
     FileText,
@@ -11,8 +10,8 @@ import {
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Badge from '@/components/ui/Badge.vue';
+import BackLink from '@/components/ui/BackLink.vue';
 import Button from '@/components/ui/Button.vue';
-import Card from '@/components/ui/Card.vue';
 import CardContent from '@/components/ui/CardContent.vue';
 import CardDescription from '@/components/ui/CardDescription.vue';
 import CardHeader from '@/components/ui/CardHeader.vue';
@@ -20,6 +19,7 @@ import CardTitle from '@/components/ui/CardTitle.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
+import MetricCard from '@/components/ui/MetricCard.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { formatDateTime, formatMoney, formatNumber } from '@/lib/format';
 
@@ -80,13 +80,9 @@ useBoundLocale();
 
         <div class="flex flex-col gap-6">
             <div>
-                <Link
-                    :href="route('items.index')"
-                    class="inline-flex items-center gap-1 text-xs font-semibold text-on-surface-variant hover:text-primary"
-                >
-                    <ArrowLeft :size="12" />
+                <BackLink :href="route('items.index')">
                     {{ t('items.back_to_inventory') }}
-                </Link>
+                </BackLink>
             </div>
 
             <div
@@ -139,54 +135,19 @@ useBoundLocale();
             </div>
 
             <div class="grid gap-4 sm:grid-cols-3">
-                <Card padded>
-                    <CardHeader>
-                        <CardDescription>
-                            {{ t('items.columns.quantity') }}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p
-                            class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                        >
-                            {{ formatNumber(item.total_quantity) }}
-                        </p>
-                        <p
-                            v-if="item.unit"
-                            class="mt-1 text-xs text-on-surface-variant"
-                        >
-                            {{ item.unit }}
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card padded>
-                    <CardHeader>
-                        <CardDescription>{{
-                            t('items.metrics.unit_price')
-                        }}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p
-                            class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                        >
-                            {{ formatMoney(item.purchase_price) }}
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card padded>
-                    <CardHeader>
-                        <CardDescription>{{
-                            t('items.metrics.total_value')
-                        }}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p
-                            class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                        >
-                            {{ formatMoney(item.total_value) }}
-                        </p>
-                    </CardContent>
-                </Card>
+                <MetricCard
+                    :title="t('items.columns.quantity')"
+                    :value="formatNumber(item.total_quantity)"
+                    :description="item.unit ?? undefined"
+                />
+                <MetricCard
+                    :title="t('items.metrics.unit_price')"
+                    :value="formatMoney(item.purchase_price)"
+                />
+                <MetricCard
+                    :title="t('items.metrics.total_value')"
+                    :value="formatMoney(item.total_value)"
+                />
             </div>
 
             <section class="space-y-4">

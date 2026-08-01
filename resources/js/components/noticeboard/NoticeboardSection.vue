@@ -17,12 +17,14 @@ import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Input from '@/components/ui/Input.vue';
+import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import RichTextEditor from '@/components/noticeboard/RichTextEditor.vue';
 import { useRoute } from '@/composables/useRoute';
+import { useDialog } from '@/composables/useDialog';
 import { cn } from '@/lib/utils';
 
 export type NoticeboardCard = {
@@ -62,6 +64,7 @@ const props = defineProps<{
 
 const { t } = useI18n();
 const route = useRoute();
+const dialog = useDialog();
 const formOpen = ref(false);
 const editingCard = ref<NoticeboardCard | null>(null);
 const search = ref(props.noticeboard.filters.search);
@@ -193,8 +196,16 @@ function submit(): void {
     );
 }
 
-function trash(card: NoticeboardCard): void {
-    if (!window.confirm(t('noticeboard.confirm_trash'))) return;
+async function trash(card: NoticeboardCard): Promise<void> {
+    if (
+        !(await dialog.confirm({
+            title: `${t('common.delete')} #${card.id}`,
+            message: t('noticeboard.confirm_trash'),
+            confirmLabel: t('common.delete'),
+            variant: 'warning',
+        }))
+    )
+        return;
     router.delete(route('noticeboard-cards.destroy', card.id), {
         preserveScroll: true,
     });
@@ -210,8 +221,21 @@ function restore(card: NoticeboardCard): void {
     );
 }
 
-function forceDestroy(card: NoticeboardCard): void {
-    if (!window.confirm(t('noticeboard.confirm_force_delete'))) return;
+async function forceDestroy(card: NoticeboardCard): Promise<void> {
+    const token = t('common.confirmation_token');
+    if (
+        !(await dialog.confirm({
+            title: `${t('noticeboard.force_delete')} #${card.id}`,
+            message: t('noticeboard.confirm_force_delete'),
+            confirmLabel: t('noticeboard.force_delete'),
+            variant: 'danger',
+            verification: {
+                label: t('common.type_to_confirm', { value: token }),
+                expected: token,
+            },
+        }))
+    )
+        return;
     router.delete(route('noticeboard-cards.force-destroy', card.id), {
         preserveScroll: true,
     });
@@ -264,9 +288,11 @@ function cardClass(
             class="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
         >
             <div>
-                <h2 class="font-heading text-xl font-bold text-on-surface">
+                <h1
+                    class="font-heading text-2xl font-bold tracking-tight text-on-surface"
+                >
                     {{ t('noticeboard.title') }}
-                </h2>
+                </h1>
                 <p class="mt-1 text-sm text-on-surface-variant">
                     {{
                         activeStore
@@ -373,40 +399,48 @@ function cardClass(
                             <template
                                 v-if="noticeboard.filters.status === 'trash'"
                             >
-                                <button
+                                <Button
                                     type="button"
-                                    class="rounded-lg p-2 hover:bg-black/5"
+                                    variant="ghost"
+                                    size="icon"
+                                    class="size-8"
                                     :aria-label="t('noticeboard.restore')"
                                     @click="restore(card)"
                                 >
                                     <ArchiveRestore :size="15" />
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     type="button"
-                                    class="rounded-lg p-2 text-error-red hover:bg-black/5"
+                                    variant="ghost"
+                                    size="icon"
+                                    class="size-8 text-error-red hover:text-error-red"
                                     :aria-label="t('noticeboard.force_delete')"
                                     @click="forceDestroy(card)"
                                 >
                                     <Trash2 :size="15" />
-                                </button>
+                                </Button>
                             </template>
                             <template v-else>
-                                <button
+                                <Button
                                     type="button"
-                                    class="rounded-lg p-2 hover:bg-black/5"
+                                    variant="ghost"
+                                    size="icon"
+                                    class="size-8"
                                     :aria-label="t('common.edit')"
                                     @click="openEdit(card)"
                                 >
                                     <Pencil :size="15" />
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     type="button"
-                                    class="rounded-lg p-2 text-error-red hover:bg-black/5"
+                                    variant="ghost"
+                                    size="icon"
+                                    class="size-8 text-error-red hover:text-error-red"
                                     :aria-label="t('common.delete')"
                                     @click="trash(card)"
                                 >
                                     <Trash2 :size="15" />
-                                </button>
+                                </Button>
                             </template>
                         </div>
                     </div>
@@ -447,11 +481,9 @@ function cardClass(
     >
         <form class="space-y-5" @submit.prevent="submit">
             <div>
-                <label
-                    class="mb-1.5 block text-xs font-semibold text-on-surface"
-                >
+                <Label class="mb-1.5 block">
                     {{ t('noticeboard.form.content') }}
-                </label>
+                </Label>
                 <RichTextEditor
                     v-model="form.body_html"
                     :invalid="Boolean(form.errors.body_html)"
@@ -557,12 +589,9 @@ function cardClass(
                 </fieldset>
 
                 <div>
-                    <label
-                        for="noticeboard-expiration"
-                        class="mb-1.5 block text-xs font-semibold"
-                    >
+                    <Label for="noticeboard-expiration" class="mb-1.5 block">
                         {{ t('noticeboard.form.expires_on') }}
-                    </label>
+                    </Label>
                     <Input
                         id="noticeboard-expiration"
                         v-model="form.expires_on"
@@ -572,11 +601,9 @@ function cardClass(
             </div>
 
             <div>
-                <label
-                    class="mb-1.5 block text-xs font-semibold text-on-surface"
-                >
+                <Label class="mb-1.5 block">
                     {{ t('noticeboard.form.image') }}
-                </label>
+                </Label>
                 <div
                     class="flex flex-col gap-3 rounded-xl border border-dashed border-outline-glass p-4 sm:flex-row sm:items-center"
                 >

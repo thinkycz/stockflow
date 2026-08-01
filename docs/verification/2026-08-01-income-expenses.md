@@ -38,4 +38,6 @@ blockers remain.
 Apply `2026_08_01_000001_create_financial_reports.php` during deployment before
 opening the section to administrators. Also apply
 `2026_08_01_000004_create_financial_recurring_expenses.php` before enabling
-recurring-expense management.
+recurring-expense management. The recurring-expense migration uses a MySQL-safe
+explicit foreign-key name and can repair the partial state left by the failed
+release `74570063`.

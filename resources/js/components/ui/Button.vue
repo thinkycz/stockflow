@@ -11,12 +11,14 @@ const props = withDefaults(
             | 'warning'
             | 'ghost'
             | 'danger';
+        size?: 'default' | 'compact' | 'icon';
         class?: string;
         disabled?: boolean;
     }>(),
     {
         type: 'button',
         variant: 'primary',
+        size: 'default',
         class: '',
         disabled: false,
     },
@@ -34,6 +36,12 @@ const variants = {
     ghost: 'border-transparent bg-transparent text-on-surface-variant hover:bg-surface-container-low hover:text-primary',
     danger: 'border-error-red/20 bg-error-red text-white hover:brightness-105 active:scale-[0.98]',
 };
+
+const sizes = {
+    default: 'h-10 gap-2 px-4',
+    compact: 'h-8 gap-1.5 px-2.5',
+    icon: 'size-10 p-0',
+};
 </script>
 
 <template>
@@ -42,8 +50,9 @@ const variants = {
         :disabled="props.disabled"
         :class="
             cn(
-                'inline-flex h-10 items-center justify-center rounded-xl border px-4 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer gap-2',
+                'inline-flex cursor-pointer items-center justify-center rounded-xl border text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
                 variants[props.variant],
+                sizes[props.size],
                 props.class,
             )
         "

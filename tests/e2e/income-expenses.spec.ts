@@ -1,5 +1,14 @@
 import { expect, test } from '@playwright/test';
 
+async function confirmDialog(
+    page: import('@playwright/test').Page,
+    label: string,
+): Promise<void> {
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: label, exact: true }).click();
+}
+
 test('admin manages and closes a monthly financial report while limited users are denied', async ({
     page,
 }) => {
@@ -81,20 +90,20 @@ test('admin manages and closes a monthly financial report while limited users ar
     await expect(cashRow).toContainText('Manually adjusted');
 
     await page.goto('/payroll?year=2030&month=1');
-    page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: 'Close month' }).click();
+    await confirmDialog(page, 'Close month');
     await expect(page.getByText('Closed', { exact: true })).toBeVisible();
     await page.goto('/income-expenses?year=2030&month=1');
 
-    page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: 'Close month' }).click();
+    await confirmDialog(page, 'Close month');
     await expect(page.getByText('Closed', { exact: true })).toBeVisible();
     await expect(
         page.getByRole('button', { name: 'Recurring expenses' }),
     ).toBeVisible();
 
-    page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: 'Reopen' }).click();
+    await confirmDialog(page, 'Reopen');
     await expect(page.getByText('Open', { exact: true })).toBeVisible();
 
     await page.context().clearCookies();

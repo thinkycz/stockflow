@@ -4,6 +4,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
+import BackLink from '@/components/ui/BackLink.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
@@ -56,8 +57,19 @@ const totals = computed(() => ({
                 class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
             >
                 <div>
+                    <BackLink
+                        :href="
+                            route('statements.index', {
+                                store_id: props.filters.store_id,
+                                year: props.filters.year,
+                                month: props.filters.month,
+                            })
+                        "
+                    >
+                        {{ t('statements.history.back') }}
+                    </BackLink>
                     <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
+                        class="mt-2 font-heading text-2xl font-bold tracking-tight text-on-surface"
                     >
                         {{ t('statements.history.title') }}
                     </h1>
@@ -66,19 +78,6 @@ const totals = computed(() => ({
                     </p>
                     <StoreContextIndicator />
                 </div>
-                <Link
-                    :href="
-                        route('statements.index', {
-                            store_id: props.filters.store_id,
-                            year: props.filters.year,
-                            month: props.filters.month,
-                        })
-                    "
-                >
-                    <Button variant="secondary">
-                        ← {{ t('statements.history.back') }}
-                    </Button>
-                </Link>
             </header>
 
             <section class="space-y-4">

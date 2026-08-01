@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft } from '@lucide/vue';
+import { Head } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
+import BackLink from '@/components/ui/BackLink.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
@@ -47,13 +47,9 @@ const route = useRoute();
 
         <div class="flex flex-col gap-6">
             <div>
-                <Link
-                    :href="route('inventory-counts.index')"
-                    class="inline-flex items-center gap-1 text-xs font-semibold text-on-surface-variant hover:text-primary"
-                >
-                    <ArrowLeft :size="12" />
+                <BackLink :href="route('inventory-counts.index')">
                     {{ t('inventory_counts.back_to_list') }}
-                </Link>
+                </BackLink>
             </div>
 
             <div class="flex flex-col gap-2">

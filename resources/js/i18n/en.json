@@ -41,6 +41,12 @@
     "common": {
         "save": "Save",
         "cancel": "Cancel",
+        "confirm": "Confirm",
+        "continue": "Continue",
+        "type_to_confirm": "Type \"{value}\" to confirm",
+        "confirmation_token": "DELETE",
+        "reason": "Reason",
+        "link_address": "Link address",
         "edit": "Edit",
         "delete": "Delete",
         "actions": "Actions",

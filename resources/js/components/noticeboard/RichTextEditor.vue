@@ -13,6 +13,7 @@ import {
 } from '@lucide/vue';
 import { onBeforeUnmount, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useDialog } from '@/composables/useDialog';
 import { cn } from '@/lib/utils';
 
 const props = withDefaults(
@@ -30,6 +31,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const dialog = useDialog();
 
 const TextSize = Mark.create({
     name: 'textSize',
@@ -101,10 +103,16 @@ function setTextSize(size: 'small' | 'normal' | 'large'): void {
     editor.value?.chain().focus().setMark('textSize', { size }).run();
 }
 
-function setLink(): void {
+async function setLink(): Promise<void> {
     const current = editor.value?.getAttributes('link').href as
         string | undefined;
-    const href = window.prompt(t('noticeboard.editor.link_prompt'), current);
+    const href = await dialog.prompt({
+        title: t('noticeboard.editor.link'),
+        message: t('noticeboard.editor.link_prompt'),
+        label: t('common.link_address'),
+        defaultValue: current ?? '',
+        confirmLabel: t('common.confirm'),
+    });
 
     if (href === null || !editor.value) return;
     if (href.trim() === '') {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Plus, Search } from '@lucide/vue';
+import { Plus } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -13,6 +13,7 @@ import Label from '@/components/ui/Label.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import Select from '@/components/ui/Select.vue';
+import SearchFilter from '@/components/ui/SearchFilter.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { formatDate, formatMoney, formatSignedMoney } from '@/lib/format';
@@ -89,6 +90,7 @@ const formDestinationStoreId = ref<string>(
 );
 const formDateFrom = ref<string>(props.filters.date_from || '');
 const formDateTo = ref<string>(props.filters.date_to || '');
+const filtering = ref(false);
 let filterTimer: ReturnType<typeof setTimeout> | null = null;
 
 const totals = computed(() =>
@@ -131,6 +133,8 @@ function applyFilters(): void {
     router.get(route('stock-movements.index'), params, {
         preserveState: true,
         preserveScroll: true,
+        onStart: () => (filtering.value = true),
+        onFinish: () => (filtering.value = false),
     });
 }
 
@@ -182,26 +186,14 @@ watch(
 
             <Card padded>
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-end">
-                    <div class="flex flex-col gap-1 lg:flex-1">
-                        <Label for="stock_movement_search">
-                            {{ t('stock_movements.filter.search') }}
-                        </Label>
-                        <div class="relative">
-                            <Search
-                                :size="14"
-                                class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
-                            />
-                            <Input
-                                id="stock_movement_search"
-                                v-model="formSearch"
-                                type="search"
-                                :placeholder="
-                                    t('stock_movements.search_placeholder')
-                                "
-                                class="pl-9"
-                            />
-                        </div>
-                    </div>
+                    <SearchFilter
+                        id="stock_movement_search"
+                        v-model="formSearch"
+                        :label="t('stock_movements.filter.search')"
+                        :placeholder="t('stock_movements.search_placeholder')"
+                        :busy="filtering"
+                        class="lg:flex-1"
+                    />
                     <div class="flex flex-col gap-1 lg:w-40">
                         <Label for="movement_type_filter">
                             {{ t('stock_movements.filter.type') }}

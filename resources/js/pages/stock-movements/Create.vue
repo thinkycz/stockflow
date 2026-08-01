@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ArrowLeft, Plus, Trash2 } from '@lucide/vue';
+import { Plus, Trash2 } from '@lucide/vue';
 import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Alert from '@/components/ui/Alert.vue';
+import BackLink from '@/components/ui/BackLink.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import CardHeader from '@/components/ui/CardHeader.vue';
@@ -475,14 +476,12 @@ watch(
 
         <div class="flex flex-col gap-6">
             <div>
-                <Link
+                <BackLink
                     v-if="props.is_admin"
                     :href="route('stock-movements.index')"
-                    class="inline-flex items-center gap-1 text-xs font-semibold text-on-surface-variant hover:text-primary"
                 >
-                    <ArrowLeft :size="12" />
                     {{ t('stock_movements.back_to_list') }}
-                </Link>
+                </BackLink>
             </div>
 
             <div
@@ -845,16 +844,18 @@ watch(
                                     {{ formatMoney(lineTotal(row)) }}
                                 </td>
                                 <td>
-                                    <button
+                                    <Button
                                         type="button"
-                                        class="rounded-lg p-1.5 text-on-surface-variant transition hover:bg-rose-50 hover:text-error-red"
+                                        variant="ghost"
+                                        size="icon"
+                                        class="size-8 hover:text-error-red"
                                         :aria-label="
                                             t('stock_movements.form.remove_row')
                                         "
                                         @click="removeRow(row.id)"
                                     >
                                         <Trash2 :size="14" />
-                                    </button>
+                                    </Button>
                                 </td>
                             </tr>
                         </tbody>

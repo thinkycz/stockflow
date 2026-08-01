@@ -21,6 +21,7 @@ import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import FieldError from '@/components/ui/FieldError.vue';
+import FilterField from '@/components/ui/FilterField.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
@@ -29,6 +30,7 @@ import Select from '@/components/ui/Select.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
+import { useDialog } from '@/composables/useDialog';
 
 type FinancialRow = {
     id: string;
@@ -81,6 +83,7 @@ const props = defineProps<{
 const { t, locale } = useI18n();
 useBoundLocale();
 const route = useRoute();
+const dialog = useDialog();
 const manualModalOpen = ref(false);
 const editingManualRow = ref<FinancialRow | null>(null);
 const overrideModalOpen = ref(false);
@@ -253,10 +256,15 @@ function submitManual(): void {
     manualForm.post(route('income-expenses.manual-rows.store'), options);
 }
 
-function deleteManual(row: FinancialRow): void {
+async function deleteManual(row: FinancialRow): Promise<void> {
     if (
         !row.manual_row_id ||
-        !window.confirm(t('income_expenses.confirm_delete'))
+        !(await dialog.confirm({
+            title: `${t('common.delete')}: ${row.label}`,
+            message: t('income_expenses.confirm_delete'),
+            confirmLabel: t('common.delete'),
+            variant: 'danger',
+        }))
     ) {
         return;
     }
@@ -296,14 +304,31 @@ function resetOverride(row: FinancialRow): void {
     });
 }
 
-function lifecycle(action: 'copy-previous' | 'close' | 'reopen'): void {
+async function lifecycle(
+    action: 'copy-previous' | 'close' | 'reopen',
+): Promise<void> {
     const confirmation =
         action === 'close'
             ? t('income_expenses.confirm_close')
             : action === 'reopen'
               ? t('income_expenses.confirm_reopen')
               : null;
-    if (confirmation !== null && !window.confirm(confirmation)) return;
+    if (
+        confirmation !== null &&
+        !(await dialog.confirm({
+            title:
+                action === 'close'
+                    ? t('income_expenses.close')
+                    : t('income_expenses.reopen'),
+            message: confirmation,
+            confirmLabel:
+                action === 'close'
+                    ? t('income_expenses.close')
+                    : t('income_expenses.reopen'),
+            variant: action === 'close' ? 'warning' : 'default',
+        }))
+    )
+        return;
     lifecycleProcessing.value = true;
     router.post(
         route(`income-expenses.${action}`),
@@ -392,16 +417,16 @@ function rowHref(row: FinancialRow): string | null {
                     </p>
                 </div>
                 <div class="flex flex-wrap items-end gap-2">
-                    <div class="flex flex-col gap-1">
-                        <Label for="income_expenses_month">
-                            {{ t('income_expenses.month') }}
-                        </Label>
+                    <FilterField
+                        for="income_expenses_month"
+                        :label="t('income_expenses.month')"
+                    >
                         <MonthPicker
                             id="income_expenses_month"
                             :model-value="`${filters.year}-${String(filters.month).padStart(2, '0')}`"
                             @change="changeMonth"
                         />
-                    </div>
+                    </FilterField>
                     <Button
                         v-if="financial_report"
                         variant="secondary"

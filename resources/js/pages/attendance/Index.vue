@@ -211,10 +211,12 @@ onUnmounted(() => {
                 class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
             >
                 <div>
-                    <h1 class="font-heading text-2xl font-bold">
+                    <h1
+                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
+                    >
                         {{ t('attendance.title') }}
                     </h1>
-                    <p class="text-sm text-on-surface-variant">
+                    <p class="mt-1 text-sm text-on-surface-variant">
                         {{ t('attendance.subtitle') }}
                     </p>
                     <StoreContextIndicator />

@@ -24,6 +24,32 @@ declare(strict_types=1);
     }
 });
 
+\arch('automatic migration foreign key names fit the MySQL identifier limit', function (): void {
+    foreach (\glob(\base_path('database/migrations/*.php')) as $file) {
+        $contents = (string) \file_get_contents($file);
+        \preg_match_all(
+            '/create\\(\'([^\']+)\', static function \\(Blueprint \\$table\\): void \\{(.*?)\\n        \\}\\);/s',
+            $contents,
+            $tableMatches,
+            \PREG_SET_ORDER,
+        );
+
+        foreach ($tableMatches as $tableMatch) {
+            \preg_match_all(
+                '/\\$table->foreignId\\(\'([^\']+)\'\\)([^;]*?)->constrained\\(/',
+                $tableMatch[2],
+                $foreignMatches,
+                \PREG_SET_ORDER,
+            );
+
+            foreach ($foreignMatches as $foreignMatch) {
+                \expect(\mb_strlen($tableMatch[1] . '_' . $foreignMatch[1] . '_foreign'))
+                    ->toBeLessThanOrEqual(64);
+            }
+        }
+    }
+});
+
 \arch('app models do not use Eloquent model event methods', function (): void {
     $forbidden = [
         '::observe(',

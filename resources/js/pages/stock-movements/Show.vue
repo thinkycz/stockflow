@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowLeft, ArrowLeftRight, Undo2 } from '@lucide/vue';
+import { Head, router } from '@inertiajs/vue3';
+import { ArrowLeftRight, Undo2 } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Alert from '@/components/ui/Alert.vue';
+import BackLink from '@/components/ui/BackLink.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import CardContent from '@/components/ui/CardContent.vue';
-import CardDescription from '@/components/ui/CardDescription.vue';
 import CardHeader from '@/components/ui/CardHeader.vue';
 import CardTitle from '@/components/ui/CardTitle.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
+import MetricCard from '@/components/ui/MetricCard.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
+import { useDialog } from '@/composables/useDialog';
 import {
     formatDate,
     formatMoney,
@@ -36,7 +39,7 @@ type Row = {
     classification: string | null;
 };
 
-defineProps<{
+const props = defineProps<{
     movement: {
         id: number;
         number: string;
@@ -76,13 +79,24 @@ const { t } = useI18n();
 useBoundLocale();
 
 const route = useRoute();
+const dialog = useDialog();
 
-function reverseMovement(id: number): void {
-    const reason = window.prompt(t('stock_movements.reversal_reason_prompt'));
+async function reverseMovement(id: number): Promise<void> {
+    const reason = await dialog.prompt({
+        title: `${t('stock_movements.reverse')}: ${props.movement.number}`,
+        message: t('stock_movements.reversal_reason_prompt'),
+        label: t('common.reason'),
+        confirmLabel: t('stock_movements.reverse'),
+        variant: 'danger',
+        required: true,
+        maxLength: 2000,
+    });
     if (reason === null || reason.trim() === '') {
         return;
     }
-    router.post(route('stock-movements.reverse', id), { reason });
+    router.post(route('stock-movements.reverse', id), {
+        reason: reason.trim(),
+    });
 }
 </script>
 
@@ -92,13 +106,9 @@ function reverseMovement(id: number): void {
 
         <div class="flex flex-col gap-6">
             <div>
-                <Link
-                    :href="route('stock-movements.index')"
-                    class="inline-flex items-center gap-1 text-xs font-semibold text-on-surface-variant hover:text-primary"
-                >
-                    <ArrowLeft :size="12" />
+                <BackLink :href="route('stock-movements.index')">
                     {{ t('stock_movements.back_to_list') }}
-                </Link>
+                </BackLink>
             </div>
 
             <div
@@ -147,7 +157,10 @@ function reverseMovement(id: number): void {
                 </div>
             </div>
 
-            <Card v-if="movement.reversed_at || movement.reversal_of_id" padded>
+            <Alert
+                v-if="movement.reversed_at || movement.reversal_of_id"
+                variant="warning"
+            >
                 <p class="text-sm text-on-surface-variant">
                     {{
                         movement.reversal_of_id
@@ -160,41 +173,21 @@ function reverseMovement(id: number): void {
                         · {{ movement.reversal_reason }}
                     </span>
                 </p>
-            </Card>
+            </Alert>
 
             <div class="grid gap-4 sm:grid-cols-2">
-                <Card padded>
-                    <CardHeader>
-                        <CardDescription>{{
-                            t('stock_movements.detail.total_value')
-                        }}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p
-                            class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                        >
-                            {{
-                                movement.type === 'inventory_reconciliation'
-                                    ? formatSignedMoney(movement.net_value)
-                                    : formatMoney(movement.total_value)
-                            }}
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card padded>
-                    <CardHeader>
-                        <CardDescription>{{
-                            t('stock_movements.detail.items_count')
-                        }}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p
-                            class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                        >
-                            {{ rows.length }}
-                        </p>
-                    </CardContent>
-                </Card>
+                <MetricCard
+                    :title="t('stock_movements.detail.total_value')"
+                    :value="
+                        movement.type === 'inventory_reconciliation'
+                            ? formatSignedMoney(movement.net_value)
+                            : formatMoney(movement.total_value)
+                    "
+                />
+                <MetricCard
+                    :title="t('stock_movements.detail.items_count')"
+                    :value="rows.length"
+                />
             </div>
 
             <section class="space-y-4">

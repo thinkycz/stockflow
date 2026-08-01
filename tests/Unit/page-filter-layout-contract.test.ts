@@ -25,7 +25,7 @@ describe('page filter layout contract', () => {
         ]) {
             const header = headerOf(page);
 
-            expect(header).toContain('<Label');
+            expect(header).toContain('<FilterField');
             expect(header).toContain('<MonthPicker');
         }
     });
@@ -39,8 +39,8 @@ describe('page filter layout contract', () => {
         ]) {
             const header = headerOf(page);
 
-            expect(header).toContain('<Label');
-            expect(header).toContain('type="search"');
+            expect(header).toContain('<SearchFilter');
+            expect(header).toContain(':label=');
         }
     });
 });

@@ -65,6 +65,11 @@
         font: inherit;
     }
 
+    :where(a, button, input, select, textarea, [role='button']):focus-visible {
+        outline: 2px solid color-mix(in srgb, var(--color-primary) 55%, white);
+        outline-offset: 2px;
+    }
+
     /*
      * Hide native number input spinner buttons. Each form supplies its
      * own stepper controls (e.g. inventory count) so the browser's

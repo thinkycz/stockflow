@@ -2,11 +2,12 @@ import './bootstrap';
 import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/vue3';
-import { createApp, h } from 'vue';
+import { createApp, Fragment, h } from 'vue';
 import type { DefineComponent } from 'vue';
 import { route as ziggyRoute } from 'ziggy-js';
 import { createAppI18n, isSupportedLocale } from './i18n';
 import type { SharedProps } from './types';
+import DialogHost from './components/ui/DialogHost.vue';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - StockFlow` : 'StockFlow'),
@@ -48,7 +49,9 @@ createInertiaApp({
         // Expose route() to every component's template via
         // globalProperties so slots rendered by layouts still have
         // access to Ziggy's named-route helper.
-        const app = createApp({ render: () => h(App, props) })
+        const app = createApp({
+            render: () => h(Fragment, [h(App, props), h(DialogHost)]),
+        })
             .use(plugin)
             .use(i18n);
 

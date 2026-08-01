@@ -8,6 +8,8 @@ use Thinkycz\LaravelCore\Support\Resolver;
 
 $app = Resolver::resolveApp();
 $env = Env::inject();
+$secureCookie = $env->appEnvIs(['staging', 'production']) ||
+    ($env->parseNullableBool('SESSION_SECURE_COOKIE') ?? $env->appEnvIs(['development']));
 
 return [
     /*
@@ -139,7 +141,7 @@ return [
     |
     */
 
-    'cookie' => ($env->appEnvIs(['local', 'testing']) ? '' : '__Host-') . Str::slug($env->mustParseString('APP_NAME') . '_' . $env->appEnv() . '_session', '_'),
+    'cookie' => ($secureCookie ? '__Host-' : '') . Str::slug($env->mustParseString('APP_NAME') . '_' . $env->appEnv() . '_session', '_'),
 
     /*
     |--------------------------------------------------------------------------
@@ -178,7 +180,7 @@ return [
     |
     */
 
-    'secure' => $env->parseNullableString('SESSION_SECURE_COOKIE') ?? false,
+    'secure' => $secureCookie,
 
     /*
     |--------------------------------------------------------------------------

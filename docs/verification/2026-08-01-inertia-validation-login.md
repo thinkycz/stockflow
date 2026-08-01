@@ -13,6 +13,7 @@
 - Webové feature testy byly převedeny ze stránkové `422` odpovědi na redirect a session errors; JSON požadavky zůstávají beze změny.
 - Unit test helperu ověřuje první zprávu, červený toast a zavolání původního `onError` callbacku.
 - Unit test helperu ověřuje také hlavičku samostatné akce; controller test potvrzuje, že stejná zpráva dorazí po redirectu v `props.flash.error` a není závislá jen na načasování klientského callbacku.
+- Regresní test produkční session konfigurace ověřuje, že i při `SESSION_SECURE_COOKIE=false` splňuje cookie s prefixem `__Host-` požadavky `Secure`, cesta `/` a nulová doména.
 - Playwright scénář ověřuje, že předčasné uzavření zůstane na „Income & expenses“, zobrazí chybu a nevykreslí Login.
 
 ## Výsledky
@@ -23,10 +24,10 @@
     - Composer a npm audit bez zranitelností
     - TypeScript a produkční build úspěšné
     - frontend unit testy: 44 passed
-    - PHP testy: 617 passed, 14 250 assertions
+    - PHP testy: 618 passed, 14 256 assertions
 - `php artisan test tests/Feature/App/Http/Controllers/Api`: 41 passed, 140 assertions
 - `npm run e2e -- tests/e2e/income-expenses.spec.ts`: 1 passed
 
 ## Závěr
 
-Původní uživatelský scénář je opravený a ověřený na úrovni controlleru i skutečného prohlížeče. Webové Inertia validace se vracejí na původní stránku, autentizace zůstává zachovaná a samostatné akce zobrazují první zprávu v trvalém červeném toastu. JSON/API kontrakt zůstal beze změny.
+Původní uživatelský scénář je opravený na úrovni handleru, klienta i produkční session konfigurace. Webové Inertia validace se vracejí na původní stránku, autentizace zůstává zachovaná a samostatné akce zobrazují první zprávu v trvalém červeném toastu. JSON/API kontrakt zůstal beze změny. Produkce musí být znovu nasazena, aby začala přijímat opravenou secure session cookie.

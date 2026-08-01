@@ -20,10 +20,13 @@ Globální handler nyní pro Inertia požadavky vrací redirect na explicitní `
 
 Přímé uživatelské mutace přes Inertia router používají sdílený wrapper, který zobrazí první validační zprávu jako trvalý červený toast a zachová původní `onError`. Formuláře přes `useForm` zůstávají bez tohoto wrapperu, aby chyby nebyly duplicitní vedle polí. API/JSON validace nadále vrací `422`.
 
-Původní varianta spoléhala jen na klientský `onError`. V reálném běhu mohl následný update Inertia props tento lokální toast přepsat, takže se zpráva nezobrazila. Wrapper proto samostatnou akci označí hlavičkou `X-StockFlow-Action`; globální handler pak první chybu přenese také přes standardní Inertia error flash. Klientský callback zůstává jako okamžitá zpětná vazba, serverový flash garantuje zobrazení po redirectu.
+Wrapper samostatnou akci označí hlavičkou `X-StockFlow-Action`; globální handler pak první chybu přenese přes standardní Inertia error flash. Klientský `onError` callback zůstává jako okamžitá zpětná vazba, serverový flash garantuje zobrazení po redirectu.
+
+Produkční ověření následně odhalilo ještě druhou, nezávislou příčinu: server posílal session cookie pojmenovanou `__Host-stockflow_production_session`, ale bez povinného atributu `Secure`. Prohlížeč ji proto odmítl. Přihlášení dál fungovalo přes samostatnou database-token cookie, zatímco session `errors` a `flash` se mezi POSTem a následným GETem ztratily. Konfigurace nyní pro staging a production vynucuje secure session cookie bez ohledu na chybné `SESSION_SECURE_COOKIE=false`; prefix `__Host-` se používá jen pro secure cookie.
 
 ## Guardrail
 
 - Nevykreslovat stránkovou Inertia komponentu přímo z globálního handleru validačních výjimek.
 - Nové samostatné `router.post`, `router.put`, `router.patch` a `router.delete` akce obalit helperem pro chybový toast; neaplikovat jej na `useForm` ani logout.
 - Regresní test musí po chybě ověřit redirect, zachovaného uživatele a komponentu sestavenou následným GET požadavkem.
+- Cookie s prefixem `__Host-` musí mít vždy `Secure`, cestu `/` a žádnou doménu; produkční konfigurace tento invariant testuje i při chybném environment override.

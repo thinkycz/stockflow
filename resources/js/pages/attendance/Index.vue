@@ -3,115 +3,79 @@ import { Link, router, useForm } from '@inertiajs/vue3';
 import {
     ArrowRight,
     CircleCheck,
+    CircleHelp,
     Clock3,
     Coffee,
+    Frown,
     LogIn,
     LogOut,
+    Meh,
+    Smile,
     TriangleAlert,
-    UserRound,
 } from '@lucide/vue';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import AppLayout from '@/layouts/AppLayout.vue';
+import Alert from '@/components/ui/Alert.vue';
 import Button from '@/components/ui/Button.vue';
-import Card from '@/components/ui/Card.vue';
+import DataTable from '@/components/ui/DataTable.vue';
+import EmptyState from '@/components/ui/EmptyState.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
+import { useDialog } from '@/composables/useDialog';
 import { useRoute } from '@/composables/useRoute';
+import AppLayout from '@/layouts/AppLayout.vue';
 
-type Worker = { id: number; first_name: string; last_name: string };
-type WorkerState = {
-    worker_id: number;
-    status: 'absent' | 'present' | 'break' | 'stale';
-    has_current_shift: boolean;
-};
-type BreakRow = {
-    started_at: string;
-    ended_at: string | null;
-    seconds?: number;
-};
+type AttendanceStatus = 'absent' | 'present' | 'break' | 'stale';
+type BreakRow = { started_at: string; ended_at: string | null };
 type SessionRow = {
     id: number;
-    worker_id: number;
-    worker_name: string;
-    date?: string;
     started_at: string;
     ended_at: string | null;
     breaks: BreakRow[];
 };
+type AttendanceRow = {
+    worker_id: number;
+    worker_name: string;
+    status: AttendanceStatus;
+    has_current_shift: boolean;
+    shifts: Array<{ id: number; start_time: string; end_time: string }>;
+    sessions: SessionRow[];
+    quality: {
+        average_score: number | null;
+        evaluated_shifts: number;
+        band: 'good' | 'warning' | 'poor' | null;
+    };
+};
 
 const props = defineProps<{
     store: { id: number; name: string; is_warehouse: boolean } | null;
-    workers: Worker[];
-    worker_states: WorkerState[];
-    recommended_worker_id: number | null;
+    attendance_rows: AttendanceRow[];
+    off_schedule_workers: Array<{ id: number; name: string }>;
     store_state: 'occupied' | 'empty' | 'unclear';
-    today_sessions: SessionRow[];
     is_admin: boolean;
 }>();
 
 const { t, locale } = useI18n();
 const route = useRoute();
-const selectedWorkerId = ref(
-    props.recommended_worker_id === null
-        ? ''
-        : String(props.recommended_worker_id),
-);
-const warningOpen = ref(false);
+const dialog = useDialog();
+const nowMs = ref(Date.now());
+const offScheduleOpen = ref(false);
+const offScheduleWorkerId = ref('');
+const pendingWorkerId = ref<number | null>(null);
 const actionForm = useForm({
     worker_id: '',
     action: '',
     confirm_without_shift: false,
 });
 
-const selectedState = computed(() =>
-    props.worker_states.find(
-        (row) => row.worker_id === Number(selectedWorkerId.value),
-    ),
+const offScheduleOptions = computed(() =>
+    props.off_schedule_workers.map((worker) => ({
+        value: String(worker.id),
+        label: worker.name,
+    })),
 );
-const selectedWorker = computed(() =>
-    props.workers.find(
-        (worker) => worker.id === Number(selectedWorkerId.value),
-    ),
-);
-const selectedSession = computed(() =>
-    props.today_sessions.find(
-        (row) =>
-            row.worker_id === Number(selectedWorkerId.value) &&
-            row.ended_at === null,
-    ),
-);
-const selectedOpenBreak = computed(() =>
-    selectedSession.value?.breaks.find((pause) => pause.ended_at === null),
-);
-const nowMs = ref(Date.now());
-const liveSeconds = computed(() => {
-    const session = selectedSession.value;
-    if (!session) return 0;
-    if (selectedState.value?.status === 'break' && selectedOpenBreak.value) {
-        return Math.max(
-            0,
-            Math.floor(
-                (nowMs.value - Date.parse(selectedOpenBreak.value.started_at)) /
-                    1000,
-            ),
-        );
-    }
-    const elapsed = Math.max(
-        0,
-        Math.floor((nowMs.value - Date.parse(session.started_at)) / 1000),
-    );
-    const breakSeconds = session.breaks.reduce((total, pause) => {
-        const end = pause.ended_at ? Date.parse(pause.ended_at) : nowMs.value;
-        return (
-            total +
-            Math.max(0, Math.floor((end - Date.parse(pause.started_at)) / 1000))
-        );
-    }, 0);
-    return Math.max(0, elapsed - breakSeconds);
-});
 
 function timeOnly(value: string | null): string {
     if (value === null) return t('attendance.now');
@@ -120,12 +84,7 @@ function timeOnly(value: string | null): string {
         minute: '2-digit',
     }).format(new Date(value));
 }
-function liveDuration(seconds: number): string {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
-}
+
 function intervalSeconds(start: string, end: string | null): number {
     return Math.max(
         0,
@@ -136,15 +95,28 @@ function intervalSeconds(start: string, end: string | null): number {
         ),
     );
 }
-function workedSeconds(row: SessionRow): number {
-    const elapsed = intervalSeconds(row.started_at, row.ended_at);
-    const pauses = row.breaks.reduce(
+
+function breakSeconds(session: SessionRow): number {
+    return session.breaks.reduce(
         (total, pause) =>
             total + intervalSeconds(pause.started_at, pause.ended_at),
         0,
     );
-    return Math.max(0, elapsed - pauses);
 }
+
+function workedSeconds(row: AttendanceRow): number {
+    return row.sessions.reduce(
+        (total, session) =>
+            total +
+            Math.max(
+                0,
+                intervalSeconds(session.started_at, session.ended_at) -
+                    breakSeconds(session),
+            ),
+        0,
+    );
+}
+
 function conciseDuration(seconds: number): string {
     const minutes = Math.floor(seconds / 60);
     if (minutes < 1) return t('attendance.duration.less_than_minute');
@@ -154,32 +126,72 @@ function conciseDuration(seconds: number): string {
     if (remainingMinutes === 0) return `${hours} h`;
     return `${hours} h ${remainingMinutes} min`;
 }
-function sessionStatus(row: SessionRow): 'working' | 'break' | 'completed' {
-    if (row.ended_at !== null) return 'completed';
-    return props.worker_states.find(
-        (state) => state.worker_id === row.worker_id,
-    )?.status === 'break'
-        ? 'break'
-        : 'working';
+
+function allBreaks(row: AttendanceRow): BreakRow[] {
+    return row.sessions.flatMap((session) => session.breaks);
 }
-function perform(action: string, confirmed = false): void {
-    if (!selectedWorkerId.value) return;
-    if (
-        action === 'arrival' &&
-        selectedState.value?.has_current_shift !== true &&
-        !confirmed
-    ) {
-        warningOpen.value = true;
-        return;
-    }
-    actionForm.worker_id = selectedWorkerId.value;
+
+function qualityText(row: AttendanceRow): string {
+    if (row.quality.average_score === null)
+        return t('attendance.quality.unrated');
+    return t(`attendance.quality.${row.quality.band}`, {
+        score: row.quality.average_score,
+    });
+}
+
+function qualityClass(row: AttendanceRow): string {
+    if (row.quality.band === 'good') return 'text-emerald-700';
+    if (row.quality.band === 'warning') return 'text-amber-700';
+    if (row.quality.band === 'poor') return 'text-error-red';
+    return 'text-on-surface-variant';
+}
+
+function statusClass(status: AttendanceStatus): string {
+    if (status === 'present') return 'bg-emerald-100 text-emerald-800';
+    if (status === 'break') return 'bg-amber-100 text-amber-800';
+    if (status === 'stale') return 'bg-red-100 text-error-red';
+    return 'bg-surface-container text-on-surface-variant';
+}
+
+function postAction(
+    workerId: number,
+    action: string,
+    confirmed: boolean,
+): void {
+    pendingWorkerId.value = workerId;
+    actionForm.worker_id = String(workerId);
     actionForm.action = action;
     actionForm.confirm_without_shift = confirmed;
     actionForm.post(route('attendance.actions.store'), {
         preserveScroll: true,
+        onFinish: () => {
+            pendingWorkerId.value = null;
+        },
     });
-    warningOpen.value = false;
 }
+
+async function perform(row: AttendanceRow, action: string): Promise<void> {
+    let confirmed = false;
+    if (action === 'arrival' && !row.has_current_shift) {
+        confirmed = await dialog.confirm({
+            title: t('attendance.no_shift.title'),
+            message: t('attendance.no_shift.description'),
+            confirmLabel: t('attendance.no_shift.confirm'),
+            variant: 'warning',
+        });
+        if (!confirmed) return;
+    }
+    postAction(row.worker_id, action, confirmed);
+}
+
+function performOffScheduleArrival(): void {
+    const workerId = Number(offScheduleWorkerId.value);
+    if (!workerId) return;
+    postAction(workerId, 'arrival', true);
+    offScheduleOpen.value = false;
+    offScheduleWorkerId.value = '';
+}
+
 let refreshTimer: ReturnType<typeof setInterval> | null = null;
 let clockTimer: ReturnType<typeof setInterval> | null = null;
 onMounted(() => {
@@ -187,13 +199,12 @@ onMounted(() => {
         nowMs.value = Date.now();
     }, 1000);
     refreshTimer = setInterval(() => {
-        if (!warningOpen.value)
+        if (!offScheduleOpen.value && !actionForm.processing)
             router.reload({
                 only: [
-                    'worker_states',
-                    'recommended_worker_id',
+                    'attendance_rows',
+                    'off_schedule_workers',
                     'store_state',
-                    'today_sessions',
                 ],
             });
     }, 30_000);
@@ -221,22 +232,37 @@ onUnmounted(() => {
                     </p>
                     <StoreContextIndicator />
                 </div>
-                <Link
-                    v-if="is_admin && store && !store.is_warehouse"
-                    :href="route('attendance.report')"
-                >
-                    <Button variant="secondary">
-                        {{ t('attendance.report.title') }}
-                        <ArrowRight :size="15" />
+                <div class="flex flex-wrap gap-2">
+                    <Button
+                        v-if="
+                            store &&
+                            !store.is_warehouse &&
+                            off_schedule_workers.length > 0
+                        "
+                        size="compact"
+                        variant="secondary"
+                        @click="offScheduleOpen = true"
+                    >
+                        <LogIn :size="14" />
+                        {{ t('attendance.actions.off_schedule_arrival') }}
                     </Button>
-                </Link>
+                    <Link
+                        v-if="is_admin && store && !store.is_warehouse"
+                        :href="route('attendance.report')"
+                    >
+                        <Button variant="secondary">
+                            {{ t('attendance.report.title') }}
+                            <ArrowRight :size="15" />
+                        </Button>
+                    </Link>
+                </div>
             </header>
 
-            <Card v-if="!store || store.is_warehouse" padded
-                ><p class="text-sm text-on-surface-variant">
-                    {{ t('attendance.retail_required') }}
-                </p></Card
-            >
+            <EmptyState
+                v-if="!store || store.is_warehouse"
+                :title="t('attendance.retail_required')"
+                icon="inbox"
+            />
             <template v-else>
                 <div
                     role="alert"
@@ -272,345 +298,345 @@ onUnmounted(() => {
                     </div>
                 </div>
 
-                <Card padded>
-                    <div
-                        class="grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(20rem,1.15fr)]"
-                    >
-                        <div class="space-y-5">
-                            <div class="space-y-2">
-                                <Label for="attendance-worker">{{
-                                    t('attendance.worker')
-                                }}</Label>
-                                <Select
-                                    id="attendance-worker"
-                                    v-model="selectedWorkerId"
-                                    :placeholder="t('attendance.select_worker')"
-                                    :options="
-                                        workers.map((worker) => ({
-                                            value: String(worker.id),
-                                            label: `${worker.first_name} ${worker.last_name}`,
-                                        }))
-                                    "
-                                />
-                            </div>
-
-                            <div
-                                v-if="selectedWorker"
-                                class="flex items-center gap-3"
-                            >
-                                <span
-                                    class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary"
-                                >
-                                    <UserRound :size="18" />
-                                </span>
-                                <div>
-                                    <p class="font-semibold text-on-surface">
-                                        {{ selectedWorker.first_name }}
-                                        {{ selectedWorker.last_name }}
-                                    </p>
-                                    <p class="text-xs text-on-surface-variant">
-                                        {{
-                                            t(
-                                                `attendance.status.${selectedState?.status ?? 'absent'}`,
-                                            )
-                                        }}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="flex flex-col gap-2 sm:flex-row">
-                                <Button
-                                    v-if="
-                                        selectedState?.status === 'absent' ||
-                                        !selectedState
-                                    "
-                                    class="h-12 w-full text-sm sm:flex-1"
-                                    :disabled="
-                                        actionForm.processing ||
-                                        !selectedWorkerId
-                                    "
-                                    @click="perform('arrival')"
-                                >
-                                    <LogIn :size="17" />
-                                    {{ t('attendance.actions.arrival') }}
-                                </Button>
-                                <Button
-                                    v-if="selectedState?.status === 'present'"
-                                    variant="warning"
-                                    class="h-12 w-full text-sm sm:flex-1"
-                                    :disabled="actionForm.processing"
-                                    @click="perform('break_start')"
-                                >
-                                    <Coffee :size="17" />
-                                    {{ t('attendance.actions.break_start') }}
-                                </Button>
-                                <Button
-                                    v-if="selectedState?.status === 'break'"
-                                    variant="success"
-                                    class="h-12 w-full text-sm sm:flex-1"
-                                    :disabled="actionForm.processing"
-                                    @click="perform('break_end')"
-                                >
-                                    <LogIn :size="17" />
-                                    {{ t('attendance.actions.break_end') }}
-                                </Button>
-                                <Button
-                                    v-if="
-                                        selectedState?.status === 'present' ||
-                                        selectedState?.status === 'break'
-                                    "
-                                    variant="danger"
-                                    class="h-12 w-full text-sm sm:flex-1"
-                                    :disabled="actionForm.processing"
-                                    @click="perform('departure')"
-                                >
-                                    <LogOut :size="17" />
-                                    {{ t('attendance.actions.departure') }}
-                                </Button>
-                            </div>
-                        </div>
-
-                        <div
-                            class="flex min-h-52 flex-col items-center justify-center rounded-2xl border px-6 py-8 text-center"
-                            :class="
-                                selectedState?.status === 'present'
-                                    ? 'border-emerald-200 bg-emerald-50'
-                                    : selectedState?.status === 'break'
-                                      ? 'border-warning-amber/25 bg-warning-amber/5'
-                                      : selectedState?.status === 'stale'
-                                        ? 'border-warning-amber/25 bg-warning-amber/5'
-                                        : 'border-outline-glass bg-surface-container-low'
-                            "
+                <section aria-labelledby="attendance-today-title">
+                    <div class="mb-4">
+                        <h2
+                            id="attendance-today-title"
+                            class="font-heading text-lg font-bold text-on-surface"
                         >
-                            <Clock3
-                                :size="22"
-                                class="mb-3"
-                                :class="
-                                    selectedState?.status === 'present'
-                                        ? 'text-emerald-700'
-                                        : selectedState?.status === 'break' ||
-                                            selectedState?.status === 'stale'
-                                          ? 'text-warning-amber'
-                                          : 'text-on-surface-variant'
-                                "
-                            />
-                            <p
-                                class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant"
-                            >
-                                {{
-                                    !selectedWorkerId
-                                        ? t('attendance.timer.select')
-                                        : selectedState?.status === 'present'
-                                          ? t('attendance.timer.working')
-                                          : selectedState?.status === 'break'
-                                            ? t('attendance.timer.break')
-                                            : selectedState?.status === 'stale'
-                                              ? t('attendance.timer.stale')
-                                              : t('attendance.timer.absent')
-                                }}
-                            </p>
-                            <p
-                                v-if="
-                                    selectedState?.status === 'present' ||
-                                    selectedState?.status === 'break'
-                                "
-                                class="mt-2 font-mono text-4xl font-bold tracking-tight text-on-surface tabular-nums sm:text-5xl"
-                            >
-                                {{ liveDuration(liveSeconds) }}
-                            </p>
-                            <p
-                                v-else
-                                class="mt-2 text-lg font-semibold text-on-surface"
-                            >
-                                {{
-                                    selectedWorkerId
-                                        ? t(
-                                              `attendance.status.${selectedState?.status ?? 'absent'}`,
-                                          )
-                                        : t('attendance.select_worker')
-                                }}
-                            </p>
-                            <p
-                                v-if="selectedSession"
-                                class="mt-3 text-xs text-on-surface-variant"
-                            >
-                                {{
-                                    t('attendance.arrived_at', {
-                                        time: timeOnly(
-                                            selectedSession.started_at,
-                                        ),
-                                    })
-                                }}
-                            </p>
-                        </div>
-                    </div>
-                    <p
-                        v-if="selectedState?.status === 'stale'"
-                        class="mt-4 text-sm font-medium text-warning-amber"
-                    >
-                        {{ t('attendance.stale_help') }}
-                    </p>
-                </Card>
-
-                <Card padded>
-                    <div class="mb-5">
-                        <h2 class="font-heading text-lg font-bold">
                             {{ t('attendance.today') }}
                         </h2>
                         <p class="mt-1 text-sm text-on-surface-variant">
                             {{ t('attendance.today_help') }}
                         </p>
                     </div>
-                    <p
-                        v-if="today_sessions.length === 0"
-                        class="text-sm text-on-surface-variant"
-                    >
-                        {{ t('attendance.empty_today') }}
-                    </p>
-                    <div
+
+                    <EmptyState
+                        v-if="attendance_rows.length === 0"
+                        :title="t('attendance.empty.title')"
+                        :description="t('attendance.empty.description')"
+                        icon="inbox"
+                    />
+                    <DataTable
                         v-else
-                        class="overflow-hidden rounded-xl border border-outline-glass"
+                        data-testid="attendance-table"
+                        table-class="md:min-w-[1080px]"
                     >
-                        <div
-                            class="hidden grid-cols-[minmax(10rem,1fr)_minmax(11rem,1fr)_minmax(14rem,1.4fr)_auto] gap-4 bg-surface-container-low px-4 py-3 text-xs font-semibold uppercase tracking-wide text-on-surface-variant md:grid"
-                        >
-                            <span>{{ t('attendance.worker') }}</span>
-                            <span>{{ t('attendance.table.work') }}</span>
-                            <span>{{ t('attendance.breaks') }}</span>
-                            <span>{{ t('attendance.table.status') }}</span>
-                        </div>
-                        <div
-                            v-for="row in today_sessions"
-                            :key="row.id"
-                            class="grid gap-4 border-t border-outline-glass p-4 first:border-t-0 md:grid-cols-[minmax(10rem,1fr)_minmax(11rem,1fr)_minmax(14rem,1.4fr)_auto] md:items-start"
-                        >
-                            <div class="flex items-start gap-3">
-                                <span
-                                    class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
-                                    :class="
-                                        sessionStatus(row) === 'working'
-                                            ? 'bg-emerald-500'
-                                            : sessionStatus(row) === 'break'
-                                              ? 'bg-amber-400'
-                                              : 'bg-neutral'
-                                    "
-                                ></span>
-                                <div>
-                                    <span
-                                        class="mb-1 block text-xs font-semibold text-on-surface-variant md:hidden"
-                                        >{{ t('attendance.worker') }}</span
-                                    >
-                                    <strong class="text-sm text-on-surface">{{
-                                        row.worker_name
-                                    }}</strong>
-                                </div>
-                            </div>
-                            <div>
-                                <span
-                                    class="mb-1 block text-xs font-semibold text-on-surface-variant md:hidden"
-                                    >{{ t('attendance.table.work') }}</span
-                                >
-                                <div
-                                    class="flex items-center gap-2 text-sm font-semibold text-on-surface"
-                                >
-                                    <Clock3 :size="15" class="text-primary" />
-                                    {{ timeOnly(row.started_at) }}–{{
-                                        timeOnly(row.ended_at)
-                                    }}
-                                </div>
-                                <p class="mt-1 text-xs text-on-surface-variant">
-                                    {{ t('attendance.table.worked') }}:
-                                    <strong
-                                        class="font-semibold text-on-surface"
-                                        >{{
-                                            conciseDuration(workedSeconds(row))
-                                        }}</strong
-                                    >
-                                </p>
-                            </div>
-                            <div>
-                                <span
-                                    class="mb-2 block text-xs font-semibold text-on-surface-variant md:hidden"
-                                    >{{ t('attendance.breaks') }}</span
-                                >
-                                <p
-                                    v-if="row.breaks.length === 0"
-                                    class="text-sm text-on-surface-variant"
-                                >
-                                    {{ t('attendance.table.no_breaks') }}
-                                </p>
-                                <div v-else class="flex flex-col gap-2">
+                        <thead>
+                            <tr>
+                                <th>{{ t('attendance.worker') }}</th>
+                                <th>{{ t('attendance.table.shift') }}</th>
+                                <th>{{ t('attendance.table.work') }}</th>
+                                <th>{{ t('attendance.breaks') }}</th>
+                                <th>{{ t('attendance.table.status') }}</th>
+                                <th>{{ t('attendance.table.actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="row in attendance_rows"
+                                :key="row.worker_id"
+                                :data-testid="`attendance-row-${row.worker_id}`"
+                            >
+                                <td :data-label="t('attendance.worker')">
+                                    <p class="font-semibold text-on-surface">
+                                        {{ row.worker_name }}
+                                    </p>
                                     <div
-                                        v-for="(
-                                            pause, pauseIndex
-                                        ) in row.breaks"
-                                        :key="`${pause.started_at}-${pauseIndex}`"
-                                        class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs"
+                                        class="mt-2 flex items-center gap-1.5 text-xs font-semibold"
+                                        :class="qualityClass(row)"
+                                        :title="
+                                            t('attendance.quality.tooltip', {
+                                                count: row.quality
+                                                    .evaluated_shifts,
+                                            })
+                                        "
+                                    >
+                                        <Smile
+                                            v-if="row.quality.band === 'good'"
+                                            :size="18"
+                                            aria-hidden="true"
+                                        />
+                                        <Meh
+                                            v-else-if="
+                                                row.quality.band === 'warning'
+                                            "
+                                            :size="18"
+                                            aria-hidden="true"
+                                        />
+                                        <Frown
+                                            v-else-if="
+                                                row.quality.band === 'poor'
+                                            "
+                                            :size="18"
+                                            aria-hidden="true"
+                                        />
+                                        <CircleHelp
+                                            v-else
+                                            :size="18"
+                                            aria-hidden="true"
+                                        />
+                                        <span aria-hidden="true">
+                                            {{
+                                                row.quality.average_score ===
+                                                null
+                                                    ? t(
+                                                          'attendance.quality.unrated_short',
+                                                      )
+                                                    : `${row.quality.average_score}/100`
+                                            }}
+                                        </span>
+                                        <span class="sr-only">{{
+                                            qualityText(row)
+                                        }}</span>
+                                    </div>
+                                </td>
+                                <td :data-label="t('attendance.table.shift')">
+                                    <div
+                                        v-if="row.shifts.length > 0"
+                                        class="flex flex-col gap-1"
                                     >
                                         <span
-                                            class="flex items-center gap-2 font-semibold text-amber-950"
+                                            v-for="shift in row.shifts"
+                                            :key="shift.id"
+                                            class="text-sm font-medium text-on-surface"
+                                        >
+                                            {{ shift.start_time }}–{{
+                                                shift.end_time
+                                            }}
+                                        </span>
+                                    </div>
+                                    <span
+                                        v-else
+                                        class="text-sm text-on-surface-variant"
+                                        >{{
+                                            t('attendance.table.no_shift')
+                                        }}</span
+                                    >
+                                </td>
+                                <td :data-label="t('attendance.table.work')">
+                                    <div
+                                        v-if="row.sessions.length > 0"
+                                        class="space-y-1"
+                                    >
+                                        <p
+                                            v-for="session in row.sessions"
+                                            :key="session.id"
+                                            class="flex items-center gap-1.5 text-sm font-medium text-on-surface"
+                                        >
+                                            <Clock3
+                                                :size="14"
+                                                class="text-primary"
+                                            />
+                                            {{
+                                                timeOnly(session.started_at)
+                                            }}–{{ timeOnly(session.ended_at) }}
+                                        </p>
+                                        <p
+                                            class="text-xs text-on-surface-variant"
+                                        >
+                                            {{ t('attendance.table.worked') }}:
+                                            <strong class="text-on-surface">{{
+                                                conciseDuration(
+                                                    workedSeconds(row),
+                                                )
+                                            }}</strong>
+                                        </p>
+                                    </div>
+                                    <span
+                                        v-else
+                                        class="text-sm text-on-surface-variant"
+                                        >{{
+                                            t('attendance.table.not_arrived')
+                                        }}</span
+                                    >
+                                </td>
+                                <td :data-label="t('attendance.breaks')">
+                                    <div
+                                        v-if="allBreaks(row).length > 0"
+                                        class="space-y-1.5"
+                                    >
+                                        <p
+                                            v-for="(pause, index) in allBreaks(
+                                                row,
+                                            )"
+                                            :key="`${pause.started_at}-${index}`"
+                                            class="flex items-center gap-1.5 text-xs font-medium text-amber-800"
                                         >
                                             <Coffee :size="14" />
                                             {{ timeOnly(pause.started_at) }}–{{
                                                 timeOnly(pause.ended_at)
                                             }}
-                                        </span>
-                                        <span
-                                            class="font-medium text-amber-800"
-                                            >{{
+                                            ·
+                                            {{
                                                 conciseDuration(
                                                     intervalSeconds(
                                                         pause.started_at,
                                                         pause.ended_at,
                                                     ),
                                                 )
-                                            }}</span
-                                        >
+                                            }}
+                                        </p>
                                     </div>
-                                </div>
-                            </div>
-                            <div>
-                                <span
-                                    class="mb-1 block text-xs font-semibold text-on-surface-variant md:hidden"
-                                    >{{ t('attendance.table.status') }}</span
+                                    <span
+                                        v-else
+                                        class="text-sm text-on-surface-variant"
+                                        >{{
+                                            t('attendance.table.no_breaks')
+                                        }}</span
+                                    >
+                                </td>
+                                <td :data-label="t('attendance.table.status')">
+                                    <span
+                                        class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                                        :class="statusClass(row.status)"
+                                    >
+                                        {{
+                                            t(`attendance.status.${row.status}`)
+                                        }}
+                                    </span>
+                                    <Alert
+                                        v-if="row.status === 'stale'"
+                                        variant="warning"
+                                        class="mt-2 max-w-xs"
+                                    >
+                                        {{ t('attendance.stale_help') }}
+                                    </Alert>
+                                </td>
+                                <td
+                                    :data-label="t('attendance.table.actions')"
+                                    data-mobile-layout="stack"
                                 >
-                                <span
-                                    class="inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold"
-                                    :class="
-                                        sessionStatus(row) === 'working'
-                                            ? 'bg-emerald-100 text-emerald-800'
-                                            : sessionStatus(row) === 'break'
-                                              ? 'bg-amber-100 text-amber-800'
-                                              : 'bg-surface-container text-on-surface-variant'
-                                    "
-                                    >{{
-                                        t(
-                                            `attendance.status.${sessionStatus(row)}`,
-                                        )
-                                    }}</span
-                                >
-                            </div>
-                        </div>
-                    </div>
-                </Card>
+                                    <div
+                                        class="flex flex-wrap gap-2 md:justify-end"
+                                    >
+                                        <Button
+                                            v-if="row.status === 'absent'"
+                                            size="compact"
+                                            :disabled="
+                                                actionForm.processing &&
+                                                pendingWorkerId ===
+                                                    row.worker_id
+                                            "
+                                            @click="perform(row, 'arrival')"
+                                        >
+                                            <LogIn :size="14" />
+                                            {{
+                                                t('attendance.actions.arrival')
+                                            }}
+                                        </Button>
+                                        <Button
+                                            v-if="row.status === 'present'"
+                                            size="compact"
+                                            variant="warning"
+                                            :disabled="
+                                                actionForm.processing &&
+                                                pendingWorkerId ===
+                                                    row.worker_id
+                                            "
+                                            @click="perform(row, 'break_start')"
+                                        >
+                                            <Coffee :size="14" />
+                                            {{
+                                                t(
+                                                    'attendance.actions.break_start',
+                                                )
+                                            }}
+                                        </Button>
+                                        <Button
+                                            v-if="row.status === 'break'"
+                                            size="compact"
+                                            variant="success"
+                                            :disabled="
+                                                actionForm.processing &&
+                                                pendingWorkerId ===
+                                                    row.worker_id
+                                            "
+                                            @click="perform(row, 'break_end')"
+                                        >
+                                            <LogIn :size="14" />
+                                            {{
+                                                t(
+                                                    'attendance.actions.break_end',
+                                                )
+                                            }}
+                                        </Button>
+                                        <Button
+                                            v-if="
+                                                row.status === 'present' ||
+                                                row.status === 'break'
+                                            "
+                                            size="compact"
+                                            variant="danger"
+                                            :disabled="
+                                                actionForm.processing &&
+                                                pendingWorkerId ===
+                                                    row.worker_id
+                                            "
+                                            @click="perform(row, 'departure')"
+                                        >
+                                            <LogOut :size="14" />
+                                            {{
+                                                t(
+                                                    'attendance.actions.departure',
+                                                )
+                                            }}
+                                        </Button>
+                                        <Link
+                                            v-if="
+                                                row.status === 'stale' &&
+                                                is_admin
+                                            "
+                                            :href="route('attendance.report')"
+                                            class="inline-flex h-8 items-center rounded-xl border border-outline-glass bg-white px-2.5 text-xs font-semibold text-on-surface hover:bg-surface-container-low"
+                                        >
+                                            {{
+                                                t(
+                                                    'attendance.actions.correct_record',
+                                                )
+                                            }}
+                                        </Link>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </DataTable>
+                </section>
             </template>
         </div>
 
         <Modal
-            :open="warningOpen"
-            :title="t('attendance.no_shift.title')"
-            @close="warningOpen = false"
-            ><p class="text-sm text-on-surface-variant">
-                {{ t('attendance.no_shift.description') }}
-            </p>
-            <template #footer
-                ><Button variant="secondary" @click="warningOpen = false">{{
-                    t('common.cancel')
-                }}</Button
-                ><Button @click="perform('arrival', true)">{{
-                    t('attendance.no_shift.confirm')
-                }}</Button></template
-            ></Modal
+            :open="offScheduleOpen"
+            :title="t('attendance.off_schedule.title')"
+            @close="offScheduleOpen = false"
         >
+            <p class="mb-4 text-sm text-on-surface-variant">
+                {{ t('attendance.off_schedule.description') }}
+            </p>
+            <div class="space-y-2">
+                <Label for="off-schedule-worker">{{
+                    t('attendance.worker')
+                }}</Label>
+                <Select
+                    id="off-schedule-worker"
+                    v-model="offScheduleWorkerId"
+                    autofocus
+                    :placeholder="t('attendance.select_worker')"
+                    :options="offScheduleOptions"
+                />
+            </div>
+            <template #footer>
+                <Button variant="secondary" @click="offScheduleOpen = false">{{
+                    t('common.cancel')
+                }}</Button>
+                <Button
+                    :disabled="!offScheduleWorkerId || actionForm.processing"
+                    @click="performOffScheduleArrival"
+                >
+                    <LogIn :size="15" />
+                    {{ t('attendance.actions.arrival') }}
+                </Button>
+            </template>
+        </Modal>
     </AppLayout>
 </template>

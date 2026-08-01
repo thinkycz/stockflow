@@ -1147,18 +1147,34 @@
         "subtitle": "Příchody, pauzy a odchody brigádníků pro aktivní prodejnu.",
         "worker": "Brigádník",
         "select_worker": "Vyberte brigádníka",
-        "today": "Dnešní docházka",
-        "today_help": "Rychlý přehled dnešních příchodů, pauz a odchodů.",
+        "today": "Dnešní směny a docházka",
+        "today_help": "Zaznamenejte příchod, pauzu, návrat nebo odchod přímo u brigádníka.",
         "empty_today": "Dnes zatím nebyla zaznamenána žádná docházka.",
         "retail_required": "Docházka je dostupná pouze pro aktivní maloobchodní prodejnu.",
         "break": "Pauza",
         "breaks": "Pauzy",
         "break_count": "Pauzy: {count}",
         "table": {
+            "shift": "Plánované směny",
             "work": "Pracovní doba",
             "worked": "Odpracováno bez pauz",
             "status": "Stav",
+            "actions": "Akce",
+            "no_shift": "Bez dnešní směny",
+            "not_arrived": "Zatím bez příchodu",
             "no_breaks": "Bez pauzy"
+        },
+        "empty": {
+            "title": "Dnes nejsou naplánovaní žádní brigádníci",
+            "description": "Zobrazí se zde brigádníci s dnešní směnou nebo otevřenou docházkou."
+        },
+        "quality": {
+            "good": "Výborná kvalita docházky: {score} ze 100",
+            "warning": "Průměrná kvalita docházky: {score} ze 100",
+            "poor": "Nízká kvalita docházky: {score} ze 100",
+            "unrated": "Zatím bez hodnocení docházky",
+            "unrated_short": "Bez hodnocení",
+            "tooltip": "Vyhodnocené směny v tomto měsíci: {count}"
         },
         "duration": {
             "less_than_minute": "méně než 1 min"
@@ -1194,9 +1210,15 @@
         },
         "actions": {
             "arrival": "Příchod",
+            "off_schedule_arrival": "Příchod bez směny",
             "break_start": "Začít pauzu",
             "break_end": "Návrat",
-            "departure": "Odchod"
+            "departure": "Odchod",
+            "correct_record": "Opravit ve výkazu"
+        },
+        "off_schedule": {
+            "title": "Příchod bez směny",
+            "description": "Vyberte brigádníka, který dnes nemá směnu ani otevřenou docházku."
         },
         "no_shift": {
             "title": "Brigádník nemá aktuální směnu",

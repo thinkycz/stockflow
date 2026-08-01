@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Models\AttendanceSession;
+use App\Models\Shift;
 use App\Models\ShiftPreset;
 use App\Models\Store;
 use App\Models\User;
@@ -58,6 +59,51 @@ class E2ESeeder extends Seeder
                 'last_name' => 'Employee',
             ],
             ['hourly_rate' => 200],
+        );
+        $scheduledWorker = Worker::query()->updateOrCreate(
+            [
+                'user_id' => $user->getKey(),
+                'first_name' => 'Scheduled',
+                'last_name' => 'Worker',
+            ],
+            ['hourly_rate' => 200],
+        );
+        $outsideWindowWorker = Worker::query()->updateOrCreate(
+            [
+                'user_id' => $user->getKey(),
+                'first_name' => 'Outside Window',
+                'last_name' => 'Worker',
+            ],
+            ['hourly_rate' => 200],
+        );
+        Worker::query()->updateOrCreate(
+            [
+                'user_id' => $user->getKey(),
+                'first_name' => 'Off Schedule',
+                'last_name' => 'Worker',
+            ],
+            ['hourly_rate' => 200],
+        );
+        Shift::query()->updateOrCreate(
+            [
+                'user_id' => $user->getKey(),
+                'store_id' => $store->getKey(),
+                'worker_id' => $scheduledWorker->getKey(),
+                'date' => CarbonImmutable::now('Europe/Prague')->toDateString(),
+                'start_time' => '00:00',
+            ],
+            ['end_time' => '23:59'],
+        );
+        $localNow = CarbonImmutable::now('Europe/Prague');
+        Shift::query()->updateOrCreate(
+            [
+                'user_id' => $user->getKey(),
+                'store_id' => $store->getKey(),
+                'worker_id' => $outsideWindowWorker->getKey(),
+                'date' => $localNow->toDateString(),
+                'start_time' => $localNow->hour < 12 ? '20:00' : '02:00',
+            ],
+            ['end_time' => $localNow->hour < 12 ? '21:00' : '03:00'],
         );
         $limited = User::query()->where('email', 'limited@test.com')->first();
 

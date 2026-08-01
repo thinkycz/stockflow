@@ -1147,18 +1147,34 @@
         "subtitle": "Worker arrivals, breaks and departures for the active store.",
         "worker": "Worker",
         "select_worker": "Select a worker",
-        "today": "Today's attendance",
-        "today_help": "A quick overview of today's arrivals, breaks and departures.",
+        "today": "Today's shifts and attendance",
+        "today_help": "Record an arrival, break, return or departure directly for each worker.",
         "empty_today": "No attendance has been recorded today.",
         "retail_required": "Attendance is available only for an active retail store.",
         "break": "Break",
         "breaks": "Breaks",
         "break_count": "Breaks: {count}",
         "table": {
+            "shift": "Scheduled shifts",
             "work": "Working hours",
             "worked": "Worked excluding breaks",
             "status": "Status",
+            "actions": "Actions",
+            "no_shift": "No shift today",
+            "not_arrived": "Not arrived yet",
             "no_breaks": "No breaks"
+        },
+        "empty": {
+            "title": "No workers are scheduled today",
+            "description": "Workers with a shift today or open attendance will appear here."
+        },
+        "quality": {
+            "good": "Excellent attendance quality: {score} out of 100",
+            "warning": "Average attendance quality: {score} out of 100",
+            "poor": "Low attendance quality: {score} out of 100",
+            "unrated": "No attendance rating yet",
+            "unrated_short": "Not rated",
+            "tooltip": "Evaluated shifts this month: {count}"
         },
         "duration": {
             "less_than_minute": "less than 1 min"
@@ -1194,9 +1210,15 @@
         },
         "actions": {
             "arrival": "Arrival",
+            "off_schedule_arrival": "Arrival without shift",
             "break_start": "Start break",
             "break_end": "Return",
-            "departure": "Departure"
+            "departure": "Departure",
+            "correct_record": "Correct in report"
+        },
+        "off_schedule": {
+            "title": "Arrival without shift",
+            "description": "Select a worker who has no shift today and no open attendance."
         },
         "no_shift": {
             "title": "Worker has no current shift",

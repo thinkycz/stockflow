@@ -240,14 +240,31 @@ class AttendanceService
         Shift::querySelect($query);
 
         foreach ($query->whereDate('date', $local->toDateString())->orderBy('start_time')->get() as $shift) {
-            $start = CarbonImmutable::parse($shift->getDate() . ' ' . $shift->getStartTime(), self::BUSINESS_TIMEZONE);
-            $end = CarbonImmutable::parse($shift->getDate() . ' ' . $shift->getEndTime(), self::BUSINESS_TIMEZONE);
-            if ($local->betweenIncluded($start->subHour(), $end->addHour())) {
+            if ($this->matchesCurrentWindow($shift, $now)) {
                 return $shift;
             }
         }
 
         return null;
+    }
+
+    /**
+     * Determine whether the supplied instant is inside a shift's attendance
+     * matching window.
+     */
+    public function matchesCurrentWindow(Shift $shift, CarbonImmutable $now): bool
+    {
+        $local = $now->setTimezone(self::BUSINESS_TIMEZONE);
+        $start = CarbonImmutable::parse(
+            $shift->getDate() . ' ' . $shift->getStartTime(),
+            self::BUSINESS_TIMEZONE,
+        );
+        $end = CarbonImmutable::parse(
+            $shift->getDate() . ' ' . $shift->getEndTime(),
+            self::BUSINESS_TIMEZONE,
+        );
+
+        return $local->betweenIncluded($start->subHour(), $end->addHour());
     }
 
     /**

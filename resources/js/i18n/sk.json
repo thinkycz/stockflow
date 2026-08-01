@@ -1147,18 +1147,34 @@
         "subtitle": "Príchody, prestávky a odchody brigádnikov pre aktívnu predajňu.",
         "worker": "Brigádnik",
         "select_worker": "Vyberte brigádnika",
-        "today": "Dnešná dochádzka",
-        "today_help": "Rýchly prehľad dnešných príchodov, prestávok a odchodov.",
+        "today": "Dnešné zmeny a dochádzka",
+        "today_help": "Zaznamenajte príchod, prestávku, návrat alebo odchod priamo pri brigádnikovi.",
         "empty_today": "Dnes zatiaľ nebola zaznamenaná žiadna dochádzka.",
         "retail_required": "Dochádzka je dostupná iba pre aktívnu maloobchodnú predajňu.",
         "break": "Prestávka",
         "breaks": "Prestávky",
         "break_count": "Prestávky: {count}",
         "table": {
+            "shift": "Plánované zmeny",
             "work": "Pracovný čas",
             "worked": "Odpracované bez prestávok",
             "status": "Stav",
+            "actions": "Akcie",
+            "no_shift": "Bez dnešnej zmeny",
+            "not_arrived": "Zatiaľ bez príchodu",
             "no_breaks": "Bez prestávky"
+        },
+        "empty": {
+            "title": "Dnes nie sú naplánovaní žiadni brigádnici",
+            "description": "Zobrazia sa tu brigádnici s dnešnou zmenou alebo otvorenou dochádzkou."
+        },
+        "quality": {
+            "good": "Výborná kvalita dochádzky: {score} zo 100",
+            "warning": "Priemerná kvalita dochádzky: {score} zo 100",
+            "poor": "Nízka kvalita dochádzky: {score} zo 100",
+            "unrated": "Zatiaľ bez hodnotenia dochádzky",
+            "unrated_short": "Bez hodnotenia",
+            "tooltip": "Vyhodnotené zmeny v tomto mesiaci: {count}"
         },
         "duration": {
             "less_than_minute": "menej ako 1 min"
@@ -1194,9 +1210,15 @@
         },
         "actions": {
             "arrival": "Príchod",
+            "off_schedule_arrival": "Príchod bez zmeny",
             "break_start": "Začať prestávku",
             "break_end": "Návrat",
-            "departure": "Odchod"
+            "departure": "Odchod",
+            "correct_record": "Opraviť vo výkaze"
+        },
+        "off_schedule": {
+            "title": "Príchod bez zmeny",
+            "description": "Vyberte brigádnika, ktorý dnes nemá zmenu ani otvorenú dochádzku."
         },
         "no_shift": {
             "title": "Brigádnik nemá aktuálnu smenu",

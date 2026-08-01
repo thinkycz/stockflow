@@ -7,7 +7,6 @@ import PayrollPrintMenu from '@/components/payroll/PayrollPrintMenu.vue';
 import Alert from '@/components/ui/Alert.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
-import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
@@ -283,13 +282,13 @@ async function resetWageOverride(): Promise<void> {
                 }}
             </Alert>
 
-            <Card :padded="false" class="overflow-hidden">
-                <div class="px-5 py-4">
+            <section class="space-y-4">
+                <div class="px-1">
                     <h2 class="font-heading text-lg font-bold text-on-surface">
                         {{ t('payroll.planned_shifts') }}
                     </h2>
                 </div>
-                <DataTable variant="nested" table-class="md:min-w-[760px]">
+                <DataTable table-class="md:min-w-[760px]">
                     <thead>
                         <tr>
                             <th>{{ t('payroll.date') }}</th>
@@ -330,15 +329,15 @@ async function resetWageOverride(): Promise<void> {
                         </tr>
                     </tbody>
                 </DataTable>
-            </Card>
+            </section>
 
-            <Card :padded="false" class="overflow-hidden">
-                <div class="px-5 py-4">
+            <section class="space-y-4">
+                <div class="px-1">
                     <h2 class="font-heading text-lg font-bold text-on-surface">
                         {{ t('payroll.attendance_records') }}
                     </h2>
                 </div>
-                <DataTable variant="nested" table-class="md:min-w-[700px]">
+                <DataTable table-class="md:min-w-[700px]">
                     <thead>
                         <tr>
                             <th>{{ t('payroll.date') }}</th>
@@ -389,10 +388,10 @@ async function resetWageOverride(): Promise<void> {
                         </tr>
                     </tbody>
                 </DataTable>
-            </Card>
+            </section>
 
-            <Card :padded="false" class="overflow-hidden">
-                <div class="flex items-center justify-between gap-3 px-5 py-4">
+            <section class="space-y-4">
+                <div class="flex items-center justify-between gap-3 px-1">
                     <h2 class="font-heading text-lg font-bold text-on-surface">
                         {{ t('payroll.adjustments') }}
                     </h2>
@@ -405,7 +404,7 @@ async function resetWageOverride(): Promise<void> {
                         <Plus :size="14" />{{ t('payroll.add_adjustment') }}
                     </Button>
                 </div>
-                <DataTable variant="nested" table-class="md:min-w-[640px]">
+                <DataTable table-class="md:min-w-[640px]">
                     <thead>
                         <tr>
                             <th>{{ t('payroll.adjustment_type') }}</th>
@@ -472,7 +471,7 @@ async function resetWageOverride(): Promise<void> {
                         </tr>
                     </tbody>
                 </DataTable>
-            </Card>
+            </section>
         </div>
 
         <Modal

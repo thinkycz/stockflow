@@ -7,6 +7,7 @@ const monthPickerPath = resolve(resourcesRoot, 'components/ui/MonthPicker.vue');
 const monthPages = [
     'pages/attendance/Report.vue',
     'pages/income-expenses/Index.vue',
+    'pages/income-expenses/RecurringExpenses.vue',
     'pages/payroll/Index.vue',
     'pages/reports/Index.vue',
     'pages/statements/Index.vue',

@@ -26,8 +26,10 @@ use Database\Factories\UserFactory;
     ])->assertRedirect();
     \expect(FinancialRecurringExpenseVersion::query()->count())->toBe(2);
 
-    $this->be($admin, 'users')->get('/income-expenses?store_id=' . $store->getKey() . '&year=2026&month=8', $this->inertiaHeaders())
+    $this->be($admin, 'users')->get($base . $storeQuery . '&year=2026&month=8', $this->inertiaHeaders())
         ->assertOk()
+        ->assertJsonPath('component', 'income-expenses/RecurringExpenses')
+        ->assertJsonPath('props.active_store.name', $store->getName())
         ->assertJsonPath('props.recurring_expenses.0.label', 'Internet')
         ->assertJsonPath('props.recurring_expenses.0.amount', 1000)
         ->assertJsonPath('props.recurring_expenses.0.status', 'active');
@@ -49,8 +51,12 @@ use Database\Factories\UserFactory;
     ];
 
     $this->be($admin, 'users')->post('/income-expenses/recurring-expenses?store_id=' . $warehouse->getKey(), $payload)->assertNotFound();
+    $this->be($admin, 'users')->get('/income-expenses/recurring-expenses?store_id=' . $warehouse->getKey(), $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.recurring_expenses', []);
     $this->be($admin, 'users')->post('/income-expenses/recurring-expenses?store_id=' . $store->getKey(), $payload)->assertRedirect();
     $expense = FinancialRecurringExpense::query()->firstOrFail();
     $this->be($admin, 'users')->put('/income-expenses/recurring-expenses/' . $expense->getKey() . '?store_id=' . $otherStore->getKey(), $payload)->assertNotFound();
     $this->be($limited, 'users')->post('/income-expenses/recurring-expenses?store_id=' . $store->getKey(), $payload)->assertRedirect('/dashboard');
+    $this->be($limited, 'users')->get('/income-expenses/recurring-expenses?store_id=' . $store->getKey())->assertRedirect('/dashboard');
 });

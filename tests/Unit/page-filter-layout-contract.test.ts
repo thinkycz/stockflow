@@ -19,6 +19,7 @@ describe('page filter layout contract', () => {
     test('single month filters live in the page header', () => {
         for (const page of [
             'income-expenses/Index.vue',
+            'income-expenses/RecurringExpenses.vue',
             'payroll/Index.vue',
             'reports/Index.vue',
             'statements/Index.vue',

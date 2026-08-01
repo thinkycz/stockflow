@@ -26,7 +26,7 @@
 - Add store-scoped recurring-expense definitions and effective-dated versions.
 - Resolve one automatic monthly row per applicable definition, including due-day
   clamping, lifecycle boundaries, standard overrides, and snapshot behavior.
-- Add admin management routes and a modal for create, effective-month change,
-  and non-destructive termination in all three locales.
+- Add admin management routes and a dedicated page for create,
+  effective-month change, and non-destructive termination in all three locales.
 - Cover domain, authorization, Inertia, frontend, and browser scenarios, then
   rerun the full repository verification gate.

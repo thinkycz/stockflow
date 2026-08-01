@@ -14,9 +14,9 @@ allow all valid attendance transitions directly from that worker's row.
 - Row actions reflect absent, present, break and stale states.
 - The current month's evaluated shifts provide an accessible good, warning,
   poor or unrated quality indicator.
-- Off-schedule arrival remains available from a small header dialog.
 - A separate timer panel above the table lets the user inspect a selected
-  worker's live work or break duration and opens the off-schedule dialog.
+  worker's live work or break duration. It includes every worker and directly
+  exposes arrival, off-schedule arrival, break, return and departure actions.
 - The table is standalone and uses the shared mobile-card behavior.
 
 ## Invariants

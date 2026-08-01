@@ -46,9 +46,6 @@ class IncomeExpenseIndexController
             'financial_report' => $store instanceof Store && !$store->isWarehouse()
                 ? $service->build($admin, $store, $year, $month)
                 : null,
-            'recurring_expenses' => $store instanceof Store && !$store->isWarehouse()
-                ? $service->recurringExpenses($admin, $store, $year, $month)
-                : [],
         ]);
     }
 }

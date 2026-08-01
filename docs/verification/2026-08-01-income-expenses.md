@@ -8,19 +8,20 @@ blockers remain.
 
 ## Evidence
 
-- `make fix` completed successfully with Prettier and Pint.
+- The changed files were formatted successfully with Prettier and Pint.
 - `make check` completed successfully on the final tree:
-    - PHPStan analysed 366 files at maximum level with no errors.
+    - PHPStan analysed 368 files at maximum level with no errors.
     - Prettier and Pint checks passed.
     - Composer and npm audits reported no vulnerabilities.
     - PHP platform requirements and strict Composer validation passed.
     - Vue TypeScript checking and the production Vite build passed.
-    - Vitest passed 31 tests in 9 files.
-    - Pest passed 610 tests with 13,906 assertions.
+    - Vitest passed 42 tests in 12 files.
+    - Pest passed 615 tests with 14,189 assertions.
 - The focused Playwright scenario
   `tests/e2e/income-expenses.spec.ts` passed after the final build and covers
-  recurring-expense creation, a future effective change, exclusive termination,
-  historical stability, admin navigation, manual-row creation, override editing,
+  navigation to the dedicated recurring-expense page, recurring-expense creation,
+  a future effective change, exclusive termination, historical stability, absence
+  of the previous-month copy button, manual-row creation, override editing,
   close/reopen, and limited-admin denial.
 - Focused financial tests pass the five revenue channels, monthly commission
   rounding, Bolt cash inclusion, stock exclusions, multiple shift rates,
@@ -28,9 +29,9 @@ blockers remain.
   idempotency, recurring due-day clamping, version history, exclusive
   termination, warehouse denial, foreign-store denial, and closed-report
   mutation denial.
-- `php artisan route:list --path=income-expenses --json` exposes all 12 expected
-  authenticated admin routes, including create/change/terminate recurring
-  expense mutations.
+- `php artisan route:list --path=income-expenses --json` exposes all 13 expected
+  authenticated admin routes, including the recurring-expense page and its
+  create/change/terminate mutations.
 - `git diff --check` reports no whitespace errors.
 
 ## Release note

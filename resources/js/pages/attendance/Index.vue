@@ -21,7 +21,6 @@ import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Label from '@/components/ui/Label.vue';
-import Modal from '@/components/ui/Modal.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useDialog } from '@/composables/useDialog';
@@ -62,13 +61,12 @@ const { t, locale } = useI18n();
 const route = useRoute();
 const dialog = useDialog();
 const nowMs = ref(Date.now());
-const offScheduleOpen = ref(false);
-const offScheduleWorkerId = ref('');
 const timerWorkerId = ref(
     String(
         props.attendance_rows.find((row) => row.status !== 'absent')
             ?.worker_id ??
             props.attendance_rows[0]?.worker_id ??
+            props.off_schedule_workers[0]?.id ??
             '',
     ),
 );
@@ -79,18 +77,23 @@ const actionForm = useForm({
     confirm_without_shift: false,
 });
 
-const offScheduleOptions = computed(() =>
-    props.off_schedule_workers.map((worker) => ({
-        value: String(worker.id),
-        label: worker.name,
-    })),
-);
-const timerWorkerOptions = computed(() =>
-    props.attendance_rows.map((row) => ({
+const timerWorkerOptions = [
+    ...props.attendance_rows.map((row) => ({
         value: String(row.worker_id),
         label: row.worker_name,
     })),
-);
+    ...props.off_schedule_workers.map((worker) => ({
+        value: String(worker.id),
+        label: worker.name,
+    })),
+].sort((left, right) => left.label.localeCompare(right.label, locale.value));
+const timerWorkerModel = computed({
+    get: () => timerWorkerId.value,
+    set: (value: string | number | null) => {
+        if (value !== null && String(value) !== '')
+            timerWorkerId.value = String(value);
+    },
+});
 const timerRow = computed(() =>
     props.attendance_rows.find(
         (row) => row.worker_id === Number(timerWorkerId.value),
@@ -109,6 +112,12 @@ const timerSeconds = computed(() => {
         return intervalSeconds(timerOpenBreak.value.started_at, null);
     return workedSeconds(row);
 });
+const timerStatus = computed<AttendanceStatus>(
+    () => timerRow.value?.status ?? 'absent',
+);
+const timerHasShift = computed(
+    () => timerRow.value?.has_current_shift === true,
+);
 
 function timeOnly(value: string | null): string {
     if (value === null) return t('attendance.now');
@@ -204,6 +213,9 @@ function postAction(
     actionForm.confirm_without_shift = confirmed;
     actionForm.post(route('attendance.actions.store'), {
         preserveScroll: true,
+        onSuccess: () => {
+            timerWorkerId.value = String(workerId);
+        },
         onFinish: () => {
             pendingWorkerId.value = null;
         },
@@ -224,12 +236,14 @@ async function perform(row: AttendanceRow, action: string): Promise<void> {
     postAction(row.worker_id, action, confirmed);
 }
 
-function performOffScheduleArrival(): void {
-    const workerId = Number(offScheduleWorkerId.value);
+async function performTimerAction(action: string): Promise<void> {
+    const workerId = Number(timerWorkerId.value);
     if (!workerId) return;
-    postAction(workerId, 'arrival', true);
-    offScheduleOpen.value = false;
-    offScheduleWorkerId.value = '';
+    if (timerRow.value) {
+        await perform(timerRow.value, action);
+        return;
+    }
+    postAction(workerId, action, action === 'arrival');
 }
 
 let refreshTimer: ReturnType<typeof setInterval> | null = null;
@@ -239,7 +253,7 @@ onMounted(() => {
         nowMs.value = Date.now();
     }, 1000);
     refreshTimer = setInterval(() => {
-        if (!offScheduleOpen.value && !actionForm.processing)
+        if (!actionForm.processing)
             router.reload({
                 only: [
                     'attendance_rows',
@@ -336,22 +350,71 @@ onUnmounted(() => {
                                 }}</Label>
                                 <Select
                                     id="attendance-timer-worker"
-                                    v-model="timerWorkerId"
+                                    v-model="timerWorkerModel"
                                     :placeholder="t('attendance.select_worker')"
                                     :options="timerWorkerOptions"
                                 />
                             </div>
                             <Button
-                                variant="secondary"
+                                v-if="timerStatus === 'absent'"
                                 class="w-full sm:w-fit"
-                                :disabled="off_schedule_workers.length === 0"
-                                @click="offScheduleOpen = true"
+                                :disabled="
+                                    !timerWorkerId || actionForm.processing
+                                "
+                                @click="performTimerAction('arrival')"
                             >
                                 <LogIn :size="15" />
                                 {{
-                                    t('attendance.actions.off_schedule_arrival')
+                                    timerHasShift
+                                        ? t('attendance.actions.arrival')
+                                        : t(
+                                              'attendance.actions.off_schedule_arrival',
+                                          )
                                 }}
                             </Button>
+                            <div
+                                v-else-if="
+                                    timerStatus === 'present' ||
+                                    timerStatus === 'break'
+                                "
+                                class="flex flex-col gap-2 sm:flex-row"
+                            >
+                                <Button
+                                    v-if="timerStatus === 'present'"
+                                    variant="warning"
+                                    class="w-full sm:w-fit"
+                                    :disabled="actionForm.processing"
+                                    @click="performTimerAction('break_start')"
+                                >
+                                    <Coffee :size="15" />
+                                    {{ t('attendance.actions.break_start') }}
+                                </Button>
+                                <Button
+                                    v-else
+                                    variant="success"
+                                    class="w-full sm:w-fit"
+                                    :disabled="actionForm.processing"
+                                    @click="performTimerAction('break_end')"
+                                >
+                                    <LogIn :size="15" />
+                                    {{ t('attendance.actions.break_end') }}
+                                </Button>
+                                <Button
+                                    variant="danger"
+                                    class="w-full sm:w-fit"
+                                    :disabled="actionForm.processing"
+                                    @click="performTimerAction('departure')"
+                                >
+                                    <LogOut :size="15" />
+                                    {{ t('attendance.actions.departure') }}
+                                </Button>
+                            </div>
+                            <Alert
+                                v-else-if="timerStatus === 'stale'"
+                                variant="warning"
+                            >
+                                {{ t('attendance.stale_help') }}
+                            </Alert>
                         </div>
 
                         <div
@@ -381,13 +444,13 @@ onUnmounted(() => {
                                 class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant"
                             >
                                 {{
-                                    !timerRow
+                                    !timerWorkerId
                                         ? t('attendance.timer.select')
-                                        : timerRow.status === 'present'
+                                        : timerStatus === 'present'
                                           ? t('attendance.timer.working')
-                                          : timerRow.status === 'break'
+                                          : timerStatus === 'break'
                                             ? t('attendance.timer.break')
-                                            : timerRow.status === 'stale'
+                                            : timerStatus === 'stale'
                                               ? t('attendance.timer.stale')
                                               : t('attendance.timer.absent')
                                 }}
@@ -406,10 +469,8 @@ onUnmounted(() => {
                                 class="mt-2 text-lg font-semibold text-on-surface"
                             >
                                 {{
-                                    timerRow
-                                        ? t(
-                                              `attendance.status.${timerRow.status}`,
-                                          )
+                                    timerWorkerId
+                                        ? t(`attendance.status.${timerStatus}`)
                                         : t('attendance.select_worker')
                                 }}
                             </p>
@@ -733,39 +794,5 @@ onUnmounted(() => {
                 </section>
             </template>
         </div>
-
-        <Modal
-            :open="offScheduleOpen"
-            :title="t('attendance.off_schedule.title')"
-            @close="offScheduleOpen = false"
-        >
-            <p class="mb-4 text-sm text-on-surface-variant">
-                {{ t('attendance.off_schedule.description') }}
-            </p>
-            <div class="space-y-2">
-                <Label for="off-schedule-worker">{{
-                    t('attendance.worker')
-                }}</Label>
-                <Select
-                    id="off-schedule-worker"
-                    v-model="offScheduleWorkerId"
-                    autofocus
-                    :placeholder="t('attendance.select_worker')"
-                    :options="offScheduleOptions"
-                />
-            </div>
-            <template #footer>
-                <Button variant="secondary" @click="offScheduleOpen = false">{{
-                    t('common.cancel')
-                }}</Button>
-                <Button
-                    :disabled="!offScheduleWorkerId || actionForm.processing"
-                    @click="performOffScheduleArrival"
-                >
-                    <LogIn :size="15" />
-                    {{ t('attendance.actions.arrival') }}
-                </Button>
-            </template>
-        </Modal>
     </AppLayout>
 </template>

@@ -183,6 +183,7 @@ Resolver::resolveRouteRegistrar()
         $router->post('income-expenses/manual-rows', [IncomeExpenseManualRowController::class, 'store'])->name('income-expenses.manual-rows.store');
         $router->put('income-expenses/manual-rows/{manualRow}', [IncomeExpenseManualRowController::class, 'update'])->whereNumber('manualRow')->name('income-expenses.manual-rows.update');
         $router->delete('income-expenses/manual-rows/{manualRow}', [IncomeExpenseManualRowController::class, 'destroy'])->whereNumber('manualRow')->name('income-expenses.manual-rows.destroy');
+        $router->get('income-expenses/recurring-expenses', [IncomeExpenseRecurringExpenseController::class, 'index'])->name('income-expenses.recurring-expenses.index');
         $router->post('income-expenses/recurring-expenses', [IncomeExpenseRecurringExpenseController::class, 'store'])->name('income-expenses.recurring-expenses.store');
         $router->put('income-expenses/recurring-expenses/{recurringExpense}', [IncomeExpenseRecurringExpenseController::class, 'update'])->whereNumber('recurringExpense')->name('income-expenses.recurring-expenses.update');
         $router->post('income-expenses/recurring-expenses/{recurringExpense}/terminate', [IncomeExpenseRecurringExpenseController::class, 'terminate'])->whereNumber('recurringExpense')->name('income-expenses.recurring-expenses.terminate');

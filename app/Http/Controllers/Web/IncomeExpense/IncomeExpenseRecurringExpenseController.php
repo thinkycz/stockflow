@@ -6,18 +6,51 @@ namespace App\Http\Controllers\Web\IncomeExpense;
 
 use App\Http\Controllers\Web\Concerns\ResolvesFinancialReportContext;
 use App\Http\Validation\FinancialReportValidity;
+use App\Models\Store;
 use App\Models\User;
 use App\Services\FinancialReportService;
+use App\Support\ActiveStoreResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
+use Inertia\Response;
 use Thinkycz\LaravelCore\Support\Parser;
 use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Typer;
 
 class IncomeExpenseRecurringExpenseController
 {
     use ResolvesFinancialReportContext;
+
+    /**
+     * Render recurring-expense management for the active store.
+     */
+    public function index(Request $request): Response
+    {
+        $admin = User::mustAuth();
+        $now = Carbon::now();
+        $year = Typer::parseNullableInt($request->query('year')) ?? $now->year;
+        $month = Typer::parseNullableInt($request->query('month')) ?? $now->month;
+        if ($year < 2000 || $year > 2100 || $month < 1 || $month > 12) {
+            $year = $now->year;
+            $month = $now->month;
+        }
+        $store = ActiveStoreResolver::resolve($request, $admin);
+
+        return Inertia::render('income-expenses/RecurringExpenses', [
+            'active_store' => $store instanceof Store ? [
+                'id' => $store->getKey(),
+                'name' => $store->getName(),
+                'is_warehouse' => $store->isWarehouse(),
+            ] : null,
+            'filters' => ['year' => $year, 'month' => $month],
+            'recurring_expenses' => $store instanceof Store && !$store->isWarehouse()
+                ? (new FinancialReportService())->recurringExpenses($admin, $store, $year, $month)
+                : [],
+        ]);
+    }
 
     /**
      * Create a recurring expense.
@@ -122,11 +155,11 @@ class IncomeExpenseRecurringExpenseController
     }
 
     /**
-     * Redirect to the report month that opened the manager.
+     * Redirect back to recurring-expense management.
      */
     private function redirect(Parser $payload): RedirectResponse
     {
-        return Resolver::resolveRedirector()->route('income-expenses.index', [
+        return Resolver::resolveRedirector()->route('income-expenses.recurring-expenses.index', [
             'year' => $payload->parseInt('year'),
             'month' => $payload->parseInt('month'),
         ]);

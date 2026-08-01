@@ -35,7 +35,7 @@
 
 - Status: complete
 - [x] Add schema, models, factories, and effective-dated service behavior.
-- [x] Add admin routes, management modal, row rendering, and translations.
+- [x] Add admin routes, dedicated management page, row rendering, and translations.
 - [x] Add domain, controller, Inertia, frontend, and E2E coverage.
 - [x] Run full verification and refresh closeout evidence.
 - Blockers: none.
@@ -49,6 +49,8 @@
 - Recurring expenses remain live automatic sources and use the existing monthly
   override mechanism; closed report snapshots stay immutable.
 - Definition changes are effective-dated, and termination is non-destructive.
+- The monthly report no longer exposes manual-row copying; recurring-expense
+  management uses a dedicated page instead of layered modals.
 
 ## Next
 

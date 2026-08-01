@@ -36,25 +36,34 @@ test('attendance transitions are controlled directly from the worker row', async
     await expect(row).toContainText('Not working');
 });
 
-test('off-schedule arrival modal lists only eligible workers', async ({
+test('timer panel lists every worker and controls an off-schedule session', async ({
     page,
 }) => {
     await login(page);
     await page.goto('/attendance');
 
-    await page.getByRole('button', { name: 'Arrival without shift' }).click();
-    const dialog = page.getByRole('dialog', {
-        name: 'Arrival without shift',
+    const timerPanel = page.getByTestId('attendance-timer-panel');
+    const workerSelect = timerPanel.getByLabel('Worker');
+    await expect(workerSelect.getByRole('option')).toContainText([
+        'Select a worker',
+        'Active Employee',
+        'E2E Worker',
+        'Off Schedule Worker',
+        'Outside Window Worker',
+        'Scheduled Worker',
+    ]);
+    await workerSelect.selectOption({
+        label: 'Off Schedule Worker',
     });
-    await expect(
-        dialog.getByRole('option', { name: 'Off Schedule Worker' }),
-    ).toBeAttached();
-    await expect(
-        dialog.getByRole('option', { name: 'Scheduled Worker' }),
-    ).toHaveCount(0);
-    await expect(
-        dialog.getByRole('option', { name: 'E2E Worker' }),
-    ).toHaveCount(0);
+    await timerPanel
+        .getByRole('button', { name: 'Arrival without shift' })
+        .click();
+    await expect(timerPanel).toContainText('Time worked today');
+    await timerPanel.getByRole('button', { name: 'Start break' }).click();
+    await expect(timerPanel).toContainText('Current break duration');
+    await timerPanel.getByRole('button', { name: 'Return' }).click();
+    await timerPanel.getByRole('button', { name: 'Departure' }).click();
+    await expect(timerPanel).toContainText('Not working');
 });
 
 test('arrival outside the shift matching window requires confirmation', async ({

@@ -5,7 +5,7 @@
 | Attendance overview payload     | Complete | Controller feature tests                 |
 | Standalone actionable table     | Complete | `attendance/Index.vue` and unit contract |
 | Monthly quality indicator       | Complete | Rating payload, localized icon and score |
-| Off-schedule arrival dialog     | Complete | Filtered payload and browser test        |
+| Off-schedule arrival control    | Complete | Direct contextual action in timer panel  |
 | Mobile and browser verification | Complete | Four targeted Playwright scenarios       |
 | Full repository checks          | Complete | `make fix` and `make check` passed       |
 | Timer overview panel            | Complete | Restored above the standalone table      |

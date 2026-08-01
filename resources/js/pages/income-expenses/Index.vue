@@ -4,7 +4,6 @@ import {
     ArrowDownCircle,
     ArrowUpCircle,
     CalendarClock,
-    Copy,
     LockKeyhole,
     Pencil,
     Plus,
@@ -62,23 +61,10 @@ type FinancialReport = {
     };
 };
 
-type RecurringExpense = {
-    id: number;
-    label: string;
-    amount: number;
-    due_day: number;
-    note: string | null;
-    starts_on: string;
-    ends_before: string | null;
-    effective_from: string;
-    status: 'active' | 'upcoming' | 'ended';
-};
-
 const props = defineProps<{
     active_store: { id: number; name: string; is_warehouse: boolean } | null;
     filters: { year: number; month: number };
     financial_report: FinancialReport | null;
-    recurring_expenses: RecurringExpense[];
 }>();
 
 const { t, locale } = useI18n();
@@ -90,11 +76,6 @@ const editingManualRow = ref<FinancialRow | null>(null);
 const overrideModalOpen = ref(false);
 const overridingRow = ref<FinancialRow | null>(null);
 const lifecycleProcessing = ref(false);
-const recurringManagerOpen = ref(false);
-const recurringFormOpen = ref(false);
-const editingRecurringExpense = ref<RecurringExpense | null>(null);
-const terminationModalOpen = ref(false);
-const terminatingRecurringExpense = ref<RecurringExpense | null>(null);
 
 const manualForm = useForm({
     year: props.filters.year,
@@ -113,92 +94,6 @@ const overrideForm = useForm({
     source_key: '',
     amount: '',
 });
-
-const recurringForm = useForm({
-    year: props.filters.year,
-    month: props.filters.month,
-    effective_period: selectedPeriod(),
-    label: '',
-    amount: '',
-    due_day: '1',
-    note: '',
-});
-
-const terminationForm = useForm({
-    year: props.filters.year,
-    month: props.filters.month,
-    ends_before_period: selectedPeriod(),
-});
-
-function selectedPeriod(): string {
-    return `${props.filters.year}-${String(props.filters.month).padStart(2, '0')}`;
-}
-
-function followingPeriod(value: string): string {
-    const [year, month] = value.split('-').map(Number);
-    const next = new Date(Date.UTC(year, month, 1));
-    return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, '0')}`;
-}
-
-function openRecurringForm(expense: RecurringExpense | null = null): void {
-    editingRecurringExpense.value = expense;
-    recurringForm.clearErrors();
-    recurringForm.year = props.filters.year;
-    recurringForm.month = props.filters.month;
-    recurringForm.label = expense?.label ?? '';
-    recurringForm.amount = expense ? String(expense.amount) : '';
-    recurringForm.due_day = expense ? String(expense.due_day) : '1';
-    recurringForm.note = expense?.note ?? '';
-    recurringForm.effective_period =
-        expense && expense.starts_on > selectedPeriod()
-            ? expense.starts_on
-            : selectedPeriod();
-    recurringManagerOpen.value = false;
-    recurringFormOpen.value = true;
-}
-
-function submitRecurringExpense(): void {
-    const options = { onSuccess: () => (recurringFormOpen.value = false) };
-    if (editingRecurringExpense.value) {
-        recurringForm.put(
-            route(
-                'income-expenses.recurring-expenses.update',
-                editingRecurringExpense.value.id,
-            ),
-            options,
-        );
-        return;
-    }
-    recurringForm.post(
-        route('income-expenses.recurring-expenses.store'),
-        options,
-    );
-}
-
-function openTermination(expense: RecurringExpense): void {
-    terminatingRecurringExpense.value = expense;
-    terminationForm.clearErrors();
-    terminationForm.year = props.filters.year;
-    terminationForm.month = props.filters.month;
-    terminationForm.ends_before_period = followingPeriod(
-        expense.starts_on > selectedPeriod()
-            ? expense.starts_on
-            : selectedPeriod(),
-    );
-    recurringManagerOpen.value = false;
-    terminationModalOpen.value = true;
-}
-
-function submitTermination(): void {
-    if (!terminatingRecurringExpense.value) return;
-    terminationForm.post(
-        route(
-            'income-expenses.recurring-expenses.terminate',
-            terminatingRecurringExpense.value.id,
-        ),
-        { onSuccess: () => (terminationModalOpen.value = false) },
-    );
-}
 
 function money(value: number): string {
     return new Intl.NumberFormat(locale.value, {
@@ -308,9 +203,7 @@ function resetOverride(row: FinancialRow): void {
     });
 }
 
-async function lifecycle(
-    action: 'copy-previous' | 'close' | 'reopen',
-): Promise<void> {
+async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
     const confirmation =
         action === 'close'
             ? t('income_expenses.confirm_close')
@@ -432,25 +325,22 @@ function rowHref(row: FinancialRow): string | null {
                             @change="changeMonth"
                         />
                     </FilterField>
-                    <Button
+                    <Link
                         v-if="financial_report"
-                        variant="secondary"
-                        @click="recurringManagerOpen = true"
+                        :href="
+                            route('income-expenses.recurring-expenses.index', {
+                                year: filters.year,
+                                month: filters.month,
+                            })
+                        "
                     >
-                        <CalendarClock :size="15" />{{
-                            t('income_expenses.recurring.manage')
-                        }}
-                    </Button>
-                    <template v-if="financial_report?.report.status === 'open'">
-                        <Button
-                            variant="secondary"
-                            :disabled="lifecycleProcessing"
-                            @click="lifecycle('copy-previous')"
-                        >
-                            <Copy :size="15" />{{
-                                t('income_expenses.copy_previous')
+                        <Button variant="secondary">
+                            <CalendarClock :size="15" />{{
+                                t('income_expenses.recurring.manage')
                             }}
                         </Button>
+                    </Link>
+                    <template v-if="financial_report?.report.status === 'open'">
                         <Button
                             variant="warning"
                             :disabled="lifecycleProcessing"
@@ -713,242 +603,6 @@ function rowHref(row: FinancialRow): string | null {
                 </section>
             </template>
         </div>
-
-        <Modal
-            :open="recurringManagerOpen"
-            :title="t('income_expenses.recurring.title')"
-            class="max-w-3xl"
-            @close="recurringManagerOpen = false"
-        >
-            <div class="space-y-4">
-                <div class="flex items-center justify-between gap-4">
-                    <p class="text-sm text-on-surface-variant">
-                        {{ t('income_expenses.recurring.help') }}
-                    </p>
-                    <Button @click="openRecurringForm()">
-                        <Plus :size="15" />{{
-                            t('income_expenses.recurring.add')
-                        }}
-                    </Button>
-                </div>
-                <div
-                    v-if="recurring_expenses.length === 0"
-                    class="rounded-xl bg-surface-container-low px-4 py-8 text-center text-sm text-on-surface-variant"
-                >
-                    {{ t('income_expenses.recurring.empty') }}
-                </div>
-                <div v-else class="max-h-[55vh] space-y-3 overflow-y-auto pr-1">
-                    <div
-                        v-for="expense in recurring_expenses"
-                        :key="expense.id"
-                        :data-testid="`recurring-expense-${expense.id}`"
-                        class="flex flex-col gap-3 rounded-xl border border-outline-glass p-4 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                        <div class="min-w-0">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span class="font-semibold">{{
-                                    expense.label
-                                }}</span>
-                                <Badge
-                                    :variant="
-                                        expense.status === 'active'
-                                            ? 'success'
-                                            : expense.status === 'upcoming'
-                                              ? 'warning'
-                                              : 'neutral'
-                                    "
-                                    >{{
-                                        t(
-                                            `income_expenses.recurring.status.${expense.status}`,
-                                        )
-                                    }}</Badge
-                                >
-                            </div>
-                            <p class="mt-1 text-sm text-on-surface-variant">
-                                {{ money(expense.amount) }} ·
-                                {{
-                                    t(
-                                        'income_expenses.recurring.due_day_value',
-                                        {
-                                            day: expense.due_day,
-                                        },
-                                    )
-                                }}
-                            </p>
-                            <p class="mt-1 text-xs text-on-surface-variant">
-                                {{
-                                    t('income_expenses.recurring.validity', {
-                                        from: expense.starts_on,
-                                        until:
-                                            expense.ends_before ??
-                                            t(
-                                                'income_expenses.recurring.indefinite',
-                                            ),
-                                    })
-                                }}
-                            </p>
-                            <p
-                                v-if="expense.note"
-                                class="mt-1 text-xs text-on-surface-variant"
-                            >
-                                {{ expense.note }}
-                            </p>
-                        </div>
-                        <div
-                            v-if="expense.status !== 'ended'"
-                            class="flex shrink-0 gap-1"
-                        >
-                            <Button
-                                variant="ghost"
-                                class="h-8 px-2"
-                                @click="openRecurringForm(expense)"
-                            >
-                                <Pencil :size="14" />{{
-                                    t('income_expenses.recurring.change')
-                                }}
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                class="h-8 px-2 text-error-red"
-                                @click="openTermination(expense)"
-                            >
-                                {{ t('income_expenses.recurring.terminate') }}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </Modal>
-
-        <Modal
-            :open="recurringFormOpen"
-            :title="
-                editingRecurringExpense
-                    ? t('income_expenses.recurring.change_title')
-                    : t('income_expenses.recurring.add_title')
-            "
-            @close="recurringFormOpen = false"
-        >
-            <form class="space-y-4" @submit.prevent="submitRecurringExpense">
-                <div class="space-y-2">
-                    <Label for="recurring-label" required>{{
-                        t('income_expenses.item')
-                    }}</Label>
-                    <Input
-                        id="recurring-label"
-                        v-model="recurringForm.label"
-                        required
-                    />
-                    <FieldError :message="recurringForm.errors.label" />
-                </div>
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <div class="space-y-2">
-                        <Label for="recurring-amount" required>{{
-                            t('income_expenses.amount')
-                        }}</Label>
-                        <Input
-                            id="recurring-amount"
-                            v-model="recurringForm.amount"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            required
-                        />
-                        <FieldError :message="recurringForm.errors.amount" />
-                    </div>
-                    <div class="space-y-2">
-                        <Label for="recurring-day" required>{{
-                            t('income_expenses.recurring.due_day')
-                        }}</Label>
-                        <Input
-                            id="recurring-day"
-                            v-model="recurringForm.due_day"
-                            type="number"
-                            min="1"
-                            max="31"
-                            required
-                        />
-                        <FieldError :message="recurringForm.errors.due_day" />
-                    </div>
-                </div>
-                <div class="space-y-2">
-                    <Label for="recurring-effective" required>{{
-                        editingRecurringExpense
-                            ? t('income_expenses.recurring.effective_from')
-                            : t('income_expenses.recurring.starts_on')
-                    }}</Label>
-                    <MonthPicker
-                        id="recurring-effective"
-                        v-model="recurringForm.effective_period"
-                    />
-                    <FieldError
-                        :message="recurringForm.errors.effective_period"
-                    />
-                </div>
-                <div class="space-y-2">
-                    <Label for="recurring-note">{{
-                        t('income_expenses.note')
-                    }}</Label>
-                    <Textarea
-                        id="recurring-note"
-                        v-model="recurringForm.note"
-                    />
-                    <FieldError :message="recurringForm.errors.note" />
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <Button
-                        variant="secondary"
-                        @click="recurringFormOpen = false"
-                        >{{ t('common.cancel') }}</Button
-                    >
-                    <Button type="submit" :disabled="recurringForm.processing">
-                        {{ t('common.save') }}
-                    </Button>
-                </div>
-            </form>
-        </Modal>
-
-        <Modal
-            :open="terminationModalOpen"
-            :title="t('income_expenses.recurring.terminate_title')"
-            @close="terminationModalOpen = false"
-        >
-            <form class="space-y-4" @submit.prevent="submitTermination">
-                <p class="text-sm text-on-surface-variant">
-                    {{
-                        t('income_expenses.recurring.terminate_help', {
-                            item: terminatingRecurringExpense?.label ?? '',
-                        })
-                    }}
-                </p>
-                <div class="space-y-2">
-                    <Label for="recurring-ends-before" required>{{
-                        t('income_expenses.recurring.ends_before')
-                    }}</Label>
-                    <MonthPicker
-                        id="recurring-ends-before"
-                        v-model="terminationForm.ends_before_period"
-                    />
-                    <FieldError
-                        :message="terminationForm.errors.ends_before_period"
-                    />
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <Button
-                        variant="secondary"
-                        @click="terminationModalOpen = false"
-                        >{{ t('common.cancel') }}</Button
-                    >
-                    <Button
-                        type="submit"
-                        variant="warning"
-                        :disabled="terminationForm.processing"
-                    >
-                        {{ t('income_expenses.recurring.confirm_terminate') }}
-                    </Button>
-                </div>
-            </form>
-        </Modal>
 
         <Modal
             :open="manualModalOpen"

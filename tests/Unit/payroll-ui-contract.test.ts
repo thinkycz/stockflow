@@ -29,6 +29,8 @@ describe('payroll ui contract', () => {
         expect(source).toContain('<PayrollPrintMenu');
         expect(source).toContain('payslip.shifts');
         expect(source).toContain('payslip.attendance');
+        expect(source).not.toContain('<Card :padded="false"');
+        expect(source).not.toContain('variant="nested"');
     });
 
     test('the print menu exposes one accessible trigger and two menu items', () => {

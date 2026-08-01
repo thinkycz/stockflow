@@ -12,6 +12,10 @@ describe('attendance table contract', () => {
         expect(source).toContain('<DataTable');
         expect(source).toContain('<Card');
         expect(source).toContain('data-testid="attendance-timer-panel"');
+        expect(source).toContain("performTimerAction('arrival')");
+        expect(source).toContain("performTimerAction('break_start')");
+        expect(source).toContain("performTimerAction('break_end')");
+        expect(source).toContain("performTimerAction('departure')");
         expect(source.indexOf('</Card>')).toBeLessThan(
             source.indexOf('<DataTable'),
         );

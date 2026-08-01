@@ -21,6 +21,50 @@ test('admin manages and closes a monthly financial report while limited users ar
         /\/statements\?.*year=2030.*month=1/,
     );
 
+    await page.getByRole('button', { name: 'Recurring expenses' }).click();
+    await page.getByRole('button', { name: 'Add expense' }).click();
+    await page.getByLabel('Item').fill('E2E rent');
+    await page.getByLabel('Amount').fill('1000');
+    await page.getByLabel('Day of month').fill('31');
+    await page.getByLabel('First month').fill('2030-01');
+    await page.getByLabel('Note').fill('Recurring E2E expense');
+    await page.getByRole('button', { name: 'Save' }).click();
+    const recurringRow = page.getByTestId(/financial-row-recurring_expense-/);
+    await expect(recurringRow).toContainText('E2E rent');
+    await expect(recurringRow).toContainText('1,000.00');
+
+    await page.getByRole('button', { name: 'Recurring expenses' }).click();
+    const recurringDefinition = page
+        .getByTestId(/recurring-expense-/)
+        .filter({ hasText: 'E2E rent' });
+    await recurringDefinition
+        .getByRole('button', { name: 'Schedule change' })
+        .click();
+    await page.getByLabel('Amount').fill('1100');
+    await page.getByLabel('Change effective from').fill('2030-02');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.goto('/income-expenses?year=2030&month=2');
+    await expect(page.getByText('E2E rent', { exact: true })).toBeVisible();
+    await expect(
+        page.getByTestId(/financial-row-recurring_expense-/),
+    ).toContainText('1,100.00');
+
+    await page.getByRole('button', { name: 'Recurring expenses' }).click();
+    await page
+        .getByTestId(/recurring-expense-/)
+        .filter({ hasText: 'E2E rent' })
+        .getByRole('button', { name: 'End' })
+        .click();
+    await page.getByLabel('Do not include from').fill('2030-03');
+    await page.getByRole('button', { name: 'Confirm end' }).click();
+    await page.goto('/income-expenses?year=2030&month=3');
+    await expect(page.getByText('E2E rent', { exact: true })).toHaveCount(0);
+
+    await page.goto('/income-expenses?year=2030&month=1');
+    await expect(
+        page.getByTestId(/financial-row-recurring_expense-/),
+    ).toContainText('1,000.00');
+
     await page.getByRole('button', { name: 'Add row' }).click();
     await page.getByLabel('Type').selectOption('income');
     await page.getByLabel('Date').fill('2030-01-15');
@@ -45,6 +89,9 @@ test('admin manages and closes a monthly financial report while limited users ar
     page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: 'Close month' }).click();
     await expect(page.getByText('Closed', { exact: true })).toBeVisible();
+    await expect(
+        page.getByRole('button', { name: 'Recurring expenses' }),
+    ).toBeVisible();
 
     page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: 'Reopen' }).click();

@@ -156,3 +156,84 @@ use Illuminate\Validation\ValidationException;
         ->and($service->copyPreviousManualRows($admin, $store, 2026, 2))->toBe(0)
         ->and(FinancialReportManualRow::query()->latest('id')->firstOrFail()->getOccurredOn())->toBe('2026-02-28');
 });
+
+\test('recurring expenses generate one store scoped row and clamp the due day', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $otherStore = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new FinancialReportService();
+    $service->createRecurringExpense($admin, $store, 2026, 1, 'Rent', 15000, 31, 'Lease');
+
+    $before = $service->build($admin, $store, 2025, 12)['expense_rows'];
+    $february = \collect($service->build($admin, $store, 2026, 2)['expense_rows'])
+        ->firstWhere('source_type', FinancialSourceTypeEnum::RECURRING_EXPENSE->value);
+    $other = \collect($service->build($admin, $otherStore, 2026, 2)['expense_rows'])
+        ->firstWhere('source_type', FinancialSourceTypeEnum::RECURRING_EXPENSE->value);
+
+    \expect($before)->toBeEmpty()
+        ->and($february['label'])->toBe('Rent')
+        ->and($february['occurred_on'])->toBe('2026-02-28')
+        ->and($february['calculated_amount'])->toBe(15000.0)
+        ->and($february['note'])->toBe('Lease')
+        ->and($other)->toBeNull();
+});
+
+\test('recurring expense versions preserve earlier and scheduled later months before termination', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new FinancialReportService();
+    $expense = $service->createRecurringExpense($admin, $store, 2026, 1, 'Rent', 100, 31, 'Original');
+    $service->changeRecurringExpense($admin, $store, $expense->getKey(), 2026, 3, 'Rent', 120, 15, 'March');
+    $service->changeRecurringExpense($admin, $store, $expense->getKey(), 2026, 5, 'Rent', 140, 5, 'May');
+    $service->changeRecurringExpense($admin, $store, $expense->getKey(), 2026, 4, 'Rent', 130, 10, 'April');
+    $service->terminateRecurringExpense($admin, $store, $expense->getKey(), 2026, 6);
+
+    $row = static fn(int $month): mixed => \collect($service->build($admin, $store, 2026, $month)['expense_rows'])
+        ->firstWhere('source_type', FinancialSourceTypeEnum::RECURRING_EXPENSE->value);
+
+    \expect($row(2)['calculated_amount'])->toBe(100.0)
+        ->and($row(2)['note'])->toBe('Original')
+        ->and($row(3)['calculated_amount'])->toBe(120.0)
+        ->and($row(3)['occurred_on'])->toBe('2026-03-15')
+        ->and($row(4)['calculated_amount'])->toBe(130.0)
+        ->and($row(5)['calculated_amount'])->toBe(140.0)
+        ->and($row(6))->toBeNull();
+});
+
+\test('recurring expense uses monthly overrides and closed snapshots refresh only after reopen', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new FinancialReportService();
+    $expense = $service->createRecurringExpense($admin, $store, 2026, 7, 'Internet', 100, 10, null);
+    $service->setOverride(
+        $admin,
+        $store,
+        2026,
+        7,
+        FinancialSourceTypeEnum::RECURRING_EXPENSE,
+        (string) $expense->getKey(),
+        90,
+    );
+    (new PayrollReportService())->close($admin, $store, 2026, 7);
+    $service->close($admin, $store, 2026, 7);
+    $service->changeRecurringExpense($admin, $store, $expense->getKey(), 2026, 7, 'Internet', 200, 10, null);
+
+    $closed = \collect($service->build($admin, $store, 2026, 7)['expense_rows'])
+        ->firstWhere('source_type', FinancialSourceTypeEnum::RECURRING_EXPENSE->value);
+    $service->reopen($admin, $store, 2026, 7);
+    $service->resetOverride(
+        $admin,
+        $store,
+        2026,
+        7,
+        FinancialSourceTypeEnum::RECURRING_EXPENSE,
+        (string) $expense->getKey(),
+    );
+    $reopened = \collect($service->build($admin, $store, 2026, 7)['expense_rows'])
+        ->firstWhere('source_type', FinancialSourceTypeEnum::RECURRING_EXPENSE->value);
+
+    \expect($closed['calculated_amount'])->toEqual(100.0)
+        ->and($closed['effective_amount'])->toEqual(90.0)
+        ->and($reopened['calculated_amount'])->toBe(200.0)
+        ->and($reopened['effective_amount'])->toBe(200.0);
+});

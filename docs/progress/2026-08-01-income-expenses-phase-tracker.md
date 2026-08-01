@@ -2,7 +2,7 @@
 
 ## Status
 
-- Current phase: complete
+- Current phase: Phase 4
 - Overall status: verified
 - Last updated: 2026-08-01
 
@@ -31,13 +31,26 @@
 - [x] Close traceability and verification evidence.
 - Blockers: none.
 
+## Phase 4: Recurring monthly expenses
+
+- Status: complete
+- [x] Add schema, models, factories, and effective-dated service behavior.
+- [x] Add admin routes, management modal, row rendering, and translations.
+- [x] Add domain, controller, Inertia, frontend, and E2E coverage.
+- [x] Run full verification and refresh closeout evidence.
+- Blockers: none.
+
 ## Decisions
 
 - Open reports are computed live; only overrides and manual rows are persistent.
 - Closed reports render their saved snapshot.
 - Reopening preserves edits but resumes live calculations.
 - Warehouse selection renders an empty state and cannot be mutated.
+- Recurring expenses remain live automatic sources and use the existing monthly
+  override mechanism; closed report snapshots stay immutable.
+- Definition changes are effective-dated, and termination is non-destructive.
 
 ## Next
 
-Ready for review and deployment; apply the new database migration before serving the section.
+Apply the recurring-expense migration during deployment. No implementation or
+verification blockers remain for this phase.

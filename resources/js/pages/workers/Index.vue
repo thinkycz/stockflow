@@ -5,10 +5,10 @@ import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
-import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Input from '@/components/ui/Input.vue';
+import Label from '@/components/ui/Label.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { formatMoney } from '@/lib/format';
@@ -74,7 +74,27 @@ function destroyWorker(id: number): void {
                         {{ t('workers.subtitle') }}
                     </p>
                 </div>
-                <div class="flex items-center gap-2">
+                <div
+                    class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
+                >
+                    <div class="flex w-full flex-col gap-1 sm:w-72">
+                        <Label for="workers_search">{{
+                            t('common.search')
+                        }}</Label>
+                        <div class="relative">
+                            <Search
+                                :size="14"
+                                class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
+                            />
+                            <Input
+                                id="workers_search"
+                                v-model="searchTerm"
+                                type="search"
+                                :placeholder="t('workers.search_placeholder')"
+                                class="pl-9"
+                            />
+                        </div>
+                    </div>
                     <Link :href="route('workers.create')">
                         <Button>
                             <Plus :size="14" />
@@ -83,21 +103,6 @@ function destroyWorker(id: number): void {
                     </Link>
                 </div>
             </header>
-
-            <Card padded>
-                <div class="relative flex-1">
-                    <Search
-                        :size="14"
-                        class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
-                    />
-                    <Input
-                        v-model="searchTerm"
-                        type="search"
-                        :placeholder="t('workers.search_placeholder')"
-                        class="pl-9"
-                    />
-                </div>
-            </Card>
 
             <section class="space-y-4">
                 <EmptyState

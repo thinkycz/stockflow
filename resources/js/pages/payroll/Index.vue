@@ -217,12 +217,17 @@ function lifecycle(action: 'close' | 'reopen'): void {
                         }}
                     </p>
                 </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <MonthPicker
-                        :model-value="monthValue()"
-                        :aria-label="t('payroll.month')"
-                        @change="changeMonth"
-                    />
+                <div class="flex flex-wrap items-end gap-2">
+                    <div class="flex flex-col gap-1">
+                        <Label for="payroll_month">
+                            {{ t('payroll.month') }}
+                        </Label>
+                        <MonthPicker
+                            id="payroll_month"
+                            :model-value="monthValue()"
+                            @change="changeMonth"
+                        />
+                    </div>
                     <Link
                         v-if="payroll_report"
                         :href="

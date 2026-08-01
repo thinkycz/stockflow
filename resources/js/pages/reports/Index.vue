@@ -18,6 +18,7 @@ import CardTitle from '@/components/ui/CardTitle.vue';
 import Chart from '@/components/ui/Chart.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
+import Label from '@/components/ui/Label.vue';
 import MetricCard from '@/components/ui/MetricCard.vue';
 import MonthPicker from '@/components/ui/MonthPicker.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
@@ -193,16 +194,14 @@ function quantityWithUnit(value: number, unit: string | null): string {
                     </p>
                     <StoreContextIndicator />
                 </div>
-                <div class="min-w-52 space-y-1">
-                    <label
-                        for="report_month_filter"
-                        class="text-xs font-semibold text-on-surface-variant"
-                    >
+                <div class="flex min-w-52 flex-col gap-1">
+                    <Label for="report_month_filter">
                         {{ t('reports.statements.month') }}
-                    </label>
+                    </Label>
                     <MonthPicker
                         id="report_month_filter"
                         :model-value="monthValue"
+                        :aria-label="t('reports.statements.month')"
                         @change="selectMonth"
                     />
                 </div>

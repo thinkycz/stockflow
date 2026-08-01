@@ -170,10 +170,37 @@
         "confirm_reopen": "Reopen the month and refresh automatic values from their sources?",
         "warehouse_title": "Select a retail store",
         "warehouse_description": "The financial report is not available for the central warehouse.",
+        "recurring": {
+            "manage": "Recurring expenses",
+            "title": "Recurring expenses",
+            "help": "Manage fixed expenses that are added to each applicable open month.",
+            "add": "Add expense",
+            "add_title": "Add recurring expense",
+            "change": "Schedule change",
+            "change_title": "Change recurring expense",
+            "terminate": "End",
+            "terminate_title": "End recurring expense",
+            "terminate_help": "{item} will no longer be included from the selected month onward. Existing history is preserved.",
+            "confirm_terminate": "Confirm end",
+            "empty": "No recurring expenses have been configured for this store.",
+            "due_day": "Day of month",
+            "due_day_value": "day {day} of each month",
+            "starts_on": "First month",
+            "effective_from": "Change effective from",
+            "ends_before": "Do not include from",
+            "validity": "From {from} · until {until}",
+            "indefinite": "indefinitely",
+            "status": {
+                "active": "Active",
+                "upcoming": "Upcoming",
+                "ended": "Ended"
+            }
+        },
         "source_types": {
             "revenue": "Revenue",
             "stock_movement": "Stock document",
             "wage": "Wage",
+            "recurring_expense": "Recurring expense",
             "manual": "Manual"
         }
     },

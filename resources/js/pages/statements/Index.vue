@@ -10,6 +10,7 @@ import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
+import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import MonthPicker from '@/components/ui/MonthPicker.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
@@ -420,18 +421,32 @@ function submitPendingSave(closeAttendances: boolean): void {
                     </p>
                     <StoreContextIndicator />
                 </div>
-                <Link
-                    v-if="props.statement"
-                    :href="
-                        route('statements.history', {
-                            statement: props.statement.id,
-                        })
-                    "
+                <div
+                    class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
                 >
-                    <Button variant="secondary">
-                        {{ t('statements.actions.history') }} →
-                    </Button>
-                </Link>
+                    <div class="flex flex-col gap-1">
+                        <Label for="statement_month">
+                            {{ t('statements.month') }}
+                        </Label>
+                        <MonthPicker
+                            id="statement_month"
+                            :model-value="monthValue"
+                            @change="selectMonth"
+                        />
+                    </div>
+                    <Link
+                        v-if="props.statement"
+                        :href="
+                            route('statements.history', {
+                                statement: props.statement.id,
+                            })
+                        "
+                    >
+                        <Button variant="secondary">
+                            {{ t('statements.actions.history') }} →
+                        </Button>
+                    </Link>
+                </div>
             </header>
 
             <Card v-if="showTodayPanel && props.today_day" padded>
@@ -509,25 +524,6 @@ function submitPendingSave(closeAttendances: boolean): void {
                         </Button>
                     </div>
                 </form>
-            </Card>
-
-            <Card padded>
-                <div class="grid gap-4 sm:grid-cols-2 lg:max-w-2xl">
-                    <div class="space-y-2">
-                        <label
-                            for="statement_month"
-                            class="text-xs font-semibold text-on-surface-variant"
-                        >
-                            {{ t('statements.month') }}
-                        </label>
-                        <MonthPicker
-                            id="statement_month"
-                            :model-value="monthValue"
-                            class="w-full"
-                            @change="selectMonth"
-                        />
-                    </div>
-                </div>
             </Card>
 
             <div

@@ -6,10 +6,10 @@ import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
-import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Input from '@/components/ui/Input.vue';
+import Label from '@/components/ui/Label.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useCzechDate } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
@@ -86,28 +86,35 @@ const currentUserId = (): number | null => page.props.auth?.user?.id ?? null;
                         {{ t('users.subtitle') }}
                     </p>
                 </div>
-                <Link :href="route('users.create')">
-                    <Button>
-                        <Plus :size="14" />
-                        {{ t('users.create.title') }}
-                    </Button>
-                </Link>
-            </header>
-
-            <Card padded>
-                <div class="relative flex-1">
-                    <Search
-                        :size="14"
-                        class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
-                    />
-                    <Input
-                        v-model="searchTerm"
-                        type="search"
-                        :placeholder="t('users.search_placeholder')"
-                        class="pl-9"
-                    />
+                <div
+                    class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
+                >
+                    <div class="flex w-full flex-col gap-1 sm:w-72">
+                        <Label for="users_search">{{
+                            t('common.search')
+                        }}</Label>
+                        <div class="relative">
+                            <Search
+                                :size="14"
+                                class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
+                            />
+                            <Input
+                                id="users_search"
+                                v-model="searchTerm"
+                                type="search"
+                                :placeholder="t('users.search_placeholder')"
+                                class="pl-9"
+                            />
+                        </div>
+                    </div>
+                    <Link :href="route('users.create')">
+                        <Button>
+                            <Plus :size="14" />
+                            {{ t('users.create.title') }}
+                        </Button>
+                    </Link>
                 </div>
-            </Card>
+            </header>
 
             <section class="space-y-4">
                 <EmptyState

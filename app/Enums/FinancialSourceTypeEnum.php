@@ -12,6 +12,8 @@ enum FinancialSourceTypeEnum: string
 
     case WAGE = 'wage';
 
+    case RECURRING_EXPENSE = 'recurring_expense';
+
     /**
      * Get possible values.
      *

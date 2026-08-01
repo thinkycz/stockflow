@@ -18,6 +18,13 @@ and durable administrator overrides into one auditable result.
   effective-value override.
 - Manual income and expense rows have a label, date, amount, and optional note.
 - Manual rows can be copied idempotently from the previous month.
+- Recurring expenses are store-scoped schedules with monthly effective versions,
+  a due day, fixed CZK amount, optional note, and an exclusive ending month.
+- Each applicable recurring expense produces one live automatic expense row.
+  Changes affect the selected month onward without rewriting earlier versions;
+  one month can still use the standard automatic-row override.
+- Ending a recurring expense preserves its history and prevents occurrences from
+  the selected ending month onward. Recurring rows are never copied as manual rows.
 - Closing a month freezes a complete snapshot and locks mutations. Reopening
   restores live source calculations while preserving overrides and manual rows.
 - Closing requires the matching payroll report to be closed first.
@@ -29,3 +36,5 @@ and durable administrator overrides into one auditable result.
 The page shows separate income and expense tables plus total income, total
 expenses, and profit. Source changes affect open reports unless overridden,
 closed reports remain unchanged, and reopened reports refresh from sources.
+Recurring-expense management remains available while a closed month is viewed,
+but its saved snapshot cannot change until the report is reopened.

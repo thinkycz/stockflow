@@ -170,10 +170,37 @@
         "confirm_reopen": "Znovu otvoriť mesiac a obnoviť automatické hodnoty zo zdrojov?",
         "warehouse_title": "Vyberte predajňu",
         "warehouse_description": "Finančný report nie je dostupný pre centrálny sklad.",
+        "recurring": {
+            "manage": "Pravidelné výdavky",
+            "title": "Pravidelné výdavky",
+            "help": "Spravujte pevné výdavky, ktoré sa automaticky pridávajú do každého platného otvoreného mesiaca.",
+            "add": "Pridať výdavok",
+            "add_title": "Pridať pravidelný výdavok",
+            "change": "Naplánovať zmenu",
+            "change_title": "Zmeniť pravidelný výdavok",
+            "terminate": "Ukončiť",
+            "terminate_title": "Ukončiť pravidelný výdavok",
+            "terminate_help": "Položka {item} sa od vybraného mesiaca prestane započítavať. Doterajšia história zostane zachovaná.",
+            "confirm_terminate": "Potvrdiť ukončenie",
+            "empty": "Pre túto predajňu zatiaľ nie sú nastavené žiadne pravidelné výdavky.",
+            "due_day": "Deň v mesiaci",
+            "due_day_value": "každý mesiac dňa {day}.",
+            "starts_on": "Prvý mesiac",
+            "effective_from": "Zmena platí od",
+            "ends_before": "Nezapočítavať od",
+            "validity": "Od {from} · do {until}",
+            "indefinite": "bez obmedzenia",
+            "status": {
+                "active": "Aktívny",
+                "upcoming": "Budúci",
+                "ended": "Ukončený"
+            }
+        },
         "source_types": {
             "revenue": "Tržba",
             "stock_movement": "Skladový doklad",
             "wage": "Mzda",
+            "recurring_expense": "Pravidelný výdavok",
             "manual": "Ručné"
         }
     },

@@ -40,6 +40,11 @@ class FinancialReportValidity
     public function month(): Validity { return $this->baseValidity->make()->integer(12, 1); }
 
     /**
+     * Validate a year-month period.
+     */
+    public function period(): Validity { return $this->baseValidity->make()->varchar(7)->addRule('date_format', ['Y-m']); }
+
+    /**
      * Validate a financial direction.
      */
     public function direction(): Validity { return $this->baseValidity->make()->inString(FinancialDirectionEnum::values()); }
@@ -68,6 +73,11 @@ class FinancialReportValidity
      * Validate a non-negative CZK amount.
      */
     public function amount(): Validity { return $this->baseValidity->make()->numeric(999999999999.99, 0)->addRule('decimal', [0, 2]); }
+
+    /**
+     * Validate a recurring-expense due day.
+     */
+    public function dueDay(): Validity { return $this->baseValidity->make()->integer(31, 1); }
 
     /**
      * Validate an optional note.

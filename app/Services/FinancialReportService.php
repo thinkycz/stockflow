@@ -8,6 +8,8 @@ use App\Enums\FinancialDirectionEnum;
 use App\Enums\FinancialReportStatusEnum;
 use App\Enums\FinancialSourceTypeEnum;
 use App\Enums\StockMovementTypeEnum;
+use App\Models\FinancialRecurringExpense;
+use App\Models\FinancialRecurringExpenseVersion;
 use App\Models\FinancialReport;
 use App\Models\FinancialReportManualRow;
 use App\Models\FinancialReportOverride;
@@ -58,6 +60,7 @@ class FinancialReportService
             ...$this->revenueRows($admin, $store, $year, $month),
             ...$this->stockRows($admin, $store, $year, $month),
             ...$this->wageRows($admin, $store, $year, $month),
+            ...$this->recurringExpenseRows($admin, $store, $year, $month),
         ];
         $overrides = [];
 
@@ -93,7 +96,7 @@ class FinancialReportService
     {
         $report = $this->openReport($admin, $store, $year, $month);
         $exists = false;
-        foreach ([...$this->revenueRows($admin, $store, $year, $month), ...$this->stockRows($admin, $store, $year, $month), ...$this->wageRows($admin, $store, $year, $month)] as $row) {
+        foreach ([...$this->revenueRows($admin, $store, $year, $month), ...$this->stockRows($admin, $store, $year, $month), ...$this->wageRows($admin, $store, $year, $month), ...$this->recurringExpenseRows($admin, $store, $year, $month)] as $row) {
             if ($row['source_type'] === $sourceType->value && $row['source_key'] === $sourceKey) {
                 $exists = true;
                 break;
@@ -185,6 +188,124 @@ class FinancialReportService
 
             return $count;
         });
+    }
+
+    /**
+     * Create a recurring monthly expense and its first effective version.
+     */
+    public function createRecurringExpense(User $admin, Store $store, int $year, int $month, string $label, float $amount, int $dueDay, string|null $note): FinancialRecurringExpense
+    {
+        $this->assertStore($admin, $store);
+
+        return DB::transaction(static function () use ($admin, $store, $year, $month, $label, $amount, $dueDay, $note): FinancialRecurringExpense {
+            $startsOn = new CarbonImmutable($year . '-' . $month . '-01');
+            $expense = FinancialRecurringExpense::query()->create([
+                'user_id' => $admin->getKey(),
+                'store_id' => $store->getKey(),
+                'starts_on' => $startsOn->toDateString(),
+            ]);
+            $expense->versions()->create([
+                'effective_from' => $startsOn->toDateString(),
+                'label' => $label,
+                'amount' => \round($amount, 2),
+                'due_day' => $dueDay,
+                'note' => $note,
+            ]);
+
+            return $expense;
+        });
+    }
+
+    /**
+     * Add or replace a recurring-expense version from an effective month.
+     */
+    public function changeRecurringExpense(User $admin, Store $store, int $expenseId, int $year, int $month, string $label, float $amount, int $dueDay, string|null $note): void
+    {
+        $this->assertStore($admin, $store);
+        DB::transaction(function () use ($admin, $store, $expenseId, $year, $month, $label, $amount, $dueDay, $note): void {
+            $expense = $this->recurringExpense($admin, $store, $expenseId, true);
+            $effectiveFrom = new CarbonImmutable($year . '-' . $month . '-01');
+            if ($effectiveFrom->toDateString() < $expense->getStartsOn()) {
+                Thrower::default()->message('effective_from', \__('A recurring expense change cannot start before the expense itself.'))->throw();
+            }
+            if ($expense->getEndsBefore() !== null) {
+                Thrower::default()->message('recurring_expense', \__('An ended recurring expense cannot be changed.'))->throw();
+            }
+            $version = $expense->versions()->whereDate('effective_from', $effectiveFrom->toDateString())->first();
+            $attributes = ['label' => $label, 'amount' => \round($amount, 2), 'due_day' => $dueDay, 'note' => $note];
+            if ($version instanceof FinancialRecurringExpenseVersion) {
+                $version->update($attributes);
+            } else {
+                $expense->versions()->create(['effective_from' => $effectiveFrom->toDateString(), ...$attributes]);
+            }
+        });
+    }
+
+    /**
+     * End a recurring expense before the selected month.
+     */
+    public function terminateRecurringExpense(User $admin, Store $store, int $expenseId, int $year, int $month): void
+    {
+        $this->assertStore($admin, $store);
+        DB::transaction(function () use ($admin, $store, $expenseId, $year, $month): void {
+            $expense = $this->recurringExpense($admin, $store, $expenseId, true);
+            $endsBefore = new CarbonImmutable($year . '-' . $month . '-01');
+            if ($endsBefore->toDateString() < $expense->getStartsOn()) {
+                Thrower::default()->message('ends_before', \__('A recurring expense cannot end before it starts.'))->throw();
+            }
+            if ($expense->getEndsBefore() !== null) {
+                Thrower::default()->message('recurring_expense', \__('The recurring expense has already ended.'))->throw();
+            }
+            $expense->update(['ends_before' => $endsBefore->toDateString()]);
+        });
+    }
+
+    /**
+     * Build recurring-expense management rows for the selected month.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function recurringExpenses(User $admin, Store $store, int $year, int $month): array
+    {
+        $this->assertStore($admin, $store);
+        $period = new CarbonImmutable($year . '-' . $month . '-01');
+        $query = FinancialRecurringExpense::query();
+        FinancialRecurringExpense::scopeForUser($query, $admin);
+        FinancialRecurringExpense::querySelect($query);
+        $expenses = $query->where('store_id', $store->getKey())->with('versions')->orderBy('starts_on')->orderBy('id')->get();
+        $rows = [];
+        foreach ($expenses as $expense) {
+            $status = $expense->getStartsOn() > $period->toDateString()
+                ? 'upcoming'
+                : ($expense->getEndsBefore() !== null && $expense->getEndsBefore() <= $period->toDateString() ? 'ended' : 'active');
+            $reference = match ($status) {
+                'upcoming' => new CarbonImmutable($expense->getStartsOn()),
+                'ended' => new CarbonImmutable($expense->getEndsBefore())->subMonth(),
+                default => $period,
+            };
+            $version = null;
+            foreach ($expense->getVersions() as $candidate) {
+                if ($candidate->getEffectiveFrom() <= $reference->toDateString()) {
+                    $version = $candidate;
+                }
+            }
+            if (!$version instanceof FinancialRecurringExpenseVersion) {
+                continue;
+            }
+            $rows[] = [
+                'id' => $expense->getKey(),
+                'label' => $version->getLabel(),
+                'amount' => $version->getAmount(),
+                'due_day' => $version->getDueDay(),
+                'note' => $version->getNote(),
+                'starts_on' => \mb_substr($expense->getStartsOn(), 0, 7),
+                'ends_before' => $expense->getEndsBefore() === null ? null : \mb_substr($expense->getEndsBefore(), 0, 7),
+                'effective_from' => \mb_substr($version->getEffectiveFrom(), 0, 7),
+                'status' => $status,
+            ];
+        }
+
+        return $rows;
     }
 
     /**
@@ -337,6 +458,50 @@ class FinancialReportService
     }
 
     /**
+     * @return list<FinancialRow>
+     */
+    private function recurringExpenseRows(User $admin, Store $store, int $year, int $month): array
+    {
+        $period = new CarbonImmutable($year . '-' . $month . '-01');
+        $query = FinancialRecurringExpense::query();
+        FinancialRecurringExpense::scopeForUser($query, $admin);
+        FinancialRecurringExpense::querySelect($query);
+        $expenses = $query
+            ->where('store_id', $store->getKey())
+            ->whereDate('starts_on', '<=', $period->toDateString())
+            ->where(static fn($activeQuery) => $activeQuery->whereNull('ends_before')->orWhereDate('ends_before', '>', $period->toDateString()))
+            ->with('versions')
+            ->orderBy('id')
+            ->get();
+        $rows = [];
+        foreach ($expenses as $expense) {
+            $version = null;
+            foreach ($expense->getVersions() as $candidate) {
+                if ($candidate->getEffectiveFrom() <= $period->toDateString()) {
+                    $version = $candidate;
+                }
+            }
+            if (!$version instanceof FinancialRecurringExpenseVersion) {
+                continue;
+            }
+            $occurredOn = $period->setDay(\min($version->getDueDay(), $period->daysInMonth))->toDateString();
+            $row = $this->automaticRow(
+                FinancialDirectionEnum::EXPENSE,
+                FinancialSourceTypeEnum::RECURRING_EXPENSE,
+                (string) $expense->getKey(),
+                $version->getLabel(),
+                $occurredOn,
+                $version->getAmount(),
+                ['recurring_expense_id' => $expense->getKey(), 'due_day' => $version->getDueDay()],
+            );
+            $row['note'] = $version->getNote();
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    /**
      * Build a calculated row.
      *
      * @param array<string, mixed> $details
@@ -431,6 +596,22 @@ class FinancialReportService
         FinancialReport::scopeForUser($query, $admin);
 
         return $query->where('store_id', $store->getKey())->where('year', $year)->where('month', $month)->first();
+    }
+
+    /**
+     * Resolve a recurring expense inside the active administrator and store scope.
+     */
+    private function recurringExpense(User $admin, Store $store, int $expenseId, bool $lock): FinancialRecurringExpense
+    {
+        $query = FinancialRecurringExpense::query();
+        FinancialRecurringExpense::scopeForUser($query, $admin);
+        FinancialRecurringExpense::querySelect($query);
+        $query->where('store_id', $store->getKey())->whereKey($expenseId);
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        return $query->firstOrFail();
     }
 
     /**

@@ -38,13 +38,17 @@ class IncomeExpenseIndexController
             $month = $now->month;
         }
         $store = ActiveStoreResolver::resolve($request, $admin);
+        $service = new FinancialReportService();
 
         return Inertia::render('income-expenses/Index', [
             'active_store' => $store instanceof Store ? ['id' => $store->getKey(), 'name' => $store->getName(), 'is_warehouse' => $store->isWarehouse()] : null,
             'filters' => ['year' => $year, 'month' => $month],
             'financial_report' => $store instanceof Store && !$store->isWarehouse()
-                ? (new FinancialReportService())->build($admin, $store, $year, $month)
+                ? $service->build($admin, $store, $year, $month)
                 : null,
+            'recurring_expenses' => $store instanceof Store && !$store->isWarehouse()
+                ? $service->recurringExpenses($admin, $store, $year, $month)
+                : [],
         ]);
     }
 }

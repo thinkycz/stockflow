@@ -37,7 +37,6 @@ class ItemShowController
             'stock_movements.type',
             'stock_movements.store_id',
             'stock_movements.total_quantity',
-            'stock_movements.total_value',
             'stock_movements.created_at',
         ])
             ->orderByDesc('stock_movements.created_at')
@@ -51,7 +50,6 @@ class ItemShowController
                 'type' => $movement->getType()->value,
                 'store_id' => $movement->getStoreId(),
                 'total_quantity' => $movement->getTotalQuantity(),
-                'total_value' => $movement->getTotalValue(),
                 'quantity' => $movement->getPivotQuantity(),
                 'quantity_before' => $movement->getPivotQuantityBefore(),
                 'quantity_after' => $movement->getPivotQuantityAfter(),
@@ -82,7 +80,6 @@ class ItemShowController
                 'purchase_price' => $item->getPurchasePrice(),
                 'total_value' => $item->getTotalValue(),
                 'description' => $item->getDescription(),
-                'status' => $item->getStockStatus()->value,
             ],
             'store_quantities' => $storeQuantities,
             'movements' => $movements,

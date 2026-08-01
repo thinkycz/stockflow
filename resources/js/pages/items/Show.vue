@@ -20,7 +20,6 @@ import CardTitle from '@/components/ui/CardTitle.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
-import StatusBadge from '@/components/ui/StatusBadge.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { formatDateTime, formatMoney, formatNumber } from '@/lib/format';
 
@@ -36,7 +35,6 @@ type MovementRow = {
         | 'reversal';
     store_id: number | null;
     total_quantity: number;
-    total_value: number;
     quantity: number | null;
     quantity_before: number | null;
     quantity_after: number | null;
@@ -62,7 +60,6 @@ const props = defineProps<{
         purchase_price: number;
         total_value: number;
         description: string | null;
-        status: 'in_stock' | 'low_stock' | 'out_of_stock';
     };
     store_quantities: StoreQuantityRow[];
     movements: MovementRow[];
@@ -115,8 +112,6 @@ useBoundLocale();
                             </Badge>
                             <span v-if="item.unit">·</span>
                             <span v-if="item.unit">{{ item.unit }}</span>
-                            <span>·</span>
-                            <StatusBadge :status="item.status" />
                         </div>
                     </div>
                 </div>
@@ -300,9 +295,6 @@ useBoundLocale();
                                 <th class="text-right">
                                     {{ t('stock_movements.columns.quantity') }}
                                 </th>
-                                <th class="text-right">
-                                    {{ t('stock_movements.columns.value') }}
-                                </th>
                                 <th>{{ t('stock_movements.columns.date') }}</th>
                             </tr>
                         </thead>
@@ -340,9 +332,6 @@ useBoundLocale();
                                                   movement.quantity ?? 0,
                                               )
                                     }}
-                                </td>
-                                <td class="text-right text-on-surface-variant">
-                                    {{ formatMoney(movement.total_value) }}
                                 </td>
                                 <td class="text-xs text-on-surface-variant">
                                     {{ formatDateTime(movement.created_at) }}

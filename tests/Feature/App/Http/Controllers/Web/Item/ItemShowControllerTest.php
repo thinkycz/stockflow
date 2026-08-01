@@ -11,10 +11,12 @@ use App\Models\StoreItem;
 \test('authenticated user can view item details with movement history', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
+    $otherItem = Item::factory()->create(['user_id' => $user->getKey()]);
     $movement = StockMovement::factory()->incoming()->create([
         'user_id' => $user->getKey(),
         'created_by' => $user->getKey(),
         'store_id' => $warehouse->getKey(),
+        'total_value' => 30,
     ]);
 
     StockMovementItem::query()->create([
@@ -27,6 +29,16 @@ use App\Models\StoreItem;
         'quantity_difference' => 10,
         'adjustment_reason' => null,
     ]);
+    StockMovementItem::query()->create([
+        'stock_movement_id' => $movement->getKey(),
+        'item_id' => $otherItem->getKey(),
+        'quantity' => 20,
+        'total' => 20,
+        'quantity_before' => 0,
+        'quantity_after' => 20,
+        'quantity_difference' => 20,
+        'adjustment_reason' => null,
+    ]);
 
     $response = $this->be($user, 'users')->get("/items/{$item->getKey()}", $this->inertiaHeaders());
 
@@ -34,6 +46,8 @@ use App\Models\StoreItem;
     $response->assertJsonPath('component', 'items/Show');
     $response->assertJsonPath('props.item.id', $item->getKey());
     $response->assertJsonCount(1, 'props.movements');
+    \expect($response->json('props.item'))->not->toHaveKey('status');
+    \expect($response->json('props.movements.0'))->not->toHaveKey('total_value');
 });
 
 \test('item show includes movements from all stores', function (): void {

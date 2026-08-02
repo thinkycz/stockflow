@@ -39,6 +39,8 @@ class RecipeTestResultIndexController
                     'attempt_count' => $attempts->count(),
                     'latest' => $latest instanceof RecipeTestAttempt ? [
                         'id' => $latest->getKey(), 'variant_name' => $latest->getVariantName(), 'score' => $latest->getScore(),
+                        'order_score' => $latest->getOrderScore(), 'amount_score' => $latest->getAmountScore(),
+                        'session_position' => $latest->getSessionPosition(), 'session_id' => $latest->getSessionId(),
                         'passed' => $latest->isPassed(), 'submitted_at' => $latest->getSubmittedAt()?->toJSON(),
                     ] : null,
                 ];
@@ -55,6 +57,8 @@ class RecipeTestResultIndexController
                 ->paginate(self::TAKE)->withQueryString();
             $paginator->through(static fn(RecipeTestAttempt $attempt): array => [
                 'id' => $attempt->getKey(), 'variant_name' => $attempt->getVariantName(), 'score' => $attempt->getScore(),
+                'order_score' => $attempt->getOrderScore(), 'amount_score' => $attempt->getAmountScore(),
+                'session_position' => $attempt->getSessionPosition(), 'session_id' => $attempt->getSessionId(),
                 'passed' => $attempt->isPassed(), 'submitted_at' => $attempt->getSubmittedAt()?->toJSON(), 'actor_name' => $attempt->getActorName(),
             ]);
             $history = Typer::assertStringKeyArray($paginator->toArray());
@@ -80,7 +84,7 @@ class RecipeTestResultIndexController
             ->where(static function (Builder $query) use ($recipe): void {
                 $query->where('recipe_id', $recipe->getKey())
                     ->orWhere(static function (Builder $query) use ($recipe): void {
-                        $query->whereNull('recipe_id')->where('recipe_name', $recipe->getName());
+                        $query->whereNull('recipe_id')->whereRaw('LOWER(recipe_name) = ?', [\mb_strtolower($recipe->getName())]);
                     });
             });
     }

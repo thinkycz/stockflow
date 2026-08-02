@@ -153,6 +153,26 @@ class RecipeValidity
     public function token(): Validity { return $this->baseValidity->make()->string(64); }
 
     /**
+     * Three submitted recipe answers.
+     */
+    public function sessionAnswers(): Validity { return $this->baseValidity->make()->array(null)->min(3)->max(3); }
+
+    /**
+     * Child attempt identifier.
+     */
+    public function attemptId(): Validity { return $this->baseValidity->id(); }
+
+    /**
+     * Amount answers keyed by opaque instruction token.
+     */
+    public function amountAnswers(): Validity { return $this->baseValidity->make()->array(null)->max(100); }
+
+    /**
+     * Decimal amount answer before server normalization.
+     */
+    public function amountAnswer(): Validity { return $this->baseValidity->make()->string(32); }
+
+    /**
      * Requested archive state.
      */
     public function archived(): Validity { return $this->baseValidity->make()->boolean(); }

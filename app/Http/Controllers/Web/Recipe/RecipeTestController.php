@@ -6,10 +6,8 @@ namespace App\Http\Controllers\Web\Recipe;
 
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\RecipeValidity;
-use App\Models\Recipe;
 use App\Models\RecipeTestAttempt;
 use App\Models\User;
-use App\Models\Worker;
 use App\Services\RecipeTestService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,28 +21,6 @@ class RecipeTestController
     use ValidatesWebRequests;
 
     /**
-     * Start a new test attempt for a selected worker.
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        $actor = User::mustAuth();
-        if ($actor->isAdmin()) {
-            \abort(403);
-        }
-        $owner = $actor->resolveScopeUser();
-        $validity = RecipeValidity::inject($owner->getKey());
-        $validated = $this->validateRequest($request, [
-            'recipe_id' => $validity->recipeId()->required()->toArray(),
-            'worker_id' => $validity->workerId()->required()->toArray(),
-        ]);
-        $recipe = Typer::assertInstance(Recipe::query()->where('user_id', $owner->getKey())->whereNull('archived_at')->whereKey($validated->assertInt('recipe_id'))->firstOrFail(), Recipe::class);
-        $worker = Typer::assertInstance(Worker::query()->where('user_id', $owner->getKey())->whereKey($validated->assertInt('worker_id'))->firstOrFail(), Worker::class);
-        $attempt = (new RecipeTestService())->start($actor, $worker, $recipe);
-
-        return Resolver::resolveRedirector()->route('recipe-tests.show', $attempt->getKey());
-    }
-
-    /**
      * Display an owned in-progress attempt.
      */
     public function show(RecipeTestAttempt $recipeTest): RedirectResponse|Response
@@ -52,7 +28,9 @@ class RecipeTestController
         $actor = User::mustAuth();
         $attempt = $this->ownedAttempt($actor, $recipeTest);
         if ($attempt->getSubmittedAt() !== null) {
-            return Resolver::resolveRedirector()->route('recipes.show', $attempt->getRecipeId());
+            return $attempt->getRecipeId() === null
+                ? Resolver::resolveRedirector()->route('recipes.index')
+                : Resolver::resolveRedirector()->route('recipes.show', $attempt->getRecipeId());
         }
 
         return Inertia::render('recipes/Test', $this->payload($attempt, false));

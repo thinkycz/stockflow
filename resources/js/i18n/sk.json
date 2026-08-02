@@ -1334,7 +1334,20 @@
             "passed": "Test splnený",
             "failed": "Test nesplnený",
             "correct_order": "Správne poradie",
-            "try_again": "Skúsiť znova"
+            "try_again": "Skúsiť znova",
+            "session_title": "Test troch receptov",
+            "session_explanation": "Test náhodne vyberie tri recepty. Zoradíte celý postup a doplníte presné množstvá v g a ml.",
+            "not_enough_recipes": "Na test musia byť aktívne aspoň tri použiteľné recepty.",
+            "session_instructions": "Zoraďte inštrukcie a doplňte skryté množstvá. Výsledok uvidíte až po odoslaní všetkých troch receptov.",
+            "submit_all": "Odoslať všetky recepty",
+            "combined_score": "Celkové skóre",
+            "order_score": "Poradie",
+            "amount_score": "Množstvá",
+            "your_amount": "vaša odpoveď",
+            "correct_amount": "správne",
+            "add": "Pridať",
+            "into": "do",
+            "amount_for": "Množstvo pre {ingredient}"
         },
         "results": {
             "title": "Výsledky testov",

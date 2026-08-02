@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Web\Recipe;
 use App\Models\Recipe;
 use App\Models\RecipeCategory;
 use App\Models\User;
+use App\Models\Worker;
 use App\Services\RecipeCatalogService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -50,11 +51,22 @@ class RecipeIndexController
             'active_recipes_count' => Typer::assertInt($category->getAttribute('active_recipes_count')),
         ])->all();
 
+        $workers = [];
+        $testableRecipeCount = 0;
+        if (!$actor->isAdmin()) {
+            $workers = Worker::query()->where('user_id', $owner->getKey())->orderBy('first_name')->orderBy('last_name')->get()
+                ->map(static fn(Worker $worker): array => ['id' => $worker->getKey(), 'name' => $worker->getFullName()])->all();
+            $testableRecipeCount = Recipe::query()->where('user_id', $owner->getKey())->whereNull('archived_at')
+                ->whereHas('variants', static fn(Builder $query): Builder => $query->has('instructions', '>=', 2))->count();
+        }
+
         return Inertia::render('recipes/Index', [
             'is_admin' => $actor->isAdmin(),
             'categories' => $categories,
             'recipes' => Typer::assertStringKeyArray($paginator->toArray()),
             'filters' => ['search' => $search, 'category_id' => $categoryId > 0 ? $categoryId : null, 'archived' => $showArchived],
+            'workers' => $workers,
+            'testable_recipe_count' => $testableRecipeCount,
         ]);
     }
 

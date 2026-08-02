@@ -23,7 +23,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         ]]],
     ])->assertRedirect();
 
-    \expect($recipe->fresh()?->getName())->toBe('EDITED')
+    \expect($recipe->fresh()?->getName())->toBe('Edited')
         ->and($recipe->fresh()?->variants()->count())->toBe(1);
 });
 

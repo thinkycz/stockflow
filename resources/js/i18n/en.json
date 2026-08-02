@@ -1334,7 +1334,20 @@
             "passed": "Test passed",
             "failed": "Test failed",
             "correct_order": "Correct order",
-            "try_again": "Try again"
+            "try_again": "Try again",
+            "session_title": "Three-recipe test",
+            "session_explanation": "The test randomly selects three recipes. You will order the full process and enter exact g and ml amounts.",
+            "not_enough_recipes": "At least three usable active recipes are required for a test.",
+            "session_instructions": "Order the instructions and fill in the hidden amounts. Results appear only after all three recipes are submitted.",
+            "submit_all": "Submit all recipes",
+            "combined_score": "Combined score",
+            "order_score": "Order",
+            "amount_score": "Amounts",
+            "your_amount": "your answer",
+            "correct_amount": "correct",
+            "add": "Add",
+            "into": "into",
+            "amount_for": "Amount for {ingredient}"
         },
         "results": {
             "title": "Test results",

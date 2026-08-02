@@ -55,6 +55,7 @@ use App\Http\Controllers\Web\Recipe\RecipeShowController;
 use App\Http\Controllers\Web\Recipe\RecipeTestController;
 use App\Http\Controllers\Web\Recipe\RecipeTestResultIndexController;
 use App\Http\Controllers\Web\Recipe\RecipeTestResultShowController;
+use App\Http\Controllers\Web\Recipe\RecipeTestSessionController;
 use App\Http\Controllers\Web\Report\ReportController;
 use App\Http\Controllers\Web\Report\StatisticsController;
 use App\Http\Controllers\Web\Settings\SettingsController;
@@ -169,9 +170,11 @@ Resolver::resolveRouteRegistrar()
         // Company recipes (admin + limited read/test)
         $router->get('recipes', RecipeIndexController::class)->name('recipes.index');
         $router->get('recipes/{recipe}', RecipeShowController::class)->whereNumber('recipe')->name('recipes.show');
-        $router->post('recipe-tests', [RecipeTestController::class, 'store'])->name('recipe-tests.store');
         $router->get('recipe-tests/{recipeTest}', [RecipeTestController::class, 'show'])->whereNumber('recipeTest')->name('recipe-tests.show');
         $router->put('recipe-tests/{recipeTest}', [RecipeTestController::class, 'update'])->whereNumber('recipeTest')->name('recipe-tests.update');
+        $router->post('recipe-test-sessions', [RecipeTestSessionController::class, 'store'])->name('recipe-test-sessions.store');
+        $router->get('recipe-test-sessions/{session}', [RecipeTestSessionController::class, 'show'])->whereNumber('session')->name('recipe-test-sessions.show');
+        $router->put('recipe-test-sessions/{session}', [RecipeTestSessionController::class, 'update'])->whereNumber('session')->name('recipe-test-sessions.update');
 
         // Settings
         $router->get('verify-email', [VerifyEmailController::class, 'create'])->name('verify-email.show');

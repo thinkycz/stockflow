@@ -4,7 +4,7 @@ import {
     Archive,
     ArrowDown,
     ArrowUp,
-    EllipsisVertical,
+    ClipboardCheck,
     FolderCog,
     Pencil,
     Plus,
@@ -12,13 +12,17 @@ import {
     Search,
     Trophy,
 } from '@lucide/vue';
-import { computed, reactive } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
+import DropdownMenu from '@/components/ui/DropdownMenu.vue';
+import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
 import Input from '@/components/ui/Input.vue';
+import Label from '@/components/ui/Label.vue';
+import Modal from '@/components/ui/Modal.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import Select from '@/components/ui/Select.vue';
 import { useRoute } from '@/composables/useRoute';
@@ -47,6 +51,8 @@ const props = defineProps<{
         total: number;
     };
     filters: { search: string; category_id: number | null; archived: boolean };
+    workers: Array<{ id: number; name: string }>;
+    testable_recipe_count: number;
 }>();
 
 const { t } = useI18n();
@@ -58,6 +64,12 @@ const filters = reactive({
         : '',
     archived: props.filters.archived,
 });
+const testModalOpen = ref(false);
+const workerId = ref('');
+const starting = ref(false);
+const canStartTest = computed(
+    () => props.workers.length > 0 && props.testable_recipe_count >= 3,
+);
 
 const groupedRecipes = computed(() =>
     props.categories
@@ -97,6 +109,16 @@ function moveRecipe(id: number, direction: 'up' | 'down'): void {
         { preserveScroll: true },
     );
 }
+
+function startTest(): void {
+    if (!workerId.value || !canStartTest.value) return;
+    starting.value = true;
+    router.post(
+        route('recipe-test-sessions.store'),
+        { worker_id: Number(workerId.value) },
+        { onFinish: () => (starting.value = false) },
+    );
+}
 </script>
 
 <template>
@@ -131,6 +153,23 @@ function moveRecipe(id: number, direction: 'up' | 'down'): void {
                             <Plus :size="15" />{{ t('recipes.create') }}
                         </Button>
                     </Link>
+                </div>
+                <div v-else class="flex flex-col items-end gap-1">
+                    <Button
+                        :disabled="!canStartTest"
+                        size="compact"
+                        @click="testModalOpen = true"
+                    >
+                        <ClipboardCheck :size="16" />{{
+                            t('recipes.test.start')
+                        }}
+                    </Button>
+                    <p
+                        v-if="testable_recipe_count < 3"
+                        class="max-w-64 text-right text-xs text-on-surface-variant"
+                    >
+                        {{ t('recipes.test.not_enough_recipes') }}
+                    </p>
                 </div>
             </header>
 
@@ -212,71 +251,49 @@ function moveRecipe(id: number, direction: 'up' | 'down'): void {
                             <Badge v-if="recipe.archived" variant="warning">
                                 {{ t('recipes.archived') }}
                             </Badge>
-                            <details v-if="is_admin" class="group relative">
-                                <summary
-                                    class="flex size-8 cursor-pointer list-none items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
-                                    :aria-label="t('recipes.row_actions')"
+                            <DropdownMenu
+                                v-if="is_admin"
+                                :label="t('recipes.row_actions')"
+                            >
+                                <DropdownMenuItem
+                                    :href="route('recipes.edit', recipe.id)"
                                 >
-                                    <EllipsisVertical :size="17" />
-                                </summary>
-                                <div
-                                    class="absolute top-9 right-0 z-20 w-48 rounded-xl border border-outline-glass bg-white p-1 shadow-lg"
+                                    <Pencil :size="16" />{{ t('common.edit') }}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    @select="moveRecipe(recipe.id, 'up')"
                                 >
-                                    <Link
-                                        :href="route('recipes.edit', recipe.id)"
-                                        class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-surface-container-low"
-                                    >
-                                        <Pencil :size="14" />{{
-                                            t('common.edit')
-                                        }}
-                                    </Link>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="compact"
-                                        class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-surface-container-low"
-                                        @click="moveRecipe(recipe.id, 'up')"
-                                    >
-                                        <ArrowUp :size="14" />{{
-                                            t('common.move_up')
-                                        }}
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="compact"
-                                        class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-surface-container-low"
-                                        @click="moveRecipe(recipe.id, 'down')"
-                                    >
-                                        <ArrowDown :size="14" />{{
-                                            t('common.move_down')
-                                        }}
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="compact"
-                                        class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-surface-container-low"
-                                        @click="
-                                            setArchived(
-                                                recipe,
-                                                !recipe.archived,
-                                            )
-                                        "
-                                    >
-                                        <RotateCcw
-                                            v-if="recipe.archived"
-                                            :size="14"
-                                        />
-                                        <Archive v-else :size="14" />
-                                        {{
-                                            recipe.archived
-                                                ? t('recipes.restore')
-                                                : t('recipes.archive')
-                                        }}
-                                    </Button>
-                                </div>
-                            </details>
+                                    <ArrowUp :size="16" />{{
+                                        t('common.move_up')
+                                    }}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    @select="moveRecipe(recipe.id, 'down')"
+                                >
+                                    <ArrowDown :size="16" />{{
+                                        t('common.move_down')
+                                    }}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    :tone="
+                                        recipe.archived ? 'default' : 'danger'
+                                    "
+                                    @select="
+                                        setArchived(recipe, !recipe.archived)
+                                    "
+                                >
+                                    <RotateCcw
+                                        v-if="recipe.archived"
+                                        :size="16"
+                                    />
+                                    <Archive v-else :size="16" />
+                                    {{
+                                        recipe.archived
+                                            ? t('recipes.restore')
+                                            : t('recipes.archive')
+                                    }}
+                                </DropdownMenuItem>
+                            </DropdownMenu>
                         </li>
                     </ul>
                 </section>
@@ -301,5 +318,38 @@ function moveRecipe(id: number, direction: 'up' | 'down'): void {
                 }"
             />
         </div>
+
+        <Modal
+            :open="testModalOpen"
+            :title="t('recipes.test.choose_worker')"
+            @close="testModalOpen = false"
+        >
+            <Label for="test-worker" required>{{
+                t('recipes.test.worker')
+            }}</Label>
+            <Select
+                id="test-worker"
+                v-model="workerId"
+                class="mt-1"
+                :options="
+                    workers.map((worker) => ({
+                        value: String(worker.id),
+                        label: worker.name,
+                    }))
+                "
+                :placeholder="t('recipes.test.choose_worker_placeholder')"
+            />
+            <p class="mt-3 text-xs text-on-surface-variant">
+                {{ t('recipes.test.session_explanation') }}
+            </p>
+            <template #footer>
+                <Button variant="secondary" @click="testModalOpen = false">{{
+                    t('common.cancel')
+                }}</Button>
+                <Button :disabled="!workerId || starting" @click="startTest">{{
+                    starting ? t('common.saving') : t('recipes.test.start')
+                }}</Button>
+            </template>
+        </Modal>
     </AppLayout>
 </template>

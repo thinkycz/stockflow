@@ -21,6 +21,10 @@ defineProps<{
         worker_name: string;
         actor_name: string;
         score: number;
+        order_score: number | null;
+        amount_score: number | null;
+        session_id: number | null;
+        session_position: number | null;
         passed: boolean;
         started_at: string;
         submitted_at: string;
@@ -32,6 +36,9 @@ defineProps<{
             type?: string;
             action_key: string;
             icon_group?: string;
+            quantity_value?: string | null;
+            unit?: string | null;
+            submitted_amount?: string | null;
         }>;
     };
 }>();
@@ -69,6 +76,9 @@ const { formatCzechDateTime } = useCzechDate();
                                 attempt.variant_name ||
                                 t('recipes.default_variant')
                             }}
+                            <template v-if="attempt.session_position">
+                                · {{ attempt.session_position }}/3
+                            </template>
                         </p>
                     </div>
                 </div>
@@ -83,6 +93,15 @@ const { formatCzechDateTime } = useCzechDate();
                         :variant="attempt.passed ? 'success' : 'danger'"
                         >{{ attempt.score }} %</Badge
                     >
+                    <p
+                        v-if="attempt.order_score !== null"
+                        class="mt-1 text-xs text-on-surface-variant"
+                    >
+                        {{ t('recipes.test.order_score') }}:
+                        {{ attempt.order_score }} % ·
+                        {{ t('recipes.test.amount_score') }}:
+                        {{ attempt.amount_score }} %
+                    </p>
                 </div>
                 <div>
                     <p class="text-xs text-on-surface-variant">
@@ -163,6 +182,20 @@ const { formatCzechDateTime } = useCzechDate();
                                 :action-key="step.action_key"
                             />
                             <span>{{ step.text }}</span>
+                            <span
+                                v-if="
+                                    step.quantity_value &&
+                                    ['g', 'ml'].includes(
+                                        (step.unit || '').toLowerCase(),
+                                    )
+                                "
+                                class="text-xs text-on-surface-variant"
+                            >
+                                {{ t('recipes.test.your_amount') }}:
+                                {{ step.submitted_amount }} ·
+                                {{ t('recipes.test.correct_amount') }}:
+                                {{ step.quantity_value }} {{ step.unit }}
+                            </span>
                         </li>
                     </ol>
                     <ol v-else class="mt-4 space-y-2">

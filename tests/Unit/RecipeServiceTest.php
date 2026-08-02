@@ -25,10 +25,10 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     \expect(RecipeCategory::query()->where('user_id', $admin->getKey())->count())->toBe(8)
         ->and(Recipe::query()->where('user_id', $admin->getKey())->count())->toBe(49)
-        ->and(Recipe::query()->where('name', 'CLASSIC MATCHA LATTE')->exists())->toBeTrue()
+        ->and(Recipe::query()->where('name', 'Classic Matcha Latte')->exists())->toBeTrue()
         ->and(Recipe::query()->where('name', 'Creme Brulee')->exists())->toBeTrue();
 
-    $classic = Typer::assertInstance(Recipe::query()->where('name', 'CLASSIC MATCHA LATTE')->with(['variants.ingredients', 'variants.steps', 'variants.instructions'])->firstOrFail(), Recipe::class);
+    $classic = Typer::assertInstance(Recipe::query()->where('name', 'Classic Matcha Latte')->with(['variants.ingredients', 'variants.steps', 'variants.instructions'])->firstOrFail(), Recipe::class);
     $creamCheese = Typer::assertInstance(Recipe::query()->where('name', 'Cream Cheese')->with(['variants.ingredients', 'variants.steps'])->firstOrFail(), Recipe::class);
     \expect($classic->getVariants()->map(static fn(RecipeVariant $variant): string|null => $variant->getName())->all())->toBe(['S', 'M'])
         ->and($classic->getVariants()->first()?->getSteps()->map(static fn(RecipeStep $step): string => $step->getText())->all())->toBe(['stir', 'ice'])
@@ -47,7 +47,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->and($creamCheese->getVariants()->map(static fn(RecipeVariant $variant): string|null => $variant->getName())->all())->toBe(['Batch', '1 portion'])
         ->and($creamCheese->getVariants()->last()?->getSteps()->map(static fn(RecipeStep $step): string => $step->getText())->all())->toBe(['Add 50g smetana + 20g salko + 20g milk + 10g cheese', 'whip up']);
 
-    Recipe::query()->where('name', 'CLASSIC MATCHA LATTE')->update(['name' => 'Edited recipe']);
+    Recipe::query()->where('name', 'Classic Matcha Latte')->update(['name' => 'Edited recipe']);
     $service->initialize($admin);
 
     \expect(Recipe::query()->where('user_id', $admin->getKey())->count())->toBe(49)
@@ -127,7 +127,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $service = new RecipeCatalogService();
     $service->initialize($admin);
 
-    $classic = Typer::assertInstance(Recipe::query()->where('name', 'CLASSIC MATCHA LATTE')->with(['variants.ingredients', 'variants.instructions'])->firstOrFail(), Recipe::class);
+    $classic = Typer::assertInstance(Recipe::query()->where('name', 'Classic Matcha Latte')->with(['variants.ingredients', 'variants.instructions'])->firstOrFail(), Recipe::class);
     $classicVariant = Typer::assertInstance($classic->getVariants()->first(), RecipeVariant::class);
     $classicVariant->ingredients()->orderBy('position')->firstOrFail()->update(['name' => 'edited milk']);
     $classicVariant->instructions()->delete();
@@ -137,8 +137,8 @@ use Thinkycz\LaravelCore\Support\Typer;
     $service->initialize($admin);
     \expect($classicVariant->instructions()->orderBy('position')->firstOrFail()->getAttribute('text'))->toBe('Add 100 ml edited milk into cup');
 
-    $strawberryTea = Typer::assertInstance(Recipe::query()->where('name', 'STRAWBERRY TEA')->with('variants.instructions')->firstOrFail(), Recipe::class);
-    $coconutCloud = Typer::assertInstance(Recipe::query()->where('name', 'COCONUT CLOUD')->with('variants.instructions')->firstOrFail(), Recipe::class);
+    $strawberryTea = Typer::assertInstance(Recipe::query()->where('name', 'Strawberry Tea')->with('variants.instructions')->firstOrFail(), Recipe::class);
+    $coconutCloud = Typer::assertInstance(Recipe::query()->where('name', 'Coconut Cloud')->with('variants.instructions')->firstOrFail(), Recipe::class);
     $creamCheese = Typer::assertInstance(Recipe::query()->where('name', 'Cream Cheese')->with('variants.instructions')->firstOrFail(), Recipe::class);
     \expect($strawberryTea->getVariants()->first()?->getInstructions()->first()?->getTarget())->toBe('shaker')
         ->and($coconutCloud->getVariants()->first()?->getInstructions()->contains(static fn(RecipeInstruction $instruction): bool => $instruction->getTarget() === 'mixing bowl'))->toBeTrue()

@@ -24,3 +24,8 @@
 | R20    | follow-up plán | Legacy obsah a pokusy zůstávají kompatibilní         | 6    | verified | result show/index test                           |
 | R21    | follow-up      | Migrace jednou nahradí celý starý katalog            | 6    | verified | `000006`, `RecipeCatalogSeederTest`              |
 | R22    | follow-up      | Reset katalogu zachová historické snapshoty          | 6    | verified | seeder a result controller testy                 |
+| R23    | follow-up      | Konzistentní přístupný dropdown akcí                 | 7    | verified | UI kontrakt, admin Playwright                    |
+| R24    | follow-up      | Kategorie uppercase, recepty uložené title case      | 7    | verified | normalizer, migrace, CRUD a historický match     |
+| R25    | follow-up      | Jedno sezení vybere tři různé aktivní recepty        | 7    | verified | session service a controller testy               |
+| R26    | follow-up      | Pořadí i přesná g/ml množství bez úniku odpovědi     | 7    | verified | payload test, atomické skórování, úspěšné E2E    |
+| R27    | follow-up      | Start na indexu a sekvenční mobilní wizard           | 7    | verified | UI kontrakt, mobilní failed/pass Playwright      |

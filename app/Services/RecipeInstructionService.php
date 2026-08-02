@@ -61,7 +61,7 @@ class RecipeInstructionService
      */
     private function sequence(Recipe $recipe, RecipeVariant $variant): array
     {
-        if ($recipe->getName() === 'CLASSIC MATCHA LATTE') {
+        if (\mb_strtolower($recipe->getName()) === 'classic matcha latte') {
             return $this->classicSequence($variant);
         }
 
@@ -277,7 +277,7 @@ class RecipeInstructionService
     {
         foreach (RecipeDefaultCatalog::categories() as $category) {
             foreach ($category['recipes'] as $recipe) {
-                if ($recipe['name'] !== $recipeName) {
+                if (\mb_strtolower($recipe['name']) !== \mb_strtolower($recipeName)) {
                     continue;
                 }
                 foreach ($recipe['variants'] as $variant) {

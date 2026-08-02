@@ -2,8 +2,8 @@
 
 ## Stav
 
-- Aktuální fáze: Fáze 6 – dokončeno
-- Celkový stav: verified
+- Aktuální fáze: Fáze 7 – dokončeno
+- Celkový stav: done
 - Poslední aktualizace: 2026-08-02
 - Výchozí worktree: změny follow-upu připravené k předání, větev `main`
 
@@ -54,8 +54,8 @@
 ## Rozhodnutí
 
 - Omezený účet vybírá brigádníka bez dalšího ověření identity; audit ukládá aktéra.
-- Jeden pokus testuje jednu serverem náhodně vybranou variantu bez časového limitu.
-- Úspěch vyžaduje přesné pořadí; opakování je neomezené.
+- Nové sezení testuje tři různé náhodné recepty, z každého jednu náhodnou variantu.
+- Úspěch vyžaduje přesné pořadí i všechna číselná množství `g`/`ml`; opakování je neomezené.
 - Recepty jsou firemní a historické pokusy jsou snapshoty.
 - Suroviny se zobrazují odděleně od testovatelných postupových kroků; akční
   ikony jsou odvozené parserem, ale admin je může změnit. Toto rozhodnutí
@@ -72,7 +72,13 @@
 - [x] Jednorázová datová migrace čistého katalogu se zachováním snapshotů
 - Blokátory: žádné
 
-## Další krok
+## Fáze 7: Konzistentní katalog a test tří receptů
 
-- Nasadit standardními Laravel migracemi; nová migrace `000006` sama jednou
-  nahradí celý katalog bez závislosti na `db:seed`.
+- Stav: done
+- [x] Přístupný jednotný dropdown
+- [x] Title-case názvy receptů při zachování uppercase kategorií a historie
+- [x] Tři různé náhodné recepty v jednom sezení
+- [x] Přesné odpovědi množství `g`/`ml` bez úniku správné hodnoty
+- [x] Indexový start, sekvenční wizard a souhrnný výsledek
+- [x] Admin výsledky, CS/SK/EN, neúspěšné i úspěšné E2E a plné ověření
+- Blokátory: žádné

@@ -25,7 +25,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         ]]],
     ])->assertRedirect();
 
-    $this->assertDatabaseHas('recipes', ['name' => 'NEW RECIPE', 'user_id' => $admin->getKey()]);
+    $this->assertDatabaseHas('recipes', ['name' => 'New Recipe', 'user_id' => $admin->getKey()]);
 });
 
 \test('admin can override ingredient icon groups and preserve their order', function (): void {
@@ -46,7 +46,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         ]],
     ])->assertRedirect();
 
-    $variant = Typer::assertInstance(RecipeVariant::query()->whereHas('recipe', static fn($query) => $query->where('name', 'ICON RECIPE'))->firstOrFail(), RecipeVariant::class);
+    $variant = Typer::assertInstance(RecipeVariant::query()->whereHas('recipe', static fn($query) => $query->where('name', 'Icon Recipe'))->firstOrFail(), RecipeVariant::class);
     \expect($variant->getInstructions()->map(static fn(RecipeInstruction $instruction): string => $instruction->getText())->all())
         ->toBe(['Add 20 g sugar', 'Add half mango', 'Mix', 'Serve'])
         ->and($variant->getInstructions()->first()?->getIconGroup())->toBe('fruit')

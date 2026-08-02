@@ -22,7 +22,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $owner = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
     (new RecipeCatalogService())->initialize($owner);
 
-    $legacyRecipe = Typer::assertInstance(Recipe::query()->where('name', 'CLASSIC MATCHA LATTE')->firstOrFail(), Recipe::class);
+    $legacyRecipe = Typer::assertInstance(Recipe::query()->where('name', 'Classic Matcha Latte')->firstOrFail(), Recipe::class);
     $legacyRecipe->setAttribute('name', 'ADMIN EDITED MATCHA');
     $legacyRecipe->save();
     $attempt = Typer::assertInstance(RecipeTestAttempt::query()->create([
@@ -51,7 +51,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->and($attempt->fresh()?->getCorrectStepsSnapshot())->toBe($attempt->getCorrectStepsSnapshot())
         ->and(Recipe::query()->where('name', 'ADMIN EDITED MATCHA')->exists())->toBeFalse();
 
-    $seededRecipe = Typer::assertInstance(Recipe::query()->where('name', 'CLASSIC MATCHA LATTE')->firstOrFail(), Recipe::class);
+    $seededRecipe = Typer::assertInstance(Recipe::query()->where('name', 'Classic Matcha Latte')->firstOrFail(), Recipe::class);
     $variant = $seededRecipe->getVariants()->first();
     \expect($variant)->not->toBeNull();
     $instructions = RecipeInstruction::query()->where('recipe_variant_id', $variant?->getKey())->orderBy('position')->pluck('text')->all();
@@ -77,8 +77,8 @@ use Thinkycz\LaravelCore\Support\Typer;
     $owner->setAttribute('recipe_catalog_v2_seeded_at', Carbon::now());
     $owner->save();
 
-    Recipe::query()->where('name', 'CLASSIC MATCHA LATTE')->update(['name' => 'STALE PRODUCTION MATCHA']);
-    Recipe::query()->where('name', 'COCONUT CLOUD')->delete();
+    Recipe::query()->where('name', 'Classic Matcha Latte')->update(['name' => 'STALE PRODUCTION MATCHA']);
+    Recipe::query()->where('name', 'Coconut Cloud')->delete();
 
     $migration = Typer::assertInstance(require \database_path('migrations/2026_08_02_000006_force_replace_recipe_catalog.php'), Migration::class);
     $migration->up();
@@ -87,6 +87,6 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->and(Recipe::query()->count())->toBe(49)
         ->and(RecipeVariant::query()->whereDoesntHave('instructions')->count())->toBe(0)
         ->and(Recipe::query()->where('name', 'STALE PRODUCTION MATCHA')->exists())->toBeFalse()
-        ->and(Recipe::query()->where('name', 'CLASSIC MATCHA LATTE')->exists())->toBeTrue()
-        ->and(Recipe::query()->where('name', 'COCONUT CLOUD')->exists())->toBeTrue();
+        ->and(Recipe::query()->where('name', 'Classic Matcha Latte')->exists())->toBeTrue()
+        ->and(Recipe::query()->where('name', 'Coconut Cloud')->exists())->toBeTrue();
 });

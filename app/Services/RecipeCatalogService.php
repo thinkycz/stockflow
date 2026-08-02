@@ -12,6 +12,7 @@ use App\Models\RecipeStep;
 use App\Models\RecipeVariant;
 use App\Models\User;
 use App\Support\RecipeDefaultCatalog;
+use App\Support\RecipeNameNormalizer;
 use App\Support\RecipeTextParser;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -48,7 +49,7 @@ class RecipeCatalogService
                     $recipe = Typer::assertInstance(Recipe::query()->create([
                         'user_id' => $locked->getKey(),
                         'recipe_category_id' => $category->getKey(),
-                        'name' => $recipeRow['name'],
+                        'name' => RecipeNameNormalizer::normalize($recipeRow['name']),
                         'note' => $recipeRow['note'],
                         'position' => $recipePosition + 1,
                         'archived_at' => null,
@@ -120,7 +121,7 @@ class RecipeCatalogService
                 : new Recipe();
             $target->setAttribute('user_id', $owner->getKey());
             $target->setAttribute('recipe_category_id', $category->getKey());
-            $target->setAttribute('name', $name);
+            $target->setAttribute('name', RecipeNameNormalizer::normalize($name));
             $target->setAttribute('note', $note);
             if (!$recipe instanceof Recipe) {
                 $lastPosition = Typer::assertNullableInt(Recipe::query()->where('recipe_category_id', $category->getKey())->max('position'));

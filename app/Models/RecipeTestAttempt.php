@@ -39,7 +39,7 @@ class RecipeTestAttempt extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'user_id', 'recipe_id', 'recipe_variant_id', 'worker_id', 'actor_user_id', 'recipe_name', 'variant_name', 'worker_name', 'actor_name', 'correct_steps', 'variant_snapshot', 'presented_tokens', 'submitted_tokens', 'score', 'passed', 'started_at', 'submitted_at', 'created_at', 'updated_at']);
+        return $query->select(['id', 'recipe_test_session_id', 'session_position', 'user_id', 'recipe_id', 'recipe_variant_id', 'worker_id', 'actor_user_id', 'recipe_name', 'variant_name', 'worker_name', 'actor_name', 'correct_steps', 'variant_snapshot', 'presented_tokens', 'submitted_tokens', 'submitted_amounts', 'score', 'order_score', 'amount_score', 'passed', 'started_at', 'submitted_at', 'created_at', 'updated_at']);
     }
 
     /**
@@ -63,9 +63,14 @@ class RecipeTestAttempt extends BaseModel
     public function actor(): BelongsTo { return $this->belongsTo(User::class, 'actor_user_id'); }
 
     /**
+     * @return BelongsTo<RecipeTestSession, $this>
+     */
+    public function session(): BelongsTo { return $this->belongsTo(RecipeTestSession::class, 'recipe_test_session_id'); }
+
+    /**
      * Get the source recipe id.
      */
-    public function getRecipeId(): int { return $this->assertInt('recipe_id'); }
+    public function getRecipeId(): int|null { return $this->assertNullableInt('recipe_id'); }
 
     /**
      * Get the owning company id.
@@ -96,6 +101,16 @@ class RecipeTestAttempt extends BaseModel
      * Get the snapshotted variant name.
      */
     public function getVariantName(): string|null { return $this->assertNullableString('variant_name'); }
+
+    /**
+     * Get the parent session id for new tests.
+     */
+    public function getSessionId(): int|null { return $this->assertNullableInt('recipe_test_session_id'); }
+
+    /**
+     * Get the position inside a three-recipe session.
+     */
+    public function getSessionPosition(): int|null { return $this->assertNullableInt('session_position'); }
 
     /**
      * Get the snapshotted worker name.
@@ -151,9 +166,38 @@ class RecipeTestAttempt extends BaseModel
     }
 
     /**
+     * Get normalized submitted amount answers.
+     *
+     * @return array<string, string>|null
+     */
+    public function getSubmittedAmounts(): array|null
+    {
+        $value = $this->getAttribute('submitted_amounts');
+        if ($value === null) {
+            return null;
+        }
+        $amounts = [];
+        foreach (Typer::assertArray($value) as $token => $amount) {
+            $amounts[Typer::assertString($token)] = Typer::assertString($amount);
+        }
+
+        return $amounts;
+    }
+
+    /**
      * Get the percentage score after submission.
      */
     public function getScore(): int|null { return $this->assertNullableInt('score'); }
+
+    /**
+     * Get the order-only score.
+     */
+    public function getOrderScore(): int|null { return $this->assertNullableInt('order_score'); }
+
+    /**
+     * Get the amount-only score.
+     */
+    public function getAmountScore(): int|null { return $this->assertNullableInt('amount_score'); }
 
     /**
      * Determine whether the submitted attempt passed.
@@ -185,7 +229,7 @@ class RecipeTestAttempt extends BaseModel
     protected function casts(): array
     {
         return [
-            'correct_steps' => 'array', 'variant_snapshot' => 'array', 'presented_tokens' => 'array', 'submitted_tokens' => 'array',
+            'correct_steps' => 'array', 'variant_snapshot' => 'array', 'presented_tokens' => 'array', 'submitted_tokens' => 'array', 'submitted_amounts' => 'array',
             'passed' => 'boolean', 'started_at' => 'datetime', 'submitted_at' => 'datetime',
         ];
     }

@@ -29,7 +29,7 @@ class RecipeTestService
             throw new InvalidArgumentException('Recipe test is not available.');
         }
 
-        $variants = $recipe->variants()->with('instructions')->get();
+        $variants = $recipe->variants()->has('instructions', '>=', 2)->with('instructions')->get();
         if ($variants->isEmpty()) {
             throw new InvalidArgumentException('Recipe has no testable variant.');
         }

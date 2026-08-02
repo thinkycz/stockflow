@@ -33,8 +33,12 @@ class RecipeTestResultShowController
         $snapshot = $recipeTest->getVariantSnapshot();
         $ingredients = [];
         $correctStepDetails = [];
+        $submittedAmounts = $recipeTest->getSubmittedAmounts() ?? [];
         if ($snapshot !== null) {
-            foreach (Typer::assertArray($snapshot['instructions'] ?? []) as $instruction) {
+            foreach (Typer::assertArray($snapshot['instructions'] ?? []) as $value) {
+                $instruction = Typer::assertStringKeyArray(Typer::assertArray($value));
+                $token = Typer::assertString($instruction['token'] ?? '');
+                $instruction['submitted_amount'] = $submittedAmounts[$token] ?? null;
                 $correctStepDetails[] = $instruction;
             }
             foreach (Typer::assertArray($snapshot['ingredients'] ?? []) as $ingredient) {
@@ -49,6 +53,8 @@ class RecipeTestResultShowController
             'id' => $recipeTest->getKey(), 'recipe_name' => $recipeTest->getRecipeName(), 'variant_name' => $recipeTest->getVariantName(),
             'worker_name' => $recipeTest->getWorkerName(), 'actor_name' => $recipeTest->getActorName(),
             'score' => $recipeTest->getScore(), 'passed' => $recipeTest->isPassed(),
+            'order_score' => $recipeTest->getOrderScore(), 'amount_score' => $recipeTest->getAmountScore(),
+            'session_id' => $recipeTest->getSessionId(), 'session_position' => $recipeTest->getSessionPosition(),
             'started_at' => $recipeTest->getStartedAt()->toJSON(), 'submitted_at' => $recipeTest->getSubmittedAt()->toJSON(),
             'correct_steps' => \array_column($correct, 'text'), 'submitted_steps' => $submitted,
             'ingredients' => $ingredients, 'correct_step_details' => $correctStepDetails,

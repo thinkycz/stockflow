@@ -52,3 +52,15 @@
 - Před smazáním katalogu se historické pokusy odpojí od původních receptů; jejich
   snapshoty zůstávají beze změny a adminský přehled je k novému receptu přiřadí
   podle firemního scope a snapshotu názvu.
+
+## Tříreceptové testovací sezení
+
+- Nový test se spouští pouze z indexu a obsahuje přesně tři různé náhodné aktivní
+  recepty; u každého se náhodně vybere použitelná varianta.
+- Brigádník prochází recepty sekvenčně bez průběžného odhalení výsledků. Finální
+  odeslání je atomické a uspěje jen při správném pořadí všech instrukcí a všech
+  dostupných číselných množství v `g` nebo `ml`.
+- Klient nikdy neobdrží správné množství ani text, ze kterého by šlo množství
+  vyčíst. Desetinná čárka a tečka jsou ekvivalentní, tolerance není povolena.
+- Kategorie zůstávají verzálkami; názvy receptů se ukládají v title case. Staré
+  snapshoty se nemění a párují se bez ohledu na velikost písmen.

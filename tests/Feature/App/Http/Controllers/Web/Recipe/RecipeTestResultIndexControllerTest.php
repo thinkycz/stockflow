@@ -22,6 +22,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     (new RecipeTestService())->submit($limited, $attempt, \collect($attempt->getCorrectStepsSnapshot())->pluck('token')->all());
     $attempt->setAttribute('recipe_id', null);
     $attempt->setAttribute('recipe_variant_id', null);
+    $attempt->setAttribute('recipe_name', \mb_strtoupper($recipe->getName()));
     $attempt->save();
 
     $this->be($admin, 'users')->get('/recipe-test-results?worker_id=' . $worker->getKey(), $this->inertiaHeaders())

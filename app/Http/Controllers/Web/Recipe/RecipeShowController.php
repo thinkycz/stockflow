@@ -8,7 +8,6 @@ use App\Models\Recipe;
 use App\Models\RecipeInstruction;
 use App\Models\RecipeVariant;
 use App\Models\User;
-use App\Models\Worker;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -24,12 +23,6 @@ class RecipeShowController
             \abort(404);
         }
         $recipe->load(['category', 'variants.instructions']);
-        $workers = [];
-        if (!$actor->isAdmin()) {
-            $workers = Worker::query()->where('user_id', $actor->resolveScopeUser()->getKey())
-                ->orderBy('first_name')->orderBy('last_name')->get()
-                ->map(static fn(Worker $worker): array => ['id' => $worker->getKey(), 'name' => $worker->getFullName()])->all();
-        }
 
         return Inertia::render('recipes/Show', [
             'is_admin' => $actor->isAdmin(),
@@ -50,7 +43,6 @@ class RecipeShowController
                     ];
                 })->all(),
             ],
-            'workers' => $workers,
         ]);
     }
 }

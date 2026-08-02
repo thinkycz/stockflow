@@ -46,3 +46,10 @@
 - Přidat idempotentní seeder a samostatnou produkční datovou migraci, která jednou
   odstraní starý katalog, odpojí historické pokusy a naplní čistý katalog v nové
   instrukční struktuře i při deployi bez `db:seed`.
+
+## Fáze 7: Konzistentní katalog a test tří receptů
+
+- Sjednotit řádkové akce do přístupného dropdownu a uložit názvy receptů v title case.
+- Zavést testovací sezení se třemi child pokusy a atomickým vyhodnocením pořadí i množství.
+- Přesunout start na index, doplnit sekvenční wizard, výsledky a kompatibilitu historie.
+- Ověřit payload bez správných množství, role, mobilní ovládání, E2E a plné repo kontroly.

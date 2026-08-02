@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { Archive, ClipboardCheck, Pencil, RotateCcw } from '@lucide/vue';
+import { Archive, Pencil, RotateCcw } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import BackLink from '@/components/ui/BackLink.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
-import Label from '@/components/ui/Label.vue';
-import Modal from '@/components/ui/Modal.vue';
-import Select from '@/components/ui/Select.vue';
 import RecipeInstructionList, {
     type RecipeInstructionData,
 } from '@/components/recipes/RecipeInstructionList.vue';
@@ -29,14 +26,10 @@ const props = defineProps<{
             instructions: RecipeInstructionData[];
         }>;
     };
-    workers: Array<{ id: number; name: string }>;
 }>();
 
 const { t } = useI18n();
 const route = useRoute();
-const testModalOpen = ref(false);
-const workerId = ref('');
-const starting = ref(false);
 const selectedVariantIndex = ref(0);
 const selectedVariant = computed(
     () => props.recipe.variants[selectedVariantIndex.value],
@@ -44,16 +37,6 @@ const selectedVariant = computed(
 
 function setArchived(archived: boolean): void {
     router.put(route('recipes.archive', props.recipe.id), { archived });
-}
-
-function startTest(): void {
-    if (!workerId.value) return;
-    starting.value = true;
-    router.post(
-        route('recipe-tests.store'),
-        { recipe_id: props.recipe.id, worker_id: Number(workerId.value) },
-        { onFinish: () => (starting.value = false) },
-    );
 }
 </script>
 
@@ -112,14 +95,6 @@ function startTest(): void {
                                 }}</Button
                             >
                         </template>
-                        <Button
-                            v-else
-                            :disabled="workers.length === 0"
-                            @click="testModalOpen = true"
-                            ><ClipboardCheck :size="16" />{{
-                                t('recipes.test.start')
-                            }}</Button
-                        >
                     </div>
                 </div>
             </header>
@@ -155,35 +130,5 @@ function startTest(): void {
                 />
             </section>
         </div>
-
-        <Modal
-            :open="testModalOpen"
-            :title="t('recipes.test.choose_worker')"
-            @close="testModalOpen = false"
-        >
-            <Label for="test-worker" required>{{
-                t('recipes.test.worker')
-            }}</Label>
-            <Select
-                id="test-worker"
-                v-model="workerId"
-                class="mt-1"
-                :options="
-                    workers.map((worker) => ({
-                        value: String(worker.id),
-                        label: worker.name,
-                    }))
-                "
-                :placeholder="t('recipes.test.choose_worker_placeholder')"
-            />
-            <template #footer>
-                <Button variant="secondary" @click="testModalOpen = false">{{
-                    t('common.cancel')
-                }}</Button>
-                <Button :disabled="!workerId || starting" @click="startTest">{{
-                    starting ? t('common.saving') : t('recipes.test.start')
-                }}</Button>
-            </template>
-        </Modal>
     </AppLayout>
 </template>

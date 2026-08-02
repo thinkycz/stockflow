@@ -20,6 +20,10 @@ type Latest = {
     id: number;
     variant_name: string | null;
     score: number;
+    order_score: number | null;
+    amount_score: number | null;
+    session_position: number | null;
+    session_id: number | null;
     passed: boolean;
     submitted_at: string;
 };
@@ -155,6 +159,15 @@ function showHistory(recipeId: number): void {
                                             t('recipes.default_variant')
                                         }}
                                         ·
+                                        <template
+                                            v-if="
+                                                recipe.latest.session_position
+                                            "
+                                        >
+                                            {{
+                                                recipe.latest.session_position
+                                            }}/3 ·
+                                        </template>
                                         {{
                                             formatCzechDateTime(
                                                 recipe.latest.submitted_at,
@@ -209,6 +222,9 @@ function showHistory(recipeId: number): void {
                             >
                             <p class="mt-1 text-xs text-on-surface-variant">
                                 {{ formatCzechDateTime(attempt.submitted_at) }}
+                                <template v-if="attempt.session_position">
+                                    · {{ attempt.session_position }}/3
+                                </template>
                                 · {{ attempt.actor_name }}
                             </p>
                         </div>

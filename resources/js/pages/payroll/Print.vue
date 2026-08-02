@@ -88,7 +88,7 @@ onMounted(async () => {
                 </tbody>
             </DataTable>
 
-            <section v-if="!simple && payslip.adjustments.length" class="mt-6">
+            <section v-if="payslip.adjustments.length" class="mt-6">
                 <h2 class="mb-2 text-lg font-bold">
                     {{ t('payroll.adjustments') }}
                 </h2>

@@ -81,10 +81,16 @@ test('admin adjusts closes and prints payroll while limited users are denied', a
     let printPage = await popupPromise;
     await expect(printPage.getByText('Payslip', { exact: true })).toBeVisible();
     await expect(printPage.getByText('Base pay')).toBeVisible();
-    await expect(printPage.getByText('Tips')).toBeVisible();
-    await expect(printPage.getByText('Deduction')).toBeVisible();
+    await expect(
+        printPage.getByText('Tips', { exact: true }).last(),
+    ).toBeVisible();
+    await expect(
+        printPage.getByText('Deduction', { exact: true }).last(),
+    ).toBeVisible();
     await expect(printPage.getByText('Final pay')).toBeVisible();
-    await expect(printPage.locator('table')).toHaveCount(0);
+    await expect(printPage.getByText('Adjustments')).toBeVisible();
+    await expect(printPage.getByText('E2E shared tips')).toBeVisible();
+    await expect(printPage.locator('table')).toHaveCount(1);
     await printPage.close();
 
     popupPromise = page.waitForEvent('popup');

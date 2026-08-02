@@ -13,12 +13,14 @@ const props = withDefaults(
         open: boolean;
         title?: string;
         class?: string;
+        bodyClass?: string;
         closeOnBackdrop?: boolean;
         layer?: 'default' | 'alert';
     }>(),
     {
         title: '',
         class: '',
+        bodyClass: '',
         closeOnBackdrop: true,
         layer: 'default',
     },
@@ -170,7 +172,7 @@ watch(
                         <X :size="16" />
                     </Button>
                 </div>
-                <div class="px-6 py-4">
+                <div :class="cn('px-6 py-4', bodyClass)">
                     <slot />
                 </div>
                 <div

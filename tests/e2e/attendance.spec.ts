@@ -107,3 +107,33 @@ test('attendance rows become mobile cards without horizontal overflow', async ({
         ),
     ).toBe(true);
 });
+
+test('admin rejects and then approves a monthly attendance deviation', async ({
+    page,
+}) => {
+    await login(page);
+    await page.goto('/attendance/report?month=2031-02');
+
+    await page.getByRole('button', { name: 'Review deviation' }).click();
+    const dialog = page.getByRole('dialog', {
+        name: 'Review attendance deviation',
+    });
+    await expect(dialog).toContainText('08:00–16:00');
+    await expect(dialog).toContainText('08:20');
+    await expect(dialog.getByLabel('Approved start')).toHaveValue('08:15');
+    await expect(dialog.getByLabel('Approved end')).toHaveValue('16:30');
+    await dialog.getByLabel('Review reason').fill('Keep original schedule');
+    await dialog.getByRole('button', { name: 'Reject deviation' }).click();
+
+    await page.getByRole('button', { name: 'Rejected' }).click();
+    await dialog.getByLabel('Review reason').fill('Accept actual coverage');
+    await dialog.getByRole('button', { name: 'Approve deviation' }).click();
+
+    await expect(page.getByRole('button', { name: 'Approved' })).toBeVisible();
+    await page.goto('/payroll?year=2031&month=2');
+    const payrollRow = page
+        .locator('[data-testid^="payroll-row-"]')
+        .filter({ hasText: 'E2E Worker' });
+    await expect(payrollRow).toContainText('8.25 h');
+    await expect(payrollRow).toContainText('1,650');
+});

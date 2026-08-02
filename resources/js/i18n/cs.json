@@ -1205,6 +1205,9 @@
             "all_statuses": "Všechny stavy",
             "date": "Datum",
             "detail": "Detail checklistu",
+            "progress": "Průběh dne",
+            "completed_tasks": "{completed} z {total} úkolů splněno",
+            "no_worker": "Bez přiřazeného brigádníka",
             "empty": "Historie je prázdná",
             "empty_help": "Pro zvolené filtry nejsou žádné checklisty.",
             "excuse": "Označit jako neprovozní",
@@ -1315,6 +1318,23 @@
             "total_wage": "Orientační odměna",
             "empty": "Pro zvolené filtry nejsou žádné záznamy.",
             "incomplete": "Neúplné bloky: {count}"
+        },
+        "deviation": {
+            "title": "Posouzení odchylky docházky",
+            "help": "Porovnejte plánovanou směnu s prvním příchodem a posledním odchodem. Schválení upraví kalendář směn a výpočet otevřené výplaty.",
+            "planned": "Plánovaná směna",
+            "actual": "Skutečná docházka",
+            "start_time": "Schválený začátek",
+            "end_time": "Schválený konec",
+            "reason": "Důvod rozhodnutí",
+            "approve": "Schválit odchylku",
+            "reject": "Zamítnout odchylku",
+            "closed_payroll": "Před schválením znovu otevřete výplatní report tohoto měsíce. Zamítnutí zůstává dostupné.",
+            "status": {
+                "pending": "Posoudit odchylku",
+                "approved": "Schváleno",
+                "rejected": "Zamítnuto"
+            }
         },
         "correction": {
             "create": "Doplnit záznam",

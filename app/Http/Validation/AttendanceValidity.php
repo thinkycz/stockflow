@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Validation;
 
 use App\Enums\AttendanceActionEnum;
+use App\Enums\AttendanceDeviationReviewDecisionEnum;
 use App\Models\User;
 use Thinkycz\LaravelCore\Validation\BaseValidity;
 use Thinkycz\LaravelCore\Validation\Validity;
@@ -43,6 +44,11 @@ class AttendanceValidity
     public function action(): Validity { return $this->baseValidity->make()->inString(AttendanceActionEnum::values()); }
 
     /**
+     * Validate an attendance deviation decision.
+     */
+    public function deviationDecision(): Validity { return $this->baseValidity->make()->inString(AttendanceDeviationReviewDecisionEnum::values()); }
+
+    /**
      * Validate the out-of-shift confirmation flag.
      */
     public function confirmation(): Validity { return $this->baseValidity->make()->boolean(); }
@@ -51,6 +57,11 @@ class AttendanceValidity
      * Validate a browser-local date and time.
      */
     public function localDateTime(): Validity { return $this->baseValidity->make()->string(null)->dateFormat('Y-m-d\\TH:i'); }
+
+    /**
+     * Validate an ISO-compatible instant.
+     */
+    public function instant(): Validity { return $this->baseValidity->make()->string(null)->date(); }
 
     /**
      * Validate the correction break collection.

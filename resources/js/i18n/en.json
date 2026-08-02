@@ -1208,6 +1208,9 @@
             "all_statuses": "All statuses",
             "date": "Date",
             "detail": "Checklist detail",
+            "progress": "Daily progress",
+            "completed_tasks": "{completed} of {total} tasks completed",
+            "no_worker": "No worker assigned",
             "empty": "History is empty",
             "empty_help": "No checklists match the selected filters.",
             "excuse": "Mark as closed",
@@ -1318,6 +1321,23 @@
             "total_wage": "Estimated pay",
             "empty": "There are no records for the selected filters.",
             "incomplete": "Incomplete sessions: {count}"
+        },
+        "deviation": {
+            "title": "Review attendance deviation",
+            "help": "Compare the scheduled shift with the first arrival and last departure. Approval updates the shift calendar and open payroll calculations.",
+            "planned": "Scheduled shift",
+            "actual": "Actual attendance",
+            "start_time": "Approved start",
+            "end_time": "Approved end",
+            "reason": "Review reason",
+            "approve": "Approve deviation",
+            "reject": "Reject deviation",
+            "closed_payroll": "Reopen the payroll report for this month before approving. Rejection remains available.",
+            "status": {
+                "pending": "Review deviation",
+                "approved": "Approved",
+                "rejected": "Rejected"
+            }
         },
         "correction": {
             "create": "Add record",

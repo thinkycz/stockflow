@@ -5,10 +5,12 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
+import Badge from '@/components/ui/Badge.vue';
 import BackLink from '@/components/ui/BackLink.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import FilterField from '@/components/ui/FilterField.vue';
+import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
@@ -41,6 +43,21 @@ type SessionRow = {
     wage: number | null;
     voided: boolean;
 };
+type DeviationStatus = 'pending' | 'approved' | 'rejected';
+type DeviationRow = {
+    shift_id: number;
+    primary_session_id: number;
+    status: DeviationStatus;
+    planned_start_time: string;
+    planned_end_time: string;
+    actual_started_at: string;
+    actual_ended_at: string;
+    arrival_offset_seconds: number;
+    departure_offset_seconds: number;
+    can_approve: boolean;
+    reason: string | null;
+    reviewed_at: string | null;
+};
 type SummaryRow = {
     actual_seconds: number;
     planned_seconds: number;
@@ -51,7 +68,12 @@ const props = defineProps<{
     store: { id: number; name: string } | null;
     workers: Worker[];
     filters: { month: string; worker_id: number | null } | null;
-    report: { month: string; rows: SessionRow[]; summary: SummaryRow[] } | null;
+    report: {
+        month: string;
+        rows: SessionRow[];
+        summary: SummaryRow[];
+        deviations: DeviationRow[];
+    } | null;
 }>();
 
 const { t, locale } = useI18n();
@@ -72,6 +94,36 @@ const correctionForm = useForm({
     breaks: [] as Array<{ started_at: string; ended_at: string }>,
     reason: '',
 });
+const reviewOpen = ref(false);
+const activeDeviation = ref<DeviationRow | null>(null);
+const reviewForm = useForm({
+    decision: 'approved' as 'approved' | 'rejected',
+    reason: '',
+    start_time: '',
+    end_time: '',
+    allow_overlap: false,
+    expected_started_at: '',
+    expected_ended_at: '',
+    expected_start_time: '',
+    expected_end_time: '',
+});
+const reviewErrors = computed(
+    () => reviewForm.errors as Record<string, string | undefined>,
+);
+const timeSelectOptions = Array.from({ length: 96 }, (_, index) => {
+    const minutes = index * 15;
+    const time = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+    return { value: time, label: time };
+});
+const deviationsBySession = computed(
+    () =>
+        new Map(
+            (props.report?.deviations ?? []).map((deviation) => [
+                deviation.primary_session_id,
+                deviation,
+            ]),
+        ),
+);
 const reportTotals = computed(() =>
     (props.report?.summary ?? []).reduce(
         (total, row) => ({
@@ -101,6 +153,71 @@ function duration(seconds: number | null | undefined): string {
     const sign = seconds < 0 ? '−' : '';
     const minutes = Math.round(Math.abs(seconds) / 60);
     return `${sign}${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`;
+}
+function roundedQuarter(value: string): string {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+        timeZone: 'Europe/Prague',
+    }).formatToParts(new Date(value));
+    const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? 0);
+    const minute = Number(
+        parts.find((part) => part.type === 'minute')?.value ?? 0,
+    );
+    const slot = Math.min(95, Math.floor((hour * 60 + minute + 7) / 15));
+    return timeSelectOptions[slot]?.value ?? '00:00';
+}
+function openReview(deviation: DeviationRow): void {
+    activeDeviation.value = deviation;
+    reviewForm.reset();
+    reviewForm.clearErrors();
+    reviewForm.decision = 'approved';
+    reviewForm.reason = '';
+    reviewForm.start_time = roundedQuarter(deviation.actual_started_at);
+    reviewForm.end_time = roundedQuarter(deviation.actual_ended_at);
+    reviewForm.allow_overlap = false;
+    reviewForm.expected_started_at = deviation.actual_started_at;
+    reviewForm.expected_ended_at = deviation.actual_ended_at;
+    reviewForm.expected_start_time = deviation.planned_start_time;
+    reviewForm.expected_end_time = deviation.planned_end_time;
+    reviewOpen.value = true;
+}
+function closeReview(): void {
+    reviewOpen.value = false;
+    activeDeviation.value = null;
+    reviewForm.reset();
+}
+function submitReview(decision: 'approved' | 'rejected'): void {
+    if (activeDeviation.value === null) return;
+    reviewForm.decision = decision;
+    const confirmOverlap = async (
+        errors: Record<string, string>,
+    ): Promise<void> => {
+        if (
+            errors.overlap !== undefined &&
+            !reviewForm.allow_overlap &&
+            (await dialog.confirm({
+                title: t('common.confirm'),
+                message: t('shifts.overlap_confirm'),
+                confirmLabel: t('common.continue'),
+                variant: 'warning',
+            }))
+        ) {
+            reviewForm.allow_overlap = true;
+            submitReview(decision);
+        }
+    };
+    reviewForm.post(
+        route('attendance.deviation-reviews.store', {
+            shift: activeDeviation.value.shift_id,
+        }),
+        {
+            preserveScroll: true,
+            onError: (errors) => void confirmOverlap(errors),
+            onSuccess: closeReview,
+        },
+    );
 }
 function applyFilters(): void {
     router.get(
@@ -380,6 +497,35 @@ function removeBreak(index: number): void {
                             </td>
                             <td class="space-x-2">
                                 <Button
+                                    v-if="deviationsBySession.get(row.id)"
+                                    variant="ghost"
+                                    size="compact"
+                                    @click="
+                                        openReview(
+                                            deviationsBySession.get(row.id)!,
+                                        )
+                                    "
+                                >
+                                    <Badge
+                                        :variant="
+                                            deviationsBySession.get(row.id)
+                                                ?.status === 'approved'
+                                                ? 'success'
+                                                : deviationsBySession.get(
+                                                        row.id,
+                                                    )?.status === 'rejected'
+                                                  ? 'danger'
+                                                  : 'warning'
+                                        "
+                                    >
+                                        {{
+                                            t(
+                                                `attendance.deviation.status.${deviationsBySession.get(row.id)?.status}`,
+                                            )
+                                        }}
+                                    </Badge>
+                                </Button>
+                                <Button
                                     variant="ghost"
                                     size="compact"
                                     @click="openEdit(row)"
@@ -411,6 +557,117 @@ function removeBreak(index: number): void {
                 </DataTable>
             </template>
         </div>
+
+        <Modal
+            :open="reviewOpen"
+            :title="t('attendance.deviation.title')"
+            class="max-w-xl"
+            @close="closeReview"
+        >
+            <form
+                v-if="activeDeviation"
+                class="space-y-5"
+                @submit.prevent="submitReview('approved')"
+            >
+                <p class="text-sm text-on-surface-variant">
+                    {{ t('attendance.deviation.help') }}
+                </p>
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="rounded-xl bg-surface-container-low p-4">
+                        <p
+                            class="text-xs font-semibold text-on-surface-variant"
+                        >
+                            {{ t('attendance.deviation.planned') }}
+                        </p>
+                        <p class="mt-1 font-mono font-semibold">
+                            {{ activeDeviation.planned_start_time }}–{{
+                                activeDeviation.planned_end_time
+                            }}
+                        </p>
+                    </div>
+                    <div class="rounded-xl bg-surface-container-low p-4">
+                        <p
+                            class="text-xs font-semibold text-on-surface-variant"
+                        >
+                            {{ t('attendance.deviation.actual') }}
+                        </p>
+                        <p class="mt-1 font-mono font-semibold">
+                            {{ timeOnly(activeDeviation.actual_started_at) }}–{{
+                                timeOnly(activeDeviation.actual_ended_at)
+                            }}
+                        </p>
+                    </div>
+                </div>
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div>
+                        <Label for="deviation-start">{{
+                            t('attendance.deviation.start_time')
+                        }}</Label>
+                        <Select
+                            id="deviation-start"
+                            v-model="reviewForm.start_time"
+                            :options="timeSelectOptions"
+                        />
+                        <FieldError :message="reviewForm.errors.start_time" />
+                    </div>
+                    <div>
+                        <Label for="deviation-end">{{
+                            t('attendance.deviation.end_time')
+                        }}</Label>
+                        <Select
+                            id="deviation-end"
+                            v-model="reviewForm.end_time"
+                            :options="timeSelectOptions"
+                        />
+                        <FieldError :message="reviewForm.errors.end_time" />
+                    </div>
+                </div>
+                <div>
+                    <Label for="deviation-reason" required>{{
+                        t('attendance.deviation.reason')
+                    }}</Label>
+                    <Input
+                        id="deviation-reason"
+                        v-model="reviewForm.reason"
+                        required
+                    />
+                    <FieldError :message="reviewForm.errors.reason" />
+                </div>
+                <FieldError :message="reviewErrors.shift" />
+                <FieldError :message="reviewErrors.payroll" />
+                <FieldError :message="reviewErrors.overlap" />
+                <p
+                    v-if="!activeDeviation.can_approve"
+                    class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-medium text-amber-900"
+                >
+                    {{ t('attendance.deviation.closed_payroll') }}
+                </p>
+                <div
+                    class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"
+                >
+                    <Button variant="secondary" @click="closeReview">
+                        {{ t('common.cancel') }}
+                    </Button>
+                    <Button
+                        variant="danger"
+                        :disabled="reviewForm.processing"
+                        @click="submitReview('rejected')"
+                    >
+                        {{ t('attendance.deviation.reject') }}
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="success"
+                        :disabled="
+                            reviewForm.processing ||
+                            !activeDeviation.can_approve
+                        "
+                    >
+                        {{ t('attendance.deviation.approve') }}
+                    </Button>
+                </div>
+            </form>
+        </Modal>
 
         <Modal
             :open="correctionOpen"

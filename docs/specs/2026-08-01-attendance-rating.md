@@ -19,6 +19,8 @@ zůstávají dostupné pouze administrátorovi.
   nevstupují. Zneplatněná docházka se ignoruje.
 - Více bloků stejné směny se spojí; mezery mezi bloky jsou další pauzy.
 - Jakmile docházka existuje, výpočet používá její snapshot plánovaných časů.
+  Auditované schválení odchylky je synchronizuje s nově schváleným plánem;
+  běžná editace směny je nemění.
 - Pásma jsou dobré 90–100, upozornění 70–89 a špatné 0–69.
 - Měsíční skóre pracovníka je nevážený průměr hodnocených směn zaokrouhlený
   na celé body.

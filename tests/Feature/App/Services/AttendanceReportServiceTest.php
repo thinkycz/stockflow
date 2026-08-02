@@ -79,3 +79,37 @@ use Illuminate\Support\Carbon;
     \expect($service->build($admin, $store, '2026-07', null)['rows'][0]['actual_seconds'])->toBe(1800)
         ->and($service->build($admin, $store, '2026-08', null)['rows'][0]['actual_seconds'])->toBe(1800);
 });
+
+\test('report requires a deviation review only beyond fifteen minutes', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $withinTolerance = Shift::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
+        'date' => '2026-07-10', 'start_time' => '08:00', 'end_time' => '16:00',
+    ]);
+    $pending = Shift::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
+        'date' => '2026-07-11', 'start_time' => '08:00', 'end_time' => '16:00',
+    ]);
+    AttendanceSession::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
+        'shift_id' => $withinTolerance->getKey(), 'scheduled_date' => '2026-07-10',
+        'scheduled_start_time' => '08:00', 'scheduled_end_time' => '16:00',
+        'started_at' => '2026-07-10 06:15:00', 'ended_at' => '2026-07-10 14:00:00',
+    ]);
+    AttendanceSession::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
+        'shift_id' => $pending->getKey(), 'scheduled_date' => '2026-07-11',
+        'scheduled_start_time' => '08:00', 'scheduled_end_time' => '16:00',
+        'started_at' => '2026-07-11 06:15:01', 'ended_at' => '2026-07-11 14:00:00',
+    ]);
+
+    $report = (new AttendanceReportService())->build($admin, $store, '2026-07', null);
+
+    \expect($report['deviations'])->toHaveCount(1)
+        ->and($report['deviations'][0]['shift_id'])->toBe($pending->getKey())
+        ->and($report['deviations'][0]['status'])->toBe('pending')
+        ->and($report['deviations'][0]['arrival_offset_seconds'])->toBe(901)
+        ->and($report['deviations'][0]['departure_offset_seconds'])->toBe(0);
+});

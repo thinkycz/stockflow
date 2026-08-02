@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Web\Attendance\AttendanceActionController;
 use App\Http\Controllers\Web\Attendance\AttendanceCorrectionController;
+use App\Http\Controllers\Web\Attendance\AttendanceDeviationReviewController;
 use App\Http\Controllers\Web\Attendance\AttendanceIndexController;
 use App\Http\Controllers\Web\Attendance\AttendancePrintController;
 use App\Http\Controllers\Web\Attendance\AttendanceReportController;
@@ -261,6 +262,7 @@ Resolver::resolveRouteRegistrar()
         $router->get('attendance/report', AttendanceReportController::class)->name('attendance.report');
         $router->get('attendance/print', AttendancePrintController::class)->name('attendance.print');
         $router->post('attendance/corrections', [AttendanceCorrectionController::class, 'store'])->name('attendance.corrections.store');
+        $router->post('attendance/shifts/{shift}/deviation-reviews', AttendanceDeviationReviewController::class)->whereNumber('shift')->name('attendance.deviation-reviews.store');
         $router->put('attendance/sessions/{attendanceSession}', [AttendanceCorrectionController::class, 'update'])->whereNumber('attendanceSession')->name('attendance.sessions.update');
         $router->post('attendance/sessions/{attendanceSession}/void', [AttendanceCorrectionController::class, 'void'])->whereNumber('attendanceSession')->name('attendance.sessions.void');
 

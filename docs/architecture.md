@@ -210,7 +210,9 @@ blokům jednoho brigádníka a souběžným pauzám jednoho bloku.
 
 Časy jsou UTC timestampy, zatímco párování plánovaných směn, hranice dne a UI
 používají `Europe/Prague`. Příchod snapshotuje plán a sazbu odpovídající směny;
-report proto zůstává historicky stabilní. Obsazenost se neukládá duplicitně,
+report proto zůstává historicky stabilní. Jedinou výjimkou je auditované
+schválení odchylky na adminském reportu, které synchronně upraví směnu i její
+napárované plánované snapshoty a tím přepočítá otevřenou výplatu. Obsazenost se neukládá duplicitně,
 ale odvozuje se ze všech otevřených bloků a pauz prodejny. Neuzavřený blok z
 předchozího lokálního dne vytváří stav `unclear` a nevstupuje do odměny.
 

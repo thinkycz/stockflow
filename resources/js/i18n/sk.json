@@ -1208,6 +1208,9 @@
             "all_statuses": "Všetky stavy",
             "date": "Dátum",
             "detail": "Detail checklistu",
+            "progress": "Priebeh dňa",
+            "completed_tasks": "{completed} z {total} úloh splnených",
+            "no_worker": "Bez priradeného brigádnika",
             "empty": "História je prázdna",
             "empty_help": "Pre zvolené filtre nie sú žiadne checklisty.",
             "excuse": "Označiť ako neprevádzkový",
@@ -1318,6 +1321,23 @@
             "total_wage": "Orientačná odmena",
             "empty": "Pre zvolené filtre nie sú žiadne záznamy.",
             "incomplete": "Neúplné bloky: {count}"
+        },
+        "deviation": {
+            "title": "Posúdenie odchýlky dochádzky",
+            "help": "Porovnajte plánovanú zmenu s prvým príchodom a posledným odchodom. Schválenie upraví kalendár zmien a výpočet otvorenej výplaty.",
+            "planned": "Plánovaná zmena",
+            "actual": "Skutočná dochádzka",
+            "start_time": "Schválený začiatok",
+            "end_time": "Schválený koniec",
+            "reason": "Dôvod rozhodnutia",
+            "approve": "Schváliť odchýlku",
+            "reject": "Zamietnuť odchýlku",
+            "closed_payroll": "Pred schválením znovu otvorte výplatný report tohto mesiaca. Zamietnutie zostáva dostupné.",
+            "status": {
+                "pending": "Posúdiť odchýlku",
+                "approved": "Schválené",
+                "rejected": "Zamietnuté"
+            }
         },
         "correction": {
             "create": "Doplniť záznam",

@@ -5,22 +5,27 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\AttendanceBreak;
+use App\Models\AttendanceDeviationReview;
 use App\Models\AttendanceSession;
+use App\Models\PayrollReport;
+use App\Models\Shift;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * @phpstan-type AttendanceReportRow array{id: int, worker_id: int, shift_id: int|null, worker_name: string, date: string, started_at: string, ended_at: string|null, breaks: list<array{started_at: string, ended_at: string|null, seconds: int}>, break_seconds: int, actual_seconds: int|null, planned_seconds: int|null, difference_seconds: int|null, hourly_rate: float, wage: float|null, stale: bool, voided: bool}
  * @phpstan-type AttendanceSummaryRow array{worker_id: int, worker_name: string, actual_seconds: int, planned_seconds: int, difference_seconds: int, wage: float, incomplete_count: int}
+ * @phpstan-type AttendanceDeviationRow array{shift_id: int, primary_session_id: int, status: string, planned_start_time: string, planned_end_time: string, actual_started_at: string, actual_ended_at: string, arrival_offset_seconds: int, departure_offset_seconds: int, can_approve: bool, reason: string|null, reviewed_at: string|null}
  */
 class AttendanceReportService
 {
     /**
      * Build report rows and per-worker totals for one month.
      *
-     * @return array{month: string, rows: list<AttendanceReportRow>, summary: list<AttendanceSummaryRow>}
+     * @return array{month: string, rows: list<AttendanceReportRow>, summary: list<AttendanceSummaryRow>, deviations: list<AttendanceDeviationRow>}
      */
     public function build(User $owner, Store $store, string $month, int|null $workerId): array
     {
@@ -124,7 +129,12 @@ class AttendanceReportService
             $totals[$worker->getKey()] = $total;
         }
 
-        return ['month' => $month, 'rows' => $rows, 'summary' => \array_values($totals)];
+        return [
+            'month' => $month,
+            'rows' => $rows,
+            'summary' => \array_values($totals),
+            'deviations' => $this->deviations($owner, $store, $sessions),
+        ];
     }
 
     /**
@@ -151,5 +161,106 @@ class AttendanceReportService
         }
 
         return 'empty';
+    }
+
+    /**
+     * Compare complete attendance boundaries with their current shifts.
+     *
+     * @param Collection<int, AttendanceSession> $sessions
+     *
+     * @return list<AttendanceDeviationRow>
+     */
+    private function deviations(User $owner, Store $store, Collection $sessions): array
+    {
+        $eligible = $sessions->filter(
+            static fn(AttendanceSession $session): bool => $session->getShiftId() !== null && $session->getVoidedAt() === null,
+        );
+        $shiftIds = $eligible->map(
+            static fn(AttendanceSession $session): int => (int) $session->getShiftId(),
+        )->unique()->values()->all();
+        if ($shiftIds === []) {
+            return [];
+        }
+
+        $shiftQuery = Shift::query();
+        Shift::scopeForUser($shiftQuery, $owner);
+        Shift::scopeForStore($shiftQuery, $store->getKey());
+        Shift::querySelect($shiftQuery);
+        $shifts = $shiftQuery->whereKey($shiftIds)->get()->keyBy(
+            static fn(Shift $shift): int => $shift->getKey(),
+        );
+        $reviewQuery = AttendanceDeviationReview::query();
+        AttendanceDeviationReview::scopeForUser($reviewQuery, $owner);
+        AttendanceDeviationReview::querySelect($reviewQuery);
+        $reviews = $reviewQuery
+            ->where('store_id', $store->getKey())
+            ->whereIn('shift_id', $shiftIds)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get()
+            ->groupBy(static fn(AttendanceDeviationReview $review): int => $review->getShiftId());
+        $payrollQuery = PayrollReport::query();
+        PayrollReport::scopeForUser($payrollQuery, $owner);
+        PayrollReport::querySelect($payrollQuery);
+        $closedPayrollPeriods = $payrollQuery
+            ->where('store_id', $store->getKey())
+            ->where('status', 'closed')
+            ->get()
+            ->map(static fn(PayrollReport $report): string => \sprintf('%04d-%02d', $report->getYear(), $report->getMonth()))
+            ->all();
+        $deviations = [];
+
+        foreach ($eligible->groupBy(static fn(AttendanceSession $session): int => (int) $session->getShiftId()) as $shiftId => $shiftSessions) {
+            $shift = $shifts->get($shiftId);
+            if (!$shift instanceof Shift || $shiftSessions->contains(
+                static fn(AttendanceSession $session): bool => $session->getEndedAt() === null,
+            )) {
+                continue;
+            }
+            $first = $shiftSessions->sortBy(
+                static fn(AttendanceSession $session): int => $session->getStartedAt()->getTimestamp(),
+            )->first();
+            $last = $shiftSessions->sortByDesc(
+                static fn(AttendanceSession $session): int => $session->getEndedAt()?->getTimestamp() ?? 0,
+            )->first();
+            if (!$first instanceof AttendanceSession || !$last instanceof AttendanceSession || $last->getEndedAt() === null) {
+                continue;
+            }
+            $plannedStart = CarbonImmutable::parse(
+                $shift->getDate() . ' ' . $shift->getStartTime(),
+                AttendanceService::BUSINESS_TIMEZONE,
+            );
+            $plannedEnd = CarbonImmutable::parse(
+                $shift->getDate() . ' ' . $shift->getEndTime(),
+                AttendanceService::BUSINESS_TIMEZONE,
+            );
+            $arrivalOffset = $first->getStartedAt()->getTimestamp() - $plannedStart->utc()->getTimestamp();
+            $departureOffset = $last->getEndedAt()->getTimestamp() - $plannedEnd->utc()->getTimestamp();
+            $matchingReview = $reviews->get($shift->getKey(), new Collection())->first(
+                static fn(AttendanceDeviationReview $review): bool => $review->getActualStartedAt()->getTimestamp() === $first->getStartedAt()->getTimestamp() &&
+                    $review->getActualEndedAt()->getTimestamp() === $last->getEndedAt()->getTimestamp() &&
+                    \mb_substr($review->getAfterStartTime(), 0, 5) === $shift->getStartTimeShort() &&
+                    \mb_substr($review->getAfterEndTime(), 0, 5) === $shift->getEndTimeShort(),
+            );
+            if (\abs($arrivalOffset) <= 900 && \abs($departureOffset) <= 900 && !($matchingReview instanceof AttendanceDeviationReview)) {
+                continue;
+            }
+            $deviations[] = [
+                'shift_id' => $shift->getKey(),
+                'primary_session_id' => $first->getKey(),
+                'status' => $matchingReview?->getDecision()->value ?? 'pending',
+                'planned_start_time' => $shift->getStartTimeShort(),
+                'planned_end_time' => $shift->getEndTimeShort(),
+                'actual_started_at' => $first->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toIso8601String(),
+                'actual_ended_at' => $last->getEndedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toIso8601String(),
+                'arrival_offset_seconds' => $arrivalOffset,
+                'departure_offset_seconds' => $departureOffset,
+                'can_approve' => !\in_array(\mb_substr($shift->getDate(), 0, 7), $closedPayrollPeriods, true),
+                'reason' => $matchingReview?->getReason(),
+                'reviewed_at' => $matchingReview?->getCreatedAt()->toIso8601String(),
+            ];
+        }
+
+        return $deviations;
     }
 }

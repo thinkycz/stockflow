@@ -1,9 +1,20 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { ArrowDown, ArrowUp, Plus, Trash2 } from '@lucide/vue';
+import {
+    ArrowDown,
+    ArrowUp,
+    Check,
+    Circle,
+    Moon,
+    Plus,
+    Sun,
+    Trash2,
+    UserRound,
+} from '@lucide/vue';
 import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
@@ -124,6 +135,41 @@ const statusOptions = computed(() =>
                 : t(`checklists.status.${value}`),
     })),
 );
+const historyDetailItems = computed(() => ({
+    morning:
+        props.history_detail?.items.filter(
+            (item) => item.shift === 'morning',
+        ) ?? [],
+    afternoon:
+        props.history_detail?.items.filter(
+            (item) => item.shift === 'afternoon',
+        ) ?? [],
+}));
+const historyDetailCompletedCount = computed(
+    () =>
+        props.history_detail?.items.filter((item) => item.completed_at !== null)
+            .length ?? 0,
+);
+
+function statusVariant(
+    status: Status,
+): 'neutral' | 'success' | 'warning' | 'danger' {
+    switch (status) {
+        case 'completed':
+            return 'success';
+        case 'in_progress':
+            return 'warning';
+        case 'incomplete':
+            return 'danger';
+        case 'not_configured':
+        case 'excused':
+            return 'neutral';
+    }
+}
+
+function shiftStatus(shift: 'morning' | 'afternoon'): Status {
+    return props.history_detail?.[`${shift}_status`] ?? 'not_configured';
+}
 
 function scopeUrl(
     scope: 'daily' | 'weekly',
@@ -408,12 +454,8 @@ async function changeExcuse(excused: boolean): Promise<void> {
                         }}</Button>
                     </Card>
 
-                    <Card
-                        v-if="history.data.length > 0"
-                        :padded="false"
-                        class="overflow-hidden"
-                    >
-                        <DataTable variant="nested">
+                    <div v-if="history.data.length > 0">
+                        <DataTable>
                             <thead>
                                 <tr>
                                     <th>
@@ -432,30 +474,44 @@ async function changeExcuse(excused: boolean): Promise<void> {
                                 <tr v-for="row in history.data" :key="row.id">
                                     <td>{{ row.date }}</td>
                                     <td>
-                                        {{
-                                            t(
-                                                `checklists.status.${row.morning_status}`,
-                                            )
-                                        }}
+                                        <Badge
+                                            :variant="
+                                                statusVariant(
+                                                    row.morning_status,
+                                                )
+                                            "
+                                            >{{
+                                                t(
+                                                    `checklists.status.${row.morning_status}`,
+                                                )
+                                            }}</Badge
+                                        >
                                     </td>
                                     <td>
-                                        {{
-                                            t(
-                                                `checklists.status.${row.afternoon_status}`,
-                                            )
-                                        }}
+                                        <Badge
+                                            :variant="
+                                                statusVariant(
+                                                    row.afternoon_status,
+                                                )
+                                            "
+                                            >{{
+                                                t(
+                                                    `checklists.status.${row.afternoon_status}`,
+                                                )
+                                            }}</Badge
+                                        >
                                     </td>
                                     <td>
                                         <Link
                                             :href="detailUrl(row.id)"
-                                            class="text-xs font-semibold text-primary"
+                                            class="inline-flex h-8 items-center justify-center rounded-xl border border-outline-glass bg-white px-2.5 text-xs font-semibold text-on-surface transition hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2"
                                             >{{ t('common.detail') }}</Link
                                         >
                                     </td>
                                 </tr>
                             </tbody>
                         </DataTable>
-                        <div class="p-4">
+                        <div class="pt-4">
                             <Pagination
                                 :current-page="history.current_page"
                                 :last-page="history.last_page"
@@ -468,7 +524,7 @@ async function changeExcuse(excused: boolean): Promise<void> {
                                 }"
                             />
                         </div>
-                    </Card>
+                    </div>
                     <EmptyState
                         v-else
                         :title="t('checklists.history.empty')"
@@ -485,56 +541,171 @@ async function changeExcuse(excused: boolean): Promise<void> {
                     ? `${t('checklists.history.detail')} · ${history_detail.date}`
                     : ''
             "
-            class="max-w-3xl"
+            class="max-h-[calc(100vh-2rem)] max-w-4xl overflow-hidden"
+            body-class="max-h-[calc(100vh-9rem)] overflow-y-auto p-0"
             @close="closeDetail"
         >
-            <div v-if="history_detail" class="space-y-5 p-6">
-                <div class="flex flex-wrap gap-2">
-                    <Button
-                        v-if="!history_detail.excuse_reason"
-                        variant="warning"
-                        size="compact"
-                        @click="changeExcuse(true)"
-                        >{{ t('checklists.history.excuse') }}</Button
-                    ><Button
-                        v-else
-                        variant="secondary"
-                        size="compact"
-                        @click="changeExcuse(false)"
-                        >{{ t('checklists.history.restore') }}</Button
-                    >
-                </div>
+            <div v-if="history_detail">
                 <div
-                    v-for="shift in ['morning', 'afternoon'] as const"
-                    :key="shift"
+                    class="border-b border-outline-glass bg-surface-container-low px-6 py-5"
                 >
-                    <h3 class="mb-2 font-heading text-sm font-bold">
-                        {{ t(`checklists.shifts.${shift}`) }}
-                    </h3>
-                    <ul class="space-y-2">
-                        <li
-                            v-for="item in history_detail.items.filter(
-                                (value) => value.shift === shift,
-                            )"
-                            :key="item.id"
-                            class="rounded-xl border border-outline-glass px-3 py-2 text-sm"
-                        >
-                            <span
-                                :class="
-                                    item.completed_at
-                                        ? 'line-through opacity-65'
-                                        : ''
-                                "
-                                >{{ item.text }}</span
-                            ><span
-                                v-if="item.worker_name"
-                                class="ml-2 text-xs text-on-surface-variant"
-                                >· {{ item.worker_name }}</span
+                    <div
+                        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                        <div>
+                            <p
+                                class="text-xs font-semibold tracking-wide text-on-surface-variant uppercase"
                             >
-                        </li>
-                    </ul>
+                                {{ t('checklists.history.progress') }}
+                            </p>
+                            <p class="mt-1 font-heading text-2xl font-bold">
+                                {{
+                                    t('checklists.history.completed_tasks', {
+                                        completed: historyDetailCompletedCount,
+                                        total: history_detail.items.length,
+                                    })
+                                }}
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <Badge
+                                :variant="
+                                    statusVariant(history_detail.morning_status)
+                                "
+                                >{{
+                                    t(
+                                        `checklists.status.${history_detail.morning_status}`,
+                                    )
+                                }}</Badge
+                            >
+                            <Badge
+                                :variant="
+                                    statusVariant(
+                                        history_detail.afternoon_status,
+                                    )
+                                "
+                                >{{
+                                    t(
+                                        `checklists.status.${history_detail.afternoon_status}`,
+                                    )
+                                }}</Badge
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    v-if="history_detail.excuse_reason"
+                    class="mx-6 mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3"
+                >
+                    <p class="text-xs font-semibold text-amber-900 uppercase">
+                        {{ t('checklists.status.excused') }}
+                    </p>
+                    <p class="mt-1 text-sm text-amber-950">
+                        {{ history_detail.excuse_reason }}
+                    </p>
+                </div>
+
+                <div class="grid gap-4 p-6 md:grid-cols-2">
+                    <section
+                        v-for="shift in ['morning', 'afternoon'] as const"
+                        :key="shift"
+                        class="overflow-hidden rounded-2xl border border-outline-glass bg-white"
+                    >
+                        <div
+                            class="flex items-center justify-between gap-3 border-b border-outline-glass bg-surface-container-low px-4 py-3"
+                        >
+                            <div class="flex items-center gap-2.5">
+                                <div
+                                    class="flex size-9 items-center justify-center rounded-xl bg-white text-on-surface shadow-sm"
+                                >
+                                    <Sun
+                                        v-if="shift === 'morning'"
+                                        :size="18"
+                                    />
+                                    <Moon v-else :size="18" />
+                                </div>
+                                <h3 class="font-heading text-sm font-bold">
+                                    {{ t(`checklists.shifts.${shift}`) }}
+                                </h3>
+                            </div>
+                            <Badge
+                                :variant="statusVariant(shiftStatus(shift))"
+                                >{{
+                                    t(`checklists.status.${shiftStatus(shift)}`)
+                                }}</Badge
+                            >
+                        </div>
+
+                        <ul
+                            v-if="historyDetailItems[shift].length > 0"
+                            class="divide-y divide-outline-glass"
+                        >
+                            <li
+                                v-for="item in historyDetailItems[shift]"
+                                :key="item.id"
+                                class="flex gap-3 px-4 py-3.5"
+                            >
+                                <span
+                                    :class="[
+                                        'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full',
+                                        item.completed_at
+                                            ? 'bg-emerald-100 text-emerald-700'
+                                            : 'bg-surface-container text-on-surface-variant',
+                                    ]"
+                                >
+                                    <Check
+                                        v-if="item.completed_at"
+                                        :size="13"
+                                        :stroke-width="3"
+                                    />
+                                    <Circle
+                                        v-else
+                                        :size="9"
+                                        fill="currentColor"
+                                    />
+                                </span>
+                                <div class="min-w-0 flex-1">
+                                    <p
+                                        class="text-sm font-medium text-on-surface"
+                                    >
+                                        {{ item.text }}
+                                    </p>
+                                    <p
+                                        class="mt-1 flex items-center gap-1.5 text-xs text-on-surface-variant"
+                                    >
+                                        <UserRound :size="13" />
+                                        {{
+                                            item.worker_name ??
+                                            t('checklists.history.no_worker')
+                                        }}
+                                    </p>
+                                </div>
+                            </li>
+                        </ul>
+                        <p
+                            v-else
+                            class="px-4 py-8 text-center text-sm text-on-surface-variant"
+                        >
+                            {{ t('checklists.no_tasks') }}
+                        </p>
+                    </section>
                 </div>
             </div>
+
+            <template v-if="history_detail" #footer>
+                <Button
+                    v-if="!history_detail.excuse_reason"
+                    variant="warning"
+                    @click="changeExcuse(true)"
+                    >{{ t('checklists.history.excuse') }}</Button
+                ><Button
+                    v-else
+                    variant="secondary"
+                    @click="changeExcuse(false)"
+                    >{{ t('checklists.history.restore') }}</Button
+                >
+            </template>
         </Modal>
     </AppLayout>
 </template>

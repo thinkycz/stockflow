@@ -2,8 +2,8 @@
 
 ## Stav
 
-- Aktuální fáze: Fáze 5 – strukturovaný katalog
-- Celkový stav: ověřeno po follow-up redesignu
+- Aktuální fáze: Fáze 6 – dokončeno
+- Celkový stav: verified
 - Poslední aktualizace: 2026-08-02
 - Výchozí worktree: změny follow-upu připravené k předání, větev `main`
 
@@ -58,8 +58,21 @@
 - Úspěch vyžaduje přesné pořadí; opakování je neomezené.
 - Recepty jsou firemní a historické pokusy jsou snapshoty.
 - Suroviny se zobrazují odděleně od testovatelných postupových kroků; akční
-  ikony jsou odvozené parserem, ale admin je může změnit.
+  ikony jsou odvozené parserem, ale admin je může změnit. Toto rozhodnutí
+  nahrazuje Fáze 6: nové recepty používají jednu testovatelnou sekvenci.
+
+## Fáze 6: Kompaktní katalog a jednotná výrobní sekvence
+
+- Stav: done
+- [x] Kanonické instrukce a idempotentní převod legacy dat
+- [x] Nové snapshoty a test celé sekvence při zachování legacy historie
+- [x] Prostý index a samostatná adminská stránka kategorií
+- [x] Kompaktní detail s přepínačem variant a jednotný editor
+- [x] CS/SK/EN, cílené testy, E2E a plné repo kontroly
+- [x] Jednorázový deploy reset a seed čistého katalogu se zachováním snapshotů
+- Blokátory: žádné
 
 ## Další krok
 
-- Předat ověřenou implementaci a aplikovat databázovou migraci při nasazení.
+- Nasadit standardním `make production`; migrace připraví nullable vazbu historie
+  a navazující `db:seed --force` jednou nahradí katalog.

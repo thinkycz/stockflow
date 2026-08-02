@@ -20,6 +20,9 @@ use Thinkycz\LaravelCore\Support\Typer;
     $recipe = Typer::assertInstance(Recipe::query()->firstOrFail(), Recipe::class);
     $attempt = (new RecipeTestService())->start($limited, $worker, $recipe);
     (new RecipeTestService())->submit($limited, $attempt, \collect($attempt->getCorrectStepsSnapshot())->pluck('token')->all());
+    $attempt->setAttribute('recipe_id', null);
+    $attempt->setAttribute('recipe_variant_id', null);
+    $attempt->save();
 
     $this->be($admin, 'users')->get('/recipe-test-results?worker_id=' . $worker->getKey(), $this->inertiaHeaders())
         ->assertOk()->assertJsonPath('component', 'recipes/Results')

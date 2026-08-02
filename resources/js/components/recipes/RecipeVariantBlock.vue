@@ -44,13 +44,12 @@ export type RecipeVariantData = {
     steps: RecipeProcedureStepData[];
 };
 
-const props = withDefaults(
+withDefaults(
     defineProps<{
         variant: RecipeVariantData;
-        isAdmin?: boolean;
         showProcedure?: boolean;
     }>(),
-    { isAdmin: false, showProcedure: true },
+    { showProcedure: true },
 );
 
 const { t } = useI18n();
@@ -103,19 +102,6 @@ function quantityLabel(ingredient: RecipeIngredientData): string {
     }
 
     return String(ingredient.quantity_value);
-}
-
-function displaySource(ingredient: RecipeIngredientData): boolean {
-    const quantity = quantityLabel(ingredient);
-    const normalized = [quantity, ingredient.unit, ingredient.name]
-        .filter(Boolean)
-        .join(' ');
-
-    return Boolean(
-        props.isAdmin &&
-        ingredient.source_text &&
-        ingredient.source_text !== normalized,
-    );
 }
 </script>
 
@@ -172,15 +158,6 @@ function displaySource(ingredient: RecipeIngredientData): boolean {
                             >
                                 {{ ingredient.name }}
                             </span>
-                            <details
-                                v-if="displaySource(ingredient)"
-                                class="mt-1 text-[11px] text-on-surface-variant"
-                            >
-                                <summary class="cursor-pointer">
-                                    {{ t('recipes.source_wording') }}
-                                </summary>
-                                <span>{{ ingredient.source_text }}</span>
-                            </details>
                         </span>
                     </li>
                 </ul>
@@ -220,19 +197,6 @@ function displaySource(ingredient: RecipeIngredientData): boolean {
                             class="min-w-0 flex-1 pt-1 text-sm text-on-surface"
                         >
                             {{ step.text }}
-                            <details
-                                v-if="
-                                    isAdmin &&
-                                    step.source_text &&
-                                    step.source_text !== step.text
-                                "
-                                class="mt-1 text-[11px] text-on-surface-variant"
-                            >
-                                <summary class="cursor-pointer">
-                                    {{ t('recipes.source_wording') }}
-                                </summary>
-                                <span>{{ step.source_text }}</span>
-                            </details>
                         </span>
                     </li>
                 </ol>

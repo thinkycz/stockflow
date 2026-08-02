@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
 import { ArrowDown, ArrowUp, Plus, Trash2 } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -13,22 +13,18 @@ import Select from '@/components/ui/Select.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import { useRoute } from '@/composables/useRoute';
 
-type Ingredient = {
+type Instruction = {
+    type: 'ingredient' | 'action';
+    text: string;
+    action_key: string;
     quantity_value: string | number;
     quantity_text: string;
     unit: string;
-    name: string;
+    ingredient_name: string;
+    target: string;
     icon_group: string;
-    source_text: string;
 };
-type Step = { text: string; action_key: string; source_text: string };
-type Variant = { name: string; ingredients: Ingredient[]; steps: Step[] };
-type FormData = {
-    category_id: string;
-    name: string;
-    note: string | null;
-    variants: Variant[];
-};
+type Variant = { name: string; instructions: Instruction[] };
 
 const props = defineProps<{
     recipe: {
@@ -38,8 +34,17 @@ const props = defineProps<{
         note: string | null;
         variants: Array<{
             name: string | null;
-            ingredients?: Ingredient[];
-            steps: Step[];
+            instructions: Array<{
+                type: 'ingredient' | 'action';
+                text: string;
+                action_key: string;
+                quantity_value: number | string | null;
+                quantity_text: string | null;
+                unit: string | null;
+                ingredient_name: string | null;
+                target: string | null;
+                icon_group: string;
+            }>;
         }>;
     } | null;
     categories: Array<{ id: number; name: string }>;
@@ -80,43 +85,46 @@ const actionKeys = [
     'other',
 ];
 
-function blankIngredient(): Ingredient {
+function blankInstruction(
+    type: 'ingredient' | 'action' = 'action',
+): Instruction {
     return {
+        type,
+        text: '',
+        action_key: type === 'ingredient' ? 'add' : 'other',
         quantity_value: '',
         quantity_text: '',
         unit: '',
-        name: '',
+        ingredient_name: '',
+        target: '',
         icon_group: 'neutral',
-        source_text: '',
     };
 }
 
-function blankStep(): Step {
-    return { text: '', action_key: 'other', source_text: '' };
-}
-
 function blankVariant(): Variant {
-    return { name: '', ingredients: [], steps: [blankStep(), blankStep()] };
+    return { name: '', instructions: [blankInstruction(), blankInstruction()] };
 }
 
-const form = useForm<FormData>({
+const form = useForm({
     category_id: props.recipe ? String(props.recipe.category_id) : '',
     name: props.recipe?.name ?? '',
-    note: props.recipe?.note ?? null,
-    variants: props.recipe?.variants.map((variant) => ({
-        name: variant.name ?? '',
-        ingredients: (variant.ingredients ?? []).map((ingredient) => ({
-            ...ingredient,
-            quantity_text: ingredient.quantity_text ?? '',
-            unit: ingredient.unit ?? '',
-            source_text: ingredient.source_text ?? '',
-        })),
-        steps: variant.steps.map((step) => ({
-            ...step,
-            action_key: step.action_key ?? 'other',
-            source_text: step.source_text ?? '',
-        })),
-    })) ?? [blankVariant()],
+    note: props.recipe?.note ?? '',
+    variants: props.recipe
+        ? props.recipe.variants.map((variant) => ({
+              name: variant.name ?? '',
+              instructions: variant.instructions.map((instruction) => ({
+                  type: instruction.type,
+                  text: instruction.text,
+                  action_key: instruction.action_key,
+                  quantity_value: instruction.quantity_value ?? '',
+                  quantity_text: instruction.quantity_text ?? '',
+                  unit: instruction.unit ?? '',
+                  ingredient_name: instruction.ingredient_name ?? '',
+                  target: instruction.target ?? '',
+                  icon_group: instruction.icon_group,
+              })),
+          }))
+        : [blankVariant()],
 });
 
 function move<T>(rows: T[], index: number, direction: -1 | 1): void {
@@ -129,27 +137,33 @@ function move<T>(rows: T[], index: number, direction: -1 | 1): void {
 function addVariant(): void {
     form.variants.push(blankVariant());
 }
-
 function removeVariant(index: number): void {
     if (form.variants.length > 1) form.variants.splice(index, 1);
 }
-
-function addIngredient(variant: Variant): void {
-    variant.ingredients.push(blankIngredient());
+function addInstruction(variant: Variant, type: 'ingredient' | 'action'): void {
+    variant.instructions.push(blankInstruction(type));
 }
-
-function removeIngredient(variant: Variant, index: number): void {
-    variant.ingredients.splice(index, 1);
+function removeInstruction(variant: Variant, index: number): void {
+    if (variant.instructions.length > 2) variant.instructions.splice(index, 1);
 }
-
-function addStep(variant: Variant): void {
-    variant.steps.push(blankStep());
+function changeType(instruction: Instruction): void {
+    instruction.action_key =
+        instruction.type === 'ingredient' ? 'add' : 'other';
 }
-
-function removeStep(variant: Variant, index: number): void {
-    if (variant.steps.length > 2) variant.steps.splice(index, 1);
+function rebuildIngredientText(instruction: Instruction): void {
+    if (instruction.type !== 'ingredient') return;
+    const quantity =
+        instruction.quantity_text || String(instruction.quantity_value || '');
+    const amount = [quantity, instruction.unit].filter(Boolean).join(' ');
+    instruction.text = [
+        'Add',
+        amount,
+        instruction.ingredient_name,
+        instruction.target ? 'into ' + instruction.target : '',
+    ]
+        .filter(Boolean)
+        .join(' ');
 }
-
 function submit(): void {
     if (props.recipe) form.put(route('recipes.update', props.recipe.id));
     else form.post(route('recipes.store'));
@@ -166,8 +180,9 @@ function submit(): void {
                             ? route('recipes.show', recipe.id)
                             : route('recipes.index')
                     "
-                    >{{ t('recipes.back') }}</BackLink
                 >
+                    {{ t('recipes.back') }}
+                </BackLink>
                 <h1
                     class="mt-3 font-heading text-2xl font-bold text-on-surface"
                 >
@@ -221,22 +236,21 @@ function submit(): void {
                             class="mt-1"
                             :rows="3"
                         />
-                        <FieldError :message="form.errors.note" />
                     </div>
                 </Card>
 
                 <Card
                     v-for="(variant, variantIndex) in form.variants"
                     :key="variantIndex"
-                    class="space-y-5"
+                    class="space-y-4"
                 >
                     <div class="flex items-end gap-2">
                         <div class="min-w-0 flex-1">
-                            <Label :for="`variant-${variantIndex}`">{{
+                            <Label :for="'variant-' + variantIndex">{{
                                 t('recipes.variant_name')
                             }}</Label>
                             <Input
-                                :id="`variant-${variantIndex}`"
+                                :id="'variant-' + variantIndex"
                                 v-model="variant.name"
                                 class="mt-1"
                                 :placeholder="t('recipes.default_variant')"
@@ -248,8 +262,9 @@ function submit(): void {
                             :disabled="variantIndex === 0"
                             :aria-label="t('common.move_up')"
                             @click="move(form.variants, variantIndex, -1)"
-                            ><ArrowUp :size="15"
-                        /></Button>
+                        >
+                            <ArrowUp :size="15" />
+                        </Button>
                         <Button
                             size="icon"
                             variant="ghost"
@@ -258,379 +273,247 @@ function submit(): void {
                             "
                             :aria-label="t('common.move_down')"
                             @click="move(form.variants, variantIndex, 1)"
-                            ><ArrowDown :size="15"
-                        /></Button>
+                        >
+                            <ArrowDown :size="15" />
+                        </Button>
                         <Button
                             size="icon"
                             variant="danger"
                             :disabled="form.variants.length === 1"
                             :aria-label="t('recipes.remove_variant')"
                             @click="removeVariant(variantIndex)"
-                            ><Trash2 :size="15"
-                        /></Button>
+                        >
+                            <Trash2 :size="15" />
+                        </Button>
                     </div>
 
-                    <section class="space-y-3">
+                    <div class="space-y-2">
                         <div
-                            class="flex flex-wrap items-center justify-between gap-2"
+                            v-for="(
+                                instruction, instructionIndex
+                            ) in variant.instructions"
+                            :key="instructionIndex"
+                            class="rounded-xl border border-outline-glass bg-surface-container-low/40 p-3"
                         >
-                            <div>
-                                <h3
-                                    class="font-heading text-base font-bold text-on-surface"
+                            <div class="flex flex-wrap items-end gap-2">
+                                <span
+                                    class="mb-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-white"
                                 >
-                                    {{ t('recipes.ingredients') }}
-                                </h3>
-                                <p class="text-xs text-on-surface-variant">
-                                    {{ t('recipes.ingredients_help') }}
-                                </p>
-                            </div>
-                            <Button
-                                variant="secondary"
-                                size="compact"
-                                @click="addIngredient(variant)"
-                                ><Plus :size="14" />{{
-                                    t('recipes.add_ingredient')
-                                }}</Button
-                            >
-                        </div>
-                        <div
-                            v-if="variant.ingredients.length"
-                            class="space-y-3"
-                        >
-                            <div
-                                v-for="(
-                                    ingredient, ingredientIndex
-                                ) in variant.ingredients"
-                                :key="ingredientIndex"
-                                class="rounded-xl border border-outline-glass bg-surface-container-low/50 p-3"
-                            >
-                                <div
-                                    class="grid gap-2 sm:grid-cols-[110px_110px_minmax(0,1fr)_160px_auto] sm:items-end"
+                                    {{ instructionIndex + 1 }}
+                                </span>
+                                <div class="w-36">
+                                    <Label>{{
+                                        t('recipes.instruction_type')
+                                    }}</Label>
+                                    <Select
+                                        v-model="instruction.type"
+                                        class="mt-1"
+                                        :options="[
+                                            {
+                                                value: 'ingredient',
+                                                label: t(
+                                                    'recipes.instruction_types.ingredient',
+                                                ),
+                                            },
+                                            {
+                                                value: 'action',
+                                                label: t(
+                                                    'recipes.instruction_types.action',
+                                                ),
+                                            },
+                                        ]"
+                                        @change="changeType(instruction)"
+                                    />
+                                </div>
+                                <div class="min-w-60 flex-1">
+                                    <Label required>{{
+                                        t('recipes.instruction_text')
+                                    }}</Label>
+                                    <Input
+                                        v-model="instruction.text"
+                                        class="mt-1"
+                                        required
+                                    />
+                                </div>
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    :disabled="instructionIndex === 0"
+                                    :aria-label="t('common.move_up')"
+                                    @click="
+                                        move(
+                                            variant.instructions,
+                                            instructionIndex,
+                                            -1,
+                                        )
+                                    "
                                 >
-                                    <div>
-                                        <Label
-                                            :for="`ingredient-quantity-${variantIndex}-${ingredientIndex}`"
-                                            >{{ t('recipes.quantity') }}</Label
-                                        >
-                                        <Input
-                                            :id="`ingredient-quantity-${variantIndex}-${ingredientIndex}`"
-                                            v-model="ingredient.quantity_value"
-                                            type="number"
-                                            step="0.001"
-                                            class="mt-1"
-                                            :placeholder="
-                                                t(
-                                                    'recipes.quantity_placeholder',
-                                                )
-                                            "
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label
-                                            :for="`ingredient-unit-${variantIndex}-${ingredientIndex}`"
-                                            >{{ t('recipes.unit') }}</Label
-                                        >
-                                        <Input
-                                            :id="`ingredient-unit-${variantIndex}-${ingredientIndex}`"
-                                            v-model="ingredient.unit"
-                                            class="mt-1"
-                                            :placeholder="
-                                                t('recipes.unit_placeholder')
-                                            "
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label
-                                            :for="`ingredient-name-${variantIndex}-${ingredientIndex}`"
-                                            required
-                                            >{{
-                                                t('recipes.ingredient_name')
-                                            }}</Label
-                                        >
-                                        <Input
-                                            :id="`ingredient-name-${variantIndex}-${ingredientIndex}`"
-                                            v-model="ingredient.name"
-                                            class="mt-1"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label
-                                            :for="`ingredient-icon-${variantIndex}-${ingredientIndex}`"
-                                            >{{
-                                                t('recipes.icon_group')
-                                            }}</Label
-                                        >
-                                        <Select
-                                            :id="`ingredient-icon-${variantIndex}-${ingredientIndex}`"
-                                            v-model="ingredient.icon_group"
-                                            class="mt-1"
-                                            :options="
-                                                iconGroups.map((group) => ({
-                                                    value: group,
-                                                    label: t(
-                                                        `recipes.icon_groups.${group}`,
-                                                    ),
-                                                }))
-                                            "
-                                        />
-                                    </div>
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        :aria-label="
-                                            t('recipes.remove_ingredient')
-                                        "
-                                        @click="
-                                            removeIngredient(
-                                                variant,
-                                                ingredientIndex,
-                                            )
-                                        "
-                                        ><Trash2 :size="14"
-                                    /></Button>
-                                </div>
-                                <div class="mt-2 grid gap-2 sm:grid-cols-2">
-                                    <div>
-                                        <Label
-                                            :for="`ingredient-fallback-${variantIndex}-${ingredientIndex}`"
-                                            >{{
-                                                t('recipes.quantity_fallback')
-                                            }}</Label
-                                        >
-                                        <Input
-                                            :id="`ingredient-fallback-${variantIndex}-${ingredientIndex}`"
-                                            v-model="ingredient.quantity_text"
-                                            class="mt-1"
-                                            :placeholder="
-                                                t(
-                                                    'recipes.quantity_fallback_placeholder',
-                                                )
-                                            "
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label
-                                            :for="`ingredient-source-${variantIndex}-${ingredientIndex}`"
-                                            >{{
-                                                t('recipes.source_wording')
-                                            }}</Label
-                                        >
-                                        <Input
-                                            :id="`ingredient-source-${variantIndex}-${ingredientIndex}`"
-                                            v-model="ingredient.source_text"
-                                            class="mt-1"
-                                            :placeholder="
-                                                t('recipes.source_optional')
-                                            "
-                                        />
-                                    </div>
-                                </div>
-                                <div class="mt-2 flex gap-1">
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        class="size-8"
-                                        :disabled="ingredientIndex === 0"
-                                        :aria-label="t('common.move_up')"
-                                        @click="
-                                            move(
-                                                variant.ingredients,
-                                                ingredientIndex,
-                                                -1,
-                                            )
-                                        "
-                                        ><ArrowUp :size="13"
-                                    /></Button>
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        class="size-8"
-                                        :disabled="
-                                            ingredientIndex ===
-                                            variant.ingredients.length - 1
-                                        "
-                                        :aria-label="t('common.move_down')"
-                                        @click="
-                                            move(
-                                                variant.ingredients,
-                                                ingredientIndex,
-                                                1,
-                                            )
-                                        "
-                                        ><ArrowDown :size="13"
-                                    /></Button>
-                                </div>
+                                    <ArrowUp :size="14" />
+                                </Button>
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    :disabled="
+                                        instructionIndex ===
+                                        variant.instructions.length - 1
+                                    "
+                                    :aria-label="t('common.move_down')"
+                                    @click="
+                                        move(
+                                            variant.instructions,
+                                            instructionIndex,
+                                            1,
+                                        )
+                                    "
+                                >
+                                    <ArrowDown :size="14" />
+                                </Button>
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    :disabled="variant.instructions.length <= 2"
+                                    :aria-label="
+                                        t('recipes.remove_instruction')
+                                    "
+                                    @click="
+                                        removeInstruction(
+                                            variant,
+                                            instructionIndex,
+                                        )
+                                    "
+                                >
+                                    <Trash2 :size="14" />
+                                </Button>
                             </div>
-                        </div>
-                        <p
-                            v-else
-                            class="rounded-xl border border-dashed border-outline-glass p-3 text-xs text-on-surface-variant"
-                        >
-                            {{ t('recipes.no_ingredients') }}
-                        </p>
-                    </section>
 
-                    <section
-                        class="space-y-3 border-t border-outline-glass pt-4"
-                    >
-                        <div
-                            class="flex flex-wrap items-center justify-between gap-2"
-                        >
-                            <div>
-                                <h3
-                                    class="font-heading text-base font-bold text-on-surface"
-                                >
-                                    {{ t('recipes.procedure') }}
-                                </h3>
-                                <p class="text-xs text-on-surface-variant">
-                                    {{ t('recipes.procedure_help') }}
-                                </p>
-                            </div>
-                            <Button
-                                variant="secondary"
-                                size="compact"
-                                @click="addStep(variant)"
-                                ><Plus :size="14" />{{
-                                    t('recipes.add_step')
-                                }}</Button
-                            >
-                        </div>
-                        <div class="space-y-3">
                             <div
-                                v-for="(step, stepIndex) in variant.steps"
-                                :key="stepIndex"
-                                class="rounded-xl border border-outline-glass bg-surface-container-low/50 p-3"
+                                v-if="instruction.type === 'ingredient'"
+                                class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-6"
                             >
-                                <div
-                                    class="grid gap-2 sm:grid-cols-[42px_180px_minmax(0,1fr)_auto] sm:items-end"
-                                >
-                                    <span
-                                        class="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-white"
-                                        >{{ stepIndex + 1 }}</span
-                                    >
-                                    <div>
-                                        <Label
-                                            :for="`step-action-${variantIndex}-${stepIndex}`"
-                                            >{{ t('recipes.action') }}</Label
-                                        >
-                                        <Select
-                                            :id="`step-action-${variantIndex}-${stepIndex}`"
-                                            v-model="step.action_key"
-                                            class="mt-1"
-                                            :options="
-                                                actionKeys.map((action) => ({
-                                                    value: action,
-                                                    label: t(
-                                                        `recipes.actions.${action}`,
-                                                    ),
-                                                }))
-                                            "
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label
-                                            :for="`step-text-${variantIndex}-${stepIndex}`"
-                                            required
-                                            >{{ t('recipes.step_text') }}</Label
-                                        >
-                                        <Input
-                                            :id="`step-text-${variantIndex}-${stepIndex}`"
-                                            v-model="step.text"
-                                            class="mt-1"
-                                            required
-                                        />
-                                    </div>
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        :disabled="variant.steps.length <= 2"
-                                        :aria-label="t('recipes.remove_step')"
-                                        @click="removeStep(variant, stepIndex)"
-                                        ><Trash2 :size="14"
-                                    /></Button>
+                                <div>
+                                    <Label>{{ t('recipes.quantity') }}</Label>
+                                    <Input
+                                        v-model="instruction.quantity_value"
+                                        type="number"
+                                        step="0.001"
+                                        class="mt-1"
+                                        @input="
+                                            rebuildIngredientText(instruction)
+                                        "
+                                    />
                                 </div>
-                                <div class="mt-2 grid gap-2 sm:grid-cols-2">
-                                    <div class="flex gap-1">
-                                        <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            class="size-8"
-                                            :disabled="stepIndex === 0"
-                                            :aria-label="t('common.move_up')"
-                                            @click="
-                                                move(
-                                                    variant.steps,
-                                                    stepIndex,
-                                                    -1,
-                                                )
-                                            "
-                                            ><ArrowUp :size="13"
-                                        /></Button>
-                                        <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            class="size-8"
-                                            :disabled="
-                                                stepIndex ===
-                                                variant.steps.length - 1
-                                            "
-                                            :aria-label="t('common.move_down')"
-                                            @click="
-                                                move(
-                                                    variant.steps,
-                                                    stepIndex,
-                                                    1,
-                                                )
-                                            "
-                                            ><ArrowDown :size="13"
-                                        /></Button>
-                                    </div>
-                                    <div>
-                                        <Label
-                                            :for="`step-source-${variantIndex}-${stepIndex}`"
-                                            >{{
-                                                t('recipes.source_wording')
-                                            }}</Label
-                                        >
-                                        <Input
-                                            :id="`step-source-${variantIndex}-${stepIndex}`"
-                                            v-model="step.source_text"
-                                            class="mt-1"
-                                            :placeholder="
-                                                t('recipes.source_optional')
-                                            "
-                                        />
-                                    </div>
+                                <div>
+                                    <Label>{{
+                                        t('recipes.quantity_fallback')
+                                    }}</Label>
+                                    <Input
+                                        v-model="instruction.quantity_text"
+                                        class="mt-1"
+                                        @input="
+                                            rebuildIngredientText(instruction)
+                                        "
+                                    />
+                                </div>
+                                <div>
+                                    <Label>{{ t('recipes.unit') }}</Label>
+                                    <Input
+                                        v-model="instruction.unit"
+                                        class="mt-1"
+                                        @input="
+                                            rebuildIngredientText(instruction)
+                                        "
+                                    />
+                                </div>
+                                <div>
+                                    <Label>{{
+                                        t('recipes.ingredient_name')
+                                    }}</Label>
+                                    <Input
+                                        v-model="instruction.ingredient_name"
+                                        class="mt-1"
+                                        @input="
+                                            rebuildIngredientText(instruction)
+                                        "
+                                    />
+                                </div>
+                                <div>
+                                    <Label>{{ t('recipes.target') }}</Label>
+                                    <Input
+                                        v-model="instruction.target"
+                                        class="mt-1"
+                                        @input="
+                                            rebuildIngredientText(instruction)
+                                        "
+                                    />
+                                </div>
+                                <div>
+                                    <Label>{{ t('recipes.icon_group') }}</Label>
+                                    <Select
+                                        v-model="instruction.icon_group"
+                                        class="mt-1"
+                                        :options="
+                                            iconGroups.map((group) => ({
+                                                value: group,
+                                                label: t(
+                                                    'recipes.icon_groups.' +
+                                                        group,
+                                                ),
+                                            }))
+                                        "
+                                    />
                                 </div>
                             </div>
+                            <div v-else class="mt-3 max-w-xs">
+                                <Label>{{ t('recipes.action') }}</Label>
+                                <Select
+                                    v-model="instruction.action_key"
+                                    class="mt-1"
+                                    :options="
+                                        actionKeys.map((action) => ({
+                                            value: action,
+                                            label: t(
+                                                'recipes.actions.' + action,
+                                            ),
+                                        }))
+                                    "
+                                />
+                            </div>
                         </div>
-                    </section>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <Button
+                            variant="secondary"
+                            size="compact"
+                            @click="addInstruction(variant, 'ingredient')"
+                        >
+                            <Plus :size="14" />{{
+                                t('recipes.add_ingredient_instruction')
+                            }}
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            size="compact"
+                            @click="addInstruction(variant, 'action')"
+                        >
+                            <Plus :size="14" />{{
+                                t('recipes.add_action_instruction')
+                            }}
+                        </Button>
+                    </div>
                 </Card>
 
                 <div class="flex flex-wrap justify-between gap-3">
-                    <Button variant="secondary" @click="addVariant"
-                        ><Plus :size="15" />{{
-                            t('recipes.add_variant')
-                        }}</Button
-                    >
-                    <div class="flex gap-2">
-                        <Link
-                            :href="
-                                recipe
-                                    ? route('recipes.show', recipe.id)
-                                    : route('recipes.index')
-                            "
-                            ><Button variant="secondary">{{
-                                t('common.cancel')
-                            }}</Button></Link
-                        >
-                        <Button type="submit" :disabled="form.processing">{{
+                    <Button variant="secondary" @click="addVariant">
+                        <Plus :size="15" />{{ t('recipes.add_variant') }}
+                    </Button>
+                    <Button type="submit" :disabled="form.processing">
+                        {{
                             form.processing
                                 ? t('common.saving')
                                 : t('common.save')
-                        }}</Button>
-                    </div>
+                        }}
+                    </Button>
                 </div>
             </form>
         </div>

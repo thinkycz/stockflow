@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
 import { Archive, ClipboardCheck, Pencil, RotateCcw } from '@lucide/vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import BackLink from '@/components/ui/BackLink.vue';
@@ -10,9 +10,9 @@ import Button from '@/components/ui/Button.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import Select from '@/components/ui/Select.vue';
-import RecipeVariantBlock, {
-    type RecipeVariantData,
-} from '@/components/recipes/RecipeVariantBlock.vue';
+import RecipeInstructionList, {
+    type RecipeInstructionData,
+} from '@/components/recipes/RecipeInstructionList.vue';
 import { useRoute } from '@/composables/useRoute';
 
 const props = defineProps<{
@@ -23,7 +23,11 @@ const props = defineProps<{
         note: string | null;
         archived: boolean;
         category: { id: number; name: string };
-        variants: RecipeVariantData[];
+        variants: Array<{
+            id: number;
+            name: string | null;
+            instructions: RecipeInstructionData[];
+        }>;
     };
     workers: Array<{ id: number; name: string }>;
 }>();
@@ -33,6 +37,10 @@ const route = useRoute();
 const testModalOpen = ref(false);
 const workerId = ref('');
 const starting = ref(false);
+const selectedVariantIndex = ref(0);
+const selectedVariant = computed(
+    () => props.recipe.variants[selectedVariantIndex.value],
+);
 
 function setArchived(archived: boolean): void {
     router.put(route('recipes.archive', props.recipe.id), { archived });
@@ -116,14 +124,36 @@ function startTest(): void {
                 </div>
             </header>
 
-            <div class="space-y-4">
-                <RecipeVariantBlock
-                    v-for="variant in recipe.variants"
-                    :key="variant.id"
-                    :variant="variant"
-                    :is-admin="is_admin"
+            <section v-if="selectedVariant" class="mx-auto w-full max-w-3xl">
+                <div
+                    v-if="recipe.variants.length > 1"
+                    class="mb-3 flex flex-wrap gap-1 rounded-xl bg-surface-container-low p-1"
+                    role="tablist"
+                    :aria-label="t('recipes.variant_name')"
+                >
+                    <Button
+                        v-for="(variant, index) in recipe.variants"
+                        :key="variant.id"
+                        type="button"
+                        role="tab"
+                        variant="ghost"
+                        size="compact"
+                        :aria-selected="selectedVariantIndex === index"
+                        class="rounded-lg px-4 py-1.5 text-sm font-semibold transition"
+                        :class="
+                            selectedVariantIndex === index
+                                ? 'bg-white text-primary shadow-sm'
+                                : 'text-on-surface-variant hover:text-on-surface'
+                        "
+                        @click="selectedVariantIndex = index"
+                    >
+                        {{ variant.name || t('recipes.default_variant') }}
+                    </Button>
+                </div>
+                <RecipeInstructionList
+                    :instructions="selectedVariant.instructions"
                 />
-            </div>
+            </section>
         </div>
 
         <Modal

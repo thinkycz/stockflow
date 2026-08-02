@@ -2,42 +2,44 @@
 
 ## Výsledek
 
-Implementace odpovídá schválenému plánu i follow-upu pro přehlednější katalog.
-Katalog obsahuje 8 kategorií a 49 receptů z dodaného PDF, inicializuje se pro
-firmu právě jednou a následné požadavky nepřepisují adminovy změny. Index nyní
-seskupuje recepty podle kategorií a zobrazuje všechny varianty inline; každá
-varianta má oddělené řádky surovin s množstvím, fallbackem a ikonou a samostatný
-číslovaný postup.
+Implementace odpovídá schválenému plánu i následnému požadavku na deploy reset.
+`/recipes` je prostý seznam kategorií a názvů drinků, správu kategorií má admin
+na `/recipe-categories` a detail načítá jen jednu zvolenou variantu. Varianta se
+zobrazuje i edituje jako jediná kompaktní výrobní sekvence bez zdrojového znění.
 
-Pokus náhodně vybere variantu, suroviny zobrazí jako pevný seznam, klientovi
-poskytne pouze promíchané neprůhledné tokeny postupových kroků a server vyhodnotí
-procento přesných pozic. Splnění vyžaduje 100 %. Nový snapshot obsahuje celou
-variantu včetně množství a ikon; staré snapshoty se nepřepočítávají. Historie
-zůstává zachována po editaci, archivaci i odstranění brigádníka nebo omezeného
-účtu.
+Pokus náhodně vybere variantu, promíchá všechny její instrukce a server vyhodnotí
+procento přesných pozic; splnění vyžaduje 100 %. Nový snapshot obsahuje celou
+sekvenci a její metadata, staré snapshoty se čtou v původním formátu.
+
+Standardní deploy (`make production`) po migracích spouští `db:seed --force`.
+`RecipeCatalogSeeder` při prvním takovém běhu odstraní starých 8 kategorií a 49
+receptů včetně adminových změn a vytvoří čistý katalog v nové struktuře. Marker
+na hlavním adminovi zajišťuje, že další seedy katalog znovu nesmažou. Historické
+pokusy se před resetem odpojí od starých ID, jejich snapshoty zůstanou beze změny
+a adminský přehled je páruje s novým receptem podle snapshotu názvu.
 
 ## Čerstvé důkazy
 
 - `make check` — PHPStan bez chyb, Prettier a Pint prošly, Composer/NPM audity
   bez nálezů, type-check a produkční build prošly, 14 Vitest souborů / 44 testů
-  a 660 Pest testů / 17 252 assertions prošlo.
+  a 663 Pest testů / 17 427 assertions prošlo.
 - `npm run e2e -- tests/e2e/recipes.spec.ts` — 2 Chromium scénáře prošly nad
   čerstvou migrací a E2E seedem. Adminský scénář ověřil navigaci a výsledky;
   mobilní omezený účet ověřil read-only detail, výběr brigádníka, změnu pořadí,
   odeslání a zobrazení správného pořadí.
-- Playwright E2E runtime kontrola otevřela `/recipes` jako omezený účet a
-  ověřila inline suroviny a postup; E2E navíc prošlo nad aktualizovaným
-  mobilním selektorem katalogové karty.
-- Vizuální artefakt katalogu: `output/playwright/recipes-inline-limited.png`.
+- Playwright runtime kontrola ověřila kompaktní adminský index a detail Classic
+  Matcha Latte s přesnou osmibodovou sekvencí.
+- Vizuální artefakty: `output/playwright/recipes-compact-admin.png` a
+  `output/playwright/recipe-classic-compact.png`.
 - Cílené service a controller testy pokryly jednorázový import, rozdělení
   `100g milk + 20g sugar - stir`, fallbacky `half`/`a few`/`1,5`, ikonový
-  override, řazení kategorií,
-  receptů, variant a kroků, archivaci/obnovu, tenantovou izolaci, vlastnictví
-  pokusu, neúplné tokeny, částečné skóre, přesné splnění a stabilitu snapshotu.
+  override, řazení kategorií, receptů a instrukcí, archivaci/obnovu, tenantovou
+  izolaci, vlastnictví pokusu, neúplné tokeny, částečné skóre, přesné splnění,
+  stabilitu snapshotu a idempotentní deploy reset katalogu.
 
 ## Release readiness
 
 - Verdikt: připraveno k nasazení.
 - Blokátory: žádné.
-- Nasazení vyžaduje běžné spuštění Laravel migrací; katalog se naplní při prvním
-  otevření sekce Recepty hlavním adminem nebo jeho omezeným účtem.
+- Nasazení vyžaduje standardní projektový deploy včetně `db:seed --force`; samotné
+  spuštění migrací reset katalogu záměrně neprovádí.

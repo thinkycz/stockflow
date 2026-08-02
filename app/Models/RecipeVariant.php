@@ -52,6 +52,11 @@ class RecipeVariant extends BaseModel
     public function ingredients(): HasMany { return $this->hasMany(RecipeIngredient::class, 'recipe_variant_id')->orderBy('position')->orderBy('id'); }
 
     /**
+     * @return HasMany<RecipeInstruction, $this>
+     */
+    public function instructions(): HasMany { return $this->hasMany(RecipeInstruction::class, 'recipe_variant_id')->orderBy('position')->orderBy('id'); }
+
+    /**
      * Get the parent recipe id.
      */
     public function getRecipeId(): int { return $this->assertInt('recipe_id'); }
@@ -88,6 +93,18 @@ class RecipeVariant extends BaseModel
         }
 
         return $this->ingredients()->get();
+    }
+
+    /**
+     * @return Collection<array-key, RecipeInstruction>
+     */
+    public function getInstructions(): Collection
+    {
+        if ($this->relationLoaded('instructions')) {
+            return $this->assertRelationshipCollection('instructions', RecipeInstruction::class);
+        }
+
+        return $this->instructions()->get();
     }
 
     /**

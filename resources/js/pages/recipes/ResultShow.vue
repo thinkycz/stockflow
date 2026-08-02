@@ -6,6 +6,7 @@ import BackLink from '@/components/ui/BackLink.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Card from '@/components/ui/Card.vue';
 import RecipeActionIcon from '@/components/recipes/RecipeActionIcon.vue';
+import RecipeInstructionIcon from '@/components/recipes/RecipeInstructionIcon.vue';
 import RecipeVariantBlock, {
     type RecipeIngredientData,
 } from '@/components/recipes/RecipeVariantBlock.vue';
@@ -28,8 +29,9 @@ defineProps<{
         ingredients: RecipeIngredientData[];
         correct_step_details: Array<{
             text: string;
+            type?: string;
             action_key: string;
-            source_text: string | null;
+            icon_group?: string;
         }>;
     };
 }>();
@@ -115,7 +117,6 @@ const { formatCzechDateTime } = useCzechDate();
                     steps: [],
                 }"
                 :show-procedure="false"
-                :is-admin="true"
             />
             <div class="grid gap-5 md:grid-cols-2">
                 <Card
@@ -151,7 +152,16 @@ const { formatCzechDateTime } = useCzechDate();
                             <span class="font-bold text-primary"
                                 >{{ index + 1 }}.</span
                             >
-                            <RecipeActionIcon :action-key="step.action_key" />
+                            <RecipeInstructionIcon
+                                v-if="step.type"
+                                :type="step.type"
+                                :action-key="step.action_key"
+                                :icon-group="step.icon_group || 'neutral'"
+                            />
+                            <RecipeActionIcon
+                                v-else
+                                :action-key="step.action_key"
+                            />
                             <span>{{ step.text }}</span>
                         </li>
                     </ol>

@@ -13,12 +13,31 @@ use App\Services\RecipeCatalogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class RecipeCategoryController
 {
     use ValidatesWebRequests;
+
+    /**
+     * Display the dedicated category administration page.
+     */
+    public function index(): Response
+    {
+        $owner = User::mustAuth();
+        (new RecipeCatalogService())->initialize($owner);
+
+        return Inertia::render('recipes/Categories', [
+            'categories' => RecipeCategory::query()->where('user_id', $owner->getKey())
+                ->withCount('recipes')->orderBy('position')->get()
+                ->map(static fn(RecipeCategory $category): array => [
+                    'id' => $category->getKey(), 'name' => $category->getName(),
+                    'recipes_count' => Typer::assertInt($category->getAttribute('recipes_count')),
+                ])->all(),
+        ]);
+    }
 
     /**
      * Create a recipe category.
@@ -34,7 +53,7 @@ class RecipeCategoryController
         ]);
         Inertia::flash('success', \__('Recipe category created.'));
 
-        return Resolver::resolveRedirector()->route('recipes.index');
+        return Resolver::resolveRedirector()->route('recipe-categories.index');
     }
 
     /**
@@ -47,7 +66,7 @@ class RecipeCategoryController
         $recipeCategory->save();
         Inertia::flash('success', \__('Recipe category saved.'));
 
-        return Resolver::resolveRedirector()->route('recipes.index');
+        return Resolver::resolveRedirector()->route('recipe-categories.index');
     }
 
     /**
@@ -62,7 +81,7 @@ class RecipeCategoryController
             Inertia::flash('success', \__('Recipe category deleted.'));
         }
 
-        return Resolver::resolveRedirector()->route('recipes.index');
+        return Resolver::resolveRedirector()->route('recipe-categories.index');
     }
 
     /**
@@ -73,7 +92,7 @@ class RecipeCategoryController
         $validated = $this->validateRequest($request, ['direction' => RecipeValidity::inject()->direction()->required()->toArray()]);
         (new RecipeCatalogService())->moveCategory(User::mustAuth(), $recipeCategory, $validated->assertString('direction'));
 
-        return Resolver::resolveRedirector()->route('recipes.index');
+        return Resolver::resolveRedirector()->route('recipe-categories.index');
     }
 
     /**

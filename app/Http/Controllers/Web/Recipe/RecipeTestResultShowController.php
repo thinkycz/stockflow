@@ -34,6 +34,9 @@ class RecipeTestResultShowController
         $ingredients = [];
         $correctStepDetails = [];
         if ($snapshot !== null) {
+            foreach (Typer::assertArray($snapshot['instructions'] ?? []) as $instruction) {
+                $correctStepDetails[] = $instruction;
+            }
             foreach (Typer::assertArray($snapshot['ingredients'] ?? []) as $ingredient) {
                 $ingredients[] = $ingredient;
             }

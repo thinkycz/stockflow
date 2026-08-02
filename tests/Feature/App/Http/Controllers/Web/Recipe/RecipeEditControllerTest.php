@@ -11,13 +11,16 @@ use Thinkycz\LaravelCore\Support\Typer;
 \test('admin edits a recipe and replaces variants transactionally', function (): void {
     $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
     (new RecipeCatalogService())->initialize($admin);
-    $recipe = Typer::assertInstance(Recipe::query()->with('variants.steps')->firstOrFail(), Recipe::class);
+    $recipe = Typer::assertInstance(Recipe::query()->with('variants.instructions')->firstOrFail(), Recipe::class);
 
     $this->be($admin, 'users')->get('/recipes/' . $recipe->getKey() . '/edit', $this->inertiaHeaders())
         ->assertOk()->assertJsonPath('component', 'recipes/Edit');
     $this->be($admin, 'users')->put('/recipes/' . $recipe->getKey(), [
         'category_id' => $recipe->getCategoryId(), 'name' => 'EDITED', 'note' => null,
-        'variants' => [['name' => null, 'steps' => [['text' => 'One'], ['text' => 'Two']]]],
+        'variants' => [['name' => null, 'instructions' => [
+            ['type' => 'action', 'text' => 'One', 'action_key' => 'other', 'icon_group' => 'neutral'],
+            ['type' => 'action', 'text' => 'Two', 'action_key' => 'other', 'icon_group' => 'neutral'],
+        ]]],
     ])->assertRedirect();
 
     \expect($recipe->fresh()?->getName())->toBe('EDITED')

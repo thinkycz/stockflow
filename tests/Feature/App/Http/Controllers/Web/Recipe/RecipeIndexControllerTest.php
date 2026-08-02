@@ -18,7 +18,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $this->be($limited, 'users')->get('/recipes', $this->inertiaHeaders())
         ->assertOk()->assertJsonPath('component', 'recipes/Index')->assertJsonPath('props.is_admin', false)
         ->assertJsonPath('props.recipes.total', 49)
-        ->assertJsonPath('props.recipes.data.0.variants.0.ingredients.0.name', 'milk')
-        ->assertJsonPath('props.recipes.data.0.variants.0.steps.0.text', 'stir')
-        ->assertJsonPath('props.recipes.data.0.variants.0.ingredients.0.source_text', null);
+        ->assertJsonPath('props.recipes.data.0.name', 'CLASSIC MATCHA LATTE')
+        ->assertJsonMissingPath('props.recipes.data.0.variants')
+        ->assertJsonMissingPath('props.recipes.data.0.note');
 });

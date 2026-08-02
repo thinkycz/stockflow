@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Web\Recipe;
 
 use App\Models\Recipe;
-use App\Models\RecipeIngredient;
-use App\Models\RecipeStep;
+use App\Models\RecipeInstruction;
 use App\Models\RecipeVariant;
 use App\Models\User;
 use App\Models\Worker;
@@ -24,7 +23,7 @@ class RecipeShowController
         if (!$actor->isAdmin() && $recipe->isArchived()) {
             \abort(404);
         }
-        $recipe->load(['category', 'variants.ingredients', 'variants.steps']);
+        $recipe->load(['category', 'variants.instructions']);
         $workers = [];
         if (!$actor->isAdmin()) {
             $workers = Worker::query()->where('user_id', $actor->resolveScopeUser()->getKey())
@@ -38,18 +37,15 @@ class RecipeShowController
                 'id' => $recipe->getKey(), 'name' => $recipe->getName(), 'note' => $recipe->getNote(),
                 'archived' => $recipe->isArchived(),
                 'category' => ['id' => $recipe->getCategoryId(), 'name' => $recipe->getCategory()->getName()],
-                'variants' => $recipe->getVariants()->map(static function (RecipeVariant $variant) use ($actor): array {
+                'variants' => $recipe->getVariants()->map(static function (RecipeVariant $variant): array {
                     return [
                         'id' => $variant->getKey(), 'name' => $variant->getName(),
-                        'ingredients' => $variant->getIngredients()->map(static fn(RecipeIngredient $ingredient): array => [
-                            'id' => $ingredient->getKey(), 'quantity_value' => $ingredient->getQuantityValue(),
-                            'quantity_text' => $ingredient->getQuantityText(), 'unit' => $ingredient->getUnit(),
-                            'name' => $ingredient->getName(), 'icon_group' => $ingredient->getIconGroup(),
-                            'source_text' => $actor->isAdmin() ? $ingredient->getSourceText() : null,
-                        ])->all(),
-                        'steps' => $variant->getSteps()->map(static fn(RecipeStep $step): array => [
-                            'id' => $step->getKey(), 'text' => $step->getText(), 'action_key' => $step->getActionKey(),
-                            'source_text' => $actor->isAdmin() ? $step->getSourceText() : null,
+                        'instructions' => $variant->getInstructions()->map(static fn(RecipeInstruction $instruction): array => [
+                            'id' => $instruction->getKey(), 'type' => $instruction->getType(), 'text' => $instruction->getText(),
+                            'action_key' => $instruction->getActionKey(), 'quantity_value' => $instruction->getQuantityValue(),
+                            'quantity_text' => $instruction->getQuantityText(), 'unit' => $instruction->getUnit(),
+                            'ingredient_name' => $instruction->getIngredientName(), 'target' => $instruction->getTarget(),
+                            'icon_group' => $instruction->getIconGroup(),
                         ])->all(),
                     ];
                 })->all(),

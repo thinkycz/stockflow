@@ -55,7 +55,7 @@ class RecipeCreateController
     }
 
     /**
-     * @return array{category_id: int, name: string, note: string|null, variants: list<array{name: string|null, ingredients: list<array<string, mixed>>, steps: list<array<string, mixed>>}>}
+     * @return array{category_id: int, name: string, note: string|null, variants: list<array{name: string|null, instructions: list<array<string, mixed>>}>}
      */
     private function validatedForm(Request $request, User $owner): array
     {
@@ -63,43 +63,38 @@ class RecipeCreateController
         $validated = $this->validateRequest($request, [
             'category_id' => $validity->categoryId()->required()->toArray(), 'name' => $validity->name()->required()->toArray(),
             'note' => $validity->note()->nullable()->toArray(), 'variants' => $validity->variants()->required()->toArray(),
-            'variants.*.name' => $validity->variantName()->nullable()->toArray(), 'variants.*.ingredients' => $validity->ingredients()->nullable()->toArray(),
-            'variants.*.ingredients.*.quantity_value' => $validity->ingredientQuantity()->nullable()->toArray(),
-            'variants.*.ingredients.*.quantity_text' => $validity->ingredientQuantityText()->nullable()->toArray(),
-            'variants.*.ingredients.*.unit' => $validity->ingredientUnit()->nullable()->toArray(),
-            'variants.*.ingredients.*.name' => $validity->ingredientName()->required()->toArray(),
-            'variants.*.ingredients.*.icon_group' => $validity->ingredientIconGroup()->required()->toArray(),
-            'variants.*.ingredients.*.source_text' => $validity->sourceText()->nullable()->toArray(),
-            'variants.*.steps' => $validity->steps()->required()->toArray(), 'variants.*.steps.*.text' => $validity->stepText()->required()->toArray(),
-            'variants.*.steps.*.action_key' => $validity->actionKey()->nullable()->toArray(), 'variants.*.steps.*.source_text' => $validity->sourceText()->nullable()->toArray(),
+            'variants.*.name' => $validity->variantName()->nullable()->toArray(),
+            'variants.*.instructions' => $validity->instructions()->required()->toArray(),
+            'variants.*.instructions.*.type' => $validity->instructionType()->required()->toArray(),
+            'variants.*.instructions.*.text' => $validity->stepText()->required()->toArray(),
+            'variants.*.instructions.*.action_key' => $validity->actionKey()->required()->toArray(),
+            'variants.*.instructions.*.quantity_value' => $validity->ingredientQuantity()->nullable()->toArray(),
+            'variants.*.instructions.*.quantity_text' => $validity->ingredientQuantityText()->nullable()->toArray(),
+            'variants.*.instructions.*.unit' => $validity->ingredientUnit()->nullable()->toArray(),
+            'variants.*.instructions.*.ingredient_name' => $validity->ingredientName()->nullable()->toArray(),
+            'variants.*.instructions.*.target' => $validity->instructionTarget()->nullable()->toArray(),
+            'variants.*.instructions.*.icon_group' => $validity->ingredientIconGroup()->required()->toArray(),
         ]);
         $variants = [];
         foreach ($validated->assertArray('variants') as $value) {
             $row = Typer::assertStringKeyArray(Typer::assertArray($value));
-            $ingredients = [];
-            foreach (Typer::assertArray($row['ingredients'] ?? []) as $ingredientValue) {
-                $ingredient = Typer::assertStringKeyArray(Typer::assertArray($ingredientValue));
-                $ingredients[] = [
-                    'quantity_value' => $ingredient['quantity_value'] ?? null,
-                    'quantity_text' => $ingredient['quantity_text'] ?? null,
-                    'unit' => $ingredient['unit'] ?? null,
-                    'name' => \mb_trim(Typer::assertString($ingredient['name'] ?? null)),
-                    'icon_group' => Typer::assertString($ingredient['icon_group'] ?? 'neutral'),
-                    'source_text' => $ingredient['source_text'] ?? null,
-                ];
-            }
-            $steps = [];
-            foreach (Typer::assertArray($row['steps'] ?? null) as $stepValue) {
-                $step = Typer::assertStringKeyArray(Typer::assertArray($stepValue));
-                $text = \mb_trim(Typer::assertString($step['text'] ?? null));
-                $steps[] = [
-                    'text' => $text,
-                    'action_key' => $step['action_key'] ?? 'other',
-                    'source_text' => $step['source_text'] ?? $text,
+            $instructions = [];
+            foreach (Typer::assertArray($row['instructions'] ?? null) as $instructionValue) {
+                $instruction = Typer::assertStringKeyArray(Typer::assertArray($instructionValue));
+                $instructions[] = [
+                    'type' => Typer::assertString($instruction['type'] ?? null),
+                    'text' => \mb_trim(Typer::assertString($instruction['text'] ?? null)),
+                    'action_key' => Typer::assertString($instruction['action_key'] ?? 'other'),
+                    'quantity_value' => $instruction['quantity_value'] ?? null,
+                    'quantity_text' => $instruction['quantity_text'] ?? null,
+                    'unit' => $instruction['unit'] ?? null,
+                    'ingredient_name' => $instruction['ingredient_name'] ?? null,
+                    'target' => $instruction['target'] ?? null,
+                    'icon_group' => Typer::assertString($instruction['icon_group'] ?? 'neutral'),
                 ];
             }
             $variantName = isset($row['name']) ? \mb_trim(Typer::assertString($row['name'])) : '';
-            $variants[] = ['name' => $variantName !== '' ? $variantName : null, 'ingredients' => $ingredients, 'steps' => $steps];
+            $variants[] = ['name' => $variantName !== '' ? $variantName : null, 'instructions' => $instructions];
         }
 
         return ['category_id' => $validated->assertInt('category_id'), 'name' => \mb_trim($validated->assertString('name')), 'note' => $validated->assertNullableString('note'), 'variants' => $variants];

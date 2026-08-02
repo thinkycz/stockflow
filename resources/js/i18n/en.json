@@ -1244,6 +1244,17 @@
         "variant_count": "Variants: {count}",
         "default_variant": "Default variant",
         "variant_name": "Variant name",
+        "row_actions": "Recipe actions",
+        "instruction_type": "Row type",
+        "instruction_text": "Instruction text",
+        "instruction_types": {
+            "ingredient": "Ingredient",
+            "action": "Action"
+        },
+        "target": "Target / vessel",
+        "add_ingredient_instruction": "Add ingredient",
+        "add_action_instruction": "Add action",
+        "remove_instruction": "Remove instruction",
         "steps": "Preparation steps",
         "ingredients": "Ingredients",
         "procedure": "Procedure",
@@ -1304,6 +1315,7 @@
         "form_help": "Each variant must contain at least two steps. Their order is the correct test solution.",
         "categories": {
             "title": "Recipe categories",
+            "manage": "Manage categories",
             "help": "Categories keep the catalog organized. Only an empty category can be deleted.",
             "create": "Add category",
             "edit": "Edit category",

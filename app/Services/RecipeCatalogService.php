@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Recipe;
 use App\Models\RecipeCategory;
 use App\Models\RecipeIngredient;
+use App\Models\RecipeInstruction;
 use App\Models\RecipeStep;
 use App\Models\RecipeVariant;
 use App\Models\User;
@@ -91,10 +92,12 @@ class RecipeCatalogService
             $locked->setAttribute('recipes_initialized_at', Carbon::now());
             $locked->save();
         });
+
+        (new RecipeInstructionService())->initialize($owner);
     }
 
     /**
-     * @param list<array{name: string|null, ingredients?: list<array<string, mixed>>, steps: list<array<string, mixed>|string>}> $variants
+     * @param list<array{name: string|null, instructions: list<array<string, mixed>>}> $variants
      */
     public function save(User $owner, RecipeCategory $category, Recipe|null $recipe, string $name, string|null $note, array $variants): Recipe
     {
@@ -106,7 +109,7 @@ class RecipeCatalogService
         }
         $normalizedVariants = $this->normalizeVariants($variants);
         foreach ($normalizedVariants as $variant) {
-            if (\count($variant['steps']) < 2) {
+            if (\count($variant['instructions']) < 2) {
                 throw new InvalidArgumentException('Every recipe variant must contain at least two steps.');
             }
         }
@@ -131,15 +134,9 @@ class RecipeCatalogService
                 $variant = Typer::assertInstance(RecipeVariant::query()->create([
                     'recipe_id' => $target->getKey(), 'name' => $variantRow['name'], 'position' => $variantPosition + 1,
                 ]), RecipeVariant::class);
-                foreach ($variantRow['ingredients'] as $ingredientPosition => $ingredient) {
-                    RecipeIngredient::query()->create([
-                        'recipe_variant_id' => $variant->getKey(), 'position' => $ingredientPosition + 1, ...$ingredient,
-                    ]);
-                }
-                foreach ($variantRow['steps'] as $stepPosition => $step) {
-                    RecipeStep::query()->create([
-                        'recipe_variant_id' => $variant->getKey(), 'text' => $step['text'], 'action_key' => $step['action_key'],
-                        'source_text' => $step['source_text'], 'position' => $stepPosition + 1,
+                foreach ($variantRow['instructions'] as $instructionPosition => $instruction) {
+                    RecipeInstruction::query()->create([
+                        'recipe_variant_id' => $variant->getKey(), 'position' => $instructionPosition + 1, ...$instruction,
                     ]);
                 }
             }
@@ -219,59 +216,45 @@ class RecipeCatalogService
     }
 
     /**
-     * Normalize structured editor data and keep compatibility with the original free-text form payload.
+     * @param list<array{name: string|null, instructions: list<array<string, mixed>>}> $variants
      *
-     * @param list<array{name: string|null, ingredients?: list<array<string, mixed>>, steps: list<array<string, mixed>|string>}> $variants
-     *
-     * @return list<array{name: string|null, ingredients: list<array{quantity_value: float|int|null, quantity_text: string|null, unit: string|null, name: string, icon_group: string, source_text: string}>, steps: list<array{text: string, action_key: string, source_text: string}>}>
+     * @return list<array{name: string|null, instructions: list<array<string, mixed>>}>
      */
     private function normalizeVariants(array $variants): array
     {
         $normalized = [];
         foreach ($variants as $variant) {
-            $ingredients = [];
-            foreach ($variant['ingredients'] ?? [] as $ingredientValue) {
-                $ingredient = Typer::assertStringKeyArray(Typer::assertArray($ingredientValue));
-                $rawQuantity = $ingredient['quantity_value'] ?? null;
+            $instructions = [];
+            foreach ($variant['instructions'] as $instructionValue) {
+                $instruction = Typer::assertStringKeyArray(Typer::assertArray($instructionValue));
+                $rawQuantity = $instruction['quantity_value'] ?? null;
                 $quantity = null;
                 if ($rawQuantity !== null && $rawQuantity !== '') {
                     $quantity = (float) \str_replace(',', '.', (string) Typer::assertScalar($rawQuantity));
                     $quantity = $quantity === \floor($quantity) ? (int) $quantity : $quantity;
                 }
-                $name = \mb_trim(Typer::assertString($ingredient['name'] ?? null));
-                $iconGroup = \mb_trim(Typer::assertString($ingredient['icon_group'] ?? 'neutral'));
-                $ingredients[] = [
-                    'quantity_value' => $quantity,
-                    'quantity_text' => isset($ingredient['quantity_text']) ? Typer::assertNullableString($ingredient['quantity_text']) : null,
-                    'unit' => isset($ingredient['unit']) ? Typer::assertNullableString($ingredient['unit']) : null,
-                    'name' => $name,
-                    'icon_group' => \in_array($iconGroup, RecipeTextParser::ICON_GROUPS, true) ? $iconGroup : 'neutral',
-                    'source_text' => isset($ingredient['source_text']) ? (Typer::assertNullableString($ingredient['source_text']) ?? $name) : $name,
-                ];
-            }
-
-            $steps = [];
-            foreach ($variant['steps'] as $stepValue) {
-                if (\is_string($stepValue)) {
-                    $text = \mb_trim($stepValue);
-                    $steps[] = ['text' => $text, 'action_key' => 'other', 'source_text' => $text];
-
-                    continue;
-                }
-                $step = Typer::assertStringKeyArray(Typer::assertArray($stepValue));
-                $text = \mb_trim(Typer::assertString($step['text'] ?? null));
-                $actionKey = \mb_trim(Typer::assertString($step['action_key'] ?? 'other'));
-                $steps[] = [
+                $text = \mb_trim(Typer::assertString($instruction['text'] ?? null));
+                $type = \mb_trim(Typer::assertString($instruction['type'] ?? 'action'));
+                $actionKey = \mb_trim(Typer::assertString($instruction['action_key'] ?? 'other'));
+                $iconGroup = \mb_trim(Typer::assertString($instruction['icon_group'] ?? 'neutral'));
+                $instructions[] = [
+                    'type' => \in_array($type, ['ingredient', 'action'], true) ? $type : 'action',
                     'text' => $text,
                     'action_key' => \in_array($actionKey, RecipeTextParser::ACTION_KEYS, true) ? $actionKey : 'other',
-                    'source_text' => isset($step['source_text']) ? (Typer::assertNullableString($step['source_text']) ?? $text) : $text,
+                    'quantity_value' => $quantity,
+                    'quantity_text' => isset($instruction['quantity_text']) ? Typer::assertNullableString($instruction['quantity_text']) : null,
+                    'unit' => isset($instruction['unit']) ? Typer::assertNullableString($instruction['unit']) : null,
+                    'ingredient_name' => isset($instruction['ingredient_name']) ? Typer::assertNullableString($instruction['ingredient_name']) : null,
+                    'target' => isset($instruction['target']) ? Typer::assertNullableString($instruction['target']) : null,
+                    'icon_group' => \in_array($iconGroup, RecipeTextParser::ICON_GROUPS, true) ? $iconGroup : 'neutral',
+                    'source_text' => isset($instruction['source_text']) ? Typer::assertNullableString($instruction['source_text']) : $text,
+                    'is_inferred' => false,
                 ];
             }
 
             $normalized[] = [
                 'name' => $variant['name'] === null ? null : \mb_trim(Typer::assertString($variant['name'])),
-                'ingredients' => $ingredients,
-                'steps' => $steps,
+                'instructions' => $instructions,
             ];
         }
 

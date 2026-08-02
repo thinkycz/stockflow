@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Recipe;
-use App\Models\RecipeIngredient;
-use App\Models\RecipeStep;
+use App\Models\RecipeInstruction;
 use App\Models\RecipeTestAttempt;
 use App\Models\RecipeVariant;
 use App\Models\User;
@@ -30,39 +29,34 @@ class RecipeTestService
             throw new InvalidArgumentException('Recipe test is not available.');
         }
 
-        $variants = $recipe->variants()->with(['steps', 'ingredients'])->get();
+        $variants = $recipe->variants()->with('instructions')->get();
         if ($variants->isEmpty()) {
             throw new InvalidArgumentException('Recipe has no testable variant.');
         }
         $variant = Typer::assertInstance($variants->get(\random_int(0, $variants->count() - 1)), RecipeVariant::class);
-        $steps = $variant->getSteps();
-        if ($steps->count() < 2) {
+        $instructions = $variant->getInstructions();
+        if ($instructions->count() < 2) {
             throw new InvalidArgumentException('Recipe variant must have at least two steps.');
         }
 
         $correct = [];
-        $snapshotSteps = [];
-        foreach ($steps as $value) {
-            $step = Typer::assertInstance($value, RecipeStep::class);
+        $snapshotInstructions = [];
+        foreach ($instructions as $value) {
+            $instruction = Typer::assertInstance($value, RecipeInstruction::class);
             $token = Str::uuid()->toString();
-            $correct[] = ['token' => $token, 'text' => $step->getText()];
-            $snapshotSteps[] = [
+            $correct[] = ['token' => $token, 'text' => $instruction->getText()];
+            $snapshotInstructions[] = [
                 'token' => $token,
-                'text' => $step->getText(),
-                'action_key' => $step->getActionKey(),
-                'source_text' => $step->getSourceText(),
-            ];
-        }
-        $snapshotIngredients = [];
-        foreach ($variant->getIngredients() as $value) {
-            $ingredient = Typer::assertInstance($value, RecipeIngredient::class);
-            $snapshotIngredients[] = [
-                'quantity_value' => $ingredient->getQuantityValue(),
-                'quantity_text' => $ingredient->getQuantityText(),
-                'unit' => $ingredient->getUnit(),
-                'name' => $ingredient->getName(),
-                'icon_group' => $ingredient->getIconGroup(),
-                'source_text' => $ingredient->getSourceText(),
+                'type' => $instruction->getType(),
+                'text' => $instruction->getText(),
+                'action_key' => $instruction->getActionKey(),
+                'quantity_value' => $instruction->getQuantityValue(),
+                'quantity_text' => $instruction->getQuantityText(),
+                'unit' => $instruction->getUnit(),
+                'ingredient_name' => $instruction->getIngredientName(),
+                'target' => $instruction->getTarget(),
+                'icon_group' => $instruction->getIconGroup(),
+                'is_inferred' => $instruction->isInferred(),
             ];
         }
         $presented = \array_column($correct, 'token');
@@ -87,8 +81,7 @@ class RecipeTestService
             'correct_steps' => $correct,
             'variant_snapshot' => [
                 'variant_name' => $variant->getName(),
-                'ingredients' => $snapshotIngredients,
-                'steps' => $snapshotSteps,
+                'instructions' => $snapshotInstructions,
             ],
             'presented_tokens' => $presented,
             'submitted_tokens' => null,

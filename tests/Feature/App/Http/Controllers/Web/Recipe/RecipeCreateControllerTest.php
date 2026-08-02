@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\RecipeCategory;
-use App\Models\RecipeIngredient;
+use App\Models\RecipeInstruction;
 use App\Models\RecipeVariant;
 use App\Models\User;
 use App\Services\RecipeCatalogService;
@@ -19,7 +19,10 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->assertOk()->assertJsonPath('component', 'recipes/Edit');
     $this->be($admin, 'users')->post('/recipes', [
         'category_id' => $category->getKey(), 'name' => 'NEW RECIPE', 'note' => 'Note',
-        'variants' => [['name' => 'M', 'steps' => [['text' => 'First'], ['text' => 'Second']]]],
+        'variants' => [['name' => 'M', 'instructions' => [
+            ['type' => 'action', 'text' => 'First', 'action_key' => 'other', 'icon_group' => 'neutral'],
+            ['type' => 'action', 'text' => 'Second', 'action_key' => 'other', 'icon_group' => 'neutral'],
+        ]]],
     ])->assertRedirect();
 
     $this->assertDatabaseHas('recipes', ['name' => 'NEW RECIPE', 'user_id' => $admin->getKey()]);
@@ -34,16 +37,18 @@ use Thinkycz\LaravelCore\Support\Typer;
         'category_id' => $category->getKey(), 'name' => 'ICON RECIPE', 'note' => null,
         'variants' => [[
             'name' => 'M',
-            'ingredients' => [
-                ['quantity_value' => '20', 'quantity_text' => null, 'unit' => 'g', 'name' => 'sugar', 'icon_group' => 'fruit', 'source_text' => '20g sugar'],
-                ['quantity_value' => null, 'quantity_text' => 'half', 'unit' => null, 'name' => 'mango', 'icon_group' => 'neutral', 'source_text' => 'half mango'],
+            'instructions' => [
+                ['type' => 'ingredient', 'text' => 'Add 20 g sugar', 'action_key' => 'add', 'quantity_value' => '20', 'unit' => 'g', 'ingredient_name' => 'sugar', 'icon_group' => 'fruit'],
+                ['type' => 'ingredient', 'text' => 'Add half mango', 'action_key' => 'add', 'quantity_text' => 'half', 'ingredient_name' => 'mango', 'icon_group' => 'neutral'],
+                ['type' => 'action', 'text' => 'Mix', 'action_key' => 'mix', 'icon_group' => 'neutral'],
+                ['type' => 'action', 'text' => 'Serve', 'action_key' => 'serve', 'icon_group' => 'neutral'],
             ],
-            'steps' => [['text' => 'Mix', 'action_key' => 'mix', 'source_text' => 'Mix'], ['text' => 'Serve', 'action_key' => 'serve', 'source_text' => 'Serve']],
         ]],
     ])->assertRedirect();
 
     $variant = Typer::assertInstance(RecipeVariant::query()->whereHas('recipe', static fn($query) => $query->where('name', 'ICON RECIPE'))->firstOrFail(), RecipeVariant::class);
-    \expect($variant->getIngredients()->map(static fn(RecipeIngredient $ingredient): string => $ingredient->getName())->all())->toBe(['sugar', 'mango'])
-        ->and($variant->getIngredients()->first()?->getIconGroup())->toBe('fruit')
-        ->and($variant->getIngredients()->last()?->getQuantityText())->toBe('half');
+    \expect($variant->getInstructions()->map(static fn(RecipeInstruction $instruction): string => $instruction->getText())->all())
+        ->toBe(['Add 20 g sugar', 'Add half mango', 'Mix', 'Serve'])
+        ->and($variant->getInstructions()->first()?->getIconGroup())->toBe('fruit')
+        ->and($variant->getInstructions()->skip(1)->first()?->getQuantityText())->toBe('half');
 });

@@ -83,6 +83,16 @@ class RecipeValidity
     public function steps(): Validity { return $this->baseValidity->make()->array(null)->min(2)->max(100); }
 
     /**
+     * Ordered canonical recipe instructions.
+     */
+    public function instructions(): Validity { return $this->baseValidity->make()->array(null)->min(2)->max(100); }
+
+    /**
+     * Canonical instruction type.
+     */
+    public function instructionType(): Validity { return $this->baseValidity->make()->string(32)->in(['ingredient', 'action']); }
+
+    /**
      * Individual instruction text.
      */
     public function stepText(): Validity { return $this->baseValidity->make()->string(1000); }
@@ -111,6 +121,11 @@ class RecipeValidity
      * Ingredient display name.
      */
     public function ingredientName(): Validity { return $this->baseValidity->make()->string(180); }
+
+    /**
+     * Optional target vessel or destination.
+     */
+    public function instructionTarget(): Validity { return $this->baseValidity->make()->string(180); }
 
     /**
      * Ingredient icon group.

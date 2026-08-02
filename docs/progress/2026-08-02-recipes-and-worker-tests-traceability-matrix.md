@@ -17,3 +17,10 @@
 | R13    | follow-up plán | Postupové kroky s akční ikonou a pořadím             | 5    | verified | parser, snapshot a mobile E2E                    |
 | R14    | follow-up plán | Test řadí pouze postup a snapshot je celý            | 5    | verified | `RecipeServiceTest`, `RecipeTestControllerTest`  |
 | R15    | follow-up plán | Historické pokusy zůstávají kompatibilní             | 5    | verified | legacy fallback payload + service test           |
+| R16    | follow-up plán | Index je prostý seznam kategorií a drinků            | 6    | verified | index feature test, admin E2E                    |
+| R17    | follow-up plán | Kategorie mají samostatnou adminskou stránku         | 6    | verified | category feature test, admin E2E                 |
+| R18    | follow-up plán | Varianta má jednu kompaktní výrobní sekvenci         | 6    | verified | service/show test, runtime screenshot            |
+| R19    | follow-up plán | Celá sekvence se testuje a snapshotuje               | 6    | verified | service/controller test, limited E2E             |
+| R20    | follow-up plán | Legacy obsah a pokusy zůstávají kompatibilní         | 6    | verified | result show/index test                           |
+| R21    | follow-up      | Deploy jednou nahradí starý katalog čistým seedem    | 6    | verified | `RecipeCatalogSeederTest`                        |
+| R22    | follow-up      | Reset katalogu zachová historické snapshoty          | 6    | verified | seeder a result controller testy                 |

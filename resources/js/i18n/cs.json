@@ -1241,6 +1241,17 @@
         "variant_count": "Varianty: {count}",
         "default_variant": "Výchozí varianta",
         "variant_name": "Název varianty",
+        "row_actions": "Akce receptu",
+        "instruction_type": "Typ řádku",
+        "instruction_text": "Text instrukce",
+        "instruction_types": {
+            "ingredient": "Surovina",
+            "action": "Akce"
+        },
+        "target": "Cíl / nádoba",
+        "add_ingredient_instruction": "Přidat surovinu",
+        "add_action_instruction": "Přidat akci",
+        "remove_instruction": "Odebrat instrukci",
         "steps": "Kroky přípravy",
         "ingredients": "Suroviny",
         "procedure": "Postup",
@@ -1301,6 +1312,7 @@
         "form_help": "Každá varianta musí mít alespoň dva kroky. Jejich pořadí je správným řešením testu.",
         "categories": {
             "title": "Kategorie receptů",
+            "manage": "Spravovat kategorie",
             "help": "Kategorie pomáhají udržet katalog přehledný. Smazat lze jen prázdnou kategorii.",
             "create": "Přidat kategorii",
             "edit": "Upravit kategorii",

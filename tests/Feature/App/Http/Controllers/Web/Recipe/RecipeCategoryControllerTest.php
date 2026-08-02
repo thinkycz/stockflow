@@ -10,6 +10,8 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 \test('admin manages empty recipe categories and limited account is refused', function (): void {
     $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $this->be($admin, 'users')->get('/recipe-categories', $this->inertiaHeaders())
+        ->assertOk()->assertJsonPath('component', 'recipes/Categories');
     $this->be($admin, 'users')->post('/recipe-categories', ['name' => 'Seasonal'])->assertRedirect();
     $category = Typer::assertInstance(RecipeCategory::query()->where('name', 'Seasonal')->firstOrFail(), RecipeCategory::class);
     $this->be($admin, 'users')->put('/recipe-categories/' . $category->getKey(), ['name' => 'Summer'])->assertRedirect();
@@ -17,6 +19,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $this->assertDatabaseMissing('recipe_categories', ['id' => $category->getKey()]);
 
     $limited = UserFactory::new()->createOne(['parent_user_id' => $admin->getKey()]);
+    $this->be($limited, 'users')->get('/recipe-categories')->assertRedirect('/dashboard');
     $this->be($limited, 'users')->post('/recipe-categories', ['name' => 'Forbidden'])->assertRedirect('/dashboard');
 });
 

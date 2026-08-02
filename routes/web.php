@@ -289,6 +289,7 @@ Resolver::resolveRouteRegistrar()
         $router->delete('checklist-days/{checklistDay}/excuse', [ChecklistDayExcuseController::class, 'destroy'])->whereNumber('checklistDay')->name('checklist-days.excuse.destroy');
 
         // Company recipe administration and personnel results
+        $router->get('recipe-categories', [RecipeCategoryController::class, 'index'])->name('recipe-categories.index');
         $router->get('recipes/create', [RecipeCreateController::class, 'create'])->name('recipes.create');
         $router->post('recipes', [RecipeCreateController::class, 'store'])->name('recipes.store');
         $router->get('recipes/{recipe}/edit', [RecipeEditController::class, 'edit'])->whereNumber('recipe')->name('recipes.edit');

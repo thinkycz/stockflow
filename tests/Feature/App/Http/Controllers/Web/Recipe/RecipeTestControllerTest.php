@@ -25,11 +25,10 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $attempt = Typer::assertInstance(RecipeTestAttempt::query()->firstOrFail(), RecipeTestAttempt::class);
     \expect($attempt->getVariantSnapshot())->not->toBeNull()
-        ->and($attempt->getVariantSnapshot()['ingredients'] ?? [])->not->toBeEmpty();
+        ->and($attempt->getVariantSnapshot()['instructions'] ?? [])->not->toBeEmpty();
     $this->be($limited, 'users')->get('/recipe-tests/' . $attempt->getKey(), $this->inertiaHeaders())
         ->assertOk()->assertJsonPath('component', 'recipes/Test')
-        ->assertJsonPath('props.attempt.ingredients.0.name', 'milk')
-        ->assertJsonCount(2, 'props.attempt.steps');
+        ->assertJsonCount(8, 'props.attempt.instructions');
 
     $tokens = \collect($attempt->getCorrectStepsSnapshot())->pluck('token')->all();
     $this->be($limited, 'users')->put('/recipe-tests/' . $attempt->getKey(), ['tokens' => $tokens], $this->inertiaHeaders())

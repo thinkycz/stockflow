@@ -31,6 +31,11 @@ test('admin browses recipes in the required sidebar position and opens results',
         page.getByRole('heading', { name: 'Recipes', exact: true }),
     ).toBeVisible();
     await expect(page.getByText('CLASSIC MATCHA LATTE')).toBeVisible();
+    await page.getByRole('button', { name: 'Manage categories' }).click();
+    await expect(
+        page.getByRole('heading', { name: 'Recipe categories', exact: true }),
+    ).toBeVisible();
+    await page.getByRole('link', { name: 'Back to recipes' }).click();
     await page.getByRole('button', { name: 'Test results' }).click();
     await expect(
         page.getByRole('heading', { name: 'Test results', exact: true }),
@@ -47,21 +52,18 @@ test('limited account reads a recipe and submits a mobile reorder test', async (
         .locator('#mobile-nav-drawer')
         .getByTestId('nav-item-recipes')
         .click();
-    const classicCard = page
-        .getByTestId('recipe-catalog-card')
+    const classicRow = page
+        .getByTestId('recipe-catalog-row')
         .filter({ hasText: 'CLASSIC MATCHA LATTE' });
-    await expect(
-        classicCard.getByTestId('recipe-ingredient').first(),
-    ).toContainText('milk');
-    await expect(
-        classicCard.getByTestId('recipe-procedure-step').first(),
-    ).toBeVisible();
-    await page
-        .getByTestId('recipe-catalog-card')
-        .filter({ hasText: 'CLASSIC MATCHA LATTE' })
-        .getByRole('button', { name: 'Detail' })
+    await expect(classicRow).toBeVisible();
+    await classicRow
+        .getByRole('link', { name: 'CLASSIC MATCHA LATTE' })
         .click();
     await expect(page.getByRole('button', { name: 'Edit' })).toHaveCount(0);
+    await expect(page.getByTestId('recipe-instruction')).toHaveCount(8);
+    await expect(page.getByTestId('recipe-instruction').first()).toContainText(
+        'Add 100 ml milk into cup',
+    );
 
     await page.getByRole('button', { name: 'Start test' }).click();
     await page.getByLabel('Worker').selectOption({ label: 'E2E Worker' });

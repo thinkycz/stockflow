@@ -8,6 +8,7 @@ use App\Models\Recipe;
 use App\Models\RecipeTestAttempt;
 use App\Models\User;
 use App\Models\Worker;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -31,8 +32,7 @@ class RecipeTestResultIndexController
         if ($worker instanceof Worker) {
             foreach (Recipe::query()->where('user_id', $owner->getKey())->orderBy('recipe_category_id')->orderBy('position')->get() as $value) {
                 $recipe = Typer::assertInstance($value, Recipe::class);
-                $attempts = RecipeTestAttempt::query()->where('user_id', $owner->getKey())->where('worker_id', $worker->getKey())
-                    ->where('recipe_id', $recipe->getKey())->whereNotNull('submitted_at');
+                $attempts = $this->attemptsForRecipe($owner, $worker, $recipe)->whereNotNull('submitted_at');
                 $latest = (clone $attempts)->orderByDesc('submitted_at')->first();
                 $rows[] = [
                     'id' => $recipe->getKey(), 'name' => $recipe->getName(), 'archived' => $recipe->isArchived(),
@@ -47,8 +47,11 @@ class RecipeTestResultIndexController
 
         $history = ['data' => [], 'current_page' => 1, 'last_page' => 1, 'total' => 0];
         if ($worker instanceof Worker && $recipeId > 0) {
-            $paginator = RecipeTestAttempt::query()->where('user_id', $owner->getKey())->where('worker_id', $worker->getKey())
-                ->where('recipe_id', $recipeId)->whereNotNull('submitted_at')->orderByDesc('submitted_at')
+            $selectedRecipe = Recipe::query()->where('user_id', $owner->getKey())->whereKey($recipeId)->first();
+            $attemptQuery = $selectedRecipe instanceof Recipe
+                ? $this->attemptsForRecipe($owner, $worker, $selectedRecipe)
+                : RecipeTestAttempt::query()->whereRaw('1 = 0');
+            $paginator = $attemptQuery->whereNotNull('submitted_at')->orderByDesc('submitted_at')
                 ->paginate(self::TAKE)->withQueryString();
             $paginator->through(static fn(RecipeTestAttempt $attempt): array => [
                 'id' => $attempt->getKey(), 'variant_name' => $attempt->getVariantName(), 'score' => $attempt->getScore(),
@@ -62,5 +65,23 @@ class RecipeTestResultIndexController
             'selected_worker_id' => $worker?->getKey(), 'selected_recipe_id' => $recipeId > 0 ? $recipeId : null,
             'recipes' => $rows, 'history' => $history,
         ]);
+    }
+
+    /**
+     * Include attempts detached by the one-time catalog replacement through their immutable name snapshot.
+     *
+     * @return Builder<RecipeTestAttempt>
+     */
+    private function attemptsForRecipe(User $owner, Worker $worker, Recipe $recipe): Builder
+    {
+        return RecipeTestAttempt::query()
+            ->where('user_id', $owner->getKey())
+            ->where('worker_id', $worker->getKey())
+            ->where(static function (Builder $query) use ($recipe): void {
+                $query->where('recipe_id', $recipe->getKey())
+                    ->orWhere(static function (Builder $query) use ($recipe): void {
+                        $query->whereNull('recipe_id')->where('recipe_name', $recipe->getName());
+                    });
+            });
     }
 }

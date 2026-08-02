@@ -13,17 +13,15 @@ import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
-import RecipeActionIcon from '@/components/recipes/RecipeActionIcon.vue';
-import RecipeVariantBlock, {
-    type RecipeIngredientData,
-} from '@/components/recipes/RecipeVariantBlock.vue';
+import RecipeInstructionIcon from '@/components/recipes/RecipeInstructionIcon.vue';
 import { useRoute } from '@/composables/useRoute';
 
-type Step = {
+type Instruction = {
     token: string;
     text: string;
+    type: string;
     action_key: string;
-    source_text: string | null;
+    icon_group: string;
 };
 const props = defineProps<{
     attempt: {
@@ -32,23 +30,25 @@ const props = defineProps<{
         recipe_name: string;
         variant_name: string | null;
         worker_name: string;
-        ingredients: RecipeIngredientData[];
-        steps: Step[];
+        instructions: Instruction[];
     };
     result: { score: number; passed: boolean; correct_steps: string[] } | null;
 }>();
 
 const { t } = useI18n();
 const route = useRoute();
-const steps = ref(props.attempt.steps.map((step) => ({ ...step })));
+const instructions = ref(
+    props.attempt.instructions.map((instruction) => ({ ...instruction })),
+);
 const submitting = ref(false);
 const dragIndex = ref<number | null>(null);
 const touchIndex = ref<number | null>(null);
 
 function move(index: number, target: number): void {
-    if (target < 0 || target >= steps.value.length || index === target) return;
-    const [step] = steps.value.splice(index, 1);
-    if (step) steps.value.splice(target, 0, step);
+    if (target < 0 || target >= instructions.value.length || index === target)
+        return;
+    const [instruction] = instructions.value.splice(index, 1);
+    if (instruction) instructions.value.splice(target, 0, instruction);
 }
 
 function drop(target: number): void {
@@ -74,7 +74,7 @@ function submit(): void {
     submitting.value = true;
     router.put(
         route('recipe-tests.update', props.attempt.id),
-        { tokens: steps.value.map((step) => step.token) },
+        { tokens: instructions.value.map((instruction) => instruction.token) },
         { preserveScroll: true, onFinish: () => (submitting.value = false) },
     );
 }
@@ -99,15 +99,6 @@ function submit(): void {
                     {{ attempt.worker_name }}
                 </p>
             </header>
-
-            <RecipeVariantBlock
-                :variant="{
-                    name: attempt.variant_name,
-                    ingredients: attempt.ingredients,
-                    steps: [],
-                }"
-                :show-procedure="false"
-            />
 
             <Card v-if="result" class="text-center">
                 <component
@@ -169,8 +160,8 @@ function submit(): void {
                     </p>
                     <ol class="space-y-3">
                         <li
-                            v-for="(step, index) in steps"
-                            :key="step.token"
+                            v-for="(instruction, index) in instructions"
+                            :key="instruction.token"
                             :data-step-index="index"
                             draggable="true"
                             class="flex items-center gap-2 rounded-xl border border-outline-glass bg-white p-3 shadow-sm transition hover:border-primary/30"
@@ -193,13 +184,15 @@ function submit(): void {
                             <span
                                 class="flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-primary"
                             >
-                                <RecipeActionIcon
-                                    :action-key="step.action_key"
+                                <RecipeInstructionIcon
+                                    :type="instruction.type"
+                                    :action-key="instruction.action_key"
+                                    :icon-group="instruction.icon_group"
                                 />
                             </span>
                             <span
                                 class="min-w-0 flex-1 text-sm text-on-surface"
-                                >{{ step.text }}</span
+                                >{{ instruction.text }}</span
                             >
                             <Button
                                 size="icon"
@@ -214,7 +207,7 @@ function submit(): void {
                                 size="icon"
                                 variant="ghost"
                                 class="size-8"
-                                :disabled="index === steps.length - 1"
+                                :disabled="index === instructions.length - 1"
                                 :aria-label="t('common.move_down')"
                                 @click="move(index, index + 1)"
                                 ><ArrowDown :size="14"

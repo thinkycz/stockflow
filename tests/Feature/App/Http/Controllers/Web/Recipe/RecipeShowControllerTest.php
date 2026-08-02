@@ -21,7 +21,10 @@ use Thinkycz\LaravelCore\Support\Typer;
     $this->be($admin, 'users')->get('/recipes/' . $recipe->getKey(), $this->inertiaHeaders())
         ->assertOk()->assertJsonPath('props.is_admin', true);
     $this->be($limited, 'users')->get('/recipes/' . $recipe->getKey(), $this->inertiaHeaders())
-        ->assertOk()->assertJsonPath('props.workers.0.name', 'Tea Worker');
+        ->assertOk()->assertJsonPath('props.workers.0.name', 'Tea Worker')
+        ->assertJsonPath('props.recipe.variants.0.instructions.0.text', 'Add 100 ml milk into cup')
+        ->assertJsonMissingPath('props.recipe.variants.0.ingredients')
+        ->assertJsonMissingPath('props.recipe.variants.0.steps');
 
     $recipe->update(['archived_at' => \now()]);
     $this->be($limited, 'users')->get('/recipes/' . $recipe->getKey())->assertNotFound();

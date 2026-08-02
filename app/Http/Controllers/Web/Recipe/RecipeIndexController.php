@@ -6,9 +6,6 @@ namespace App\Http\Controllers\Web\Recipe;
 
 use App\Models\Recipe;
 use App\Models\RecipeCategory;
-use App\Models\RecipeIngredient;
-use App\Models\RecipeStep;
-use App\Models\RecipeVariant;
 use App\Models\User;
 use App\Services\RecipeCatalogService;
 use Illuminate\Database\Eloquent\Builder;
@@ -33,7 +30,7 @@ class RecipeIndexController
         $categoryId = $request->integer('category_id');
         $showArchived = $actor->isAdmin() && $request->boolean('archived');
 
-        $query = Recipe::query()->where('user_id', $owner->getKey())->with(['category', 'variants.ingredients', 'variants.steps']);
+        $query = Recipe::query()->where('user_id', $owner->getKey())->with('category')->withCount('variants');
         $showArchived ? $query->whereNotNull('archived_at') : $query->whereNull('archived_at');
         if ($search !== '') {
             Recipe::scopeSearch($query, $search);
@@ -42,7 +39,7 @@ class RecipeIndexController
             $query->where('recipe_category_id', $categoryId);
         }
         $paginator = $query->orderBy('recipe_category_id')->orderBy('position')->paginate(self::TAKE)->withQueryString();
-        $paginator->through(fn(Recipe $recipe): array => $this->recipeRow($recipe, $actor->isAdmin()));
+        $paginator->through(fn(Recipe $recipe): array => $this->recipeRow($recipe));
 
         $categories = RecipeCategory::query()->where('user_id', $owner->getKey())->withCount([
             'recipes',
@@ -64,31 +61,13 @@ class RecipeIndexController
     /**
      * @return array<string, mixed>
      */
-    private function recipeRow(Recipe $recipe, bool $isAdmin): array
+    private function recipeRow(Recipe $recipe): array
     {
         return [
-            'id' => $recipe->getKey(), 'name' => $recipe->getName(), 'note' => $recipe->getNote(),
+            'id' => $recipe->getKey(), 'name' => $recipe->getName(),
             'category' => ['id' => $recipe->getCategoryId(), 'name' => $recipe->getCategory()->getName()],
             'archived' => $recipe->isArchived(),
-            'variant_count' => $recipe->getVariants()->count(),
-            'variants' => $recipe->getVariants()->map(fn(RecipeVariant $variant): array => [
-                'id' => $variant->getKey(),
-                'name' => $variant->getName(),
-                'ingredients' => $variant->getIngredients()->map(fn(RecipeIngredient $ingredient): array => [
-                    'quantity_value' => $ingredient->getQuantityValue(),
-                    'quantity_text' => $ingredient->getQuantityText(),
-                    'unit' => $ingredient->getUnit(),
-                    'name' => $ingredient->getName(),
-                    'icon_group' => $ingredient->getIconGroup(),
-                    'source_text' => $isAdmin ? $ingredient->getSourceText() : null,
-                ])->all(),
-                'steps' => $variant->getSteps()->map(fn(RecipeStep $step): array => [
-                    'id' => $step->getKey(),
-                    'text' => $step->getText(),
-                    'action_key' => $step->getActionKey(),
-                    'source_text' => $isAdmin ? $step->getSourceText() : null,
-                ])->all(),
-            ])->all(),
+            'variant_count' => Typer::assertInt($recipe->getAttribute('variants_count')),
         ];
     }
 }

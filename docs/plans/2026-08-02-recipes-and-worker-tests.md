@@ -32,3 +32,16 @@
   historických pokusů.
 - Převést importované řádky deterministickými pravidly bez druhého spuštění importu.
 - Zobrazit všechny recepty inline a editoru zpřístupnit pořadí, fallbacky a override ikon.
+
+## Fáze 6: Kompaktní katalog a jednotná výrobní sekvence
+
+- Přidat kanonické `recipe_instructions` vedle legacy surovin a kroků a převést
+  každou firmu právě jednou bez přepsání jejích aktuálních hodnot.
+- Změnit testy a nové snapshoty na celou seřazenou výrobní sekvenci; staré
+  snapshoty dál číst v původním formátu.
+- Zjednodušit `/recipes` na seznam kategorií a drinků, přesunout správu kategorií
+  na `/recipe-categories` a detail zobrazit jako jednu kompaktní variantu.
+- Nahradit editor surovin/postupu jedním editorem instrukcí a odstranit zdrojové
+  znění ze všech uživatelských obrazovek.
+- Přidat idempotentní deploy seeder, který jednou odstraní starý katalog, odpojí
+  historické pokusy a naplní čistý katalog v nové instrukční struktuře.

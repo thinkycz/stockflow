@@ -4,7 +4,6 @@ import {
     Archive,
     ArrowDown,
     ArrowUp,
-    BookOpen,
     Pencil,
     Plus,
     RotateCcw,
@@ -12,7 +11,7 @@ import {
     Trash2,
     Trophy,
 } from '@lucide/vue';
-import { reactive } from 'vue';
+import { computed, reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Badge from '@/components/ui/Badge.vue';
@@ -23,6 +22,9 @@ import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import Select from '@/components/ui/Select.vue';
+import RecipeVariantBlock, {
+    type RecipeVariantData,
+} from '@/components/recipes/RecipeVariantBlock.vue';
 import { useRoute } from '@/composables/useRoute';
 import { useDialog } from '@/composables/useDialog';
 
@@ -33,6 +35,7 @@ type RecipeRow = {
     category: { id: number; name: string };
     archived: boolean;
     variant_count: number;
+    variants: RecipeVariantData[];
 };
 
 const props = defineProps<{
@@ -63,6 +66,17 @@ const filters = reactive({
         : '',
     archived: props.filters.archived,
 });
+
+const groupedRecipes = computed(() =>
+    props.categories
+        .map((category) => ({
+            ...category,
+            recipes: props.recipes.data.filter(
+                (recipe) => recipe.category.id === category.id,
+            ),
+        }))
+        .filter((category) => category.recipes.length > 0),
+);
 
 function applyFilters(): void {
     router.get(
@@ -157,20 +171,20 @@ function moveRecipe(id: number, direction: 'up' | 'down'): void {
                     </p>
                 </div>
                 <div v-if="is_admin" class="flex flex-wrap gap-2">
-                    <Link :href="route('recipe-test-results.index')"
-                        ><Button variant="secondary"
+                    <Link :href="route('recipe-test-results.index')">
+                        <Button variant="secondary"
                             ><Trophy :size="15" />{{
                                 t('recipes.results.title')
                             }}</Button
-                        ></Link
-                    >
-                    <Link :href="route('recipes.create')"
-                        ><Button
+                        >
+                    </Link>
+                    <Link :href="route('recipes.create')">
+                        <Button
                             ><Plus :size="15" />{{
                                 t('recipes.create')
                             }}</Button
-                        ></Link
-                    >
+                        >
+                    </Link>
                 </div>
             </header>
 
@@ -274,31 +288,35 @@ function moveRecipe(id: number, direction: 'up' | 'down'): void {
                     >
                         <span class="text-xs font-semibold text-on-surface">{{
                             category.name
-                        }}</span
-                        ><span class="text-[11px] text-on-surface-variant"
+                        }}</span>
+                        <span class="text-[11px] text-on-surface-variant"
                             >({{ category.active_recipes_count }})</span
-                        ><Button
+                        >
+                        <Button
                             variant="ghost"
                             size="icon"
                             class="ml-1 size-7"
                             :aria-label="t('common.move_up')"
                             @click="moveCategory(category.id, 'up')"
-                            ><ArrowUp :size="13" /></Button
-                        ><Button
+                            ><ArrowUp :size="13"
+                        /></Button>
+                        <Button
                             variant="ghost"
                             size="icon"
                             class="size-7"
                             :aria-label="t('common.move_down')"
                             @click="moveCategory(category.id, 'down')"
-                            ><ArrowDown :size="13" /></Button
-                        ><Button
+                            ><ArrowDown :size="13"
+                        /></Button>
+                        <Button
                             variant="ghost"
                             size="icon"
                             class="size-7"
                             :aria-label="t('recipes.categories.edit')"
                             @click="editCategory(category)"
-                            ><Pencil :size="13" /></Button
-                        ><Button
+                            ><Pencil :size="13"
+                        /></Button>
+                        <Button
                             variant="ghost"
                             size="icon"
                             class="size-7"
@@ -311,93 +329,139 @@ function moveRecipe(id: number, direction: 'up' | 'down'): void {
                 </div>
             </Card>
 
-            <div
-                v-if="recipes.data.length"
-                class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-            >
-                <Card
-                    v-for="recipe in recipes.data"
-                    :key="recipe.id"
-                    class="flex h-full flex-col"
+            <template v-if="recipes.data.length">
+                <section
+                    v-for="category in groupedRecipes"
+                    :key="category.id"
+                    class="space-y-4"
                 >
-                    <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <h2
+                            class="font-heading text-xl font-bold text-on-surface"
+                        >
+                            {{ category.name }}
+                        </h2>
                         <Badge variant="neutral">{{
-                            recipe.category.name
-                        }}</Badge>
-                        <Badge v-if="recipe.archived" variant="warning">{{
-                            t('recipes.archived')
+                            category.recipes.length
                         }}</Badge>
                     </div>
-                    <h2
-                        class="mt-4 font-heading text-lg font-bold text-on-surface"
-                    >
-                        {{ recipe.name }}
-                    </h2>
-                    <p
-                        v-if="recipe.note"
-                        class="mt-2 line-clamp-2 text-xs text-on-surface-variant"
-                    >
-                        {{ recipe.note }}
-                    </p>
-                    <p
-                        class="mt-3 text-xs font-semibold text-on-surface-variant"
-                    >
-                        {{
-                            t('recipes.variant_count', {
-                                count: recipe.variant_count,
-                            })
-                        }}
-                    </p>
-                    <div class="mt-auto flex flex-wrap gap-2 pt-5">
-                        <Link :href="route('recipes.show', recipe.id)"
-                            ><Button variant="secondary" size="compact"
-                                ><BookOpen :size="14" />{{
-                                    t('common.detail')
-                                }}</Button
-                            ></Link
+                    <div class="space-y-5">
+                        <Card
+                            v-for="recipe in category.recipes"
+                            :key="recipe.id"
+                            class="space-y-4"
+                            data-testid="recipe-catalog-card"
                         >
-                        <Button
-                            v-if="is_admin"
-                            variant="ghost"
-                            size="icon"
-                            :aria-label="t('common.move_up')"
-                            @click="moveRecipe(recipe.id, 'up')"
-                            ><ArrowUp :size="14"
-                        /></Button>
-                        <Button
-                            v-if="is_admin"
-                            variant="ghost"
-                            size="icon"
-                            :aria-label="t('common.move_down')"
-                            @click="moveRecipe(recipe.id, 'down')"
-                            ><ArrowDown :size="14"
-                        /></Button>
-                        <Button
-                            v-if="is_admin && !recipe.archived"
-                            variant="ghost"
-                            size="compact"
-                            @click="setArchived(recipe, true)"
-                            ><Archive :size="14" />{{
-                                t('recipes.archive')
-                            }}</Button
-                        >
-                        <Button
-                            v-if="is_admin && recipe.archived"
-                            variant="ghost"
-                            size="compact"
-                            @click="setArchived(recipe, false)"
-                            ><RotateCcw :size="14" />{{
-                                t('recipes.restore')
-                            }}</Button
-                        >
+                            <header
+                                class="flex flex-wrap items-start justify-between gap-3"
+                            >
+                                <div>
+                                    <div
+                                        class="flex flex-wrap items-center gap-2"
+                                    >
+                                        <Badge
+                                            v-if="recipe.archived"
+                                            variant="warning"
+                                            >{{ t('recipes.archived') }}</Badge
+                                        >
+                                        <span
+                                            class="text-xs text-on-surface-variant"
+                                            >{{
+                                                t('recipes.variant_count', {
+                                                    count: recipe.variant_count,
+                                                })
+                                            }}</span
+                                        >
+                                    </div>
+                                    <h3
+                                        class="mt-2 font-heading text-xl font-bold text-on-surface"
+                                    >
+                                        {{ recipe.name }}
+                                    </h3>
+                                    <p
+                                        v-if="recipe.note"
+                                        class="mt-1 whitespace-pre-line text-sm text-on-surface-variant"
+                                    >
+                                        {{ recipe.note }}
+                                    </p>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <Link
+                                        :href="route('recipes.show', recipe.id)"
+                                        ><Button
+                                            variant="secondary"
+                                            size="compact"
+                                            >{{ t('common.detail') }}</Button
+                                        ></Link
+                                    >
+                                    <Link
+                                        v-if="is_admin"
+                                        :href="route('recipes.edit', recipe.id)"
+                                        ><Button variant="ghost" size="compact"
+                                            ><Pencil :size="14" />{{
+                                                t('common.edit')
+                                            }}</Button
+                                        ></Link
+                                    >
+                                </div>
+                            </header>
+
+                            <div class="space-y-4">
+                                <RecipeVariantBlock
+                                    v-for="variant in recipe.variants"
+                                    :key="variant.id"
+                                    :variant="variant"
+                                    :is-admin="is_admin"
+                                />
+                            </div>
+
+                            <footer
+                                v-if="is_admin"
+                                class="flex flex-wrap gap-2 border-t border-outline-glass pt-3"
+                            >
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    :aria-label="t('common.move_up')"
+                                    @click="moveRecipe(recipe.id, 'up')"
+                                    ><ArrowUp :size="14"
+                                /></Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    :aria-label="t('common.move_down')"
+                                    @click="moveRecipe(recipe.id, 'down')"
+                                    ><ArrowDown :size="14"
+                                /></Button>
+                                <Button
+                                    v-if="!recipe.archived"
+                                    variant="ghost"
+                                    size="compact"
+                                    @click="setArchived(recipe, true)"
+                                    ><Archive :size="14" />{{
+                                        t('recipes.archive')
+                                    }}</Button
+                                >
+                                <Button
+                                    v-else
+                                    variant="ghost"
+                                    size="compact"
+                                    @click="setArchived(recipe, false)"
+                                    ><RotateCcw :size="14" />{{
+                                        t('recipes.restore')
+                                    }}</Button
+                                >
+                            </footer>
+                        </Card>
                     </div>
-                </Card>
-            </div>
+                </section>
+            </template>
             <EmptyState
                 v-else
                 :title="t('recipes.empty')"
                 :description="t('recipes.empty_help')"
             />
+
             <Pagination
                 v-if="recipes.last_page > 1"
                 :current-page="recipes.current_page"

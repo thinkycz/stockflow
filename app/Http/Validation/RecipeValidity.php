@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Validation;
 
 use App\Models\User;
+use App\Support\RecipeTextParser;
 use Thinkycz\LaravelCore\Validation\BaseValidity;
 use Thinkycz\LaravelCore\Validation\Validity;
 
@@ -85,6 +86,46 @@ class RecipeValidity
      * Individual instruction text.
      */
     public function stepText(): Validity { return $this->baseValidity->make()->string(1000); }
+
+    /**
+     * Structured ingredient rows.
+     */
+    public function ingredients(): Validity { return $this->baseValidity->make()->array(null)->max(100); }
+
+    /**
+     * Normalized ingredient quantity.
+     */
+    public function ingredientQuantity(): Validity { return $this->baseValidity->make()->numeric(999999999.999, 0)->decimal(0, 3); }
+
+    /**
+     * Exact fallback quantity expression.
+     */
+    public function ingredientQuantityText(): Validity { return $this->baseValidity->make()->string(80); }
+
+    /**
+     * Ingredient unit abbreviation.
+     */
+    public function ingredientUnit(): Validity { return $this->baseValidity->make()->string(32); }
+
+    /**
+     * Ingredient display name.
+     */
+    public function ingredientName(): Validity { return $this->baseValidity->make()->string(180); }
+
+    /**
+     * Ingredient icon group.
+     */
+    public function ingredientIconGroup(): Validity { return $this->baseValidity->make()->inString(RecipeTextParser::ICON_GROUPS); }
+
+    /**
+     * Action icon key.
+     */
+    public function actionKey(): Validity { return $this->baseValidity->make()->inString(RecipeTextParser::ACTION_KEYS); }
+
+    /**
+     * Original source wording.
+     */
+    public function sourceText(): Validity { return $this->baseValidity->make()->string(1000); }
 
     /**
      * Submitted opaque step tokens.

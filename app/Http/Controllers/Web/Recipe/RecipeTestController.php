@@ -93,24 +93,46 @@ class RecipeTestController
     private function payload(RecipeTestAttempt $attempt, bool $withResult): array
     {
         $correct = $attempt->getCorrectStepsSnapshot();
+        $snapshot = $attempt->getVariantSnapshot();
+        $snapshotSteps = [];
+        $ingredients = [];
+        if ($snapshot !== null) {
+            foreach (Typer::assertArray($snapshot['steps'] ?? []) as $value) {
+                $row = Typer::assertStringKeyArray(Typer::assertArray($value));
+                $token = Typer::assertString($row['token'] ?? null);
+                $snapshotSteps[$token] = [
+                    'action_key' => Typer::assertString($row['action_key'] ?? 'other'),
+                    'source_text' => Typer::assertNullableString($row['source_text'] ?? null),
+                ];
+            }
+            foreach (Typer::assertArray($snapshot['ingredients'] ?? []) as $value) {
+                $row = Typer::assertStringKeyArray(Typer::assertArray($value));
+                $ingredients[] = $row;
+            }
+        }
         $byToken = [];
         foreach ($correct as $step) {
             $byToken[$step['token']] = $step['text'];
         }
         $presented = [];
         foreach ($attempt->getPresentedTokens() as $token) {
-            $presented[] = ['token' => $token, 'text' => $byToken[$token]];
+            $presented[] = [
+                'token' => $token,
+                'text' => $byToken[$token],
+                'action_key' => $snapshotSteps[$token]['action_key'] ?? 'other',
+                'source_text' => $snapshotSteps[$token]['source_text'] ?? null,
+            ];
         }
 
         return [
             'attempt' => [
                 'id' => $attempt->getKey(), 'recipe_id' => $attempt->getRecipeId(),
                 'recipe_name' => $attempt->getRecipeName(), 'variant_name' => $attempt->getVariantName(),
-                'worker_name' => $attempt->getWorkerName(), 'steps' => $presented,
+                'worker_name' => $attempt->getWorkerName(), 'ingredients' => $ingredients, 'steps' => $presented,
             ],
             'result' => $withResult ? [
                 'score' => $attempt->getScore(), 'passed' => $attempt->isPassed(),
-                'correct_steps' => \array_column($correct, 'text'),
+                'correct_steps' => \array_column($correct, 'text'), 'ingredients' => $ingredients,
             ] : null,
         ];
     }

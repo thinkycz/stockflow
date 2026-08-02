@@ -8,11 +8,33 @@
 ## Funkční požadavky
 
 - Recepty jsou jeden firemní katalog nezávislý na aktivní provozovně.
-- Admin spravuje kategorie, recepty, varianty a seřazené kroky; použitý recept se archivuje, nemaže.
+- `/recipes` zobrazuje kategorie a všechny aktivní recepty inline; detail zůstává pro
+  soustředěné zobrazení a spuštění testu.
+- Admin spravuje kategorie, recepty, varianty, strukturované suroviny a seřazené
+  postupové kroky; použitý recept se archivuje, nemaže.
+- Varianta má suroviny jako samostatné řádky s pořadím, množstvím, jednotkou,
+  přesným fallback výrazem, ikonovou skupinou a zdrojovým zněním. Postupové kroky
+  mají vlastní akci, ikonu a zdrojové znění.
 - Omezený účet vidí aktivní recepty a může po výběru brigádníka spustit neomezený počet testů, ale nesmí měnit katalog ani procházet historii.
-- Jeden test náhodně vybere jednu variantu, promíchá její kroky a po odeslání vyžaduje pro úspěch přesné pořadí.
+- Jeden test náhodně vybere jednu variantu, suroviny zobrazí pevně a promíchá pouze
+  její postupové kroky. Po odeslání vyžaduje pro úspěch přesné pořadí.
 - Výsledek ukáže procento správných pozic a správné pořadí. Admin vidí poslední výsledek každého receptu a úplnou historii brigádníka.
-- Historie ukládá snapshot receptu, varianty, kroků, odpovědi, brigádníka, auditní účet a časy, takže ji pozdější editace nezmění.
+- Historie nových pokusů ukládá snapshot celé varianty včetně surovin, množství,
+  ikon a postupových kroků; odpovědi, brigádníka, auditní účet a časy, takže ji
+  pozdější editace nezmění. Starší pokusy zůstávají přesně ve svém původním
+  snapshot formátu.
+
+## Deterministický import
+
+- Import PDF zachovává zdrojový katalog a běží jednou na firmu.
+- Pravidla rozdělují `+`, známé jednotky a akční suffixy, například
+  `100g milk + 20g sugar - stir` na dvě suroviny a krok `stir`.
+- Číselná množství se ukládají jako číslo; `half`, `a few` a změněné zápisy jako
+  `1,5` zachovávají přesný fallback výraz. Nejasné texty dostanou neutrální ikonu
+  nebo akci a zůstanou dohledatelné ve zdrojovém znění.
+- Pokud má varianta alespoň dva explicitní postupové kroky, generické kroky
+  `add` z čistě surovinových řádků se do testu nezařadí. U kratších variant se
+  použijí jako deterministický fallback, aby katalog zůstal testovatelný.
 
 ## Bezpečnostní a datové invarianty
 

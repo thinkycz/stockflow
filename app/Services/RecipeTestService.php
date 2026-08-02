@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Recipe;
+use App\Models\RecipeIngredient;
 use App\Models\RecipeStep;
 use App\Models\RecipeTestAttempt;
 use App\Models\RecipeVariant;
@@ -29,7 +30,7 @@ class RecipeTestService
             throw new InvalidArgumentException('Recipe test is not available.');
         }
 
-        $variants = $recipe->variants()->with('steps')->get();
+        $variants = $recipe->variants()->with(['steps', 'ingredients'])->get();
         if ($variants->isEmpty()) {
             throw new InvalidArgumentException('Recipe has no testable variant.');
         }
@@ -40,9 +41,29 @@ class RecipeTestService
         }
 
         $correct = [];
+        $snapshotSteps = [];
         foreach ($steps as $value) {
             $step = Typer::assertInstance($value, RecipeStep::class);
-            $correct[] = ['token' => Str::uuid()->toString(), 'text' => $step->getText()];
+            $token = Str::uuid()->toString();
+            $correct[] = ['token' => $token, 'text' => $step->getText()];
+            $snapshotSteps[] = [
+                'token' => $token,
+                'text' => $step->getText(),
+                'action_key' => $step->getActionKey(),
+                'source_text' => $step->getSourceText(),
+            ];
+        }
+        $snapshotIngredients = [];
+        foreach ($variant->getIngredients() as $value) {
+            $ingredient = Typer::assertInstance($value, RecipeIngredient::class);
+            $snapshotIngredients[] = [
+                'quantity_value' => $ingredient->getQuantityValue(),
+                'quantity_text' => $ingredient->getQuantityText(),
+                'unit' => $ingredient->getUnit(),
+                'name' => $ingredient->getName(),
+                'icon_group' => $ingredient->getIconGroup(),
+                'source_text' => $ingredient->getSourceText(),
+            ];
         }
         $presented = \array_column($correct, 'token');
         \shuffle($presented);
@@ -64,6 +85,11 @@ class RecipeTestService
             'worker_name' => $worker->getFullName(),
             'actor_name' => $actor->getEmail(),
             'correct_steps' => $correct,
+            'variant_snapshot' => [
+                'variant_name' => $variant->getName(),
+                'ingredients' => $snapshotIngredients,
+                'steps' => $snapshotSteps,
+            ],
             'presented_tokens' => $presented,
             'submitted_tokens' => null,
             'score' => null,

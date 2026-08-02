@@ -2,10 +2,10 @@
 
 ## Stav
 
-- Aktuální fáze: dokončeno
-- Celkový stav: ověřeno
+- Aktuální fáze: Fáze 5 – strukturovaný katalog
+- Celkový stav: ověřeno po follow-up redesignu
 - Poslední aktualizace: 2026-08-02
-- Výchozí worktree: čistý, větev `main`
+- Výchozí worktree: změny follow-upu připravené k předání, větev `main`
 
 ## Fáze 1: Doména a katalog
 
@@ -40,12 +40,25 @@
 - [x] Verification report a readiness verdict
 - Blokátory: žádné
 
+## Fáze 5: Strukturovaný katalog
+
+- Stav: done
+- [x] `recipe_ingredients`, akce kroků a snapshot celé varianty
+- [x] Deterministický parser importu včetně fallback množství a ikon
+- [x] Inline katalog podle kategorií a sdílené ikonové variantní bloky
+- [x] Admin editor surovin, pořadí, ikon a samostatných kroků
+- [x] Test pouze nad postupovými tokeny, pevný seznam surovin
+- [x] Parser, CRUD, snapshot a E2E testy
+- Blokátory: žádné
+
 ## Rozhodnutí
 
 - Omezený účet vybírá brigádníka bez dalšího ověření identity; audit ukládá aktéra.
 - Jeden pokus testuje jednu serverem náhodně vybranou variantu bez časového limitu.
 - Úspěch vyžaduje přesné pořadí; opakování je neomezené.
 - Recepty jsou firemní a historické pokusy jsou snapshoty.
+- Suroviny se zobrazují odděleně od testovatelných postupových kroků; akční
+  ikony jsou odvozené parserem, ale admin je může změnit.
 
 ## Další krok
 

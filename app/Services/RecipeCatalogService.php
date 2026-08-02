@@ -6,10 +6,12 @@ namespace App\Services;
 
 use App\Models\Recipe;
 use App\Models\RecipeCategory;
+use App\Models\RecipeIngredient;
 use App\Models\RecipeStep;
 use App\Models\RecipeVariant;
 use App\Models\User;
 use App\Support\RecipeDefaultCatalog;
+use App\Support\RecipeTextParser;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -18,11 +20,17 @@ use Thinkycz\LaravelCore\Support\Typer;
 class RecipeCatalogService
 {
     /**
+     * Create the catalog service with the deterministic source parser.
+     */
+    public function __construct(private readonly RecipeTextParser $parser = new RecipeTextParser()) {}
+
+    /**
      * Initialize the source PDF catalog exactly once for a company owner.
      */
     public function initialize(User $owner): void
     {
-        DB::transaction(static function () use ($owner): void {
+        $parser = $this->parser;
+        DB::transaction(static function () use ($owner, $parser): void {
             $locked = Typer::assertInstance(User::query()->whereKey($owner->getKey())->lockForUpdate()->firstOrFail(), User::class);
             if ($locked->getRecipesInitializedAt() !== null) {
                 return;
@@ -51,11 +59,29 @@ class RecipeCatalogService
                             'name' => $variantRow['name'],
                             'position' => $variantPosition + 1,
                         ]), RecipeVariant::class);
-                        foreach ($variantRow['steps'] as $stepPosition => $text) {
+                        $stepPosition = 0;
+                        $ingredientPosition = 0;
+                        $parsedSteps = [];
+                        foreach ($variantRow['steps'] as $sourceText) {
+                            $parsed = $parser->parse($sourceText);
+                            foreach ($parsed['ingredients'] as $ingredient) {
+                                RecipeIngredient::query()->create([
+                                    'recipe_variant_id' => $variant->getKey(),
+                                    'position' => ++$ingredientPosition,
+                                    ...$ingredient,
+                                ]);
+                            }
+                            $parsedSteps = [...$parsedSteps, ...$parsed['steps']];
+                        }
+                        $explicitSteps = \array_values(\array_filter($parsedSteps, static fn(array $step): bool => $step['action_key'] !== 'add'));
+                        $stepsToPersist = \count($explicitSteps) >= 2 ? $explicitSteps : $parsedSteps;
+                        foreach ($stepsToPersist as $step) {
                             RecipeStep::query()->create([
                                 'recipe_variant_id' => $variant->getKey(),
-                                'text' => $text,
-                                'position' => $stepPosition + 1,
+                                'text' => $step['text'],
+                                'action_key' => $step['action_key'],
+                                'source_text' => $step['source_text'],
+                                'position' => ++$stepPosition,
                             ]);
                         }
                     }
@@ -68,7 +94,7 @@ class RecipeCatalogService
     }
 
     /**
-     * @param list<array{name: string|null, steps: list<string>}> $variants
+     * @param list<array{name: string|null, ingredients?: list<array<string, mixed>>, steps: list<array<string, mixed>|string>}> $variants
      */
     public function save(User $owner, RecipeCategory $category, Recipe|null $recipe, string $name, string|null $note, array $variants): Recipe
     {
@@ -78,13 +104,14 @@ class RecipeCatalogService
         if ($variants === []) {
             throw new InvalidArgumentException('Recipe must contain a variant.');
         }
-        foreach ($variants as $variant) {
+        $normalizedVariants = $this->normalizeVariants($variants);
+        foreach ($normalizedVariants as $variant) {
             if (\count($variant['steps']) < 2) {
                 throw new InvalidArgumentException('Every recipe variant must contain at least two steps.');
             }
         }
 
-        return DB::transaction(static function () use ($owner, $category, $recipe, $name, $note, $variants): Recipe {
+        return DB::transaction(static function () use ($owner, $category, $recipe, $name, $note, $normalizedVariants): Recipe {
             $target = $recipe instanceof Recipe
                 ? Typer::assertInstance(Recipe::query()->whereKey($recipe->getKey())->where('user_id', $owner->getKey())->lockForUpdate()->firstOrFail(), Recipe::class)
                 : new Recipe();
@@ -100,13 +127,19 @@ class RecipeCatalogService
             $target->save();
             $target->variants()->delete();
 
-            foreach ($variants as $variantPosition => $variantRow) {
+            foreach ($normalizedVariants as $variantPosition => $variantRow) {
                 $variant = Typer::assertInstance(RecipeVariant::query()->create([
                     'recipe_id' => $target->getKey(), 'name' => $variantRow['name'], 'position' => $variantPosition + 1,
                 ]), RecipeVariant::class);
-                foreach ($variantRow['steps'] as $stepPosition => $text) {
+                foreach ($variantRow['ingredients'] as $ingredientPosition => $ingredient) {
+                    RecipeIngredient::query()->create([
+                        'recipe_variant_id' => $variant->getKey(), 'position' => $ingredientPosition + 1, ...$ingredient,
+                    ]);
+                }
+                foreach ($variantRow['steps'] as $stepPosition => $step) {
                     RecipeStep::query()->create([
-                        'recipe_variant_id' => $variant->getKey(), 'text' => $text, 'position' => $stepPosition + 1,
+                        'recipe_variant_id' => $variant->getKey(), 'text' => $step['text'], 'action_key' => $step['action_key'],
+                        'source_text' => $step['source_text'], 'position' => $stepPosition + 1,
                     ]);
                 }
             }
@@ -183,5 +216,65 @@ class RecipeCatalogService
             $target->save();
             $neighbor->save();
         });
+    }
+
+    /**
+     * Normalize structured editor data and keep compatibility with the original free-text form payload.
+     *
+     * @param list<array{name: string|null, ingredients?: list<array<string, mixed>>, steps: list<array<string, mixed>|string>}> $variants
+     *
+     * @return list<array{name: string|null, ingredients: list<array{quantity_value: float|int|null, quantity_text: string|null, unit: string|null, name: string, icon_group: string, source_text: string}>, steps: list<array{text: string, action_key: string, source_text: string}>}>
+     */
+    private function normalizeVariants(array $variants): array
+    {
+        $normalized = [];
+        foreach ($variants as $variant) {
+            $ingredients = [];
+            foreach ($variant['ingredients'] ?? [] as $ingredientValue) {
+                $ingredient = Typer::assertStringKeyArray(Typer::assertArray($ingredientValue));
+                $rawQuantity = $ingredient['quantity_value'] ?? null;
+                $quantity = null;
+                if ($rawQuantity !== null && $rawQuantity !== '') {
+                    $quantity = (float) \str_replace(',', '.', (string) Typer::assertScalar($rawQuantity));
+                    $quantity = $quantity === \floor($quantity) ? (int) $quantity : $quantity;
+                }
+                $name = \mb_trim(Typer::assertString($ingredient['name'] ?? null));
+                $iconGroup = \mb_trim(Typer::assertString($ingredient['icon_group'] ?? 'neutral'));
+                $ingredients[] = [
+                    'quantity_value' => $quantity,
+                    'quantity_text' => isset($ingredient['quantity_text']) ? Typer::assertNullableString($ingredient['quantity_text']) : null,
+                    'unit' => isset($ingredient['unit']) ? Typer::assertNullableString($ingredient['unit']) : null,
+                    'name' => $name,
+                    'icon_group' => \in_array($iconGroup, RecipeTextParser::ICON_GROUPS, true) ? $iconGroup : 'neutral',
+                    'source_text' => isset($ingredient['source_text']) ? (Typer::assertNullableString($ingredient['source_text']) ?? $name) : $name,
+                ];
+            }
+
+            $steps = [];
+            foreach ($variant['steps'] as $stepValue) {
+                if (\is_string($stepValue)) {
+                    $text = \mb_trim($stepValue);
+                    $steps[] = ['text' => $text, 'action_key' => 'other', 'source_text' => $text];
+
+                    continue;
+                }
+                $step = Typer::assertStringKeyArray(Typer::assertArray($stepValue));
+                $text = \mb_trim(Typer::assertString($step['text'] ?? null));
+                $actionKey = \mb_trim(Typer::assertString($step['action_key'] ?? 'other'));
+                $steps[] = [
+                    'text' => $text,
+                    'action_key' => \in_array($actionKey, RecipeTextParser::ACTION_KEYS, true) ? $actionKey : 'other',
+                    'source_text' => isset($step['source_text']) ? (Typer::assertNullableString($step['source_text']) ?? $text) : $text,
+                ];
+            }
+
+            $normalized[] = [
+                'name' => $variant['name'] === null ? null : \mb_trim(Typer::assertString($variant['name'])),
+                'ingredients' => $ingredients,
+                'steps' => $steps,
+            ];
+        }
+
+        return $normalized;
     }
 }

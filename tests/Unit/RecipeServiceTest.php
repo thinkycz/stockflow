@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\Recipe;
 use App\Models\RecipeCategory;
+use App\Models\RecipeIngredient;
 use App\Models\RecipeStep;
 use App\Models\RecipeTestAttempt;
 use App\Models\RecipeVariant;
@@ -26,13 +27,14 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->and(Recipe::query()->where('name', 'CLASSIC MATCHA LATTE')->exists())->toBeTrue()
         ->and(Recipe::query()->where('name', 'Creme Brulee')->exists())->toBeTrue();
 
-    $classic = Typer::assertInstance(Recipe::query()->where('name', 'CLASSIC MATCHA LATTE')->with('variants.steps')->firstOrFail(), Recipe::class);
-    $creamCheese = Typer::assertInstance(Recipe::query()->where('name', 'Cream Cheese')->with('variants.steps')->firstOrFail(), Recipe::class);
+    $classic = Typer::assertInstance(Recipe::query()->where('name', 'CLASSIC MATCHA LATTE')->with(['variants.ingredients', 'variants.steps'])->firstOrFail(), Recipe::class);
+    $creamCheese = Typer::assertInstance(Recipe::query()->where('name', 'Cream Cheese')->with(['variants.ingredients', 'variants.steps'])->firstOrFail(), Recipe::class);
     \expect($classic->getVariants()->map(static fn(RecipeVariant $variant): string|null => $variant->getName())->all())->toBe(['S', 'M'])
-        ->and($classic->getVariants()->first()?->getSteps()->map(static fn(RecipeStep $step): string => $step->getText())->all())->toBe(['100g milk + 20g sugar - stir', 'ice', '50g water (70-80 degrees) + 3,5g matcha'])
+        ->and($classic->getVariants()->first()?->getSteps()->map(static fn(RecipeStep $step): string => $step->getText())->all())->toBe(['stir', 'ice'])
+        ->and($classic->getVariants()->first()?->getIngredients()->map(static fn(RecipeIngredient $ingredient): string => $ingredient->getName())->all())->toBe(['milk', 'sugar', 'ice', 'water', 'matcha'])
         ->and($creamCheese->getNote())->toBe('use up in 5 days')
         ->and($creamCheese->getVariants()->map(static fn(RecipeVariant $variant): string|null => $variant->getName())->all())->toBe(['Batch', '1 portion'])
-        ->and($creamCheese->getVariants()->last()?->getSteps()->map(static fn(RecipeStep $step): string => $step->getText())->all())->toBe(['50g smetana + 20g salko + 20g milk + 10g cheese', 'whip up']);
+        ->and($creamCheese->getVariants()->last()?->getSteps()->map(static fn(RecipeStep $step): string => $step->getText())->all())->toBe(['Add 50g smetana + 20g salko + 20g milk + 10g cheese', 'whip up']);
 
     Recipe::query()->where('name', 'CLASSIC MATCHA LATTE')->update(['name' => 'Edited recipe']);
     $service->initialize($admin);
@@ -64,9 +66,15 @@ use Thinkycz\LaravelCore\Support\Typer;
             'recipe_variant_id' => $variant->getKey(), 'text' => $text, 'position' => $position + 1,
         ]);
     }
+    RecipeIngredient::query()->create([
+        'recipe_variant_id' => $variant->getKey(), 'position' => 1, 'quantity_value' => 100,
+        'quantity_text' => null, 'unit' => 'g', 'name' => 'Milk', 'icon_group' => 'water_milk', 'source_text' => '100g Milk',
+    ]);
 
     $testService = new RecipeTestService();
     $partialAttempt = $testService->start($actor, $worker, $recipe);
+    \expect($partialAttempt->getVariantSnapshot()['ingredients'][0]['name'] ?? null)->toBe('Milk')
+        ->and($partialAttempt->getVariantSnapshot()['steps'][0]['action_key'] ?? null)->toBe('other');
     $partialTokens = \collect($partialAttempt->getCorrectStepsSnapshot())->pluck('token')->all();
     \expect($partialAttempt->getPresentedTokens())->not->toBe($partialTokens)
         ->and(fn() => $testService->submit($actor, $partialAttempt, \array_slice($partialTokens, 1)))->toThrow(InvalidArgumentException::class);
@@ -79,12 +87,14 @@ use Thinkycz\LaravelCore\Support\Typer;
     $correctTokens = \collect($attempt->getCorrectStepsSnapshot())->pluck('token')->all();
 
     RecipeStep::query()->where('recipe_variant_id', $variant->getKey())->update(['text' => 'Changed']);
+    RecipeIngredient::query()->where('recipe_variant_id', $variant->getKey())->update(['name' => 'Changed ingredient']);
     $submitted = $testService->submit($actor, $attempt, $correctTokens);
 
     \expect($submitted)->toBeInstanceOf(RecipeTestAttempt::class)
         ->and($submitted->getScore())->toBe(100)
         ->and($submitted->isPassed())->toBeTrue()
         ->and($submitted->getCorrectStepsSnapshot()[0]['text'])->toBe('Milk')
+        ->and($submitted->getVariantSnapshot()['ingredients'][0]['name'] ?? null)->toBe('Milk')
         ->and($submitted->getSubmittedAt())->not->toBeNull();
 
     $workerName = $submitted->getWorkerName();

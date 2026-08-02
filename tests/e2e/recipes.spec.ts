@@ -47,8 +47,17 @@ test('limited account reads a recipe and submits a mobile reorder test', async (
         .locator('#mobile-nav-drawer')
         .getByTestId('nav-item-recipes')
         .click();
+    const classicCard = page
+        .getByTestId('recipe-catalog-card')
+        .filter({ hasText: 'CLASSIC MATCHA LATTE' });
+    await expect(
+        classicCard.getByTestId('recipe-ingredient').first(),
+    ).toContainText('milk');
+    await expect(
+        classicCard.getByTestId('recipe-procedure-step').first(),
+    ).toBeVisible();
     await page
-        .locator('section')
+        .getByTestId('recipe-catalog-card')
         .filter({ hasText: 'CLASSIC MATCHA LATTE' })
         .getByRole('button', { name: 'Detail' })
         .click();

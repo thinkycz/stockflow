@@ -5,6 +5,10 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import BackLink from '@/components/ui/BackLink.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Card from '@/components/ui/Card.vue';
+import RecipeActionIcon from '@/components/recipes/RecipeActionIcon.vue';
+import RecipeVariantBlock, {
+    type RecipeIngredientData,
+} from '@/components/recipes/RecipeVariantBlock.vue';
 import { useCzechDate } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
 
@@ -21,6 +25,12 @@ defineProps<{
         submitted_at: string;
         correct_steps: string[];
         submitted_steps: string[];
+        ingredients: RecipeIngredientData[];
+        correct_step_details: Array<{
+            text: string;
+            action_key: string;
+            source_text: string | null;
+        }>;
     };
 }>();
 const { t } = useI18n();
@@ -97,6 +107,16 @@ const { formatCzechDateTime } = useCzechDate();
                     </p>
                 </div></Card
             >
+            <RecipeVariantBlock
+                v-if="attempt.ingredients.length"
+                :variant="{
+                    name: attempt.variant_name,
+                    ingredients: attempt.ingredients,
+                    steps: [],
+                }"
+                :show-procedure="false"
+                :is-admin="true"
+            />
             <div class="grid gap-5 md:grid-cols-2">
                 <Card
                     ><h2 class="font-heading text-lg font-bold">
@@ -117,7 +137,25 @@ const { formatCzechDateTime } = useCzechDate();
                     ><h2 class="font-heading text-lg font-bold">
                         {{ t('recipes.test.correct_order') }}
                     </h2>
-                    <ol class="mt-4 space-y-2">
+                    <ol
+                        v-if="attempt.correct_step_details.length"
+                        class="mt-4 space-y-2"
+                    >
+                        <li
+                            v-for="(
+                                step, index
+                            ) in attempt.correct_step_details"
+                            :key="index"
+                            class="flex items-center gap-2 rounded-xl bg-surface-container-low p-3 text-sm"
+                        >
+                            <span class="font-bold text-primary"
+                                >{{ index + 1 }}.</span
+                            >
+                            <RecipeActionIcon :action-key="step.action_key" />
+                            <span>{{ step.text }}</span>
+                        </li>
+                    </ol>
+                    <ol v-else class="mt-4 space-y-2">
                         <li
                             v-for="(step, index) in attempt.correct_steps"
                             :key="index"

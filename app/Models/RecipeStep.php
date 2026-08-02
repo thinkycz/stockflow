@@ -29,7 +29,7 @@ class RecipeStep extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'recipe_variant_id', 'text', 'position', 'created_at', 'updated_at']);
+        return $query->select(['id', 'recipe_variant_id', 'text', 'action_key', 'source_text', 'position', 'created_at', 'updated_at']);
     }
 
     /**
@@ -46,6 +46,16 @@ class RecipeStep extends BaseModel
      * Get the instruction text.
      */
     public function getText(): string { return $this->assertString('text'); }
+
+    /**
+     * Get the action key used for the procedure icon.
+     */
+    public function getActionKey(): string { return $this->assertString('action_key'); }
+
+    /**
+     * Get the original source wording.
+     */
+    public function getSourceText(): string|null { return $this->assertNullableString('source_text'); }
 
     /**
      * Get the instruction position.

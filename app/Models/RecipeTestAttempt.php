@@ -39,7 +39,7 @@ class RecipeTestAttempt extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'user_id', 'recipe_id', 'recipe_variant_id', 'worker_id', 'actor_user_id', 'recipe_name', 'variant_name', 'worker_name', 'actor_name', 'correct_steps', 'presented_tokens', 'submitted_tokens', 'score', 'passed', 'started_at', 'submitted_at', 'created_at', 'updated_at']);
+        return $query->select(['id', 'user_id', 'recipe_id', 'recipe_variant_id', 'worker_id', 'actor_user_id', 'recipe_name', 'variant_name', 'worker_name', 'actor_name', 'correct_steps', 'variant_snapshot', 'presented_tokens', 'submitted_tokens', 'score', 'passed', 'started_at', 'submitted_at', 'created_at', 'updated_at']);
     }
 
     /**
@@ -122,6 +122,20 @@ class RecipeTestAttempt extends BaseModel
     }
 
     /**
+     * Get the immutable structured variant snapshot for new attempts.
+     *
+     * Legacy attempts intentionally return null and continue using correct_steps.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getVariantSnapshot(): array|null
+    {
+        $value = $this->getAttribute('variant_snapshot');
+
+        return $value === null ? null : Typer::assertStringKeyArray(Typer::assertArray($value));
+    }
+
+    /**
      * @return list<string>
      */
     public function getPresentedTokens(): array { return \array_values(Typer::assertStringArray(Typer::assertArray($this->getAttribute('presented_tokens')))); }
@@ -171,7 +185,7 @@ class RecipeTestAttempt extends BaseModel
     protected function casts(): array
     {
         return [
-            'correct_steps' => 'array', 'presented_tokens' => 'array', 'submitted_tokens' => 'array',
+            'correct_steps' => 'array', 'variant_snapshot' => 'array', 'presented_tokens' => 'array', 'submitted_tokens' => 'array',
             'passed' => 'boolean', 'started_at' => 'datetime', 'submitted_at' => 'datetime',
         ];
     }

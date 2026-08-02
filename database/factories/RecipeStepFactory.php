@@ -18,6 +18,6 @@ class RecipeStepFactory extends Factory
      */
     public function definition(): array
     {
-        return ['recipe_variant_id' => RecipeVariant::factory(), 'text' => $this->faker->sentence(), 'position' => 1];
+        return ['recipe_variant_id' => RecipeVariant::factory(), 'text' => $this->faker->sentence(), 'action_key' => 'other', 'source_text' => null, 'position' => 1];
     }
 }

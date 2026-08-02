@@ -13,9 +13,18 @@ import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
+import RecipeActionIcon from '@/components/recipes/RecipeActionIcon.vue';
+import RecipeVariantBlock, {
+    type RecipeIngredientData,
+} from '@/components/recipes/RecipeVariantBlock.vue';
 import { useRoute } from '@/composables/useRoute';
 
-type Step = { token: string; text: string };
+type Step = {
+    token: string;
+    text: string;
+    action_key: string;
+    source_text: string | null;
+};
 const props = defineProps<{
     attempt: {
         id: number;
@@ -23,6 +32,7 @@ const props = defineProps<{
         recipe_name: string;
         variant_name: string | null;
         worker_name: string;
+        ingredients: RecipeIngredientData[];
         steps: Step[];
     };
     result: { score: number; passed: boolean; correct_steps: string[] } | null;
@@ -89,6 +99,15 @@ function submit(): void {
                     {{ attempt.worker_name }}
                 </p>
             </header>
+
+            <RecipeVariantBlock
+                :variant="{
+                    name: attempt.variant_name,
+                    ingredients: attempt.ingredients,
+                    steps: [],
+                }"
+                :show-procedure="false"
+            />
 
             <Card v-if="result" class="text-center">
                 <component
@@ -171,6 +190,13 @@ function submit(): void {
                                 class="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary"
                                 >{{ index + 1 }}</span
                             >
+                            <span
+                                class="flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-primary"
+                            >
+                                <RecipeActionIcon
+                                    :action-key="step.action_key"
+                                />
+                            </span>
                             <span
                                 class="min-w-0 flex-1 text-sm text-on-surface"
                                 >{{ step.text }}</span

@@ -7,10 +7,12 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import BackLink from '@/components/ui/BackLink.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
-import Card from '@/components/ui/Card.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import Select from '@/components/ui/Select.vue';
+import RecipeVariantBlock, {
+    type RecipeVariantData,
+} from '@/components/recipes/RecipeVariantBlock.vue';
 import { useRoute } from '@/composables/useRoute';
 
 const props = defineProps<{
@@ -21,11 +23,7 @@ const props = defineProps<{
         note: string | null;
         archived: boolean;
         category: { id: number; name: string };
-        variants: Array<{
-            id: number;
-            name: string | null;
-            steps: Array<{ id: number; text: string }>;
-        }>;
+        variants: RecipeVariantData[];
     };
     workers: Array<{ id: number; name: string }>;
 }>();
@@ -118,25 +116,13 @@ function startTest(): void {
                 </div>
             </header>
 
-            <div class="grid gap-5 lg:grid-cols-2">
-                <Card v-for="variant in recipe.variants" :key="variant.id">
-                    <h2 class="font-heading text-lg font-bold text-on-surface">
-                        {{ variant.name || t('recipes.default_variant') }}
-                    </h2>
-                    <ol class="mt-4 space-y-3">
-                        <li
-                            v-for="(step, index) in variant.steps"
-                            :key="step.id"
-                            class="flex gap-3 rounded-xl bg-surface-container-low p-3 text-sm text-on-surface"
-                        >
-                            <span
-                                class="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary"
-                                >{{ index + 1 }}</span
-                            >
-                            <span>{{ step.text }}</span>
-                        </li>
-                    </ol>
-                </Card>
+            <div class="space-y-4">
+                <RecipeVariantBlock
+                    v-for="variant in recipe.variants"
+                    :key="variant.id"
+                    :variant="variant"
+                    :is-admin="is_admin"
+                />
             </div>
         </div>
 

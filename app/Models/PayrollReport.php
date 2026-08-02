@@ -69,6 +69,16 @@ class PayrollReport extends BaseModel
     }
 
     /**
+     * Manually included worker relationship.
+     *
+     * @return HasMany<PayrollWorkerEntry, $this>
+     */
+    public function workerEntries(): HasMany
+    {
+        return $this->hasMany(PayrollWorkerEntry::class);
+    }
+
+    /**
      * Loaded adjustments.
      *
      * @return Collection<array-key, PayrollAdjustment>
@@ -90,6 +100,18 @@ class PayrollReport extends BaseModel
         return $this->relationLoaded('wageOverrides')
             ? $this->assertRelationshipCollection('wageOverrides', PayrollWageOverride::class)
             : $this->wageOverrides()->get();
+    }
+
+    /**
+     * Loaded manually included workers.
+     *
+     * @return Collection<array-key, PayrollWorkerEntry>
+     */
+    public function getWorkerEntries(): Collection
+    {
+        return $this->relationLoaded('workerEntries')
+            ? $this->assertRelationshipCollection('workerEntries', PayrollWorkerEntry::class)
+            : $this->workerEntries()->get();
     }
 
     /**

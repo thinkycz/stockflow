@@ -40,6 +40,8 @@ export type Payslip = {
     payable_hours: number;
     payable_hourly_rate: number;
     wage_overridden: boolean;
+    manually_added: boolean;
+    can_remove: boolean;
     base_amount: number;
     tip_amount: number;
     deduction_amount: number;

@@ -44,6 +44,7 @@ use App\Http\Controllers\Web\Payroll\PayrollLifecycleController;
 use App\Http\Controllers\Web\Payroll\PayrollPrintController;
 use App\Http\Controllers\Web\Payroll\PayrollShowController;
 use App\Http\Controllers\Web\Payroll\PayrollWageOverrideController;
+use App\Http\Controllers\Web\Payroll\PayrollWorkerController;
 use App\Http\Controllers\Web\Report\ReportController;
 use App\Http\Controllers\Web\Report\StatisticsController;
 use App\Http\Controllers\Web\Settings\SettingsController;
@@ -175,6 +176,8 @@ Resolver::resolveRouteRegistrar()
         $router->get('payroll', PayrollIndexController::class)->name('payroll.index');
         $router->get('payroll/workers/{worker}', PayrollShowController::class)->whereNumber('worker')->name('payroll.show');
         $router->get('payroll/print', PayrollPrintController::class)->name('payroll.print');
+        $router->post('payroll/workers', [PayrollWorkerController::class, 'store'])->name('payroll.workers.store');
+        $router->delete('payroll/workers/{worker}', [PayrollWorkerController::class, 'destroy'])->whereNumber('worker')->name('payroll.workers.destroy');
         $router->post('payroll/adjustments', [PayrollAdjustmentController::class, 'store'])->name('payroll.adjustments.store');
         $router->put('payroll/adjustments/{payrollAdjustment}', [PayrollAdjustmentController::class, 'update'])->whereNumber('payrollAdjustment')->name('payroll.adjustments.update');
         $router->delete('payroll/adjustments/{payrollAdjustment}', [PayrollAdjustmentController::class, 'destroy'])->whereNumber('payrollAdjustment')->name('payroll.adjustments.destroy');

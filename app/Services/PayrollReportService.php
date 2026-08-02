@@ -10,6 +10,7 @@ use App\Models\FinancialReport;
 use App\Models\PayrollAdjustment;
 use App\Models\PayrollReport;
 use App\Models\PayrollWageOverride;
+use App\Models\PayrollWorkerEntry;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\User;
@@ -43,6 +44,7 @@ class PayrollReportService
         $shifts = $shiftQuery->orderBy('date')->orderBy('start_time')->get();
         $adjustments = $report instanceof PayrollReport ? $report->getAdjustments() : new Collection();
         $wageOverrides = $report instanceof PayrollReport ? $report->getWageOverrides() : new Collection();
+        $workerEntries = $report instanceof PayrollReport ? $report->getWorkerEntries() : new Collection();
         $attendanceRows = (new AttendanceReportService())->build(
             $admin,
             $store,
@@ -53,6 +55,7 @@ class PayrollReportService
             ...$shifts->map(static fn(Shift $shift): int => $shift->getWorkerId())->all(),
             ...$adjustments->map(static fn(PayrollAdjustment $adjustment): int => $adjustment->getWorkerId())->all(),
             ...$wageOverrides->map(static fn(PayrollWageOverride $override): int => $override->getWorkerId())->all(),
+            ...$workerEntries->map(static fn(PayrollWorkerEntry $entry): int => $entry->getWorkerId())->all(),
             ...\array_map(static fn(array $row): int => $row['worker_id'], $attendanceRows),
         ]));
 
@@ -67,6 +70,9 @@ class PayrollReportService
             $workerAdjustments = $adjustments->where('worker_id', $worker->getKey());
             $wageOverride = $wageOverrides->first(
                 static fn(PayrollWageOverride $override): bool => $override->getWorkerId() === $worker->getKey(),
+            );
+            $manuallyAdded = $workerEntries->contains(
+                static fn(PayrollWorkerEntry $entry): bool => $entry->getWorkerId() === $worker->getKey(),
             );
             $workerAttendance = \array_values(\array_filter(
                 $attendanceRows,
@@ -111,7 +117,7 @@ class PayrollReportService
             $automaticHours = \round($plannedMinutes / 60, 2);
             $automaticHourlyRate = $automaticHours > 0
                 ? \round($automaticBaseAmount / $automaticHours, 2)
-                : 0.0;
+                : ($manuallyAdded ? $worker->getHourlyRate() : 0.0);
             if ($wageOverride instanceof PayrollWageOverride) {
                 $baseAmount = \round($wageOverride->getHours() * $wageOverride->getHourlyRate(), 2);
             }
@@ -159,6 +165,12 @@ class PayrollReportService
                 'payable_hours' => $wageOverride instanceof PayrollWageOverride ? $wageOverride->getHours() : $automaticHours,
                 'payable_hourly_rate' => $wageOverride instanceof PayrollWageOverride ? $wageOverride->getHourlyRate() : $automaticHourlyRate,
                 'wage_overridden' => $wageOverride instanceof PayrollWageOverride,
+                'manually_added' => $manuallyAdded,
+                'can_remove' => $manuallyAdded &&
+                    $workerShifts->isEmpty() &&
+                    $workerAttendance === [] &&
+                    $workerAdjustments->isEmpty() &&
+                    !($wageOverride instanceof PayrollWageOverride),
                 'base_amount' => $baseAmount,
                 'tip_amount' => $tipAmount,
                 'deduction_amount' => $deductionAmount,
@@ -176,6 +188,37 @@ class PayrollReportService
             'month' => $month,
             'payslips' => $payslips,
         ], $this->reportMeta($report));
+    }
+
+    /**
+     * Include a worker with no activity in an open monthly payroll report.
+     */
+    public function addWorker(User $admin, Store $store, int $year, int $month, Worker $worker): void
+    {
+        DB::transaction(function () use ($admin, $store, $year, $month, $worker): void {
+            $report = $this->openReport($admin, $store, $year, $month);
+            $this->assertWorker($admin, $worker);
+            if ($this->payslipForWorker($this->build($admin, $store, $year, $month), $worker->getKey()) !== []) {
+                $this->fail('worker_id', Typer::assertString(\__('This worker already has a payroll entry.')));
+            }
+            $report->workerEntries()->create(['worker_id' => $worker->getKey()]);
+        });
+    }
+
+    /**
+     * Remove a manually included worker when their payroll entry is empty.
+     */
+    public function removeWorker(User $admin, Store $store, int $year, int $month, int $workerId): void
+    {
+        DB::transaction(function () use ($admin, $store, $year, $month, $workerId): void {
+            $report = $this->openReport($admin, $store, $year, $month);
+            $entry = $report->workerEntries()->where('worker_id', $workerId)->firstOrFail();
+            $payslip = $this->payslipForWorker($this->build($admin, $store, $year, $month), $workerId);
+            if (($payslip['can_remove'] ?? false) !== true) {
+                $this->fail('worker_id', Typer::assertString(\__('This payroll entry is not empty and cannot be removed.')));
+            }
+            $entry->delete();
+        });
     }
 
     /**

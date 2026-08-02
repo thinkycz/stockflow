@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Web\Payroll;
 
 use App\Models\Store;
 use App\Models\User;
+use App\Models\Worker;
 use App\Services\AttendanceService;
 use App\Services\PayrollReportService;
 use App\Support\ActiveStoreResolver;
@@ -36,6 +37,31 @@ class PayrollIndexController
             $month = $now->month;
         }
         $store = ActiveStoreResolver::resolve($request, $admin);
+        $payrollReport = $store instanceof Store && !$store->isWarehouse()
+            ? (new PayrollReportService())->build($admin, $store, $year, $month)
+            : null;
+        $availableWorkers = [];
+        if ($payrollReport !== null && ($payrollReport['status'] ?? null) === 'open') {
+            $workerIds = [];
+            foreach (Typer::assertArray($payrollReport['payslips'] ?? null) as $value) {
+                $payslip = Typer::assertStringKeyArray(Typer::assertArray($value));
+                $workerIds[] = Typer::assertInt($payslip['worker_id'] ?? null);
+            }
+            $workerQuery = Worker::query();
+            Worker::scopeForUser($workerQuery, $admin);
+            Worker::querySelect($workerQuery);
+            $availableWorkers = $workerQuery
+                ->whereNotIn('id', $workerIds)
+                ->orderBy('last_name')
+                ->orderBy('first_name')
+                ->take(1000)
+                ->get()
+                ->map(static fn(Worker $worker): array => [
+                    'id' => $worker->getKey(),
+                    'title' => $worker->getFullName(),
+                ])
+                ->all();
+        }
 
         return Inertia::render('payroll/Index', [
             'active_store' => $store instanceof Store ? [
@@ -44,9 +70,8 @@ class PayrollIndexController
                 'is_warehouse' => $store->isWarehouse(),
             ] : null,
             'filters' => ['year' => $year, 'month' => $month],
-            'payroll_report' => $store instanceof Store && !$store->isWarehouse()
-                ? (new PayrollReportService())->build($admin, $store, $year, $month)
-                : null,
+            'payroll_report' => $payrollReport,
+            'available_workers' => $availableWorkers,
         ]);
     }
 }

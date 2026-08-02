@@ -168,6 +168,31 @@ async function resetWageOverride(): Promise<void> {
         }),
     );
 }
+
+async function removeWorker(): Promise<void> {
+    if (
+        !(await dialog.confirm({
+            title: props.payslip.worker_name,
+            message: t('payroll.confirm_remove_worker'),
+            confirmLabel: t('payroll.remove_worker'),
+            variant: 'danger',
+        }))
+    )
+        return;
+
+    router.delete(
+        route('payroll.workers.destroy', {
+            worker: props.payslip.worker_id,
+            store_id: props.active_store.id,
+        }),
+        withActionErrorToast({
+            data: {
+                year: props.filters.year,
+                month: props.filters.month,
+            },
+        }),
+    );
+}
 </script>
 
 <template>
@@ -242,6 +267,13 @@ async function resetWageOverride(): Promise<void> {
                         @click="openAdjustment()"
                     >
                         <Plus :size="15" />{{ t('payroll.add_adjustment') }}
+                    </Button>
+                    <Button
+                        v-if="report.status === 'open' && payslip.can_remove"
+                        variant="danger"
+                        @click="removeWorker"
+                    >
+                        <Trash2 :size="15" />{{ t('payroll.remove_worker') }}
                     </Button>
                 </div>
             </header>

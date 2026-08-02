@@ -1,15 +1,19 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
-import { LockKeyhole, UnlockKeyhole } from '@lucide/vue';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { LockKeyhole, Plus, UnlockKeyhole } from '@lucide/vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PayrollPrintMenu from '@/components/payroll/PayrollPrintMenu.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
+import Combobox from '@/components/ui/Combobox.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
+import FieldError from '@/components/ui/FieldError.vue';
 import FilterField from '@/components/ui/FilterField.vue';
 import MonthPicker from '@/components/ui/MonthPicker.vue';
+import Label from '@/components/ui/Label.vue';
+import Modal from '@/components/ui/Modal.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useDialog } from '@/composables/useDialog';
 import { useRoute } from '@/composables/useRoute';
@@ -22,12 +26,39 @@ const props = defineProps<{
     active_store: { id: number; name: string; is_warehouse: boolean } | null;
     filters: { year: number; month: number };
     payroll_report: PayrollReport | null;
+    available_workers: { id: number; title: string }[];
 }>();
 
 const { t, locale } = useI18n();
 const route = useRoute();
 const dialog = useDialog();
 const lifecycleProcessing = ref(false);
+const workerModalOpen = ref(false);
+const workerForm = useForm({
+    year: props.filters.year,
+    month: props.filters.month,
+    worker_id: null as number | null,
+});
+
+function openWorkerModal(): void {
+    workerForm.clearErrors();
+    workerForm.year = props.filters.year;
+    workerForm.month = props.filters.month;
+    workerForm.worker_id = null;
+    workerModalOpen.value = true;
+}
+
+function submitWorker(): void {
+    workerForm.post(
+        route('payroll.workers.store', {
+            store_id: props.active_store?.id ?? null,
+        }),
+        {
+            preserveScroll: true,
+            onSuccess: () => (workerModalOpen.value = false),
+        },
+    );
+}
 
 function monthValue(): string {
     return `${props.filters.year}-${String(props.filters.month).padStart(2, '0')}`;
@@ -133,6 +164,16 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                             })
                         "
                     />
+                    <Button
+                        v-if="
+                            payroll_report?.status === 'open' &&
+                            available_workers.length > 0
+                        "
+                        variant="secondary"
+                        @click="openWorkerModal"
+                    >
+                        <Plus :size="15" />{{ t('payroll.add_worker') }}
+                    </Button>
                     <Button
                         v-if="payroll_report?.status === 'open'"
                         variant="warning"
@@ -258,5 +299,46 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                 </tbody>
             </DataTable>
         </div>
+
+        <Modal
+            :open="workerModalOpen"
+            :title="t('payroll.add_worker')"
+            @close="workerModalOpen = false"
+        >
+            <form class="space-y-4" @submit.prevent="submitWorker">
+                <div class="space-y-2">
+                    <Label for="payroll-worker" required>
+                        {{ t('payroll.worker') }}
+                    </Label>
+                    <Combobox
+                        id="payroll-worker"
+                        v-model="workerForm.worker_id"
+                        :items="available_workers"
+                        :placeholder="t('payroll.select_worker')"
+                        :no-results-text="t('payroll.no_available_workers')"
+                        :invalid="Boolean(workerForm.errors.worker_id)"
+                        required
+                    />
+                    <FieldError :message="workerForm.errors.worker_id" />
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <Button
+                        variant="secondary"
+                        @click="workerModalOpen = false"
+                    >
+                        {{ t('common.cancel') }}
+                    </Button>
+                    <Button
+                        type="submit"
+                        :disabled="
+                            workerForm.processing ||
+                            workerForm.worker_id === null
+                        "
+                    >
+                        {{ t('payroll.add_worker') }}
+                    </Button>
+                </div>
+            </form>
+        </Modal>
     </AppLayout>
 </template>

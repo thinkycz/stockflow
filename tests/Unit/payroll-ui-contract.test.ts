@@ -16,6 +16,8 @@ describe('payroll ui contract', () => {
         expect(source).not.toContain('openWageOverride');
         expect(source).toContain("route('payroll.show'");
         expect(source).toContain("t('common.detail')");
+        expect(source).toContain("route('payroll.workers.store'");
+        expect(source).toContain('<Combobox');
     });
 
     test('the detail owns payroll editing and both print variants', () => {
@@ -29,6 +31,8 @@ describe('payroll ui contract', () => {
         expect(source).toContain('<PayrollPrintMenu');
         expect(source).toContain('payslip.shifts');
         expect(source).toContain('payslip.attendance');
+        expect(source).toContain("route('payroll.workers.destroy'");
+        expect(source).toContain('payslip.can_remove');
         expect(source).not.toContain('<Card :padded="false"');
         expect(source).not.toContain('variant="nested"');
     });

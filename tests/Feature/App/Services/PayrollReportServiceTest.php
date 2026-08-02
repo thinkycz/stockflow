@@ -222,3 +222,84 @@ use Illuminate\Validation\ValidationException;
         ->and(fn() => $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 4, 120))
         ->toThrow(ValidationException::class);
 });
+
+\test('admin can add and remove an empty worker entry', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $worker = Worker::factory()->create([
+        'user_id' => $admin->getKey(),
+        'hourly_rate' => 175,
+    ]);
+    $service = new PayrollReportService();
+
+    $service->addWorker($admin, $store, 2026, 7, $worker);
+    $payslip = $service->build($admin, $store, 2026, 7)['payslips'][0];
+
+    \expect($payslip['payable_hours'])->toBe(0.0)
+        ->and($payslip['payable_hourly_rate'])->toBe(175.0)
+        ->and($payslip['base_amount'])->toBe(0.0)
+        ->and($payslip['final_amount'])->toBe(0.0)
+        ->and($payslip['manually_added'])->toBeTrue()
+        ->and($payslip['can_remove'])->toBeTrue()
+        ->and(fn() => $service->addWorker($admin, $store, 2026, 7, $worker))
+        ->toThrow(ValidationException::class);
+
+    $service->removeWorker($admin, $store, 2026, 7, $worker->getKey());
+
+    \expect($service->build($admin, $store, 2026, 7)['payslips'])->toBe([]);
+});
+
+\test('manually added workers persist through close and reopen', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new PayrollReportService();
+
+    $service->addWorker($admin, $store, 2026, 7, $worker);
+    $service->close($admin, $store, 2026, 7);
+    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['manually_added'])->toBeTrue();
+
+    $service->reopen($admin, $store, 2026, 7);
+    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['manually_added'])->toBeTrue();
+});
+
+\test('worker entries with payroll activity cannot be removed', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new PayrollReportService();
+
+    $shiftWorker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $service->addWorker($admin, $store, 2026, 7, $shiftWorker);
+    Shift::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $shiftWorker->getKey(),
+        'date' => '2026-07-10',
+    ]);
+
+    $attendanceWorker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $service->addWorker($admin, $store, 2026, 7, $attendanceWorker);
+    AttendanceSession::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $attendanceWorker->getKey(),
+        'created_by_user_id' => $admin->getKey(),
+        'hourly_rate' => 100,
+        'started_at' => '2026-07-10 06:00:00',
+        'ended_at' => '2026-07-10 07:00:00',
+        'voided_at' => '2026-07-10 08:00:00',
+    ]);
+
+    $adjustmentWorker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $service->addWorker($admin, $store, 2026, 7, $adjustmentWorker);
+    $service->createAdjustment($admin, $store, 2026, 7, $adjustmentWorker, PayrollAdjustmentTypeEnum::TIP, 10, 'Tip');
+
+    $overrideWorker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $service->addWorker($admin, $store, 2026, 7, $overrideWorker);
+    $service->upsertWageOverride($admin, $store, 2026, 7, $overrideWorker, 1, 100);
+
+    foreach ([$shiftWorker, $attendanceWorker, $adjustmentWorker, $overrideWorker] as $worker) {
+        \expect(fn() => $service->removeWorker($admin, $store, 2026, 7, $worker->getKey()))
+            ->toThrow(ValidationException::class);
+    }
+});

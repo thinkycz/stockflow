@@ -8,6 +8,7 @@ import {
     CalendarDays,
     ClipboardCheck,
     ClipboardList,
+    Gift,
     HardHat,
     HandCoins,
     LayoutDashboard,
@@ -160,6 +161,13 @@ const storeNavItemsByKey = computed<Record<StoreSectionNavigationKey, NavItem>>(
             label: t('nav.income_expenses'),
             icon: WalletCards,
             active: activeUrl.value.startsWith('/income-expenses'),
+        },
+        gift_vouchers: {
+            key: 'gift_vouchers',
+            href: route('gift-vouchers.index'),
+            label: t('nav.gift_vouchers'),
+            icon: Gift,
+            active: activeUrl.value.startsWith('/gift-voucher'),
         },
     }),
 );

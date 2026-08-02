@@ -24,6 +24,7 @@
         "recipes": "Recepty",
         "payroll": "Výplatní pásky",
         "income_expenses": "Příjmy a výdaje",
+        "gift_vouchers": "Dárkové poukazy",
         "users": "Uživatelé",
         "workers": "Brigádníci",
         "settings": "Nastavení",
@@ -1493,6 +1494,85 @@
             "reason": "Důvod opravy",
             "reason_prompt": "Zadejte důvod zneplatnění",
             "add_break": "Přidat pauzu"
+        }
+    },
+    "gift_vouchers": {
+        "title": "Dárkové poukazy",
+        "subtitle": "Vydávání, tisk a bezpečné jednorázové uplatnění poukazů.",
+        "code": "Kód poukazu",
+        "reason": "Důvod změny",
+        "valid_until": "Platí do {date}",
+        "batch_number": "Dávka #{id}",
+        "batch_count": "{count} poukazů",
+        "tabs": {
+            "redeem": "Uplatnit",
+            "overview": "Přehled",
+            "issue": "Vydat",
+            "settings": "Nastavení"
+        },
+        "status": {
+            "active": "Aktivní",
+            "expired": "Expirovaný",
+            "redeemed": "Uplatněný",
+            "voided": "Zneplatněný"
+        },
+        "redeem": {
+            "eyebrow": "Ověření na prodejně",
+            "title": "Uplatnit dárkový poukaz",
+            "description": "Zadejte kód ručně nebo jej načtěte čtečkou. Před potvrzením vždy uvidíte hodnotu a stav.",
+            "retail_required": "Vyberte maloobchodní prodejnu. Ve skladu nelze poukazy uplatňovat.",
+            "code_placeholder": "XXXX-XXXX-XXXX-XXXX",
+            "check": "Ověřit kód",
+            "confirm": "Potvrdit uplatnění"
+        },
+        "filters": {
+            "all": "Všechny stavy",
+            "status": "Stav",
+            "code": "Přesný kód",
+            "code_placeholder": "XXXX-XXXX-XXXX-XXXX"
+        },
+        "columns": {
+            "status": "Stav",
+            "redeemed_at": "Uplatněno",
+            "actions": "Akce"
+        },
+        "actions": {
+            "print": "Vytisknout poukaz",
+            "print_active": "Vytisknout aktivní",
+            "void": "Zneplatnit",
+            "void_help": "Zadejte důvod nevratného zneplatnění aktivního poukazu.",
+            "reverse": "Stornovat uplatnění",
+            "reverse_help": "Zadejte důvod opravy. Původní uplatnění zůstane v auditu."
+        },
+        "empty": {
+            "title": "Žádné poukazy",
+            "description": "Vystavte první dávku nebo změňte filtry."
+        },
+        "issue": {
+            "title": "Vydat novou dávku",
+            "description": "Všechny poukazy v dávce mají stejnou hodnotu a platnost.",
+            "branding_required": "Nejdříve uložte zákaznický název v nastavení.",
+            "quantity": "Počet poukazů",
+            "amount": "Hodnota jednoho poukazu",
+            "expires_on": "Platnost do (volitelné)",
+            "submit": "Vydat poukazy"
+        },
+        "settings": {
+            "title": "Vzhled poukazu",
+            "description": "Branding se při vydání uloží do dávky a pozdější změny neovlivní dotisk.",
+            "public_name": "Veřejný název podniku",
+            "message": "Krátké sdělení",
+            "logo": "Logo (JPEG, PNG nebo WebP)"
+        },
+        "print": {
+            "title": "Tisk dárkových poukazů",
+            "eyebrow": "Dárkový poukaz",
+            "default_message": "Darujte radost podle vlastního výběru.",
+            "valid_until": "Platí do {date}",
+            "no_expiration": "Bez omezení platnosti",
+            "one_use": "Jednorázové uplatnění v plné hodnotě",
+            "qr_alt": "QR kód dárkového poukazu",
+            "code_help": "Kód předložte obsluze"
         }
     }
 }

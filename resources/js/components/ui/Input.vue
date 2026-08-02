@@ -15,6 +15,9 @@ withDefaults(
         defaultValue?: string;
         invalid?: boolean;
         describedBy?: string;
+        min?: string | number;
+        max?: string | number;
+        step?: string | number;
     }>(),
     {
         id: undefined,
@@ -27,6 +30,9 @@ withDefaults(
         defaultValue: '',
         invalid: false,
         describedBy: undefined,
+        min: undefined,
+        max: undefined,
+        step: undefined,
     },
 );
 </script>
@@ -42,6 +48,9 @@ withDefaults(
         :required="$props.required"
         :aria-invalid="$props.invalid ? 'true' : undefined"
         :aria-describedby="$props.describedBy"
+        :min="$props.min"
+        :max="$props.max"
+        :step="$props.step"
         :class="
             cn(
                 'h-10 w-full rounded-xl border bg-white px-3 text-xs text-on-surface outline-none transition placeholder:text-on-surface-variant/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20',

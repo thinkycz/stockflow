@@ -175,5 +175,16 @@
     "Recipe category created.": "Kategória receptov bola vytvorená.",
     "Recipe category saved.": "Kategória receptov bola uložená.",
     "Recipe category deleted.": "Kategória receptov bola zmazaná.",
-    "A category containing recipes cannot be deleted.": "Kategóriu obsahujúcu recepty nemožno zmazať."
+    "A category containing recipes cannot be deleted.": "Kategóriu obsahujúcu recepty nemožno zmazať.",
+    "This gift voucher cannot be redeemed.": "Tento darčekový poukaz nemožno uplatniť.",
+    "This gift voucher state cannot be changed.": "Stav tohto darčekového poukazu nemožno zmeniť.",
+    "Gift voucher code was not found.": "Kód darčekového poukazu nebol nájdený.",
+    "Gift voucher confirmation expired. Check the code again.": "Potvrdenie darčekového poukazu vypršalo. Overte kód znova.",
+    "Gift vouchers can only be redeemed at a retail store.": "Darčekové poukazy možno uplatniť iba na maloobchodnej predajni.",
+    "Gift voucher redeemed.": "Darčekový poukaz bol uplatnený.",
+    "Configure gift voucher branding before issuing a batch.": "Pred vydaním dávky nastavte vzhľad darčekových poukazov.",
+    "Gift voucher batch issued.": "Dávka darčekových poukazov bola vydaná.",
+    "Gift voucher redemption reversed.": "Uplatnenie darčekového poukazu bolo stornované.",
+    "Gift voucher voided.": "Darčekový poukaz bol zneplatnený.",
+    "Gift voucher branding saved.": "Vzhľad darčekových poukazov bol uložený."
 }

@@ -19,6 +19,13 @@ use App\Http\Controllers\Web\Checklist\ChecklistIndexController;
 use App\Http\Controllers\Web\Checklist\ChecklistItemController;
 use App\Http\Controllers\Web\Checklist\ChecklistTemplateController;
 use App\Http\Controllers\Web\Dashboard\DashboardController;
+use App\Http\Controllers\Web\GiftVoucher\GiftVoucherBatchController;
+use App\Http\Controllers\Web\GiftVoucher\GiftVoucherIndexController;
+use App\Http\Controllers\Web\GiftVoucher\GiftVoucherLifecycleController;
+use App\Http\Controllers\Web\GiftVoucher\GiftVoucherLookupController;
+use App\Http\Controllers\Web\GiftVoucher\GiftVoucherPrintController;
+use App\Http\Controllers\Web\GiftVoucher\GiftVoucherRedeemController;
+use App\Http\Controllers\Web\GiftVoucher\GiftVoucherSettingController;
 use App\Http\Controllers\Web\IncomeExpense\IncomeExpenseIndexController;
 use App\Http\Controllers\Web\IncomeExpense\IncomeExpenseLifecycleController;
 use App\Http\Controllers\Web\IncomeExpense\IncomeExpenseManualRowController;
@@ -164,6 +171,11 @@ Resolver::resolveRouteRegistrar()
         $router->get('attendance', AttendanceIndexController::class)->name('attendance.index');
         $router->post('attendance/actions', AttendanceActionController::class)->name('attendance.actions.store');
 
+        // Gift vouchers (admin + limited redemption)
+        $router->get('gift-vouchers', GiftVoucherIndexController::class)->name('gift-vouchers.index');
+        $router->post('gift-vouchers/lookup', GiftVoucherLookupController::class)->name('gift-vouchers.lookup');
+        $router->post('gift-vouchers/{voucher}/redeem', GiftVoucherRedeemController::class)->whereNumber('voucher')->name('gift-vouchers.redeem');
+
         // Store checklists (admin + limited completion)
         $router->put('checklist-items/{checklistItem}', ChecklistItemController::class)->whereNumber('checklistItem')->name('checklist-items.update');
 
@@ -188,6 +200,14 @@ Resolver::resolveRouteRegistrar()
         $router->get('settings', [SettingsController::class, 'edit'])->name('settings.show');
         $router->post('settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
         $router->post('settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
+
+        // Gift voucher administration
+        $router->post('gift-voucher-batches', [GiftVoucherBatchController::class, 'store'])->name('gift-voucher-batches.store');
+        $router->get('gift-voucher-batches/{batch}/print', [GiftVoucherPrintController::class, 'batch'])->whereNumber('batch')->name('gift-voucher-batches.print');
+        $router->get('gift-vouchers/{voucher}/print', [GiftVoucherPrintController::class, 'voucher'])->whereNumber('voucher')->name('gift-vouchers.print');
+        $router->post('gift-vouchers/{voucher}/void', [GiftVoucherLifecycleController::class, 'void'])->whereNumber('voucher')->name('gift-vouchers.void');
+        $router->post('gift-vouchers/{voucher}/reverse-redemption', [GiftVoucherLifecycleController::class, 'reverseRedemption'])->whereNumber('voucher')->name('gift-vouchers.reverse-redemption');
+        $router->put('gift-voucher-settings', GiftVoucherSettingController::class)->name('gift-voucher-settings.update');
 
         // Noticeboard moderation
         $router->post('noticeboard-cards/{noticeboardCard}/restore', [NoticeboardCardController::class, 'restore'])->whereNumber('noticeboardCard')->name('noticeboard-cards.restore');

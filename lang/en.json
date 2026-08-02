@@ -175,5 +175,16 @@
     "Recipe category created.": "Recipe category created.",
     "Recipe category saved.": "Recipe category saved.",
     "Recipe category deleted.": "Recipe category deleted.",
-    "A category containing recipes cannot be deleted.": "A category containing recipes cannot be deleted."
+    "A category containing recipes cannot be deleted.": "A category containing recipes cannot be deleted.",
+    "This gift voucher cannot be redeemed.": "This gift voucher cannot be redeemed.",
+    "This gift voucher state cannot be changed.": "This gift voucher state cannot be changed.",
+    "Gift voucher code was not found.": "Gift voucher code was not found.",
+    "Gift voucher confirmation expired. Check the code again.": "Gift voucher confirmation expired. Check the code again.",
+    "Gift vouchers can only be redeemed at a retail store.": "Gift vouchers can only be redeemed at a retail store.",
+    "Gift voucher redeemed.": "Gift voucher redeemed.",
+    "Configure gift voucher branding before issuing a batch.": "Configure gift voucher branding before issuing a batch.",
+    "Gift voucher batch issued.": "Gift voucher batch issued.",
+    "Gift voucher redemption reversed.": "Gift voucher redemption reversed.",
+    "Gift voucher voided.": "Gift voucher voided.",
+    "Gift voucher branding saved.": "Gift voucher branding saved."
 }

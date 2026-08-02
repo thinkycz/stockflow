@@ -249,6 +249,32 @@ jen pro svou přiřazenou prodejnu přes `ActiveStoreResolver`.
   to their assigned store while the admin keeps a single owner of the
   underlying data.
 
+## Dárkové poukazy
+
+Doménu tvoří aktuální firemní branding, neměnné vydané dávky, jednotlivé
+poukazy a append-only auditní události. `gift_vouchers.status` drží pouze
+`active`, `redeemed` nebo `voided`; `expired` se odvozuje z UTC konce dne
+uloženého na dávce a provozní časové zóny `Europe/Prague`.
+
+Kód je kryptograficky náhodný bearer údaj. Šifrovaná podoba umožňuje adminský
+dotisk, zatímco unikátní SHA-256 otisk slouží k přesnému vyhledání bez
+dešifrování celé kolekce. Lookup nevkládá kód do URL: vytvoří krátkodobý
+session ticket svázaný s uživatelem a poukazem. Uplatnění ticket spotřebuje,
+zamkne řádek přes `lockForUpdate()` a ve stejné transakci aktualizuje aktuální
+stav i auditní událost. Tím databázová transakce, nikoli stav klienta, brání
+dvojímu uplatnění.
+
+Vlastníkem dat je hlavní admin. Omezený účet vyhledává přes
+`resolveScopeUser()` a může zapisovat pouze na svou `assigned_store_id`;
+admin používá aktivní maloobchodní prodejnu. Sklad a cizí firemní scope jsou
+odmítnuty. Správa, tisk, zneplatnění a storno uplatnění zůstávají za `admin`
+middlewarem.
+
+Brandingové obrázky používají soukromý disk. Vydání kopíruje aktuální logo do
+neměnného snapshotu dávky, takže pozdější nastavení nezmění historický dotisk.
+Tiskový Inertia controller generuje SVG QR na serveru a stránka skládá explicitní
+A4 archy po třech kusech.
+
 ## Virtuální nástěnka
 
 Dashboard obsahuje nad provozními přehledy store-scoped virtuální nástěnku.

@@ -17,7 +17,8 @@ export type StoreSectionNavigationKey =
     | 'checklists'
     | 'recipes'
     | 'payroll'
-    | 'income_expenses';
+    | 'income_expenses'
+    | 'gift_vouchers';
 
 export function storeSectionNavigationKeys(
     isAdmin: boolean,
@@ -35,6 +36,7 @@ export function storeSectionNavigationKeys(
             'recipes',
             'payroll',
             'income_expenses',
+            'gift_vouchers',
         ];
     }
 
@@ -46,6 +48,7 @@ export function storeSectionNavigationKeys(
         'inventory_counts',
         ...(canViewOperations ? (['shifts', 'attendance'] as const) : []),
         'recipes',
+        'gift_vouchers',
     ];
 }
 
@@ -67,7 +70,8 @@ export function isStoreSectionUrl(url: string, isAdmin: boolean): boolean {
         isRouteOrChild('/recipe-tests') ||
         isRouteOrChild('/recipe-test-results') ||
         isRouteOrChild('/payroll') ||
-        isRouteOrChild('/income-expenses')
+        isRouteOrChild('/income-expenses') ||
+        isRouteOrChild('/gift-vouchers')
     ) {
         return true;
     }

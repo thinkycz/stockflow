@@ -24,6 +24,7 @@
         "recipes": "Recipes",
         "payroll": "Payslips",
         "income_expenses": "Income & expenses",
+        "gift_vouchers": "Gift vouchers",
         "users": "Users",
         "workers": "Workers",
         "settings": "Settings",
@@ -1496,6 +1497,85 @@
             "reason": "Correction reason",
             "reason_prompt": "Enter the reason for voiding",
             "add_break": "Add break"
+        }
+    },
+    "gift_vouchers": {
+        "title": "Gift vouchers",
+        "subtitle": "Issue, print, and securely redeem single-use vouchers.",
+        "code": "Voucher code",
+        "reason": "Reason for change",
+        "valid_until": "Valid until {date}",
+        "batch_number": "Batch #{id}",
+        "batch_count": "{count} vouchers",
+        "tabs": {
+            "redeem": "Redeem",
+            "overview": "Overview",
+            "issue": "Issue",
+            "settings": "Settings"
+        },
+        "status": {
+            "active": "Active",
+            "expired": "Expired",
+            "redeemed": "Redeemed",
+            "voided": "Voided"
+        },
+        "redeem": {
+            "eyebrow": "In-store verification",
+            "title": "Redeem a gift voucher",
+            "description": "Enter the code or scan it with a keyboard reader. You will see its value and status before confirmation.",
+            "retail_required": "Select a retail store. Vouchers cannot be redeemed at the warehouse.",
+            "code_placeholder": "XXXX-XXXX-XXXX-XXXX",
+            "check": "Check code",
+            "confirm": "Confirm redemption"
+        },
+        "filters": {
+            "all": "All statuses",
+            "status": "Status",
+            "code": "Exact code",
+            "code_placeholder": "XXXX-XXXX-XXXX-XXXX"
+        },
+        "columns": {
+            "status": "Status",
+            "redeemed_at": "Redeemed at",
+            "actions": "Actions"
+        },
+        "actions": {
+            "print": "Print voucher",
+            "print_active": "Print active vouchers",
+            "void": "Void",
+            "void_help": "Enter the reason for permanently voiding this active voucher.",
+            "reverse": "Reverse redemption",
+            "reverse_help": "Enter the correction reason. The original redemption remains in the audit log."
+        },
+        "empty": {
+            "title": "No vouchers",
+            "description": "Issue the first batch or change the filters."
+        },
+        "issue": {
+            "title": "Issue a new batch",
+            "description": "Every voucher in the batch has the same value and expiration.",
+            "branding_required": "Save the customer-facing name in settings first.",
+            "quantity": "Voucher count",
+            "amount": "Value of one voucher",
+            "expires_on": "Valid until (optional)",
+            "submit": "Issue vouchers"
+        },
+        "settings": {
+            "title": "Voucher appearance",
+            "description": "Branding is snapshotted when issued, so later changes do not alter reprints.",
+            "public_name": "Public business name",
+            "message": "Short message",
+            "logo": "Logo (JPEG, PNG, or WebP)"
+        },
+        "print": {
+            "title": "Print gift vouchers",
+            "eyebrow": "Gift voucher",
+            "default_message": "Give the joy of choosing.",
+            "valid_until": "Valid until {date}",
+            "no_expiration": "No expiration",
+            "one_use": "Single use for the full value",
+            "qr_alt": "Gift voucher QR code",
+            "code_help": "Present this code to staff"
         }
     }
 }

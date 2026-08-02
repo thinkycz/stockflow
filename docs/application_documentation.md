@@ -106,6 +106,24 @@
   public shared calendar shows score badges and the same aggregate table
   without salary or detailed per-shift penalty reasons.
 
+## Gift vouchers
+
+- `/gift-vouchers` is a shared operational section. Limited users can verify and
+  redeem a code only for their assigned retail store; admins use the active
+  retail store and also receive overview, issue, and branding-management tabs.
+- Admins issue batches of 1–100 single-use CZK vouchers. Every voucher has a
+  random 16-character code, an encrypted stored value, an exact-search digest,
+  an optional Prague end-of-day expiration, and an immutable lifecycle audit.
+- Code verification creates a five-minute, session-bound, one-use confirmation
+  ticket. Redemption locks the voucher row and rechecks company, store, status,
+  and expiration boundaries before writing the redeemed state and audit event.
+- Admins may permanently void an active voucher or auditably reverse an
+  erroneous redemption. Expiration is derived; no scheduled state mutation is
+  required. Gift-voucher activity does not alter statements or POS totals.
+- Branding is stored on the private filesystem and snapshotted per batch.
+  Printable pages contain three fixed-height vouchers per portrait A4 sheet,
+  with both a readable code and an SVG QR code containing that same code.
+
 ## Cookies
 
 | name pattern                                      | description              |

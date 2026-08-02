@@ -13,6 +13,7 @@ withDefaults(
         required?: boolean;
         invalid?: boolean;
         describedBy?: string;
+        maxlength?: number;
     }>(),
     {
         id: undefined,
@@ -23,6 +24,7 @@ withDefaults(
         required: false,
         invalid: false,
         describedBy: undefined,
+        maxlength: undefined,
     },
 );
 </script>
@@ -37,6 +39,7 @@ withDefaults(
         :required="$props.required"
         :aria-invalid="$props.invalid ? 'true' : undefined"
         :aria-describedby="$props.describedBy"
+        :maxlength="$props.maxlength"
         :class="
             cn(
                 'w-full resize-y rounded-xl border bg-white px-3 py-2 text-xs text-on-surface outline-none transition placeholder:text-on-surface-variant/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20',

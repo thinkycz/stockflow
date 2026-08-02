@@ -265,6 +265,14 @@ class User extends BaseUser implements MustVerifyEmail
     }
 
     /**
+     * Recipe catalog initialization timestamp.
+     */
+    public function getRecipesInitializedAt(): Carbon|null
+    {
+        return $this->assertNullableCarbon('recipes_initialized_at');
+    }
+
+    /**
      * Me resource.
      */
     public function meResource(): JsonApiResource
@@ -289,6 +297,7 @@ class User extends BaseUser implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'recipes_initialized_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
         ];

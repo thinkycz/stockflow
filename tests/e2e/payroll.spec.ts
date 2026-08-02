@@ -91,6 +91,12 @@ test('admin adjusts closes and prints payroll while limited users are denied', a
     await expect(printPage.getByText('Adjustments')).toBeVisible();
     await expect(printPage.getByText('E2E shared tips')).toBeVisible();
     await expect(printPage.locator('table')).toHaveCount(1);
+    await expect(
+        printPage.getByTestId('payroll-wage-calculation'),
+    ).toContainText('10.5 h');
+    await expect(
+        printPage.getByTestId('payroll-wage-calculation'),
+    ).toContainText('150.00');
     await printPage.close();
 
     popupPromise = page.waitForEvent('popup');

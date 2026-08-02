@@ -32,6 +32,10 @@ function date(value: string): string {
     );
 }
 
+function hours(value: number): string {
+    return `${new Intl.NumberFormat(locale.value, { maximumFractionDigits: 2 }).format(value)} h`;
+}
+
 onMounted(async () => {
     await nextTick();
     window.print();
@@ -131,6 +135,16 @@ onMounted(async () => {
                 <div v-if="!simple" class="flex justify-between">
                     <span>{{ t('payroll.actual') }}</span>
                     <strong>{{ duration(payslip.actual_seconds) }}</strong>
+                </div>
+                <div v-if="simple" class="flex justify-between gap-4">
+                    <span>{{ t('payroll.payable_hours') }}</span>
+                    <strong
+                        data-testid="payroll-wage-calculation"
+                        class="text-right"
+                    >
+                        {{ hours(payslip.payable_hours) }} ×
+                        {{ formatMoney(payslip.payable_hourly_rate) }} / h
+                    </strong>
                 </div>
                 <div class="flex justify-between">
                     <span>{{ t('payroll.base_amount') }}</span>

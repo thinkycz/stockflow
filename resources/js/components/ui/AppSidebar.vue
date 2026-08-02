@@ -3,6 +3,7 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     ArrowLeftRight,
     BarChart3,
+    BookOpen,
     Boxes,
     CalendarDays,
     ClipboardCheck,
@@ -136,6 +137,15 @@ const storeNavItemsByKey = computed<Record<StoreSectionNavigationKey, NavItem>>(
             label: t('nav.checklists'),
             icon: ListChecks,
             active: activeUrl.value.startsWith('/checklists'),
+        },
+        recipes: {
+            key: 'recipes',
+            href: route('recipes.index'),
+            label: t('nav.recipes'),
+            icon: BookOpen,
+            active:
+                activeUrl.value.startsWith('/recipes') ||
+                activeUrl.value.startsWith('/recipe-test'),
         },
         payroll: {
             key: 'payroll',

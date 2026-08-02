@@ -167,5 +167,13 @@
     "Checklist updated.": "Checklist byl aktualizován.",
     "Checklist day excused.": "Den byl označen jako neprovozní.",
     "Checklist day restored.": "Omluvení dne bylo zrušeno.",
-    "The checklist was changed by another user. Refresh and try again.": "Checklist mezitím změnil jiný uživatel. Obnovte stránku a zkuste to znovu."
+    "The checklist was changed by another user. Refresh and try again.": "Checklist mezitím změnil jiný uživatel. Obnovte stránku a zkuste to znovu.",
+    "Recipe created.": "Recept byl vytvořen.",
+    "Recipe saved.": "Recept byl uložen.",
+    "Recipe archived.": "Recept byl archivován.",
+    "Recipe restored.": "Recept byl obnoven.",
+    "Recipe category created.": "Kategorie receptů byla vytvořena.",
+    "Recipe category saved.": "Kategorie receptů byla uložena.",
+    "Recipe category deleted.": "Kategorie receptů byla smazána.",
+    "A category containing recipes cannot be deleted.": "Kategorii obsahující recepty nelze smazat."
 }

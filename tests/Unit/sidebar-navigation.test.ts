@@ -30,12 +30,16 @@ describe('sidebar navigation', () => {
         expect(admin.indexOf('checklists')).toBe(
             admin.indexOf('attendance') + 1,
         );
-        expect(admin.indexOf('payroll')).toBe(admin.indexOf('checklists') + 1);
+        expect(admin.indexOf('recipes')).toBe(admin.indexOf('checklists') + 1);
+        expect(admin.indexOf('payroll')).toBe(admin.indexOf('recipes') + 1);
         expect(admin.indexOf('income_expenses')).toBe(
             admin.indexOf('payroll') + 1,
         );
         expect(limited).not.toContain('payroll');
         expect(limited).not.toContain('income_expenses');
+        expect(limited.indexOf('recipes')).toBe(
+            limited.indexOf('attendance') + 1,
+        );
         expect(admin).not.toContain('statistics');
     });
 
@@ -47,6 +51,7 @@ describe('sidebar navigation', () => {
         expect(isStoreSectionUrl('/shifts?month=7', true)).toBe(true);
         expect(isStoreSectionUrl('/attendance/report', true)).toBe(true);
         expect(isStoreSectionUrl('/checklists?tab=history', true)).toBe(true);
+        expect(isStoreSectionUrl('/recipes/42', true)).toBe(true);
         expect(isStoreSectionUrl('/payroll?year=2026', true)).toBe(true);
         expect(isStoreSectionUrl('/income-expenses?year=2026', true)).toBe(
             true,

@@ -167,5 +167,13 @@
     "Checklist updated.": "Checklist bol aktualizovaný.",
     "Checklist day excused.": "Deň bol označený ako neprevádzkový.",
     "Checklist day restored.": "Ospravedlnenie dňa bolo zrušené.",
-    "The checklist was changed by another user. Refresh and try again.": "Checklist medzitým zmenil iný používateľ. Obnovte stránku a skúste to znova."
+    "The checklist was changed by another user. Refresh and try again.": "Checklist medzitým zmenil iný používateľ. Obnovte stránku a skúste to znova.",
+    "Recipe created.": "Recept bol vytvorený.",
+    "Recipe saved.": "Recept bol uložený.",
+    "Recipe archived.": "Recept bol archivovaný.",
+    "Recipe restored.": "Recept bol obnovený.",
+    "Recipe category created.": "Kategória receptov bola vytvorená.",
+    "Recipe category saved.": "Kategória receptov bola uložená.",
+    "Recipe category deleted.": "Kategória receptov bola zmazaná.",
+    "A category containing recipes cannot be deleted.": "Kategóriu obsahujúcu recepty nemožno zmazať."
 }

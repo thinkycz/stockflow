@@ -167,5 +167,13 @@
     "Checklist updated.": "Checklist updated.",
     "Checklist day excused.": "Checklist day excused.",
     "Checklist day restored.": "Checklist day restored.",
-    "The checklist was changed by another user. Refresh and try again.": "The checklist was changed by another user. Refresh and try again."
+    "The checklist was changed by another user. Refresh and try again.": "The checklist was changed by another user. Refresh and try again.",
+    "Recipe created.": "Recipe created.",
+    "Recipe saved.": "Recipe saved.",
+    "Recipe archived.": "Recipe archived.",
+    "Recipe restored.": "Recipe restored.",
+    "Recipe category created.": "Recipe category created.",
+    "Recipe category saved.": "Recipe category saved.",
+    "Recipe category deleted.": "Recipe category deleted.",
+    "A category containing recipes cannot be deleted.": "A category containing recipes cannot be deleted."
 }

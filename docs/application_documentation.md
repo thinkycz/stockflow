@@ -43,6 +43,14 @@
     - `/inventory-counts` (POST `/inventory-counts` to persist a new session)
     - `/inventory-counts/history` (admin + limited, default 90-day window)
     - `/inventory-counts/{session}` (read-only session detail)
+    - `/recipes` and `/recipes/{recipe}` — company recipe catalog for both roles;
+      admin manages categories, recipes, variants, ordered steps, and archive state,
+      while limited accounts have read-only access to active recipes.
+    - `/recipe-tests` — limited-account workflow that records the selected worker,
+      uniformly selects one recipe variant, serves shuffled opaque step tokens, and
+      evaluates an untimed ordering attempt against an immutable snapshot.
+    - `/recipe-test-results` — admin-only worker overview, latest result per recipe,
+      completed-attempt counts, full per-recipe history, and attempt snapshots.
     - `/reports` — unified monthly financial and inventory reporting;
       `/reports/statistics` is a compatibility redirect
     - `/users` admin CRUD (GET index, GET `/create`, POST store, GET `/users/{id}/edit`,
@@ -73,12 +81,17 @@
   is seeded by `UserSeeder` and provisions additional limited accounts from the
   `/users` section. Limited users are pinned to exactly one store
   (`assigned_store_id`) and may only see Dashboard, Příjem zboží,
-  Výdej / spotřeba, Výkazy (Statements), Inventura, Směny, Docházka, and
+  Výdej / spotřeba, Výkazy (Statements), Inventura, Směny, Docházka, Recepty, and
   Settings. Their Dashboard does not expose inventory statistics and instead
   provides a store-scoped live operations summary (current and next shifts,
   current attendance, breaks, and stale attendance warnings) plus four compact
   actions for receipt, consumption, statements, and inventory. Store-scoped inputs are fixed and any
   cross-store access returns 403.
+- Recipe data belongs to the main admin company and is independent of the active
+  store. The catalog is initialized once from `TEACHA-recipes.pdf`; later requests
+  never overwrite admin edits. Recipe attempts preserve worker, actor, recipe,
+  variant, and ordered-step snapshots even when source records later change or the
+  worker/limited account is removed.
 - The authenticated Shifts page shows a dynamic 0–100 attendance rating for
   completed shifts and one per-worker monthly table combining assigned hours
   with attendance quality. Limited users can inspect rating reasons and copy a

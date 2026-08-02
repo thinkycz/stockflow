@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Models\Recipe;
+use App\Models\Store;
+use App\Models\User;
+use App\Models\Worker;
+use App\Services\RecipeCatalogService;
+use Database\Factories\UserFactory;
+use Thinkycz\LaravelCore\Support\Typer;
+
+\test('both roles can read an active recipe and limited receives company workers', function (): void {
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $limited = UserFactory::new()->limited($store)->createOne();
+    Worker::factory()->create(['user_id' => $admin->getKey(), 'first_name' => 'Tea', 'last_name' => 'Worker']);
+    (new RecipeCatalogService())->initialize($admin);
+    $recipe = Typer::assertInstance(Recipe::query()->firstOrFail(), Recipe::class);
+
+    $this->be($admin, 'users')->get('/recipes/' . $recipe->getKey(), $this->inertiaHeaders())
+        ->assertOk()->assertJsonPath('props.is_admin', true);
+    $this->be($limited, 'users')->get('/recipes/' . $recipe->getKey(), $this->inertiaHeaders())
+        ->assertOk()->assertJsonPath('props.workers.0.name', 'Tea Worker');
+
+    $recipe->update(['archived_at' => \now()]);
+    $this->be($limited, 'users')->get('/recipes/' . $recipe->getKey())->assertNotFound();
+});

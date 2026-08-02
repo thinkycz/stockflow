@@ -68,3 +68,16 @@ test('print media restores a compact semantic table', async ({ page }) => {
         'table-header-group',
     );
 });
+
+test('simple payslips print consecutively with cut lines', async ({ page }) => {
+    await login(page);
+    await page.emulateMedia({ media: 'print' });
+    await page.goto('/payroll/print?year=2026&month=8&simple=1');
+
+    const payslip = page.locator('.payslip--simple').first();
+    await expect(payslip).toBeVisible();
+    await expect(payslip).toHaveCSS('break-after', 'auto');
+    await expect(payslip).toHaveCSS('break-inside', 'avoid');
+    await expect(payslip).toHaveCSS('min-height', '0px');
+    await expect(payslip).toHaveCSS('border-bottom-style', 'dashed');
+});

@@ -45,6 +45,7 @@ onMounted(async () => {
             v-for="payslip in payroll_report.payslips"
             :key="payslip.worker_id"
             class="payslip"
+            :class="{ 'payslip--simple': simple }"
         >
             <header class="mb-6 border-b pb-4">
                 <h1 class="text-2xl font-bold">
@@ -186,6 +187,21 @@ onMounted(async () => {
     main {
         max-width: none;
         padding: 0;
+    }
+
+    .payslip--simple {
+        margin-bottom: 6mm;
+        min-height: 0;
+        break-after: auto;
+        break-inside: avoid;
+        border-bottom: 1px dashed #000;
+        padding-bottom: 6mm;
+    }
+
+    .payslip--simple:last-child {
+        margin-bottom: 0;
+        border-bottom: 0;
+        padding-bottom: 0;
     }
 
     @page {

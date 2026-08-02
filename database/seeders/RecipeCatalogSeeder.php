@@ -22,6 +22,22 @@ class RecipeCatalogSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->replace(false);
+    }
+
+    /**
+     * Force replacement for the corrective production data migration.
+     */
+    public function replaceAll(): void
+    {
+        $this->replace(true);
+    }
+
+    /**
+     * Replace the single company catalog, optionally ignoring an earlier deploy marker.
+     */
+    private function replace(bool $force): void
+    {
         $adminQuery = User::query();
         User::scopeAdmin($adminQuery);
         if ($adminQuery->count() > 1) {
@@ -32,9 +48,9 @@ class RecipeCatalogSeeder extends Seeder
             return;
         }
 
-        DB::transaction(static function () use ($admin): void {
+        DB::transaction(static function () use ($admin, $force): void {
             $owner = Typer::assertInstance(User::query()->whereKey($admin->getKey())->lockForUpdate()->firstOrFail(), User::class);
-            if ($owner->getRecipeCatalogV2SeededAt() !== null) {
+            if (!$force && $owner->getRecipeCatalogV2SeededAt() !== null) {
                 return;
             }
 

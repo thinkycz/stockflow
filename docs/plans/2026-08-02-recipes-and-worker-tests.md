@@ -43,5 +43,6 @@
   na `/recipe-categories` a detail zobrazit jako jednu kompaktní variantu.
 - Nahradit editor surovin/postupu jedním editorem instrukcí a odstranit zdrojové
   znění ze všech uživatelských obrazovek.
-- Přidat idempotentní deploy seeder, který jednou odstraní starý katalog, odpojí
-  historické pokusy a naplní čistý katalog v nové instrukční struktuře.
+- Přidat idempotentní seeder a samostatnou produkční datovou migraci, která jednou
+  odstraní starý katalog, odpojí historické pokusy a naplní čistý katalog v nové
+  instrukční struktuře i při deployi bez `db:seed`.

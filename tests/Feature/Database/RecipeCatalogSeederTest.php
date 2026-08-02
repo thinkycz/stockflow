@@ -3,12 +3,15 @@
 declare(strict_types=1);
 
 use App\Models\Recipe;
+use App\Models\RecipeCategory;
 use App\Models\RecipeInstruction;
 use App\Models\RecipeTestAttempt;
+use App\Models\RecipeVariant;
 use App\Models\User;
 use App\Services\RecipeCatalogService;
 use Database\Factories\UserFactory;
 use Database\Seeders\RecipeCatalogSeeder;
+use Illuminate\Database\Migrations\Migration;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -66,4 +69,24 @@ use Thinkycz\LaravelCore\Support\Typer;
     $recipeIds = Recipe::query()->orderBy('id')->pluck('id')->all();
     (new RecipeCatalogSeeder())->run();
     \expect(Recipe::query()->orderBy('id')->pluck('id')->all())->toBe($recipeIds);
+});
+
+\it('force replaces every recipe even when the previous deploy marker is already set', function (): void {
+    $owner = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    (new RecipeCatalogService())->initialize($owner);
+    $owner->setAttribute('recipe_catalog_v2_seeded_at', Carbon::now());
+    $owner->save();
+
+    Recipe::query()->where('name', 'CLASSIC MATCHA LATTE')->update(['name' => 'STALE PRODUCTION MATCHA']);
+    Recipe::query()->where('name', 'COCONUT CLOUD')->delete();
+
+    $migration = Typer::assertInstance(require \database_path('migrations/2026_08_02_000006_force_replace_recipe_catalog.php'), Migration::class);
+    $migration->up();
+
+    \expect(RecipeCategory::query()->count())->toBe(8)
+        ->and(Recipe::query()->count())->toBe(49)
+        ->and(RecipeVariant::query()->whereDoesntHave('instructions')->count())->toBe(0)
+        ->and(Recipe::query()->where('name', 'STALE PRODUCTION MATCHA')->exists())->toBeFalse()
+        ->and(Recipe::query()->where('name', 'CLASSIC MATCHA LATTE')->exists())->toBeTrue()
+        ->and(Recipe::query()->where('name', 'COCONUT CLOUD')->exists())->toBeTrue();
 });

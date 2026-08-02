@@ -26,16 +26,17 @@
 
 ## Deterministický import a převod
 
-- Deploy seed jednorázově odstraní dosavadní kategorie a recepty hlavního admina
-  a vytvoří čistý katalog z PDF už s kanonickými instrukcemi. Dřívější adminovy
-  úpravy katalogu se záměrně nepřenášejí.
+- Korektivní datová migrace jednorázově odstraní dosavadní kategorie a recepty
+  hlavního admina a vytvoří čistý katalog z PDF už s kanonickými instrukcemi.
+  Dřívější adminovy úpravy katalogu se záměrně nepřenášejí.
 - Pravidla rozdělují `+`, známé jednotky a akční suffixy, například
   `100g milk + 20g sugar - stir` na dvě suroviny a krok `stir`.
 - Číselná množství se ukládají jako číslo; `half`, `a few` a změněné zápisy jako
   `1,5` zachovávají přesný fallback výraz. Nejasné texty dostanou neutrální ikonu
   nebo akci a zůstanou dohledatelné ve zdrojovém znění.
-- Seeder je označen firemním časovým markerem; další deploye ani ruční opakování
-  `db:seed` nový katalog znovu nemažou a nepřepisují.
+- Migrace se díky Laravel migration ledgeru spustí pouze jednou. Běžný seeder je
+  navíc označen firemním časovým markerem, takže ruční opakování `db:seed` nový
+  katalog znovu nemaže a nepřepisuje.
 - Matcha recepty odvozují cup/matcha bowl/whisk/pour, šejkrované čaje shaker a
   nalití a cloudy oddělené šlehání. Přípravy používají jen rozpoznatelný cíl.
 - Classic Matcha Latte S má osm instrukcí od `Add 100 ml milk into cup` po

@@ -22,5 +22,5 @@
 | R18    | follow-up plán | Varianta má jednu kompaktní výrobní sekvenci         | 6    | verified | service/show test, runtime screenshot            |
 | R19    | follow-up plán | Celá sekvence se testuje a snapshotuje               | 6    | verified | service/controller test, limited E2E             |
 | R20    | follow-up plán | Legacy obsah a pokusy zůstávají kompatibilní         | 6    | verified | result show/index test                           |
-| R21    | follow-up      | Deploy jednou nahradí starý katalog čistým seedem    | 6    | verified | `RecipeCatalogSeederTest`                        |
+| R21    | follow-up      | Migrace jednou nahradí celý starý katalog            | 6    | verified | `000006`, `RecipeCatalogSeederTest`              |
 | R22    | follow-up      | Reset katalogu zachová historické snapshoty          | 6    | verified | seeder a result controller testy                 |

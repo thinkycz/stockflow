@@ -69,10 +69,10 @@
 - [x] Prostý index a samostatná adminská stránka kategorií
 - [x] Kompaktní detail s přepínačem variant a jednotný editor
 - [x] CS/SK/EN, cílené testy, E2E a plné repo kontroly
-- [x] Jednorázový deploy reset a seed čistého katalogu se zachováním snapshotů
+- [x] Jednorázová datová migrace čistého katalogu se zachováním snapshotů
 - Blokátory: žádné
 
 ## Další krok
 
-- Nasadit standardním `make production`; migrace připraví nullable vazbu historie
-  a navazující `db:seed --force` jednou nahradí katalog.
+- Nasadit standardními Laravel migracemi; nová migrace `000006` sama jednou
+  nahradí celý katalog bez závislosti na `db:seed`.

@@ -33,6 +33,7 @@
         "logout": "Log out",
         "menu": "Menu",
         "user_menu": "User menu",
+        "signed_in_as": "Signed in as",
         "close": "Close",
         "main": "Main navigation"
     },
@@ -267,6 +268,10 @@
             "subtitle": "Receive company-wide operational milestones that do not belong to one store.",
             "channel": "Company Slack channel",
             "submit": "Save Slack settings",
+            "test_action": "Send test notification",
+            "test_action_loading": "Sending test notification",
+            "test_action_help": "Sends a sample message to the configured channel so you can verify the webhook works.",
+            "test_action_disabled_help": "Configure a Slack channel first to send a test notification.",
             "digest_archive": {
                 "open": "Daily operational digest archive",
                 "title": "Daily operational digests",

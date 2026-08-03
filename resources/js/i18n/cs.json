@@ -33,6 +33,7 @@
         "logout": "Odhlásit se",
         "menu": "Menu",
         "user_menu": "Uživatelské menu",
+        "signed_in_as": "Přihlášen jako",
         "close": "Zavřít",
         "main": "Hlavní navigace"
     },
@@ -267,6 +268,10 @@
             "subtitle": "Přijímejte celofiremní provozní milníky, které nepatří jedné prodejně.",
             "channel": "Firemní Slack kanál",
             "submit": "Uložit Slack nastavení",
+            "test_action": "Odeslat testovací notifikaci",
+            "test_action_loading": "Odesílám testovací notifikaci",
+            "test_action_help": "Odešle vzorovou zprávu do nastaveného kanálu, abyste si mohli ověřit, že webhook funguje.",
+            "test_action_disabled_help": "Před odesláním testovací notifikace nejprve nastavte Slack kanál.",
             "digest_archive": {
                 "open": "Archiv denních provozních souhrnů",
                 "title": "Denní provozní souhrny",

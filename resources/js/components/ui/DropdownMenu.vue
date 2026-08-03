@@ -140,7 +140,7 @@ onUnmounted(() =>
             :id="menuId"
             role="menu"
             :class="[
-                'absolute z-50 min-w-48 max-w-xs overflow-hidden rounded-xl border border-outline-glass bg-white p-1 shadow-lg',
+                'absolute z-50 min-w-56 max-w-xs overflow-hidden rounded-xl border border-outline-glass bg-white p-1 shadow-lg',
                 panelClass,
             ]"
             @click="close()"

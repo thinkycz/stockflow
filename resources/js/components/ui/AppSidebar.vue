@@ -324,7 +324,7 @@ function logout(): void {
 
         <DropdownMenu
             :label="t('nav.user_menu')"
-            placement="right-start"
+            placement="right-end"
             trigger-class="flex w-full items-center justify-between gap-2 border-t border-outline-glass pt-4 px-2"
         >
             <template #trigger>
@@ -347,6 +347,18 @@ function logout(): void {
                     class="shrink-0 text-on-surface-variant"
                 />
             </template>
+            <div class="border-b border-outline-glass px-3 py-2.5">
+                <p
+                    class="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant"
+                >
+                    {{ t('nav.signed_in_as') }}
+                </p>
+                <p
+                    class="mt-0.5 truncate text-sm font-semibold text-on-surface"
+                >
+                    {{ auth.user?.email ?? '' }}
+                </p>
+            </div>
             <DropdownMenuItem v-if="isAdmin" :href="route('settings.show')">
                 <SettingsIcon :size="16" />
                 {{ t('nav.settings') }}

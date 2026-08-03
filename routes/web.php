@@ -69,6 +69,7 @@ use App\Http\Controllers\Web\Settings\SettingsController;
 use App\Http\Controllers\Web\Settings\SlackDigestIndexController;
 use App\Http\Controllers\Web\Settings\SlackDigestRetryController;
 use App\Http\Controllers\Web\Settings\SlackDigestShowController;
+use App\Http\Controllers\Web\Settings\SlackTestController;
 use App\Http\Controllers\Web\Shift\SharedShiftIndexController;
 use App\Http\Controllers\Web\Shift\ShiftDestroyController;
 use App\Http\Controllers\Web\Shift\ShiftIndexController;
@@ -204,6 +205,7 @@ Resolver::resolveRouteRegistrar()
         $router->post('settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
         $router->post('settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
         $router->post('settings/slack', [SettingsController::class, 'updateSlack'])->name('settings.slack.update');
+        $router->post('settings/slack/test', SlackTestController::class)->name('settings.slack.test');
         $router->get('settings/slack-digests', SlackDigestIndexController::class)->name('settings.slack-digests.index');
         $router->get('settings/slack-digests/{digest}', SlackDigestShowController::class)->whereNumber('digest')->name('settings.slack-digests.show');
         $router->post('settings/slack-digests/{digest}/retry', SlackDigestRetryController::class)->whereNumber('digest')->name('settings.slack-digests.retry');

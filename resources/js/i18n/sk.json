@@ -33,6 +33,7 @@
         "logout": "Odhlásiť sa",
         "menu": "Menu",
         "user_menu": "Používateľské menu",
+        "signed_in_as": "Prihlásený ako",
         "close": "Zavrieť",
         "main": "Hlavná navigácia"
     },
@@ -267,6 +268,10 @@
             "subtitle": "Prijímajte celofiremné prevádzkové míľniky, ktoré nepatria jednej predajni.",
             "channel": "Firemný Slack kanál",
             "submit": "Uložiť Slack nastavenia",
+            "test_action": "Odoslať testovaciu notifikáciu",
+            "test_action_loading": "Odosielam testovaciu notifikáciu",
+            "test_action_help": "Odošle vzorovú správu do nastaveného kanála, aby ste si mohli overiť, že webhook funguje.",
+            "test_action_disabled_help": "Pred odoslaním testovacej notifikácie najprv nastavte Slack kanál.",
             "digest_archive": {
                 "open": "Archív denných prevádzkových súhrnov",
                 "title": "Denné prevádzkové súhrny",

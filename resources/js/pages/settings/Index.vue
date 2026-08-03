@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link, useForm } from '@inertiajs/vue3';
+import { Send } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -60,6 +61,12 @@ const slackForm = useForm<SlackFields>({
     company_slack_channel: user?.value?.company_slack_channel ?? '',
 });
 
+const testSlackForm = useForm<Record<string, never>>({});
+
+const hasSavedSlackChannel = computed(
+    () => (user?.value?.company_slack_channel ?? '').trim().length > 0,
+);
+
 function submitProfile(): void {
     profileForm.post(route('settings.profile.update'));
 }
@@ -78,6 +85,13 @@ function submitPassword(): void {
 
 function submitSlack(): void {
     slackForm.post(route('settings.slack.update'));
+}
+
+function submitTestSlack(): void {
+    if (!hasSavedSlackChannel.value) return;
+    testSlackForm.post(route('settings.slack.test'), {
+        preserveScroll: true,
+    });
 }
 </script>
 
@@ -154,6 +168,10 @@ function submitSlack(): void {
                         />
                     </div>
 
+                    <p class="text-xs text-on-surface-variant">
+                        {{ t('settings.slack.test_action_help') }}
+                    </p>
+
                     <div
                         class="flex flex-col gap-3 border-t border-outline-glass pt-4 sm:flex-row sm:items-center sm:justify-between"
                     >
@@ -163,9 +181,36 @@ function submitSlack(): void {
                         >
                             {{ t('settings.slack.digest_archive.open') }}
                         </Link>
-                        <Button type="submit" :disabled="slackForm.processing">
-                            {{ t('settings.slack.submit') }}
-                        </Button>
+                        <div
+                            class="flex flex-wrap items-center gap-2 sm:justify-end"
+                        >
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                :loading="testSlackForm.processing"
+                                :loading-label="
+                                    t('settings.slack.test_action_loading')
+                                "
+                                :disabled="!hasSavedSlackChannel"
+                                :title="
+                                    hasSavedSlackChannel
+                                        ? t('settings.slack.test_action')
+                                        : t(
+                                              'settings.slack.test_action_disabled_help',
+                                          )
+                                "
+                                @click="submitTestSlack"
+                            >
+                                <Send :size="14" />
+                                {{ t('settings.slack.test_action') }}
+                            </Button>
+                            <Button
+                                type="submit"
+                                :disabled="slackForm.processing"
+                            >
+                                {{ t('settings.slack.submit') }}
+                            </Button>
+                        </div>
                     </div>
                 </form>
             </Card>

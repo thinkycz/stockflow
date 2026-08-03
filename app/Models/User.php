@@ -257,6 +257,14 @@ class User extends BaseUser implements MustVerifyEmail
     }
 
     /**
+     * Optional company-wide Slack channel.
+     */
+    public function getCompanySlackChannel(): string|null
+    {
+        return $this->assertNullableString('company_slack_channel');
+    }
+
+    /**
      * EmailVerifiedAt getter.
      */
     public function getEmailVerifiedAt(): Carbon|null

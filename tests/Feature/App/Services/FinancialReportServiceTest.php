@@ -13,9 +13,12 @@ use App\Models\StatementDay;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\Worker;
+use App\Notifications\OperationalActivitySlackNotification;
 use App\Services\FinancialReportService;
 use App\Services\PayrollReportService;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
+use Thinkycz\LaravelCore\Support\Config;
 
 \test('build calculates revenue commissions stock documents and wages', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
@@ -146,6 +149,8 @@ use Illuminate\Validation\ValidationException;
 });
 
 \test('override persists source changes and reopening refreshes a closed snapshot', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
     [$admin] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $statement = Statement::factory()->forStore($store)->forMonth(2026, 7)->create();
@@ -157,25 +162,31 @@ use Illuminate\Validation\ValidationException;
     \expect($service->build($admin, $store, 2026, 7)['income_rows'][0]['effective_amount'])->toBe(80.0);
 
     (new PayrollReportService())->close($admin, $store, 2026, 7);
+    $store->update(['slack_channel' => '#praha']);
     $service->close($admin, $store, 2026, 7);
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 1);
     $day->update(['cash' => 300, 'total' => 300]);
     \expect($service->build($admin, $store, 2026, 7)['income_rows'][0]['calculated_amount'])->toEqual(200.0);
 
     $service->reopen($admin, $store, 2026, 7);
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 2);
     $reopened = $service->build($admin, $store, 2026, 7);
     \expect($reopened['income_rows'][0]['calculated_amount'])->toBe(300.0)
         ->and($reopened['income_rows'][0]['effective_amount'])->toBe(80.0);
 });
 
 \test('manual rows copy idempotently and clamp the day to the target month', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
     [$admin] = \createIsolatedUserWithWarehouse();
-    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'slack_channel' => '#praha']);
     $service = new FinancialReportService();
     $service->createManualRow($admin, $store, 2026, 1, FinancialDirectionEnum::EXPENSE, 'Rent', '2026-01-31', 1000, null);
 
     \expect($service->copyPreviousManualRows($admin, $store, 2026, 2))->toBe(1)
         ->and($service->copyPreviousManualRows($admin, $store, 2026, 2))->toBe(0)
         ->and(FinancialReportManualRow::query()->latest('id')->firstOrFail()->getOccurredOn())->toBe('2026-02-28');
+    Notification::assertNothingSent();
 });
 
 \test('recurring expenses generate one store scoped row and clamp the due day', function (): void {

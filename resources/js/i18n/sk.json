@@ -246,6 +246,12 @@
             "subtitle": "Aktualizujte údaje účtu a jazyk rozhrania.",
             "submit": "Uložiť profil"
         },
+        "slack": {
+            "title": "Firemný Slack",
+            "subtitle": "Prijímajte celofiremné prevádzkové míľniky, ktoré nepatria jednej predajni.",
+            "channel": "Firemný Slack kanál",
+            "submit": "Uložiť Slack nastavenia"
+        },
         "password": {
             "title": "Heslo",
             "subtitle": "Zvoľte silné heslo a udržujte účet v bezpečí.",

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\OperationalActivityTypeEnum;
 use App\Models\Recipe;
 use App\Models\RecipeInstruction;
 use App\Models\RecipeTestAttempt;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use RuntimeException;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class RecipeTestService
@@ -125,8 +127,24 @@ class RecipeTestService
             $locked->setAttribute('submitted_tokens', $submittedTokens);
             $locked->setAttribute('score', $score);
             $locked->setAttribute('passed', $score === 100);
-            $locked->setAttribute('submitted_at', Carbon::now());
+            $submittedAt = Carbon::now();
+            $locked->setAttribute('submitted_at', $submittedAt);
             $locked->save();
+
+            if ($locked->getSessionId() === null) {
+                OperationalActivityService::dispatchToCompany(
+                    $locked->isPassed() ? OperationalActivityTypeEnum::RECIPE_TEST_PASSED : OperationalActivityTypeEnum::RECIPE_TEST_FAILED,
+                    $actor,
+                    $submittedAt->toIso8601String(),
+                    Resolver::resolveUrlGenerator()->route('recipe-test-results.show', ['recipeTest' => $locked->getKey()]),
+                    [
+                        'Slack worker' => $locked->getWorkerName(),
+                        'Slack recipe' => $locked->getRecipeName(),
+                        'Slack recipe test score' => (string) $locked->getScore() . ' %',
+                        'Slack recipe test result' => $locked->isPassed() ? 'Úspěšný' : 'Neúspěšný',
+                    ],
+                );
+            }
 
             return $locked;
         });

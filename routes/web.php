@@ -200,6 +200,7 @@ Resolver::resolveRouteRegistrar()
         $router->get('settings', [SettingsController::class, 'edit'])->name('settings.show');
         $router->post('settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
         $router->post('settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
+        $router->post('settings/slack', [SettingsController::class, 'updateSlack'])->name('settings.slack.update');
 
         // Gift voucher administration
         $router->post('gift-voucher-batches', [GiftVoucherBatchController::class, 'store'])->name('gift-voucher-batches.store');

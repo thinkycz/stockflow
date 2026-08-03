@@ -8,13 +8,19 @@ use App\Models\PayrollReport;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\Worker;
+use App\Notifications\OperationalActivitySlackNotification;
 use App\Services\AttendanceDeviationReviewService;
 use App\Services\AttendanceReportService;
 use Carbon\CarbonImmutable;
+use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Support\Facades\Notification;
+use Thinkycz\LaravelCore\Support\Config;
 
 \test('approval updates the shift and every attendance snapshot with an immutable review', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
     [$admin] = \createIsolatedUserWithWarehouse();
-    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'slack_channel' => '#praha']);
     $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
     $shift = Shift::factory()->create([
         'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
@@ -62,11 +68,25 @@ use Carbon\CarbonImmutable;
     \expect($deviations)->toHaveCount(1)
         ->and($deviations[0]['status'])->toBe('approved')
         ->and((new App\Services\PayrollReportService())->build($admin, $store, 2026, 7)['payslips'][0]['base_amount'])->toBe(825.0);
+
+    Notification::assertSentOnDemand(
+        OperationalActivitySlackNotification::class,
+        static function (OperationalActivitySlackNotification $notification, array $channels, AnonymousNotifiable $notifiable): bool {
+            $payload = \json_encode($notification->toSlack($notifiable)->toArray(), \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_UNICODE);
+
+            return $channels === ['slack'] &&
+                $notifiable->routeNotificationFor('slack') === '#praha' &&
+                \str_contains($payload, 'Odchylka docházky schválena') &&
+                !\str_contains($payload, 'Approved adjusted shift');
+        },
+    );
 });
 
 \test('rejection preserves the shift and a later attendance change reopens the deviation', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
     [$admin] = \createIsolatedUserWithWarehouse();
-    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'slack_channel' => '#praha']);
     $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
     $shift = Shift::factory()->create([
         'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
@@ -100,6 +120,18 @@ use Carbon\CarbonImmutable;
 
     $session->update(['started_at' => '2026-07-10 06:30:00']);
     \expect((new AttendanceReportService())->build($admin, $store, '2026-07', null)['deviations'][0]['status'])->toBe('pending');
+
+    Notification::assertSentOnDemand(
+        OperationalActivitySlackNotification::class,
+        static function (OperationalActivitySlackNotification $notification, array $channels, AnonymousNotifiable $notifiable): bool {
+            $payload = \json_encode($notification->toSlack($notifiable)->toArray(), \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_UNICODE);
+
+            return $channels === ['slack'] &&
+                $notifiable->routeNotificationFor('slack') === '#praha' &&
+                \str_contains($payload, 'Odchylka docházky zamítnuta') &&
+                !\str_contains($payload, 'Keep original plan');
+        },
+    );
 });
 
 \test('approval is blocked for closed payroll and rejection remains available', function (): void {

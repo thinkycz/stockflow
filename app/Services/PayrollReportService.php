@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\OperationalActivityTypeEnum;
 use App\Enums\PayrollAdjustmentTypeEnum;
 use App\Enums\PayrollReportStatusEnum;
 use App\Models\FinancialReport;
@@ -18,6 +19,7 @@ use App\Models\Worker;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -385,6 +387,7 @@ class PayrollReportService
                 'closed_at' => CarbonImmutable::now(),
                 'closed_by_user_id' => $admin->getKey(),
             ]);
+            $this->notifyLifecycle(OperationalActivityTypeEnum::PAYROLL_REPORT_CLOSED, $admin, $store, $year, $month, $snapshot);
         });
     }
 
@@ -409,12 +412,68 @@ class PayrollReportService
                 $this->fail('report', Typer::assertString(\__('Reopen the financial report before reopening payroll.')));
             }
             $report = PayrollReport::query()->whereKey($report->getKey())->lockForUpdate()->firstOrFail();
+            $wasClosed = $report->isClosed();
+            $snapshot = $report->getSnapshot() ?? ['payslips' => []];
             $report->update([
                 'status' => PayrollReportStatusEnum::OPEN->value,
                 'reopened_at' => CarbonImmutable::now(),
                 'reopened_by_user_id' => $admin->getKey(),
             ]);
+            if ($wasClosed) {
+                $this->notifyLifecycle(OperationalActivityTypeEnum::PAYROLL_REPORT_REOPENED, $admin, $store, $year, $month, $snapshot);
+            }
         });
+    }
+
+    /**
+     * Dispatch one payroll report lifecycle milestone.
+     *
+     * @param array<string, mixed> $snapshot
+     */
+    private function notifyLifecycle(
+        OperationalActivityTypeEnum $type,
+        User $admin,
+        Store $store,
+        int $year,
+        int $month,
+        array $snapshot,
+    ): void {
+        $base = 0.0;
+        $tips = 0.0;
+        $deductions = 0.0;
+        $final = 0.0;
+        $payslips = Typer::assertArray($snapshot['payslips'] ?? []);
+        foreach ($payslips as $value) {
+            $payslip = Typer::assertStringKeyArray(Typer::assertArray($value));
+            $base += Typer::parseFloat($payslip['base_amount'] ?? null);
+            $tips += Typer::parseFloat($payslip['tip_amount'] ?? null);
+            $deductions += Typer::parseFloat($payslip['deduction_amount'] ?? null);
+            $final += Typer::parseFloat($payslip['final_amount'] ?? null);
+        }
+
+        OperationalActivityService::dispatch(
+            $type,
+            $admin,
+            CarbonImmutable::now('UTC')->toIso8601String(),
+            Resolver::resolveUrlGenerator()->route('payroll.index', ['year' => $year, 'month' => $month]),
+            [['store' => $store, 'perspective' => null]],
+            [
+                'Slack report month' => \sprintf('%02d/%d', $month, $year),
+                'Slack payslip count' => (string) \count($payslips),
+                'Slack payroll base' => $this->formatCurrency($base),
+                'Slack payroll tips' => $this->formatCurrency($tips),
+                'Slack payroll deductions' => $this->formatCurrency($deductions),
+                'Slack payroll final' => $this->formatCurrency($final),
+            ],
+        );
+    }
+
+    /**
+     * Format a CZK notification amount.
+     */
+    private function formatCurrency(float $amount): string
+    {
+        return \number_format($amount, 2, ',', ' ') . ' Kč';
     }
 
     /**

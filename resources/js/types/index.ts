@@ -4,6 +4,7 @@ export interface AuthUser {
     id: number;
     email: string;
     locale: string;
+    company_slack_channel: string | null;
     email_verified_at: string | null;
     is_admin: boolean;
     assigned_store_id: number | null;

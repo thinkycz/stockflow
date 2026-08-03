@@ -53,3 +53,25 @@ use Illuminate\Notifications\AnonymousNotifiable;
         ->toContain('22. 7. 2026 12:15')
         ->toContain('Otevřít ve StockFlow');
 });
+
+\test('company notification omits store context', function (): void {
+    $notification = new OperationalActivitySlackNotification(
+        OperationalActivityTypeEnum::STATEMENT_SAVED,
+        'admin@example.com',
+        null,
+        null,
+        '2026-08-02T10:15:00+00:00',
+        ['Slack month' => '2026-08'],
+        'https://stockflow.test/reports',
+    );
+
+    $encoded = \json_encode(
+        $notification->toSlack(new AnonymousNotifiable())->toArray(),
+        flags: \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_UNICODE,
+    );
+
+    \expect($notification->getStoreName())->toBeNull()
+        ->and($encoded)->not->toContain('Prodejna')
+        ->toContain('admin@example.com')
+        ->toContain('2026-08');
+});

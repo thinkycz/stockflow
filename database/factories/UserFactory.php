@@ -39,6 +39,7 @@ class UserFactory extends Factory
             'parent_user_id' => null,
             'assigned_store_id' => null,
             'active_store_id' => null,
+            'company_slack_channel' => null,
         ];
     }
 

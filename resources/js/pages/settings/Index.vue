@@ -26,6 +26,10 @@ type PasswordFields = {
     new_password_confirmation: string;
 };
 
+type SlackFields = {
+    company_slack_channel: string;
+};
+
 const { user, app } = useSharedProps();
 const { t, te } = useI18n();
 
@@ -51,6 +55,10 @@ const passwordForm = useForm<PasswordFields>({
     new_password_confirmation: '',
 });
 
+const slackForm = useForm<SlackFields>({
+    company_slack_channel: user?.value?.company_slack_channel ?? '',
+});
+
 function submitProfile(): void {
     profileForm.post(route('settings.profile.update'));
 }
@@ -65,6 +73,10 @@ function submitPassword(): void {
             );
         },
     });
+}
+
+function submitSlack(): void {
+    slackForm.post(route('settings.slack.update'));
 }
 </script>
 
@@ -120,6 +132,40 @@ function submitPassword(): void {
                             :disabled="profileForm.processing"
                         >
                             {{ t('settings.profile.submit') }}
+                        </Button>
+                    </div>
+                </form>
+            </Card>
+
+            <Card padded>
+                <CardHeader>
+                    <CardTitle>{{ t('settings.slack.title') }}</CardTitle>
+                </CardHeader>
+                <form class="space-y-5" @submit.prevent="submitSlack">
+                    <p class="text-sm text-on-surface-variant">
+                        {{ t('settings.slack.subtitle') }}
+                    </p>
+                    <div class="space-y-2">
+                        <Label for="company_slack_channel">
+                            {{ t('settings.slack.channel') }}
+                        </Label>
+                        <Input
+                            id="company_slack_channel"
+                            v-model="slackForm.company_slack_channel"
+                            type="text"
+                            maxlength="100"
+                            placeholder="#company-operations"
+                        />
+                        <FieldError
+                            :message="slackForm.errors.company_slack_channel"
+                        />
+                    </div>
+
+                    <div
+                        class="flex items-center justify-end border-t border-outline-glass pt-4"
+                    >
+                        <Button type="submit" :disabled="slackForm.processing">
+                            {{ t('settings.slack.submit') }}
                         </Button>
                     </div>
                 </form>

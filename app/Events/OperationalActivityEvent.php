@@ -30,7 +30,7 @@ class OperationalActivityEvent implements ShouldDispatchAfterCommit
     public readonly string $url;
 
     /**
-     * @var list<array{channel: string, store: string, perspective: string|null}>
+     * @var list<array{channel: string, store: string|null, perspective: string|null}>
      */
     public readonly array $destinations;
 
@@ -42,7 +42,7 @@ class OperationalActivityEvent implements ShouldDispatchAfterCommit
     /**
      * Create an immutable operational activity snapshot.
      *
-     * @param list<array{channel: string, store: string, perspective: string|null}> $destinations
+     * @param list<array{channel: string, store: string|null, perspective: string|null}> $destinations
      * @param array<string, string> $facts
      */
     public function __construct(

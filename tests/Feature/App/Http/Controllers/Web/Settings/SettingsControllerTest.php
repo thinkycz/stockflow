@@ -12,12 +12,54 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('admin can view the unified settings page', function (): void {
-    $user = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $user = Typer::assertInstance(UserFactory::new()->admin()->createOne([
+        'company_slack_channel' => '#company-operations',
+    ]), User::class);
 
     $response = $this->be($user, 'users')->get('/settings', $this->inertiaHeaders());
 
     $response->assertOk();
     $response->assertJsonPath('component', 'settings/Index');
+    $response->assertJsonPath('props.auth.user.company_slack_channel', '#company-operations');
+});
+
+\test('admin can update the company Slack channel', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+
+    $response = $this->be($user, 'users')->post('/settings/slack', [
+        'company_slack_channel' => '  #company-operations  ',
+    ], $this->inertiaHeaders());
+
+    $response->assertOk();
+    $response->assertJsonPath('component', 'settings/Index');
+    \assertInertiaFlash($response, 'success', \__('Slack settings updated.'));
+    $this->assertDatabaseHas('users', [
+        'id' => $user->getKey(),
+        'company_slack_channel' => '#company-operations',
+    ]);
+});
+
+\test('blank company Slack channel is stored as null', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->admin()->createOne([
+        'company_slack_channel' => '#company-operations',
+    ]), User::class);
+
+    $this->be($user, 'users')->post('/settings/slack', [
+        'company_slack_channel' => '   ',
+    ], $this->inertiaHeaders())->assertOk();
+
+    $this->assertDatabaseHas('users', [
+        'id' => $user->getKey(),
+        'company_slack_channel' => null,
+    ]);
+});
+
+\test('company Slack channel is limited to one hundred characters', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+
+    $this->be($user, 'users')->post('/settings/slack', [
+        'company_slack_channel' => \str_repeat('x', 101),
+    ])->assertStatus(422);
 });
 
 \test('admin can update profile', function (): void {
@@ -167,8 +209,15 @@ use Thinkycz\LaravelCore\Support\Typer;
         ], $this->inertiaHeaders())
         ->assertRedirect('/dashboard');
 
+    $this->be($user, 'users')
+        ->post('/settings/slack', [
+            'company_slack_channel' => '#forbidden',
+        ], $this->inertiaHeaders())
+        ->assertRedirect('/dashboard');
+
     $user->refresh();
 
     static::assertSame('limited@example.com', $user->getEmail());
     static::assertSame($originalPassword, $user->getAuthPassword());
+    static::assertNull($user->getCompanySlackChannel());
 });

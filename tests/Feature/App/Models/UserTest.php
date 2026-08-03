@@ -19,6 +19,18 @@ use Thinkycz\LaravelCore\Support\Typer;
     static::assertSame($user->getLocale(), $user->assertString('locale'));
 });
 
+\test('company Slack channel getter returns a channel or null', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->admin()->createOne([
+        'company_slack_channel' => '#company-operations',
+    ]), User::class);
+
+    static::assertSame('#company-operations', $user->getCompanySlackChannel());
+
+    $user->update(['company_slack_channel' => null]);
+
+    static::assertNull($user->getCompanySlackChannel());
+});
+
 \test('email verified at getter returns carbon or null', function (): void {
     $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
 

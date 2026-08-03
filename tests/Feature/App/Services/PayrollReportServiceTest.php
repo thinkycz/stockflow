@@ -8,8 +8,11 @@ use App\Models\FinancialReport;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\Worker;
+use App\Notifications\OperationalActivitySlackNotification;
 use App\Services\PayrollReportService;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
+use Thinkycz\LaravelCore\Support\Config;
 
 \test('build calculates a payslip from rounded planned shifts', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
@@ -50,8 +53,10 @@ use Illuminate\Validation\ValidationException;
 });
 
 \test('closing snapshots payroll and reopening requires open finances', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
     [$admin] = \createIsolatedUserWithWarehouse();
-    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'slack_channel' => '#praha']);
     $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
     $shift = Shift::factory()->create([
         'user_id' => $admin->getKey(),
@@ -65,6 +70,7 @@ use Illuminate\Validation\ValidationException;
     $service = new PayrollReportService();
 
     $service->close($admin, $store, 2026, 7);
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 1);
     $shift->update(['end_time' => '10:00']);
 
     \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['base_amount'])->toEqual(100.0)
@@ -87,10 +93,12 @@ use Illuminate\Validation\ValidationException;
         'status' => 'closed',
     ]);
     \expect(fn() => $service->reopen($admin, $store, 2026, 7))->toThrow(ValidationException::class);
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 1);
 
     FinancialReport::query()->update(['status' => 'open']);
     $service->reopen($admin, $store, 2026, 7);
     \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['base_amount'])->toBe(200.0);
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 2);
 });
 
 \test('build exposes actual attendance and warnings without changing planned pay', function (): void {
@@ -139,8 +147,10 @@ use Illuminate\Validation\ValidationException;
 });
 
 \test('adjustments change final pay and deductions cannot make it negative', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
     [$admin] = \createIsolatedUserWithWarehouse();
-    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'slack_channel' => '#praha']);
     $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
     Shift::factory()->create([
         'user_id' => $admin->getKey(),
@@ -171,6 +181,7 @@ use Illuminate\Validation\ValidationException;
             106,
             'Invalid',
         ))->toThrow(ValidationException::class);
+    Notification::assertNothingSent();
 });
 
 \test('monthly wage override replaces planned hours and rate and can be reset', function (): void {

@@ -8,9 +8,14 @@ use App\Models\RecipeTestSession;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
+use App\Notifications\OperationalActivitySlackNotification;
 use App\Services\RecipeCatalogService;
+use App\Services\RecipeTestService;
 use App\Services\RecipeTestSessionService;
 use Database\Factories\UserFactory;
+use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Support\Facades\Notification;
+use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Typer;
 
 \test('session selects three distinct active recipes and snapshots their variants', function (): void {
@@ -55,7 +60,10 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('session scores order and exact normalized gram and milliliter amounts atomically', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
     $owner = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $owner->update(['company_slack_channel' => '#company-operations']);
     $store = Store::factory()->createOne(['user_id' => $owner->getKey()]);
     $actor = Typer::assertInstance(UserFactory::new()->limited($store)->createOne(), User::class);
     $worker = Typer::assertInstance(Worker::factory()->createOne(['user_id' => $owner->getKey()]), Worker::class);
@@ -85,4 +93,35 @@ use Thinkycz\LaravelCore\Support\Typer;
     foreach ($submitted->getAttempts() as $attempt) {
         \expect($attempt->getOrderScore())->toBe(100)->and($attempt->getAmountScore())->toBe(100);
     }
+
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 1);
+    Notification::assertSentOnDemand(
+        OperationalActivitySlackNotification::class,
+        static function (OperationalActivitySlackNotification $notification, array $channels, AnonymousNotifiable $notifiable): bool {
+            $payload = \json_encode($notification->toSlack($notifiable)->toArray(), \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_UNICODE);
+
+            return $notifiable->routeNotificationFor('slack') === '#company-operations' &&
+                \str_contains($payload, 'Receptový test splněn') &&
+                !\str_contains($payload, 'correct_steps');
+        },
+    );
+});
+
+\test('standalone legacy recipe attempt sends one failed company notification', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
+    $owner = Typer::assertInstance(UserFactory::new()->admin()->createOne(['company_slack_channel' => '#company-operations']), User::class);
+    $store = Store::factory()->createOne(['user_id' => $owner->getKey()]);
+    $actor = Typer::assertInstance(UserFactory::new()->limited($store)->createOne(), User::class);
+    $worker = Typer::assertInstance(Worker::factory()->createOne(['user_id' => $owner->getKey()]), Worker::class);
+    (new RecipeCatalogService())->initialize($owner);
+    $recipe = Typer::assertInstance(Recipe::query()->where('user_id', $owner->getKey())->firstOrFail(), Recipe::class);
+    $service = new RecipeTestService();
+    $attempt = $service->start($actor, $worker, $recipe);
+    $tokens = \array_reverse(\array_column($attempt->getCorrectStepsSnapshot(), 'token'));
+
+    $submitted = $service->submit($actor, $attempt, $tokens);
+
+    \expect($submitted->isPassed())->toBeFalse();
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 1);
 });

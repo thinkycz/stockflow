@@ -32,7 +32,7 @@ class OperationalActivitySlackNotification extends Notification implements Shoul
     /**
      * Store name for this destination.
      */
-    private readonly string $storeName;
+    private readonly string|null $storeName;
 
     /**
      * Transfer perspective, when applicable.
@@ -62,7 +62,7 @@ class OperationalActivitySlackNotification extends Notification implements Shoul
     public function __construct(
         OperationalActivityTypeEnum $type,
         string $actorEmail,
-        string $storeName,
+        string|null $storeName,
         string|null $perspective,
         string $occurredAt,
         array $facts,
@@ -99,10 +99,13 @@ class OperationalActivitySlackNotification extends Notification implements Shoul
             ->format('j. n. Y H:i');
 
         $message = (new SlackMessage())
-            ->text($title . ': ' . $this->storeName)
+            ->text($this->storeName === null ? $title : $title . ': ' . $this->storeName)
             ->headerBlock($title)
             ->sectionBlock(function (SectionBlock $block) use ($time): void {
-                $block->field('*' . $this->translate('Slack store') . ":*\n" . $this->escape($this->storeName))->markdown();
+                if ($this->storeName !== null) {
+                    $block->field('*' . $this->translate('Slack store') . ":*\n" . $this->escape($this->storeName))->markdown();
+                }
+
                 $block->field('*' . $this->translate('Slack actor') . ":*\n" . $this->escape($this->actorEmail))->markdown();
                 $block->field('*' . $this->translate('Slack time') . ":*\n" . $time)->markdown();
 
@@ -127,7 +130,7 @@ class OperationalActivitySlackNotification extends Notification implements Shoul
     /**
      * Store name captured for this destination.
      */
-    public function getStoreName(): string
+    public function getStoreName(): string|null
     {
         return $this->storeName;
     }

@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\ChecklistEventActionEnum;
 use App\Enums\ChecklistShiftEnum;
 use App\Enums\ChecklistTemplateScopeEnum;
+use App\Enums\OperationalActivityTypeEnum;
 use App\Enums\StoreStatusEnum;
 use App\Models\ChecklistDay;
 use App\Models\ChecklistEvent;
@@ -21,6 +22,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use RuntimeException;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class ChecklistService
@@ -207,6 +209,8 @@ class ChecklistService
                 throw new InvalidArgumentException('Worker does not belong to this company.');
             }
 
+            $shift = $locked->getShift();
+            $beforeStatus = $this->statusFor($day, $shift);
             $previousWorkerId = $locked->getCompletedByWorkerId();
             $completedWorkerId = $completed ? $worker->getKey() : null;
             $locked->setAttribute('completed_by_worker_id', $completedWorkerId);
@@ -224,6 +228,25 @@ class ChecklistService
                 'created_at' => CarbonImmutable::now(),
             ]);
 
+            $afterStatus = $this->statusFor($day, $shift);
+            if ($beforeStatus !== 'completed' && $afterStatus === 'completed') {
+                $this->notifyChecklist(
+                    OperationalActivityTypeEnum::CHECKLIST_SHIFT_COMPLETED,
+                    $actor,
+                    $store,
+                    $day,
+                    $shift,
+                );
+            } elseif ($beforeStatus === 'completed' && $afterStatus !== 'completed') {
+                $this->notifyChecklist(
+                    OperationalActivityTypeEnum::CHECKLIST_SHIFT_REOPENED,
+                    $actor,
+                    $store,
+                    $day,
+                    $shift,
+                );
+            }
+
             return $locked;
         });
     }
@@ -233,7 +256,7 @@ class ChecklistService
      */
     public function excuseDay(ChecklistDay $day, User $actor, string $reason, bool $excused): void
     {
-        DB::transaction(static function () use ($day, $actor, $reason, $excused): void {
+        DB::transaction(function () use ($day, $actor, $reason, $excused): void {
             $locked = Typer::assertInstance(ChecklistDay::query()->whereKey($day->getKey())->lockForUpdate()->firstOrFail(), ChecklistDay::class);
             $locked->setAttribute('excused_by_user_id', $excused ? $actor->getKey() : null);
             $locked->setAttribute('excuse_reason', $excused ? $reason : null);
@@ -247,6 +270,16 @@ class ChecklistService
                 'reason' => $reason,
                 'created_at' => CarbonImmutable::now(),
             ]);
+
+            $store = Typer::assertInstance(Store::query()->whereKey($locked->getStoreId())->firstOrFail(), Store::class);
+            $this->notifyChecklist(
+                $excused
+                    ? OperationalActivityTypeEnum::CHECKLIST_DAY_EXCUSED
+                    : OperationalActivityTypeEnum::CHECKLIST_DAY_EXCUSE_REVOKED,
+                $actor,
+                $store,
+                $locked,
+            );
         });
     }
 
@@ -310,5 +343,36 @@ class ChecklistService
                 'afternoon' => ['status' => $this->statusFor($day, ChecklistShiftEnum::Afternoon), 'items' => $byShift['afternoon']],
             ],
         ];
+    }
+
+    /**
+     * Dispatch one aggregate checklist milestone.
+     */
+    private function notifyChecklist(
+        OperationalActivityTypeEnum $type,
+        User $actor,
+        Store $store,
+        ChecklistDay $day,
+        ChecklistShiftEnum|null $shift = null,
+    ): void {
+        $facts = ['Slack checklist date' => $day->getDate()->format('j. n. Y')];
+        if ($shift instanceof ChecklistShiftEnum) {
+            $facts['Slack checklist shift'] = match ($shift) {
+                ChecklistShiftEnum::Morning => 'Ranní',
+                ChecklistShiftEnum::Afternoon => 'Odpolední',
+            };
+        }
+
+        OperationalActivityService::dispatch(
+            $type,
+            $actor,
+            CarbonImmutable::now('UTC')->toIso8601String(),
+            Resolver::resolveUrlGenerator()->route('checklists.index', [
+                'store_id' => $store->getKey(),
+                'date' => $day->getDate()->toDateString(),
+            ]),
+            [['store' => $store, 'perspective' => null]],
+            $facts,
+        );
     }
 }

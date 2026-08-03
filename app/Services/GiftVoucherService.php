@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enums\GiftVoucherEventTypeEnum;
 use App\Enums\GiftVoucherStatusEnum;
+use App\Enums\OperationalActivityTypeEnum;
 use App\Models\GiftVoucher;
 use App\Models\GiftVoucherBatch;
 use App\Models\GiftVoucherSetting;
@@ -15,6 +16,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -101,6 +103,20 @@ class GiftVoucherService
                 ]);
             }
 
+            OperationalActivityService::dispatchToCompany(
+                OperationalActivityTypeEnum::GIFT_VOUCHER_BATCH_ISSUED,
+                $admin,
+                CarbonImmutable::now('UTC')->toIso8601String(),
+                Resolver::resolveUrlGenerator()->route('gift-vouchers.index'),
+                [
+                    'Slack voucher batch' => '#' . $batch->getKey(),
+                    'Slack voucher quantity' => (string) $batch->getQuantity(),
+                    'Slack voucher amount' => $this->formatCurrency($batch->getAmount()),
+                    'Slack voucher total value' => $this->formatCurrency($batch->getAmount() * $batch->getQuantity()),
+                    'Slack voucher expiration' => $batch->getExpiresAt()?->setTimezone(self::BUSINESS_TIMEZONE)->format('j. n. Y') ?? 'Bez expirace',
+                ],
+            );
+
             return $batch;
         });
     }
@@ -149,6 +165,18 @@ class GiftVoucherService
                 'type' => GiftVoucherEventTypeEnum::Redeemed->value,
                 'reason' => null,
             ]);
+
+            OperationalActivityService::dispatch(
+                OperationalActivityTypeEnum::GIFT_VOUCHER_REDEEMED,
+                $actor,
+                Typer::assertNotNull($locked->getRedeemedAt())->toIso8601String(),
+                Resolver::resolveUrlGenerator()->route('gift-vouchers.index'),
+                [['store' => $store, 'perspective' => null]],
+                [
+                    'Slack voucher' => '#' . $locked->getKey(),
+                    'Slack voucher amount' => $this->formatCurrency($locked->getGiftVoucherBatch()->getAmount()),
+                ],
+            );
 
             return $locked;
         });
@@ -240,8 +268,40 @@ class GiftVoucherService
                 'reason' => $reason,
             ]);
 
+            $facts = [
+                'Slack voucher' => '#' . $locked->getKey(),
+                'Slack voucher amount' => $this->formatCurrency($locked->getGiftVoucherBatch()->getAmount()),
+            ];
+            if ($event === GiftVoucherEventTypeEnum::Voided) {
+                OperationalActivityService::dispatchToCompany(
+                    OperationalActivityTypeEnum::GIFT_VOUCHER_VOIDED,
+                    $admin,
+                    CarbonImmutable::now('UTC')->toIso8601String(),
+                    Resolver::resolveUrlGenerator()->route('gift-vouchers.index'),
+                    $facts,
+                );
+            } else {
+                $eventStore = Typer::assertInstance(Store::query()->whereKey($eventStoreId)->firstOrFail(), Store::class);
+                OperationalActivityService::dispatch(
+                    OperationalActivityTypeEnum::GIFT_VOUCHER_REDEMPTION_REVERSED,
+                    $admin,
+                    CarbonImmutable::now('UTC')->toIso8601String(),
+                    Resolver::resolveUrlGenerator()->route('gift-vouchers.index'),
+                    [['store' => $eventStore, 'perspective' => null]],
+                    $facts,
+                );
+            }
+
             return $locked;
         });
+    }
+
+    /**
+     * Format one CZK voucher value for Slack.
+     */
+    private function formatCurrency(float $amount): string
+    {
+        return \number_format($amount, 2, ',', ' ') . ' Kč';
     }
 
     /**

@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\FinancialDirectionEnum;
 use App\Enums\FinancialReportStatusEnum;
 use App\Enums\FinancialSourceTypeEnum;
+use App\Enums\OperationalActivityTypeEnum;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\FinancialRecurringExpense;
 use App\Models\FinancialRecurringExpenseVersion;
@@ -20,6 +21,7 @@ use App\Models\Store;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -337,6 +339,7 @@ class FinancialReportService
                 'closed_at' => CarbonImmutable::now(),
                 'closed_by_user_id' => $admin->getKey(),
             ]);
+            $this->notifyLifecycle(OperationalActivityTypeEnum::FINANCIAL_REPORT_CLOSED, $admin, $store, $year, $month, $payload);
         });
     }
 
@@ -351,12 +354,54 @@ class FinancialReportService
                 Thrower::default()->message('report', \__('The financial report does not exist.'))->throw();
             }
             $report = FinancialReport::query()->lockForUpdate()->findOrFail($report->getKey());
+            $wasClosed = $report->isClosed();
+            $snapshot = $report->getSnapshot() ?? ['totals' => ['income' => 0, 'expenses' => 0, 'profit' => 0]];
             $report->update([
                 'status' => FinancialReportStatusEnum::OPEN->value,
                 'reopened_at' => CarbonImmutable::now(),
                 'reopened_by_user_id' => $admin->getKey(),
             ]);
+            if ($wasClosed) {
+                $this->notifyLifecycle(OperationalActivityTypeEnum::FINANCIAL_REPORT_REOPENED, $admin, $store, $year, $month, $snapshot);
+            }
         });
+    }
+
+    /**
+     * Dispatch one financial report lifecycle milestone.
+     *
+     * @param array<string, mixed> $snapshot
+     */
+    private function notifyLifecycle(
+        OperationalActivityTypeEnum $type,
+        User $admin,
+        Store $store,
+        int $year,
+        int $month,
+        array $snapshot,
+    ): void {
+        $totals = Typer::assertStringKeyArray(Typer::assertArray($snapshot['totals'] ?? null));
+        OperationalActivityService::dispatch(
+            $type,
+            $admin,
+            CarbonImmutable::now('UTC')->toIso8601String(),
+            Resolver::resolveUrlGenerator()->route('income-expenses.index', ['year' => $year, 'month' => $month]),
+            [['store' => $store, 'perspective' => null]],
+            [
+                'Slack report month' => \sprintf('%02d/%d', $month, $year),
+                'Slack financial income' => $this->formatCurrency(Typer::parseFloat($totals['income'] ?? null)),
+                'Slack financial expenses' => $this->formatCurrency(Typer::parseFloat($totals['expenses'] ?? null)),
+                'Slack financial profit' => $this->formatCurrency(Typer::parseFloat($totals['profit'] ?? null)),
+            ],
+        );
+    }
+
+    /**
+     * Format a CZK notification amount.
+     */
+    private function formatCurrency(float $amount): string
+    {
+        return \number_format($amount, 2, ',', ' ') . ' Kč';
     }
 
     /**

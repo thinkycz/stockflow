@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Web\Settings;
 
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
+use App\Http\Validation\StoreValidity;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -78,6 +79,26 @@ class SettingsController
         });
 
         Inertia::flash('success', \__('Password updated.'));
+
+        return Inertia::render('settings/Index');
+    }
+
+    /**
+     * Update the company-wide Slack destination.
+     */
+    public function updateSlack(Request $request): Response
+    {
+        $user = User::mustAuth();
+        $validated = $this->validateRequest($request, [
+            'company_slack_channel' => StoreValidity::inject($user->getKey())->slackChannel()->nullable()->toArray(),
+        ]);
+        $channel = \mb_trim($validated->assertNullableString('company_slack_channel') ?? '');
+
+        $user->update([
+            'company_slack_channel' => $channel === '' ? null : $channel,
+        ]);
+
+        Inertia::flash('success', \__('Slack settings updated.'));
 
         return Inertia::render('settings/Index');
     }

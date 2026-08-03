@@ -246,6 +246,12 @@
             "subtitle": "Update your account details and language preference.",
             "submit": "Save profile"
         },
+        "slack": {
+            "title": "Company Slack",
+            "subtitle": "Receive company-wide operational milestones that do not belong to one store.",
+            "channel": "Company Slack channel",
+            "submit": "Save Slack settings"
+        },
         "password": {
             "title": "Password",
             "subtitle": "Pick a strong password and keep your account secure.",

@@ -8,10 +8,14 @@ use App\Models\RecipeVariant;
 use App\Models\User;
 use App\Services\RecipeCatalogService;
 use Database\Factories\UserFactory;
+use Illuminate\Support\Facades\Notification;
+use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Typer;
 
 \test('admin creates a structured recipe', function (): void {
-    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(['company_slack_channel' => '#company-operations']), User::class);
     (new RecipeCatalogService())->initialize($admin);
     $category = Typer::assertInstance(RecipeCategory::query()->firstOrFail(), RecipeCategory::class);
 
@@ -26,6 +30,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     ])->assertRedirect();
 
     $this->assertDatabaseHas('recipes', ['name' => 'New Recipe', 'user_id' => $admin->getKey()]);
+    Notification::assertNothingSent();
 });
 
 \test('admin can override ingredient icon groups and preserve their order', function (): void {

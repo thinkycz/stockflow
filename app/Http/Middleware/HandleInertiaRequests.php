@@ -102,6 +102,7 @@ class HandleInertiaRequests extends Middleware
             'id' => $user->getKey(),
             'email' => $user->getEmail(),
             'locale' => $user->getLocale(),
+            'company_slack_channel' => $user->getCompanySlackChannel(),
             'email_verified_at' => $user->getEmailVerifiedAt()?->toJSON(),
             'is_admin' => $user->isAdmin(),
             'assigned_store_id' => $user->getAssignedStoreId(),

@@ -6,13 +6,16 @@ use App\Enums\OperationalActivityTypeEnum;
 use App\Events\OperationalActivityEvent;
 use App\Listeners\SendOperationalActivitySlackNotificationListener;
 use App\Models\Store;
+use App\Models\User;
 use App\Notifications\OperationalActivitySlackNotification;
 use App\Services\OperationalActivityService;
+use Database\Factories\UserFactory;
 use Illuminate\Contracts\Notifications\Factory as NotificationFactoryContract;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Thinkycz\LaravelCore\Support\Config;
+use Thinkycz\LaravelCore\Support\Typer;
 
 \test('listener routes one queued notification to each distinct configured store channel', function (): void {
     Notification::fake();
@@ -54,6 +57,46 @@ use Thinkycz\LaravelCore\Support\Config;
         [['channel' => '#praha', 'store' => 'Praha', 'perspective' => null]],
         [],
     ));
+
+    Notification::assertNothingSent();
+});
+
+\test('company activities use the owner company Slack channel without store context', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $admin->update(['company_slack_channel' => '#company-operations']);
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $actor = Typer::assertInstance(UserFactory::new()->limited($store)->createOne(), User::class);
+
+    OperationalActivityService::dispatchToCompany(
+        OperationalActivityTypeEnum::STATEMENT_SAVED,
+        $actor,
+        '2026-08-02T10:15:00+00:00',
+        '/reports',
+        ['Slack month' => '2026-08'],
+    );
+
+    Notification::assertSentOnDemand(
+        OperationalActivitySlackNotification::class,
+        static fn(OperationalActivitySlackNotification $notification, array $channels, AnonymousNotifiable $notifiable): bool => $channels === ['slack'] &&
+            $notifiable->routeNotificationFor('slack') === '#company-operations' &&
+            $notification->getStoreName() === null,
+    );
+});
+
+\test('company activities remain silent without a configured company channel', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
+    [$admin] = \createIsolatedUserWithWarehouse();
+
+    OperationalActivityService::dispatchToCompany(
+        OperationalActivityTypeEnum::STATEMENT_SAVED,
+        $admin,
+        '2026-08-02T10:15:00+00:00',
+        '/reports',
+        [],
+    );
 
     Notification::assertNothingSent();
 });

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\OperationalActivityTypeEnum;
 use App\Models\Recipe;
 use App\Models\RecipeTestAttempt;
 use App\Models\RecipeTestSession;
@@ -14,6 +15,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use RuntimeException;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class RecipeTestSessionService
@@ -158,6 +160,19 @@ class RecipeTestSessionService
             $locked->setAttribute('passed', $allPassed);
             $locked->setAttribute('submitted_at', $submittedAt);
             $locked->save();
+
+            OperationalActivityService::dispatchToCompany(
+                $allPassed ? OperationalActivityTypeEnum::RECIPE_TEST_PASSED : OperationalActivityTypeEnum::RECIPE_TEST_FAILED,
+                $actor,
+                $submittedAt->toIso8601String(),
+                Resolver::resolveUrlGenerator()->route('recipe-test-sessions.show', ['session' => $locked->getKey()]),
+                [
+                    'Slack worker' => $locked->getWorkerName(),
+                    'Slack recipe test score' => (string) $locked->getScore() . ' %',
+                    'Slack recipe test result' => $allPassed ? 'Úspěšný' : 'Neúspěšný',
+                    'Slack recipe count' => (string) self::RECIPE_COUNT,
+                ],
+            );
 
             return Typer::assertInstance($locked->load('attempts'), RecipeTestSession::class);
         });

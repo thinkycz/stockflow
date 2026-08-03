@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\AttendanceDeviationReviewDecisionEnum;
+use App\Enums\OperationalActivityTypeEnum;
 use App\Enums\PayrollReportStatusEnum;
 use App\Models\AttendanceDeviationReview;
 use App\Models\AttendanceSession;
@@ -16,6 +17,7 @@ use App\Models\Worker;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -110,9 +112,9 @@ class AttendanceDeviationReviewService
 
             $afterStartTime = $lockedShift->getStartTimeShort();
             $afterEndTime = $lockedShift->getEndTimeShort();
+            $worker = Worker::query()->whereKey($lockedShift->getWorkerId())->firstOrFail();
             if ($decision === AttendanceDeviationReviewDecisionEnum::APPROVED) {
                 $this->assertPayrollOpen($actor, $store, $lockedShift);
-                $worker = Worker::query()->whereKey($lockedShift->getWorkerId())->firstOrFail();
                 if (!$allowOverlap && (new ShiftAssignmentService())->findOverlaps(
                     $actor,
                     $store,
@@ -134,7 +136,7 @@ class AttendanceDeviationReviewService
                 ]);
             }
 
-            return AttendanceDeviationReview::query()->create([
+            $review = AttendanceDeviationReview::query()->create([
                 'user_id' => $actor->getKey(),
                 'store_id' => $store->getKey(),
                 'shift_id' => $lockedShift->getKey(),
@@ -148,6 +150,28 @@ class AttendanceDeviationReviewService
                 'after_start_time' => $afterStartTime,
                 'after_end_time' => $afterEndTime,
             ]);
+
+            OperationalActivityService::dispatch(
+                $decision === AttendanceDeviationReviewDecisionEnum::APPROVED
+                    ? OperationalActivityTypeEnum::ATTENDANCE_DEVIATION_APPROVED
+                    : OperationalActivityTypeEnum::ATTENDANCE_DEVIATION_REJECTED,
+                $actor,
+                $review->getCreatedAt()->toIso8601String(),
+                Resolver::resolveUrlGenerator()->route('attendance.report', [
+                    'store_id' => $store->getKey(),
+                    'month' => \mb_substr($lockedShift->getDate(), 0, 7),
+                ]),
+                [['store' => $store, 'perspective' => null]],
+                [
+                    'Slack worker' => $worker->getFullName(),
+                    'Slack attendance date' => $lockedShift->getDate(),
+                    'Slack planned time' => $expectedStartTime . '–' . $expectedEndTime,
+                    'Slack actual time' => $first->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->format('H:i') . '–' . $last->getEndedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->format('H:i'),
+                    'Slack reviewed time' => $afterStartTime . '–' . $afterEndTime,
+                ],
+            );
+
+            return $review;
         });
     }
 

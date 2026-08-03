@@ -55,4 +55,32 @@ class OperationalActivityService
             $facts,
         ));
     }
+
+    /**
+     * Dispatch a scalar operational snapshot to the company-wide channel.
+     *
+     * @param array<string, string> $facts
+     */
+    public static function dispatchToCompany(
+        OperationalActivityTypeEnum $type,
+        User $actor,
+        string $occurredAt,
+        string $url,
+        array $facts,
+    ): void {
+        $channel = \mb_trim($actor->resolveScopeUser()->getCompanySlackChannel() ?? '');
+
+        if ($channel === '') {
+            return;
+        }
+
+        Resolver::resolveEventDispatcher()->dispatch(new OperationalActivityEvent(
+            $type,
+            $actor->getEmail(),
+            $occurredAt,
+            $url,
+            [['channel' => $channel, 'store' => null, 'perspective' => null]],
+            $facts,
+        ));
+    }
 }

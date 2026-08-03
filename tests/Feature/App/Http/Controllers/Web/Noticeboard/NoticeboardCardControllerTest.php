@@ -8,11 +8,16 @@ use App\Models\Store;
 use App\Models\User;
 use Database\Factories\UserFactory;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Typer;
 
 \test('admin can create a sanitized card for the active store', function (): void {
+    Notification::fake();
+    Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
     [$admin, $store] = \createIsolatedUserWithWarehouse();
+    $store->update(['slack_channel' => '#warehouse']);
     $admin->setActiveStoreId($store->getKey());
 
     $response = $this->be($admin, 'users')->post('/noticeboard-cards', [
@@ -30,6 +35,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->and($card->getTitle())->toBe('Ahoj týme')
         ->and($card->getBodyHtml())->toContain('<strong>týme</strong>')
         ->not->toContain('<script');
+    Notification::assertNothingSent();
 });
 
 \test('card validation rejects invalid rich text and stores expiration at Prague end of day in UTC', function (): void {

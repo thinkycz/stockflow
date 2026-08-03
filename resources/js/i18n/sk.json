@@ -1,7 +1,7 @@
 {
     "app": {
-        "name": "StockFlow",
-        "tagline": "Správa inventára"
+        "name": "Teacha",
+        "tagline": "Management System"
     },
     "nav": {
         "section": {
@@ -32,6 +32,7 @@
         "password": "Heslo",
         "logout": "Odhlásiť sa",
         "menu": "Menu",
+        "user_menu": "Používateľské menu",
         "close": "Zavrieť",
         "main": "Hlavná navigácia"
     },

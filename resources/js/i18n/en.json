@@ -1,7 +1,7 @@
 {
     "app": {
-        "name": "StockFlow",
-        "tagline": "Inventory Management"
+        "name": "Teacha",
+        "tagline": "Management System"
     },
     "nav": {
         "section": {
@@ -32,6 +32,7 @@
         "password": "Password",
         "logout": "Log out",
         "menu": "Menu",
+        "user_menu": "User menu",
         "close": "Close",
         "main": "Main navigation"
     },

@@ -6,6 +6,7 @@ import {
     BookOpen,
     Boxes,
     CalendarDays,
+    ChevronsUpDown,
     ClipboardCheck,
     ClipboardList,
     Gift,
@@ -25,6 +26,9 @@ import {
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Brand from '@/components/ui/Brand.vue';
+import DropdownMenu from '@/components/ui/DropdownMenu.vue';
+import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
+import DropdownMenuSeparator from '@/components/ui/DropdownMenuSeparator.vue';
 import StoreSwitcher from '@/components/ui/StoreSwitcher.vue';
 import { useRoute } from '@/composables/useRoute';
 import { useSharedProps } from '@/composables/useSharedProps';
@@ -254,8 +258,6 @@ const navSections = computed<NavSection[]>(() => {
     ];
 });
 
-const settingsActive = computed(() => activeUrl.value.startsWith('/settings'));
-
 const userInitials = computed(() => {
     const email = auth.value.user?.email ?? '';
     if (!email) return 'U';
@@ -293,7 +295,7 @@ function logout(): void {
                 class="space-y-1"
             >
                 <p
-                    class="px-3 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/70"
+                    class="px-3 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant"
                 >
                     {{ section.label }}
                 </p>
@@ -320,46 +322,40 @@ function logout(): void {
             </div>
         </nav>
 
-        <div
-            class="flex items-center justify-between gap-2 border-t border-outline-glass pt-4 px-2"
+        <DropdownMenu
+            :label="t('nav.user_menu')"
+            placement="right-start"
+            trigger-class="flex w-full items-center justify-between gap-2 border-t border-outline-glass pt-4 px-2"
         >
-            <div class="flex min-w-0 flex-1 items-center gap-3">
-                <div
-                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-outline-glass bg-surface-container-lowest font-heading text-xs font-bold text-primary"
-                >
-                    {{ userInitials }}
+            <template #trigger>
+                <div class="flex min-w-0 flex-1 items-center gap-3">
+                    <div
+                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-outline-glass bg-surface-container-lowest font-heading text-xs font-bold text-primary"
+                    >
+                        {{ userInitials }}
+                    </div>
+                    <div class="min-w-0 overflow-hidden">
+                        <p
+                            class="truncate text-xs font-semibold text-on-surface"
+                        >
+                            {{ auth.user?.email ?? '' }}
+                        </p>
+                    </div>
                 </div>
-                <div class="min-w-0 overflow-hidden">
-                    <p class="truncate text-xs font-semibold text-on-surface">
-                        {{ auth.user?.email ?? '' }}
-                    </p>
-                </div>
-            </div>
-
-            <div class="flex shrink-0 items-center gap-1">
-                <Link
-                    v-if="isAdmin"
-                    :href="route('settings.show')"
-                    :class="[
-                        'rounded-lg p-1.5 transition-colors',
-                        settingsActive
-                            ? 'bg-surface-container-lowest text-primary shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)]'
-                            : 'text-on-surface-variant hover:bg-surface-container-low hover:text-primary',
-                    ]"
-                    :title="t('nav.settings')"
-                    :aria-label="t('nav.settings')"
-                >
-                    <SettingsIcon :size="14" />
-                </Link>
-                <button
-                    @click="logout"
-                    class="cursor-pointer rounded-lg p-1.5 text-on-surface-variant transition-all hover:bg-rose-50/50 hover:text-error-red"
-                    :title="t('nav.logout')"
-                    :aria-label="t('nav.logout')"
-                >
-                    <LogOut :size="14" />
-                </button>
-            </div>
-        </div>
+                <ChevronsUpDown
+                    :size="14"
+                    class="shrink-0 text-on-surface-variant"
+                />
+            </template>
+            <DropdownMenuItem v-if="isAdmin" :href="route('settings.show')">
+                <SettingsIcon :size="16" />
+                {{ t('nav.settings') }}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator v-if="isAdmin" />
+            <DropdownMenuItem tone="danger" @click="logout">
+                <LogOut :size="16" />
+                {{ t('nav.logout') }}
+            </DropdownMenuItem>
+        </DropdownMenu>
     </div>
 </template>

@@ -10,7 +10,7 @@ import type { SharedProps } from './types';
 import DialogHost from './components/ui/DialogHost.vue';
 
 createInertiaApp({
-    title: (title) => (title ? `${title} - StockFlow` : 'StockFlow'),
+    title: (title) => (title ? `${title} - Teacha` : 'Teacha'),
     resolve: (name) => {
         const pages = import.meta.glob<DefineComponent>('./pages/**/*.vue');
         const page = pages[`./pages/${name}.vue`];

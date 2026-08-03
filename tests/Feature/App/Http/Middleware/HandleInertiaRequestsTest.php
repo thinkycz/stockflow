@@ -16,7 +16,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $shared = $middleware->share($request);
 
     static::assertArrayHasKey('app', $shared);
-    static::assertSame('StockFlow', $shared['app']['name']);
+    static::assertSame('Teacha', $shared['app']['name']);
     static::assertArrayHasKey('auth', $shared);
     static::assertArrayHasKey('flash', $shared);
     static::assertArrayHasKey('errors', $shared);

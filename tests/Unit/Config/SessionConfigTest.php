@@ -21,7 +21,7 @@ use Symfony\Component\Process\Process;
             PHP,
     ], \base_path(), [
         'APP_ENV' => 'production',
-        'APP_NAME' => 'StockFlow',
+        'APP_NAME' => 'Teacha',
         'SESSION_SECURE_COOKIE' => 'false',
     ]);
     $process->mustRun();

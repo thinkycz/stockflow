@@ -16,6 +16,7 @@ const props = withDefaults(
         bodyClass?: string;
         closeOnBackdrop?: boolean;
         layer?: 'default' | 'alert';
+        size?: 'sm' | 'md' | 'lg' | 'full';
     }>(),
     {
         title: '',
@@ -23,6 +24,7 @@ const props = withDefaults(
         bodyClass: '',
         closeOnBackdrop: true,
         layer: 'default',
+        size: 'md',
     },
 );
 
@@ -33,6 +35,12 @@ const emit = defineEmits<{
 const { t } = useI18n();
 const panel = ref<HTMLElement | null>(null);
 const titleId = `modal-title-${useId()}`;
+const sizes = {
+    sm: 'max-w-sm',
+    md: 'max-w-lg',
+    lg: 'max-w-3xl',
+    full: 'max-w-[calc(100vw-2rem)]',
+};
 let previousFocus: HTMLElement | null = null;
 let hasBodyLock = false;
 
@@ -146,6 +154,7 @@ watch(
                 :class="
                     cn(
                         'relative z-10 w-full max-w-lg rounded-2xl border border-outline-glass bg-surface-container-lowest shadow-xl',
+                        sizes[size],
                         $props.class,
                     )
                 "
@@ -163,9 +172,9 @@ watch(
                         </h2>
                     </slot>
                     <Button
-                        size="icon"
+                        size="icon-sm"
                         variant="ghost"
-                        class="size-8 rounded-lg"
+                        class="rounded-lg"
                         :aria-label="t('nav.close')"
                         @click="close"
                     >

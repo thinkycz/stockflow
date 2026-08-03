@@ -30,6 +30,8 @@ describe('data table contract', () => {
         expect(component).toContain("density?: 'default' | 'compact'");
         expect(component).toContain("variant?: 'standalone' | 'nested'");
         expect(component).toContain('tableClass?: string');
+        expect(component).toContain('loading?: boolean');
+        expect(component).toContain('<LoadingState');
         expect(component).toContain('data-table-frame');
         expect(component).toContain('data-table-scroll');
         expect(component).toContain('cell.dataset.label = label');

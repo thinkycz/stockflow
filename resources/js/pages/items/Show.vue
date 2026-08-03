@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import {
     Pencil,
     Boxes,
@@ -76,8 +76,6 @@ useBoundLocale();
 
 <template>
     <AppLayout :title="item.title">
-        <Head :title="item.title" />
-
         <div class="flex flex-col gap-6">
             <div>
                 <BackLink :href="route('items.index')">

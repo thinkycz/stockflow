@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -10,6 +10,7 @@ import CardTitle from '@/components/ui/CardTitle.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
@@ -82,19 +83,11 @@ function submitSlack(): void {
 
 <template>
     <AppLayout :title="t('settings.title')">
-        <Head :title="t('settings.title')" />
-
-        <div class="mx-auto flex w-full max-w-2xl flex-col gap-6">
-            <header>
-                <h1
-                    class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                >
-                    {{ t('settings.title') }}
-                </h1>
-                <p class="mt-1 text-sm text-on-surface-variant">
-                    {{ t('settings.subtitle') }}
-                </p>
-            </header>
+        <div class="mx-auto flex w-full max-w-3xl flex-col gap-6">
+            <PageHeader
+                :title="t('settings.title')"
+                :subtitle="t('settings.subtitle')"
+            />
 
             <Card padded>
                 <CardHeader>

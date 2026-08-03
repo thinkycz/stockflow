@@ -258,8 +258,17 @@ const settingsActive = computed(() => activeUrl.value.startsWith('/settings'));
 
 const userInitials = computed(() => {
     const email = auth.value.user?.email ?? '';
-    if (!email) return 'DU';
-    return email.substring(0, 2).toUpperCase();
+    if (!email) return 'U';
+    const parts = email
+        .split('@')[0]
+        ?.split(/[^a-zA-Z0-9]+/)
+        .filter(Boolean);
+    if (!parts || parts.length === 0) return 'U';
+    return parts
+        .slice(0, 2)
+        .map((part) => part.charAt(0))
+        .join('')
+        .toUpperCase();
 });
 
 function logout(): void {
@@ -269,14 +278,14 @@ function logout(): void {
 
 <template>
     <div class="flex h-full flex-col px-4 py-6 text-left">
-        <div
-            v-if="showBrand"
-            class="mb-8 flex cursor-default items-center gap-3 px-2"
-        >
+        <div v-if="showBrand" class="mb-8 flex items-center gap-3 px-2">
             <Brand :href="route('dashboard')" />
         </div>
 
-        <nav class="flex-1 space-y-4 overflow-y-auto">
+        <nav
+            class="flex-1 space-y-4 overflow-y-auto"
+            :aria-label="t('nav.main')"
+        >
             <div
                 v-for="section in navSections"
                 :key="section.key"
@@ -322,12 +331,7 @@ function logout(): void {
                 </div>
                 <div class="min-w-0 overflow-hidden">
                     <p class="truncate text-xs font-semibold text-on-surface">
-                        {{ auth.user ? auth.user.email.split('@')[0] : 'User' }}
-                    </p>
-                    <p
-                        class="truncate text-[9px] font-medium text-on-surface-variant opacity-85"
-                    >
-                        {{ auth.user ? auth.user.email : '' }}
+                        {{ auth.user?.email ?? '' }}
                     </p>
                 </div>
             </div>

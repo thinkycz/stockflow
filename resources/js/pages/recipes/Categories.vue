@@ -100,8 +100,7 @@ function moveCategory(id: number, direction: 'up' | 'down'): void {
                     </span>
                     <Button
                         variant="ghost"
-                        size="icon"
-                        class="size-8"
+                        size="icon-sm"
                         :disabled="index === 0"
                         :aria-label="t('common.move_up')"
                         @click="moveCategory(category.id, 'up')"
@@ -110,8 +109,7 @@ function moveCategory(id: number, direction: 'up' | 'down'): void {
                     </Button>
                     <Button
                         variant="ghost"
-                        size="icon"
-                        class="size-8"
+                        size="icon-sm"
                         :disabled="index === categories.length - 1"
                         :aria-label="t('common.move_down')"
                         @click="moveCategory(category.id, 'down')"
@@ -120,8 +118,7 @@ function moveCategory(id: number, direction: 'up' | 'down'): void {
                     </Button>
                     <Button
                         variant="ghost"
-                        size="icon"
-                        class="size-8"
+                        size="icon-sm"
                         :aria-label="t('recipes.categories.edit')"
                         @click="editCategory(category)"
                     >
@@ -129,8 +126,7 @@ function moveCategory(id: number, direction: 'up' | 'down'): void {
                     </Button>
                     <Button
                         variant="ghost"
-                        size="icon"
-                        class="size-8"
+                        size="icon-sm"
                         :disabled="category.recipes_count > 0"
                         :aria-label="t('recipes.categories.delete')"
                         @click="deleteCategory(category)"

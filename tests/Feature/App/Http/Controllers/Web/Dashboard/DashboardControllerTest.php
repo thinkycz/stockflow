@@ -2,15 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Enums\StockMovementClassificationEnum;
 use App\Models\AttendanceBreak;
 use App\Models\AttendanceSession;
 use App\Models\Item;
 use App\Models\NoticeboardCard;
 use App\Models\Shift;
-use App\Models\Statement;
 use App\Models\StockMovement;
-use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
@@ -40,16 +37,11 @@ use Thinkycz\LaravelCore\Support\Typer;
             'active_store',
             'metrics' => [
                 'inventory_value',
-                'items_count',
                 'low_stock_items',
                 'today_movements',
-                'month_incoming',
-                'month_outgoing',
+                'last_inventory_at',
             ],
-            'stock_status' => ['in_stock', 'low_stock', 'out_of_stock', 'no_data'],
-            'top_consumed',
             'recent_movements',
-            'recent_statements',
         ],
     ]);
 });
@@ -63,11 +55,8 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($response->json('props.active_store'))->toBeNull();
     \expect($response->json('props.is_admin'))->toBeTrue();
     \expect((float) $response->json('props.metrics.inventory_value'))->toBe(0.0);
-    \expect($response->json('props.metrics.items_count'))->toBe(0);
-    \expect($response->json('props.stock_status.in_stock'))->toBe(0);
-    \expect($response->json('props.top_consumed'))->toBe([]);
     \expect($response->json('props.recent_movements'))->toBe([]);
-    \expect($response->json('props.recent_statements'))->toBe([]);
+    \expect($response->json('props'))->not->toHaveKeys(['stock_status', 'top_consumed', 'recent_statements']);
 });
 
 \test('dashboard ignores an open inventory draft without a finalized date', function (): void {
@@ -98,7 +87,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($response->json('props.active_store.id'))->toBe($warehouse->getKey());
 });
 
-\test('dashboard classifies stock status for the active store', function (): void {
+\test('dashboard reports visible low stock metric for the active store', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
 
     $itemInStock = Item::factory()->create(['user_id' => $user->getKey()]);
@@ -112,11 +101,6 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response = $this->be($user, 'users')
         ->get('/dashboard?store_id=' . $warehouse->getKey(), $this->inertiaHeaders());
 
-    \expect($response->json('props.stock_status.in_stock'))->toBe(0);
-    \expect($response->json('props.stock_status.low_stock'))->toBe(0);
-    \expect($response->json('props.stock_status.out_of_stock'))->toBe(1);
-    \expect($response->json('props.stock_status.no_data'))->toBe(2);
-    \expect($response->json('props.metrics.items_count'))->toBe(3);
     \expect($response->json('props.metrics.low_stock_items'))->toBe(0);
 });
 
@@ -141,48 +125,6 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($ids)->not->toContain($foreign->getKey());
 });
 
-\test('dashboard aggregates top consumed items for the active store', function (): void {
-    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
-    $other = Store::factory()->create(['user_id' => $user->getKey()]);
-
-    $itemLocal = Item::factory()->create(['user_id' => $user->getKey(), 'title' => 'Local top']);
-    $itemOther = Item::factory()->create(['user_id' => $user->getKey(), 'title' => 'Other-store top']);
-
-    $localMovement = StockMovement::factory()
-        ->consumption($warehouse)
-        ->byUser($user)
-        ->create(['user_id' => $user->getKey()]);
-    StockMovementItem::factory()->create([
-        'stock_movement_id' => $localMovement->getKey(),
-        'item_id' => $itemLocal->getKey(),
-        'quantity' => 4,
-        'quantity_difference' => -4,
-        'classification' => StockMovementClassificationEnum::CONSUMPTION->value,
-        'total' => 40.0,
-    ]);
-
-    $otherMovement = StockMovement::factory()
-        ->consumption($other)
-        ->byUser($user)
-        ->create(['user_id' => $user->getKey()]);
-    StockMovementItem::factory()->create([
-        'stock_movement_id' => $otherMovement->getKey(),
-        'item_id' => $itemOther->getKey(),
-        'quantity' => 99,
-        'quantity_difference' => -99,
-        'classification' => StockMovementClassificationEnum::CONSUMPTION->value,
-        'total' => 9999.0,
-    ]);
-
-    $response = $this->be($user, 'users')
-        ->get('/dashboard?store_id=' . $warehouse->getKey(), $this->inertiaHeaders());
-
-    $topConsumed = $response->json('props.top_consumed');
-    \expect($topConsumed)->toHaveCount(1);
-    \expect($topConsumed[0]['item_id'])->toBe($itemLocal->getKey());
-    \expect((float) $topConsumed[0]['total_quantity'])->toBe(4.0);
-});
-
 \test('limited dashboard exposes actions without statistics', function (): void {
     [$admin, $warehouse] = \createIsolatedUserWithWarehouse();
     $limited = UserFactory::new()->limited($warehouse)->createOne();
@@ -194,10 +136,8 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response->assertOk();
     \expect($response->json('props.active_store.id'))->toBe($warehouse->getKey());
     \expect($response->json('props.metrics'))->toBeNull();
-    \expect($response->json('props.stock_status'))->toBeNull();
-    \expect($response->json('props.top_consumed'))->toBe([]);
     \expect($response->json('props.recent_movements'))->toBe([]);
-    \expect($response->json('props.recent_statements'))->toBe([]);
+    \expect($response->json('props'))->not->toHaveKeys(['stock_status', 'top_consumed', 'recent_statements']);
     \expect($response->json('props.is_admin'))->toBeFalse();
 });
 
@@ -373,29 +313,4 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->and($first->json('props.noticeboard.pagination.total'))->toBe(25)
         ->and($first->json('props.noticeboard.pagination.per_page'))->toBe(24)
         ->and($second->json('props.noticeboard.cards'))->toHaveCount(1);
-});
-
-\test('dashboard scopes recent statements to the active store', function (): void {
-    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
-    $other = Store::factory()->create(['user_id' => $user->getKey()]);
-
-    $localStatement = Statement::factory()->create([
-        'user_id' => $user->getKey(),
-        'store_id' => $warehouse->getKey(),
-        'year' => 2026,
-        'month' => 5,
-    ]);
-    Statement::factory()->create([
-        'user_id' => $user->getKey(),
-        'store_id' => $other->getKey(),
-        'year' => 2026,
-        'month' => 5,
-    ]);
-
-    $response = $this->be($user, 'users')
-        ->get('/dashboard?store_id=' . $warehouse->getKey(), $this->inertiaHeaders());
-
-    $ids = \array_column($response->json('props.recent_statements'), 'id');
-    \expect($ids)->toContain($localStatement->getKey());
-    \expect(\count($ids))->toBe(1);
 });

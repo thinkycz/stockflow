@@ -6,8 +6,14 @@ const pagesRoot = resolve(process.cwd(), 'resources/js/pages');
 
 function headerOf(page: string): string {
     const source = readFileSync(resolve(pagesRoot, page), 'utf8');
-    const headerStart = source.indexOf('<header');
-    const headerEnd = source.indexOf('</header>', headerStart);
+    const usesPageHeader = source.includes('<PageHeader');
+    const headerStart = source.indexOf(
+        usesPageHeader ? '<PageHeader' : '<header',
+    );
+    const headerEnd = source.indexOf(
+        usesPageHeader ? '</PageHeader>' : '</header>',
+        headerStart,
+    );
 
     expect(headerStart).toBeGreaterThanOrEqual(0);
     expect(headerEnd).toBeGreaterThan(headerStart);
@@ -16,6 +22,21 @@ function headerOf(page: string): string {
 }
 
 describe('page filter layout contract', () => {
+    test('standard searchable index pages use PageHeader', () => {
+        for (const page of [
+            'items/Index.vue',
+            'stores/Index.vue',
+            'users/Index.vue',
+            'workers/Index.vue',
+            'stock-movements/Index.vue',
+        ]) {
+            expect(
+                readFileSync(resolve(pagesRoot, page), 'utf8'),
+                page,
+            ).toContain('<PageHeader');
+        }
+    });
+
     test('single month filters live in the page header', () => {
         for (const page of [
             'income-expenses/Index.vue',

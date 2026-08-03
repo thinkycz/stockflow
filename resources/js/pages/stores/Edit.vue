@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
@@ -8,6 +8,7 @@ import Card from '@/components/ui/Card.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import Select from '@/components/ui/Select.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
@@ -56,19 +57,11 @@ function submit(): void {
 
 <template>
     <AppLayout :title="t('stores.title_edit')">
-        <Head :title="t('stores.title_edit')" />
-
-        <div class="mx-auto flex w-full max-w-2xl flex-col gap-6">
-            <header>
-                <h1
-                    class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                >
-                    {{ t('stores.title_edit') }}
-                </h1>
-                <p class="mt-1 text-sm text-on-surface-variant">
-                    {{ t('stores.subtitle_edit') }}
-                </p>
-            </header>
+        <div class="mx-auto flex w-full max-w-3xl flex-col gap-6">
+            <PageHeader
+                :title="t('stores.title_edit')"
+                :subtitle="t('stores.subtitle_edit')"
+            />
 
             <Card padded>
                 <form class="space-y-5" @submit.prevent="submit">
@@ -171,7 +164,11 @@ function submit(): void {
                                 {{ t('common.cancel') }}
                             </Button>
                         </Link>
-                        <Button type="submit" :disabled="form.processing">
+                        <Button
+                            type="submit"
+                            :loading="form.processing"
+                            :loading-label="t('common.saving')"
+                        >
                             {{ t('common.save') }}
                         </Button>
                     </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Link, router, useForm } from '@inertiajs/vue3';
 import { LockKeyhole, Plus, UnlockKeyhole } from '@lucide/vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -12,6 +12,7 @@ import EmptyState from '@/components/ui/EmptyState.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import FilterField from '@/components/ui/FilterField.vue';
 import MonthPicker from '@/components/ui/MonthPicker.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
@@ -102,19 +103,17 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
 
 <template>
     <AppLayout :title="t('payroll.title')">
-        <Head :title="t('payroll.title')" />
-
         <div class="mx-auto flex w-full max-w-7xl flex-col gap-6">
-            <header
-                class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+            <PageHeader
+                :title="t('payroll.title')"
+                :subtitle="
+                    t('payroll.subtitle', {
+                        store: active_store?.name ?? '—',
+                    })
+                "
             >
-                <div>
-                    <div class="flex items-center gap-3">
-                        <h1
-                            class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                        >
-                            {{ t('payroll.title') }}
-                        </h1>
+                <template #context>
+                    <div class="flex flex-wrap items-center gap-3">
                         <Badge
                             v-if="payroll_report"
                             :variant="
@@ -125,73 +124,70 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                         >
                             {{ t(`payroll.status.${payroll_report.status}`) }}
                         </Badge>
+                        <StoreContextIndicator />
                     </div>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{
-                            t('payroll.subtitle', {
-                                store: active_store?.name ?? '—',
-                            })
-                        }}
-                    </p>
-                    <StoreContextIndicator />
-                </div>
-                <div class="flex flex-wrap items-end gap-2">
-                    <FilterField
-                        for="payroll_month"
-                        :label="t('payroll.month')"
-                    >
-                        <MonthPicker
-                            id="payroll_month"
-                            :model-value="monthValue()"
-                            @change="changeMonth"
+                </template>
+                <template #actions>
+                    <div class="flex flex-wrap items-end gap-2">
+                        <FilterField
+                            for="payroll_month"
+                            :label="t('payroll.month')"
+                        >
+                            <MonthPicker
+                                id="payroll_month"
+                                :model-value="monthValue()"
+                                @change="changeMonth"
+                            />
+                        </FilterField>
+                        <PayrollPrintMenu
+                            v-if="payroll_report"
+                            :detailed-href="
+                                route('payroll.print', {
+                                    year: filters.year,
+                                    month: filters.month,
+                                    store_id: active_store?.id ?? null,
+                                })
+                            "
+                            :simple-href="
+                                route('payroll.print', {
+                                    year: filters.year,
+                                    month: filters.month,
+                                    store_id: active_store?.id ?? null,
+                                    simple: 1,
+                                })
+                            "
                         />
-                    </FilterField>
-                    <PayrollPrintMenu
-                        v-if="payroll_report"
-                        :detailed-href="
-                            route('payroll.print', {
-                                year: filters.year,
-                                month: filters.month,
-                                store_id: active_store?.id ?? null,
-                            })
-                        "
-                        :simple-href="
-                            route('payroll.print', {
-                                year: filters.year,
-                                month: filters.month,
-                                store_id: active_store?.id ?? null,
-                                simple: 1,
-                            })
-                        "
-                    />
-                    <Button
-                        v-if="
-                            payroll_report?.status === 'open' &&
-                            available_workers.length > 0
-                        "
-                        variant="secondary"
-                        @click="openWorkerModal"
-                    >
-                        <Plus :size="15" />{{ t('payroll.add_worker') }}
-                    </Button>
-                    <Button
-                        v-if="payroll_report?.status === 'open'"
-                        variant="warning"
-                        :disabled="lifecycleProcessing"
-                        @click="lifecycle('close')"
-                    >
-                        <LockKeyhole :size="15" />{{ t('payroll.close') }}
-                    </Button>
-                    <Button
-                        v-else-if="payroll_report"
-                        variant="secondary"
-                        :disabled="lifecycleProcessing"
-                        @click="lifecycle('reopen')"
-                    >
-                        <UnlockKeyhole :size="15" />{{ t('payroll.reopen') }}
-                    </Button>
-                </div>
-            </header>
+                        <Button
+                            v-if="
+                                payroll_report?.status === 'open' &&
+                                available_workers.length > 0
+                            "
+                            variant="secondary"
+                            @click="openWorkerModal"
+                        >
+                            <Plus :size="15" />{{ t('payroll.add_worker') }}
+                        </Button>
+                        <Button
+                            v-if="payroll_report?.status === 'open'"
+                            variant="warning"
+                            :disabled="lifecycleProcessing"
+                            @click="lifecycle('close')"
+                        >
+                            <LockKeyhole :size="15" />{{ t('payroll.close') }}
+                        </Button>
+                        <Button
+                            v-else-if="payroll_report"
+                            variant="secondary"
+                            :disabled="lifecycleProcessing"
+                            @click="lifecycle('reopen')"
+                        >
+                            <UnlockKeyhole :size="15" />{{
+                                t('payroll.reopen')
+                            }}
+                        </Button>
+                    </div>
+                </template>
+            </PageHeader>
 
             <EmptyState
                 v-if="!payroll_report"

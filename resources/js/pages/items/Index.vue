@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { Pencil, Plus, Trash2, Boxes } from '@lucide/vue';
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Pagination from '@/components/ui/Pagination.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import SearchFilter from '@/components/ui/SearchFilter.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
@@ -82,41 +83,32 @@ async function destroyItem(item: ItemRow): Promise<void> {
 
 <template>
     <AppLayout :title="t('items.title')">
-        <Head :title="t('items.title')" />
-
         <div class="flex flex-col gap-6">
-            <header
-                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            <PageHeader
+                :title="t('items.title')"
+                :subtitle="t('items.subtitle')"
             >
-                <div>
-                    <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
+                <template #actions>
+                    <div
+                        class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
                     >
-                        {{ t('items.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('items.subtitle') }}
-                    </p>
-                </div>
-                <div
-                    class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
-                >
-                    <SearchFilter
-                        id="items_search"
-                        v-model="searchTerm"
-                        :label="t('common.search')"
-                        :placeholder="t('items.search_placeholder')"
-                        :busy="submitting"
-                        class="w-full sm:w-72"
-                    />
-                    <Link :href="route('items.create')">
-                        <Button>
-                            <Plus :size="14" />
-                            {{ t('items.add_item') }}
-                        </Button>
-                    </Link>
-                </div>
-            </header>
+                        <SearchFilter
+                            id="items_search"
+                            v-model="searchTerm"
+                            :label="t('common.search')"
+                            :placeholder="t('items.search_placeholder')"
+                            :busy="submitting"
+                            class="w-full sm:w-72"
+                        />
+                        <Link :href="route('items.create')">
+                            <Button>
+                                <Plus :size="14" />
+                                {{ t('items.add_item') }}
+                            </Button>
+                        </Link>
+                    </div>
+                </template>
+            </PageHeader>
 
             <section class="space-y-4">
                 <EmptyState
@@ -133,7 +125,11 @@ async function destroyItem(item: ItemRow): Promise<void> {
                         </Link>
                     </template>
                 </EmptyState>
-                <DataTable v-else>
+                <DataTable
+                    v-else
+                    :loading="submitting"
+                    :loading-label="t('common.loading')"
+                >
                     <thead>
                         <tr>
                             <th class="w-10">

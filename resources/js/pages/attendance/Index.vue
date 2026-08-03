@@ -17,11 +17,13 @@ import {
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Alert from '@/components/ui/Alert.vue';
+import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Label from '@/components/ui/Label.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useDialog } from '@/composables/useDialog';
@@ -199,11 +201,13 @@ function qualityClass(row: AttendanceRow): string {
     return 'text-on-surface-variant';
 }
 
-function statusClass(status: AttendanceStatus): string {
-    if (status === 'present') return 'bg-emerald-100 text-emerald-800';
-    if (status === 'break') return 'bg-amber-100 text-amber-800';
-    if (status === 'stale') return 'bg-red-100 text-error-red';
-    return 'bg-surface-container text-on-surface-variant';
+function statusVariant(
+    status: AttendanceStatus,
+): 'success' | 'warning' | 'danger' | 'neutral' {
+    if (status === 'present') return 'success';
+    if (status === 'break') return 'warning';
+    if (status === 'stale') return 'danger';
+    return 'neutral';
 }
 
 function postAction(
@@ -276,21 +280,14 @@ onUnmounted(() => {
 <template>
     <AppLayout :title="t('attendance.title')">
         <div class="flex flex-col gap-6">
-            <header
-                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            <PageHeader
+                :title="t('attendance.title')"
+                :subtitle="t('attendance.subtitle')"
             >
-                <div>
-                    <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                    >
-                        {{ t('attendance.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('attendance.subtitle') }}
-                    </p>
+                <template #context>
                     <StoreContextIndicator />
-                </div>
-                <div class="flex flex-wrap gap-2">
+                </template>
+                <template #actions>
                     <Link
                         v-if="is_admin && store && !store.is_warehouse"
                         :href="route('attendance.report')"
@@ -300,8 +297,8 @@ onUnmounted(() => {
                             <ArrowRight :size="15" />
                         </Button>
                     </Link>
-                </div>
-            </header>
+                </template>
+            </PageHeader>
 
             <EmptyState
                 v-if="!store || store.is_warehouse"
@@ -705,14 +702,11 @@ onUnmounted(() => {
                                     >
                                 </td>
                                 <td :data-label="t('attendance.table.status')">
-                                    <span
-                                        class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
-                                        :class="statusClass(row.status)"
-                                    >
+                                    <Badge :variant="statusVariant(row.status)">
                                         {{
                                             t(`attendance.status.${row.status}`)
                                         }}
-                                    </span>
+                                    </Badge>
                                     <Alert
                                         v-if="row.status === 'stale'"
                                         variant="warning"

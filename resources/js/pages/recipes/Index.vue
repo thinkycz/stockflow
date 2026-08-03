@@ -20,6 +20,7 @@ import Button from '@/components/ui/Button.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
+import DropdownMenuSeparator from '@/components/ui/DropdownMenuSeparator.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
@@ -274,6 +275,7 @@ function startTest(): void {
                                         t('common.move_down')
                                     }}
                                 </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                     :tone="
                                         recipe.archived ? 'default' : 'danger'

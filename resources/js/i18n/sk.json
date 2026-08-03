@@ -32,7 +32,8 @@
         "password": "Heslo",
         "logout": "Odhlásiť sa",
         "menu": "Menu",
-        "close": "Zavrieť"
+        "close": "Zavrieť",
+        "main": "Hlavná navigácia"
     },
     "store_switcher": {
         "label": "Aktívna predajňa",
@@ -56,7 +57,7 @@
         "search": "Hľadať",
         "apply": "Použiť",
         "export": "Exportovať",
-        "loading": "Načítanie...",
+        "loading": "Načítava sa…",
         "no_results": "Neboli nájdené žiadne výsledky.",
         "results": "výsledkov",
         "searching_for": "Hľadať",
@@ -68,7 +69,9 @@
         "detail": "Detail",
         "saving": "Ukladám…",
         "move_up": "Posunúť hore",
-        "move_down": "Posunúť dole"
+        "move_down": "Posunúť dole",
+        "first_page": "Prvá stránka",
+        "last_page": "Posledná stránka"
     },
     "auth": {
         "login": {
@@ -104,7 +107,10 @@
         "title": "Výplatné pásky",
         "subtitle": "Mesačný výplatný report pre predajňu {store}.",
         "month": "Mesiac",
-        "status": { "open": "Rozpracované", "closed": "Uzavreté" },
+        "status": {
+            "open": "Rozpracované",
+            "closed": "Uzavreté"
+        },
         "worker": "Brigádnik",
         "planned": "Plán",
         "actual": "Skutočnosť",
@@ -118,7 +124,10 @@
         "amount": "Suma",
         "reason": "Dôvod",
         "adjustment_type": "Typ úpravy",
-        "adjustment_types": { "tip": "Prepitné", "deduction": "Zrážka" },
+        "adjustment_types": {
+            "tip": "Prepitné",
+            "deduction": "Zrážka"
+        },
         "add_adjustment": "Pridať úpravu",
         "add_worker": "Pridať brigádnika",
         "select_worker": "Vyberte brigádnika",
@@ -166,11 +175,17 @@
         "title": "Príjmy a výdavky",
         "subtitle": "Mesačný finančný report pre predajňu {store}.",
         "month": "Mesiac",
-        "status": { "open": "Otvorený", "closed": "Uzavretý" },
+        "status": {
+            "open": "Otvorený",
+            "closed": "Uzavretý"
+        },
         "total_income": "Príjmy celkom",
         "total_expenses": "Výdavky celkom",
         "profit": "Výsledok",
-        "sections": { "income": "Príjmy", "expense": "Výdavky" },
+        "sections": {
+            "income": "Príjmy",
+            "expense": "Výdavky"
+        },
         "date": "Dátum",
         "item": "Položka",
         "source": "Zdroj",
@@ -295,7 +310,8 @@
         "status": {
             "active": "Aktívne",
             "expired": "Expirované",
-            "trash": "Kôš"
+            "trash": "Kôš",
+            "label": "Stav"
         },
         "labels": {
             "information": "Informácie",
@@ -404,29 +420,6 @@
             "low_stock": "Riziko do 7 dní",
             "last_inventory": "Posledná inventúra",
             "today_movements": "Dnešné pohyby"
-        },
-        "month_flow": {
-            "title": "Mesačný pohyb",
-            "subtitle": "Nákupy a skutočná spotreba za aktuálny mesiac.",
-            "incoming": "Nákupy",
-            "outgoing": "Spotreba"
-        },
-        "stock_status": {
-            "title": "Stav zásob",
-            "subtitle": "Rozloženie položiek v tejto predajni podľa dostupnosti."
-        },
-        "top_consumed": {
-            "title": "Najviac odoberané",
-            "subtitle": "Top 5 položiek podľa evidovanej spotreby za posledných 30 dní.",
-            "item": "Položka",
-            "quantity": "Množstvo",
-            "value": "Hodnota",
-            "empty": "Za posledných 30 dní nebola evidovaná žiadna spotreba."
-        },
-        "statements": {
-            "title": "Posledné výkazy",
-            "subtitle": "Najnovšie uzavreté výkazy pre túto predajňu.",
-            "empty": "Zatiaľ žiadne výkazy."
         },
         "recent": {
             "title": "Nedávne skladové pohyby",
@@ -802,8 +795,12 @@
                 "value": "Hodnota zásob",
                 "items": "Položiek na sklade"
             },
-            "consumption": { "title": "Náklad spotreby" },
-            "risk": { "title": "Ohrozené položky" },
+            "consumption": {
+                "title": "Náklad spotreby"
+            },
+            "risk": {
+                "title": "Ohrozené položky"
+            },
             "coverage": {
                 "title": "Pokrytie inventúrami",
                 "last_inventory": "Posledná inventúra"
@@ -823,7 +820,9 @@
                 "stockout": "Predikované vypredanie",
                 "status": "Stav"
             },
-            "classifications": { "title": "Straty a korekcie podľa dôvodu" },
+            "classifications": {
+                "title": "Straty a korekcie podľa dôvodu"
+            },
             "top_consumed": {
                 "title": "Najviac spotrebované položky",
                 "subtitle": "Položky s najväčšou absolútnou zmenou v období.",
@@ -1107,6 +1106,7 @@
         "prev_month": "Predchádzajúci mesiac",
         "next_month": "Ďalší mesiac",
         "no_store": "Najprv vyberte predajňu.",
+        "no_store_help": "Vyberte aktívnu predajňu v hlavnej navigácii a zobrazte jej kalendár zmien.",
         "day_title": "Smieny pre {date}",
         "existing_shifts": "Existujúce smeny",
         "add_shift": "Pridať smenu",
@@ -1212,7 +1212,10 @@
         "dashboard_subtitle": "Ranné a popoludňajšie úlohy pre {date}",
         "retail_required": "Checklisty sú dostupné iba pre maloobchodnú prevádzku.",
         "retail_required_help": "V sidebare vyberte aktívnu predajňu, ktorá nie je skladom.",
-        "tabs": { "templates": "Šablóny", "history": "História" },
+        "tabs": {
+            "templates": "Šablóny",
+            "history": "História"
+        },
         "every_day": "Každý deň",
         "shifts": {
             "morning": "Ranná smena",

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { Store as StoreIcon, Plus, Pencil, Trash2 } from '@lucide/vue';
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import Pagination from '@/components/ui/Pagination.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import SearchFilter from '@/components/ui/SearchFilter.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
@@ -85,41 +86,32 @@ async function destroyStore(store: StoreRow): Promise<void> {
 
 <template>
     <AppLayout :title="t('stores.title')">
-        <Head :title="t('stores.title')" />
-
         <div class="flex flex-col gap-6">
-            <header
-                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            <PageHeader
+                :title="t('stores.title')"
+                :subtitle="t('stores.subtitle')"
             >
-                <div>
-                    <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
+                <template #actions>
+                    <div
+                        class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
                     >
-                        {{ t('stores.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('stores.subtitle') }}
-                    </p>
-                </div>
-                <div
-                    class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
-                >
-                    <SearchFilter
-                        id="stores_search"
-                        v-model="searchTerm"
-                        :label="t('common.search')"
-                        :placeholder="t('stores.search_placeholder')"
-                        :busy="filtering"
-                        class="w-full sm:w-72"
-                    />
-                    <Link :href="route('stores.create')">
-                        <Button>
-                            <Plus :size="14" />
-                            {{ t('stores.add_store') }}
-                        </Button>
-                    </Link>
-                </div>
-            </header>
+                        <SearchFilter
+                            id="stores_search"
+                            v-model="searchTerm"
+                            :label="t('common.search')"
+                            :placeholder="t('stores.search_placeholder')"
+                            :busy="filtering"
+                            class="w-full sm:w-72"
+                        />
+                        <Link :href="route('stores.create')">
+                            <Button>
+                                <Plus :size="14" />
+                                {{ t('stores.add_store') }}
+                            </Button>
+                        </Link>
+                    </div>
+                </template>
+            </PageHeader>
 
             <section class="space-y-4">
                 <EmptyState
@@ -136,7 +128,11 @@ async function destroyStore(store: StoreRow): Promise<void> {
                         </Link>
                     </template>
                 </EmptyState>
-                <DataTable v-else>
+                <DataTable
+                    v-else
+                    :loading="filtering"
+                    :loading-label="t('common.loading')"
+                >
                     <thead>
                         <tr>
                             <th class="w-10">

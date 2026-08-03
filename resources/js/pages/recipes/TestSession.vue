@@ -360,9 +360,8 @@ function correctInstructions(recipe: SessionRecipe): Instruction[] {
                             <div class="flex shrink-0 gap-1">
                                 <Button
                                     type="button"
-                                    size="icon"
+                                    size="icon-sm"
                                     variant="ghost"
-                                    class="size-8"
                                     :disabled="index === 0"
                                     :aria-label="t('common.move_up')"
                                     @click="move(index, -1)"
@@ -370,9 +369,8 @@ function correctInstructions(recipe: SessionRecipe): Instruction[] {
                                 /></Button>
                                 <Button
                                     type="button"
-                                    size="icon"
+                                    size="icon-sm"
                                     variant="ghost"
-                                    class="size-8"
                                     :disabled="
                                         index === orderedInstructions.length - 1
                                     "

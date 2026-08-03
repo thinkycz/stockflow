@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Link, router, useForm } from '@inertiajs/vue3';
 import { Coffee, Plus, Printer } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -15,6 +15,7 @@ import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import MonthPicker from '@/components/ui/MonthPicker.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useRoute } from '@/composables/useRoute';
@@ -283,26 +284,20 @@ function removeBreak(index: number): void {
 
 <template>
     <AppLayout :title="t('attendance.report.title')">
-        <Head :title="t('attendance.report.title')" />
         <div class="flex flex-col gap-6">
-            <header
-                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            <PageHeader
+                :title="t('attendance.report.title')"
+                :subtitle="t('attendance.report.help')"
             >
-                <div>
+                <template #before>
                     <BackLink :href="route('attendance.index')">
                         {{ t('attendance.report.back') }}
                     </BackLink>
-                    <h1
-                        class="mt-2 font-heading text-2xl font-bold tracking-tight text-on-surface"
-                    >
-                        {{ t('attendance.report.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('attendance.report.help') }}
-                    </p>
+                </template>
+                <template #context>
                     <StoreContextIndicator />
-                </div>
-            </header>
+                </template>
+            </PageHeader>
 
             <Card v-if="!store || !filters || !report" padded>
                 <p class="text-sm text-on-surface-variant">
@@ -561,7 +556,7 @@ function removeBreak(index: number): void {
         <Modal
             :open="reviewOpen"
             :title="t('attendance.deviation.title')"
-            class="max-w-xl"
+            size="md"
             @close="closeReview"
         >
             <form
@@ -676,7 +671,7 @@ function removeBreak(index: number): void {
                     ? t('attendance.correction.create')
                     : t('attendance.correction.edit')
             "
-            class="max-w-2xl"
+            size="lg"
             @close="correctionOpen = false"
         >
             <form class="space-y-4" @submit.prevent="saveCorrection">
@@ -741,8 +736,8 @@ function removeBreak(index: number): void {
                         <Button
                             type="button"
                             variant="ghost"
-                            size="icon"
-                            class="size-8 text-error-red hover:text-error-red"
+                            size="icon-sm"
+                            class="text-error-red hover:text-error-red"
                             :aria-label="t('common.delete')"
                             @click="removeBreak(index)"
                         >

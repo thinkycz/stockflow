@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import {
     Boxes,
     CircleDollarSign,
@@ -8,7 +8,7 @@ import {
     TrendingUp,
     TriangleAlert,
 } from '@lucide/vue';
-import { computed, nextTick, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Card from '@/components/ui/Card.vue';
@@ -21,8 +21,10 @@ import EmptyState from '@/components/ui/EmptyState.vue';
 import FilterField from '@/components/ui/FilterField.vue';
 import MetricCard from '@/components/ui/MetricCard.vue';
 import MonthPicker from '@/components/ui/MonthPicker.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
+import Tabs from '@/components/ui/Tabs.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { formatDate, formatMoney, formatNumber } from '@/lib/format';
@@ -106,8 +108,10 @@ const { t } = useI18n();
 useBoundLocale();
 const route = useRoute();
 const activeTab = ref<'finance' | 'inventory'>('finance');
-const financeTab = ref<HTMLButtonElement | null>(null);
-const inventoryTab = ref<HTMLButtonElement | null>(null);
+const reportTabs = computed(() => [
+    { value: 'finance', label: t('reports.tabs.finance') },
+    { value: 'inventory', label: t('reports.tabs.inventory') },
+]);
 
 const monthValue = computed(
     () => `${props.filter.year}-${String(props.filter.month).padStart(2, '0')}`,
@@ -164,13 +168,6 @@ function selectMonth(value: string): void {
     );
 }
 
-function selectTab(tab: 'finance' | 'inventory'): void {
-    activeTab.value = tab;
-    nextTick(() =>
-        (tab === 'finance' ? financeTab.value : inventoryTab.value)?.focus(),
-    );
-}
-
 function quantityWithUnit(value: number, unit: string | null): string {
     return `${formatNumber(value)}${unit ? ` ${unit}` : ''}`;
 }
@@ -178,35 +175,29 @@ function quantityWithUnit(value: number, unit: string | null): string {
 
 <template>
     <AppLayout :title="t('reports.title')">
-        <Head :title="t('reports.title')" />
         <div class="flex flex-col gap-6">
-            <header
-                class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+            <PageHeader
+                :title="t('reports.title')"
+                :subtitle="t('reports.unified_subtitle')"
             >
-                <div>
-                    <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                    >
-                        {{ t('reports.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('reports.unified_subtitle') }}
-                    </p>
+                <template #context>
                     <StoreContextIndicator />
-                </div>
-                <FilterField
-                    for="report_month_filter"
-                    :label="t('reports.statements.month')"
-                    class="min-w-52"
-                >
-                    <MonthPicker
-                        id="report_month_filter"
-                        :model-value="monthValue"
-                        :aria-label="t('reports.statements.month')"
-                        @change="selectMonth"
-                    />
-                </FilterField>
-            </header>
+                </template>
+                <template #actions>
+                    <FilterField
+                        for="report_month_filter"
+                        :label="t('reports.statements.month')"
+                        class="min-w-52"
+                    >
+                        <MonthPicker
+                            id="report_month_filter"
+                            :model-value="monthValue"
+                            :aria-label="t('reports.statements.month')"
+                            @change="selectMonth"
+                        />
+                    </FilterField>
+                </template>
+            </PageHeader>
 
             <EmptyState
                 v-if="!props.active_store"
@@ -258,50 +249,15 @@ function quantityWithUnit(value: number, unit: string | null): string {
                     </p>
                 </section>
 
-                <div
-                    class="border-b border-outline-glass"
-                    role="tablist"
-                    :aria-label="t('reports.tabs.label')"
-                >
-                    <button
-                        id="reports-tab-finance"
-                        ref="financeTab"
-                        type="button"
-                        role="tab"
-                        aria-controls="reports-panel-finance"
-                        :aria-selected="activeTab === 'finance'"
-                        :tabindex="activeTab === 'finance' ? 0 : -1"
-                        class="border-b-2 px-4 py-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                        :class="
-                            activeTab === 'finance'
-                                ? 'border-primary text-primary'
-                                : 'border-transparent text-on-surface-variant'
-                        "
-                        @click="selectTab('finance')"
-                        @keydown.right.prevent="selectTab('inventory')"
-                    >
-                        {{ t('reports.tabs.finance') }}
-                    </button>
-                    <button
-                        id="reports-tab-inventory"
-                        ref="inventoryTab"
-                        type="button"
-                        role="tab"
-                        aria-controls="reports-panel-inventory"
-                        :aria-selected="activeTab === 'inventory'"
-                        :tabindex="activeTab === 'inventory' ? 0 : -1"
-                        class="border-b-2 px-4 py-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                        :class="
-                            activeTab === 'inventory'
-                                ? 'border-primary text-primary'
-                                : 'border-transparent text-on-surface-variant'
-                        "
-                        @click="selectTab('inventory')"
-                        @keydown.left.prevent="selectTab('finance')"
-                    >
-                        {{ t('reports.tabs.inventory') }}
-                    </button>
-                </div>
+                <Tabs
+                    :model-value="activeTab"
+                    :items="reportTabs"
+                    :label="t('reports.tabs.label')"
+                    variant="underline"
+                    @update:model-value="
+                        activeTab = $event as 'finance' | 'inventory'
+                    "
+                />
 
                 <section
                     v-show="activeTab === 'finance'"

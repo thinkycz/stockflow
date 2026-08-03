@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import { Plus, Trash2 } from '@lucide/vue';
 import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -472,8 +472,6 @@ watch(
 
 <template>
     <AppLayout :title="pageTitle">
-        <Head :title="pageTitle" />
-
         <div class="flex flex-col gap-6">
             <div>
                 <BackLink
@@ -847,8 +845,8 @@ watch(
                                     <Button
                                         type="button"
                                         variant="ghost"
-                                        size="icon"
-                                        class="size-8 hover:text-error-red"
+                                        size="icon-sm"
+                                        class="hover:text-error-red"
                                         :aria-label="
                                             t('stock_movements.form.remove_row')
                                         "

@@ -14,6 +14,48 @@ function sourceFiles(directory: string): string[] {
 }
 
 describe('UI consistency contract', () => {
+    test('wrapped pages delegate document titles to their layout', () => {
+        for (const file of sourceFiles(resolve(jsRoot, 'pages'))) {
+            const source = readFileSync(file, 'utf8');
+            if (!source.includes('<AppLayout')) continue;
+
+            expect(source, file).not.toContain('<Head');
+            expect(source, file).not.toMatch(/\bHead\b.*@inertiajs\/vue3/);
+        }
+    });
+
+    test('standard forms use the documented width and shared header', () => {
+        for (const page of [
+            'items/Create.vue',
+            'items/Edit.vue',
+            'stores/Create.vue',
+            'stores/Edit.vue',
+            'users/Create.vue',
+            'users/Edit.vue',
+            'workers/Create.vue',
+            'workers/Edit.vue',
+            'settings/Index.vue',
+        ]) {
+            const source = readFileSync(resolve(jsRoot, 'pages', page), 'utf8');
+            expect(source, page).toContain('max-w-3xl');
+            expect(source, page).toContain('<PageHeader');
+        }
+    });
+
+    test('shared tabs own requested tab families', () => {
+        for (const page of [
+            'pages/reports/Index.vue',
+            'pages/recipes/Show.vue',
+            'pages/gift-vouchers/Index.vue',
+            'pages/checklists/Index.vue',
+            'components/noticeboard/NoticeboardSection.vue',
+        ]) {
+            expect(readFileSync(resolve(jsRoot, page), 'utf8'), page).toContain(
+                '<Tabs',
+            );
+        }
+    });
+
     test('native browser confirmation and prompt APIs are not used', () => {
         for (const file of sourceFiles(jsRoot)) {
             const source = readFileSync(file, 'utf8');

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { Pencil, Plus, Trash2 } from '@lucide/vue';
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -8,6 +8,7 @@ import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import SearchFilter from '@/components/ui/SearchFilter.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useCzechDate } from '@/composables/useCzechDate';
@@ -88,41 +89,32 @@ const currentUserId = (): number | null => page.props.auth?.user?.id ?? null;
 
 <template>
     <AppLayout :title="t('users.title')">
-        <Head :title="t('users.title')" />
-
         <div class="flex flex-col gap-6">
-            <header
-                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            <PageHeader
+                :title="t('users.title')"
+                :subtitle="t('users.subtitle')"
             >
-                <div>
-                    <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
+                <template #actions>
+                    <div
+                        class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
                     >
-                        {{ t('users.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('users.subtitle') }}
-                    </p>
-                </div>
-                <div
-                    class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
-                >
-                    <SearchFilter
-                        id="users_search"
-                        v-model="searchTerm"
-                        :label="t('common.search')"
-                        :placeholder="t('users.search_placeholder')"
-                        :busy="filtering"
-                        class="w-full sm:w-72"
-                    />
-                    <Link :href="route('users.create')">
-                        <Button>
-                            <Plus :size="14" />
-                            {{ t('users.create.title') }}
-                        </Button>
-                    </Link>
-                </div>
-            </header>
+                        <SearchFilter
+                            id="users_search"
+                            v-model="searchTerm"
+                            :label="t('common.search')"
+                            :placeholder="t('users.search_placeholder')"
+                            :busy="filtering"
+                            class="w-full sm:w-72"
+                        />
+                        <Link :href="route('users.create')">
+                            <Button>
+                                <Plus :size="14" />
+                                {{ t('users.create.title') }}
+                            </Button>
+                        </Link>
+                    </div>
+                </template>
+            </PageHeader>
 
             <section class="space-y-4">
                 <EmptyState
@@ -148,7 +140,11 @@ const currentUserId = (): number | null => page.props.auth?.user?.id ?? null;
                     </template>
                 </EmptyState>
 
-                <DataTable v-else>
+                <DataTable
+                    v-else
+                    :loading="filtering"
+                    :loading-label="t('common.loading')"
+                >
                     <thead>
                         <tr>
                             <th>

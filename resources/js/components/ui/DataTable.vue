@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUpdated, ref } from 'vue';
 import { cn } from '@/lib/utils';
+import LoadingState from '@/components/ui/LoadingState.vue';
 
 defineOptions({ inheritAttrs: false });
 
@@ -9,11 +10,15 @@ const props = withDefaults(
         density?: 'default' | 'compact';
         variant?: 'standalone' | 'nested';
         tableClass?: string;
+        loading?: boolean;
+        loadingLabel?: string;
     }>(),
     {
         density: 'default',
         variant: 'standalone',
         tableClass: '',
+        loading: false,
+        loadingLabel: '',
     },
 );
 
@@ -73,6 +78,19 @@ onUpdated(syncMobileLabels);
 
 <template>
     <div
+        v-if="props.loading"
+        :aria-busy="true"
+        :class="
+            cn(
+                'data-table-frame',
+                props.variant === 'nested' && 'data-table-frame--nested',
+            )
+        "
+    >
+        <LoadingState :label="props.loadingLabel" />
+    </div>
+    <div
+        v-else
         :class="
             cn(
                 'data-table-frame',

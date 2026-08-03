@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Alert from '@/components/ui/Alert.vue';
@@ -41,8 +41,6 @@ function retry(): void {
 
 <template>
     <AppLayout :title="digest.snapshot.title">
-        <Head :title="digest.snapshot.title" />
-
         <div class="mx-auto flex w-full max-w-3xl flex-col gap-6">
             <div>
                 <BackLink :href="route('settings.slack-digests.index')">

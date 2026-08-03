@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Loader2 } from '@lucide/vue';
 import { cn } from '@/lib/utils';
 
 const props = withDefaults(
@@ -11,9 +12,11 @@ const props = withDefaults(
             | 'warning'
             | 'ghost'
             | 'danger';
-        size?: 'default' | 'compact' | 'icon';
+        size?: 'default' | 'compact' | 'icon' | 'icon-sm';
         class?: string;
         disabled?: boolean;
+        loading?: boolean;
+        loadingLabel?: string;
     }>(),
     {
         type: 'button',
@@ -21,6 +24,8 @@ const props = withDefaults(
         size: 'default',
         class: '',
         disabled: false,
+        loading: false,
+        loadingLabel: '',
     },
 );
 
@@ -41,13 +46,15 @@ const sizes = {
     default: 'h-10 gap-2 px-4',
     compact: 'h-8 gap-1.5 px-2.5',
     icon: 'size-10 p-0',
+    'icon-sm': 'size-8 p-0',
 };
 </script>
 
 <template>
     <button
         :type="props.type"
-        :disabled="props.disabled"
+        :disabled="props.disabled || props.loading"
+        :aria-busy="props.loading || undefined"
         :class="
             cn(
                 'inline-flex cursor-pointer items-center justify-center rounded-xl border text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
@@ -57,6 +64,10 @@ const sizes = {
             )
         "
     >
+        <Loader2 v-if="props.loading" :size="14" class="animate-spin" />
+        <span v-if="props.loadingLabel" class="sr-only">
+            {{ props.loadingLabel }}
+        </span>
         <slot />
     </button>
 </template>

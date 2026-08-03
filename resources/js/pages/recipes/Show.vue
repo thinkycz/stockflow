@@ -7,6 +7,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import BackLink from '@/components/ui/BackLink.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
+import Tabs from '@/components/ui/Tabs.vue';
 import RecipeInstructionList, {
     type RecipeInstructionData,
 } from '@/components/recipes/RecipeInstructionList.vue';
@@ -30,9 +31,18 @@ const props = defineProps<{
 
 const { t } = useI18n();
 const route = useRoute();
-const selectedVariantIndex = ref(0);
+const selectedVariantId = ref(String(props.recipe.variants[0]?.id ?? ''));
 const selectedVariant = computed(
-    () => props.recipe.variants[selectedVariantIndex.value],
+    () =>
+        props.recipe.variants.find(
+            (variant) => String(variant.id) === selectedVariantId.value,
+        ) ?? props.recipe.variants[0],
+);
+const variantTabs = computed(() =>
+    props.recipe.variants.map((variant) => ({
+        value: String(variant.id),
+        label: variant.name || t('recipes.default_variant'),
+    })),
 );
 
 function setArchived(archived: boolean): void {
@@ -100,31 +110,13 @@ function setArchived(archived: boolean): void {
             </header>
 
             <section v-if="selectedVariant" class="mx-auto w-full max-w-3xl">
-                <div
+                <Tabs
                     v-if="recipe.variants.length > 1"
-                    class="mb-3 flex flex-wrap gap-1 rounded-xl bg-surface-container-low p-1"
-                    role="tablist"
-                    :aria-label="t('recipes.variant_name')"
-                >
-                    <Button
-                        v-for="(variant, index) in recipe.variants"
-                        :key="variant.id"
-                        type="button"
-                        role="tab"
-                        variant="ghost"
-                        size="compact"
-                        :aria-selected="selectedVariantIndex === index"
-                        class="rounded-lg px-4 py-1.5 text-sm font-semibold transition"
-                        :class="
-                            selectedVariantIndex === index
-                                ? 'bg-white text-primary shadow-sm'
-                                : 'text-on-surface-variant hover:text-on-surface'
-                        "
-                        @click="selectedVariantIndex = index"
-                    >
-                        {{ variant.name || t('recipes.default_variant') }}
-                    </Button>
-                </div>
+                    v-model="selectedVariantId"
+                    class="mb-3"
+                    :items="variantTabs"
+                    :label="t('recipes.variant_name')"
+                />
                 <RecipeInstructionList
                     :instructions="selectedVariant.instructions"
                 />

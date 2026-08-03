@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -50,8 +50,6 @@ const totals = computed(() => ({
 
 <template>
     <AppLayout :title="t('statements.history.title')">
-        <Head :title="t('statements.history.title')" />
-
         <div class="flex flex-col gap-6">
             <header
                 class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"

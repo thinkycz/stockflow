@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { ChevronLeft, ChevronRight } from '@lucide/vue';
+import {
+    ChevronsLeft,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsRight,
+} from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
 import { cn } from '@/lib/utils';
@@ -57,6 +62,14 @@ const window = computed<number[]>(() => {
         <div class="flex items-center gap-1.5">
             <Link
                 v-if="currentPage > 1"
+                :href="buildHref(1)"
+                :class="cn(linkClass)"
+                :aria-label="t('common.first_page')"
+            >
+                <ChevronsLeft :size="14" />
+            </Link>
+            <Link
+                v-if="currentPage > 1"
                 :href="buildHref(currentPage - 1)"
                 :class="cn(linkClass)"
                 :aria-label="t('common.previous')"
@@ -86,6 +99,14 @@ const window = computed<number[]>(() => {
                 :aria-label="t('common.next')"
             >
                 <ChevronRight :size="14" />
+            </Link>
+            <Link
+                v-if="currentPage < lastPage"
+                :href="buildHref(lastPage)"
+                :class="cn(linkClass)"
+                :aria-label="t('common.last_page')"
+            >
+                <ChevronsRight :size="14" />
             </Link>
         </div>
     </div>

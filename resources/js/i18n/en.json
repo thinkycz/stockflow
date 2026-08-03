@@ -32,7 +32,8 @@
         "password": "Password",
         "logout": "Log out",
         "menu": "Menu",
-        "close": "Close"
+        "close": "Close",
+        "main": "Main navigation"
     },
     "store_switcher": {
         "label": "Active store",
@@ -56,7 +57,7 @@
         "search": "Search",
         "apply": "Apply",
         "export": "Export",
-        "loading": "Loading...",
+        "loading": "Loading…",
         "no_results": "No results found.",
         "results": "results",
         "searching_for": "Searching for",
@@ -68,7 +69,9 @@
         "detail": "Detail",
         "saving": "Saving…",
         "move_up": "Move up",
-        "move_down": "Move down"
+        "move_down": "Move down",
+        "first_page": "First page",
+        "last_page": "Last page"
     },
     "auth": {
         "login": {
@@ -104,7 +107,10 @@
         "title": "Payslips",
         "subtitle": "Monthly payroll report for {store}.",
         "month": "Month",
-        "status": { "open": "In progress", "closed": "Closed" },
+        "status": {
+            "open": "In progress",
+            "closed": "Closed"
+        },
         "worker": "Worker",
         "planned": "Planned",
         "actual": "Actual",
@@ -118,7 +124,10 @@
         "amount": "Amount",
         "reason": "Reason",
         "adjustment_type": "Adjustment type",
-        "adjustment_types": { "tip": "Tips", "deduction": "Deduction" },
+        "adjustment_types": {
+            "tip": "Tips",
+            "deduction": "Deduction"
+        },
         "add_adjustment": "Add adjustment",
         "add_worker": "Add worker",
         "select_worker": "Select a worker",
@@ -166,11 +175,17 @@
         "title": "Income & expenses",
         "subtitle": "Monthly financial report for {store}.",
         "month": "Month",
-        "status": { "open": "Open", "closed": "Closed" },
+        "status": {
+            "open": "Open",
+            "closed": "Closed"
+        },
         "total_income": "Total income",
         "total_expenses": "Total expenses",
         "profit": "Profit",
-        "sections": { "income": "Income", "expense": "Expenses" },
+        "sections": {
+            "income": "Income",
+            "expense": "Expenses"
+        },
         "date": "Date",
         "item": "Item",
         "source": "Source",
@@ -295,7 +310,8 @@
         "status": {
             "active": "Active",
             "expired": "Expired",
-            "trash": "Trash"
+            "trash": "Trash",
+            "label": "Status"
         },
         "labels": {
             "information": "Information",
@@ -404,29 +420,6 @@
             "low_stock": "At risk within 7 days",
             "last_inventory": "Last inventory count",
             "today_movements": "Today's movements"
-        },
-        "month_flow": {
-            "title": "Monthly Flow",
-            "subtitle": "Purchases and actual consumption this month.",
-            "incoming": "Purchases",
-            "outgoing": "Consumption"
-        },
-        "stock_status": {
-            "title": "Stock Status",
-            "subtitle": "Breakdown of items in this store by availability."
-        },
-        "top_consumed": {
-            "title": "Most Consumed",
-            "subtitle": "Top 5 items by recorded consumption over the last 30 days.",
-            "item": "Item",
-            "quantity": "Quantity",
-            "value": "Value",
-            "empty": "No consumption was recorded in the last 30 days."
-        },
-        "statements": {
-            "title": "Recent Statements",
-            "subtitle": "Latest statements for this store.",
-            "empty": "No statements yet."
         },
         "recent": {
             "title": "Recent Stock Movements",
@@ -802,8 +795,12 @@
                 "value": "Inventory value",
                 "items": "Items on hand"
             },
-            "consumption": { "title": "Consumption cost" },
-            "risk": { "title": "At-risk items" },
+            "consumption": {
+                "title": "Consumption cost"
+            },
+            "risk": {
+                "title": "At-risk items"
+            },
             "coverage": {
                 "title": "Inventory count coverage",
                 "last_inventory": "Last inventory count"
@@ -823,7 +820,9 @@
                 "stockout": "Predicted stockout",
                 "status": "Status"
             },
-            "classifications": { "title": "Losses and corrections by reason" },
+            "classifications": {
+                "title": "Losses and corrections by reason"
+            },
             "top_consumed": {
                 "title": "Top consumed items",
                 "subtitle": "Items with the largest absolute stock change in the period.",
@@ -1107,6 +1106,7 @@
         "prev_month": "Previous month",
         "next_month": "Next month",
         "no_store": "Select a store first.",
+        "no_store_help": "Choose the active store from the main navigation to view its shift calendar.",
         "day_title": "Shifts for {date}",
         "existing_shifts": "Existing shifts",
         "add_shift": "Add shift",
@@ -1212,7 +1212,10 @@
         "dashboard_subtitle": "Morning and afternoon tasks for {date}",
         "retail_required": "Checklists are available only for a retail store.",
         "retail_required_help": "Select an active non-warehouse store in the sidebar.",
-        "tabs": { "templates": "Templates", "history": "History" },
+        "tabs": {
+            "templates": "Templates",
+            "history": "History"
+        },
         "every_day": "Every day",
         "shifts": {
             "morning": "Morning shift",

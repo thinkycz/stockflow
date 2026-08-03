@@ -14,7 +14,6 @@ use App\Models\AttendanceSession;
 use App\Models\InventorySession;
 use App\Models\NoticeboardCard;
 use App\Models\Shift;
-use App\Models\Statement;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\StoreItem;
@@ -31,7 +30,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use stdClass;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -60,10 +58,7 @@ class DashboardController
                     'name' => $activeStore->getName(),
                 ] : null,
                 'metrics' => null,
-                'stock_status' => null,
-                'top_consumed' => [],
                 'recent_movements' => [],
-                'recent_statements' => [],
                 'operations' => $activeStore instanceof Store
                     ? $this->limitedOperations($user->resolveScopeUser(), $activeStore)
                     : null,
@@ -77,8 +72,6 @@ class DashboardController
         $now = Carbon::now();
         $startOfToday = $now->copy()->startOfDay();
         $startOfTodayString = $startOfToday->toDateTimeString();
-        $startOfMonthString = $now->copy()->startOfMonth()->toDateString();
-        $thirtyDaysAgoString = $now->copy()->subDays(30)->toDateTimeString();
 
         if (!$activeStore instanceof Store) {
             return Inertia::render('Dashboard', $this->emptyPayload($noticeboard));
@@ -94,35 +87,18 @@ class DashboardController
 
         $itemsInStore = StoreItem::query()->where('store_id', $storeId)->with('item')->get();
 
-        $itemsCount = $itemsInStore->count();
-
-        $stockStatus = [
-            'in_stock' => 0,
-            'low_stock' => 0,
-            'out_of_stock' => 0,
-            'no_data' => 0,
-        ];
         $lowStockCount = 0;
         $predictions = $inventoryService->predictionsForStore($activeStore, $itemsInStore);
 
         foreach ($itemsInStore as $row) {
             $prediction = $predictions[$row->getItemId()];
 
-            if ($prediction['status'] === InventorySessionService::STATUS_OUT) {
-                ++$stockStatus['out_of_stock'];
-            } elseif ($prediction['status'] === InventorySessionService::STATUS_SOON) {
-                ++$stockStatus['low_stock'];
+            if ($prediction['status'] === InventorySessionService::STATUS_SOON) {
                 ++$lowStockCount;
-            } elseif ($prediction['status'] === InventorySessionService::STATUS_NO_DATA) {
-                ++$stockStatus['no_data'];
-            } else {
-                ++$stockStatus['in_stock'];
             }
         }
 
         $todayMovements = $this->countMovementsForStore($owner, $storeId, $startOfTodayString);
-
-        $topConsumed = $this->topConsumed($owner, $storeId, $thirtyDaysAgoString);
 
         $recentMovements = StockMovement::query();
         StockMovement::scopeForUser($recentMovements, $owner);
@@ -164,26 +140,6 @@ class DashboardController
             ])
             ->all();
 
-        $recentStatementsQuery = Statement::query();
-        Statement::scopeForUser($recentStatementsQuery, $owner);
-        Statement::scopeForStore($recentStatementsQuery, $storeId);
-        $recentStatements = $recentStatementsQuery
-            ->withSum('days as period_total', 'total')
-            ->orderByDesc('year')
-            ->orderByDesc('month')
-            ->orderByDesc('id')
-            ->limit(3)
-            ->get()
-            ->map(static fn(Statement $statement): array => [
-                'id' => $statement->getKey(),
-                'year' => $statement->getYear(),
-                'month' => $statement->getMonth(),
-                'total' => Typer::parseFloat($statement->getAttribute('period_total')),
-            ])
-            ->all();
-
-        $monthIncomingValue = $this->monthValueForStore($owner, $storeId, StockMovementTypeEnum::INCOMING, $startOfMonthString, 'store_id');
-        $monthOutgoingValue = $this->consumptionValueForStore($owner, $storeId, $startOfMonthString);
         $lastInventory = InventorySession::query()
             ->where('user_id', $owner->getKey())
             ->where('store_id', $storeId)
@@ -198,17 +154,11 @@ class DashboardController
             ],
             'metrics' => [
                 'inventory_value' => $inventoryValue,
-                'items_count' => $itemsCount,
                 'low_stock_items' => $lowStockCount,
                 'today_movements' => $todayMovements,
-                'month_incoming' => $monthIncomingValue,
-                'month_outgoing' => $monthOutgoingValue,
                 'last_inventory_at' => $lastInventory?->getCountedAt()->toJSON(),
             ],
-            'stock_status' => $stockStatus,
-            'top_consumed' => $topConsumed,
             'recent_movements' => $recentMovements,
-            'recent_statements' => $recentStatements,
             'operations' => null,
             'is_admin' => true,
             'noticeboard' => $noticeboard,
@@ -252,86 +202,6 @@ class DashboardController
     }
 
     /**
-     * Sum total_value of the given movement type scoped to the active
-     * store since the supplied boundary.
-     */
-    private function monthValueForStore(
-        User $user,
-        int $storeId,
-        StockMovementTypeEnum $type,
-        string $since,
-        string $storeColumn,
-    ): float {
-        $query = StockMovement::query();
-        StockMovement::scopeForUser($query, $user);
-        StockMovement::scopeOfType($query, $type);
-        StockMovement::scopeFromDate($query, $since);
-        $query->whereNull('reversed_at');
-
-        return (float) $query
-            ->where($storeColumn, $storeId)
-            ->sum('total_value');
-    }
-
-    /**
-     * Top 5 consumed items for the active store.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function topConsumed(User $user, int $storeId, string $since): array
-    {
-        $rows = DB::table('stock_movement_items')
-            ->join('stock_movements as movements', 'movements.id', '=', 'stock_movement_items.stock_movement_id')
-            ->join('items', 'items.id', '=', 'stock_movement_items.item_id')
-            ->where('items.user_id', $user->getKey())
-            ->where('movements.user_id', $user->getKey())
-            ->where('movements.store_id', $storeId)
-            ->where('movements.occurred_at', '>=', $since)
-            ->whereNull('movements.reversed_at')
-            ->where('stock_movement_items.classification', 'consumption')
-            ->select(
-                'items.id',
-                'items.title',
-                'items.sku',
-                DB::raw('SUM(ABS(stock_movement_items.quantity_difference)) as total_quantity'),
-                DB::raw('SUM(stock_movement_items.total) as total_value'),
-                DB::raw('COUNT(*) as rows_count'),
-            )
-            ->groupBy('items.id', 'items.title', 'items.sku')
-            ->orderByDesc('total_quantity')
-            ->limit(5)
-            ->get();
-
-        return $rows->map(static function (stdClass $row): array {
-            $values = (array) $row;
-
-            return [
-                'item_id' => Typer::assertInt($values['id'] ?? null),
-                'title' => Typer::assertString($values['title'] ?? null),
-                'sku' => Typer::parseNullableString($values['sku'] ?? null),
-                'total_quantity' => Typer::parseFloat($values['total_quantity'] ?? null),
-                'total_value' => Typer::parseFloat($values['total_value'] ?? null),
-                'rows_count' => Typer::parseInt($values['rows_count'] ?? null),
-            ];
-        })->all();
-    }
-
-    /**
-     * Consumption value classified at line level.
-     */
-    private function consumptionValueForStore(User $user, int $storeId, string $since): float
-    {
-        return (float) DB::table('stock_movement_items')
-            ->join('stock_movements', 'stock_movements.id', '=', 'stock_movement_items.stock_movement_id')
-            ->where('stock_movements.user_id', $user->getKey())
-            ->where('stock_movements.store_id', $storeId)
-            ->where('stock_movements.occurred_at', '>=', $since)
-            ->whereNull('stock_movements.reversed_at')
-            ->where('stock_movement_items.classification', 'consumption')
-            ->sum('stock_movement_items.total');
-    }
-
-    /**
      * Payload returned when the user has no active store. Numeric
      * metrics are zeroed out and lists are empty so the page can
      * render without errors.
@@ -346,22 +216,11 @@ class DashboardController
             'active_store' => null,
             'metrics' => [
                 'inventory_value' => 0.0,
-                'items_count' => 0,
                 'low_stock_items' => 0,
                 'today_movements' => 0,
-                'month_incoming' => 0.0,
-                'month_outgoing' => 0.0,
                 'last_inventory_at' => null,
             ],
-            'stock_status' => [
-                'in_stock' => 0,
-                'low_stock' => 0,
-                'out_of_stock' => 0,
-                'no_data' => 0,
-            ],
-            'top_consumed' => [],
             'recent_movements' => [],
-            'recent_statements' => [],
             'operations' => null,
             'is_admin' => true,
             'noticeboard' => $noticeboard,

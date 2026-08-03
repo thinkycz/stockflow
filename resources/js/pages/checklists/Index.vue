@@ -22,9 +22,11 @@ import EmptyState from '@/components/ui/EmptyState.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
+import Tabs from '@/components/ui/Tabs.vue';
 import { useDialog } from '@/composables/useDialog';
 import { useRoute } from '@/composables/useRoute';
 import { withActionErrorToast } from '@/lib/action-errors';
@@ -135,6 +137,10 @@ const statusOptions = computed(() =>
                 : t(`checklists.status.${value}`),
     })),
 );
+const primaryTabs = computed(() => [
+    { value: 'templates', label: t('checklists.tabs.templates') },
+    { value: 'history', label: t('checklists.tabs.history') },
+]);
 const historyDetailItems = computed(() => ({
     morning:
         props.history_detail?.items.filter(
@@ -219,6 +225,10 @@ function applyHistoryFilters(): void {
         { preserveState: true },
     );
 }
+function selectPrimaryTab(tab: string): void {
+    if (tab !== 'templates' && tab !== 'history') return;
+    router.get(route('checklists.index', { tab }), {}, { preserveState: true });
+}
 function detailUrl(dayId: number): string {
     return route('checklists.index', {
         tab: 'history',
@@ -263,17 +273,14 @@ async function changeExcuse(excused: boolean): Promise<void> {
 <template>
     <AppLayout :title="t('checklists.title')">
         <div class="space-y-6">
-            <div class="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <h1 class="font-heading text-2xl font-bold text-on-surface">
-                        {{ t('checklists.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('checklists.subtitle') }}
-                    </p>
-                </div>
-                <StoreContextIndicator v-if="active_store" />
-            </div>
+            <PageHeader
+                :title="t('checklists.title')"
+                :subtitle="t('checklists.subtitle')"
+            >
+                <template v-if="active_store" #actions>
+                    <StoreContextIndicator />
+                </template>
+            </PageHeader>
 
             <EmptyState
                 v-if="!active_store || active_store.is_warehouse"
@@ -282,28 +289,13 @@ async function changeExcuse(excused: boolean): Promise<void> {
             />
 
             <template v-else>
-                <div class="flex gap-2 border-b border-outline-glass">
-                    <Link
-                        :href="route('checklists.index', { tab: 'templates' })"
-                        :class="[
-                            'px-4 py-3 text-sm font-semibold',
-                            filters.tab === 'templates'
-                                ? 'border-b-2 border-primary text-primary'
-                                : 'text-on-surface-variant',
-                        ]"
-                        >{{ t('checklists.tabs.templates') }}</Link
-                    >
-                    <Link
-                        :href="route('checklists.index', { tab: 'history' })"
-                        :class="[
-                            'px-4 py-3 text-sm font-semibold',
-                            filters.tab === 'history'
-                                ? 'border-b-2 border-primary text-primary'
-                                : 'text-on-surface-variant',
-                        ]"
-                        >{{ t('checklists.tabs.history') }}</Link
-                    >
-                </div>
+                <Tabs
+                    :model-value="filters.tab"
+                    :items="primaryTabs"
+                    :label="t('checklists.title')"
+                    variant="underline"
+                    @update:model-value="selectPrimaryTab"
+                />
 
                 <template v-if="filters.tab === 'templates'">
                     <div class="flex flex-wrap gap-2">
@@ -541,7 +533,8 @@ async function changeExcuse(excused: boolean): Promise<void> {
                     ? `${t('checklists.history.detail')} · ${history_detail.date}`
                     : ''
             "
-            class="max-h-[calc(100vh-2rem)] max-w-4xl overflow-hidden"
+            size="full"
+            class="max-h-[calc(100vh-2rem)] overflow-hidden"
             body-class="max-h-[calc(100vh-9rem)] overflow-y-auto p-0"
             @close="closeDetail"
         >

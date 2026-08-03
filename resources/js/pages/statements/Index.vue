@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Link, router, useForm } from '@inertiajs/vue3';
 import { Clock3, Save, UserRound } from '@lucide/vue';
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -16,6 +16,7 @@ import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import MonthPicker from '@/components/ui/MonthPicker.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { formatCzechDate } from '@/composables/useCzechDate';
@@ -407,50 +408,43 @@ function submitPendingSave(closeAttendances: boolean): void {
 
 <template>
     <AppLayout :title="t('statements.title')">
-        <Head :title="t('statements.title')" />
-
         <div class="flex flex-col gap-6">
-            <header
-                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            <PageHeader
+                :title="t('statements.title')"
+                :subtitle="t('statements.subtitle')"
             >
-                <div>
-                    <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                    >
-                        {{ t('statements.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('statements.subtitle') }}
-                    </p>
+                <template #context>
                     <StoreContextIndicator />
-                </div>
-                <div
-                    class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
-                >
-                    <FilterField
-                        for="statement_month"
-                        :label="t('statements.month')"
+                </template>
+                <template #actions>
+                    <div
+                        class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
                     >
-                        <MonthPicker
-                            id="statement_month"
-                            :model-value="monthValue"
-                            @change="selectMonth"
-                        />
-                    </FilterField>
-                    <Link
-                        v-if="props.statement"
-                        :href="
-                            route('statements.history', {
-                                statement: props.statement.id,
-                            })
-                        "
-                    >
-                        <Button variant="secondary">
-                            {{ t('statements.actions.history') }} →
-                        </Button>
-                    </Link>
-                </div>
-            </header>
+                        <FilterField
+                            for="statement_month"
+                            :label="t('statements.month')"
+                        >
+                            <MonthPicker
+                                id="statement_month"
+                                :model-value="monthValue"
+                                @change="selectMonth"
+                            />
+                        </FilterField>
+                        <Link
+                            v-if="props.statement"
+                            :href="
+                                route('statements.history', {
+                                    statement: props.statement.id,
+                                })
+                            "
+                        >
+                            <Button variant="secondary">
+                                {{ t('statements.actions.history') }} →
+                            </Button>
+                        </Link>
+                    </div>
+                </template>
+            </PageHeader>
 
             <Card v-if="showTodayPanel && props.today_day" padded>
                 <form class="space-y-5" @submit.prevent="saveToday">

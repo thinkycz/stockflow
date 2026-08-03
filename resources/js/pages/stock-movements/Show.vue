@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import { ArrowLeftRight, Undo2 } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -105,8 +105,6 @@ async function reverseMovement(id: number): Promise<void> {
 
 <template>
     <AppLayout :title="movement.number">
-        <Head :title="movement.number" />
-
         <div class="flex flex-col gap-6">
             <div>
                 <BackLink :href="route('stock-movements.index')">

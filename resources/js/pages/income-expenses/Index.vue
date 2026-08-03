@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Link, router, useForm } from '@inertiajs/vue3';
 import {
     ArrowDownCircle,
     ArrowUpCircle,
@@ -25,6 +25,7 @@ import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import MonthPicker from '@/components/ui/MonthPicker.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import Textarea from '@/components/ui/Textarea.vue';
@@ -298,19 +299,17 @@ function rowHref(row: FinancialRow): string | null {
 
 <template>
     <AppLayout :title="t('income_expenses.title')">
-        <Head :title="t('income_expenses.title')" />
-
         <div class="mx-auto flex w-full max-w-7xl flex-col gap-6">
-            <header
-                class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+            <PageHeader
+                :title="t('income_expenses.title')"
+                :subtitle="
+                    t('income_expenses.subtitle', {
+                        store: active_store?.name ?? '—',
+                    })
+                "
             >
-                <div>
-                    <div class="flex items-center gap-3">
-                        <h1
-                            class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                        >
-                            {{ t('income_expenses.title') }}
-                        </h1>
+                <template #context>
+                    <div class="flex flex-wrap items-center gap-3">
                         <Badge
                             v-if="financial_report"
                             :variant="
@@ -325,65 +324,65 @@ function rowHref(row: FinancialRow): string | null {
                                 )
                             }}
                         </Badge>
+                        <StoreContextIndicator />
                     </div>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{
-                            t('income_expenses.subtitle', {
-                                store: active_store?.name ?? '—',
-                            })
-                        }}
-                    </p>
-                    <StoreContextIndicator />
-                </div>
-                <div class="flex flex-wrap items-end gap-2">
-                    <FilterField
-                        for="income_expenses_month"
-                        :label="t('income_expenses.month')"
-                    >
-                        <MonthPicker
-                            id="income_expenses_month"
-                            :model-value="`${filters.year}-${String(filters.month).padStart(2, '0')}`"
-                            @change="changeMonth"
-                        />
-                    </FilterField>
-                    <Link
-                        v-if="financial_report"
-                        :href="
-                            route('income-expenses.recurring-expenses.index', {
-                                year: filters.year,
-                                month: filters.month,
-                            })
-                        "
-                    >
-                        <Button variant="secondary">
-                            <CalendarClock :size="15" />{{
-                                t('income_expenses.recurring.manage')
-                            }}
-                        </Button>
-                    </Link>
-                    <template v-if="financial_report?.report.status === 'open'">
-                        <Button
-                            variant="warning"
-                            :disabled="lifecycleProcessing"
-                            @click="lifecycle('close')"
+                </template>
+                <template #actions>
+                    <div class="flex flex-wrap items-end gap-2">
+                        <FilterField
+                            for="income_expenses_month"
+                            :label="t('income_expenses.month')"
                         >
-                            <LockKeyhole :size="15" />{{
-                                t('income_expenses.close')
+                            <MonthPicker
+                                id="income_expenses_month"
+                                :model-value="`${filters.year}-${String(filters.month).padStart(2, '0')}`"
+                                @change="changeMonth"
+                            />
+                        </FilterField>
+                        <Link
+                            v-if="financial_report"
+                            :href="
+                                route(
+                                    'income-expenses.recurring-expenses.index',
+                                    {
+                                        year: filters.year,
+                                        month: filters.month,
+                                    },
+                                )
+                            "
+                        >
+                            <Button variant="secondary">
+                                <CalendarClock :size="15" />{{
+                                    t('income_expenses.recurring.manage')
+                                }}
+                            </Button>
+                        </Link>
+                        <template
+                            v-if="financial_report?.report.status === 'open'"
+                        >
+                            <Button
+                                variant="warning"
+                                :disabled="lifecycleProcessing"
+                                @click="lifecycle('close')"
+                            >
+                                <LockKeyhole :size="15" />{{
+                                    t('income_expenses.close')
+                                }}
+                            </Button>
+                        </template>
+                        <Button
+                            v-if="financial_report?.report.status === 'closed'"
+                            variant="secondary"
+                            :disabled="lifecycleProcessing"
+                            @click="lifecycle('reopen')"
+                        >
+                            <UnlockKeyhole :size="15" />{{
+                                t('income_expenses.reopen')
                             }}
                         </Button>
-                    </template>
-                    <Button
-                        v-if="financial_report?.report.status === 'closed'"
-                        variant="secondary"
-                        :disabled="lifecycleProcessing"
-                        @click="lifecycle('reopen')"
-                    >
-                        <UnlockKeyhole :size="15" />{{
-                            t('income_expenses.reopen')
-                        }}
-                    </Button>
-                </div>
-            </header>
+                    </div>
+                </template>
+            </PageHeader>
 
             <EmptyState
                 v-if="!financial_report"

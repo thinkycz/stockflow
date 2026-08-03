@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { router, useForm } from '@inertiajs/vue3';
 import {
     CalendarDays,
     ChevronLeft,
@@ -26,6 +26,7 @@ import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import ShiftMonthCalendar from '@/components/ShiftMonthCalendar.vue';
@@ -849,57 +850,53 @@ async function copyText(value: string): Promise<void> {
 
 <template>
     <AppLayout :title="t('shifts.title')">
-        <Head :title="t('shifts.title')" />
-
         <div class="flex flex-col gap-6">
-            <header
-                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            <PageHeader
+                :title="t('shifts.title')"
+                :subtitle="t('shifts.subtitle')"
             >
-                <div>
-                    <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                    >
-                        {{ t('shifts.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('shifts.subtitle') }}
-                    </p>
+                <template #context>
                     <StoreContextIndicator />
-                </div>
-                <div
-                    v-if="store"
-                    class="flex flex-col items-start gap-2 sm:items-end"
-                >
-                    <div class="flex flex-wrap gap-2">
-                        <Button
-                            v-if="is_admin"
-                            variant="secondary"
-                            type="button"
-                            @click="openPresetModal"
+                </template>
+                <template #actions>
+                    <div
+                        v-if="store"
+                        class="flex flex-col items-start gap-2 sm:items-end"
+                    >
+                        <div class="flex flex-wrap gap-2">
+                            <Button
+                                v-if="is_admin"
+                                variant="secondary"
+                                type="button"
+                                @click="openPresetModal"
+                            >
+                                <Settings2 :size="14" />
+                                {{ t('shifts.presets.manage') }}
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                type="button"
+                                :disabled="copyingPublicLink"
+                                @click="copyPublicLink"
+                            >
+                                <Check v-if="publicLinkCopied" :size="14" />
+                                <Link2 v-else :size="14" />
+                                {{
+                                    publicLinkCopied
+                                        ? t('shifts.public_link_copied')
+                                        : t('shifts.copy_public_link')
+                                }}
+                            </Button>
+                        </div>
+                        <p
+                            v-if="publicLinkError"
+                            class="text-xs text-error-red"
                         >
-                            <Settings2 :size="14" />
-                            {{ t('shifts.presets.manage') }}
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            type="button"
-                            :disabled="copyingPublicLink"
-                            @click="copyPublicLink"
-                        >
-                            <Check v-if="publicLinkCopied" :size="14" />
-                            <Link2 v-else :size="14" />
-                            {{
-                                publicLinkCopied
-                                    ? t('shifts.public_link_copied')
-                                    : t('shifts.copy_public_link')
-                            }}
-                        </Button>
+                            {{ publicLinkError }}
+                        </p>
                     </div>
-                    <p v-if="publicLinkError" class="text-xs text-error-red">
-                        {{ publicLinkError }}
-                    </p>
-                </div>
-            </header>
+                </template>
+            </PageHeader>
 
             <Card v-if="store && is_admin" padded>
                 <div
@@ -1008,7 +1005,11 @@ async function copyText(value: string): Promise<void> {
                     </div>
                 </div>
 
-                <EmptyState v-if="!store" :title="t('shifts.no_store')" />
+                <EmptyState
+                    v-if="!store"
+                    :title="t('shifts.no_store')"
+                    :description="t('shifts.no_store_help')"
+                />
 
                 <ShiftMonthCalendar
                     v-else
@@ -1278,7 +1279,11 @@ async function copyText(value: string): Promise<void> {
                         class="flex items-center justify-end gap-3 border-t border-outline-glass pt-4"
                     >
                         <FieldError :message="overlapError" />
-                        <Button type="submit" :disabled="form.processing">
+                        <Button
+                            type="submit"
+                            :loading="form.processing"
+                            :loading-label="t('common.saving')"
+                        >
                             <Plus :size="14" />
                             {{
                                 editingShiftId !== null
@@ -1301,7 +1306,7 @@ async function copyText(value: string): Promise<void> {
         <Modal
             :open="presetModalOpen"
             :title="t('shifts.presets.title')"
-            class="max-w-2xl"
+            size="lg"
             @close="closePresetModal"
         >
             <div class="space-y-5">
@@ -1410,7 +1415,11 @@ async function copyText(value: string): Promise<void> {
                     <div
                         class="flex justify-end border-t border-outline-glass pt-4"
                     >
-                        <Button type="submit" :disabled="presetForm.processing">
+                        <Button
+                            type="submit"
+                            :loading="presetForm.processing"
+                            :loading-label="t('common.saving')"
+                        >
                             <Plus :size="14" />
                             {{ t('common.save') }}
                         </Button>

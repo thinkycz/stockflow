@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import BackLink from '@/components/ui/BackLink.vue';
@@ -41,10 +40,6 @@ const route = useRoute();
 
 <template>
     <AppLayout :title="`${t('inventory_counts.session.title')} #${session.id}`">
-        <Head
-            :title="`${t('inventory_counts.session.title')} #${session.id}`"
-        />
-
         <div class="flex flex-col gap-6">
             <div>
                 <BackLink :href="route('inventory-counts.index')">

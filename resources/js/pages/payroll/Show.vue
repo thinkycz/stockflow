@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Link, router, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Pencil, Plus, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -197,8 +197,6 @@ async function removeWorker(): Promise<void> {
 
 <template>
     <AppLayout :title="payslip.worker_name">
-        <Head :title="`${t('payroll.print_title')} – ${payslip.worker_name}`" />
-
         <div class="mx-auto flex w-full max-w-7xl flex-col gap-6">
             <header class="flex flex-col gap-4 lg:flex-row lg:justify-between">
                 <div>

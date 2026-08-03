@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { CircleCheck, CircleOff, Plus, Pencil, Trash2 } from '@lucide/vue';
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button.vue';
 import Badge from '@/components/ui/Badge.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import SearchFilter from '@/components/ui/SearchFilter.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
@@ -74,41 +75,32 @@ async function destroyWorker(worker: WorkerRow): Promise<void> {
 
 <template>
     <AppLayout :title="t('workers.title')">
-        <Head :title="t('workers.title')" />
-
         <div class="flex flex-col gap-6">
-            <header
-                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            <PageHeader
+                :title="t('workers.title')"
+                :subtitle="t('workers.subtitle')"
             >
-                <div>
-                    <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
+                <template #actions>
+                    <div
+                        class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
                     >
-                        {{ t('workers.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('workers.subtitle') }}
-                    </p>
-                </div>
-                <div
-                    class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end"
-                >
-                    <SearchFilter
-                        id="workers_search"
-                        v-model="searchTerm"
-                        :label="t('common.search')"
-                        :placeholder="t('workers.search_placeholder')"
-                        :busy="filtering"
-                        class="w-full sm:w-72"
-                    />
-                    <Link :href="route('workers.create')">
-                        <Button>
-                            <Plus :size="14" />
-                            {{ t('workers.add_worker') }}
-                        </Button>
-                    </Link>
-                </div>
-            </header>
+                        <SearchFilter
+                            id="workers_search"
+                            v-model="searchTerm"
+                            :label="t('common.search')"
+                            :placeholder="t('workers.search_placeholder')"
+                            :busy="filtering"
+                            class="w-full sm:w-72"
+                        />
+                        <Link :href="route('workers.create')">
+                            <Button>
+                                <Plus :size="14" />
+                                {{ t('workers.add_worker') }}
+                            </Button>
+                        </Link>
+                    </div>
+                </template>
+            </PageHeader>
 
             <section class="space-y-4">
                 <EmptyState
@@ -125,7 +117,11 @@ async function destroyWorker(worker: WorkerRow): Promise<void> {
                         </Link>
                     </template>
                 </EmptyState>
-                <DataTable v-else>
+                <DataTable
+                    v-else
+                    :loading="filtering"
+                    :loading-label="t('common.loading')"
+                >
                     <thead>
                         <tr>
                             <th>

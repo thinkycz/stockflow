@@ -195,18 +195,16 @@ function submit(): void {
                                 >{{ instruction.text }}</span
                             >
                             <Button
-                                size="icon"
+                                size="icon-sm"
                                 variant="ghost"
-                                class="size-8"
                                 :disabled="index === 0"
                                 :aria-label="t('common.move_up')"
                                 @click="move(index, index - 1)"
                                 ><ArrowUp :size="14"
                             /></Button>
                             <Button
-                                size="icon"
+                                size="icon-sm"
                                 variant="ghost"
-                                class="size-8"
                                 :disabled="index === instructions.length - 1"
                                 :aria-label="t('common.move_down')"
                                 @click="move(index, index + 1)"

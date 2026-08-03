@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import BackLink from '@/components/ui/BackLink.vue';
@@ -122,8 +122,6 @@ async function restore(): Promise<void> {
 
 <template>
     <AppLayout :title="`${t('statements.session.title')} #${version.id}`">
-        <Head :title="`${t('statements.session.title')} #${version.id}`" />
-
         <div class="flex flex-col gap-6">
             <div>
                 <BackLink

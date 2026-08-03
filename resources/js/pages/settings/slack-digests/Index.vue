@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import BackLink from '@/components/ui/BackLink.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Card from '@/components/ui/Card.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import {
     formatCzechDate,
@@ -36,8 +37,6 @@ function statusVariant(
 
 <template>
     <AppLayout :title="t('settings.slack.digest_archive.title')">
-        <Head :title="t('settings.slack.digest_archive.title')" />
-
         <div class="mx-auto flex w-full max-w-3xl flex-col gap-6">
             <div>
                 <BackLink :href="route('settings.show')">
@@ -45,16 +44,10 @@ function statusVariant(
                 </BackLink>
             </div>
 
-            <header>
-                <h1
-                    class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                >
-                    {{ t('settings.slack.digest_archive.title') }}
-                </h1>
-                <p class="mt-1 text-sm text-on-surface-variant">
-                    {{ t('settings.slack.digest_archive.subtitle') }}
-                </p>
-            </header>
+            <PageHeader
+                :title="t('settings.slack.digest_archive.title')"
+                :subtitle="t('settings.slack.digest_archive.subtitle')"
+            />
 
             <EmptyState
                 v-if="digests.length === 0"

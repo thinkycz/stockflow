@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Inbox, Package, TrendingUp } from '@lucide/vue';
 import { computed } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { cn } from '@/lib/utils';
 
 const props = withDefaults(
@@ -17,8 +16,6 @@ const props = withDefaults(
         density: 'default',
     },
 );
-
-const { t } = useI18n();
 
 const iconComponent = computed(() => {
     switch (props.icon) {
@@ -65,9 +62,6 @@ const iconComponent = computed(() => {
                 class="mt-1 text-xs font-medium text-on-surface-variant"
             >
                 {{ description }}
-            </p>
-            <p v-else class="mt-1 text-xs font-medium text-on-surface-variant">
-                {{ t('common.no_results') }}
             </p>
         </div>
         <div v-if="$slots.action" class="mt-2">

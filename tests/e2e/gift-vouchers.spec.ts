@@ -29,7 +29,7 @@ test('admin issues and prints three-up vouchers and limited account redeems one'
     await page.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(page.getByText('Gift voucher branding saved.')).toBeVisible();
 
-    await page.getByRole('button', { name: 'Issue', exact: true }).click();
+    await page.getByRole('tab', { name: 'Issue', exact: true }).click();
     await page.getByLabel('Voucher count').fill('4');
     await page.getByLabel('Value of one voucher').fill('450');
     await page.getByRole('button', { name: 'Issue vouchers' }).click();
@@ -112,7 +112,7 @@ test('print media preserves three-up sheets for representative batch sizes', asy
     ];
 
     for (const batch of cases) {
-        await page.getByRole('button', { name: 'Issue', exact: true }).click();
+        await page.getByRole('tab', { name: 'Issue', exact: true }).click();
         await page.getByLabel('Voucher count').fill(String(batch.quantity));
         await page.getByLabel('Value of one voucher').fill('100');
         await page.getByRole('button', { name: 'Issue vouchers' }).click();

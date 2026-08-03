@@ -8,20 +8,25 @@ import {
     Info,
     Pencil,
     Plus,
-    Search,
     Trash2,
     TriangleAlert,
 } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
+import Alert from '@/components/ui/Alert.vue';
+import Badge from '@/components/ui/Badge.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
+import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
 import Pagination from '@/components/ui/Pagination.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
+import SearchFilter from '@/components/ui/SearchFilter.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
+import Tabs from '@/components/ui/Tabs.vue';
 import RichTextEditor from '@/components/noticeboard/RichTextEditor.vue';
 import { useRoute } from '@/composables/useRoute';
 import { useDialog } from '@/composables/useDialog';
@@ -90,6 +95,26 @@ const labelOptions = computed(() => [
         value,
         label: t(`noticeboard.labels.${value}`),
     })),
+]);
+
+const statusTabs = computed(() => [
+    {
+        value: 'active',
+        label: t('noticeboard.status.active'),
+    },
+    {
+        value: 'expired',
+        label: t('noticeboard.status.expired'),
+    },
+    ...(props.noticeboard.can_view_trash
+        ? [
+              {
+                  value: 'trash',
+                  label: t('noticeboard.status.trash'),
+                  icon: Trash2,
+              },
+          ]
+        : []),
 ]);
 
 watch(
@@ -285,73 +310,45 @@ function cardClass(
 
 <template>
     <section>
-        <div
-            class="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+        <PageHeader
+            class="mb-5"
+            :title="t('noticeboard.title')"
+            :subtitle="
+                activeStore
+                    ? t('noticeboard.subtitle')
+                    : t('noticeboard.no_store')
+            "
         >
-            <div>
-                <h1
-                    class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                >
-                    {{ t('noticeboard.title') }}
-                </h1>
-                <p class="mt-1 text-sm text-on-surface-variant">
-                    {{
-                        activeStore
-                            ? t('noticeboard.subtitle')
-                            : t('noticeboard.no_store')
-                    }}
-                </p>
+            <template #context>
                 <StoreContextIndicator />
-            </div>
-            <Button :disabled="!activeStore" @click="openCreate">
-                <Plus :size="16" />
-                {{ t('noticeboard.add') }}
-            </Button>
-        </div>
+            </template>
+            <template #actions>
+                <Button :disabled="!activeStore" @click="openCreate">
+                    <Plus :size="16" />
+                    {{ t('noticeboard.add') }}
+                </Button>
+            </template>
+        </PageHeader>
 
         <template v-if="activeStore">
             <div
                 class="mb-5 grid gap-3 md:grid-cols-[minmax(14rem,1fr)_13rem_auto]"
             >
-                <div class="relative">
-                    <Search
-                        :size="15"
-                        class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
-                    />
-                    <Input
-                        v-model="search"
-                        type="search"
-                        :placeholder="t('noticeboard.filters.search')"
-                        class="pl-9"
-                    />
-                </div>
+                <SearchFilter
+                    id="noticeboard-search"
+                    v-model="search"
+                    :label="t('noticeboard.filters.search')"
+                    :placeholder="t('noticeboard.filters.search')"
+                />
                 <Select v-model="label" :options="labelOptions" />
-                <div class="flex flex-wrap gap-1">
-                    <Button
-                        v-for="status in ['active', 'expired'] as const"
-                        :key="status"
-                        :variant="
-                            noticeboard.filters.status === status
-                                ? 'primary'
-                                : 'secondary'
-                        "
-                        @click="changeStatus(status)"
-                    >
-                        {{ t(`noticeboard.status.${status}`) }}
-                    </Button>
-                    <Button
-                        v-if="noticeboard.can_view_trash"
-                        :variant="
-                            noticeboard.filters.status === 'trash'
-                                ? 'primary'
-                                : 'secondary'
-                        "
-                        @click="changeStatus('trash')"
-                    >
-                        <Trash2 :size="14" />
-                        {{ t('noticeboard.status.trash') }}
-                    </Button>
-                </div>
+                <Tabs
+                    :model-value="noticeboard.filters.status"
+                    :items="statusTabs"
+                    :label="t('noticeboard.status.label')"
+                    @update:model-value="
+                        changeStatus($event as 'active' | 'expired' | 'trash')
+                    "
+                />
             </div>
 
             <EmptyState
@@ -382,8 +379,8 @@ function cardClass(
                     :data-card-size="card.size"
                 >
                     <div class="flex items-start justify-between gap-3">
-                        <span
-                            class="inline-flex items-center gap-1.5 rounded-full bg-white/60 px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm"
+                        <Badge
+                            class="bg-white/60 py-1.5 text-slate-700 shadow-sm"
                             :title="t(`noticeboard.labels.${card.label}`)"
                         >
                             <component
@@ -392,7 +389,7 @@ function cardClass(
                                 aria-hidden="true"
                             />
                             {{ t(`noticeboard.labels.${card.label}`) }}
-                        </span>
+                        </Badge>
                         <div
                             class="flex opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                             @click.stop
@@ -403,8 +400,7 @@ function cardClass(
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    size="icon"
-                                    class="size-8"
+                                    size="icon-sm"
                                     :aria-label="t('noticeboard.restore')"
                                     @click="restore(card)"
                                 >
@@ -412,9 +408,8 @@ function cardClass(
                                 </Button>
                                 <Button
                                     type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    class="size-8 text-error-red hover:text-error-red"
+                                    variant="danger"
+                                    size="icon-sm"
                                     :aria-label="t('noticeboard.force_delete')"
                                     @click="forceDestroy(card)"
                                 >
@@ -425,8 +420,7 @@ function cardClass(
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    size="icon"
-                                    class="size-8"
+                                    size="icon-sm"
                                     :aria-label="t('common.edit')"
                                     @click="openEdit(card)"
                                 >
@@ -435,8 +429,8 @@ function cardClass(
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    size="icon"
-                                    class="size-8 text-error-red hover:text-error-red"
+                                    size="icon-sm"
+                                    class="text-error-red hover:text-error-red"
                                     :aria-label="t('common.delete')"
                                     @click="trash(card)"
                                 >
@@ -477,7 +471,8 @@ function cardClass(
                 ? t('noticeboard.form.edit_title')
                 : t('noticeboard.form.create_title')
         "
-        class="max-h-[92vh] max-w-3xl overflow-y-auto"
+        size="lg"
+        class="max-h-[92vh] overflow-y-auto"
         @close="closeForm"
     >
         <form class="space-y-5" @submit.prevent="submit">
@@ -489,12 +484,7 @@ function cardClass(
                     v-model="form.body_html"
                     :invalid="Boolean(form.errors.body_html)"
                 />
-                <p
-                    v-if="form.errors.body_html"
-                    class="mt-1 text-xs text-error-red"
-                >
-                    {{ form.errors.body_html }}
-                </p>
+                <FieldError class="mt-1" :message="form.errors.body_html" />
             </div>
 
             <div class="grid gap-5 sm:grid-cols-2">
@@ -642,23 +632,22 @@ function cardClass(
                         </Button>
                     </div>
                 </div>
-                <p v-if="form.errors.image" class="mt-1 text-xs text-error-red">
-                    {{ form.errors.image }}
-                </p>
+                <FieldError class="mt-1" :message="form.errors.image" />
             </div>
 
-            <p
-                v-if="form.errors.lock_version"
-                class="rounded-xl bg-error-red/10 p-3 text-sm text-error-red"
-            >
+            <Alert v-if="form.errors.lock_version" variant="error">
                 {{ form.errors.lock_version }}
-            </p>
+            </Alert>
 
             <div class="flex justify-end gap-2">
                 <Button variant="secondary" @click="closeForm">
                     {{ t('common.cancel') }}
                 </Button>
-                <Button type="submit" :disabled="form.processing">
+                <Button
+                    type="submit"
+                    :loading="form.processing"
+                    :loading-label="t('common.saving')"
+                >
                     {{ t('common.save') }}
                 </Button>
             </div>

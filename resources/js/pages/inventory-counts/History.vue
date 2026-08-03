@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -92,8 +92,6 @@ const totals = computed(() => ({
 
 <template>
     <AppLayout :title="t('inventory_counts.history.title')">
-        <Head :title="t('inventory_counts.history.title')" />
-
         <div class="flex flex-col gap-6">
             <header
                 class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"

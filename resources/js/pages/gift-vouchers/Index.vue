@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Link, router, useForm } from '@inertiajs/vue3';
 import {
     Ban,
     CheckCircle2,
@@ -15,14 +15,17 @@ import {
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
+import Badge from '@/components/ui/Badge.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import Select from '@/components/ui/Select.vue';
 import Textarea from '@/components/ui/Textarea.vue';
+import Tabs from '@/components/ui/Tabs.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useDialog } from '@/composables/useDialog';
 import { useRoute } from '@/composables/useRoute';
@@ -85,9 +88,9 @@ const filterStatus = ref(props.filters.status ?? '');
 const filterSearch = ref(props.filters.search ?? '');
 
 const tabs = computed(() => {
-    const rows: Array<{ key: Tab; label: string; icon: typeof Gift }> = [
+    const rows: Array<{ value: Tab; label: string; icon: typeof Gift }> = [
         {
-            key: 'redeem',
+            value: 'redeem',
             label: t('gift_vouchers.tabs.redeem'),
             icon: TicketCheck,
         },
@@ -95,17 +98,17 @@ const tabs = computed(() => {
     if (props.is_admin) {
         rows.push(
             {
-                key: 'overview',
+                value: 'overview',
                 label: t('gift_vouchers.tabs.overview'),
                 icon: History,
             },
             {
-                key: 'issue',
+                value: 'issue',
                 label: t('gift_vouchers.tabs.issue'),
                 icon: Sparkles,
             },
             {
-                key: 'settings',
+                value: 'settings',
                 label: t('gift_vouchers.tabs.settings'),
                 icon: Settings,
             },
@@ -208,60 +211,34 @@ async function reverseVoucher(voucher: GiftVoucherRow): Promise<void> {
     });
 }
 
-function statusClass(status: GiftVoucherStatus): string {
-    return {
-        active: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-        expired: 'bg-slate-100 text-slate-600 ring-slate-200',
-        redeemed: 'bg-blue-50 text-blue-700 ring-blue-200',
-        voided: 'bg-red-50 text-red-700 ring-red-200',
-    }[status];
+function statusVariant(
+    status: GiftVoucherStatus,
+): 'success' | 'neutral' | 'incoming' | 'danger' {
+    return (
+        {
+            active: 'success',
+            expired: 'neutral',
+            redeemed: 'incoming',
+            voided: 'danger',
+        } as const
+    )[status];
 }
 </script>
 
 <template>
     <AppLayout :title="t('gift_vouchers.title')">
-        <Head :title="t('gift_vouchers.title')" />
-
         <div class="flex flex-col gap-6">
-            <header class="flex items-center gap-3">
-                <div
-                    class="flex size-11 items-center justify-center rounded-2xl bg-primary text-white shadow-sm"
-                >
-                    <Gift :size="21" />
-                </div>
-                <div>
-                    <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                    >
-                        {{ t('gift_vouchers.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('gift_vouchers.subtitle') }}
-                    </p>
-                </div>
-            </header>
+            <PageHeader
+                :title="t('gift_vouchers.title')"
+                :subtitle="t('gift_vouchers.subtitle')"
+            />
 
-            <nav
-                class="flex gap-1 overflow-x-auto rounded-2xl border border-outline-glass bg-white p-1.5"
-                :aria-label="t('gift_vouchers.title')"
-            >
-                <Button
-                    v-for="item in tabs"
-                    :key="item.key"
-                    type="button"
-                    variant="ghost"
-                    :class="
-                        'min-w-fit ' +
-                        (tab === item.key
-                            ? 'bg-primary text-white shadow-sm'
-                            : 'text-on-surface-variant hover:bg-surface-container-low')
-                    "
-                    @click="selectTab(item.key)"
-                >
-                    <component :is="item.icon" :size="15" />
-                    {{ item.label }}
-                </Button>
-            </nav>
+            <Tabs
+                :model-value="tab"
+                :items="tabs"
+                :label="t('gift_vouchers.title')"
+                @update:model-value="selectTab($event as Tab)"
+            />
 
             <section v-if="tab === 'redeem'" class="mx-auto w-full max-w-2xl">
                 <Card class="overflow-hidden p-0">
@@ -339,11 +316,10 @@ function statusClass(status: GiftVoucherStatus): string {
                                             :size="18"
                                             class="text-error-red"
                                         />
-                                        <span
-                                            :class="[
-                                                'rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ring-1',
-                                                statusClass(lookup.status),
-                                            ]"
+                                        <Badge
+                                            :variant="
+                                                statusVariant(lookup.status)
+                                            "
                                         >
                                             {{
                                                 t(
@@ -351,7 +327,7 @@ function statusClass(status: GiftVoucherStatus): string {
                                                         lookup.status,
                                                 )
                                             }}
-                                        </span>
+                                        </Badge>
                                     </div>
                                     <p
                                         class="mt-3 font-heading text-3xl font-bold text-on-surface"
@@ -468,7 +444,7 @@ function statusClass(status: GiftVoucherStatus): string {
                                 </span>
                             </div>
                             <div class="mt-3 flex flex-wrap gap-2">
-                                <span
+                                <Badge
                                     v-for="statusName in [
                                         'active',
                                         'redeemed',
@@ -476,16 +452,13 @@ function statusClass(status: GiftVoucherStatus): string {
                                         'voided',
                                     ] as GiftVoucherStatus[]"
                                     :key="statusName"
-                                    :class="[
-                                        'rounded-full px-2.5 py-1 text-[10px] font-bold ring-1',
-                                        statusClass(statusName),
-                                    ]"
+                                    :variant="statusVariant(statusName)"
                                 >
                                     {{
                                         t('gift_vouchers.status.' + statusName)
                                     }}:
                                     {{ batch.counts[statusName] }}
-                                </span>
+                                </Badge>
                             </div>
                         </div>
                         <Link
@@ -531,11 +504,8 @@ function statusClass(status: GiftVoucherStatus): string {
                                         t('gift_vouchers.columns.status')
                                     "
                                 >
-                                    <span
-                                        :class="[
-                                            'rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ring-1',
-                                            statusClass(voucher.status),
-                                        ]"
+                                    <Badge
+                                        :variant="statusVariant(voucher.status)"
                                     >
                                         {{
                                             t(
@@ -543,7 +513,7 @@ function statusClass(status: GiftVoucherStatus): string {
                                                     voucher.status,
                                             )
                                         }}
-                                    </span>
+                                    </Badge>
                                 </td>
                                 <td
                                     :data-label="

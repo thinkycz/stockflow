@@ -28,6 +28,10 @@ test('noticeboard uses one store-scoped heading and navigation context', async (
     await expect(
         storeSection.locator('[data-testid^="nav-item-"]').first(),
     ).toHaveAttribute('data-testid', 'nav-item-dashboard');
+    await expect(page.locator('aside nav')).toHaveAttribute(
+        'aria-label',
+        'Main navigation',
+    );
 
     await expect(
         page.getByText('Inventory Value', { exact: true }),
@@ -57,11 +61,13 @@ test('noticeboard uses one store-scoped heading and navigation context', async (
         'aria-selected',
         'true',
     );
-    await page.getByRole('tab', { name: 'Inventory' }).click();
+    await page.getByRole('tab', { name: 'Finance' }).focus();
+    await page.keyboard.press('ArrowRight');
     await expect(page.getByRole('tab', { name: 'Inventory' })).toHaveAttribute(
         'aria-selected',
         'true',
     );
+    await expect(page.getByRole('tab', { name: 'Inventory' })).toBeFocused();
 
     await page.goto('/items');
     await expect(page.getByTestId('active-store-pill')).toHaveCount(0);
@@ -191,7 +197,7 @@ test('noticeboard editor, preview, detail, filters and validation work together'
         page.getByText('Formatted E2E notice content', { exact: true }),
     ).toBeVisible();
 
-    await page.getByRole('button', { name: 'Expired' }).click();
+    await page.getByRole('tab', { name: 'Expired' }).click();
     await page.waitForURL(/status=expired/);
     await expect(page.getByText('No cards', { exact: true })).toBeVisible();
 });

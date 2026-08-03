@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import {
     Package,
     Pencil,
@@ -133,8 +133,6 @@ async function destroyStore(): Promise<void> {
 
 <template>
     <AppLayout :title="store.name">
-        <Head :title="store.name" />
-
         <div class="flex flex-col gap-6">
             <div>
                 <BackLink :href="route('stores.index')">

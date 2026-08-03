@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { Plus } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -11,6 +11,7 @@ import EmptyState from '@/components/ui/EmptyState.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import Select from '@/components/ui/Select.vue';
 import SearchFilter from '@/components/ui/SearchFilter.vue';
@@ -158,31 +159,22 @@ watch(
 
 <template>
     <AppLayout :title="t('stock_movements.title')">
-        <Head :title="t('stock_movements.title')" />
-
         <div class="flex flex-col gap-6">
-            <header
-                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            <PageHeader
+                :title="t('stock_movements.title')"
+                :subtitle="t('stock_movements.subtitle')"
             >
-                <div>
-                    <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                    >
-                        {{ t('stock_movements.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('stock_movements.subtitle') }}
-                    </p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <Link :href="route('stock-movements.create')">
-                        <Button>
-                            <Plus :size="14" />
-                            {{ t('stock_movements.create_new') }}
-                        </Button>
-                    </Link>
-                </div>
-            </header>
+                <template #actions>
+                    <div class="flex items-center gap-2">
+                        <Link :href="route('stock-movements.create')">
+                            <Button>
+                                <Plus :size="14" />
+                                {{ t('stock_movements.create_new') }}
+                            </Button>
+                        </Link>
+                    </div>
+                </template>
+            </PageHeader>
 
             <Card padded>
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-end">
@@ -321,7 +313,11 @@ watch(
                         </Link>
                     </template>
                 </EmptyState>
-                <DataTable v-else>
+                <DataTable
+                    v-else
+                    :loading="filtering"
+                    :loading-label="t('common.loading')"
+                >
                     <thead>
                         <tr>
                             <th>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { CalendarDays, Minus, Plus, Save, XCircle } from '@lucide/vue';
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -11,6 +11,7 @@ import EmptyState from '@/components/ui/EmptyState.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import Modal from '@/components/ui/Modal.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
@@ -296,29 +297,22 @@ async function cancelDraft(): Promise<void> {
 
 <template>
     <AppLayout :title="t('inventory_counts.title')">
-        <Head :title="t('inventory_counts.title')" />
-
         <div class="flex flex-col gap-6">
-            <header
-                class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+            <PageHeader
+                :title="t('inventory_counts.title')"
+                :subtitle="t('inventory_counts.subtitle')"
             >
-                <div>
-                    <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface"
-                    >
-                        {{ t('inventory_counts.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
-                        {{ t('inventory_counts.subtitle') }}
-                    </p>
+                <template #context>
                     <StoreContextIndicator />
-                </div>
-                <Link :href="route('inventory-counts.history')">
-                    <Button variant="secondary">
-                        {{ t('inventory_counts.history.title') }} →
-                    </Button>
-                </Link>
-            </header>
+                </template>
+                <template #actions>
+                    <Link :href="route('inventory-counts.history')">
+                        <Button variant="secondary">
+                            {{ t('inventory_counts.history.title') }} →
+                        </Button>
+                    </Link>
+                </template>
+            </PageHeader>
 
             <Card v-if="props.store" padded>
                 <div

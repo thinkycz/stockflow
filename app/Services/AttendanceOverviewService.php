@@ -31,7 +31,10 @@ class AttendanceOverviewService
      *             ended_at: string|null,
      *             breaks: list<array{started_at: string, ended_at: string|null}>
      *         }>,
-     *         quality: array{average_score: int|null, evaluated_shifts: int, band: string|null}
+     *         quality: array{
+     *             attendance_rating_enabled: bool, average_score: int|null,
+     *             evaluated_shifts: int|null, band: string|null
+     *         }
      *     }>,
      *     off_schedule_workers: list<array{id: int, name: string}>
      * }
@@ -116,8 +119,11 @@ class AttendanceOverviewService
                     fn(AttendanceSession $session): int => $session->getStartedAt()->getTimestamp(),
                 )->map(fn(AttendanceSession $session): array => $this->sessionRow($session, $breaks))->all()),
                 'quality' => [
+                    'attendance_rating_enabled' => $worker->isAttendanceRatingEnabled(),
                     'average_score' => $averageScore,
-                    'evaluated_shifts' => $rating['evaluated_shifts'] ?? 0,
+                    'evaluated_shifts' => $worker->isAttendanceRatingEnabled()
+                        ? ($rating['evaluated_shifts'] ?? 0)
+                        : null,
                     'band' => $averageScore === null
                         ? null
                         : ($averageScore >= 90 ? 'good' : ($averageScore >= 70 ? 'warning' : 'poor')),

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CircleOff } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DataTable from '@/components/ui/DataTable.vue';
@@ -20,12 +21,14 @@ const totals = computed(() =>
     props.rows.reduce(
         (result, row) => ({
             hours: result.hours + row.hours,
-            goodShifts: result.goodShifts + row.good_shifts,
-            evaluatedShifts: result.evaluatedShifts + row.evaluated_shifts,
-            lateArrivals: result.lateArrivals + row.late_arrivals,
-            earlyDepartures: result.earlyDepartures + row.early_departures,
-            breakIssues: result.breakIssues + row.break_issues,
-            absences: result.absences + row.absences,
+            goodShifts: result.goodShifts + (row.good_shifts ?? 0),
+            evaluatedShifts:
+                result.evaluatedShifts + (row.evaluated_shifts ?? 0),
+            lateArrivals: result.lateArrivals + (row.late_arrivals ?? 0),
+            earlyDepartures:
+                result.earlyDepartures + (row.early_departures ?? 0),
+            breakIssues: result.breakIssues + (row.break_issues ?? 0),
+            absences: result.absences + (row.absences ?? 0),
             salary: result.salary + (row.salary ?? 0),
         }),
         {
@@ -104,7 +107,15 @@ function formatHours(value: number): string {
                 </td>
                 <td class="text-right">
                     <span
-                        v-if="row.average_score !== null"
+                        v-if="!row.attendance_rating_enabled"
+                        class="inline-flex text-on-surface-variant"
+                        :title="t('shifts.rating.state.disabled')"
+                        :aria-label="t('shifts.rating.state.disabled')"
+                    >
+                        <CircleOff :size="18" aria-hidden="true" />
+                    </span>
+                    <span
+                        v-else-if="row.average_score !== null"
                         class="inline-flex rounded-full px-2.5 py-1 text-xs font-bold"
                         :class="
                             row.average_score >= 90
@@ -121,12 +132,34 @@ function formatHours(value: number): string {
                     </span>
                 </td>
                 <td class="text-right font-semibold">
-                    {{ row.good_shifts }}/{{ row.evaluated_shifts }}
+                    <template v-if="row.attendance_rating_enabled">
+                        {{ row.good_shifts ?? 0 }}/{{
+                            row.evaluated_shifts ?? 0
+                        }}
+                    </template>
+                    <span v-else aria-hidden="true">—</span>
+                    <span v-if="!row.attendance_rating_enabled" class="sr-only">
+                        {{ t('shifts.rating.state.disabled') }}
+                    </span>
                 </td>
-                <td class="text-right">{{ row.late_arrivals }}</td>
-                <td class="text-right">{{ row.early_departures }}</td>
-                <td class="text-right">{{ row.break_issues }}</td>
-                <td class="text-right">{{ row.absences }}</td>
+                <td class="text-right">
+                    {{
+                        row.attendance_rating_enabled ? row.late_arrivals : '—'
+                    }}
+                </td>
+                <td class="text-right">
+                    {{
+                        row.attendance_rating_enabled
+                            ? row.early_departures
+                            : '—'
+                    }}
+                </td>
+                <td class="text-right">
+                    {{ row.attendance_rating_enabled ? row.break_issues : '—' }}
+                </td>
+                <td class="text-right">
+                    {{ row.attendance_rating_enabled ? row.absences : '—' }}
+                </td>
                 <td
                     v-if="showSalary"
                     class="text-right font-semibold text-on-surface"

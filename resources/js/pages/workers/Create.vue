@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
+import Checkbox from '@/components/ui/Checkbox.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
@@ -14,6 +15,7 @@ type WorkerFields = {
     first_name: string;
     last_name: string;
     hourly_rate: string;
+    attendance_rating_enabled: boolean;
 };
 
 const { t } = useI18n();
@@ -26,6 +28,7 @@ const form = useForm<WorkerFields>({
     first_name: '',
     last_name: '',
     hourly_rate: '',
+    attendance_rating_enabled: true,
 });
 
 function submit(): void {
@@ -91,6 +94,24 @@ function submit(): void {
                             required
                         />
                         <FieldError :message="form.errors.hourly_rate" />
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2">
+                            <Checkbox
+                                id="attendance_rating_enabled"
+                                v-model="form.attendance_rating_enabled"
+                            />
+                            <Label for="attendance_rating_enabled">{{
+                                t('workers.attendance_rating_enabled')
+                            }}</Label>
+                        </div>
+                        <p class="text-xs text-on-surface-variant">
+                            {{ t('workers.attendance_rating_help') }}
+                        </p>
+                        <FieldError
+                            :message="form.errors.attendance_rating_enabled"
+                        />
                     </div>
 
                     <div

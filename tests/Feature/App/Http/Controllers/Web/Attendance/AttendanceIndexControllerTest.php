@@ -38,6 +38,7 @@ use Illuminate\Support\Carbon;
         'user_id' => $admin->getKey(),
         'first_name' => 'Anna',
         'last_name' => 'Scheduled',
+        'attendance_rating_enabled' => false,
     ]);
     $active = Worker::factory()->create([
         'user_id' => $admin->getKey(),
@@ -98,10 +99,13 @@ use Illuminate\Support\Carbon;
         ->assertJsonCount(2, 'props.attendance_rows.0.shifts')
         ->assertJsonPath('props.attendance_rows.0.shifts.0.start_time', '09:00')
         ->assertJsonPath('props.attendance_rows.0.shifts.1.start_time', '14:00')
-        ->assertJsonPath('props.attendance_rows.0.quality.average_score', 50)
-        ->assertJsonPath('props.attendance_rows.0.quality.band', 'poor')
+        ->assertJsonPath('props.attendance_rows.0.quality.attendance_rating_enabled', false)
+        ->assertJsonPath('props.attendance_rows.0.quality.average_score', null)
+        ->assertJsonPath('props.attendance_rows.0.quality.evaluated_shifts', null)
+        ->assertJsonPath('props.attendance_rows.0.quality.band', null)
         ->assertJsonPath('props.attendance_rows.1.worker_id', $active->getKey())
         ->assertJsonPath('props.attendance_rows.1.status', 'present')
+        ->assertJsonPath('props.attendance_rows.1.quality.attendance_rating_enabled', true)
         ->assertJsonPath('props.attendance_rows.1.quality.average_score', null)
         ->assertJsonPath('props.attendance_rows.1.quality.band', null)
         ->assertJsonPath('props.off_schedule_workers.0.id', $inactive->getKey());

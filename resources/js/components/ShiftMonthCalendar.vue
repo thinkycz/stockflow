@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { CalendarPlus, Clock3, LoaderCircle, UsersRound } from '@lucide/vue';
+import {
+    CalendarPlus,
+    CircleOff,
+    Clock3,
+    LoaderCircle,
+    UsersRound,
+} from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -10,7 +16,7 @@ type CalendarShift = {
     start_time: string;
     end_time: string;
     attendance_rating?: {
-        state: 'future' | 'pending' | 'scored';
+        state: 'future' | 'pending' | 'scored' | 'disabled';
         score: number | null;
         band: 'good' | 'warning' | 'poor' | null;
     };
@@ -112,6 +118,9 @@ function ratingLabel(shift: CalendarShift): string {
     }
     if (rating.state === 'pending') {
         return t('shifts.rating.state.pending');
+    }
+    if (rating.state === 'disabled') {
+        return t('shifts.rating.state.disabled');
     }
 
     return t('shifts.rating.score_label', { score: rating.score });
@@ -238,13 +247,23 @@ function formatDateKey(date: Date): string {
                                 :class="ratingClass(shift)"
                                 :aria-label="ratingLabel(shift)"
                             >
-                                {{
-                                    shift.attendance_rating?.score ??
-                                    (shift.attendance_rating?.state ===
-                                    'pending'
-                                        ? '…'
-                                        : '—')
-                                }}
+                                <CircleOff
+                                    v-if="
+                                        shift.attendance_rating?.state ===
+                                        'disabled'
+                                    "
+                                    :size="12"
+                                    aria-hidden="true"
+                                />
+                                <template v-else>
+                                    {{
+                                        shift.attendance_rating?.score ??
+                                        (shift.attendance_rating?.state ===
+                                        'pending'
+                                            ? '…'
+                                            : '—')
+                                    }}
+                                </template>
                             </span>
                         </div>
                     </div>
@@ -405,12 +424,23 @@ function formatDateKey(date: Date): string {
                             :class="ratingClass(shift)"
                             :aria-label="ratingLabel(shift)"
                         >
-                            {{
-                                shift.attendance_rating?.score ??
-                                (shift.attendance_rating?.state === 'pending'
-                                    ? '…'
-                                    : '—')
-                            }}
+                            <CircleOff
+                                v-if="
+                                    shift.attendance_rating?.state ===
+                                    'disabled'
+                                "
+                                :size="14"
+                                aria-hidden="true"
+                            />
+                            <template v-else>
+                                {{
+                                    shift.attendance_rating?.score ??
+                                    (shift.attendance_rating?.state ===
+                                    'pending'
+                                        ? '…'
+                                        : '—')
+                                }}
+                            </template>
                         </span>
                     </button>
                 </div>
@@ -523,10 +553,20 @@ function formatDateKey(date: Date): string {
                                             :class="ratingClass(shift)"
                                             :aria-label="ratingLabel(shift)"
                                         >
-                                            {{
-                                                shift.attendance_rating
-                                                    ?.score ?? '—'
-                                            }}
+                                            <CircleOff
+                                                v-if="
+                                                    shift.attendance_rating
+                                                        ?.state === 'disabled'
+                                                "
+                                                :size="10"
+                                                aria-hidden="true"
+                                            />
+                                            <template v-else>
+                                                {{
+                                                    shift.attendance_rating
+                                                        ?.score ?? '—'
+                                                }}
+                                            </template>
                                         </span>
                                     </div>
                                 </div>

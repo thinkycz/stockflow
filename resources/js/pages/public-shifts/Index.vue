@@ -19,7 +19,7 @@ type Shift = {
     start_time: string;
     end_time: string;
     attendance_rating: {
-        state: 'future' | 'pending' | 'scored';
+        state: 'future' | 'pending' | 'scored' | 'disabled';
         score: number | null;
         band: 'good' | 'warning' | 'poor' | null;
     };

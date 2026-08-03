@@ -66,7 +66,7 @@ class Worker extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'user_id', 'first_name', 'last_name', 'hourly_rate', 'created_at', 'updated_at']);
+        return $query->select(['id', 'user_id', 'first_name', 'last_name', 'hourly_rate', 'attendance_rating_enabled', 'created_at', 'updated_at']);
     }
 
     /**
@@ -110,6 +110,14 @@ class Worker extends BaseModel
     }
 
     /**
+     * Whether attendance rating is enabled for this worker.
+     */
+    public function isAttendanceRatingEnabled(): bool
+    {
+        return $this->assertBool('attendance_rating_enabled');
+    }
+
+    /**
      * User id getter.
      */
     public function getUserId(): int
@@ -126,6 +134,7 @@ class Worker extends BaseModel
     {
         return [
             'hourly_rate' => 'decimal:2',
+            'attendance_rating_enabled' => 'boolean',
         ];
     }
 }

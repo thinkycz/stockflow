@@ -6,12 +6,16 @@ use App\Models\Worker;
 
 \test('worker edit form is reachable', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
-    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $worker = Worker::factory()->create([
+        'user_id' => $admin->getKey(),
+        'attendance_rating_enabled' => false,
+    ]);
 
     $this->be($admin, 'users')->get("/workers/{$worker->getKey()}/edit", $this->inertiaHeaders())
         ->assertOk()
         ->assertJsonPath('component', 'workers/Edit')
-        ->assertJsonPath('props.worker.id', $worker->getKey());
+        ->assertJsonPath('props.worker.id', $worker->getKey())
+        ->assertJsonPath('props.worker.attendance_rating_enabled', false);
 });
 
 \test('admin can update a worker', function (): void {
@@ -27,6 +31,7 @@ use App\Models\Worker;
         'first_name' => 'New',
         'last_name' => 'Updated',
         'hourly_rate' => 250.75,
+        'attendance_rating_enabled' => false,
     ]);
 
     $response->assertRedirect();
@@ -34,6 +39,7 @@ use App\Models\Worker;
     \expect($worker->getFirstName())->toBe('New');
     \expect($worker->getLastName())->toBe('Updated');
     \expect($worker->getHourlyRate())->toBe(250.75);
+    \expect($worker->isAttendanceRatingEnabled())->toBeFalse();
 });
 
 \test('cannot edit a worker belonging to another admin', function (): void {

@@ -4,6 +4,7 @@ import {
     ArrowRight,
     CircleCheck,
     CircleHelp,
+    CircleOff,
     Clock3,
     Coffee,
     Frown,
@@ -43,8 +44,9 @@ type AttendanceRow = {
     shifts: Array<{ id: number; start_time: string; end_time: string }>;
     sessions: SessionRow[];
     quality: {
+        attendance_rating_enabled: boolean;
         average_score: number | null;
-        evaluated_shifts: number;
+        evaluated_shifts: number | null;
         band: 'good' | 'warning' | 'poor' | null;
     };
 };
@@ -181,6 +183,8 @@ function allBreaks(row: AttendanceRow): BreakRow[] {
 }
 
 function qualityText(row: AttendanceRow): string {
+    if (!row.quality.attendance_rating_enabled)
+        return t('attendance.quality.disabled');
     if (row.quality.average_score === null)
         return t('attendance.quality.unrated');
     return t(`attendance.quality.${row.quality.band}`, {
@@ -536,14 +540,32 @@ onUnmounted(() => {
                                         class="mt-2 flex items-center gap-1.5 text-xs font-semibold"
                                         :class="qualityClass(row)"
                                         :title="
-                                            t('attendance.quality.tooltip', {
-                                                count: row.quality
-                                                    .evaluated_shifts,
-                                            })
+                                            row.quality
+                                                .attendance_rating_enabled
+                                                ? t(
+                                                      'attendance.quality.tooltip',
+                                                      {
+                                                          count: row.quality
+                                                              .evaluated_shifts,
+                                                      },
+                                                  )
+                                                : t(
+                                                      'attendance.quality.disabled',
+                                                  )
                                         "
                                     >
+                                        <CircleOff
+                                            v-if="
+                                                !row.quality
+                                                    .attendance_rating_enabled
+                                            "
+                                            :size="18"
+                                            aria-hidden="true"
+                                        />
                                         <Smile
-                                            v-if="row.quality.band === 'good'"
+                                            v-else-if="
+                                                row.quality.band === 'good'
+                                            "
                                             :size="18"
                                             aria-hidden="true"
                                         />
@@ -566,7 +588,13 @@ onUnmounted(() => {
                                             :size="18"
                                             aria-hidden="true"
                                         />
-                                        <span aria-hidden="true">
+                                        <span
+                                            v-if="
+                                                row.quality
+                                                    .attendance_rating_enabled
+                                            "
+                                            aria-hidden="true"
+                                        >
                                             {{
                                                 row.quality.average_score ===
                                                 null

@@ -29,6 +29,7 @@ class WorkerEditController
                 'first_name' => $worker->getFirstName(),
                 'last_name' => $worker->getLastName(),
                 'hourly_rate' => $worker->getHourlyRate(),
+                'attendance_rating_enabled' => $worker->isAttendanceRatingEnabled(),
             ],
         ]);
     }
@@ -45,12 +46,16 @@ class WorkerEditController
             'first_name' => $validity->firstName()->required()->toArray(),
             'last_name' => $validity->lastName()->required()->toArray(),
             'hourly_rate' => $validity->hourlyRate()->required()->toArray(),
+            'attendance_rating_enabled' => $validity->attendanceRatingEnabled()->nullable()->toArray(),
         ]);
 
         $worker->update([
             'first_name' => $validated->assertString('first_name'),
             'last_name' => $validated->assertString('last_name'),
             'hourly_rate' => $validated->parseFloat('hourly_rate'),
+            'attendance_rating_enabled' => $validated->has('attendance_rating_enabled')
+                ? $validated->parseBool('attendance_rating_enabled')
+                : $worker->isAttendanceRatingEnabled(),
         ]);
 
         Inertia::flash('success', \__('Worker updated.'));

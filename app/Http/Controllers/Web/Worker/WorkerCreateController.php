@@ -38,6 +38,7 @@ class WorkerCreateController
             'first_name' => $validity->firstName()->required()->toArray(),
             'last_name' => $validity->lastName()->required()->toArray(),
             'hourly_rate' => $validity->hourlyRate()->required()->toArray(),
+            'attendance_rating_enabled' => $validity->attendanceRatingEnabled()->nullable()->toArray(),
         ]);
 
         Worker::query()->create([
@@ -45,6 +46,9 @@ class WorkerCreateController
             'first_name' => $validated->assertString('first_name'),
             'last_name' => $validated->assertString('last_name'),
             'hourly_rate' => $validated->parseFloat('hourly_rate'),
+            'attendance_rating_enabled' => $validated->has('attendance_rating_enabled')
+                ? $validated->parseBool('attendance_rating_enabled')
+                : true,
         ]);
 
         Inertia::flash('success', \__('Worker created.'));

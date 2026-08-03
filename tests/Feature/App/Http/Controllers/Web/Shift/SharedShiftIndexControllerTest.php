@@ -101,6 +101,38 @@ use Illuminate\Support\Carbon;
     $response->assertJsonPath('props.monthly_summary.0.worker_id', $worker->getKey());
 });
 
+\test('shared calendar does not publish disabled attendance rating metrics', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create([
+        'user_id' => $admin->getKey(),
+        'is_warehouse' => false,
+        'shift_share_token' => 'disabled-rating-token',
+    ]);
+    $worker = Worker::factory()->create([
+        'user_id' => $admin->getKey(),
+        'attendance_rating_enabled' => false,
+    ]);
+    Shift::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
+        'date' => '2026-07-15', 'start_time' => '09:00', 'end_time' => '16:00',
+    ]);
+    Carbon::setTestNow('2026-07-31 10:00:00 UTC');
+
+    $response = $this->get('/public/shifts/disabled-rating-token?year=2026&month=7', $this->inertiaHeaders());
+
+    $response->assertOk()
+        ->assertJsonPath('props.shifts.0.attendance_rating.state', 'disabled')
+        ->assertJsonPath('props.shifts.0.attendance_rating.score', null)
+        ->assertJsonPath('props.shifts.0.attendance_rating.band', null)
+        ->assertJsonPath('props.monthly_summary.0.attendance_rating_enabled', false)
+        ->assertJsonPath('props.monthly_summary.0.average_score', null)
+        ->assertJsonPath('props.monthly_summary.0.late_arrivals', null)
+        ->assertJsonPath('props.monthly_summary.0.hours', 7)
+        ->assertJsonMissingPath('props.monthly_summary.0.salary');
+
+    Carbon::setTestNow();
+});
+
 \test('unknown public shift calendar token returns not found', function (): void {
     $this->get('/public/shifts/unknown-token', $this->inertiaHeaders())->assertNotFound();
 });

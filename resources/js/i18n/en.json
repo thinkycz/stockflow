@@ -1083,6 +1083,12 @@
         "add_worker": "Add worker",
         "search_placeholder": "Search workers...",
         "confirm_delete": "Are you sure you want to delete this worker?",
+        "attendance_rating_enabled": "Rate attendance",
+        "attendance_rating_help": "Turning this off hides attendance ratings, while arrivals, departures, reports and payroll remain unchanged.",
+        "rating_status": {
+            "enabled": "Enabled",
+            "disabled": "Disabled"
+        },
         "empty": {
             "title": "No workers yet",
             "description": "Add your first worker."
@@ -1091,6 +1097,7 @@
             "first_name": "First name",
             "last_name": "Last name",
             "hourly_rate": "Hourly rate (CZK)",
+            "attendance_rating": "Attendance rating",
             "actions": "Actions"
         }
     },
@@ -1156,7 +1163,8 @@
             "score_label": "{score}/100",
             "state": {
                 "future": "Not rated yet",
-                "pending": "Waiting for attendance to close"
+                "pending": "Waiting for attendance to close",
+                "disabled": "Attendance rating disabled"
             },
             "band": {
                 "good": "Good attendance",
@@ -1428,6 +1436,7 @@
             "poor": "Low attendance quality: {score} out of 100",
             "unrated": "No attendance rating yet",
             "unrated_short": "Not rated",
+            "disabled": "Attendance rating disabled",
             "tooltip": "Evaluated shifts this month: {count}"
         },
         "duration": {

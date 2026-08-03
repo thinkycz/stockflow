@@ -1083,6 +1083,12 @@
         "add_worker": "Přidat brigádníka",
         "search_placeholder": "Hledat brigádníky...",
         "confirm_delete": "Opravdu chcete smazat tohoto brigádníka?",
+        "attendance_rating_enabled": "Hodnotit docházku",
+        "attendance_rating_help": "Vypnutí skryje hodnocení docházky, ale příchody, odchody, výkazy a mzdy zůstanou beze změny.",
+        "rating_status": {
+            "enabled": "Zapnuto",
+            "disabled": "Vypnuto"
+        },
         "empty": {
             "title": "Zatím žádní brigádníci",
             "description": "Přidejte svého prvního brigádníka."
@@ -1091,6 +1097,7 @@
             "first_name": "Jméno",
             "last_name": "Příjmení",
             "hourly_rate": "Hodinová sazba (CZK)",
+            "attendance_rating": "Hodnocení docházky",
             "actions": "Akce"
         }
     },
@@ -1156,7 +1163,8 @@
             "score_label": "{score}/100",
             "state": {
                 "future": "Zatím nehodnoceno",
-                "pending": "Čeká na uzavření docházky"
+                "pending": "Čeká na uzavření docházky",
+                "disabled": "Hodnocení docházky vypnuto"
             },
             "band": {
                 "good": "Dobrá docházka",
@@ -1425,6 +1433,7 @@
             "poor": "Nízká kvalita docházky: {score} ze 100",
             "unrated": "Zatím bez hodnocení docházky",
             "unrated_short": "Bez hodnocení",
+            "disabled": "Hodnocení docházky vypnuto",
             "tooltip": "Vyhodnocené směny v tomto měsíci: {count}"
         },
         "duration": {

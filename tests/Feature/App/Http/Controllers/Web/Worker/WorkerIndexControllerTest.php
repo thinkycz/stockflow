@@ -14,6 +14,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'first_name' => 'Jan',
         'last_name' => 'Novak',
         'hourly_rate' => 200.50,
+        'attendance_rating_enabled' => false,
     ]);
 
     $otherAdmin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
@@ -30,6 +31,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->where('workers.0.last_name', 'Novak')
         ->where('workers.0.color', $worker->getCalendarColor())
         ->where('workers.0.hourly_rate', 200.50)
+        ->where('workers.0.attendance_rating_enabled', false)
         ->missing('workers.1'));
 });
 

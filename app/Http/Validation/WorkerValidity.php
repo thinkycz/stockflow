@@ -57,6 +57,14 @@ class WorkerValidity
     }
 
     /**
+     * Attendance rating enabled validation rules.
+     */
+    public function attendanceRatingEnabled(): Validity
+    {
+        return $this->baseValidity->make()->boolean();
+    }
+
+    /**
      * Id validation rules.
      */
     public function id(): Validity

@@ -5,6 +5,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Check,
+    CircleOff,
     Gauge,
     Link2,
     Pencil,
@@ -42,6 +43,7 @@ type Worker = {
     first_name: string;
     last_name: string;
     color: string;
+    attendance_rating_enabled: boolean;
 };
 
 type Shift = {
@@ -61,14 +63,14 @@ type AttendanceRatingReason =
     | 'absence';
 
 type AttendanceRating = {
-    state: 'future' | 'pending' | 'scored';
+    state: 'future' | 'pending' | 'scored' | 'disabled';
     score: number | null;
     band: 'good' | 'warning' | 'poor' | null;
     reason_codes: AttendanceRatingReason[];
     arrival_offset_minutes: number | null;
     departure_offset_minutes: number | null;
-    break_minutes: number;
-    break_count: number;
+    break_minutes: number | null;
+    break_count: number | null;
 };
 
 type CalendarShift = Shift & {
@@ -314,6 +316,9 @@ function ratingStateLabel(rating: AttendanceRating | undefined): string {
     }
     if (rating.state === 'pending') {
         return t('shifts.rating.state.pending');
+    }
+    if (rating.state === 'disabled') {
+        return t('shifts.rating.state.disabled');
     }
 
     return t(`shifts.rating.band.${rating.band ?? 'poor'}`);
@@ -739,13 +744,25 @@ async function quickAddShift(
                         color: worker.color,
                         hours: contribution.minutes / 60,
                         salary: contribution.salary,
+                        attendance_rating_enabled:
+                            worker.attendance_rating_enabled,
                         average_score: null,
-                        evaluated_shifts: 0,
-                        good_shifts: 0,
-                        late_arrivals: 0,
-                        early_departures: 0,
-                        break_issues: 0,
-                        absences: 0,
+                        evaluated_shifts: worker.attendance_rating_enabled
+                            ? 0
+                            : null,
+                        good_shifts: worker.attendance_rating_enabled
+                            ? 0
+                            : null,
+                        late_arrivals: worker.attendance_rating_enabled
+                            ? 0
+                            : null,
+                        early_departures: worker.attendance_rating_enabled
+                            ? 0
+                            : null,
+                        break_issues: worker.attendance_rating_enabled
+                            ? 0
+                            : null,
+                        absences: worker.attendance_rating_enabled ? 0 : null,
                     },
                 ];
             }
@@ -1067,19 +1084,35 @@ async function copyText(value: string): Promise<void> {
                                         ratingClass(shift.attendance_rating)
                                     "
                                 >
-                                    {{
-                                        shift.attendance_rating?.score !==
-                                            null &&
-                                        shift.attendance_rating?.score !==
-                                            undefined
-                                            ? t('shifts.rating.score_label', {
-                                                  score: shift.attendance_rating
-                                                      .score,
-                                              })
-                                            : ratingStateLabel(
-                                                  shift.attendance_rating,
-                                              )
-                                    }}
+                                    <CircleOff
+                                        v-if="
+                                            shift.attendance_rating?.state ===
+                                            'disabled'
+                                        "
+                                        :size="14"
+                                        :aria-label="
+                                            t('shifts.rating.state.disabled')
+                                        "
+                                    />
+                                    <template v-else>
+                                        {{
+                                            shift.attendance_rating?.score !==
+                                                null &&
+                                            shift.attendance_rating?.score !==
+                                                undefined
+                                                ? t(
+                                                      'shifts.rating.score_label',
+                                                      {
+                                                          score: shift
+                                                              .attendance_rating
+                                                              .score,
+                                                      },
+                                                  )
+                                                : ratingStateLabel(
+                                                      shift.attendance_rating,
+                                                  )
+                                        }}
+                                    </template>
                                 </span>
                             </div>
                             <div

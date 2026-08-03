@@ -137,3 +137,47 @@ test('admin rejects and then approves a monthly attendance deviation', async ({
     await expect(payrollRow).toContainText('8.25 h');
     await expect(payrollRow).toContainText('1,650');
 });
+
+test('admin disables attendance rating without disabling attendance actions', async ({
+    page,
+}) => {
+    await login(page);
+    await page.goto('/workers');
+
+    let workerRow = page.getByRole('row', { name: /Scheduled Worker/ });
+    await workerRow.getByRole('button', { name: 'Edit' }).click();
+    const ratingCheckbox = page.getByLabel('Rate attendance');
+    await expect(ratingCheckbox).toBeChecked();
+    await ratingCheckbox.uncheck();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.waitForURL(/\/workers$/);
+
+    workerRow = page.getByRole('row', { name: /Scheduled Worker/ });
+    await expect(workerRow).toContainText('Disabled');
+
+    await page.goto('/attendance');
+    const attendanceRow = page
+        .getByTestId('attendance-table')
+        .getByRole('row', { name: /Scheduled Worker/ });
+    await expect(
+        attendanceRow.getByTitle('Attendance rating disabled'),
+    ).toBeVisible();
+    await expect(
+        attendanceRow.getByRole('button', { name: 'Arrival' }),
+    ).toBeVisible();
+
+    await page.goto('/shifts');
+    await expect(
+        page.getByLabel('Attendance rating disabled').first(),
+    ).toBeVisible();
+
+    await page.goto('/workers');
+    workerRow = page.getByRole('row', { name: /Scheduled Worker/ });
+    await workerRow.getByRole('button', { name: 'Edit' }).click();
+    await page.getByLabel('Rate attendance').check();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.waitForURL(/\/workers$/);
+    await expect(
+        page.getByRole('row', { name: /Scheduled Worker/ }),
+    ).toContainText('Enabled');
+});

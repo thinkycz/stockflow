@@ -34,7 +34,27 @@ use Thinkycz\LaravelCore\Support\Typer;
     );
     \expect($worker->getUserId())->toBe($admin->getKey());
     \expect($worker->getHourlyRate())->toBe(200.50);
+    \expect($worker->isAttendanceRatingEnabled())->toBeTrue();
     \assertInertiaFlash($response, 'success', \__('Worker created.'));
+});
+
+\test('admin can create a worker with attendance rating disabled', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+
+    $response = $this->be($admin, 'users')->post('/workers', [
+        'first_name' => 'Eva',
+        'last_name' => 'Bez hodnoceni',
+        'hourly_rate' => 180,
+        'attendance_rating_enabled' => false,
+    ]);
+
+    $response->assertRedirect();
+    $worker = Typer::assertInstance(
+        Worker::query()->where('first_name', 'Eva')->where('last_name', 'Bez hodnoceni')->first(),
+        Worker::class,
+    );
+
+    \expect($worker->isAttendanceRatingEnabled())->toBeFalse();
 });
 
 \test('first name is required', function (): void {

@@ -24,6 +24,11 @@ zůstávají dostupné pouze administrátorovi.
 - Pásma jsou dobré 90–100, upozornění 70–89 a špatné 0–69.
 - Měsíční skóre pracovníka je nevážený průměr hodnocených směn zaokrouhlený
   na celé body.
+- Admin může brigádníkovi hodnocení docházky vypnout. Docházka, korekce,
+  posouzení odchylek, výkazy a mzdy se dál evidují a počítají, ale rating se
+  nepočítá ani nezveřejňuje na interních nebo veřejných obrazovkách.
+- Vypnutí platí nad celou historií. Po opětovném zapnutí se rating dynamicky
+  obnoví z existujících docházkových dat.
 
 ## Akceptace
 
@@ -37,3 +42,6 @@ zůstávají dostupné pouze administrátorovi.
 - Omezený účet může vytvořit nebo zkopírovat veřejný odkaz pouze své přiřazené
   prodejny.
 - Výpočet je dynamický, tenantově oddělený a bez N+1 dotazů.
+- Vypnuté hodnocení používá explicitní stav `disabled`; body a všechny
+  odvozené ratingové metriky jsou `null`, zatímco plánované hodiny a případná
+  adminská mzda zůstávají dostupné.

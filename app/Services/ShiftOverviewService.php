@@ -22,9 +22,9 @@ class ShiftOverviewService
      *     ratings: array<int, array{
      *         state: string, score: int|null, band: string|null, reason_codes: list<string>,
      *         arrival_offset_minutes: int|null, departure_offset_minutes: int|null,
-     *         break_minutes: int, break_count: int
+     *         break_minutes: int|null, break_count: int|null
      *     }>,
-     *     monthly_summary: list<array<string, float|int|string|null>>
+     *     monthly_summary: list<array<string, bool|float|int|string|null>>
      * }
      */
     public function build(
@@ -58,18 +58,20 @@ class ShiftOverviewService
             }
 
             $rating = $ratingsByWorker[$workerId] ?? null;
+            $attendanceRatingEnabled = $worker->isAttendanceRatingEnabled();
             $row = [
                 'worker_id' => $workerId,
                 'worker_name' => $worker->getFullName(),
                 'color' => $worker->getCalendarColor(),
                 'hours' => $minutesByWorker[$workerId] / 60,
+                'attendance_rating_enabled' => $attendanceRatingEnabled,
                 'average_score' => $rating['average_score'] ?? null,
-                'evaluated_shifts' => $rating['evaluated_shifts'] ?? 0,
-                'good_shifts' => $rating['good_shifts'] ?? 0,
-                'late_arrivals' => $rating['late_arrivals'] ?? 0,
-                'early_departures' => $rating['early_departures'] ?? 0,
-                'break_issues' => $rating['break_issues'] ?? 0,
-                'absences' => $rating['absences'] ?? 0,
+                'evaluated_shifts' => $attendanceRatingEnabled ? ($rating['evaluated_shifts'] ?? 0) : null,
+                'good_shifts' => $attendanceRatingEnabled ? ($rating['good_shifts'] ?? 0) : null,
+                'late_arrivals' => $attendanceRatingEnabled ? ($rating['late_arrivals'] ?? 0) : null,
+                'early_departures' => $attendanceRatingEnabled ? ($rating['early_departures'] ?? 0) : null,
+                'break_issues' => $attendanceRatingEnabled ? ($rating['break_issues'] ?? 0) : null,
+                'absences' => $attendanceRatingEnabled ? ($rating['absences'] ?? 0) : null,
             ];
             if ($includeSalary) {
                 $row['salary'] = \round($salaryByWorker[$workerId] ?? 0, 2);

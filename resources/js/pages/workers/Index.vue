@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Plus, Pencil, Trash2 } from '@lucide/vue';
+import { CircleCheck, CircleOff, Plus, Pencil, Trash2 } from '@lucide/vue';
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
+import Badge from '@/components/ui/Badge.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import SearchFilter from '@/components/ui/SearchFilter.vue';
@@ -20,6 +21,7 @@ type WorkerRow = {
     last_name: string;
     color: string;
     hourly_rate: number;
+    attendance_rating_enabled: boolean;
 };
 
 const props = defineProps<{
@@ -133,6 +135,9 @@ async function destroyWorker(worker: WorkerRow): Promise<void> {
                             <th class="text-right">
                                 {{ t('workers.columns.hourly_rate') }}
                             </th>
+                            <th>
+                                {{ t('workers.columns.attendance_rating') }}
+                            </th>
                             <th class="w-0">
                                 {{ t('workers.columns.actions') }}
                             </th>
@@ -159,6 +164,33 @@ async function destroyWorker(worker: WorkerRow): Promise<void> {
                                 class="text-right font-semibold text-on-surface"
                             >
                                 {{ formatMoney(worker.hourly_rate) }}
+                            </td>
+                            <td>
+                                <Badge
+                                    :variant="
+                                        worker.attendance_rating_enabled
+                                            ? 'success'
+                                            : 'neutral'
+                                    "
+                                >
+                                    <CircleCheck
+                                        v-if="worker.attendance_rating_enabled"
+                                        :size="13"
+                                        aria-hidden="true"
+                                    />
+                                    <CircleOff
+                                        v-else
+                                        :size="13"
+                                        aria-hidden="true"
+                                    />
+                                    {{
+                                        worker.attendance_rating_enabled
+                                            ? t('workers.rating_status.enabled')
+                                            : t(
+                                                  'workers.rating_status.disabled',
+                                              )
+                                    }}
+                                </Badge>
                             </td>
                             <td>
                                 <div class="flex items-center gap-1">

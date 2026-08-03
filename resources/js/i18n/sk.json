@@ -1083,6 +1083,12 @@
         "add_worker": "Pridať brigádnika",
         "search_placeholder": "Hľadať brigádnikov...",
         "confirm_delete": "Naozaj chcete zmazať tohto brigádnika?",
+        "attendance_rating_enabled": "Hodnotiť dochádzku",
+        "attendance_rating_help": "Vypnutie skryje hodnotenie dochádzky, ale príchody, odchody, výkazy a mzdy zostanú bez zmeny.",
+        "rating_status": {
+            "enabled": "Zapnuté",
+            "disabled": "Vypnuté"
+        },
         "empty": {
             "title": "Zatiaľ žiadni brigádnici",
             "description": "Pridajte svojho prvého brigádnika."
@@ -1091,6 +1097,7 @@
             "first_name": "Meno",
             "last_name": "Priezvisko",
             "hourly_rate": "Hodinová sadzba (CZK)",
+            "attendance_rating": "Hodnotenie dochádzky",
             "actions": "Akcie"
         }
     },
@@ -1156,7 +1163,8 @@
             "score_label": "{score}/100",
             "state": {
                 "future": "Zatiaľ nehodnotené",
-                "pending": "Čaká na uzavretie dochádzky"
+                "pending": "Čaká na uzavretie dochádzky",
+                "disabled": "Hodnotenie dochádzky vypnuté"
             },
             "band": {
                 "good": "Dobrá dochádzka",
@@ -1428,6 +1436,7 @@
             "poor": "Nízka kvalita dochádzky: {score} zo 100",
             "unrated": "Zatiaľ bez hodnotenia dochádzky",
             "unrated_short": "Bez hodnotenia",
+            "disabled": "Hodnotenie dochádzky vypnuté",
             "tooltip": "Vyhodnotené zmeny v tomto mesiaci: {count}"
         },
         "duration": {

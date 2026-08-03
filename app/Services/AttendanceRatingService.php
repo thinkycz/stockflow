@@ -9,6 +9,7 @@ use App\Models\AttendanceSession;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\User;
+use App\Models\Worker;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -27,28 +28,41 @@ class AttendanceRatingService
      *     ratings: array<int, array{
      *         state: string, score: int|null, band: string|null, reason_codes: list<string>,
      *         arrival_offset_minutes: int|null, departure_offset_minutes: int|null,
-     *         break_minutes: int, break_count: int
+     *         break_minutes: int|null, break_count: int|null
      *     }>,
      *     summary: list<array{
-     *         worker_id: int, average_score: int|null, evaluated_shifts: int, good_shifts: int,
-     *         late_arrivals: int, early_departures: int, break_issues: int, absences: int
+     *         worker_id: int, attendance_rating_enabled: bool, average_score: int|null,
+     *         evaluated_shifts: int|null, good_shifts: int|null, late_arrivals: int|null,
+     *         early_departures: int|null, break_issues: int|null, absences: int|null
      *     }>
      * }
      */
     public function build(User $owner, Store $store, Collection $shifts): array
     {
-        $sessions = $this->sessions($owner, $store, $shifts);
+        $ratingEnabledByWorker = $this->ratingEnabledByWorker($owner, $shifts);
+        $ratedShifts = $shifts->filter(
+            static fn(Shift $shift): bool => $ratingEnabledByWorker[$shift->getWorkerId()] ?? false,
+        );
+        $sessions = $this->sessions($owner, $store, $ratedShifts);
         $breaks = $this->breaks($sessions);
         $sessionsByShift = $sessions->groupBy(
             static fn(AttendanceSession $session): int => (int) $session->getShiftId(),
         );
         $ratings = [];
         $summary = [];
+        $disabledWorkerIds = [];
 
         foreach ($shifts as $shift) {
             $workerId = $shift->getWorkerId();
+            if (!($ratingEnabledByWorker[$workerId] ?? false)) {
+                $ratings[$shift->getKey()] = $this->disabled();
+                $disabledWorkerIds[$workerId] = true;
+
+                continue;
+            }
             $summary[$workerId] ??= [
                 'worker_id' => $workerId,
+                'attendance_rating_enabled' => true,
                 'score_total' => 0,
                 'average_score' => null,
                 'evaluated_shifts' => 0,
@@ -89,11 +103,11 @@ class AttendanceRatingService
             }
         }
 
-        \ksort($summary);
         $summaryRows = [];
         foreach ($summary as $row) {
-            $summaryRows[] = [
+            $summaryRows[$row['worker_id']] = [
                 'worker_id' => $row['worker_id'],
+                'attendance_rating_enabled' => $row['attendance_rating_enabled'],
                 'average_score' => $row['evaluated_shifts'] > 0
                     ? (int) \round($row['score_total'] / $row['evaluated_shifts'])
                     : null,
@@ -105,8 +119,47 @@ class AttendanceRatingService
                 'absences' => $row['absences'],
             ];
         }
+        foreach (\array_keys($disabledWorkerIds) as $workerId) {
+            $summaryRows[$workerId] = [
+                'worker_id' => $workerId,
+                'attendance_rating_enabled' => false,
+                'average_score' => null,
+                'evaluated_shifts' => null,
+                'good_shifts' => null,
+                'late_arrivals' => null,
+                'early_departures' => null,
+                'break_issues' => null,
+                'absences' => null,
+            ];
+        }
+        \ksort($summaryRows);
 
-        return ['ratings' => $ratings, 'summary' => $summaryRows];
+        return ['ratings' => $ratings, 'summary' => \array_values($summaryRows)];
+    }
+
+    /**
+     * Resolve attendance rating settings for all workers referenced by the shifts.
+     *
+     * @param Collection<int, Shift> $shifts
+     *
+     * @return array<int, bool>
+     */
+    private function ratingEnabledByWorker(User $owner, Collection $shifts): array
+    {
+        if ($shifts->isEmpty()) {
+            return [];
+        }
+
+        $query = Worker::query();
+        Worker::scopeForUser($query, $owner);
+        Worker::querySelect($query);
+        $enabled = [];
+
+        foreach ($query->whereIn('id', $shifts->pluck('worker_id')->unique()->values())->get() as $worker) {
+            $enabled[$worker->getKey()] = $worker->isAttendanceRatingEnabled();
+        }
+
+        return $enabled;
     }
 
     /**
@@ -283,6 +336,24 @@ class AttendanceRatingService
             'state' => $state, 'score' => null, 'band' => null, 'reason_codes' => [],
             'arrival_offset_minutes' => null, 'departure_offset_minutes' => null,
             'break_minutes' => 0, 'break_count' => 0,
+        ];
+    }
+
+    /**
+     * Return the rating shape for a worker who opted out of attendance rating.
+     *
+     * @return array{
+     *     state: string, score: null, band: null, reason_codes: list<string>,
+     *     arrival_offset_minutes: null, departure_offset_minutes: null,
+     *     break_minutes: null, break_count: null
+     * }
+     */
+    private function disabled(): array
+    {
+        return [
+            'state' => 'disabled', 'score' => null, 'band' => null, 'reason_codes' => [],
+            'arrival_offset_minutes' => null, 'departure_offset_minutes' => null,
+            'break_minutes' => null, 'break_count' => null,
         ];
     }
 

@@ -224,6 +224,10 @@ přiřazenou prodejnu; report, sazby, tisk a opravy jsou admin-only.
 napárovaných nezneplatněných bloků a pauz. Skóre se neukládá, takže auditovaná
 oprava docházky se ihned projeví. Historické směny používají snapshot plánu;
 více pracovních bloků se spojí a mezery mezi nimi se počítají jako pauzy.
+Brigádník může mít hodnocení administrátorem vypnuté. Služba takové směny
+vyřadí ještě před načtením docházkových bloků a vrátí explicitní stav
+`disabled` bez bodů a odvozených metrik; samotná evidence docházky, reporty a
+mzdy zůstávají beze změny. Opětovné zapnutí obnoví dynamický rating z historie.
 `ShiftOverviewService` spojuje rating s naplánovanými hodinami do jediného
 `monthly_summary`, který používá přihlášená i veřejná stránka. Adminský řádek
 navíc obsahuje `salary`; omezený účet ani veřejný token tento klíč nedostanou.

@@ -185,6 +185,40 @@ use Illuminate\Support\Carbon;
     Carbon::setTestNow();
 });
 
+\test('admin keeps hours and salary while disabled attendance rating is omitted', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $worker = Worker::factory()->create([
+        'user_id' => $admin->getKey(),
+        'hourly_rate' => 200,
+        'attendance_rating_enabled' => false,
+    ]);
+    Shift::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
+        'date' => '2026-07-15', 'start_time' => '08:00', 'end_time' => '16:00', 'hourly_rate' => 200,
+    ]);
+    Carbon::setTestNow('2026-07-31 10:00:00 UTC');
+
+    $response = $this->be($admin, 'users')->get(
+        \route('shifts.index', ['store_id' => $store->getKey(), 'year' => 2026, 'month' => 7]),
+        $this->inertiaHeaders(),
+    );
+
+    $response->assertOk()
+        ->assertJsonPath('props.workers.0.attendance_rating_enabled', false)
+        ->assertJsonPath('props.shifts.0.attendance_rating.state', 'disabled')
+        ->assertJsonPath('props.shifts.0.attendance_rating.score', null)
+        ->assertJsonPath('props.shifts.0.attendance_rating.break_minutes', null)
+        ->assertJsonPath('props.monthly_summary.0.attendance_rating_enabled', false)
+        ->assertJsonPath('props.monthly_summary.0.average_score', null)
+        ->assertJsonPath('props.monthly_summary.0.good_shifts', null)
+        ->assertJsonPath('props.monthly_summary.0.absences', null)
+        ->assertJsonPath('props.monthly_summary.0.hours', 8)
+        ->assertJsonPath('props.monthly_summary.0.salary', 1600);
+
+    Carbon::setTestNow();
+});
+
 \test('guest is redirected to the login screen', function (): void {
     $this->get(\route('shifts.index'), $this->inertiaHeaders())->assertRedirect('/login');
 });

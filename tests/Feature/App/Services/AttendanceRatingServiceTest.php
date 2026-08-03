@@ -50,6 +50,62 @@ use Illuminate\Support\Carbon;
     Carbon::setTestNow();
 });
 
+\test('disabled attendance rating hides historical metrics and restores them when enabled', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $worker = Worker::factory()->create([
+        'user_id' => $admin->getKey(),
+        'attendance_rating_enabled' => false,
+    ]);
+    $shift = Shift::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
+        'date' => '2026-07-10', 'start_time' => '08:00', 'end_time' => '16:00',
+    ]);
+    AttendanceSession::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
+        'shift_id' => $shift->getKey(), 'scheduled_date' => '2026-07-10',
+        'scheduled_start_time' => '08:00', 'scheduled_end_time' => '16:00',
+        'started_at' => '2026-07-10 06:00:00', 'ended_at' => '2026-07-10 14:00:00',
+    ]);
+    Carbon::setTestNow('2026-07-11 10:00:00 UTC');
+
+    /** @var Collection<int, Shift> $shifts */
+    $shifts = Shift::query()->whereKey($shift->getKey())->get();
+    $disabled = (new AttendanceRatingService())->build($admin, $store, $shifts);
+
+    \expect($disabled['ratings'][$shift->getKey()])->toMatchArray([
+        'state' => 'disabled',
+        'score' => null,
+        'band' => null,
+        'reason_codes' => [],
+        'arrival_offset_minutes' => null,
+        'departure_offset_minutes' => null,
+        'break_minutes' => null,
+        'break_count' => null,
+    ])->and($disabled['summary'][0])->toMatchArray([
+        'worker_id' => $worker->getKey(),
+        'attendance_rating_enabled' => false,
+        'average_score' => null,
+        'evaluated_shifts' => null,
+        'good_shifts' => null,
+        'late_arrivals' => null,
+        'early_departures' => null,
+        'break_issues' => null,
+        'absences' => null,
+    ]);
+
+    $worker->update(['attendance_rating_enabled' => true]);
+    $enabled = (new AttendanceRatingService())->build($admin, $store, $shifts);
+
+    \expect(AttendanceSession::query()->where('worker_id', $worker->getKey())->count())->toBe(1)
+        ->and($enabled['ratings'][$shift->getKey()]['state'])->toBe('scored')
+        ->and($enabled['ratings'][$shift->getKey()]['score'])->toBe(100)
+        ->and($enabled['summary'][0]['attendance_rating_enabled'])->toBeTrue()
+        ->and($enabled['summary'][0]['average_score'])->toBe(100);
+
+    Carbon::setTestNow();
+});
+
 \test('rating applies all attendance penalties and reports their reasons', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);

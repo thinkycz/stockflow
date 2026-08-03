@@ -24,6 +24,7 @@ class WorkerFactory extends Factory
             'first_name' => $this->faker->firstName(),
             'last_name' => $this->faker->lastName(),
             'hourly_rate' => $this->faker->randomFloat(2, 150, 500),
+            'attendance_rating_enabled' => true,
         ];
     }
 }

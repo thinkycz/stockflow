@@ -53,6 +53,7 @@ class WorkerIndexController
                 'last_name' => $worker->getLastName(),
                 'color' => $worker->getCalendarColor(),
                 'hourly_rate' => $worker->getHourlyRate(),
+                'attendance_rating_enabled' => $worker->isAttendanceRatingEnabled(),
             ];
         })->all();
 

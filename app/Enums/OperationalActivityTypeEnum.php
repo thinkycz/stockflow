@@ -117,4 +117,121 @@ enum OperationalActivityTypeEnum: string
             self::STOCK_TRANSFER_REVERSED => 'Slack activity stock transfer reversed',
         };
     }
+
+    /**
+     * Human-facing digest category in Czech.
+     */
+    public function digestCategory(): string
+    {
+        return match ($this) {
+            self::ATTENDANCE_ARRIVAL,
+            self::ATTENDANCE_BREAK_STARTED,
+            self::ATTENDANCE_BREAK_ENDED,
+            self::ATTENDANCE_DEPARTURE,
+            self::ATTENDANCE_CORRECTION_CREATED,
+            self::ATTENDANCE_CORRECTION_UPDATED,
+            self::ATTENDANCE_CORRECTION_VOIDED,
+            self::ATTENDANCE_DEVIATION_APPROVED,
+            self::ATTENDANCE_DEVIATION_REJECTED => 'Docházka',
+            self::CHECKLIST_SHIFT_COMPLETED,
+            self::CHECKLIST_SHIFT_REOPENED,
+            self::CHECKLIST_DAY_EXCUSED,
+            self::CHECKLIST_DAY_EXCUSE_REVOKED => 'Checklisty',
+            self::PAYROLL_REPORT_CLOSED,
+            self::PAYROLL_REPORT_REOPENED => 'Výplaty',
+            self::FINANCIAL_REPORT_CLOSED,
+            self::FINANCIAL_REPORT_REOPENED => 'Finance',
+            self::RECIPE_TEST_PASSED,
+            self::RECIPE_TEST_FAILED => 'Receptové testy',
+            self::GIFT_VOUCHER_BATCH_ISSUED,
+            self::GIFT_VOUCHER_REDEEMED,
+            self::GIFT_VOUCHER_VOIDED,
+            self::GIFT_VOUCHER_REDEMPTION_REVERSED => 'Dárkové poukazy',
+            self::INVENTORY_SAVED => 'Inventury',
+            self::STATEMENT_SAVED,
+            self::STATEMENT_CLEARED,
+            self::STATEMENT_RESTORED => 'Tržby',
+            self::STOCK_MOVEMENT_CREATED,
+            self::STOCK_TRANSFER_CREATED,
+            self::STOCK_MOVEMENT_REVERSED,
+            self::STOCK_TRANSFER_REVERSED => 'Skladové pohyby',
+        };
+    }
+
+    /**
+     * Compact Czech label for aggregate digest sentences.
+     */
+    public function digestLabel(): string
+    {
+        return match ($this) {
+            self::ATTENDANCE_ARRIVAL => 'příchod',
+            self::ATTENDANCE_BREAK_STARTED => 'zahájení pauzy',
+            self::ATTENDANCE_BREAK_ENDED => 'ukončení pauzy',
+            self::ATTENDANCE_DEPARTURE => 'odchod',
+            self::ATTENDANCE_CORRECTION_CREATED => 'korekce docházky vytvořena',
+            self::ATTENDANCE_CORRECTION_UPDATED => 'korekce docházky upravena',
+            self::ATTENDANCE_CORRECTION_VOIDED => 'korekce docházky zrušena',
+            self::ATTENDANCE_DEVIATION_APPROVED => 'odchylka docházky schválena',
+            self::ATTENDANCE_DEVIATION_REJECTED => 'odchylka docházky zamítnuta',
+            self::CHECKLIST_SHIFT_COMPLETED => 'checklist dokončen',
+            self::CHECKLIST_SHIFT_REOPENED => 'checklist znovu otevřen',
+            self::CHECKLIST_DAY_EXCUSED => 'den omluven',
+            self::CHECKLIST_DAY_EXCUSE_REVOKED => 'omluva dne zrušena',
+            self::PAYROLL_REPORT_CLOSED => 'výplatní report uzavřen',
+            self::PAYROLL_REPORT_REOPENED => 'výplatní report znovu otevřen',
+            self::FINANCIAL_REPORT_CLOSED => 'finanční report uzavřen',
+            self::FINANCIAL_REPORT_REOPENED => 'finanční report znovu otevřen',
+            self::RECIPE_TEST_PASSED => 'úspěšný receptový test',
+            self::RECIPE_TEST_FAILED => 'neúspěšný receptový test',
+            self::GIFT_VOUCHER_BATCH_ISSUED => 'vydaný batch poukazů',
+            self::GIFT_VOUCHER_REDEEMED => 'uplatněný poukaz',
+            self::GIFT_VOUCHER_VOIDED => 'zneplatněný poukaz',
+            self::GIFT_VOUCHER_REDEMPTION_REVERSED => 'vrácené uplatnění poukazu',
+            self::INVENTORY_SAVED => 'uzavřená inventura',
+            self::STATEMENT_SAVED => 'uložená tržba',
+            self::STATEMENT_CLEARED => 'vymazaná tržba',
+            self::STATEMENT_RESTORED => 'obnovená tržba',
+            self::STOCK_MOVEMENT_CREATED => 'skladový pohyb',
+            self::STOCK_TRANSFER_CREATED => 'převod zásob',
+            self::STOCK_MOVEMENT_REVERSED => 'storno skladového pohybu',
+            self::STOCK_TRANSFER_REVERSED => 'storno převodu zásob',
+        };
+    }
+
+    /**
+     * Whether the archive should retain a per-event detail sentence.
+     */
+    public function hasDigestDetail(): bool
+    {
+        return !\in_array($this, [
+            self::ATTENDANCE_ARRIVAL,
+            self::ATTENDANCE_BREAK_STARTED,
+            self::ATTENDANCE_BREAK_ENDED,
+            self::ATTENDANCE_DEPARTURE,
+            self::STOCK_MOVEMENT_CREATED,
+            self::STOCK_TRANSFER_CREATED,
+        ], true);
+    }
+
+    /**
+     * Whether an audit-style digest detail should identify its actor.
+     */
+    public function hasDigestActor(): bool
+    {
+        return \in_array($this, [
+            self::ATTENDANCE_CORRECTION_CREATED,
+            self::ATTENDANCE_CORRECTION_UPDATED,
+            self::ATTENDANCE_CORRECTION_VOIDED,
+            self::ATTENDANCE_DEVIATION_APPROVED,
+            self::ATTENDANCE_DEVIATION_REJECTED,
+            self::PAYROLL_REPORT_CLOSED,
+            self::PAYROLL_REPORT_REOPENED,
+            self::FINANCIAL_REPORT_CLOSED,
+            self::FINANCIAL_REPORT_REOPENED,
+            self::GIFT_VOUCHER_VOIDED,
+            self::GIFT_VOUCHER_REDEMPTION_REVERSED,
+            self::STOCK_MOVEMENT_REVERSED,
+            self::STOCK_TRANSFER_REVERSED,
+        ], true);
+    }
 }

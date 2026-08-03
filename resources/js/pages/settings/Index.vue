@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -162,8 +162,14 @@ function submitSlack(): void {
                     </div>
 
                     <div
-                        class="flex items-center justify-end border-t border-outline-glass pt-4"
+                        class="flex flex-col gap-3 border-t border-outline-glass pt-4 sm:flex-row sm:items-center sm:justify-between"
                     >
+                        <Link
+                            :href="route('settings.slack-digests.index')"
+                            class="text-xs font-semibold text-primary hover:underline"
+                        >
+                            {{ t('settings.slack.digest_archive.open') }}
+                        </Link>
                         <Button type="submit" :disabled="slackForm.processing">
                             {{ t('settings.slack.submit') }}
                         </Button>

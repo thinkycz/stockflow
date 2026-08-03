@@ -1,0 +1,11 @@
+# Denní provozní Slack souhrn – traceability matrix
+
+| Req ID | Source               | Requirement                                  | Phase | Tasks            | Status   | Verification                                                                   | Notes                                  |
+| ------ | -------------------- | -------------------------------------------- | ----- | ---------------- | -------- | ------------------------------------------------------------------------------ | -------------------------------------- |
+| R1     | schválený plán       | Transakční journal všech provozních milníků  | 1     | T1.1–T1.3        | verified | OperationalActivityServiceTest                                                 | Jeden záznam na milník                 |
+| R2     | schválený plán       | Denní pražské období a agregovaný příběh     | 2     | T2.1             | verified | DailyOperationalDigestBuilderTest                                              | Včetně obou DST hranic a enum coverage |
+| R3     | schválený plán       | Jedna queued Slack zpráva a retry lifecycle  | 2     | T2.2             | verified | DailyOperationalDigestServiceTest, OperationalDailyDigestSlackNotificationTest | Firemní kanál                          |
+| R4     | schválený plán       | Recovery zmeškaných dní a 90denní retence    | 2     | T2.3             | verified | OperationalDigestJobsTest, DailyOperationalDigestServiceTest                   | Bez historického backfillu             |
+| R5     | schválený plán       | Admin archiv, detail a retry failed digestu  | 3     | T3.1–T3.3        | verified | SlackDigestIndex/Show/RetryControllerTest                                      | Admin-only a company scope             |
+| R6     | schválený plán       | CS/SK/EN UI a český Slack obsah              | 3     | T3.4             | verified | type-check, build, I18nParityTest, browser smoke                               | Parita ověřena                         |
+| R7     | stávající Slack spec | Privacy hranice a izolace transportních chyb | 1–4   | T1.3, T2.2, T4.1 | verified | Builder, service a notification testy; `make check`                            | Bez citlivých payloadů                 |

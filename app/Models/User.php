@@ -265,6 +265,14 @@ class User extends BaseUser implements MustVerifyEmail
     }
 
     /**
+     * First Prague calendar date eligible for a daily operational digest.
+     */
+    public function getOperationalDigestStartedOn(): Carbon|null
+    {
+        return $this->assertNullableCarbon('operational_digest_started_on');
+    }
+
+    /**
      * EmailVerifiedAt getter.
      */
     public function getEmailVerifiedAt(): Carbon|null
@@ -324,6 +332,7 @@ class User extends BaseUser implements MustVerifyEmail
             'recipes_initialized_at' => 'datetime',
             'recipe_instructions_initialized_at' => 'datetime',
             'recipe_catalog_v2_seeded_at' => 'datetime',
+            'operational_digest_started_on' => 'date',
             'password' => 'hashed',
             'is_admin' => 'boolean',
         ];

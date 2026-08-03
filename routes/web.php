@@ -66,6 +66,9 @@ use App\Http\Controllers\Web\Recipe\RecipeTestSessionController;
 use App\Http\Controllers\Web\Report\ReportController;
 use App\Http\Controllers\Web\Report\StatisticsController;
 use App\Http\Controllers\Web\Settings\SettingsController;
+use App\Http\Controllers\Web\Settings\SlackDigestIndexController;
+use App\Http\Controllers\Web\Settings\SlackDigestRetryController;
+use App\Http\Controllers\Web\Settings\SlackDigestShowController;
 use App\Http\Controllers\Web\Shift\SharedShiftIndexController;
 use App\Http\Controllers\Web\Shift\ShiftDestroyController;
 use App\Http\Controllers\Web\Shift\ShiftIndexController;
@@ -201,6 +204,9 @@ Resolver::resolveRouteRegistrar()
         $router->post('settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
         $router->post('settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
         $router->post('settings/slack', [SettingsController::class, 'updateSlack'])->name('settings.slack.update');
+        $router->get('settings/slack-digests', SlackDigestIndexController::class)->name('settings.slack-digests.index');
+        $router->get('settings/slack-digests/{digest}', SlackDigestShowController::class)->whereNumber('digest')->name('settings.slack-digests.show');
+        $router->post('settings/slack-digests/{digest}/retry', SlackDigestRetryController::class)->whereNumber('digest')->name('settings.slack-digests.retry');
 
         // Gift voucher administration
         $router->post('gift-voucher-batches', [GiftVoucherBatchController::class, 'store'])->name('gift-voucher-batches.store');

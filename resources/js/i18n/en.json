@@ -250,7 +250,28 @@
             "title": "Company Slack",
             "subtitle": "Receive company-wide operational milestones that do not belong to one store.",
             "channel": "Company Slack channel",
-            "submit": "Save Slack settings"
+            "submit": "Save Slack settings",
+            "digest_archive": {
+                "open": "Daily operational digest archive",
+                "title": "Daily operational digests",
+                "subtitle": "History of company-wide Slack digests for the last 90 days.",
+                "back": "Back to settings",
+                "back_to_archive": "Back to archive",
+                "empty_title": "No digests yet",
+                "empty_description": "The first digest is created after the first full day following activation.",
+                "milestones": "Operational milestones: {count}",
+                "attempts": "Attempts",
+                "delivered": "Delivered",
+                "retry": "Try sending again",
+                "warehouse": "Warehouse",
+                "actor": "Actor",
+                "status": {
+                    "pending": "Pending",
+                    "queued": "Queued",
+                    "sent": "Sent",
+                    "failed": "Failed"
+                }
+            }
         },
         "password": {
             "title": "Password",

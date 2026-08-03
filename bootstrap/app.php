@@ -8,6 +8,8 @@ use App\Console\Commands\PruneNoticeboardCardsCommand;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ResolveActiveStore;
+use App\Jobs\CreateDailyOperationalDigestJob;
+use App\Jobs\PruneOperationalDigestHistoryJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -97,6 +99,21 @@ return Application::configure(basePath: \dirname(__DIR__))
             ->dailyAt('00:05')
             ->timezone($timezone)
             ->runInBackground();
+
+        $schedule
+            ->job(new CreateDailyOperationalDigestJob())
+            ->hourly()
+            ->between('07:00', '23:00')
+            ->timezone($timezone)
+            ->withoutOverlapping()
+            ->onOneServer();
+
+        $schedule
+            ->job(new PruneOperationalDigestHistoryJob())
+            ->dailyAt('04:15')
+            ->timezone($timezone)
+            ->withoutOverlapping()
+            ->onOneServer();
     })
     ->withExceptions(static function (Exceptions $exceptions): void {
         $exceptions->map(

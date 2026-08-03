@@ -250,7 +250,28 @@
             "title": "Firemní Slack",
             "subtitle": "Přijímejte celofiremní provozní milníky, které nepatří jedné prodejně.",
             "channel": "Firemní Slack kanál",
-            "submit": "Uložit Slack nastavení"
+            "submit": "Uložit Slack nastavení",
+            "digest_archive": {
+                "open": "Archiv denních provozních souhrnů",
+                "title": "Denní provozní souhrny",
+                "subtitle": "Historie celofiremních Slack souhrnů za posledních 90 dní.",
+                "back": "Zpět do nastavení",
+                "back_to_archive": "Zpět do archivu",
+                "empty_title": "Zatím žádné souhrny",
+                "empty_description": "První souhrn vznikne po skončení prvního celého dne od aktivace.",
+                "milestones": "Provozní milníky: {count}",
+                "attempts": "Pokusy",
+                "delivered": "Doručeno",
+                "retry": "Zkusit odeslat znovu",
+                "warehouse": "Sklad",
+                "actor": "Aktér",
+                "status": {
+                    "pending": "Připraveno",
+                    "queued": "Ve frontě",
+                    "sent": "Odesláno",
+                    "failed": "Selhalo"
+                }
+            }
         },
         "password": {
             "title": "Heslo",

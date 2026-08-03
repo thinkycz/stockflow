@@ -227,5 +227,7 @@
     "Gift voucher batch issued.": "Gift voucher batch issued.",
     "Gift voucher redemption reversed.": "Gift voucher redemption reversed.",
     "Gift voucher voided.": "Gift voucher voided.",
-    "Gift voucher branding saved.": "Gift voucher branding saved."
+    "Gift voucher branding saved.": "Gift voucher branding saved.",
+    "Daily Slack digest queued again.": "Daily Slack digest queued again.",
+    "Only failed daily Slack digests can be retried.": "Only failed daily Slack digests can be retried."
 }

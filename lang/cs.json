@@ -227,5 +227,7 @@
     "Gift voucher batch issued.": "Dávka dárkových poukazů byla vydána.",
     "Gift voucher redemption reversed.": "Uplatnění dárkového poukazu bylo stornováno.",
     "Gift voucher voided.": "Dárkový poukaz byl zneplatněn.",
-    "Gift voucher branding saved.": "Vzhled dárkových poukazů byl uložen."
+    "Gift voucher branding saved.": "Vzhled dárkových poukazů byl uložen.",
+    "Daily Slack digest queued again.": "Denní Slack souhrn byl znovu zařazen do fronty.",
+    "Only failed daily Slack digests can be retried.": "Znovu odeslat lze pouze neúspěšný denní Slack souhrn."
 }

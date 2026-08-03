@@ -56,6 +56,33 @@ describe('UI consistency contract', () => {
         }
     });
 
+    test('active store is the first left-aligned page context', () => {
+        for (const page of [
+            'income-expenses/Index.vue',
+            'payroll/Index.vue',
+            'checklists/Index.vue',
+        ]) {
+            const source = readFileSync(resolve(jsRoot, 'pages', page), 'utf8');
+            const context = source.match(
+                /<template[^>]*#context[^>]*>([\s\S]*?)<\/template>/,
+            )?.[1];
+
+            expect(context, page).toBeDefined();
+            expect(context, page).toContain('<StoreContextIndicator');
+            expect(
+                context?.indexOf('<StoreContextIndicator'),
+                page,
+            ).toBeLessThan(
+                context?.indexOf('<Badge') === -1
+                    ? Number.POSITIVE_INFINITY
+                    : (context?.indexOf('<Badge') ?? Number.POSITIVE_INFINITY),
+            );
+            expect(source, page).not.toMatch(
+                /<template[^>]*#actions[^>]*>[\s\S]*?<StoreContextIndicator/,
+            );
+        }
+    });
+
     test('native browser confirmation and prompt APIs are not used', () => {
         for (const file of sourceFiles(jsRoot)) {
             const source = readFileSync(file, 'utf8');

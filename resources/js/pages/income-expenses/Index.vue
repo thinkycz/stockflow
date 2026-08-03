@@ -309,7 +309,8 @@ function rowHref(row: FinancialRow): string | null {
                 "
             >
                 <template #context>
-                    <div class="flex flex-wrap items-center gap-3">
+                    <div class="mt-2 flex flex-wrap items-center gap-3">
+                        <StoreContextIndicator class="mt-0" />
                         <Badge
                             v-if="financial_report"
                             :variant="
@@ -324,7 +325,6 @@ function rowHref(row: FinancialRow): string | null {
                                 )
                             }}
                         </Badge>
-                        <StoreContextIndicator />
                     </div>
                 </template>
                 <template #actions>

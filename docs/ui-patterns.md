@@ -8,6 +8,8 @@
 - Use `PageHeader` for the standard title, optional subtitle, context, and
   right-aligned action composition. Keep subordinate navigation in `before` or
   immediately above the header.
+- Place `StoreContextIndicator` first in the header context row. Status badges
+  follow it; the active store never belongs in the right-aligned actions slot.
 - Create, edit, and settings forms use `mx-auto w-full max-w-3xl`.
 
 ## Controls and state

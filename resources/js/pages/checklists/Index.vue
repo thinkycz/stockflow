@@ -277,7 +277,7 @@ async function changeExcuse(excused: boolean): Promise<void> {
                 :title="t('checklists.title')"
                 :subtitle="t('checklists.subtitle')"
             >
-                <template v-if="active_store" #actions>
+                <template v-if="active_store" #context>
                     <StoreContextIndicator />
                 </template>
             </PageHeader>

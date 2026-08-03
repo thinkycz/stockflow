@@ -113,7 +113,8 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                 "
             >
                 <template #context>
-                    <div class="flex flex-wrap items-center gap-3">
+                    <div class="mt-2 flex flex-wrap items-center gap-3">
+                        <StoreContextIndicator class="mt-0" />
                         <Badge
                             v-if="payroll_report"
                             :variant="
@@ -124,7 +125,6 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                         >
                             {{ t(`payroll.status.${payroll_report.status}`) }}
                         </Badge>
-                        <StoreContextIndicator />
                     </div>
                 </template>
                 <template #actions>

@@ -332,7 +332,7 @@ function cardClass(
 
         <template v-if="activeStore">
             <div
-                class="mb-5 grid gap-3 md:grid-cols-[minmax(14rem,1fr)_13rem_auto]"
+                class="mb-5 grid items-end gap-3 md:grid-cols-[minmax(14rem,1fr)_13rem_auto]"
             >
                 <SearchFilter
                     id="noticeboard-search"

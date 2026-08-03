@@ -71,8 +71,8 @@ function onKeydown(event: KeyboardEvent, item: TabItem): void {
         :class="
             cn(
                 variant === 'segmented'
-                    ? 'flex gap-1 overflow-x-auto rounded-xl border border-outline-glass bg-surface-container-low p-1'
-                    : 'flex gap-1 overflow-x-auto border-b border-outline-glass',
+                    ? 'flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl border border-outline-glass bg-surface-container-low p-1'
+                    : 'flex gap-6 overflow-x-auto border-b border-outline-glass',
                 $props.class,
             )
         "
@@ -89,14 +89,14 @@ function onKeydown(event: KeyboardEvent, item: TabItem): void {
             :tabindex="modelValue === item.value ? 0 : -1"
             :class="
                 cn(
-                    'min-w-fit shrink-0 rounded-lg px-4 text-sm',
+                    'min-w-fit shrink-0 px-4 text-sm',
                     variant === 'segmented'
                         ? modelValue === item.value
-                            ? 'bg-white text-primary shadow-sm hover:bg-white'
-                            : 'text-on-surface-variant'
+                            ? 'rounded-lg bg-white text-primary shadow-sm hover:bg-white'
+                            : 'rounded-lg text-on-surface-variant'
                         : modelValue === item.value
-                          ? 'rounded-none border-b-2 border-primary text-primary'
-                          : 'rounded-none border-b-2 border-transparent text-on-surface-variant',
+                          ? 'relative h-11 rounded-none border-0 bg-transparent px-1 text-primary shadow-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary hover:bg-transparent'
+                          : 'relative h-11 rounded-none border-0 bg-transparent px-1 text-on-surface-variant shadow-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-transparent hover:bg-transparent hover:text-on-surface',
                 )
             "
             @click="select(item, $event.currentTarget as HTMLElement)"

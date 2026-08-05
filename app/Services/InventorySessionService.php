@@ -605,28 +605,12 @@ class InventorySessionService
             ->where('store_id', $store->getKey())
             ->get()
             ->keyBy(static fn(StoreItem $row): int => $row->getItemId());
-        $previousByItem = [];
-        $previousRows = DB::table('inventory_session_items')
-            ->join('inventory_sessions', 'inventory_sessions.id', '=', 'inventory_session_items.session_id')
-            ->where('inventory_sessions.store_id', $store->getKey())
-            ->where('inventory_sessions.status', 'closed')
-            ->orderByDesc('inventory_sessions.counted_at')
-            ->orderByDesc('inventory_session_items.id')
-            ->get(['inventory_session_items.item_id', 'inventory_session_items.quantity']);
-        foreach ($previousRows as $previousRow) {
-            $itemId = Typer::parseInt($previousRow->item_id);
-            if (!isset($previousByItem[$itemId])) {
-                $previousByItem[$itemId] = $this->number($previousRow->quantity);
-            }
-        }
-
         $rows = [];
 
         foreach ($items as $item) {
             $itemId = $item->getKey();
             $storeItem = $currentByItem->get($itemId);
             $current = $storeItem instanceof StoreItem ? $storeItem->getQuantity() : 0;
-            $previous = $previousByItem[$itemId] ?? null;
 
             $rows[] = [
                 'item_id' => $itemId,
@@ -634,7 +618,6 @@ class InventorySessionService
                 'sku' => $item->getSku(),
                 'unit' => $item->getUnit(),
                 'current' => $current,
-                'previous' => $previous,
             ];
         }
 
@@ -697,8 +680,8 @@ class InventorySessionService
     /**
      * Build the read-only item list for a single inventory session.
      * Items appear in alphabetical order. Each row exposes the new
-     * quantity recorded in the session and the previous quantity from
-     * the prior session for the same store/item (null if none).
+     * quantity recorded in the session and the expected stock quantity
+     * immediately before the item was counted (null for legacy rows).
      *
      * @return array<int, array<string, mixed>>
      */
@@ -734,7 +717,6 @@ class InventorySessionService
                 'expected' => $sessionItem->getExpectedQuantity(),
                 'difference' => $sessionItem->getQuantityDifference(),
                 'classification' => $sessionItem->getClassification()?->value,
-                'previous' => $this->previousQuantity($session->getStore(), $item, $session->getCountedAt()),
                 'note' => $sessionItem->getNote(),
             ];
         }

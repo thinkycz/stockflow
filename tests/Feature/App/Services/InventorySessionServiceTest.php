@@ -156,7 +156,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($service->previousQuantity($store, $item, Carbon::now()->subDays(2)))->toBe(7);
 });
 
-\test('buildStoreView sorts items alphabetically by title and exposes previous quantity', function (): void {
+\test('buildStoreView sorts items alphabetically by title without previous inventory quantity', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $user->getKey()]);
     $zeta = Item::factory()->create(['user_id' => $user->getKey(), 'title' => 'Zeta Item']);
@@ -184,13 +184,13 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($view)->toHaveCount(3);
     \expect($view[0]['title'])->toBe('Alpha Item');
     \expect($view[0]['current'])->toBe(0);
-    \expect($view[0]['previous'])->toBe(4);
+    \expect($view[0])->not->toHaveKey('previous');
     \expect($view[1]['title'])->toBe('Middle Item');
     \expect($view[1]['current'])->toBe(0);
-    \expect($view[1]['previous'])->toBeNull();
+    \expect($view[1])->not->toHaveKey('previous');
     \expect($view[2]['title'])->toBe('Zeta Item');
     \expect($view[2]['current'])->toBe(9);
-    \expect($view[2]['previous'])->toBeNull();
+    \expect($view[2])->not->toHaveKey('previous');
 });
 
 \test('historyForUser returns sessions in descending counted_at order', function (): void {
@@ -298,7 +298,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($rows[0]['id'])->toBe($sessionA->getKey());
 });
 
-\test('buildSessionView returns rows in alphabetical order with previous quantity', function (): void {
+\test('buildSessionView returns rows in alphabetical order with stock before inventory', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $user->getKey()]);
     $zeta = Item::factory()->create(['user_id' => $user->getKey(), 'title' => 'Zeta Item']);
@@ -319,6 +319,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'session_id' => $current->getKey(),
         'item_id' => $alpha->getKey(),
         'quantity' => 8,
+        'expected_quantity' => 7,
     ]);
     InventorySessionItem::factory()->create([
         'session_id' => $current->getKey(),
@@ -332,10 +333,12 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($rows)->toHaveCount(2);
     \expect($rows[0]['title'])->toBe('Alpha Item');
     \expect($rows[0]['current'])->toBe(8);
-    \expect($rows[0]['previous'])->toBe(6);
+    \expect($rows[0]['expected'])->toBe(7);
+    \expect($rows[0])->not->toHaveKey('previous');
     \expect($rows[1]['title'])->toBe('Zeta Item');
     \expect($rows[1]['current'])->toBe(4);
-    \expect($rows[1]['previous'])->toBeNull();
+    \expect($rows[1]['expected'])->toBeNull();
+    \expect($rows[1])->not->toHaveKey('previous');
 });
 
 \test('closed inventory intervals count consumption but never transfers', function (): void {

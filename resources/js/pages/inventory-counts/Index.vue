@@ -25,7 +25,6 @@ type InventoryRow = {
     sku: string | null;
     unit: string | null;
     current: number;
-    previous: number | null;
 };
 
 type EditableRow = {
@@ -412,27 +411,6 @@ async function cancelDraft(): Promise<void> {
                                             {{
                                                 formatWithUnit(
                                                     row.current,
-                                                    row.unit,
-                                                )
-                                            }}
-                                        </dd>
-                                    </div>
-                                    <div>
-                                        <dt
-                                            class="text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant"
-                                        >
-                                            {{
-                                                t(
-                                                    'inventory_counts.columns.previous_short',
-                                                )
-                                            }}
-                                        </dt>
-                                        <dd
-                                            class="text-xs text-on-surface-variant"
-                                        >
-                                            {{
-                                                formatWithUnit(
-                                                    row.previous,
                                                     row.unit,
                                                 )
                                             }}

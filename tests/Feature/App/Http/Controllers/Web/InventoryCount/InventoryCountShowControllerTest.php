@@ -29,6 +29,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'session_id' => $current->getKey(),
         'item_id' => $alpha->getKey(),
         'quantity' => 8,
+        'expected_quantity' => 7,
     ]);
     InventorySessionItem::factory()->create([
         'session_id' => $current->getKey(),
@@ -48,10 +49,12 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->has('rows', 2)
         ->where('rows.0.title', 'Alpha Item')
         ->where('rows.0.current', 8)
-        ->where('rows.0.previous', 6)
+        ->where('rows.0.expected', 7)
+        ->missing('rows.0.previous')
         ->where('rows.1.title', 'Zeta Item')
         ->where('rows.1.current', 4)
-        ->where('rows.1.previous', null));
+        ->where('rows.1.expected', null)
+        ->missing('rows.1.previous'));
 });
 
 \test('show refuses a session from another user', function (): void {

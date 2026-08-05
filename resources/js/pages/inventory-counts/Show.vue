@@ -14,7 +14,7 @@ type SessionRow = {
     sku: string | null;
     unit: string | null;
     current: number;
-    previous: number | null;
+    expected: number | null;
     note: string | null;
 };
 
@@ -92,7 +92,11 @@ const route = useRoute();
                                 {{ t('inventory_counts.columns.unit') }}
                             </th>
                             <th class="min-w-[8rem] text-right">
-                                {{ t('inventory_counts.columns.previous') }}
+                                {{
+                                    t(
+                                        'inventory_counts.columns.before_inventory',
+                                    )
+                                }}
                             </th>
                             <th class="min-w-[9rem] text-right">
                                 {{ t('inventory_counts.columns.new_quantity') }}
@@ -118,7 +122,7 @@ const route = useRoute();
                             <td
                                 class="text-right text-xs text-on-surface-variant"
                             >
-                                {{ row.previous ?? '—' }}
+                                {{ row.expected ?? '—' }}
                             </td>
                             <td
                                 class="text-right font-semibold text-on-surface"

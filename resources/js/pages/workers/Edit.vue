@@ -9,6 +9,7 @@ import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
+import WorkerColorField from '@/components/workers/WorkerColorField.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 
@@ -17,6 +18,7 @@ type WorkerFields = {
     last_name: string;
     hourly_rate: string;
     attendance_rating_enabled: boolean;
+    calendar_color: string;
 };
 
 const props = defineProps<{
@@ -26,7 +28,11 @@ const props = defineProps<{
         last_name: string;
         hourly_rate: number;
         attendance_rating_enabled: boolean;
+        calendar_color: string | null;
+        effective_calendar_color: string;
+        automatic_calendar_color: string;
     };
+    calendar_colors: string[];
 }>();
 
 const { t } = useI18n();
@@ -40,6 +46,7 @@ const form = useForm<WorkerFields>({
     last_name: props.worker.last_name,
     hourly_rate: String(props.worker.hourly_rate),
     attendance_rating_enabled: props.worker.attendance_rating_enabled,
+    calendar_color: props.worker.calendar_color ?? '',
 });
 
 function submit(): void {
@@ -116,6 +123,13 @@ function submit(): void {
                             :message="form.errors.attendance_rating_enabled"
                         />
                     </div>
+
+                    <WorkerColorField
+                        v-model="form.calendar_color"
+                        :colors="calendar_colors"
+                        :automatic-color="worker.automatic_calendar_color"
+                        :error="form.errors.calendar_color"
+                    />
 
                     <div
                         class="flex items-center justify-end gap-3 border-t border-outline-glass pt-4"

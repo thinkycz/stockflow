@@ -66,7 +66,25 @@ class Worker extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'user_id', 'first_name', 'last_name', 'hourly_rate', 'attendance_rating_enabled', 'created_at', 'updated_at']);
+        return $query->select(['id', 'user_id', 'first_name', 'last_name', 'calendar_color', 'hourly_rate', 'attendance_rating_enabled', 'created_at', 'updated_at']);
+    }
+
+    /**
+     * Available curated calendar colors.
+     *
+     * @return list<string>
+     */
+    public static function calendarColors(): array
+    {
+        return self::CALENDAR_COLORS;
+    }
+
+    /**
+     * Normalize an optional calendar color for persistence.
+     */
+    public static function normalizeCalendarColor(string|null $calendarColor): string|null
+    {
+        return $calendarColor === null ? null : \mb_strtoupper($calendarColor);
     }
 
     /**
@@ -98,7 +116,29 @@ class Worker extends BaseModel
      */
     public function getCalendarColor(): string
     {
+        $calendarColor = $this->getStoredCalendarColor();
+
+        if ($calendarColor !== null) {
+            return \mb_strtoupper($calendarColor);
+        }
+
+        return $this->getAutomaticCalendarColor();
+    }
+
+    /**
+     * Deterministic fallback color used when no explicit color is stored.
+     */
+    public function getAutomaticCalendarColor(): string
+    {
         return self::CALENDAR_COLORS[(Typer::assertInt($this->getKey()) - 1) % \count(self::CALENDAR_COLORS)];
+    }
+
+    /**
+     * Explicitly stored calendar color, or null when automatic assignment is used.
+     */
+    public function getStoredCalendarColor(): string|null
+    {
+        return Typer::assertNullableString($this->getAttribute('calendar_color'));
     }
 
     /**

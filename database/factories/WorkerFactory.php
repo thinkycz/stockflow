@@ -23,6 +23,7 @@ class WorkerFactory extends Factory
             'user_id' => static fn(): int => UserFactory::new()->createOne()->getKey(),
             'first_name' => $this->faker->firstName(),
             'last_name' => $this->faker->lastName(),
+            'calendar_color' => null,
             'hourly_rate' => $this->faker->randomFloat(2, 150, 500),
             'attendance_rating_enabled' => true,
         ];

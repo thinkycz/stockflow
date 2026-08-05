@@ -12,7 +12,9 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $this->be($admin, 'users')->get('/workers/create', $this->inertiaHeaders())
         ->assertOk()
-        ->assertJsonPath('component', 'workers/Create');
+        ->assertJsonPath('component', 'workers/Create')
+        ->assertJsonCount(12, 'props.calendar_colors')
+        ->assertJsonPath('props.calendar_colors.0', '#2563EB');
 });
 
 \test('admin can create a worker', function (): void {
@@ -25,6 +27,7 @@ use Thinkycz\LaravelCore\Support\Typer;
             'first_name' => 'Jan',
             'last_name' => 'Novak',
             'hourly_rate' => 200.50,
+            'calendar_color' => '#12abef',
         ], $this->inertiaHeaders());
 
     $response->assertRedirect();
@@ -34,8 +37,23 @@ use Thinkycz\LaravelCore\Support\Typer;
     );
     \expect($worker->getUserId())->toBe($admin->getKey());
     \expect($worker->getHourlyRate())->toBe(200.50);
+    \expect($worker->getStoredCalendarColor())->toBe('#12ABEF');
+    \expect($worker->getCalendarColor())->toBe('#12ABEF');
     \expect($worker->isAttendanceRatingEnabled())->toBeTrue();
     \assertInertiaFlash($response, 'success', \__('Worker created.'));
+});
+
+\test('calendar color must be a full hexadecimal color', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+
+    $this->be($admin, 'users')->postJson('/workers', [
+        'first_name' => 'Invalid',
+        'last_name' => 'Color',
+        'hourly_rate' => 200,
+        'calendar_color' => '#FFF',
+    ])->assertUnprocessable()->assertJsonValidationErrors('calendar_color');
+
+    \expect(Worker::query()->where('first_name', 'Invalid')->exists())->toBeFalse();
 });
 
 \test('admin can create a worker with attendance rating disabled', function (): void {

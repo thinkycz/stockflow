@@ -13,7 +13,10 @@ use Illuminate\Support\Carbon;
 \test('report subtracts breaks and calculates plan difference and wage', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $admin->getKey()]);
-    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $worker = Worker::factory()->create([
+        'user_id' => $admin->getKey(),
+        'calendar_color' => '#12ABEF',
+    ]);
     $shift = Shift::factory()->create([
         'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
         'date' => '2026-07-10', 'start_time' => '08:00', 'end_time' => '16:00', 'hourly_rate' => 250,
@@ -31,7 +34,8 @@ use Illuminate\Support\Carbon;
 
     $report = (new AttendanceReportService())->build($admin, $store, '2026-07', null);
 
-    \expect($report['rows'][0]['actual_seconds'])->toBe(13_500)
+    \expect($report['rows'][0]['worker_color'])->toBe('#12ABEF')
+        ->and($report['rows'][0]['actual_seconds'])->toBe(13_500)
         ->and($report['rows'][0]['break_seconds'])->toBe(900)
         ->and($report['rows'][0]['breaks'])->toHaveCount(1)
         ->and($report['rows'][0]['breaks'][0]['started_at'])->toContain('2026-07-10T10:00:00')

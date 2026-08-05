@@ -65,6 +65,16 @@ class WorkerValidity
     }
 
     /**
+     * Optional custom calendar color in full hexadecimal notation.
+     */
+    public function calendarColor(): Validity
+    {
+        return $this->baseValidity->make()->string(7)->callback(
+            static fn(mixed $value): bool => \is_string($value) && \preg_match('/^#[0-9A-Fa-f]{6}$/', $value) === 1,
+        );
+    }
+
+    /**
      * Id validation rules.
      */
     public function id(): Validity

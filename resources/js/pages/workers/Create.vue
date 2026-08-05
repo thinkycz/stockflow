@@ -9,6 +9,7 @@ import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
+import WorkerColorField from '@/components/workers/WorkerColorField.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 
@@ -17,7 +18,10 @@ type WorkerFields = {
     last_name: string;
     hourly_rate: string;
     attendance_rating_enabled: boolean;
+    calendar_color: string;
 };
+
+defineProps<{ calendar_colors: string[] }>();
 
 const { t } = useI18n();
 
@@ -30,6 +34,7 @@ const form = useForm<WorkerFields>({
     last_name: '',
     hourly_rate: '',
     attendance_rating_enabled: true,
+    calendar_color: '',
 });
 
 function submit(): void {
@@ -106,6 +111,12 @@ function submit(): void {
                             :message="form.errors.attendance_rating_enabled"
                         />
                     </div>
+
+                    <WorkerColorField
+                        v-model="form.calendar_color"
+                        :colors="calendar_colors"
+                        :error="form.errors.calendar_color"
+                    />
 
                     <div
                         class="flex items-center justify-end gap-3 border-t border-outline-glass pt-4"

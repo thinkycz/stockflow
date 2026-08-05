@@ -9,13 +9,18 @@ use App\Models\Worker;
     $worker = Worker::factory()->create([
         'user_id' => $admin->getKey(),
         'attendance_rating_enabled' => false,
+        'calendar_color' => null,
     ]);
 
     $this->be($admin, 'users')->get("/workers/{$worker->getKey()}/edit", $this->inertiaHeaders())
         ->assertOk()
         ->assertJsonPath('component', 'workers/Edit')
         ->assertJsonPath('props.worker.id', $worker->getKey())
-        ->assertJsonPath('props.worker.attendance_rating_enabled', false);
+        ->assertJsonPath('props.worker.attendance_rating_enabled', false)
+        ->assertJsonPath('props.worker.calendar_color', null)
+        ->assertJsonPath('props.worker.effective_calendar_color', $worker->getCalendarColor())
+        ->assertJsonPath('props.worker.automatic_calendar_color', $worker->getAutomaticCalendarColor())
+        ->assertJsonCount(12, 'props.calendar_colors');
 });
 
 \test('admin can update a worker', function (): void {
@@ -32,6 +37,7 @@ use App\Models\Worker;
         'last_name' => 'Updated',
         'hourly_rate' => 250.75,
         'attendance_rating_enabled' => false,
+        'calendar_color' => '#c026d3',
     ]);
 
     $response->assertRedirect();
@@ -40,6 +46,24 @@ use App\Models\Worker;
     \expect($worker->getLastName())->toBe('Updated');
     \expect($worker->getHourlyRate())->toBe(250.75);
     \expect($worker->isAttendanceRatingEnabled())->toBeFalse();
+    \expect($worker->getStoredCalendarColor())->toBe('#C026D3');
+});
+
+\test('admin can reset a worker calendar color to automatic', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $worker = Worker::factory()->create([
+        'user_id' => $admin->getKey(),
+        'calendar_color' => '#12ABEF',
+    ]);
+
+    $this->be($admin, 'users')->put("/workers/{$worker->getKey()}", [
+        'first_name' => $worker->getFirstName(),
+        'last_name' => $worker->getLastName(),
+        'hourly_rate' => $worker->getHourlyRate(),
+        'calendar_color' => '',
+    ])->assertRedirect();
+
+    \expect($worker->refresh()->getStoredCalendarColor())->toBeNull();
 });
 
 \test('cannot edit a worker belonging to another admin', function (): void {

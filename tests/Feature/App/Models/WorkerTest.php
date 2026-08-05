@@ -33,3 +33,17 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->toBe($reloadedWorker->getCalendarColor())
         ->not->toBe($secondWorker->getCalendarColor());
 });
+
+\test('calendar color can be overridden and reset to the automatic fallback', function (): void {
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $automaticColor = $worker->getCalendarColor();
+
+    $worker->update(['calendar_color' => '#12ABEF']);
+
+    \expect($worker->refresh()->getCalendarColor())->toBe('#12ABEF');
+
+    $worker->update(['calendar_color' => null]);
+
+    \expect($worker->refresh()->getCalendarColor())->toBe($automaticColor);
+});

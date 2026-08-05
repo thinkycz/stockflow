@@ -41,6 +41,7 @@ type SessionRow = {
 type AttendanceRow = {
     worker_id: number;
     worker_name: string;
+    worker_color: string;
     status: AttendanceStatus;
     has_current_shift: boolean;
     shifts: Array<{ id: number; start_time: string; end_time: string }>;
@@ -530,8 +531,18 @@ onUnmounted(() => {
                                 :data-testid="`attendance-row-${row.worker_id}`"
                             >
                                 <td :data-label="t('attendance.worker')">
-                                    <p class="font-semibold text-on-surface">
-                                        {{ row.worker_name }}
+                                    <p
+                                        class="flex items-center gap-2 font-semibold text-on-surface"
+                                    >
+                                        <span
+                                            class="size-2.5 shrink-0 rounded-full border border-black/10"
+                                            :style="{
+                                                backgroundColor:
+                                                    row.worker_color,
+                                            }"
+                                            aria-hidden="true"
+                                        />
+                                        <span>{{ row.worker_name }}</span>
                                     </p>
                                     <div
                                         class="mt-2 flex items-center gap-1.5 text-xs font-semibold"

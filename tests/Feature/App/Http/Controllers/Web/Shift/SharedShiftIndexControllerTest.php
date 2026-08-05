@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
         'user_id' => $admin->getKey(),
         'first_name' => 'Jan',
         'last_name' => 'Novak',
+        'calendar_color' => '#12ABEF',
     ]);
 
     $shift = Shift::factory()->create([
@@ -48,7 +49,7 @@ use Illuminate\Support\Carbon;
     $response->assertJsonPath('component', 'public-shifts/Index');
     $response->assertJsonPath('props.store.name', $store->getName());
     $response->assertJsonPath('props.shifts.0.worker_name', 'Jan Novak');
-    $response->assertJsonPath('props.shifts.0.worker_color', $worker->getCalendarColor());
+    $response->assertJsonPath('props.shifts.0.worker_color', '#12ABEF');
     $response->assertJsonPath('props.shifts.0.date', '2026-07-15');
     $response->assertJsonPath('props.shifts.0.start_time', '09:00');
     $response->assertJsonPath('props.shifts.0.end_time', '16:00');
@@ -58,6 +59,7 @@ use Illuminate\Support\Carbon;
     $response->assertJsonMissingPath('props.shifts.0.attendance_rating.reason_codes');
     $response->assertJsonMissingPath('props.shifts.0.attendance_rating.late_minutes');
     $response->assertJsonPath('props.monthly_summary.0.worker_name', 'Jan Novak');
+    $response->assertJsonPath('props.monthly_summary.0.color', '#12ABEF');
     $response->assertJsonPath('props.monthly_summary.0.hours', 7);
     $response->assertJsonPath('props.monthly_summary.0.average_score', 100);
     $response->assertJsonPath('props.monthly_summary.0.good_shifts', 1);

@@ -38,6 +38,7 @@ use Illuminate\Support\Carbon;
         'user_id' => $admin->getKey(),
         'first_name' => 'Anna',
         'last_name' => 'Scheduled',
+        'calendar_color' => '#12ABEF',
         'attendance_rating_enabled' => false,
     ]);
     $active = Worker::factory()->create([
@@ -96,6 +97,7 @@ use Illuminate\Support\Carbon;
     $response->assertOk()
         ->assertJsonCount(2, 'props.attendance_rows')
         ->assertJsonPath('props.attendance_rows.0.worker_id', $scheduled->getKey())
+        ->assertJsonPath('props.attendance_rows.0.worker_color', '#12ABEF')
         ->assertJsonCount(2, 'props.attendance_rows.0.shifts')
         ->assertJsonPath('props.attendance_rows.0.shifts.0.start_time', '09:00')
         ->assertJsonPath('props.attendance_rows.0.shifts.1.start_time', '14:00')

@@ -16,7 +16,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * @phpstan-type AttendanceReportRow array{id: int, worker_id: int, shift_id: int|null, worker_name: string, date: string, started_at: string, ended_at: string|null, breaks: list<array{started_at: string, ended_at: string|null, seconds: int}>, break_seconds: int, actual_seconds: int|null, planned_seconds: int|null, difference_seconds: int|null, hourly_rate: float, wage: float|null, stale: bool, voided: bool}
+ * @phpstan-type AttendanceReportRow array{id: int, worker_id: int, shift_id: int|null, worker_name: string, worker_color: string, date: string, started_at: string, ended_at: string|null, breaks: list<array{started_at: string, ended_at: string|null, seconds: int}>, break_seconds: int, actual_seconds: int|null, planned_seconds: int|null, difference_seconds: int|null, hourly_rate: float, wage: float|null, stale: bool, voided: bool}
  * @phpstan-type AttendanceSummaryRow array{worker_id: int, worker_name: string, actual_seconds: int, planned_seconds: int, difference_seconds: int, wage: float, incomplete_count: int}
  * @phpstan-type AttendanceDeviationRow array{shift_id: int, primary_session_id: int, status: string, planned_start_time: string, planned_end_time: string, actual_started_at: string, actual_ended_at: string, arrival_offset_seconds: int, departure_offset_seconds: int, can_approve: bool, reason: string|null, reviewed_at: string|null}
  */
@@ -100,6 +100,7 @@ class AttendanceReportService
                 'worker_id' => $worker->getKey(),
                 'shift_id' => $session->getShiftId(),
                 'worker_name' => $worker->getFullName(),
+                'worker_color' => $worker->getCalendarColor(),
                 'date' => $session->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toDateString(),
                 'started_at' => $session->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toIso8601String(),
                 'ended_at' => $endedAt?->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toIso8601String(),

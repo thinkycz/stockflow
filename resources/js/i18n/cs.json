@@ -1089,6 +1089,15 @@
         "confirm_delete": "Opravdu chcete smazat tohoto brigádníka?",
         "attendance_rating_enabled": "Hodnotit docházku",
         "attendance_rating_help": "Vypnutí skryje hodnocení docházky, ale příchody, odchody, výkazy a mzdy zůstanou beze změny.",
+        "calendar_color": {
+            "label": "Barva brigádníka",
+            "help": "Použije se ve směnách a docházce. Automatická barva zůstává stabilně odvozená od brigádníka.",
+            "automatic": "Automaticky",
+            "automatic_preview": "Automatická: {color}",
+            "automatic_after_save": "Barva se přiřadí po uložení.",
+            "custom": "Vlastní barva",
+            "choose": "Nastavit barvu {color}"
+        },
         "rating_status": {
             "enabled": "Zapnuto",
             "disabled": "Vypnuto"

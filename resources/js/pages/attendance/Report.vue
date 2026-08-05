@@ -33,6 +33,7 @@ type SessionRow = {
     id: number;
     worker_id: number;
     worker_name: string;
+    worker_color: string;
     date: string;
     started_at: string;
     ended_at: string | null;
@@ -436,7 +437,16 @@ function removeBreak(index: number): void {
                         >
                             <td class="py-3">{{ row.date }}</td>
                             <td class="font-medium">
-                                {{ row.worker_name }}
+                                <span class="flex items-center gap-2">
+                                    <span
+                                        class="size-2.5 shrink-0 rounded-full border border-black/10"
+                                        :style="{
+                                            backgroundColor: row.worker_color,
+                                        }"
+                                        aria-hidden="true"
+                                    />
+                                    <span>{{ row.worker_name }}</span>
+                                </span>
                             </td>
                             <td>
                                 <span :class="row.voided ? 'line-through' : ''">

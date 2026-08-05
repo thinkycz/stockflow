@@ -22,6 +22,7 @@ class AttendanceOverviewService
      *     attendance_rows: list<array{
      *         worker_id: int,
      *         worker_name: string,
+     *         worker_color: string,
      *         status: string,
      *         has_current_shift: bool,
      *         shifts: list<array{id: int, start_time: string, end_time: string}>,
@@ -104,6 +105,7 @@ class AttendanceOverviewService
             $rows[] = [
                 'worker_id' => $workerId,
                 'worker_name' => $worker->getFullName(),
+                'worker_color' => $worker->getCalendarColor(),
                 'status' => $status,
                 'has_current_shift' => $workerShifts->contains(
                     fn(Shift $shift): bool => $attendanceService->matchesCurrentWindow($shift, $now),

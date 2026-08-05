@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
         'first_name' => 'Anna',
         'last_name' => 'Adams',
         'hourly_rate' => 200.50,
+        'calendar_color' => '#12ABEF',
     ]);
     $workerWithoutShifts = Worker::factory()->create([
         'user_id' => $admin->getKey(),
@@ -83,7 +84,8 @@ use Illuminate\Support\Carbon;
     $response->assertJsonPath('props.is_admin', true);
     $response->assertJsonPath('props.monthly_summary.0.worker_id', $worker->getKey());
     $response->assertJsonPath('props.monthly_summary.0.worker_name', 'Anna Adams');
-    $response->assertJsonPath('props.monthly_summary.0.color', $worker->getCalendarColor());
+    $response->assertJsonPath('props.workers.0.color', '#12ABEF');
+    $response->assertJsonPath('props.monthly_summary.0.color', '#12ABEF');
     $response->assertJsonPath('props.monthly_summary.0.hours', 8.5);
     $response->assertJsonPath('props.monthly_summary.0.salary', 1704.25);
     $response->assertJsonPath('props.monthly_summary.0.absences', 2);

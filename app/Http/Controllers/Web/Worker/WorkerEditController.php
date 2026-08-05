@@ -29,8 +29,12 @@ class WorkerEditController
                 'first_name' => $worker->getFirstName(),
                 'last_name' => $worker->getLastName(),
                 'hourly_rate' => $worker->getHourlyRate(),
+                'calendar_color' => $worker->getStoredCalendarColor(),
+                'effective_calendar_color' => $worker->getCalendarColor(),
+                'automatic_calendar_color' => $worker->getAutomaticCalendarColor(),
                 'attendance_rating_enabled' => $worker->isAttendanceRatingEnabled(),
             ],
+            'calendar_colors' => Worker::calendarColors(),
         ]);
     }
 
@@ -47,12 +51,14 @@ class WorkerEditController
             'last_name' => $validity->lastName()->required()->toArray(),
             'hourly_rate' => $validity->hourlyRate()->required()->toArray(),
             'attendance_rating_enabled' => $validity->attendanceRatingEnabled()->nullable()->toArray(),
+            'calendar_color' => $validity->calendarColor()->nullable()->toArray(),
         ]);
 
         $worker->update([
             'first_name' => $validated->assertString('first_name'),
             'last_name' => $validated->assertString('last_name'),
             'hourly_rate' => $validated->parseFloat('hourly_rate'),
+            'calendar_color' => Worker::normalizeCalendarColor($validated->assertNullableString('calendar_color')),
             'attendance_rating_enabled' => $validated->has('attendance_rating_enabled')
                 ? $validated->parseBool('attendance_rating_enabled')
                 : $worker->isAttendanceRatingEnabled(),

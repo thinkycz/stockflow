@@ -53,6 +53,7 @@ const props = defineProps<{
             | 'reversal';
         display_label_key:
             | 'incoming'
+            | 'outgoing'
             | 'transfer'
             | 'consumption'
             | 'adjustment'

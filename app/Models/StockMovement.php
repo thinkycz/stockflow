@@ -300,6 +300,21 @@ class StockMovement extends BaseModel
      */
     public function getDisplayLabelKey(): string
     {
+        if ($this->getType() !== StockMovementTypeEnum::TRANSFER) {
+            return $this->getType()->value;
+        }
+
+        $sourceStore = $this->getSourceStore();
+        $destinationStore = $this->getStore();
+        if (
+            $sourceStore instanceof Store &&
+            $destinationStore instanceof Store &&
+            $sourceStore->isWarehouse() &&
+            !$destinationStore->isWarehouse()
+        ) {
+            return 'outgoing';
+        }
+
         return $this->getType()->value;
     }
 

@@ -52,6 +52,7 @@ class StoreShowController
                 'id' => $movement->getKey(),
                 'number' => $movement->getNumber(),
                 'type' => $movement->getType()->value,
+                'display_label_key' => $movement->getDisplayLabelKey(),
                 'note' => $movement->getNote(),
                 'total_quantity' => $movement->getTotalQuantity(),
                 'total_value' => $movement->getTotalValue(),

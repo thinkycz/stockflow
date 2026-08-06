@@ -38,6 +38,14 @@ type MovementRow = {
         | 'adjustment'
         | 'inventory_reconciliation'
         | 'reversal';
+    display_label_key:
+        | 'incoming'
+        | 'outgoing'
+        | 'transfer'
+        | 'consumption'
+        | 'adjustment'
+        | 'inventory_reconciliation'
+        | 'reversal';
     note: string | null;
     total_quantity: number;
     total_value: number;
@@ -413,7 +421,10 @@ async function destroyStore(): Promise<void> {
                                 </Link>
                             </td>
                             <td>
-                                <MovementTypeBadge :type="movement.type" />
+                                <MovementTypeBadge
+                                    :type="movement.type"
+                                    :label-key="movement.display_label_key"
+                                />
                             </td>
                             <td
                                 class="text-right font-semibold text-on-surface"

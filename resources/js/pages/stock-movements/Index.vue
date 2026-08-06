@@ -31,6 +31,7 @@ type MovementRow = {
         | 'reversal';
     display_label_key:
         | 'incoming'
+        | 'outgoing'
         | 'transfer'
         | 'consumption'
         | 'adjustment'

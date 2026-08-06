@@ -20,6 +20,10 @@ import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { formatMoney, formatNumber } from '@/lib/format';
+import {
+    movementDisplayLabelKey,
+    type MovementDisplayLabelKey,
+} from '@/lib/movement-display';
 
 type StoreOption = {
     id: number;
@@ -115,9 +119,7 @@ const destinationStoreOptions = computed((): StoreOption[] => {
     );
 });
 
-type InferredLabelKey = 'incoming' | 'transfer' | 'adjustment' | 'consumption';
-
-const inferredLabelKey = computed((): InferredLabelKey | null => {
+const inferredLabelKey = computed((): MovementDisplayLabelKey | null => {
     if (isAdjustmentMode.value) {
         return 'adjustment';
     }
@@ -133,7 +135,18 @@ const inferredLabelKey = computed((): InferredLabelKey | null => {
     if (!form.source_store_id) {
         return 'incoming';
     }
-    return 'transfer';
+
+    const sourceStore = props.stores.find(
+        (store) => String(store.id) === form.source_store_id,
+    );
+    const destinationStore = props.stores.find(
+        (store) => String(store.id) === form.store_id,
+    );
+    return movementDisplayLabelKey(
+        'transfer',
+        sourceStore ?? null,
+        destinationStore ?? null,
+    );
 });
 
 const isOutgoingTransfer = computed(
@@ -603,7 +616,11 @@ watch(
                                 }}</Label>
                                 <div class="flex h-10 items-center">
                                     <MovementTypeBadge
-                                        :type="inferredLabelKey"
+                                        :type="
+                                            inferredLabelKey === 'outgoing'
+                                                ? 'transfer'
+                                                : inferredLabelKey
+                                        "
                                         :label-key="inferredLabelKey"
                                     />
                                 </div>

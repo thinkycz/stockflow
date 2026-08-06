@@ -124,7 +124,7 @@ class DashboardController
         });
         $recentMovements = $recentMovements
             ->whereNull('reversed_at')
-            ->with(['store', 'creator'])
+            ->with(['store', 'sourceStore', 'creator'])
             ->orderByDesc('occurred_at')
             ->orderByDesc('id')
             ->limit(10)
@@ -133,6 +133,7 @@ class DashboardController
                 'id' => $movement->getKey(),
                 'number' => $movement->getNumber(),
                 'type' => $movement->getType()->value,
+                'display_label_key' => $movement->getDisplayLabelKey(),
                 'store_name' => $movement->getStore()?->getName(),
                 'total_quantity' => $movement->getTotalQuantity(),
                 'total_value' => $movement->getTotalValue(),

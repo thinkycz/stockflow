@@ -593,10 +593,10 @@
         "types": {
             "incoming": "Naskladnenie",
             "outgoing": "Vyskladnenie",
-            "transfer": "Presun medzi predajňami",
+            "transfer": "Presun",
             "consumption": "Spotreba",
             "adjustment": "Ručná úprava",
-            "inventory_reconciliation": "Inventúrne vyrovnanie",
+            "inventory_reconciliation": "Inventúra",
             "reversal": "Storno"
         },
         "filter": {

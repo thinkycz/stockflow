@@ -52,7 +52,7 @@ test('inventory reconciliation shows explicit increase and decrease signs', asyn
     await page.goto('/stock-movements');
     const newestReconciliation = page
         .locator('tbody tr')
-        .filter({ hasText: 'Inventory reconciliation' })
+        .filter({ hasText: 'Inventory' })
         .first();
     await expect(newestReconciliation).toContainText(/-CZK\s*[\d,.]+/);
     await newestReconciliation.getByRole('link').first().click();
@@ -64,7 +64,7 @@ test('inventory reconciliation shows explicit increase and decrease signs', asyn
     await page.goto('/stock-movements');
     const oldestReconciliation = page
         .locator('tbody tr')
-        .filter({ hasText: 'Inventory reconciliation' })
+        .filter({ hasText: 'Inventory' })
         .nth(1);
     await expect(oldestReconciliation).toContainText(/\+CZK\s*[\d,.]+/);
     await oldestReconciliation.getByRole('link').first().click();

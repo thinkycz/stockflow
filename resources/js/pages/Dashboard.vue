@@ -49,6 +49,14 @@ type RecentMovement = {
         | 'adjustment'
         | 'inventory_reconciliation'
         | 'reversal';
+    display_label_key:
+        | 'incoming'
+        | 'outgoing'
+        | 'transfer'
+        | 'consumption'
+        | 'adjustment'
+        | 'inventory_reconciliation'
+        | 'reversal';
     store_name: string | null;
     total_value: number;
     created_at: string;
@@ -405,7 +413,10 @@ const limitedActions = computed(() => [
                                     </Link>
                                 </td>
                                 <td>
-                                    <MovementTypeBadge :type="movement.type" />
+                                    <MovementTypeBadge
+                                        :type="movement.type"
+                                        :label-key="movement.display_label_key"
+                                    />
                                 </td>
                                 <td class="text-right text-on-surface-variant">
                                     {{ formatMoney(movement.total_value) }}

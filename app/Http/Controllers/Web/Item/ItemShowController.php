@@ -36,9 +36,10 @@ class ItemShowController
             'stock_movements.number',
             'stock_movements.type',
             'stock_movements.store_id',
+            'stock_movements.source_store_id',
             'stock_movements.total_quantity',
             'stock_movements.created_at',
-        ])
+        ])->with(['store', 'sourceStore'])
             ->orderByDesc('stock_movements.created_at')
             ->orderByDesc('stock_movements.id')
             ->limit(50);
@@ -48,6 +49,7 @@ class ItemShowController
                 'id' => $movement->getKey(),
                 'number' => $movement->getNumber(),
                 'type' => $movement->getType()->value,
+                'display_label_key' => $movement->getDisplayLabelKey(),
                 'store_id' => $movement->getStoreId(),
                 'total_quantity' => $movement->getTotalQuantity(),
                 'quantity' => $movement->getPivotQuantity(),

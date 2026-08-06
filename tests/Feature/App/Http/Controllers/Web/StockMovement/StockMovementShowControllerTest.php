@@ -19,6 +19,20 @@ use App\Services\InventorySessionService;
     $response->assertJsonPath('props.movement.id', $movement->getKey());
 });
 
+\test('stock movement show labels a warehouse dispatch as outgoing', function (): void {
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+    $retail = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
+    $movement = StockMovement::factory()->transfer($retail)->create([
+        'user_id' => $user->getKey(),
+        'source_store_id' => $warehouse->getKey(),
+    ]);
+
+    $response = $this->be($user, 'users')->get("/stock-movements/{$movement->getKey()}", $this->inertiaHeaders());
+
+    $response->assertOk();
+    $response->assertJsonPath('props.movement.display_label_key', 'outgoing');
+});
+
 \test('stock movement show 404s for another user', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
     [$other] = \createIsolatedUserWithWarehouse();

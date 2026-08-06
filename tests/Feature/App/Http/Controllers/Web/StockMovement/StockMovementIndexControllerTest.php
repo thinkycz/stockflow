@@ -27,6 +27,21 @@ use App\Services\InventorySessionService;
     $response->assertJsonCount(2, 'props.movements');
 });
 
+\test('stock movement index labels warehouse dispatches as outgoing', function (): void {
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+    $retail = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
+    StockMovement::factory()->transfer($retail)->create([
+        'user_id' => $user->getKey(),
+        'source_store_id' => $warehouse->getKey(),
+    ]);
+
+    $response = $this->be($user, 'users')->get('/stock-movements', $this->inertiaHeaders());
+
+    $response->assertOk();
+    $response->assertJsonPath('props.movements.0.type', 'transfer');
+    $response->assertJsonPath('props.movements.0.display_label_key', 'outgoing');
+});
+
 \test('stock movement index supports filters', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
     StockMovement::factory()->incoming()->byUser($user)->create([

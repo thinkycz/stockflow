@@ -125,6 +125,21 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($ids)->not->toContain($foreign->getKey());
 });
 
+\test('dashboard exposes the outgoing display label for warehouse dispatches', function (): void {
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+    $retail = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
+    StockMovement::factory()->transfer($retail)->create([
+        'user_id' => $user->getKey(),
+        'source_store_id' => $warehouse->getKey(),
+    ]);
+
+    $response = $this->be($user, 'users')
+        ->get('/dashboard?store_id=' . $warehouse->getKey(), $this->inertiaHeaders());
+
+    $response->assertOk();
+    $response->assertJsonPath('props.recent_movements.0.display_label_key', 'outgoing');
+});
+
 \test('limited dashboard exposes actions without statistics', function (): void {
     [$admin, $warehouse] = \createIsolatedUserWithWarehouse();
     $limited = UserFactory::new()->limited($warehouse)->createOne();

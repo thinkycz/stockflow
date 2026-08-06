@@ -50,6 +50,25 @@ use App\Models\StoreItem;
     \expect($response->json('props.movements.0'))->not->toHaveKey('total_value');
 });
 
+\test('item show exposes the outgoing display label for warehouse dispatches', function (): void {
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+    $retail = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
+    $movement = StockMovement::factory()->transfer($retail)->create([
+        'user_id' => $user->getKey(),
+        'source_store_id' => $warehouse->getKey(),
+    ]);
+    StockMovementItem::factory()->create([
+        'stock_movement_id' => $movement->getKey(),
+        'item_id' => $item->getKey(),
+    ]);
+
+    $response = $this->be($user, 'users')->get("/items/{$item->getKey()}", $this->inertiaHeaders());
+
+    $response->assertOk();
+    $response->assertJsonPath('props.movements.0.display_label_key', 'outgoing');
+});
+
 \test('item show includes movements from all stores', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $retail = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\InventorySession;
 use App\Models\InventorySessionItem;
 use App\Models\Item;
+use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\StoreItem;
 use Illuminate\Support\Carbon;
@@ -22,6 +23,20 @@ use Illuminate\Support\Carbon;
     $response->assertJsonPath('component', 'stores/Show');
     $response->assertJsonPath('props.store.id', $store->getKey());
     $response->assertJsonPath('props.store.slack_channel', '#praha-provoz');
+});
+
+\test('store show exposes the outgoing display label for warehouse dispatches', function (): void {
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+    $retail = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
+    StockMovement::factory()->transfer($retail)->create([
+        'user_id' => $user->getKey(),
+        'source_store_id' => $warehouse->getKey(),
+    ]);
+
+    $response = $this->be($user, 'users')->get("/stores/{$warehouse->getKey()}", $this->inertiaHeaders());
+
+    $response->assertOk();
+    $response->assertJsonPath('props.movements.0.display_label_key', 'outgoing');
 });
 
 \test('store show 404s for another user', function (): void {

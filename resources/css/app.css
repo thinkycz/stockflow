@@ -30,8 +30,16 @@
     --color-incoming-bg: #d1fae5;
     --color-outgoing: #c2410c;
     --color-outgoing-bg: #ffedd5;
+    --color-transfer: #0e7490;
+    --color-transfer-bg: #cffafe;
+    --color-consumption: #b91c1c;
+    --color-consumption-bg: #fee2e2;
     --color-adjustment: #1d4ed8;
     --color-adjustment-bg: #dbeafe;
+    --color-inventory: #6d28d9;
+    --color-inventory-bg: #ede9fe;
+    --color-reversal: #475569;
+    --color-reversal-bg: #e2e8f0;
     --color-neutral: #475569;
     --color-neutral-bg: #e2e8f0;
     --color-danger: #b91c1c;

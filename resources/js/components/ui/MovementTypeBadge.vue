@@ -2,46 +2,35 @@
 import { computed } from 'vue';
 import Badge from '@/components/ui/Badge.vue';
 import { useI18n } from 'vue-i18n';
-
-type MovementType =
-    | 'incoming'
-    | 'transfer'
-    | 'consumption'
-    | 'adjustment'
-    | 'inventory_reconciliation'
-    | 'reversal';
-type LabelKey = MovementType;
+import type {
+    MovementDisplayLabelKey,
+    MovementType,
+} from '@/lib/movement-display';
 
 const props = defineProps<{
     type: MovementType;
-    labelKey?: LabelKey;
+    labelKey?: MovementDisplayLabelKey;
 }>();
 
 const { t } = useI18n();
 
-const resolvedLabelKey = computed<LabelKey>(
-    () => props.labelKey ?? (props.type as LabelKey),
+const resolvedLabelKey = computed<MovementDisplayLabelKey>(
+    () => props.labelKey ?? props.type,
 );
 
-const variant = computed<'incoming' | 'outgoing' | 'adjustment'>(() => {
-    if (
-        resolvedLabelKey.value === 'transfer' ||
-        resolvedLabelKey.value === 'consumption'
-    ) {
-        return 'outgoing';
-    }
-
-    if (
-        resolvedLabelKey.value === 'inventory_reconciliation' ||
-        resolvedLabelKey.value === 'reversal'
-    ) {
-        return 'adjustment';
-    }
-
-    return props.type === 'incoming' || props.type === 'adjustment'
-        ? props.type
-        : 'outgoing';
-});
+const variant = computed<
+    | 'incoming'
+    | 'outgoing'
+    | 'transfer'
+    | 'consumption'
+    | 'adjustment'
+    | 'inventory'
+    | 'reversal'
+>(() =>
+    resolvedLabelKey.value === 'inventory_reconciliation'
+        ? 'inventory'
+        : resolvedLabelKey.value,
+);
 
 const label = computed<string>(() =>
     t(`stock_movements.types.${resolvedLabelKey.value}`),

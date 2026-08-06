@@ -36,23 +36,38 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($movement->getCreatedAtDate())->toBeString();
 });
 
-\test('getDisplayLabelKey follows the canonical movement type', function (): void {
+\test('getDisplayLabelKey distinguishes warehouse dispatches from other transfers', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $retail = StoreFactory::new()->createOne(['user_id' => $user->getKey(), 'is_warehouse' => false]);
+    $otherRetail = StoreFactory::new()->createOne(['user_id' => $user->getKey(), 'is_warehouse' => false]);
+    $otherWarehouse = StoreFactory::new()->warehouse()->createOne(['user_id' => $user->getKey()]);
 
     $incoming = StockMovementFactory::new()->incoming()->createOne(['user_id' => $user->getKey()]);
     \expect($incoming->getDisplayLabelKey())->toBe('incoming');
 
-    $outgoingFromWarehouse = StockMovementFactory::new()->transfer($warehouse)->createOne(['user_id' => $user->getKey()]);
-    \expect($outgoingFromWarehouse->getDisplayLabelKey())->toBe('transfer');
-
-    $transfer = StockMovementFactory::new()->createOne([
+    $warehouseToRetail = StockMovementFactory::new()->transfer($retail)->createOne([
         'user_id' => $user->getKey(),
-        'type' => StockMovementTypeEnum::TRANSFER->value,
-        'source_store_id' => $retail->getKey(),
-        'store_id' => $warehouse->getKey(),
+        'source_store_id' => $warehouse->getKey(),
     ]);
-    \expect($transfer->getDisplayLabelKey())->toBe('transfer');
+    \expect($warehouseToRetail->getDisplayLabelKey())->toBe('outgoing');
+
+    $retailToWarehouse = StockMovementFactory::new()->transfer($warehouse)->createOne([
+        'user_id' => $user->getKey(),
+        'source_store_id' => $retail->getKey(),
+    ]);
+    \expect($retailToWarehouse->getDisplayLabelKey())->toBe('transfer');
+
+    $retailToRetail = StockMovementFactory::new()->transfer($otherRetail)->createOne([
+        'user_id' => $user->getKey(),
+        'source_store_id' => $retail->getKey(),
+    ]);
+    \expect($retailToRetail->getDisplayLabelKey())->toBe('transfer');
+
+    $warehouseToWarehouse = StockMovementFactory::new()->transfer($otherWarehouse)->createOne([
+        'user_id' => $user->getKey(),
+        'source_store_id' => $warehouse->getKey(),
+    ]);
+    \expect($warehouseToWarehouse->getDisplayLabelKey())->toBe('transfer');
 
     $adjustment = StockMovementFactory::new()->adjustment()->createOne(['user_id' => $user->getKey()]);
     \expect($adjustment->getDisplayLabelKey())->toBe('adjustment');

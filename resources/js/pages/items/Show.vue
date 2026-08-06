@@ -33,6 +33,14 @@ type MovementRow = {
         | 'adjustment'
         | 'inventory_reconciliation'
         | 'reversal';
+    display_label_key:
+        | 'incoming'
+        | 'outgoing'
+        | 'transfer'
+        | 'consumption'
+        | 'adjustment'
+        | 'inventory_reconciliation'
+        | 'reversal';
     store_id: number | null;
     total_quantity: number;
     quantity: number | null;
@@ -268,7 +276,10 @@ useBoundLocale();
                                 </Link>
                             </td>
                             <td>
-                                <MovementTypeBadge :type="movement.type" />
+                                <MovementTypeBadge
+                                    :type="movement.type"
+                                    :label-key="movement.display_label_key"
+                                />
                             </td>
                             <td
                                 class="text-right font-semibold text-on-surface"

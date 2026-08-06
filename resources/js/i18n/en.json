@@ -593,10 +593,10 @@
         "types": {
             "incoming": "Incoming",
             "outgoing": "Outgoing",
-            "transfer": "Store transfer",
+            "transfer": "Transfer",
             "consumption": "Consumption",
             "adjustment": "Adjustment",
-            "inventory_reconciliation": "Inventory reconciliation",
+            "inventory_reconciliation": "Inventory",
             "reversal": "Reversal"
         },
         "filter": {

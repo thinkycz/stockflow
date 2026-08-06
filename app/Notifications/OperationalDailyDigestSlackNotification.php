@@ -117,9 +117,15 @@ class OperationalDailyDigestSlackNotification extends Notification implements Sh
         $current = '';
         foreach (Typer::assertArray($snapshot['sections'] ?? null) as $value) {
             $section = Typer::assertStringKeyArray(Typer::assertArray($value));
-            $lines = ['*' . $this->escape(Typer::assertString($section['name'] ?? null)) . '*'];
+            $key = Typer::assertString($section['key'] ?? null);
+            $icon = match (true) {
+                $key === 'company' => '🏢',
+                Typer::assertBool($section['is_warehouse'] ?? null) => '📦',
+                default => '🏪',
+            };
+            $lines = ['*' . $icon . ' ' . $this->escape(Typer::assertString($section['name'] ?? null)) . '*'];
             foreach (Typer::assertArray($section['paragraphs'] ?? null) as $paragraph) {
-                $lines[] = $this->escape(Typer::assertString($paragraph));
+                $lines[] = '• ' . $this->formatParagraph(Typer::assertString($paragraph));
             }
             $text = \implode("\n", $lines);
 
@@ -148,5 +154,20 @@ class OperationalDailyDigestSlackNotification extends Notification implements Sh
     private function escape(string $value): string
     {
         return \str_replace(['&', '<', '>'], ['&amp;', '&lt;', '&gt;'], $value);
+    }
+
+    /**
+     * Emphasize the label before the first colon in one digest bullet.
+     */
+    private function formatParagraph(string $paragraph): string
+    {
+        $escaped = $this->escape($paragraph);
+        $colonPosition = \mb_strpos($escaped, ':');
+        if ($colonPosition === false) {
+            return $escaped;
+        }
+
+        return '*' . \mb_substr($escaped, 0, $colonPosition + 1) . '*'
+            . \mb_substr($escaped, $colonPosition + 1);
     }
 }

@@ -24,7 +24,11 @@ use Illuminate\Notifications\Events\NotificationSent;
                 'name' => 'Praha & centrum',
                 'is_warehouse' => false,
                 'activity_count' => 3,
-                'paragraphs' => ['Docházka: 2× příchod; 1× odchod.'],
+                'paragraphs' => [
+                    'Docházka: 2× příchod; 1× odchod.',
+                    'Finance za 08/2026: příjmy 12 000,00 Kč; výdaje 8 000,00 Kč; zisk 4 000,00 Kč.',
+                    'Výkaz za 02. 08. 2026: celkem 5 000,00 Kč.',
+                ],
                 'details' => [],
             ]],
         ],
@@ -33,14 +37,19 @@ use Illuminate\Notifications\Events\NotificationSent;
     $notification = new OperationalDailyDigestSlackNotification($digest->getKey());
 
     $payload = $notification->toSlack(new AnonymousNotifiable())->toArray();
-    $encoded = \json_encode($payload, flags: \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_UNICODE);
+    $encoded = \json_encode($payload, flags: \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
 
     \expect($notification)->toBeInstanceOf(ShouldQueue::class)
         ->and($notification->tries)->toBe(5)
         ->and($notification->backoff())->toBe([60, 300, 1800, 18000])
         ->and($encoded)->toContain('Denní provozní souhrn')
-        ->toContain('Praha &amp; centrum')
+        ->toContain('🏪 Praha &amp; centrum')
+        ->toContain('• *Docházka:*')
         ->toContain('2× příchod')
+        ->toContain('*Finance za 08/2026:*')
+        ->toContain('příjmy 12 000,00 Kč')
+        ->toContain('zisk 4 000,00 Kč')
+        ->toContain('*Výkaz za 02. 08. 2026:* celkem 5 000,00 Kč')
         ->toContain('slack-digests')
         ->and($digest->fresh()?->getAttemptCount())->toBe(1);
 });

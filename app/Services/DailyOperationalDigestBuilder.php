@@ -6,6 +6,8 @@ namespace App\Services;
 
 use App\Enums\OperationalActivityTypeEnum;
 use App\Models\OperationalActivity;
+use App\Models\Statement;
+use App\Models\StatementDay;
 use App\Models\Store;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -105,15 +107,44 @@ class DailyOperationalDigestBuilder
         Store::scopeActive($storeQuery);
         $activeStores = $storeQuery->orderByDesc('is_warehouse')->orderBy('name')->get();
 
-        /** @var array<int, array{key: string, name: string, is_warehouse: bool, activities: list<OperationalActivity>}> $locations */
+        /** @var array<int, array{key: string, name: string, is_warehouse: bool, activities: list<OperationalActivity>, financial_stats: array{period: string, income: float, expenses: float, profit: float, statement_date: string, statement_total: float}|null}> $locations */
         $locations = [];
+        $financialReportService = new FinancialReportService();
         foreach ($activeStores as $value) {
             $store = Typer::assertInstance($value, Store::class);
+            $financialStats = null;
+            if (!$store->isWarehouse()) {
+                $financialReport = $financialReportService->build($company, $store, $localStart->year, $localStart->month);
+                $totals = Typer::assertStringKeyArray(Typer::assertArray($financialReport['totals'] ?? null));
+                $statementQuery = Statement::query();
+                Statement::scopeForUser($statementQuery, $company);
+                Statement::scopeForStore($statementQuery, $store->getKey());
+                Statement::scopeForMonth($statementQuery, $localStart->year, $localStart->month);
+                $statement = $statementQuery->first();
+                $statementDay = null;
+                if ($statement instanceof Statement) {
+                    $statementDayQuery = StatementDay::query();
+                    StatementDay::querySelect($statementDayQuery);
+                    $statementDay = $statementDayQuery
+                        ->where('statement_id', $statement->getKey())
+                        ->whereDate('date', $localStart->toDateString())
+                        ->first();
+                }
+                $financialStats = [
+                    'period' => $localStart->format('m/Y'),
+                    'income' => Typer::parseFloat($totals['income'] ?? null),
+                    'expenses' => Typer::parseFloat($totals['expenses'] ?? null),
+                    'profit' => Typer::parseFloat($totals['profit'] ?? null),
+                    'statement_date' => $localStart->format('d. m. Y'),
+                    'statement_total' => $statementDay instanceof StatementDay ? $statementDay->getTotal() : 0.0,
+                ];
+            }
             $locations[$store->getKey()] = [
                 'key' => 'store:' . $store->getKey(),
                 'name' => $store->getName(),
                 'is_warehouse' => $store->isWarehouse(),
                 'activities' => [],
+                'financial_stats' => $financialStats,
             ];
         }
 
@@ -134,6 +165,7 @@ class DailyOperationalDigestBuilder
                         'name' => $context['store_name'],
                         'is_warehouse' => false,
                         'activities' => [],
+                        'financial_stats' => null,
                     ];
                 }
                 $locations[$context['store_id']]['activities'][] = $activity;
@@ -147,9 +179,10 @@ class DailyOperationalDigestBuilder
                 $location['name'],
                 $location['is_warehouse'],
                 $location['activities'],
+                $location['financial_stats'],
             );
         }
-        $sections[] = $this->buildSection('company', 'Celofiremní', false, $companyActivities);
+        $sections[] = $this->buildSection('company', 'Celofiremní', false, $companyActivities, null);
 
         $activityCount = $activities->count();
         $formattedDate = Typer::assertInstance($localStart->locale('cs'), CarbonImmutable::class)
@@ -172,6 +205,7 @@ class DailyOperationalDigestBuilder
      * Build one human-facing location or company section.
      *
      * @param list<OperationalActivity> $activities
+     * @param array{period: string, income: float, expenses: float, profit: float, statement_date: string, statement_total: float}|null $financialStats
      *
      * @return array{
      *     key: string,
@@ -182,7 +216,7 @@ class DailyOperationalDigestBuilder
      *     details: list<array{title: string, body: string, actor: string|null, url: string}>
      * }
      */
-    private function buildSection(string $key, string $name, bool $isWarehouse, array $activities): array
+    private function buildSection(string $key, string $name, bool $isWarehouse, array $activities, array|null $financialStats): array
     {
         /** @var array<string, array<string, int>> $counts */
         $counts = [];
@@ -253,6 +287,14 @@ class DailyOperationalDigestBuilder
         if ($paragraphs === []) {
             $paragraphs[] = 'Bez provozních milníků.';
         }
+        if ($financialStats !== null) {
+            $paragraphs[] = 'Finance za ' . $financialStats['period'] . ': příjmy '
+                . $this->formatCurrency($financialStats['income']) . '; výdaje '
+                . $this->formatCurrency($financialStats['expenses']) . '; zisk '
+                . $this->formatCurrency($financialStats['profit']) . '.';
+            $paragraphs[] = 'Výkaz za ' . $financialStats['statement_date'] . ': celkem '
+                . $this->formatCurrency($financialStats['statement_total']) . '.';
+        }
 
         return [
             'key' => $key,
@@ -298,6 +340,14 @@ class DailyOperationalDigestBuilder
     private function formatNumber(float $value): string
     {
         return \mb_rtrim(\mb_rtrim(\number_format($value, 2, ',', ''), '0'), ',');
+    }
+
+    /**
+     * Format a CZK amount for the Czech Slack digest.
+     */
+    private function formatCurrency(float $value): string
+    {
+        return \number_format($value, 2, ',', ' ') . ' Kč';
     }
 
     /**

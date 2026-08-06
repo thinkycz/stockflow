@@ -3,7 +3,11 @@
 declare(strict_types=1);
 
 use App\Enums\OperationalActivityTypeEnum;
+use App\Models\FinancialReport;
+use App\Models\FinancialReportManualRow;
 use App\Models\OperationalActivity;
+use App\Models\Statement;
+use App\Models\StatementDay;
 use App\Models\Store;
 use App\Services\DailyOperationalDigestBuilder;
 use Carbon\CarbonImmutable;
@@ -115,6 +119,33 @@ use Carbon\CarbonImmutable;
         ->toContain('1× neúspěšný receptový test')
         ->toContain('průměrné skóre 70 %')
         ->toContain('2 batchů, 5 poukazů, celková hodnota 2 300,00 Kč');
+});
+
+\test('builder includes monthly financial stats and the statement total for every active retail store', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'name' => 'Praha']);
+    $statement = Statement::factory()->forStore($store)->forMonth(2026, 8)->create();
+    StatementDay::factory()->create([
+        'statement_id' => $statement->getKey(),
+        'date' => '2026-08-02',
+        'cash' => 100,
+        'total' => 100,
+    ]);
+    $report = FinancialReport::factory()->byUser($admin)->forStore($store)->forMonth(2026, 8)->create();
+    FinancialReportManualRow::factory()->create([
+        'financial_report_id' => $report->getKey(),
+        'occurred_on' => '2026-08-02',
+        'amount' => 40,
+    ]);
+
+    $snapshot = (new DailyOperationalDigestBuilder())->build($admin, CarbonImmutable::parse('2026-08-02'));
+
+    \expect(\implode(' ', $snapshot['sections'][0]['paragraphs']))
+        ->not->toContain('Finance za 08/2026')
+        ->not->toContain('Výkaz za 02. 08. 2026')
+        ->and(\implode(' ', $snapshot['sections'][1]['paragraphs']))
+        ->toContain('Finance za 08/2026: příjmy 100,00 Kč; výdaje 40,00 Kč; zisk 60,00 Kč.')
+        ->toContain('Výkaz za 02. 08. 2026: celkem 100,00 Kč.');
 });
 
 \test('builder respects the twenty-five-hour Prague daylight-saving day', function (): void {

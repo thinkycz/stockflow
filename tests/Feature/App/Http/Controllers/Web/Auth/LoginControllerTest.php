@@ -14,6 +14,14 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response->assertJsonPath('component', 'auth/Login');
 });
 
+\test('login page retains the main Teacha install metadata', function (): void {
+    $this->get('/login')
+        ->assertOk()
+        ->assertSee('content="Teacha"', false)
+        ->assertSee('href="/manifest.webmanifest"', false)
+        ->assertDontSee('Teacha Shifts', false);
+});
+
 \test('user can login with database token cookie', function (): void {
     $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
 

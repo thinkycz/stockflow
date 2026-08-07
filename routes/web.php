@@ -71,6 +71,7 @@ use App\Http\Controllers\Web\Settings\SlackDigestRetryController;
 use App\Http\Controllers\Web\Settings\SlackDigestShowController;
 use App\Http\Controllers\Web\Settings\SlackTestController;
 use App\Http\Controllers\Web\Shift\SharedShiftIndexController;
+use App\Http\Controllers\Web\Shift\SharedShiftManifestController;
 use App\Http\Controllers\Web\Shift\ShiftDestroyController;
 use App\Http\Controllers\Web\Shift\ShiftIndexController;
 use App\Http\Controllers\Web\Shift\ShiftQuickAddController;
@@ -131,6 +132,7 @@ Resolver::resolveRouteRegistrar()
 
 Resolver::resolveRouteRegistrar()->get('email/verify', EmailVerificationConfirmController::class)->name('email.verify');
 
+Resolver::resolveRouteRegistrar()->get('public/shifts/{token}/manifest.webmanifest', SharedShiftManifestController::class)->name('public-shifts.manifest');
 Resolver::resolveRouteRegistrar()->get('public/shifts/{token}', SharedShiftIndexController::class)->name('public-shifts.index');
 
 Resolver::resolveRouteRegistrar()

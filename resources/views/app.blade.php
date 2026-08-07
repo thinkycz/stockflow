@@ -1,4 +1,11 @@
 <!DOCTYPE html>
+@php
+    $isPublicShiftCalendar = request()->routeIs('public-shifts.index');
+    $installName = $isPublicShiftCalendar ? 'Teacha Shifts' : 'Teacha';
+    $manifestHref = $isPublicShiftCalendar
+        ? route('public-shifts.manifest', ['token' => request()->route('token')], false)
+        : '/manifest.webmanifest';
+@endphp
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8" />
@@ -6,9 +13,9 @@
         <meta name="theme-color" content="#344c28" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-title" content="Teacha" />
+        <meta name="apple-mobile-web-app-title" content="{{ $installName }}" />
 
-        <link rel="manifest" href="/manifest.webmanifest" />
+        <link rel="manifest" href="{{ $manifestHref }}" />
         <link rel="icon" type="image/svg+xml" href="/teacha-mark.svg" />
         <link rel="icon" href="/favicon.ico?v=2" sizes="any" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />

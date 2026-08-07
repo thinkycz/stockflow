@@ -8,6 +8,21 @@ use App\Models\Store;
 use App\Models\Worker;
 use Illuminate\Support\Carbon;
 
+\test('public shift calendar renders its employee install metadata', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    Store::factory()->create([
+        'user_id' => $admin->getKey(),
+        'is_warehouse' => false,
+        'shift_share_token' => 'employee-install-token',
+    ]);
+
+    $this->get('/public/shifts/employee-install-token')
+        ->assertOk()
+        ->assertSee('content="Teacha Shifts"', false)
+        ->assertSee('href="/public/shifts/employee-install-token/manifest.webmanifest"', false)
+        ->assertDontSee('href="/manifest.webmanifest"', false);
+});
+
 \test('guest can view the shared store shift calendar with worker names', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create([

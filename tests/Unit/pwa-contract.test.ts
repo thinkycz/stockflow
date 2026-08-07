@@ -91,19 +91,32 @@ describe('Teacha PWA contract', () => {
         );
         expect(serviceWorker).toContain("request.mode === 'navigate'");
         expect(serviceWorker).toContain("request.method !== 'GET'");
+        expect(serviceWorker).not.toContain("'/public/shifts/");
         expect(serviceWorker).not.toContain('fetch(event.request)');
         expect(serviceWorker).not.toContain('event.request.clone()');
     });
 
-    test('links PWA metadata and uses the shared Teacha mark', () => {
+    test('routes install metadata and uses the shared Teacha mark', () => {
         const shell = source('resources/views/app.blade.php');
         const brand = source('resources/js/components/ui/Brand.vue');
         const entrypoint = source('resources/js/app.ts');
+        const routes = source('routes/web.php');
+        const employeeManifest = source(
+            'app/Http/Controllers/Web/Shift/SharedShiftManifestController.php',
+        );
 
-        expect(shell).toContain('rel="manifest" href="/manifest.webmanifest"');
+        expect(shell).toContain("request()->routeIs('public-shifts.index')");
+        expect(shell).toContain("route('public-shifts.manifest'");
+        expect(shell).toContain(": '/manifest.webmanifest'");
+        expect(shell).toContain('rel="manifest" href="{{ $manifestHref }}"');
         expect(shell).toContain('name="theme-color" content="#344c28"');
         expect(shell).toContain('rel="apple-touch-icon"');
         expect(shell).toContain('rel="icon" type="image/svg+xml"');
+        expect(routes).toContain("->name('public-shifts.manifest')");
+        expect(employeeManifest).toContain("'name' => 'Teacha Shifts'");
+        expect(employeeManifest).toContain("'id' => $startUrl");
+        expect(employeeManifest).toContain("'start_url' => $startUrl");
+        expect(employeeManifest).toContain("'scope' => $startUrl");
         expect(brand).toContain('/teacha-mark.svg');
         expect(brand).toContain("t('app.name')");
         expect(brand).not.toContain('{{ app.name }}');

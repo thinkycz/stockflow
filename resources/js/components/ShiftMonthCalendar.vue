@@ -2,8 +2,8 @@
 import {
     CalendarPlus,
     CircleOff,
-    ClipboardList,
     Clock3,
+    Hand,
     LoaderCircle,
     UsersRound,
 } from '@lucide/vue';
@@ -313,7 +313,7 @@ function formatDateKey(date: Date): string {
                                 :aria-label="t('shifts.requests.item_label')"
                                 :title="t('shifts.requests.item_label')"
                             >
-                                <ClipboardList :size="12" aria-hidden="true" />
+                                <Hand :size="12" aria-hidden="true" />
                             </span>
                         </div>
                     </div>
@@ -532,7 +532,7 @@ function formatDateKey(date: Date): string {
                             :aria-label="t('shifts.requests.item_label')"
                             :title="t('shifts.requests.item_label')"
                         >
-                            <ClipboardList :size="13" aria-hidden="true" />
+                            <Hand :size="13" aria-hidden="true" />
                         </span>
                     </div>
                 </div>
@@ -694,7 +694,7 @@ function formatDateKey(date: Date): string {
                                                 t('shifts.requests.item_label')
                                             "
                                         >
-                                            <ClipboardList
+                                            <Hand
                                                 :size="11"
                                                 aria-hidden="true"
                                             />

@@ -308,9 +308,13 @@ function formatDateKey(date: Date): string {
                             <span class="truncate">{{
                                 shiftRequest.worker_name
                             }}</span>
-                            <span class="shrink-0 font-bold uppercase">{{
-                                t('shifts.requests.item_label')
-                            }}</span>
+                            <span
+                                class="shrink-0 text-primary"
+                                :aria-label="t('shifts.requests.item_label')"
+                                :title="t('shifts.requests.item_label')"
+                            >
+                                <ClipboardList :size="12" aria-hidden="true" />
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -524,10 +528,11 @@ function formatDateKey(date: Date): string {
                             </p>
                         </div>
                         <span
-                            class="flex items-center gap-1 text-[10px] font-bold text-primary uppercase"
+                            class="flex shrink-0 items-center text-primary"
+                            :aria-label="t('shifts.requests.item_label')"
+                            :title="t('shifts.requests.item_label')"
                         >
-                            <ClipboardList :size="13" />
-                            {{ t('shifts.requests.item_label') }}
+                            <ClipboardList :size="13" aria-hidden="true" />
                         </span>
                     </div>
                 </div>
@@ -680,9 +685,20 @@ function formatDateKey(date: Date): string {
                                         <span class="truncate">{{
                                             shiftRequest.worker_name
                                         }}</span>
-                                        <span class="font-bold uppercase">{{
-                                            t('shifts.requests.item_label')
-                                        }}</span>
+                                        <span
+                                            class="shrink-0 text-primary"
+                                            :aria-label="
+                                                t('shifts.requests.item_label')
+                                            "
+                                            :title="
+                                                t('shifts.requests.item_label')
+                                            "
+                                        >
+                                            <ClipboardList
+                                                :size="11"
+                                                aria-hidden="true"
+                                            />
+                                        </span>
                                     </div>
                                 </div>
                             </div>

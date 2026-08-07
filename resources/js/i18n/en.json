@@ -1179,6 +1179,7 @@
             "invalid_time": "The end time must be later than the start time.",
             "item_label": "Request",
             "show": "Show requests",
+            "hide": "Hide requests",
             "lock": "Lock requests",
             "unlock": "Unlock requests",
             "locked_title": "Requests for this month are locked",

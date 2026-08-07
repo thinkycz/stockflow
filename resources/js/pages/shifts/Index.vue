@@ -1055,7 +1055,13 @@ async function copyText(value: string): Promise<void> {
                             @click="showRequests = !showRequests"
                         >
                             <ClipboardList :size="14" />
-                            {{ t('shifts.requests.show') }}
+                            {{
+                                t(
+                                    showRequests
+                                        ? 'shifts.requests.hide'
+                                        : 'shifts.requests.show',
+                                )
+                            }}
                         </Button>
                         <Button
                             v-if="is_admin && request_month_is_future"

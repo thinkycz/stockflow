@@ -45,9 +45,12 @@ test('public shift requests toggle and appear in the admin calendar overlay', as
     await page.getByLabel('Time to').selectOption('18:00');
     await page.getByRole('button', { name: 'Start selecting' }).click();
     await day.click();
-    await expect(day.getByTestId('calendar-shift-request')).toHaveText(
-        /10:00–18:00.*Request/,
+    await expect(day.getByTestId('calendar-shift-request')).toContainText(
+        '10:00–18:00',
     );
+    await expect(
+        day.getByTestId('calendar-shift-request').getByLabel('Request'),
+    ).toBeVisible();
 
     await page.goto('/login');
     await page.getByLabel('Email').fill('test@test.com');
@@ -55,6 +58,9 @@ test('public shift requests toggle and appear in the admin calendar overlay', as
     await page.getByRole('button', { name: 'Log in' }).click();
     await page.goto(`/shifts?year=${year}&month=${month}`);
     await page.getByRole('button', { name: 'Show requests' }).click();
+    await expect(
+        page.getByRole('button', { name: 'Hide requests' }),
+    ).toBeVisible();
     await expect(
         page
             .getByTestId(`calendar-day-${date}`)

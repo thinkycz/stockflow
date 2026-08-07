@@ -1179,6 +1179,7 @@
             "invalid_time": "Čas do musí byť neskôr ako čas od.",
             "item_label": "Požiadavka",
             "show": "Zobraziť požiadavky",
+            "hide": "Skryť požiadavky",
             "lock": "Uzamknúť požiadavky",
             "unlock": "Odomknúť požiadavky",
             "locked_title": "Požiadavky pre tento mesiac sú uzamknuté",

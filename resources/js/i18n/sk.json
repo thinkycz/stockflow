@@ -1166,6 +1166,17 @@
         },
         "public_title": "Kalendár smien — {store}",
         "public_subtitle": "Verejný kalendár smien so skóre a mesačným prehľadom kvality dochádzky.",
+        "install": {
+            "action": "Pridať Teacha",
+            "title": "Pridať Teacha na plochu",
+            "safari_intro": "Nainštalujte si tento kalendár smien ako aplikáciu cez ponuku Zdieľať v Safari.",
+            "chrome_intro": "Nainštalujte si tento kalendár smien pomocou tlačidla Zdieľať vedľa adresného riadka Chromu.",
+            "other_intro": "Pridajte si tento kalendár smien na plochu cez ponuku Zdieľať vo vašom prehliadači.",
+            "share": "Klepnite na tlačidlo Zdieľať na paneli prehliadača.",
+            "add_home": "Vyberte Pridať na plochu.",
+            "web_app": "Ponechajte zapnutú možnosť Otvoriť ako webovú aplikáciu.",
+            "confirm": "Potvrďte klepnutím na Pridať."
+        },
         "requests": {
             "title": "Požiadavky na smeny — {store}",
             "heading": "Požiadavky na smeny",

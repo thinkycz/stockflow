@@ -1166,6 +1166,17 @@
         },
         "public_title": "Kalendář směn — {store}",
         "public_subtitle": "Veřejný kalendář směn se skóre a měsíčním přehledem kvality docházky.",
+        "install": {
+            "action": "Přidat Teacha",
+            "title": "Přidat Teacha na plochu",
+            "safari_intro": "Nainstalujte si tento kalendář směn jako aplikaci přes nabídku Sdílet v Safari.",
+            "chrome_intro": "Nainstalujte si tento kalendář směn pomocí tlačítka Sdílet vedle adresního řádku Chromu.",
+            "other_intro": "Přidejte si tento kalendář směn na plochu přes nabídku Sdílet ve vašem prohlížeči.",
+            "share": "Klepněte na tlačítko Sdílet na liště prohlížeče.",
+            "add_home": "Vyberte Přidat na plochu.",
+            "web_app": "Ponechte zapnutou volbu Otevřít jako webovou aplikaci.",
+            "confirm": "Potvrďte klepnutím na Přidat."
+        },
         "requests": {
             "title": "Požadavky na směny — {store}",
             "heading": "Požadavky na směny",

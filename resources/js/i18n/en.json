@@ -1166,6 +1166,17 @@
         },
         "public_title": "Shift calendar — {store}",
         "public_subtitle": "Public shift calendar with attendance scores and a monthly quality summary.",
+        "install": {
+            "action": "Add Teacha",
+            "title": "Add Teacha to your Home Screen",
+            "safari_intro": "Use Safari's Share menu to install this shift calendar as an app.",
+            "chrome_intro": "Use the Share button beside Chrome's address bar to install this shift calendar.",
+            "other_intro": "Use your browser's Share menu to add this shift calendar to your Home Screen.",
+            "share": "Tap the Share button in the browser toolbar.",
+            "add_home": "Choose Add to Home Screen.",
+            "web_app": "Leave Open as Web App enabled.",
+            "confirm": "Confirm by tapping Add."
+        },
         "requests": {
             "title": "Shift requests — {store}",
             "heading": "Shift requests",

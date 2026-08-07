@@ -126,4 +126,18 @@ describe('Teacha PWA contract', () => {
             "navigator.serviceWorker.register('/sw.js')",
         );
     });
+
+    test('offers adaptive installation only from the public shift calendar', () => {
+        const calendar = source('resources/js/pages/public-shifts/Index.vue');
+        const requests = source(
+            'resources/js/pages/public-shift-requests/Index.vue',
+        );
+        const install = source('resources/js/composables/usePwaInstall.ts');
+
+        expect(calendar).toContain("t('shifts.install.action')");
+        expect(calendar).toContain('<Modal');
+        expect(calendar).toContain('usePwaInstall()');
+        expect(requests).not.toContain('usePwaInstall');
+        expect(install).not.toContain('navigator.share');
+    });
 });

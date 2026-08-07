@@ -5,14 +5,18 @@ import {
     ChevronLeft,
     ChevronRight,
     ClipboardPen,
+    Download,
     Gauge,
+    Share,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
+import Modal from '@/components/ui/Modal.vue';
 import ShiftMonthCalendar from '@/components/ShiftMonthCalendar.vue';
 import ShiftMonthlySummaryTable from '@/components/ShiftMonthlySummaryTable.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
+import { usePwaInstall } from '@/composables/usePwaInstall';
 import { useRoute } from '@/composables/useRoute';
 import { sortShiftsByTime } from '@/lib/shift-calendar';
 import type { MonthlyShiftSummary } from '@/types/shifts';
@@ -55,6 +59,7 @@ const { t, locale } = useI18n();
 useBoundLocale();
 
 const route = useRoute();
+const { canInstall, iosBrowser, instructionsOpen, install } = usePwaInstall();
 
 const dateLocale = computed<string>(() => {
     if (locale.value === 'en') return 'en-US';
@@ -200,18 +205,29 @@ function navigateMonth(delta: number): void {
                         {{ t('shifts.public_subtitle') }}
                     </p>
                 </div>
-                <Link
-                    as="button"
-                    :href="
-                        route('public-shift-requests.index', {
-                            token: share_token,
-                        })
-                    "
-                    class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-primary/20 bg-gradient-to-b from-primary-container to-primary px-4 text-xs font-semibold text-white shadow-[0_4px_12px_rgba(0,104,95,0.15)] transition hover:brightness-105 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none active:scale-[0.98]"
-                >
-                    <ClipboardPen :size="15" />
-                    {{ t('shifts.requests.open_form') }}
-                </Link>
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <Button
+                        v-if="canInstall"
+                        variant="secondary"
+                        type="button"
+                        @click="install"
+                    >
+                        <Download :size="15" />
+                        {{ t('shifts.install.action') }}
+                    </Button>
+                    <Link
+                        as="button"
+                        :href="
+                            route('public-shift-requests.index', {
+                                token: share_token,
+                            })
+                        "
+                        class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-primary/20 bg-gradient-to-b from-primary-container to-primary px-4 text-xs font-semibold text-white shadow-[0_4px_12px_rgba(0,104,95,0.15)] transition hover:brightness-105 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none active:scale-[0.98]"
+                    >
+                        <ClipboardPen :size="15" />
+                        {{ t('shifts.requests.open_form') }}
+                    </Link>
+                </div>
             </header>
 
             <section class="space-y-4">
@@ -275,4 +291,64 @@ function navigateMonth(delta: number): void {
             </section>
         </div>
     </main>
+
+    <Modal
+        :open="instructionsOpen"
+        :title="t('shifts.install.title')"
+        size="sm"
+        @close="instructionsOpen = false"
+    >
+        <div class="space-y-5 text-sm text-on-surface-variant">
+            <p v-if="iosBrowser === 'safari'">
+                {{ t('shifts.install.safari_intro') }}
+            </p>
+            <p v-else-if="iosBrowser === 'chrome'">
+                {{ t('shifts.install.chrome_intro') }}
+            </p>
+            <p v-else>
+                {{ t('shifts.install.other_intro') }}
+            </p>
+
+            <ol class="space-y-3">
+                <li class="flex items-start gap-3">
+                    <span
+                        class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary-fixed text-primary"
+                    >
+                        <Share :size="17" />
+                    </span>
+                    <span class="pt-1.5">{{ t('shifts.install.share') }}</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span
+                        class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-container font-semibold text-on-surface"
+                        >2</span
+                    >
+                    <span class="pt-1.5">{{
+                        t('shifts.install.add_home')
+                    }}</span>
+                </li>
+                <li
+                    v-if="iosBrowser === 'safari'"
+                    class="flex items-start gap-3"
+                >
+                    <span
+                        class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-container font-semibold text-on-surface"
+                        >3</span
+                    >
+                    <span class="pt-1.5">{{
+                        t('shifts.install.web_app')
+                    }}</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span
+                        class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-container font-semibold text-on-surface"
+                        >{{ iosBrowser === 'safari' ? 4 : 3 }}</span
+                    >
+                    <span class="pt-1.5">{{
+                        t('shifts.install.confirm')
+                    }}</span>
+                </li>
+            </ol>
+        </div>
+    </Modal>
 </template>

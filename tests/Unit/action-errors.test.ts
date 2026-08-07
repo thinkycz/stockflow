@@ -26,6 +26,6 @@ describe('action validation errors', () => {
             message: 'Close payroll first.',
         });
         expect(original).toHaveBeenCalledOnce();
-        expect(original).toHaveBeenCalledWith(errors, undefined);
+        expect(original).toHaveBeenCalledWith(errors);
     });
 });

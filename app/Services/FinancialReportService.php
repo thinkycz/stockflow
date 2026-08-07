@@ -282,7 +282,7 @@ class FinancialReportService
                 : ($expense->getEndsBefore() !== null && $expense->getEndsBefore() <= $period->toDateString() ? 'ended' : 'active');
             $reference = match ($status) {
                 'upcoming' => new CarbonImmutable($expense->getStartsOn()),
-                'ended' => new CarbonImmutable($expense->getEndsBefore())->subMonth(),
+                'ended' => (new CarbonImmutable($expense->getEndsBefore()))->subMonth(),
                 default => $period,
             };
             $version = null;

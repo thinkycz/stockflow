@@ -3,7 +3,6 @@ import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from '@/composables/useRoute';
-import { useSharedProps } from '@/composables/useSharedProps';
 
 const props = withDefaults(
     defineProps<{
@@ -18,7 +17,6 @@ const props = withDefaults(
 
 const route = useRoute();
 const { t } = useI18n();
-const { app } = useSharedProps();
 
 const resolvedHref = computed(() => props.href ?? route('dashboard'));
 </script>
@@ -31,16 +29,16 @@ const resolvedHref = computed(() => props.href ?? route('dashboard'));
             $props.class,
         ]"
     >
-        <div
-            class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-heading text-base font-bold text-white shadow-[0_2px_8px_rgba(15,23,42,0.2)]"
-        >
-            S
-        </div>
+        <img
+            :src="'/teacha-mark.svg'"
+            alt=""
+            class="h-9 w-9 shrink-0 object-contain"
+        />
         <div class="text-left">
             <h1
                 class="mb-0.5 font-heading text-sm font-bold tracking-tight text-on-surface leading-none"
             >
-                {{ app.name }}
+                {{ t('app.name') }}
             </h1>
             <p
                 class="font-mono text-[9px] font-semibold tracking-wider text-on-surface-variant uppercase opacity-75 leading-none"

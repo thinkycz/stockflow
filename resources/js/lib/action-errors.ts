@@ -34,14 +34,14 @@ export function withActionErrorToast(options: VisitOptions = {}): VisitOptions {
             ...options.headers,
             'X-StockFlow-Action': 'true',
         },
-        onError: (errors, metadata) => {
+        onError: (errors) => {
             const message = firstActionError(errors);
 
             if (message !== null) {
                 showErrorToast(message);
             }
 
-            onError?.(errors, metadata);
+            onError?.(errors);
         },
     };
 }

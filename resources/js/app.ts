@@ -9,6 +9,17 @@ import { createAppI18n, isSupportedLocale } from './i18n';
 import type { SharedProps } from './types';
 import DialogHost from './components/ui/DialogHost.vue';
 
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        void navigator.serviceWorker.register('/sw.js').catch((error) => {
+            console.error(
+                'Unable to register the Teacha service worker.',
+                error,
+            );
+        });
+    });
+}
+
 createInertiaApp({
     title: (title) => (title ? `${title} - Teacha` : 'Teacha'),
     resolve: (name) => {

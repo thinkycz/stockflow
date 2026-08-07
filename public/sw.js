@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'teacha-assets-';
-const CACHE_NAME = `${CACHE_PREFIX}v1`;
+const CACHE_NAME = `${CACHE_PREFIX}v2`;
 const BRAND_PATHS = new Set([
     '/apple-touch-icon.png',
     '/favicon.ico',

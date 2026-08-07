@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
@@ -8,7 +9,19 @@ function source(path: string): string {
     return readFileSync(resolve(projectRoot, path), 'utf8');
 }
 
+function sha256(path: string): string {
+    return createHash('sha256')
+        .update(readFileSync(resolve(projectRoot, path)))
+        .digest('hex');
+}
+
 describe('Teacha PWA contract', () => {
+    test('preserves the complete supplied mobile icon artwork', () => {
+        expect(sha256('resources/images/teacha-front.png')).toBe(
+            '1edd0f7190a33244721b63e5751a6eedfd967cbbf5f80a7e687d4dd39c7ff293',
+        );
+    });
+
     test('publishes an installable Teacha manifest with complete icon assets', () => {
         const manifest = JSON.parse(source('public/manifest.webmanifest')) as {
             name: string;
@@ -38,19 +51,19 @@ describe('Teacha PWA contract', () => {
         expect(manifest.icons).toEqual(
             expect.arrayContaining([
                 expect.objectContaining({
-                    src: '/pwa-192x192.png',
+                    src: '/pwa-192x192.png?v=2',
                     sizes: '192x192',
                     type: 'image/png',
                     purpose: 'any',
                 }),
                 expect.objectContaining({
-                    src: '/pwa-512x512.png',
+                    src: '/pwa-512x512.png?v=2',
                     sizes: '512x512',
                     type: 'image/png',
                     purpose: 'any',
                 }),
                 expect.objectContaining({
-                    src: '/pwa-maskable-512x512.png',
+                    src: '/pwa-maskable-512x512.png?v=2',
                     sizes: '512x512',
                     type: 'image/png',
                     purpose: 'maskable',
@@ -59,8 +72,11 @@ describe('Teacha PWA contract', () => {
         );
 
         for (const icon of manifest.icons) {
+            const iconPath = new URL(icon.src, 'https://teacha.invalid')
+                .pathname;
+
             expect(
-                existsSync(resolve(projectRoot, 'public', icon.src.slice(1))),
+                existsSync(resolve(projectRoot, 'public', iconPath.slice(1))),
                 icon.src,
             ).toBe(true);
         }
@@ -69,6 +85,7 @@ describe('Teacha PWA contract', () => {
     test('keeps the service worker limited to versioned assets and brand icons', () => {
         const serviceWorker = source('public/sw.js');
 
+        expect(serviceWorker).toContain('`${CACHE_PREFIX}v2`');
         expect(serviceWorker).toContain(
             "url.pathname.startsWith('/build/assets/')",
         );

@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Models\AttendanceSession;
 use App\Models\Shift;
 use App\Models\ShiftPreset;
+use App\Models\ShiftRequest;
+use App\Models\ShiftRequestMonthLock;
 use App\Models\Store;
 use App\Models\Worker;
 use Database\Factories\UserFactory;
@@ -116,6 +118,42 @@ use Illuminate\Support\Carbon;
 
     $response->assertOk();
     \expect($response->json('props.shifts'))->toHaveCount(0);
+});
+
+\test('admin receives store scoped requests and lock state while limited users do not', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $otherStore = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $limited = UserFactory::new()->limited($store)->createOne();
+    ShiftRequest::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
+        'date' => '2026-09-10', 'start_time' => '09:00', 'end_time' => '17:00',
+    ]);
+    ShiftRequest::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $otherStore->getKey(), 'worker_id' => $worker->getKey(),
+        'date' => '2026-09-11',
+    ]);
+    ShiftRequestMonthLock::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'year' => 2026, 'month' => 9,
+        'locked_by_user_id' => $admin->getKey(),
+    ]);
+    Carbon::setTestNow('2026-08-07 10:00:00 UTC');
+
+    $adminResponse = $this->be($admin, 'users')->get('/shifts?year=2026&month=9', $this->inertiaHeaders());
+    $adminResponse->assertOk()
+        ->assertJsonCount(1, 'props.shift_requests')
+        ->assertJsonPath('props.shift_requests.0.date', '2026-09-10')
+        ->assertJsonPath('props.request_month_locked', true)
+        ->assertJsonPath('props.request_month_is_future', true);
+
+    $limitedResponse = $this->be($limited, 'users')->get('/shifts?year=2026&month=9', $this->inertiaHeaders());
+    $limitedResponse->assertOk()
+        ->assertJsonMissingPath('props.shift_requests')
+        ->assertJsonMissingPath('props.request_month_locked')
+        ->assertJsonMissingPath('props.request_month_is_future');
+
+    Carbon::setTestNow();
 });
 
 \test('limited user sees shifts with worker names and is_admin is false', function (): void {

@@ -2,6 +2,7 @@
 import {
     CalendarPlus,
     CircleOff,
+    ClipboardList,
     Clock3,
     LoaderCircle,
     UsersRound,
@@ -22,11 +23,20 @@ type CalendarShift = {
     };
 };
 
+type CalendarRequest = {
+    id: number;
+    worker_name: string;
+    worker_color: string;
+    start_time: string;
+    end_time: string;
+};
+
 type CalendarDay = {
     date: string;
     day: number;
     isCurrentMonth: boolean;
     shifts: CalendarShift[];
+    requests: CalendarRequest[];
 };
 
 const props = withDefaults(
@@ -36,12 +46,14 @@ const props = withDefaults(
         interactive?: boolean;
         editable?: boolean;
         quickAddActive?: boolean;
+        mobileMonthOnly?: boolean;
         pendingDates?: ReadonlySet<string>;
     }>(),
     {
         interactive: false,
         editable: false,
         quickAddActive: false,
+        mobileMonthOnly: false,
         pendingDates: () => new Set<string>(),
     },
 );
@@ -52,7 +64,9 @@ const emit = defineEmits<{
 
 const { t, locale } = useI18n();
 const selectedDate = ref<string>('');
-const mobileView = ref<'day' | 'month'>('day');
+const mobileView = ref<'day' | 'month'>(
+    props.mobileMonthOnly ? 'month' : 'day',
+);
 
 const dateLocale = computed<string>(() => {
     if (locale.value === 'en') return 'en-US';
@@ -84,7 +98,7 @@ watch(
             (day) => day.date === todayKey,
         );
         const firstScheduled = currentMonthDays.value.find(
-            (day) => day.shifts.length > 0,
+            (day) => day.shifts.length > 0 || day.requests.length > 0,
         );
         selectedDate.value =
             today?.date ??
@@ -98,7 +112,7 @@ watch(
 watch(
     () => props.quickAddActive,
     (active) => {
-        if (active) mobileView.value = 'day';
+        if (active && !props.mobileMonthOnly) mobileView.value = 'day';
     },
 );
 
@@ -143,6 +157,11 @@ function activateDay(day: CalendarDay): void {
 
 function openDayFromMonth(day: CalendarDay): void {
     if (!day.isCurrentMonth) return;
+
+    if (props.mobileMonthOnly) {
+        activateDay(day);
+        return;
+    }
 
     selectedDate.value = day.date;
     mobileView.value = 'day';
@@ -267,12 +286,40 @@ function formatDateKey(date: Date): string {
                             </span>
                         </div>
                     </div>
+                    <div
+                        v-for="shiftRequest in day.requests"
+                        :key="`request-${shiftRequest.id}`"
+                        data-testid="calendar-shift-request"
+                        class="rounded-lg border border-dashed border-primary/45 bg-primary-fixed/45 px-2 py-1.5"
+                        :style="{
+                            borderLeft: `3px dashed ${shiftRequest.worker_color}`,
+                        }"
+                    >
+                        <div
+                            class="truncate text-[11px] font-bold text-on-surface"
+                        >
+                            {{ shiftRequest.start_time }}–{{
+                                shiftRequest.end_time
+                            }}
+                        </div>
+                        <div
+                            class="mt-0.5 flex items-center justify-between gap-1 text-[10px] text-on-surface-variant"
+                        >
+                            <span class="truncate">{{
+                                shiftRequest.worker_name
+                            }}</span>
+                            <span class="shrink-0 font-bold uppercase">{{
+                                t('shifts.requests.item_label')
+                            }}</span>
+                        </div>
+                    </div>
                 </div>
             </button>
         </div>
 
         <div class="space-y-4 md:hidden">
             <div
+                v-if="!mobileMonthOnly"
                 class="grid grid-cols-2 gap-1 rounded-xl bg-surface-container-low p-1"
                 :aria-label="t('shifts.mobile.view_label')"
             >
@@ -306,7 +353,7 @@ function formatDateKey(date: Date): string {
             </div>
 
             <div
-                v-if="mobileView === 'day'"
+                v-if="!mobileMonthOnly && mobileView === 'day'"
                 data-testid="mobile-day-view"
                 class="overflow-hidden rounded-2xl border border-outline-glass bg-surface-container-lowest p-2 shadow-sm"
             >
@@ -351,6 +398,11 @@ function formatDateKey(date: Date): string {
                                         : 'bg-primary'
                                 "
                             />
+                            <span
+                                v-for="shiftRequest in day.requests.slice(0, 3)"
+                                :key="`request-${shiftRequest.id}`"
+                                class="size-1 rounded-full border border-current bg-transparent"
+                            />
                         </span>
                         <LoaderCircle
                             v-if="pendingDates.has(day.date)"
@@ -362,7 +414,7 @@ function formatDateKey(date: Date): string {
             </div>
 
             <section
-                v-if="mobileView === 'day' && selectedDay"
+                v-if="!mobileMonthOnly && mobileView === 'day' && selectedDay"
                 class="overflow-hidden rounded-2xl border border-outline-glass bg-surface-container-lowest shadow-sm"
             >
                 <div
@@ -392,7 +444,10 @@ function formatDateKey(date: Date): string {
                 </div>
 
                 <div
-                    v-if="selectedDay.shifts.length > 0"
+                    v-if="
+                        selectedDay.shifts.length > 0 ||
+                        selectedDay.requests.length > 0
+                    "
                     class="divide-y divide-outline-glass"
                 >
                     <button
@@ -443,6 +498,38 @@ function formatDateKey(date: Date): string {
                             </template>
                         </span>
                     </button>
+                    <div
+                        v-for="shiftRequest in selectedDay.requests"
+                        :key="`request-${shiftRequest.id}`"
+                        data-testid="mobile-calendar-shift-request"
+                        class="flex w-full items-center gap-3 bg-primary-fixed/35 px-4 py-3.5 text-left"
+                    >
+                        <span
+                            class="h-10 w-1 shrink-0 rounded-full border-l-2 border-dashed"
+                            :style="{ borderColor: shiftRequest.worker_color }"
+                        />
+                        <div class="min-w-0 flex-1">
+                            <p
+                                class="truncate text-sm font-bold text-on-surface"
+                            >
+                                {{ shiftRequest.worker_name }}
+                            </p>
+                            <p
+                                class="mt-1 flex items-center gap-1.5 text-xs font-medium text-on-surface-variant"
+                            >
+                                <Clock3 :size="13" />
+                                {{ shiftRequest.start_time }}–{{
+                                    shiftRequest.end_time
+                                }}
+                            </p>
+                        </div>
+                        <span
+                            class="flex items-center gap-1 text-[10px] font-bold text-primary uppercase"
+                        >
+                            <ClipboardList :size="13" />
+                            {{ t('shifts.requests.item_label') }}
+                        </span>
+                    </div>
                 </div>
                 <div
                     v-else
@@ -468,11 +555,12 @@ function formatDateKey(date: Date): string {
             </section>
 
             <section
-                v-if="mobileView === 'month'"
+                v-if="mobileMonthOnly || mobileView === 'month'"
                 data-testid="mobile-month-view"
                 class="overflow-hidden rounded-2xl border border-outline-glass bg-surface-container-lowest shadow-sm"
             >
                 <div
+                    v-if="!mobileMonthOnly"
                     class="border-b border-outline-glass bg-surface-container-low px-4 py-3.5"
                 >
                     <p
@@ -568,6 +656,33 @@ function formatDateKey(date: Date): string {
                                                 }}
                                             </template>
                                         </span>
+                                    </div>
+                                </div>
+                                <div
+                                    v-for="shiftRequest in day.requests"
+                                    :key="`request-${shiftRequest.id}`"
+                                    data-testid="mobile-month-calendar-shift-request"
+                                    class="rounded-md border border-dashed border-primary/45 bg-primary-fixed/45 px-1.5 py-1"
+                                    :style="{
+                                        borderLeft: `3px dashed ${shiftRequest.worker_color}`,
+                                    }"
+                                >
+                                    <div
+                                        class="truncate text-[10px] font-bold text-on-surface"
+                                    >
+                                        {{ shiftRequest.start_time }}–{{
+                                            shiftRequest.end_time
+                                        }}
+                                    </div>
+                                    <div
+                                        class="mt-0.5 flex items-center justify-between gap-1 text-[9px] text-on-surface-variant"
+                                    >
+                                        <span class="truncate">{{
+                                            shiftRequest.worker_name
+                                        }}</span>
+                                        <span class="font-bold uppercase">{{
+                                            t('shifts.requests.item_label')
+                                        }}</span>
                                     </div>
                                 </div>
                             </div>

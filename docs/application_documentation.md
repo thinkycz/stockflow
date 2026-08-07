@@ -104,7 +104,13 @@
   with attendance quality. Limited users can inspect rating reasons and copy a
   stable public link for their assigned store, but cannot see salary data. The
   public shared calendar shows score badges and the same aggregate table
-  without salary or detailed per-shift penalty reasons.
+  without salary or detailed per-shift penalty reasons. Holders of the public
+  link can open a separate request calendar, select a company worker and a
+  quarter-hour time range, and toggle one request per worker/day for future
+  months. Requests are mutable until an admin locks that store/month. Admins
+  can reopen the month and can show the distinctly styled request overlay in
+  the authenticated shift calendar; requests remain advisory and are not
+  converted into shifts automatically.
 
 ## Gift vouchers
 

@@ -236,5 +236,11 @@
     "Gift voucher voided.": "Darčekový poukaz bol zneplatnený.",
     "Gift voucher branding saved.": "Vzhľad darčekových poukazov bol uložený.",
     "Daily Slack digest queued again.": "Denný Slack súhrn bol znovu zaradený do frontu.",
-    "Only failed daily Slack digests can be retried.": "Znovu odoslať možno iba neúspešný denný Slack súhrn."
+    "Only failed daily Slack digests can be retried.": "Znovu odoslať možno iba neúspešný denný Slack súhrn.",
+    "Shift requests for this month are locked.": "Požiadavky na smeny pre tento mesiac sú uzamknuté.",
+    "Shift requests can only be changed for future months.": "Požiadavky na smeny možno meniť iba pre budúce mesiace.",
+    "The selected worker is invalid.": "Vybraný brigádnik nie je platný.",
+    "The selected store is invalid.": "Vybraná prevádzka nie je platná.",
+    "Shift requests locked.": "Požiadavky na smeny boli uzamknuté.",
+    "Shift requests reopened.": "Požiadavky na smeny boli znovu otvorené."
 }

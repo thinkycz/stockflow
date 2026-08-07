@@ -46,6 +46,8 @@ class E2ESeeder extends Seeder
             return;
         }
 
+        $store->update(['shift_share_token' => 'e2e-shift-calendar-token']);
+
         $warehouse = Store::query()
             ->where('user_id', $user->getKey())
             ->where('is_warehouse', true)

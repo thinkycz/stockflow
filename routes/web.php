@@ -72,9 +72,12 @@ use App\Http\Controllers\Web\Settings\SlackDigestShowController;
 use App\Http\Controllers\Web\Settings\SlackTestController;
 use App\Http\Controllers\Web\Shift\SharedShiftIndexController;
 use App\Http\Controllers\Web\Shift\SharedShiftManifestController;
+use App\Http\Controllers\Web\Shift\SharedShiftRequestIndexController;
+use App\Http\Controllers\Web\Shift\SharedShiftRequestToggleController;
 use App\Http\Controllers\Web\Shift\ShiftDestroyController;
 use App\Http\Controllers\Web\Shift\ShiftIndexController;
 use App\Http\Controllers\Web\Shift\ShiftQuickAddController;
+use App\Http\Controllers\Web\Shift\ShiftRequestMonthLockController;
 use App\Http\Controllers\Web\Shift\ShiftShareController;
 use App\Http\Controllers\Web\Shift\ShiftStoreController;
 use App\Http\Controllers\Web\Shift\ShiftUpdateController;
@@ -133,6 +136,8 @@ Resolver::resolveRouteRegistrar()
 Resolver::resolveRouteRegistrar()->get('email/verify', EmailVerificationConfirmController::class)->name('email.verify');
 
 Resolver::resolveRouteRegistrar()->get('public/shifts/{token}/manifest.webmanifest', SharedShiftManifestController::class)->name('public-shifts.manifest');
+Resolver::resolveRouteRegistrar()->get('public/shifts/{token}/requests', SharedShiftRequestIndexController::class)->name('public-shift-requests.index');
+Resolver::resolveRouteRegistrar()->post('public/shifts/{token}/requests/toggle', SharedShiftRequestToggleController::class)->name('public-shift-requests.toggle');
 Resolver::resolveRouteRegistrar()->get('public/shifts/{token}', SharedShiftIndexController::class)->name('public-shifts.index');
 
 Resolver::resolveRouteRegistrar()
@@ -300,6 +305,7 @@ Resolver::resolveRouteRegistrar()
         // Shifts (admin write)
         $router->post('shifts', ShiftStoreController::class)->name('shifts.store');
         $router->post('shifts/quick-add', ShiftQuickAddController::class)->name('shifts.quick-add');
+        $router->post('shift-request-month-locks', ShiftRequestMonthLockController::class)->name('shift-request-month-locks.update');
         $router->put('shifts/{shift}', ShiftUpdateController::class)->whereNumber('shift')->name('shifts.update');
         $router->delete('shifts/{shift}', ShiftDestroyController::class)->whereNumber('shift')->name('shifts.destroy');
 

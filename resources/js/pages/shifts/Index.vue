@@ -6,8 +6,11 @@ import {
     ChevronRight,
     Check,
     CircleOff,
+    ClipboardList,
     Gauge,
     Link2,
+    LockKeyhole,
+    LockOpen,
     Pencil,
     Plus,
     Settings2,
@@ -79,6 +82,19 @@ type CalendarShift = Shift & {
     worker_color: string;
 };
 
+type ShiftRequest = {
+    id: number;
+    worker_id: number;
+    date: string;
+    start_time: string;
+    end_time: string;
+};
+
+type CalendarRequest = ShiftRequest & {
+    worker_name: string;
+    worker_color: string;
+};
+
 type ShiftPreset = {
     id: number;
     name: string;
@@ -98,6 +114,9 @@ const props = defineProps<{
     is_admin: boolean;
     monthly_summary: MonthlyShiftSummary[];
     shift_presets?: ShiftPreset[];
+    shift_requests?: ShiftRequest[];
+    request_month_locked?: boolean;
+    request_month_is_future?: boolean;
 }>();
 
 const dialog = useDialog();
@@ -110,6 +129,7 @@ const route = useRoute();
 
 const year = ref<number>(props.filters.year);
 const month = ref<number>(props.filters.month);
+const showRequests = ref<boolean>(false);
 const localShifts = ref<Shift[]>([...props.shifts]);
 const localMonthlySummary = ref<MonthlyShiftSummary[]>([
     ...props.monthly_summary,
@@ -193,6 +213,7 @@ type CalendarDay = {
     day: number;
     isCurrentMonth: boolean;
     shifts: CalendarShift[];
+    requests: CalendarRequest[];
 };
 
 const calendarDays = computed<CalendarDay[]>(() => {
@@ -228,6 +249,27 @@ const calendarDays = computed<CalendarDay[]>(() => {
         shiftsByDate.set(date, sortShiftsByTime(shifts));
     }
 
+    const requestsByDate = new Map<string, CalendarRequest[]>();
+    if (showRequests.value) {
+        for (const shiftRequest of props.shift_requests ?? []) {
+            const worker = workerMap.get(shiftRequest.worker_id);
+            const enriched: CalendarRequest = {
+                ...shiftRequest,
+                worker_name: worker
+                    ? `${worker.first_name} ${worker.last_name}`
+                    : '?',
+                worker_color: worker?.color ?? '#64748B',
+            };
+            const list = requestsByDate.get(shiftRequest.date) ?? [];
+            list.push(enriched);
+            requestsByDate.set(shiftRequest.date, list);
+        }
+    }
+
+    for (const [date, requests] of requestsByDate) {
+        requestsByDate.set(date, sortShiftsByTime(requests));
+    }
+
     const days: CalendarDay[] = [];
 
     // Leading days from previous month
@@ -243,6 +285,9 @@ const calendarDays = computed<CalendarDay[]>(() => {
             day: d.getDate(),
             isCurrentMonth: false,
             shifts: (shiftsByDate.get(dateStr) ?? []).map((s) => ({ ...s })),
+            requests: (requestsByDate.get(dateStr) ?? []).map((request) => ({
+                ...request,
+            })),
         });
     }
 
@@ -255,6 +300,9 @@ const calendarDays = computed<CalendarDay[]>(() => {
             day: d,
             isCurrentMonth: true,
             shifts: (shiftsByDate.get(dateStr) ?? []).map((s) => ({ ...s })),
+            requests: (requestsByDate.get(dateStr) ?? []).map((request) => ({
+                ...request,
+            })),
         });
     }
 
@@ -268,6 +316,9 @@ const calendarDays = computed<CalendarDay[]>(() => {
             day: lastDate.getDate(),
             isCurrentMonth: false,
             shifts: (shiftsByDate.get(dateStr) ?? []).map((s) => ({ ...s })),
+            requests: (requestsByDate.get(dateStr) ?? []).map((request) => ({
+                ...request,
+            })),
         });
     }
 
@@ -300,6 +351,14 @@ function navigateMonth(delta: number): void {
         route('shifts.index'),
         { month: newMonth, year: newYear },
         { preserveState: true, preserveScroll: true },
+    );
+}
+
+function setRequestMonthLocked(locked: boolean): void {
+    router.post(
+        route('shift-request-month-locks.update'),
+        { year: year.value, month: month.value, locked },
+        withActionErrorToast({ preserveState: true, preserveScroll: true }),
     );
 }
 
@@ -973,7 +1032,9 @@ async function copyText(value: string): Promise<void> {
             </Card>
 
             <section class="space-y-4">
-                <div class="flex items-center justify-between px-1">
+                <div
+                    class="flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between"
+                >
                     <div class="flex items-center gap-2">
                         <CalendarDays
                             :size="18"
@@ -985,7 +1046,35 @@ async function copyText(value: string): Promise<void> {
                             {{ currentMonthLabel }}
                         </span>
                     </div>
-                    <div class="flex items-center gap-1">
+                    <div class="flex flex-wrap items-center gap-1">
+                        <Button
+                            v-if="is_admin"
+                            variant="secondary"
+                            type="button"
+                            :aria-pressed="showRequests"
+                            @click="showRequests = !showRequests"
+                        >
+                            <ClipboardList :size="14" />
+                            {{ t('shifts.requests.show') }}
+                        </Button>
+                        <Button
+                            v-if="is_admin && request_month_is_future"
+                            :variant="
+                                request_month_locked ? 'secondary' : 'ghost'
+                            "
+                            type="button"
+                            @click="
+                                setRequestMonthLocked(!request_month_locked)
+                            "
+                        >
+                            <LockOpen v-if="request_month_locked" :size="14" />
+                            <LockKeyhole v-else :size="14" />
+                            {{
+                                request_month_locked
+                                    ? t('shifts.requests.unlock')
+                                    : t('shifts.requests.lock')
+                            }}
+                        </Button>
                         <Button
                             variant="ghost"
                             type="button"

@@ -6,10 +6,12 @@ namespace App\Http\Controllers\Web\Shift;
 
 use App\Models\Shift;
 use App\Models\ShiftPreset;
+use App\Models\ShiftRequest;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
 use App\Services\ShiftOverviewService;
+use App\Services\ShiftRequestService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -106,6 +108,27 @@ class ShiftIndexController
         ];
 
         if ($user->isAdmin()) {
+            $shiftRequests = [];
+            if ($store instanceof Store) {
+                $shiftRequestQuery = ShiftRequest::query();
+                ShiftRequest::scopeForUser($shiftRequestQuery, $scopeUser);
+                ShiftRequest::scopeForStore($shiftRequestQuery, $store->getKey());
+                ShiftRequest::scopeForMonth($shiftRequestQuery, $year, $month);
+                ShiftRequest::querySelect($shiftRequestQuery);
+                $shiftRequests = $shiftRequestQuery->orderBy('date')->orderBy('start_time')->take(self::TAKE)->get()
+                    ->map(static fn(ShiftRequest $shiftRequest): array => [
+                        'id' => $shiftRequest->getKey(),
+                        'worker_id' => $shiftRequest->getWorkerId(),
+                        'date' => $shiftRequest->getDate(),
+                        'start_time' => $shiftRequest->getStartTimeShort(),
+                        'end_time' => $shiftRequest->getEndTimeShort(),
+                    ])->all();
+            }
+            $shiftRequestService = new ShiftRequestService();
+            $props['shift_requests'] = $shiftRequests;
+            $props['request_month_locked'] = $store instanceof Store && $shiftRequestService->isLocked($store, $year, $month);
+            $props['request_month_is_future'] = $shiftRequestService->isFuturePeriod($year, $month);
+
             $presetQuery = ShiftPreset::query();
             ShiftPreset::scopeForUser($presetQuery, $scopeUser);
 

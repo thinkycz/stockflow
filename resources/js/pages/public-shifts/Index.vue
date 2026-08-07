@@ -1,6 +1,12 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
-import { CalendarDays, ChevronLeft, ChevronRight, Gauge } from '@lucide/vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import {
+    CalendarDays,
+    ChevronLeft,
+    ChevronRight,
+    ClipboardPen,
+    Gauge,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
@@ -30,6 +36,7 @@ type CalendarDay = {
     day: number;
     isCurrentMonth: boolean;
     shifts: Shift[];
+    requests: [];
 };
 
 const props = defineProps<{
@@ -112,6 +119,7 @@ const calendarDays = computed<CalendarDay[]>(() => {
             day: date.getDate(),
             isCurrentMonth: false,
             shifts: shiftsByDate.get(dateKey) ?? [],
+            requests: [],
         });
     }
 
@@ -123,6 +131,7 @@ const calendarDays = computed<CalendarDay[]>(() => {
             day,
             isCurrentMonth: true,
             shifts: shiftsByDate.get(dateKey) ?? [],
+            requests: [],
         });
     }
 
@@ -139,6 +148,7 @@ const calendarDays = computed<CalendarDay[]>(() => {
             day: date.getDate(),
             isCurrentMonth: false,
             shifts: shiftsByDate.get(dateKey) ?? [],
+            requests: [],
         });
     }
 
@@ -174,18 +184,34 @@ function navigateMonth(delta: number): void {
         class="min-h-screen bg-surface-bg px-4 py-6 font-sans sm:px-6 sm:py-10"
     >
         <div class="mx-auto flex w-full max-w-7xl flex-col gap-6">
-            <header class="flex flex-col gap-2">
-                <div class="flex items-center gap-3 text-primary">
-                    <CalendarDays :size="24" />
-                    <h1
-                        class="font-heading text-2xl font-bold tracking-tight text-on-surface sm:text-3xl"
-                    >
-                        {{ store.name }}
-                    </h1>
+            <header
+                class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+            >
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-3 text-primary">
+                        <CalendarDays :size="24" />
+                        <h1
+                            class="font-heading text-2xl font-bold tracking-tight text-on-surface sm:text-3xl"
+                        >
+                            {{ store.name }}
+                        </h1>
+                    </div>
+                    <p class="text-sm text-on-surface-variant">
+                        {{ t('shifts.public_subtitle') }}
+                    </p>
                 </div>
-                <p class="text-sm text-on-surface-variant">
-                    {{ t('shifts.public_subtitle') }}
-                </p>
+                <Link
+                    as="button"
+                    :href="
+                        route('public-shift-requests.index', {
+                            token: share_token,
+                        })
+                    "
+                    class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-primary/20 bg-gradient-to-b from-primary-container to-primary px-4 text-xs font-semibold text-white shadow-[0_4px_12px_rgba(0,104,95,0.15)] transition hover:brightness-105 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none active:scale-[0.98]"
+                >
+                    <ClipboardPen :size="15" />
+                    {{ t('shifts.requests.open_form') }}
+                </Link>
             </header>
 
             <section class="space-y-4">
@@ -218,6 +244,7 @@ function navigateMonth(delta: number): void {
                 <ShiftMonthCalendar
                     :days="calendarDays"
                     :weekday-labels="weekdayLabels"
+                    mobile-month-only
                 />
             </section>
 

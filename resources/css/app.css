@@ -8,11 +8,11 @@
 @source '../**/*.vue';
 
 @theme {
-    --color-primary: #0f172a;
+    --color-primary: #0d9488;
     --color-on-primary: #ffffff;
-    --color-primary-container: #1e293b;
-    --color-primary-fixed: #f1f5f9;
-    --color-primary-fixed-dim: #cbd5e1;
+    --color-primary-container: #0f766e;
+    --color-primary-fixed: #ccfbf1;
+    --color-primary-fixed-dim: #99f6e4;
     --color-surface-bg: #f8fafc;
     --color-surface-container: #eef2f6;
     --color-surface-container-low: #f3f6f9;

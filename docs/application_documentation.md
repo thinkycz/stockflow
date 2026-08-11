@@ -109,8 +109,11 @@
   quarter-hour time range, and toggle one request per worker/day for future
   months. Requests are mutable until an admin locks that store/month. Admins
   can reopen the month and can show the distinctly styled request overlay in
-  the authenticated shift calendar; requests remain advisory and are not
-  converted into shifts automatically.
+  the authenticated shift calendar. The day detail always lists its requests;
+  an admin can approve one with its submitted times or adjust the times first.
+  Approval atomically converts the request into a shift and removes the request.
+  On mobile, all shift calendars offer a compact seven-column month without
+  horizontal scrolling and a horizontally scrollable full-detail month view.
 
 ## Gift vouchers
 

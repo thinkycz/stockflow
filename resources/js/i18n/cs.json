@@ -1134,11 +1134,11 @@
         "overlap_confirm": "Tato směna se překrývá s jinou směnou. Přesto ji uložit?",
         "mobile": {
             "view_label": "Zobrazení mobilního kalendáře",
-            "day_view": "Den",
-            "month_view": "Celý měsíc",
-            "full_calendar": "Kalendář celého měsíce",
-            "selected_day": "Vybraný den",
-            "no_shifts": "Na tento den nejsou směny"
+            "compact_view": "Kompaktní",
+            "full_view": "Celé zobrazení",
+            "compact_shift_label": "{name}, směna {start}–{end}",
+            "compact_request_label": "{name}, požadavek {start}–{end}",
+            "more_entries": "Další záznamy: {count}"
         },
         "presets": {
             "title": "Přednastavené směny",
@@ -1198,6 +1198,10 @@
             "created": "Požadavek byl přidán.",
             "updated": "Požadavek byl změněn.",
             "deleted": "Požadavek byl odebrán.",
+            "approve": "Potvrdit",
+            "approve_adjusted": "Potvrdit upravenou směnu",
+            "edit_heading": "Upravit požadavek",
+            "edit_help": "Pracovník a datum zůstávají podle požadavku. Upravte pouze časy směny.",
             "failed": "Požadavek se nepodařilo uložit. Obnovte stránku a zkuste to znovu."
         },
         "summary": {

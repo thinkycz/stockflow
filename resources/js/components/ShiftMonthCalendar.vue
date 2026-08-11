@@ -1,13 +1,11 @@
+<script lang="ts">
+const mobileViewsByPage = new Map<string, 'compact' | 'full'>();
+</script>
+
 <script setup lang="ts">
-import {
-    CalendarPlus,
-    CircleOff,
-    Clock3,
-    Hand,
-    LoaderCircle,
-    UsersRound,
-} from '@lucide/vue';
-import { computed, ref, watch } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import { CalendarPlus, CircleOff, Hand, LoaderCircle } from '@lucide/vue';
+import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 type CalendarShift = {
@@ -46,14 +44,12 @@ const props = withDefaults(
         interactive?: boolean;
         editable?: boolean;
         quickAddActive?: boolean;
-        mobileMonthOnly?: boolean;
         pendingDates?: ReadonlySet<string>;
     }>(),
     {
         interactive: false,
         editable: false,
         quickAddActive: false,
-        mobileMonthOnly: false,
         pendingDates: () => new Set<string>(),
     },
 );
@@ -62,67 +58,51 @@ const emit = defineEmits<{
     activate: [day: CalendarDay];
 }>();
 
-const { t, locale } = useI18n();
-const selectedDate = ref<string>('');
-const mobileView = ref<'day' | 'month'>(
-    props.mobileMonthOnly ? 'month' : 'day',
+const { t } = useI18n();
+const pageKey = usePage().component;
+const mobileView = ref<'compact' | 'full'>(
+    mobileViewsByPage.get(pageKey) ?? 'compact',
 );
 
-const dateLocale = computed<string>(() => {
-    if (locale.value === 'en') return 'en-US';
-    if (locale.value === 'sk') return 'sk-SK';
-    return 'cs-CZ';
-});
+watch(mobileView, (view) => mobileViewsByPage.set(pageKey, view));
 
 const todayKey = formatDateKey(new Date());
-const currentMonthDays = computed<CalendarDay[]>(() =>
-    props.days.filter((day) => day.isCurrentMonth),
-);
-const selectedDay = computed<CalendarDay | undefined>(() =>
-    currentMonthDays.value.find((day) => day.date === selectedDate.value),
-);
-const selectedDayLabel = computed<string>(() => {
-    if (selectedDay.value === undefined) return '';
 
-    return new Intl.DateTimeFormat(dateLocale.value, {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-    }).format(parseDateKey(selectedDay.value.date));
-});
+type CompactEntry = {
+    key: string;
+    kind: 'shift' | 'request';
+    worker_name: string;
+    worker_color: string;
+    start_time: string;
+    end_time: string;
+};
 
-watch(
-    () => props.days.map((day) => day.date).join(','),
-    () => {
-        const today = currentMonthDays.value.find(
-            (day) => day.date === todayKey,
-        );
-        const firstScheduled = currentMonthDays.value.find(
-            (day) => day.shifts.length > 0 || day.requests.length > 0,
-        );
-        selectedDate.value =
-            today?.date ??
-            firstScheduled?.date ??
-            currentMonthDays.value[0]?.date ??
-            '';
-    },
-    { immediate: true },
-);
+function compactEntries(day: CalendarDay): CompactEntry[] {
+    return [
+        ...day.shifts.map((shift) => ({
+            ...shift,
+            key: `shift-${shift.id}`,
+            kind: 'shift' as const,
+        })),
+        ...day.requests.map((request) => ({
+            ...request,
+            key: `request-${request.id}`,
+            kind: 'request' as const,
+        })),
+    ];
+}
 
-watch(
-    () => props.quickAddActive,
-    (active) => {
-        if (active && !props.mobileMonthOnly) mobileView.value = 'day';
-    },
-);
-
-function selectMobileDay(day: CalendarDay): void {
-    if (!day.isCurrentMonth) return;
-
-    selectedDate.value = day.date;
-    if (props.quickAddActive && props.editable) {
-        emit('activate', day);
-    }
+function compactEntryLabel(entry: CompactEntry): string {
+    return t(
+        entry.kind === 'shift'
+            ? 'shifts.mobile.compact_shift_label'
+            : 'shifts.mobile.compact_request_label',
+        {
+            name: entry.worker_name,
+            start: entry.start_time,
+            end: entry.end_time,
+        },
+    );
 }
 
 function ratingLabel(shift: CalendarShift): string {
@@ -153,23 +133,6 @@ function activateDay(day: CalendarDay): void {
     if (props.interactive && day.isCurrentMonth) {
         emit('activate', day);
     }
-}
-
-function openDayFromMonth(day: CalendarDay): void {
-    if (!day.isCurrentMonth) return;
-
-    if (props.mobileMonthOnly) {
-        activateDay(day);
-        return;
-    }
-
-    selectedDate.value = day.date;
-    mobileView.value = 'day';
-}
-
-function parseDateKey(value: string): Date {
-    const [year, month, day] = value.split('-').map(Number);
-    return new Date(year, month - 1, day);
 }
 
 function formatDateKey(date: Date): string {
@@ -323,49 +286,47 @@ function formatDateKey(date: Date): string {
 
         <div class="space-y-4 md:hidden">
             <div
-                v-if="!mobileMonthOnly"
                 class="grid grid-cols-2 gap-1 rounded-xl bg-surface-container-low p-1"
                 :aria-label="t('shifts.mobile.view_label')"
             >
                 <button
                     type="button"
-                    :aria-pressed="mobileView === 'day'"
+                    :aria-pressed="mobileView === 'compact'"
                     :class="[
                         'h-9 rounded-lg px-3 text-xs font-bold transition',
-                        mobileView === 'day'
+                        mobileView === 'compact'
                             ? 'bg-white text-on-surface shadow-sm'
                             : 'text-on-surface-variant hover:text-on-surface',
                     ]"
-                    @click="mobileView = 'day'"
+                    @click="mobileView = 'compact'"
                 >
-                    {{ t('shifts.mobile.day_view') }}
+                    {{ t('shifts.mobile.compact_view') }}
                 </button>
                 <button
                     type="button"
-                    :disabled="quickAddActive"
-                    :aria-pressed="mobileView === 'month'"
+                    :aria-pressed="mobileView === 'full'"
                     :class="[
-                        'h-9 rounded-lg px-3 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-40',
-                        mobileView === 'month'
+                        'h-9 rounded-lg px-3 text-xs font-bold transition',
+                        mobileView === 'full'
                             ? 'bg-white text-on-surface shadow-sm'
                             : 'text-on-surface-variant hover:text-on-surface',
                     ]"
-                    @click="mobileView = 'month'"
+                    @click="mobileView = 'full'"
                 >
-                    {{ t('shifts.mobile.month_view') }}
+                    {{ t('shifts.mobile.full_view') }}
                 </button>
             </div>
 
-            <div
-                v-if="!mobileMonthOnly && mobileView === 'day'"
-                data-testid="mobile-day-view"
-                class="overflow-hidden rounded-2xl border border-outline-glass bg-surface-container-lowest p-2 shadow-sm"
+            <section
+                v-if="mobileView === 'compact'"
+                data-testid="mobile-compact-view"
+                class="overflow-hidden rounded-2xl border border-outline-glass bg-outline-glass shadow-sm"
             >
-                <div class="grid grid-cols-7">
+                <div class="grid w-full grid-cols-7 gap-px">
                     <div
                         v-for="label in weekdayLabels"
                         :key="label"
-                        class="py-2 text-center text-[10px] font-bold tracking-wider text-on-surface-variant uppercase"
+                        class="min-w-0 bg-surface-container-low py-2 text-center text-[9px] font-bold tracking-wide text-on-surface-variant uppercase"
                     >
                         {{ label }}
                     </div>
@@ -373,215 +334,94 @@ function formatDateKey(date: Date): string {
                         v-for="day in days"
                         :key="day.date"
                         type="button"
-                        :disabled="!day.isCurrentMonth"
-                        :aria-pressed="day.date === selectedDate"
+                        :disabled="!interactive || !day.isCurrentMonth"
                         :class="[
-                            'relative grid min-h-11 grid-rows-[1rem_0.25rem] place-items-center content-center gap-1 rounded-xl text-xs font-semibold transition',
-                            !day.isCurrentMonth
-                                ? 'text-on-surface-variant/35'
-                                : 'text-on-surface hover:bg-surface-container-low',
-                            day.date === selectedDate
-                                ? 'bg-primary text-white shadow-md hover:bg-primary'
-                                : '',
-                            day.date === todayKey && day.date !== selectedDate
-                                ? 'ring-1 ring-primary/40'
-                                : '',
+                            'relative flex min-h-[76px] min-w-0 flex-col items-center bg-white px-0.5 py-1.5 text-xs font-semibold transition',
+                            day.isCurrentMonth
+                                ? interactive
+                                    ? 'cursor-pointer hover:bg-primary-fixed'
+                                    : 'cursor-default'
+                                : 'cursor-default bg-surface-container-low/70 text-on-surface-variant/35',
                         ]"
-                        :data-testid="`mobile-calendar-day-${day.date}`"
-                        @click="selectMobileDay(day)"
+                        :data-testid="`mobile-compact-calendar-day-${day.date}`"
+                        @click="activateDay(day)"
                     >
-                        <span>{{ day.day }}</span>
-                        <span class="flex h-1 gap-0.5" aria-hidden="true">
+                        <span
+                            :class="[
+                                'mb-1 flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold',
+                                day.date === todayKey
+                                    ? 'bg-primary text-white'
+                                    : '',
+                            ]"
+                        >
+                            {{ day.day }}
+                        </span>
+                        <span class="flex w-full min-w-0 flex-col gap-0.5">
                             <span
-                                v-for="shift in day.shifts.slice(0, 3)"
-                                :key="shift.id"
-                                class="size-1 rounded-full"
-                                :class="
-                                    day.date === selectedDate
-                                        ? 'bg-white'
-                                        : 'bg-primary'
+                                v-for="entry in compactEntries(day).slice(0, 3)"
+                                :key="entry.key"
+                                data-testid="mobile-compact-calendar-entry"
+                                :aria-label="compactEntryLabel(entry)"
+                                :title="compactEntryLabel(entry)"
+                                :class="[
+                                    'block min-h-8 min-w-0 rounded px-0.5 py-0.5 text-center text-[8px] leading-tight font-bold',
+                                    entry.kind === 'request'
+                                        ? 'border border-dashed bg-white'
+                                        : 'text-white',
+                                ]"
+                                :style="
+                                    entry.kind === 'request'
+                                        ? {
+                                              borderColor: entry.worker_color,
+                                              color: entry.worker_color,
+                                          }
+                                        : {
+                                              backgroundColor:
+                                                  entry.worker_color,
+                                          }
                                 "
-                            />
+                            >
+                                <span
+                                    aria-hidden="true"
+                                    class="flex min-w-0 flex-col"
+                                >
+                                    <span class="whitespace-nowrap">{{
+                                        entry.start_time
+                                    }}</span>
+                                    <span class="block min-w-0 truncate">{{
+                                        entry.worker_name
+                                    }}</span>
+                                </span>
+                            </span>
                             <span
-                                v-for="shiftRequest in day.requests.slice(0, 3)"
-                                :key="`request-${shiftRequest.id}`"
-                                class="size-1 rounded-full border border-current bg-transparent"
-                            />
+                                v-if="compactEntries(day).length > 3"
+                                data-testid="mobile-compact-calendar-overflow"
+                                class="block h-4 text-center text-[9px] leading-4 font-bold text-on-surface-variant"
+                                :aria-label="
+                                    t('shifts.mobile.more_entries', {
+                                        count: compactEntries(day).length - 3,
+                                    })
+                                "
+                            >
+                                +{{ compactEntries(day).length - 3 }}
+                            </span>
                         </span>
                         <LoaderCircle
                             v-if="pendingDates.has(day.date)"
                             :size="12"
-                            class="absolute top-1 right-1 animate-spin"
+                            class="absolute top-1 right-1 animate-spin text-primary"
                         />
-                    </button>
-                </div>
-            </div>
-
-            <section
-                v-if="!mobileMonthOnly && mobileView === 'day' && selectedDay"
-                class="overflow-hidden rounded-2xl border border-outline-glass bg-surface-container-lowest shadow-sm"
-            >
-                <div
-                    class="flex items-center justify-between gap-3 border-b border-outline-glass bg-surface-container-low px-4 py-3.5"
-                >
-                    <div>
-                        <p
-                            class="text-[10px] font-bold tracking-[0.14em] text-on-surface-variant uppercase"
-                        >
-                            {{ t('shifts.mobile.selected_day') }}
-                        </p>
-                        <h3
-                            class="mt-0.5 font-heading text-base font-bold text-on-surface capitalize"
-                        >
-                            {{ selectedDayLabel }}
-                        </h3>
-                    </div>
-                    <button
-                        v-if="editable && !quickAddActive"
-                        type="button"
-                        class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-md transition active:scale-95"
-                        :aria-label="t('shifts.add_shift')"
-                        @click="activateDay(selectedDay)"
-                    >
-                        <CalendarPlus :size="18" />
-                    </button>
-                </div>
-
-                <div
-                    v-if="
-                        selectedDay.shifts.length > 0 ||
-                        selectedDay.requests.length > 0
-                    "
-                    class="divide-y divide-outline-glass"
-                >
-                    <button
-                        v-for="shift in selectedDay.shifts"
-                        :key="shift.id"
-                        type="button"
-                        class="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-surface-container-low"
-                        @click="activateDay(selectedDay)"
-                    >
-                        <span
-                            class="h-10 w-1 shrink-0 rounded-full"
-                            :style="{ backgroundColor: shift.worker_color }"
-                        />
-                        <div class="min-w-0 flex-1">
-                            <p
-                                class="truncate text-sm font-bold text-on-surface"
-                            >
-                                {{ shift.worker_name }}
-                            </p>
-                            <p
-                                class="mt-1 flex items-center gap-1.5 text-xs font-medium text-on-surface-variant"
-                            >
-                                <Clock3 :size="13" />
-                                {{ shift.start_time }}–{{ shift.end_time }}
-                            </p>
-                        </div>
-                        <span
-                            class="shrink-0 rounded-full px-2 py-1 text-xs font-bold"
-                            :class="ratingClass(shift)"
-                            :aria-label="ratingLabel(shift)"
-                        >
-                            <CircleOff
-                                v-if="
-                                    shift.attendance_rating?.state ===
-                                    'disabled'
-                                "
-                                :size="14"
-                                aria-hidden="true"
-                            />
-                            <template v-else>
-                                {{
-                                    shift.attendance_rating?.score ??
-                                    (shift.attendance_rating?.state ===
-                                    'pending'
-                                        ? '…'
-                                        : '—')
-                                }}
-                            </template>
-                        </span>
-                    </button>
-                    <div
-                        v-for="shiftRequest in selectedDay.requests"
-                        :key="`request-${shiftRequest.id}`"
-                        data-testid="mobile-calendar-shift-request"
-                        class="flex w-full items-center gap-3 bg-primary-fixed/35 px-4 py-3.5 text-left"
-                    >
-                        <span
-                            class="h-10 w-1 shrink-0 rounded-full border-l-2 border-dashed"
-                            :style="{ borderColor: shiftRequest.worker_color }"
-                        />
-                        <div class="min-w-0 flex-1">
-                            <p
-                                class="truncate text-sm font-bold text-on-surface"
-                            >
-                                {{ shiftRequest.worker_name }}
-                            </p>
-                            <p
-                                class="mt-1 flex items-center gap-1.5 text-xs font-medium text-on-surface-variant"
-                            >
-                                <Clock3 :size="13" />
-                                {{ shiftRequest.start_time }}–{{
-                                    shiftRequest.end_time
-                                }}
-                            </p>
-                        </div>
-                        <span
-                            class="flex shrink-0 items-center text-primary"
-                            :aria-label="t('shifts.requests.item_label')"
-                            :title="t('shifts.requests.item_label')"
-                        >
-                            <Hand :size="13" aria-hidden="true" />
-                        </span>
-                    </div>
-                </div>
-                <div
-                    v-else
-                    class="flex flex-col items-center px-5 py-8 text-center"
-                >
-                    <span
-                        class="mb-3 flex size-11 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant"
-                    >
-                        <UsersRound :size="20" />
-                    </span>
-                    <p class="text-sm font-semibold text-on-surface">
-                        {{ t('shifts.mobile.no_shifts') }}
-                    </p>
-                    <button
-                        v-if="editable && !quickAddActive"
-                        type="button"
-                        class="mt-3 text-xs font-bold text-primary underline-offset-4 hover:underline"
-                        @click="activateDay(selectedDay)"
-                    >
-                        {{ t('shifts.add_shift') }}
                     </button>
                 </div>
             </section>
 
             <section
-                v-if="mobileMonthOnly || mobileView === 'month'"
-                data-testid="mobile-month-view"
+                v-if="mobileView === 'full'"
+                data-testid="mobile-full-view"
                 class="overflow-hidden rounded-2xl border border-outline-glass bg-surface-container-lowest shadow-sm"
             >
                 <div
-                    v-if="!mobileMonthOnly"
-                    class="border-b border-outline-glass bg-surface-container-low px-4 py-3.5"
-                >
-                    <p
-                        class="text-[10px] font-bold tracking-[0.14em] text-on-surface-variant uppercase"
-                    >
-                        {{ t('shifts.mobile.month_view') }}
-                    </p>
-                    <h3
-                        class="mt-0.5 font-heading text-base font-bold text-on-surface"
-                    >
-                        {{ t('shifts.mobile.full_calendar') }}
-                    </h3>
-                </div>
-
-                <div
-                    data-testid="mobile-month-scroller"
+                    data-testid="mobile-full-scroller"
                     class="overflow-x-auto overscroll-x-contain"
                 >
                     <div
@@ -598,15 +438,17 @@ function formatDateKey(date: Date): string {
                             v-for="day in days"
                             :key="day.date"
                             type="button"
-                            :disabled="!day.isCurrentMonth"
+                            :disabled="!interactive || !day.isCurrentMonth"
                             :class="[
                                 'flex min-h-[104px] flex-col items-stretch justify-start bg-white p-2 text-left',
                                 day.isCurrentMonth
-                                    ? 'cursor-pointer hover:bg-primary-fixed'
+                                    ? interactive
+                                        ? 'cursor-pointer hover:bg-primary-fixed'
+                                        : 'cursor-default'
                                     : 'cursor-default bg-surface-container-low/70 text-on-surface-variant/50',
                             ]"
-                            :data-testid="`mobile-month-calendar-day-${day.date}`"
-                            @click="openDayFromMonth(day)"
+                            :data-testid="`mobile-full-calendar-day-${day.date}`"
+                            @click="activateDay(day)"
                         >
                             <span
                                 :class="[
@@ -622,7 +464,7 @@ function formatDateKey(date: Date): string {
                                 <div
                                     v-for="shift in day.shifts"
                                     :key="shift.id"
-                                    data-testid="mobile-month-calendar-shift"
+                                    data-testid="mobile-full-calendar-shift"
                                     class="rounded-md border border-outline-glass bg-white px-1.5 py-1 shadow-sm"
                                     :style="{
                                         borderLeft: `3px solid ${shift.worker_color}`,
@@ -666,7 +508,7 @@ function formatDateKey(date: Date): string {
                                 <div
                                     v-for="shiftRequest in day.requests"
                                     :key="`request-${shiftRequest.id}`"
-                                    data-testid="mobile-month-calendar-shift-request"
+                                    data-testid="mobile-full-calendar-shift-request"
                                     class="rounded-md border border-dashed border-primary/45 bg-primary-fixed/45 px-1.5 py-1"
                                     :style="{
                                         borderLeft: `3px dashed ${shiftRequest.worker_color}`,

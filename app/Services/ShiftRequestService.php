@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Shift;
 use App\Models\ShiftRequest;
 use App\Models\ShiftRequestMonthLock;
 use App\Models\Store;
@@ -16,6 +17,80 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 class ShiftRequestService
 {
+    /**
+     * Convert a request into a shift, optionally overriding an overlap.
+     */
+    public function approve(
+        User $admin,
+        Store $store,
+        int $shiftRequestId,
+        string $startTime,
+        string $endTime,
+        bool $allowOverlap,
+    ): Shift {
+        $this->assertAdminStore($admin, $store);
+
+        return DB::transaction(function () use ($admin, $store, $shiftRequestId, $startTime, $endTime, $allowOverlap): Shift {
+            $lockedStore = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            $shiftRequestQuery = ShiftRequest::query()
+                ->whereKey($shiftRequestId)
+                ->where('user_id', $admin->getKey())
+                ->where('store_id', $lockedStore->getKey());
+            $shiftRequest = Typer::assertInstance(
+                $shiftRequestQuery->lockForUpdate()->firstOrFail(),
+                ShiftRequest::class,
+            );
+            $worker = Typer::assertInstance(
+                Worker::query()
+                    ->whereKey($shiftRequest->getWorkerId())
+                    ->where('user_id', $admin->getKey())
+                    ->firstOrFail(),
+                Worker::class,
+            );
+            $assignmentService = new ShiftAssignmentService();
+            $existingShift = $assignmentService->findExact(
+                $admin,
+                $lockedStore,
+                $worker,
+                $shiftRequest->getDate(),
+                $startTime,
+                $endTime,
+            );
+
+            if ($existingShift instanceof Shift) {
+                $shiftRequest->delete();
+
+                return $existingShift;
+            }
+
+            if (!$allowOverlap && $assignmentService->findOverlaps(
+                $admin,
+                $lockedStore,
+                $worker,
+                $shiftRequest->getDate(),
+                $startTime,
+                $endTime,
+            )->isNotEmpty()) {
+                Thrower::default()->message('overlap', \__('This shift overlaps an existing assignment.'))->throw();
+            }
+
+            $shift = $assignmentService->create(
+                $admin,
+                $lockedStore,
+                $worker,
+                $shiftRequest->getDate(),
+                $startTime,
+                $endTime,
+            );
+            $shiftRequest->delete();
+
+            return $shift;
+        });
+    }
+
     /**
      * Toggle one worker's request for a day.
      *

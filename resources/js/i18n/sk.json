@@ -1134,11 +1134,11 @@
         "overlap_confirm": "Táto smena sa prekrýva s inou smenou. Napriek tomu ju uložiť?",
         "mobile": {
             "view_label": "Zobrazenie mobilného kalendára",
-            "day_view": "Deň",
-            "month_view": "Celý mesiac",
-            "full_calendar": "Kalendár celého mesiaca",
-            "selected_day": "Vybraný deň",
-            "no_shifts": "Na tento deň nie sú smeny"
+            "compact_view": "Kompaktné",
+            "full_view": "Celé zobrazenie",
+            "compact_shift_label": "{name}, smena {start}–{end}",
+            "compact_request_label": "{name}, požiadavka {start}–{end}",
+            "more_entries": "Ďalšie záznamy: {count}"
         },
         "presets": {
             "title": "Prednastavené smeny",
@@ -1198,6 +1198,10 @@
             "created": "Požiadavka bola pridaná.",
             "updated": "Požiadavka bola zmenená.",
             "deleted": "Požiadavka bola odobratá.",
+            "approve": "Potvrdiť",
+            "approve_adjusted": "Potvrdiť upravenú smenu",
+            "edit_heading": "Upraviť požiadavku",
+            "edit_help": "Pracovník a dátum zostávajú podľa požiadavky. Upravte iba časy smeny.",
             "failed": "Požiadavku sa nepodarilo uložiť. Obnovte stránku a skúste to znova."
         },
         "summary": {

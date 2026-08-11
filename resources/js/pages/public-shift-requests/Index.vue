@@ -95,7 +95,7 @@ watch(selectedWorkerId, (workerId) => {
             month: props.filters.month,
             worker_id: workerId === '' ? undefined : Number(workerId),
         },
-        { preserveScroll: true },
+        { preserveState: true, preserveScroll: true },
     );
 });
 
@@ -478,7 +478,6 @@ async function toggleRequest(
                     :interactive="quickAddActive && !is_locked"
                     :editable="!is_locked"
                     :quick-add-active="quickAddActive"
-                    mobile-month-only
                     :pending-dates="pendingDates"
                     @activate="toggleRequest"
                 />

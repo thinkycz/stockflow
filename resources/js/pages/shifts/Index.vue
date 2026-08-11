@@ -250,20 +250,18 @@ const calendarDays = computed<CalendarDay[]>(() => {
     }
 
     const requestsByDate = new Map<string, CalendarRequest[]>();
-    if (showRequests.value) {
-        for (const shiftRequest of props.shift_requests ?? []) {
-            const worker = workerMap.get(shiftRequest.worker_id);
-            const enriched: CalendarRequest = {
-                ...shiftRequest,
-                worker_name: worker
-                    ? `${worker.first_name} ${worker.last_name}`
-                    : '?',
-                worker_color: worker?.color ?? '#64748B',
-            };
-            const list = requestsByDate.get(shiftRequest.date) ?? [];
-            list.push(enriched);
-            requestsByDate.set(shiftRequest.date, list);
-        }
+    for (const shiftRequest of props.shift_requests ?? []) {
+        const worker = workerMap.get(shiftRequest.worker_id);
+        const enriched: CalendarRequest = {
+            ...shiftRequest,
+            worker_name: worker
+                ? `${worker.first_name} ${worker.last_name}`
+                : '?',
+            worker_color: worker?.color ?? '#64748B',
+        };
+        const list = requestsByDate.get(shiftRequest.date) ?? [];
+        list.push(enriched);
+        requestsByDate.set(shiftRequest.date, list);
     }
 
     for (const [date, requests] of requestsByDate) {
@@ -324,6 +322,12 @@ const calendarDays = computed<CalendarDay[]>(() => {
 
     return days;
 });
+
+const visibleCalendarDays = computed<CalendarDay[]>(() =>
+    showRequests.value
+        ? calendarDays.value
+        : calendarDays.value.map((day) => ({ ...day, requests: [] })),
+);
 
 function formatDateKey(d: Date): string {
     const y = d.getFullYear();
@@ -399,6 +403,8 @@ function formatOffset(value: number): string {
 const modalOpen = ref<boolean>(false);
 const modalDate = ref<string>('');
 const editingShiftId = ref<number | null>(null);
+const editingRequestId = ref<number | null>(null);
+const approvingRequestId = ref<number | null>(null);
 const copyingPublicLink = ref<boolean>(false);
 const publicLinkCopied = ref<boolean>(false);
 const publicLinkError = ref<string>('');
@@ -419,8 +425,23 @@ const form = useForm<ShiftForm>({
     allow_overlap: false,
 });
 
+type RequestApprovalForm = {
+    start_time: string;
+    end_time: string;
+    allow_overlap: boolean;
+};
+
+const requestApprovalForm = useForm<RequestApprovalForm>({
+    start_time: '',
+    end_time: '',
+    allow_overlap: false,
+});
+
 const overlapError = computed<string | undefined>(
     () => (form.errors as Record<string, string>).overlap,
+);
+const requestOverlapError = computed<string | undefined>(
+    () => (requestApprovalForm.errors as Record<string, string>).overlap,
 );
 
 const timeOptions: string[] = [];
@@ -454,10 +475,23 @@ const modalShifts = computed<CalendarShift[]>(() => {
     return day?.shifts ?? [];
 });
 
+const modalRequests = computed<CalendarRequest[]>(() => {
+    const day = calendarDays.value.find((d) => d.date === modalDate.value);
+    return day?.requests ?? [];
+});
+
+const editingRequest = computed<CalendarRequest | undefined>(() =>
+    modalRequests.value.find(
+        (shiftRequest) => shiftRequest.id === editingRequestId.value,
+    ),
+);
+
 function openDayModal(date: string): void {
     modalDate.value = date;
     editingShiftId.value = null;
+    editingRequestId.value = null;
     form.reset();
+    requestApprovalForm.reset();
     form.date = date;
     form.start_time = '09:00';
     form.end_time = '16:00';
@@ -469,6 +503,8 @@ function openDayModal(date: string): void {
 
 function editShift(shift: Shift): void {
     editingShiftId.value = shift.id;
+    editingRequestId.value = null;
+    requestApprovalForm.reset();
     form.worker_id = String(shift.worker_id);
     form.date = shift.date;
     form.start_time = shift.start_time;
@@ -476,8 +512,20 @@ function editShift(shift: Shift): void {
     form.allow_overlap = false;
 }
 
+function editRequest(shiftRequest: CalendarRequest): void {
+    editingShiftId.value = null;
+    editingRequestId.value = shiftRequest.id;
+    form.reset();
+    requestApprovalForm.clearErrors();
+    requestApprovalForm.start_time = shiftRequest.start_time;
+    requestApprovalForm.end_time = shiftRequest.end_time;
+    requestApprovalForm.allow_overlap = false;
+}
+
 function cancelEdit(): void {
     editingShiftId.value = null;
+    editingRequestId.value = null;
+    requestApprovalForm.reset();
     form.worker_id =
         props.workers.length > 0 ? String(props.workers[0].id) : '';
     form.date = modalDate.value;
@@ -489,7 +537,89 @@ function cancelEdit(): void {
 function closeModal(): void {
     modalOpen.value = false;
     editingShiftId.value = null;
+    editingRequestId.value = null;
     form.reset();
+    requestApprovalForm.reset();
+}
+
+async function confirmRequestOverlap(
+    errors: Record<string, string>,
+    retry: () => void,
+    allowOverlap: boolean,
+): Promise<void> {
+    if (
+        errors.overlap !== undefined &&
+        !allowOverlap &&
+        (await dialog.confirm({
+            title: t('common.confirm'),
+            message: t('shifts.overlap_confirm'),
+            confirmLabel: t('common.continue'),
+            variant: 'warning',
+        }))
+    ) {
+        retry();
+    }
+}
+
+function approveRequest(
+    shiftRequest: CalendarRequest,
+    allowOverlap = false,
+): void {
+    approvingRequestId.value = shiftRequest.id;
+    router.post(
+        route('shift-requests.approve', {
+            shiftRequest: shiftRequest.id,
+            month: month.value,
+            year: year.value,
+        }),
+        {
+            start_time: shiftRequest.start_time,
+            end_time: shiftRequest.end_time,
+            allow_overlap: allowOverlap,
+        },
+        {
+            preserveState: true,
+            onError: (errors) =>
+                void confirmRequestOverlap(
+                    errors,
+                    () => approveRequest(shiftRequest, true),
+                    allowOverlap,
+                ),
+            onFinish: () => {
+                if (approvingRequestId.value === shiftRequest.id) {
+                    approvingRequestId.value = null;
+                }
+            },
+        },
+    );
+}
+
+function submitRequestApproval(): void {
+    if (editingRequestId.value === null) return;
+
+    requestApprovalForm.post(
+        route('shift-requests.approve', {
+            shiftRequest: editingRequestId.value,
+            month: month.value,
+            year: year.value,
+        }),
+        {
+            preserveState: true,
+            onError: (errors) =>
+                void confirmRequestOverlap(
+                    errors,
+                    () => {
+                        requestApprovalForm.allow_overlap = true;
+                        submitRequestApproval();
+                    },
+                    requestApprovalForm.allow_overlap,
+                ),
+            onSuccess: () => {
+                editingRequestId.value = null;
+                requestApprovalForm.reset();
+            },
+        },
+    );
 }
 
 function submitShift(): void {
@@ -1108,7 +1238,7 @@ async function copyText(value: string): Promise<void> {
 
                 <ShiftMonthCalendar
                     v-else
-                    :days="calendarDays"
+                    :days="visibleCalendarDays"
                     :weekday-labels="weekdayLabels"
                     :interactive="true"
                     :editable="is_admin"
@@ -1303,8 +1433,144 @@ async function copyText(value: string): Promise<void> {
                     </div>
                 </div>
 
+                <div
+                    v-if="is_admin && modalRequests.length > 0"
+                    class="space-y-2"
+                    data-testid="modal-shift-requests"
+                >
+                    <h3
+                        class="text-xs font-semibold uppercase text-on-surface-variant"
+                    >
+                        {{ t('shifts.requests.heading') }}
+                    </h3>
+                    <div
+                        v-for="shiftRequest in modalRequests"
+                        :key="shiftRequest.id"
+                        class="flex flex-col gap-3 rounded-lg border border-dashed border-primary/45 bg-primary-fixed/30 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+                        data-testid="modal-shift-request"
+                        :style="{
+                            borderLeft: `3px dashed ${shiftRequest.worker_color}`,
+                        }"
+                    >
+                        <div class="min-w-0 text-sm">
+                            <p class="font-semibold text-on-surface">
+                                {{ shiftRequest.start_time }}–{{
+                                    shiftRequest.end_time
+                                }}
+                            </p>
+                            <p class="truncate text-on-surface-variant">
+                                {{ shiftRequest.worker_name }}
+                            </p>
+                        </div>
+                        <div class="flex shrink-0 items-center gap-2">
+                            <Button
+                                variant="success"
+                                size="compact"
+                                type="button"
+                                :loading="
+                                    approvingRequestId === shiftRequest.id
+                                "
+                                :loading-label="t('common.saving')"
+                                @click="approveRequest(shiftRequest)"
+                            >
+                                <Check :size="14" />
+                                {{ t('shifts.requests.approve') }}
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                size="compact"
+                                type="button"
+                                :disabled="approvingRequestId !== null"
+                                @click="editRequest(shiftRequest)"
+                            >
+                                <Pencil :size="14" />
+                                {{ t('common.edit') }}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
                 <form
-                    v-if="is_admin"
+                    v-if="is_admin && editingRequestId !== null"
+                    class="space-y-4 rounded-xl border border-primary/20 bg-primary-fixed/20 p-4"
+                    data-testid="shift-request-approval-form"
+                    @submit.prevent="submitRequestApproval"
+                >
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <h3
+                                class="text-xs font-semibold uppercase text-on-surface-variant"
+                            >
+                                {{ t('shifts.requests.edit_heading') }}
+                            </h3>
+                            <p
+                                class="mt-1 text-sm font-semibold text-on-surface"
+                            >
+                                {{ editingRequest?.worker_name }} ·
+                                {{ modalDate }}
+                            </p>
+                            <p class="mt-1 text-xs text-on-surface-variant">
+                                {{ t('shifts.requests.edit_help') }}
+                            </p>
+                        </div>
+                        <Button
+                            variant="ghost"
+                            type="button"
+                            @click="cancelEdit"
+                        >
+                            <X :size="14" />
+                            {{ t('common.cancel') }}
+                        </Button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <Label for="request_start_time" :required="true">
+                                {{ t('shifts.columns.start_time') }}
+                            </Label>
+                            <Select
+                                id="request_start_time"
+                                v-model="requestApprovalForm.start_time"
+                                required
+                                :options="timeSelectOptions"
+                            />
+                            <FieldError
+                                :message="requestApprovalForm.errors.start_time"
+                            />
+                        </div>
+                        <div class="space-y-2">
+                            <Label for="request_end_time" :required="true">
+                                {{ t('shifts.columns.end_time') }}
+                            </Label>
+                            <Select
+                                id="request_end_time"
+                                v-model="requestApprovalForm.end_time"
+                                required
+                                :options="timeSelectOptions"
+                            />
+                            <FieldError
+                                :message="requestApprovalForm.errors.end_time"
+                            />
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex items-center justify-end gap-3 border-t border-outline-glass pt-4"
+                    >
+                        <FieldError :message="requestOverlapError" />
+                        <Button
+                            type="submit"
+                            :loading="requestApprovalForm.processing"
+                            :loading-label="t('common.saving')"
+                        >
+                            <Check :size="14" />
+                            {{ t('shifts.requests.approve_adjusted') }}
+                        </Button>
+                    </div>
+                </form>
+
+                <form
+                    v-if="is_admin && editingRequestId === null"
                     class="space-y-4"
                     @submit.prevent="submitShift"
                 >

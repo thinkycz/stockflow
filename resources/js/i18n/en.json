@@ -1134,11 +1134,11 @@
         "overlap_confirm": "This shift overlaps another assignment. Save it anyway?",
         "mobile": {
             "view_label": "Mobile calendar view",
-            "day_view": "Day",
-            "month_view": "Whole month",
-            "full_calendar": "Full month calendar",
-            "selected_day": "Selected day",
-            "no_shifts": "No shifts scheduled"
+            "compact_view": "Compact",
+            "full_view": "Full view",
+            "compact_shift_label": "{name}, shift {start}–{end}",
+            "compact_request_label": "{name}, request {start}–{end}",
+            "more_entries": "Additional entries: {count}"
         },
         "presets": {
             "title": "Shift presets",
@@ -1198,6 +1198,10 @@
             "created": "Request added.",
             "updated": "Request changed.",
             "deleted": "Request removed.",
+            "approve": "Approve",
+            "approve_adjusted": "Approve adjusted shift",
+            "edit_heading": "Edit request",
+            "edit_help": "The employee and date stay fixed from the request. Adjust only the shift times.",
             "failed": "The request could not be saved. Refresh the page and try again."
         },
         "summary": {

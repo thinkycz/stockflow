@@ -140,7 +140,10 @@ use Illuminate\Support\Carbon;
     ]);
     Carbon::setTestNow('2026-08-07 10:00:00 UTC');
 
-    $adminResponse = $this->be($admin, 'users')->get('/shifts?year=2026&month=9', $this->inertiaHeaders());
+    $adminResponse = $this->be($admin, 'users')->get(
+        \route('shifts.index', ['store_id' => $store->getKey(), 'year' => 2026, 'month' => 9]),
+        $this->inertiaHeaders(),
+    );
     $adminResponse->assertOk()
         ->assertJsonCount(1, 'props.shift_requests')
         ->assertJsonPath('props.shift_requests.0.date', '2026-09-10')

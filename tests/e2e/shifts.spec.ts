@@ -12,10 +12,14 @@ test('public shift requests toggle and appear in the admin calendar overlay', as
 
     await page.goto('/public/shifts/e2e-shift-calendar-token');
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(page.getByTestId('mobile-month-view')).toBeVisible();
+    await expect(page.getByTestId('mobile-compact-view')).toBeVisible();
+    await expect(page.getByTestId('mobile-full-view')).toHaveCount(0);
     await expect(page.getByTestId('mobile-day-view')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Day' })).toHaveCount(0);
-    await expect(page.getByText('Full month calendar')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Compact' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+    );
+    await expect(page.getByRole('button', { name: 'Full view' })).toBeVisible();
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.getByRole('button', { name: 'Submit requests' }).click();
     await page.getByLabel('Employee').selectOption({ label: 'E2E Worker' });
@@ -29,15 +33,27 @@ test('public shift requests toggle and appear in the admin calendar overlay', as
     );
 
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(page.getByTestId('mobile-month-view')).toBeVisible();
-    await expect(page.getByTestId('mobile-day-view')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Day' })).toHaveCount(0);
-    await expect(page.getByText('Full month calendar')).toHaveCount(0);
+    const compactRequestDay = page.getByTestId(
+        `mobile-compact-calendar-day-${date}`,
+    );
+    const compactRequest = compactRequestDay.getByTestId(
+        'mobile-compact-calendar-entry',
+    );
+    await expect(compactRequest).toContainText('09:00');
+    await expect(compactRequest).toContainText('E2E Worker');
+    await expect(compactRequest).toHaveAttribute(
+        'aria-label',
+        'E2E Worker, request 09:00–17:00',
+    );
+    await page.getByRole('button', { name: 'Full view' }).click();
     await expect(
         page
-            .getByTestId(`mobile-month-calendar-day-${date}`)
-            .getByTestId('mobile-month-calendar-shift-request'),
+            .getByTestId(`mobile-full-calendar-day-${date}`)
+            .getByTestId('mobile-full-calendar-shift-request'),
     ).toContainText('09:00–17:00');
+    await page.getByRole('button', { name: 'Next month' }).click();
+    await expect(page.getByTestId('mobile-full-view')).toBeVisible();
+    await page.getByRole('button', { name: 'Previous month' }).click();
     await page.setViewportSize({ width: 1280, height: 720 });
 
     await page.getByRole('button', { name: 'Done' }).click();
@@ -51,21 +67,63 @@ test('public shift requests toggle and appear in the admin calendar overlay', as
     await expect(
         day.getByTestId('calendar-shift-request').getByLabel('Request'),
     ).toBeVisible();
+    const secondDate = `${year}-${String(month).padStart(2, '0')}-16`;
+    await page.getByTestId(`calendar-day-${secondDate}`).click();
+    await expect(
+        page
+            .getByTestId(`calendar-day-${secondDate}`)
+            .getByTestId('calendar-shift-request'),
+    ).toContainText('10:00–18:00');
 
     await page.goto('/login');
     await page.getByLabel('Email').fill('test@test.com');
     await page.getByLabel('Password', { exact: true }).fill('password');
     await page.getByRole('button', { name: 'Log in' }).click();
     await page.goto(`/shifts?year=${year}&month=${month}`);
+
+    await expect(
+        page
+            .getByTestId(`calendar-day-${date}`)
+            .getByTestId('calendar-shift-request'),
+    ).toHaveCount(0);
+    await page.getByTestId(`calendar-day-${date}`).click();
+    const requestDialog = page.getByRole('dialog');
+    const modalRequest = requestDialog
+        .getByTestId('modal-shift-request')
+        .filter({ hasText: 'E2E Worker' });
+    await expect(modalRequest).toContainText('10:00–18:00');
+    await modalRequest.getByRole('button', { name: 'Edit' }).click();
+    const approvalForm = requestDialog.getByTestId(
+        'shift-request-approval-form',
+    );
+    await expect(approvalForm).toContainText(`E2E Worker · ${date}`);
+    await expect(approvalForm.getByLabel('Employee')).toHaveCount(0);
+    await approvalForm.getByLabel('Start').selectOption('10:15');
+    await approvalForm.getByLabel('End').selectOption('18:15');
+    await approvalForm
+        .getByRole('button', { name: 'Approve adjusted shift' })
+        .click();
+    await expect(modalRequest).toHaveCount(0);
+    await expect(requestDialog).toContainText('10:15–18:15');
+    await page.keyboard.press('Escape');
+
     await page.getByRole('button', { name: 'Show requests' }).click();
     await expect(
         page.getByRole('button', { name: 'Hide requests' }),
     ).toBeVisible();
     await expect(
         page
-            .getByTestId(`calendar-day-${date}`)
+            .getByTestId(`calendar-day-${secondDate}`)
             .getByTestId('calendar-shift-request'),
     ).toContainText('10:00–18:00');
+
+    await page.getByTestId(`calendar-day-${secondDate}`).click();
+    const directRequest = page
+        .getByRole('dialog')
+        .getByTestId('modal-shift-request');
+    await directRequest.getByRole('button', { name: /Approve$/ }).click();
+    await expect(directRequest).toHaveCount(0);
+    await expect(page.getByRole('dialog')).toContainText('10:00–18:00');
 });
 
 test('quick-added shifts are time ordered and feedback uses the global toast', async ({
@@ -124,37 +182,43 @@ test('quick-added shifts are time ordered and feedback uses the global toast', a
 
     await page.setViewportSize({ width: 390, height: 844 });
     const shiftDayNumberTop = await page
-        .getByTestId('mobile-calendar-day-2026-07-15')
+        .getByTestId('mobile-compact-calendar-day-2026-07-15')
         .locator('span')
         .first()
         .evaluate((element) => element.getBoundingClientRect().top);
     const emptyDayNumberTop = await page
-        .getByTestId('mobile-calendar-day-2026-07-16')
+        .getByTestId('mobile-compact-calendar-day-2026-07-16')
         .locator('span')
         .first()
         .evaluate((element) => element.getBoundingClientRect().top);
     expect(shiftDayNumberTop).toBe(emptyDayNumberTop);
 
-    await page.getByRole('button', { name: 'Whole month' }).click();
+    await expect(
+        page
+            .getByTestId('mobile-compact-calendar-day-2026-07-15')
+            .getByTestId('mobile-compact-calendar-entry'),
+    ).toHaveText([/06:30E2E Worker/, /18:00E2E Worker/]);
+
+    await page.getByRole('button', { name: 'Full view' }).click();
     const mobileMonthDay = page.getByTestId(
-        'mobile-month-calendar-day-2026-07-15',
+        'mobile-full-calendar-day-2026-07-15',
     );
     await expect(
-        mobileMonthDay.getByTestId('mobile-month-calendar-shift'),
+        mobileMonthDay.getByTestId('mobile-full-calendar-shift'),
     ).toHaveText([/06:30–12:00/, /18:00–22:00/]);
     const mobileMonthShiftDayNumberTop = await mobileMonthDay
         .locator('span')
         .first()
         .evaluate((element) => element.getBoundingClientRect().top);
     const mobileMonthEmptyDayNumberTop = await page
-        .getByTestId('mobile-month-calendar-day-2026-07-16')
+        .getByTestId('mobile-full-calendar-day-2026-07-16')
         .locator('span')
         .first()
         .evaluate((element) => element.getBoundingClientRect().top);
     expect(mobileMonthShiftDayNumberTop).toBe(mobileMonthEmptyDayNumberTop);
 });
 
-test('shift calendar switches to a selectable day agenda on mobile', async ({
+test('shift calendar switches between compact and full months on mobile', async ({
     page,
 }) => {
     await page.setViewportSize({ width: 390, height: 844 });
@@ -165,19 +229,21 @@ test('shift calendar switches to a selectable day agenda on mobile', async ({
     await page.waitForURL(/\/dashboard$/);
 
     await page.goto('/shifts?year=2026&month=7');
-    const mobileDay = page.getByTestId('mobile-calendar-day-2026-07-15');
+    const mobileDay = page.getByTestId(
+        'mobile-compact-calendar-day-2026-07-15',
+    );
 
     await expect(mobileDay).toBeVisible();
     await expect(page.getByTestId('calendar-day-2026-07-15')).toBeHidden();
     await mobileDay.click();
-    await expect(mobileDay).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
 
-    await page.getByRole('button', { name: 'Whole month' }).click();
-    await expect(page.getByTestId('mobile-month-view')).toBeVisible();
-    await expect(page.getByTestId('mobile-day-view')).toBeHidden();
-    await expect(
-        page.getByTestId('mobile-month-calendar-day-2026-07-15'),
-    ).toBeVisible();
+    await page.getByRole('button', { name: 'Full view' }).click();
+    await expect(page.getByTestId('mobile-full-view')).toBeVisible();
+    await expect(page.getByTestId('mobile-compact-view')).toHaveCount(0);
+    await page.getByTestId('mobile-full-calendar-day-2026-07-15').click();
+    await expect(page.getByRole('dialog')).toBeVisible();
 
     const hasHorizontalOverflow = await page.evaluate(
         () =>

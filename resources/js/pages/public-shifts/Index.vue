@@ -260,7 +260,6 @@ function navigateMonth(delta: number): void {
                 <ShiftMonthCalendar
                     :days="calendarDays"
                     :weekday-labels="weekdayLabels"
-                    mobile-month-only
                 />
             </section>
 

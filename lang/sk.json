@@ -45,6 +45,7 @@
     "Worker deleted.": "Brigádnik bol zmazaný.",
     "Cannot delete a worker with existing shifts.": "Brigádnika so smenami nie je možné zmazať.",
     "Shift created.": "Smena bola vytvorená.",
+    "Shift request approved.": "Požiadavka bola potvrdená a prevedená na smenu.",
     "Shift updated.": "Smena bola aktualizovaná.",
     "Shift deleted.": "Smena bola zmazaná.",
     "Shift preset created.": "Predvoľba smeny bola vytvorená.",

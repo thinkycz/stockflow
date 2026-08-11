@@ -77,6 +77,7 @@ use App\Http\Controllers\Web\Shift\SharedShiftRequestToggleController;
 use App\Http\Controllers\Web\Shift\ShiftDestroyController;
 use App\Http\Controllers\Web\Shift\ShiftIndexController;
 use App\Http\Controllers\Web\Shift\ShiftQuickAddController;
+use App\Http\Controllers\Web\Shift\ShiftRequestApproveController;
 use App\Http\Controllers\Web\Shift\ShiftRequestMonthLockController;
 use App\Http\Controllers\Web\Shift\ShiftShareController;
 use App\Http\Controllers\Web\Shift\ShiftStoreController;
@@ -305,6 +306,7 @@ Resolver::resolveRouteRegistrar()
         // Shifts (admin write)
         $router->post('shifts', ShiftStoreController::class)->name('shifts.store');
         $router->post('shifts/quick-add', ShiftQuickAddController::class)->name('shifts.quick-add');
+        $router->post('shift-requests/{shiftRequest}/approve', ShiftRequestApproveController::class)->whereNumber('shiftRequest')->name('shift-requests.approve');
         $router->post('shift-request-month-locks', ShiftRequestMonthLockController::class)->name('shift-request-month-locks.update');
         $router->put('shifts/{shift}', ShiftUpdateController::class)->whereNumber('shift')->name('shifts.update');
         $router->delete('shifts/{shift}', ShiftDestroyController::class)->whereNumber('shift')->name('shifts.destroy');

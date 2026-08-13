@@ -8,6 +8,7 @@ use App\Enums\StockMovementTypeEnum;
 use App\Models\AttendanceSession;
 use App\Models\Shift;
 use App\Models\ShiftPreset;
+use App\Models\ShiftShareLink;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
@@ -46,7 +47,14 @@ class E2ESeeder extends Seeder
             return;
         }
 
-        $store->update(['shift_share_token' => 'e2e-shift-calendar-token']);
+        ShiftShareLink::query()->updateOrCreate(
+            ['token' => 'e2e-shift-calendar-token'],
+            [
+                'user_id' => $user->getKey(),
+                'store_id' => $store->getKey(),
+                'name' => 'E2E public calendar',
+            ],
+        );
 
         $warehouse = Store::query()
             ->where('user_id', $user->getKey())

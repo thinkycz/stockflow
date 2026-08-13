@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\ShiftRequest;
 use App\Models\ShiftRequestMonthLock;
+use App\Models\ShiftShareLink;
 use App\Models\Store;
 use App\Models\Worker;
 use Database\Factories\UserFactory;
@@ -11,8 +12,9 @@ use Illuminate\Support\Carbon;
 
 \test('public request toggle creates replaces and removes one daily request', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
-    $store = Store::factory()->create([
-        'user_id' => $admin->getKey(), 'is_warehouse' => false, 'shift_share_token' => 'requests-token',
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    ShiftShareLink::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'token' => 'requests-token',
     ]);
     $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
     Carbon::setTestNow('2026-08-07 10:00:00 UTC');
@@ -37,8 +39,9 @@ use Illuminate\Support\Carbon;
 
 \test('public request toggle rejects current months locked months and foreign workers', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
-    $store = Store::factory()->create([
-        'user_id' => $admin->getKey(), 'is_warehouse' => false, 'shift_share_token' => 'requests-token',
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    ShiftShareLink::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'token' => 'requests-token',
     ]);
     $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
     $foreignAdmin = UserFactory::new()->admin()->createOne();

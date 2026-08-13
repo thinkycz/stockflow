@@ -39,6 +39,7 @@ import { showErrorToast, showSuccessToast } from '@/composables/useClientToast';
 import { useDialog } from '@/composables/useDialog';
 import { useRoute } from '@/composables/useRoute';
 import { withActionErrorToast } from '@/lib/action-errors';
+import { formatDateTime } from '@/lib/format';
 import { sortShiftsByTime } from '@/lib/shift-calendar';
 import type { MonthlyShiftSummary } from '@/types/shifts';
 
@@ -102,6 +103,13 @@ type ShiftPreset = {
     end_time: string;
 };
 
+type ShiftShareLink = {
+    id: number;
+    name: string;
+    url: string;
+    created_at: string;
+};
+
 const props = defineProps<{
     store: { id: number; name: string } | null;
     shifts: Shift[];
@@ -113,6 +121,7 @@ const props = defineProps<{
     };
     is_admin: boolean;
     monthly_summary: MonthlyShiftSummary[];
+    shift_share_links?: ShiftShareLink[];
     shift_presets?: ShiftPreset[];
     shift_requests?: ShiftRequest[];
     request_month_locked?: boolean;
@@ -405,9 +414,6 @@ const modalDate = ref<string>('');
 const editingShiftId = ref<number | null>(null);
 const editingRequestId = ref<number | null>(null);
 const approvingRequestId = ref<number | null>(null);
-const copyingPublicLink = ref<boolean>(false);
-const publicLinkCopied = ref<boolean>(false);
-const publicLinkError = ref<string>('');
 
 type ShiftForm = {
     worker_id: string;
@@ -713,6 +719,93 @@ async function deleteShift(id: number): Promise<void> {
     );
 }
 
+// --- Public shift links ---
+
+const shareLinksModalOpen = ref<boolean>(false);
+const copyingShareLinkId = ref<number | null>(null);
+const copiedShareLinkId = ref<number | null>(null);
+const shareLinkError = ref<string>('');
+
+type ShareLinkForm = {
+    name: string;
+};
+
+const shareLinkForm = useForm<ShareLinkForm>({ name: '' });
+
+function openShareLinksModal(): void {
+    shareLinkError.value = '';
+    copiedShareLinkId.value = null;
+    shareLinksModalOpen.value = true;
+}
+
+function closeShareLinksModal(): void {
+    shareLinksModalOpen.value = false;
+    shareLinkForm.reset();
+    shareLinkForm.clearErrors();
+    shareLinkError.value = '';
+    copiedShareLinkId.value = null;
+}
+
+function submitShareLink(): void {
+    if (props.store === null) return;
+
+    shareLinkForm.post(
+        route('shift-share-links.store', {
+            store_id: props.store.id,
+            month: month.value,
+            year: year.value,
+        }),
+        {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => shareLinkForm.reset(),
+        },
+    );
+}
+
+async function copyShareLink(link: ShiftShareLink): Promise<void> {
+    copyingShareLinkId.value = link.id;
+    copiedShareLinkId.value = null;
+    shareLinkError.value = '';
+
+    try {
+        await copyText(link.url);
+        copiedShareLinkId.value = link.id;
+    } catch {
+        shareLinkError.value = t('shifts.public_links.copy_error');
+    } finally {
+        copyingShareLinkId.value = null;
+    }
+}
+
+async function deleteShareLink(link: ShiftShareLink): Promise<void> {
+    if (props.store === null) return;
+
+    if (
+        !(await dialog.confirm({
+            title: `${t('common.delete')}: ${link.name}`,
+            message: t('shifts.public_links.confirm_delete'),
+            confirmLabel: t('common.delete'),
+            variant: 'danger',
+        }))
+    ) {
+        return;
+    }
+
+    router.delete(
+        route('shift-share-links.destroy', {
+            shiftShareLink: link.id,
+            store_id: props.store.id,
+            month: month.value,
+            year: year.value,
+        }),
+        withActionErrorToast({
+            preserveState: true,
+            preserveScroll: true,
+        }),
+    );
+}
+
 // --- Shift presets ---
 
 const presetModalOpen = ref<boolean>(false);
@@ -992,25 +1085,6 @@ async function quickAddShift(
     }
 }
 
-async function copyPublicLink(): Promise<void> {
-    copyingPublicLink.value = true;
-    publicLinkCopied.value = false;
-    publicLinkError.value = '';
-
-    try {
-        const response = await window.axios.post<{ url: string }>(
-            route('shifts.share'),
-        );
-
-        await copyText(response.data.url);
-        publicLinkCopied.value = true;
-    } catch {
-        publicLinkError.value = t('shifts.public_link_error');
-    } finally {
-        copyingPublicLink.value = false;
-    }
-}
-
 async function copyText(value: string): Promise<void> {
     if (navigator.clipboard !== undefined) {
         try {
@@ -1048,41 +1122,23 @@ async function copyText(value: string): Promise<void> {
                     <StoreContextIndicator />
                 </template>
                 <template #actions>
-                    <div
-                        v-if="store"
-                        class="flex flex-col items-start gap-2 sm:items-end"
-                    >
-                        <div class="flex flex-wrap gap-2">
-                            <Button
-                                v-if="is_admin"
-                                variant="secondary"
-                                type="button"
-                                @click="openPresetModal"
-                            >
-                                <Settings2 :size="14" />
-                                {{ t('shifts.presets.manage') }}
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                type="button"
-                                :disabled="copyingPublicLink"
-                                @click="copyPublicLink"
-                            >
-                                <Check v-if="publicLinkCopied" :size="14" />
-                                <Link2 v-else :size="14" />
-                                {{
-                                    publicLinkCopied
-                                        ? t('shifts.public_link_copied')
-                                        : t('shifts.copy_public_link')
-                                }}
-                            </Button>
-                        </div>
-                        <p
-                            v-if="publicLinkError"
-                            class="text-xs text-error-red"
+                    <div v-if="store && is_admin" class="flex flex-wrap gap-2">
+                        <Button
+                            variant="secondary"
+                            type="button"
+                            @click="openPresetModal"
                         >
-                            {{ publicLinkError }}
-                        </p>
+                            <Settings2 :size="14" />
+                            {{ t('shifts.presets.manage') }}
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            type="button"
+                            @click="openShareLinksModal"
+                        >
+                            <Link2 :size="14" />
+                            {{ t('shifts.public_links.manage') }}
+                        </Button>
                     </div>
                 </template>
             </PageHeader>
@@ -1661,6 +1717,112 @@ async function copyText(value: string): Promise<void> {
                 >
                     {{ t('shifts.read_only_notice') }}
                 </div>
+            </div>
+        </Modal>
+
+        <Modal
+            :open="shareLinksModalOpen"
+            :title="t('shifts.public_links.title')"
+            size="lg"
+            @close="closeShareLinksModal"
+        >
+            <div class="space-y-5">
+                <EmptyState
+                    v-if="(shift_share_links?.length ?? 0) === 0"
+                    :title="t('shifts.public_links.empty')"
+                    :description="t('shifts.public_links.empty_description')"
+                    density="compact"
+                />
+                <div v-else class="space-y-2">
+                    <div
+                        v-for="link in shift_share_links ?? []"
+                        :key="link.id"
+                        class="flex flex-col gap-3 rounded-xl border border-outline-glass px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                        <div class="min-w-0">
+                            <p class="truncate font-semibold text-on-surface">
+                                {{ link.name }}
+                            </p>
+                            <p class="text-xs text-on-surface-variant">
+                                {{
+                                    t('shifts.public_links.created_at', {
+                                        date: formatDateTime(link.created_at),
+                                    })
+                                }}
+                            </p>
+                        </div>
+                        <div class="flex shrink-0 items-center gap-1">
+                            <Button
+                                variant="secondary"
+                                size="compact"
+                                type="button"
+                                :loading="copyingShareLinkId === link.id"
+                                :loading-label="t('common.loading')"
+                                @click="copyShareLink(link)"
+                            >
+                                <Check
+                                    v-if="copiedShareLinkId === link.id"
+                                    :size="14"
+                                />
+                                <Link2 v-else :size="14" />
+                                {{
+                                    copiedShareLinkId === link.id
+                                        ? t('shifts.public_links.copied')
+                                        : t('shifts.public_links.copy')
+                                }}
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                type="button"
+                                :aria-label="t('common.delete')"
+                                @click="deleteShareLink(link)"
+                            >
+                                <Trash2 :size="14" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                <p v-if="shareLinkError" class="text-xs text-error-red">
+                    {{ shareLinkError }}
+                </p>
+
+                <form class="space-y-4" @submit.prevent="submitShareLink">
+                    <h3
+                        class="text-xs font-semibold uppercase text-on-surface-variant"
+                    >
+                        {{ t('shifts.public_links.add') }}
+                    </h3>
+                    <div class="space-y-2">
+                        <Label for="share_link_name" :required="true">{{
+                            t('shifts.public_links.name')
+                        }}</Label>
+                        <Input
+                            id="share_link_name"
+                            v-model="shareLinkForm.name"
+                            type="text"
+                            maxlength="100"
+                            required
+                        />
+                        <FieldError :message="shareLinkForm.errors.name" />
+                    </div>
+                    <p class="text-xs text-on-surface-variant">
+                        {{ t('shifts.public_links.delete_warning') }}
+                    </p>
+                    <div
+                        class="flex justify-end border-t border-outline-glass pt-4"
+                    >
+                        <Button
+                            type="submit"
+                            :loading="shareLinkForm.processing"
+                            :loading-label="t('common.saving')"
+                        >
+                            <Plus :size="14" />
+                            {{ t('shifts.public_links.create') }}
+                        </Button>
+                    </div>
+                </form>
             </div>
         </Modal>
 

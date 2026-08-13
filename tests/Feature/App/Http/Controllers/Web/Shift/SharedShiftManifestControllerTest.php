@@ -2,14 +2,19 @@
 
 declare(strict_types=1);
 
+use App\Models\ShiftShareLink;
 use App\Models\Store;
 
 \test('public shift calendar exposes a token-specific install manifest', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
-    Store::factory()->create([
+    $store = Store::factory()->create([
         'user_id' => $admin->getKey(),
         'is_warehouse' => false,
-        'shift_share_token' => 'employee-calendar-token',
+    ]);
+    ShiftShareLink::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'token' => 'employee-calendar-token',
     ]);
 
     $response = $this->get('/public/shifts/employee-calendar-token/manifest.webmanifest');

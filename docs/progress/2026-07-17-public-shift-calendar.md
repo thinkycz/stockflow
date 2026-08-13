@@ -2,29 +2,30 @@
 
 ## Status
 
-- Current phase: Complete
-- Overall status: verified
-- Last updated: 2026-07-17
+- Current phase: Multi-link management verification
+- Overall status: implementation verified; dependency audit blocked
+- Last updated: 2026-08-13
 
 ## Traceability
 
-| ID  | Requirement                                   | Phase | Status   | Verification                                                          |
-| --- | --------------------------------------------- | ----- | -------- | --------------------------------------------------------------------- |
-| R1  | Store-level unguessable persistent link       | 1     | verified | Feature tests + migration                                             |
-| R2  | Admin-only link creation/retrieval            | 1     | verified | ShiftShareControllerTest                                              |
-| R3  | Unauthenticated read-only full store calendar | 2     | verified | SharedShiftIndexControllerTest                                        |
-| R4  | Month navigation and worker names             | 2     | verified | Controller tests + type-check/build                                   |
-| R5  | Copy-link button on authenticated shift page  | 3     | verified | Type-check/build; browser clipboard permission not manually exercised |
-| R6  | CS/EN/SK translation parity                   | 3     | verified | I18nParityTest                                                        |
+| ID  | Requirement                                   | Phase | Status   | Verification                                      |
+| --- | --------------------------------------------- | ----- | -------- | ------------------------------------------------- |
+| R1  | Store-level unguessable persistent links      | 4     | verified | Store controller tests + migration                |
+| R2  | Admin-only link creation/deletion             | 4     | verified | ShiftShareLink store/destroy controller tests     |
+| R3  | Unauthenticated read-only full store calendar | 2     | verified | SharedShiftIndexControllerTest                    |
+| R4  | Month navigation and worker names             | 2     | verified | Controller tests + type-check/build               |
+| R5  | Link-management modal on authenticated page   | 4     | verified | Type-check, production build, and Inertia tests   |
+| R6  | CS/EN/SK translation parity                   | 3     | verified | I18nParityTest                                    |
+| R7  | Independent revocation across public surfaces | 4     | verified | Destroy controller and shared-route feature tests |
 
 ## Blockers
 
-- None.
-
-## Known pre-existing verification issues
-
-- Full PHPStan reports errors in the unchanged local `laravel-core` package.
-- Two statement tests hard-code 30 days and fail in July, which has 31 days.
+- `composer audit` reports six advisories for the locked
+  `league/commonmark <2.9.0` dependency required by Laravel.
+- `npm audit` reports one high-severity advisory for locked
+  `nanoid <3.3.17`.
+- Browser clipboard interaction was not manually exercised; the existing
+  clipboard fallback is retained and the production frontend build passes.
 
 ## Completed slices
 
@@ -34,7 +35,11 @@
   invalid-token handling, and a standalone read-only month calendar.
 - Phase 3: copy-link UX with clipboard fallback, three-locale text, and fresh
   verification.
+- Phase 4: migrated multi-link persistence, named creation, store-scoped
+  revocation, admin management UI, three-locale text, and focused backend/type
+  verification.
 
 ## Next
 
-- Optional future scope: token rotation/revocation controls.
+- Upgrade the affected dependency locks in a dedicated security-maintenance
+  change, then rerun `make check` and optionally smoke-test clipboard behavior.

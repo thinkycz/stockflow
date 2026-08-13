@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Shift;
 
+use App\Models\ShiftShareLink;
 use App\Models\Store;
 use Illuminate\Http\JsonResponse;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -15,10 +16,7 @@ class SharedShiftManifestController
      */
     public function __invoke(string $token): JsonResponse
     {
-        $storeQuery = Store::query();
-        Store::scopeForShiftShareToken($storeQuery, $token);
-
-        if (!$storeQuery->exists()) {
+        if (!ShiftShareLink::findStoreForToken($token) instanceof Store) {
             \abort(404);
         }
 

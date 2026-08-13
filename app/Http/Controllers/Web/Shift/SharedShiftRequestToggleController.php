@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\Concerns\ThrottlesWebRequests;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\ShiftRequestValidity;
 use App\Models\ShiftRequest;
+use App\Models\ShiftShareLink;
 use App\Models\Store;
 use App\Models\Worker;
 use App\Services\ShiftRequestService;
@@ -26,9 +27,7 @@ class SharedShiftRequestToggleController
      */
     public function __invoke(Request $request, string $token): JsonResponse
     {
-        $storeQuery = Store::query();
-        Store::scopeForShiftShareToken($storeQuery, $token);
-        $store = $storeQuery->first();
+        $store = ShiftShareLink::findStoreForToken($token);
 
         if (!$store instanceof Store) {
             \abort(404);

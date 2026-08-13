@@ -101,8 +101,9 @@
   shape.
 - The authenticated Shifts page shows a dynamic 0–100 attendance rating for
   completed shifts and one per-worker monthly table combining assigned hours
-  with attendance quality. Limited users can inspect rating reasons and copy a
-  stable public link for their assigned store, but cannot see salary data. The
+  with attendance quality. Limited users can inspect rating reasons but cannot
+  manage public links or see salary data. Administrators manage any number of
+  named public links for the active store and can revoke each independently. The
   public shared calendar shows score badges and the same aggregate table
   without salary or detailed per-shift penalty reasons. Holders of the public
   link can open a separate request calendar, select a company worker and a

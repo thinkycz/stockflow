@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Web\Shift;
 
 use App\Models\Shift;
+use App\Models\ShiftShareLink;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
@@ -27,9 +28,7 @@ class SharedShiftIndexController
      */
     public function __invoke(Request $request, string $token): Response
     {
-        $storeQuery = Store::query();
-        Store::scopeForShiftShareToken($storeQuery, $token);
-        $store = $storeQuery->first();
+        $store = ShiftShareLink::findStoreForToken($token);
 
         if (!$store instanceof Store) {
             \abort(404);

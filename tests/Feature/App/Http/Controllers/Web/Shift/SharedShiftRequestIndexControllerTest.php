@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 use App\Models\ShiftRequest;
 use App\Models\ShiftRequestMonthLock;
+use App\Models\ShiftShareLink;
 use App\Models\Store;
 use App\Models\Worker;
 use Illuminate\Support\Carbon;
 
 \test('guest sees future requests only for the selected worker', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
-    $store = Store::factory()->create([
-        'user_id' => $admin->getKey(), 'is_warehouse' => false, 'shift_share_token' => 'requests-token',
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    ShiftShareLink::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'token' => 'requests-token',
     ]);
     $worker = Worker::factory()->create(['user_id' => $admin->getKey(), 'first_name' => 'Anna', 'last_name' => 'Nova']);
     $otherWorker = Worker::factory()->create(['user_id' => $admin->getKey()]);
@@ -44,8 +46,9 @@ use Illuminate\Support\Carbon;
 
 \test('request page defaults and clamps navigation to next month', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
-    Store::factory()->create([
-        'user_id' => $admin->getKey(), 'is_warehouse' => false, 'shift_share_token' => 'requests-token',
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    ShiftShareLink::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'token' => 'requests-token',
     ]);
     Carbon::setTestNow('2026-08-07 10:00:00 UTC');
 

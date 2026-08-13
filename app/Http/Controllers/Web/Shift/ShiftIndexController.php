@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Web\Shift;
 use App\Models\Shift;
 use App\Models\ShiftPreset;
 use App\Models\ShiftRequest;
+use App\Models\ShiftShareLink;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class ShiftIndexController
@@ -108,6 +110,28 @@ class ShiftIndexController
         ];
 
         if ($user->isAdmin()) {
+            $shareLinkQuery = ShiftShareLink::query();
+            ShiftShareLink::scopeForUser($shareLinkQuery, $scopeUser);
+
+            if ($store instanceof Store) {
+                ShiftShareLink::scopeForStore($shareLinkQuery, $store->getKey());
+            } else {
+                $shareLinkQuery->whereRaw('1 = 0');
+            }
+
+            ShiftShareLink::querySelect($shareLinkQuery);
+            $props['shift_share_links'] = $shareLinkQuery
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->get()
+                ->map(static fn(ShiftShareLink $link): array => [
+                    'id' => $link->getKey(),
+                    'name' => $link->getName() ?? \__('Original public link'),
+                    'url' => Resolver::resolveUrlGenerator()->to('public/shifts/' . $link->getToken()),
+                    'created_at' => $link->getCreatedAt()->toIso8601String(),
+                ])
+                ->all();
+
             $shiftRequests = [];
             if ($store instanceof Store) {
                 $shiftRequestQuery = ShiftRequest::query();

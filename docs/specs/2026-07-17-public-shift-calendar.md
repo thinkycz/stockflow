@@ -6,9 +6,9 @@ User request confirmed on 2026-07-17.
 
 ## Goal
 
-Allow an administrator to copy a public, unauthenticated link for the active
-store so employees can view the entire store calendar, including other
-workers' names and shifts.
+Allow an administrator to manage named public, unauthenticated links for the
+active store so employees can view the entire store calendar, including other
+workers' names and shifts, while individual links can be revoked.
 
 ## Requirements
 
@@ -19,14 +19,20 @@ workers' names and shifts.
 - The public page is read-only and contains no create, update, or delete UI.
 - The calendar supports month navigation and shows worker names, dates, and
   start/end times.
-- The authenticated shift page provides a button that creates or reuses the
-  active store link and copies it to the clipboard.
-- Only administrators can create or retrieve a share link.
+- The authenticated shift page provides an administrator-only management modal
+  for creating, copying, and deleting named store links.
+- A store may have any number of active links, each with its own token.
+- Deleting a link immediately invalidates its calendar, manifest, and request
+  endpoints without affecting other links.
+- Only administrators can list, create, copy, or delete share links.
 - Frontend translation keys remain in parity across Czech, English, and Slovak.
 
 ## Decisions
 
-- Share links are persistent and reused on subsequent copy actions.
-- Token rotation and revocation are deferred because they were not requested.
+- New links require a store-unique name and receive a new 64-character token.
+- Existing store tokens are migrated without changing their public URL and use
+  a localized "Original public link" fallback name.
+- Token rotation is represented by creating a replacement and deleting the old
+  link; deleting the last link is allowed.
 - Public pages use a standalone task-focused layout without authenticated
   navigation or editing controls.

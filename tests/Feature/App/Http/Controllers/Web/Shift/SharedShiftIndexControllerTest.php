@@ -4,16 +4,21 @@ declare(strict_types=1);
 
 use App\Models\AttendanceSession;
 use App\Models\Shift;
+use App\Models\ShiftShareLink;
 use App\Models\Store;
 use App\Models\Worker;
 use Illuminate\Support\Carbon;
 
 \test('public shift calendar renders its employee install metadata', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
-    Store::factory()->create([
+    $store = Store::factory()->create([
         'user_id' => $admin->getKey(),
         'is_warehouse' => false,
-        'shift_share_token' => 'employee-install-token',
+    ]);
+    ShiftShareLink::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'token' => 'employee-install-token',
     ]);
 
     $this->get('/public/shifts/employee-install-token')
@@ -28,7 +33,11 @@ use Illuminate\Support\Carbon;
     $store = Store::factory()->create([
         'user_id' => $admin->getKey(),
         'is_warehouse' => false,
-        'shift_share_token' => 'shared-calendar-token',
+    ]);
+    ShiftShareLink::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'token' => 'shared-calendar-token',
     ]);
     $worker = Worker::factory()->create([
         'user_id' => $admin->getKey(),
@@ -88,7 +97,11 @@ use Illuminate\Support\Carbon;
     $sharedStore = Store::factory()->create([
         'user_id' => $admin->getKey(),
         'is_warehouse' => false,
-        'shift_share_token' => 'shared-calendar-token',
+    ]);
+    ShiftShareLink::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $sharedStore->getKey(),
+        'token' => 'shared-calendar-token',
     ]);
     $otherStore = Store::factory()->create([
         'user_id' => $admin->getKey(),
@@ -123,7 +136,11 @@ use Illuminate\Support\Carbon;
     $store = Store::factory()->create([
         'user_id' => $admin->getKey(),
         'is_warehouse' => false,
-        'shift_share_token' => 'disabled-rating-token',
+    ]);
+    ShiftShareLink::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'token' => 'disabled-rating-token',
     ]);
     $worker = Worker::factory()->create([
         'user_id' => $admin->getKey(),

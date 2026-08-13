@@ -79,7 +79,8 @@ use App\Http\Controllers\Web\Shift\ShiftIndexController;
 use App\Http\Controllers\Web\Shift\ShiftQuickAddController;
 use App\Http\Controllers\Web\Shift\ShiftRequestApproveController;
 use App\Http\Controllers\Web\Shift\ShiftRequestMonthLockController;
-use App\Http\Controllers\Web\Shift\ShiftShareController;
+use App\Http\Controllers\Web\Shift\ShiftShareLinkDestroyController;
+use App\Http\Controllers\Web\Shift\ShiftShareLinkStoreController;
 use App\Http\Controllers\Web\Shift\ShiftStoreController;
 use App\Http\Controllers\Web\Shift\ShiftUpdateController;
 use App\Http\Controllers\Web\ShiftPreset\ShiftPresetDestroyController;
@@ -177,7 +178,8 @@ Resolver::resolveRouteRegistrar()
 
         // Shifts (admin + limited view)
         $router->get('shifts', ShiftIndexController::class)->name('shifts.index');
-        $router->post('shifts/share', ShiftShareController::class)->name('shifts.share');
+        $router->post('shift-share-links', ShiftShareLinkStoreController::class)->name('shift-share-links.store');
+        $router->delete('shift-share-links/{shiftShareLink}', ShiftShareLinkDestroyController::class)->whereNumber('shiftShareLink')->name('shift-share-links.destroy');
 
         // Attendance (admin + limited assigned-store users)
         $router->get('attendance', AttendanceIndexController::class)->name('attendance.index');

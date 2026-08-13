@@ -50,7 +50,7 @@ class Store extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'user_id', 'name', 'address', 'status', 'is_warehouse', 'notes', 'slack_channel', 'shift_share_token', 'checklists_initialized_at', 'created_at', 'updated_at']);
+        return $query->select(['id', 'user_id', 'name', 'address', 'status', 'is_warehouse', 'notes', 'slack_channel', 'checklists_initialized_at', 'created_at', 'updated_at']);
     }
 
     /**
@@ -84,16 +84,6 @@ class Store extends BaseModel
     }
 
     /**
-     * Scope to a public shift calendar share token.
-     *
-     * @param Builder<Store> $query
-     */
-    public static function scopeForShiftShareToken(Builder $query, string $token): void
-    {
-        $query->where('shift_share_token', $token);
-    }
-
-    /**
      * Stock movements relationship.
      *
      * @return HasMany<StockMovement, $this>
@@ -111,6 +101,16 @@ class Store extends BaseModel
     public function storeItems(): HasMany
     {
         return $this->hasMany(StoreItem::class, 'store_id');
+    }
+
+    /**
+     * Public shift calendar links for this store.
+     *
+     * @return HasMany<ShiftShareLink, $this>
+     */
+    public function shiftShareLinks(): HasMany
+    {
+        return $this->hasMany(ShiftShareLink::class, 'store_id');
     }
 
     /**
@@ -228,14 +228,6 @@ class Store extends BaseModel
     public function getSlackChannel(): string|null
     {
         return $this->assertNullableString('slack_channel');
-    }
-
-    /**
-     * Public shift calendar share token getter.
-     */
-    public function getShiftShareToken(): string|null
-    {
-        return $this->assertNullableString('shift_share_token');
     }
 
     /**

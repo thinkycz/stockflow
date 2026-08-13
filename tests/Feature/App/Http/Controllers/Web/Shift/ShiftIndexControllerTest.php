@@ -7,10 +7,12 @@ use App\Models\Shift;
 use App\Models\ShiftPreset;
 use App\Models\ShiftRequest;
 use App\Models\ShiftRequestMonthLock;
+use App\Models\ShiftShareLink;
 use App\Models\Store;
 use App\Models\Worker;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Carbon;
+use Thinkycz\LaravelCore\Support\Resolver;
 
 \test('admin sees shifts for the active store in the calendar', function (): void {
     [$admin, $warehouse] = \createIsolatedUserWithWarehouse();
@@ -34,6 +36,20 @@ use Illuminate\Support\Carbon;
         'name' => 'Evening',
         'start_time' => '15:00',
         'end_time' => '21:00',
+    ]);
+    ShiftShareLink::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'name' => 'Older link',
+        'token' => 'older-link-token',
+        'created_at' => '2026-07-01 10:00:00',
+    ]);
+    ShiftShareLink::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'name' => null,
+        'token' => 'migrated-link-token',
+        'created_at' => '2026-07-02 10:00:00',
     ]);
     ShiftPreset::factory()->create([
         'user_id' => $admin->getKey(),
@@ -98,6 +114,9 @@ use Illuminate\Support\Carbon;
     $response->assertJsonPath('props.shift_presets.0.name', 'Morning');
     $response->assertJsonPath('props.shift_presets.0.start_time', '10:00');
     $response->assertJsonPath('props.shift_presets.1.name', 'Evening');
+    $response->assertJsonPath('props.shift_share_links.0.name', \__('Original public link'));
+    $response->assertJsonPath('props.shift_share_links.0.url', Resolver::resolveUrlGenerator()->to('public/shifts/migrated-link-token'));
+    $response->assertJsonPath('props.shift_share_links.1.name', 'Older link');
     \expect($response->json('props.workers'))->toHaveCount(2);
 });
 
@@ -187,6 +206,7 @@ use Illuminate\Support\Carbon;
     $response->assertJsonMissingPath('props.worker_summary');
     $response->assertJsonMissingPath('props.attendance_summary');
     $response->assertJsonMissingPath('props.shift_presets');
+    $response->assertJsonMissingPath('props.shift_share_links');
     $response->assertJsonPath('props.is_admin', false);
 });
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Dashboard;
 
+use App\Enums\LimitedUserSectionEnum;
 use App\Enums\NoticeboardCardColorEnum;
 use App\Enums\NoticeboardCardLabelEnum;
 use App\Enums\NoticeboardCardSizeEnum;
@@ -49,9 +50,13 @@ class DashboardController
         $user = User::mustAuth();
         $activeStore = ActiveStoreResolver::resolve($request, $user);
         $noticeboard = $this->noticeboard($request, $user, $activeStore);
-        $checklists = $activeStore instanceof Store ? (new ChecklistService())->dashboardPayload($activeStore, $user) : null;
+        $checklists = $activeStore instanceof Store && $user->canAccessSection(LimitedUserSectionEnum::CHECKLISTS)
+            ? (new ChecklistService())->dashboardPayload($activeStore, $user)
+            : null;
 
         if (!$user->isAdmin()) {
+            $owner = $user->resolveScopeUser();
+
             return Inertia::render('Dashboard', [
                 'active_store' => $activeStore instanceof Store ? [
                     'id' => $activeStore->getKey(),
@@ -59,9 +64,14 @@ class DashboardController
                 ] : null,
                 'metrics' => null,
                 'recent_movements' => [],
-                'operations' => $activeStore instanceof Store
-                    ? $this->limitedOperations($user->resolveScopeUser(), $activeStore)
-                    : null,
+                'operations' => $activeStore instanceof Store ? [
+                    'shifts' => $user->canAccessSection(LimitedUserSectionEnum::SHIFTS)
+                        ? $this->limitedShiftOperations($owner, $activeStore)
+                        : null,
+                    'attendance' => $user->canAccessSection(LimitedUserSectionEnum::ATTENDANCE)
+                        ? $this->limitedAttendanceOperations($owner, $activeStore)
+                        : null,
+                ] : null,
                 'is_admin' => false,
                 'noticeboard' => $noticeboard,
                 'checklists' => $checklists,
@@ -318,15 +328,14 @@ class DashboardController
     }
 
     /**
-     * Build the non-financial live operations summary for a limited user's store.
+     * Build the live shift summary for a limited user's store.
      *
      * @return array{
      *     current_shifts: list<array{id: int, worker_name: string, start_time: string, end_time: string}>,
-     *     next_shift: array{id: int, worker_name: string, date: string, start_time: string, end_time: string}|null,
-     *     attendance: array{workers: list<array{worker_name: string, status: 'break'|'present'}>, stale_count: int}
+     *     next_shift: array{id: int, worker_name: string, date: string, start_time: string, end_time: string}|null
      * }
      */
-    private function limitedOperations(User $owner, Store $store): array
+    private function limitedShiftOperations(User $owner, Store $store): array
     {
         $now = CarbonImmutable::now(AttendanceService::BUSINESS_TIMEZONE);
         $today = $now->toDateString();
@@ -354,24 +363,7 @@ class DashboardController
             ->orderBy('start_time')
             ->first();
 
-        $attendanceQuery = AttendanceSession::query();
-        AttendanceSession::scopeForUser($attendanceQuery, $owner);
-        AttendanceSession::scopeForStore($attendanceQuery, $store->getKey());
-        AttendanceSession::querySelect($attendanceQuery);
-        $attendanceSessions = $attendanceQuery->whereNotNull('active_worker_id')->get();
-        $attendanceSessionIds = $attendanceSessions
-            ->map(static fn(AttendanceSession $session): int => $session->getKey())
-            ->all();
-        $breakSessionIds = DB::table('attendance_breaks')
-            ->whereIn('active_session_id', $attendanceSessionIds)
-            ->pluck('active_session_id')
-            ->map(static fn(mixed $id): int => Typer::parseInt($id))
-            ->all();
-
-        $workerIds = [
-            ...$currentShifts->map(static fn(Shift $shift): int => $shift->getWorkerId())->all(),
-            ...$attendanceSessions->map(static fn(AttendanceSession $session): int => $session->getWorkerId())->all(),
-        ];
+        $workerIds = $currentShifts->map(static fn(Shift $shift): int => $shift->getWorkerId())->all();
         if ($nextShift instanceof Shift) {
             $workerIds[] = $nextShift->getWorkerId();
         }
@@ -396,6 +388,52 @@ class DashboardController
             }
         }
 
+        $nextWorker = $nextShift instanceof Shift ? $workers->get($nextShift->getWorkerId()) : null;
+
+        return [
+            'current_shifts' => $currentShiftRows,
+            'next_shift' => $nextShift instanceof Shift && $nextWorker instanceof Worker ? [
+                'id' => $nextShift->getKey(),
+                'worker_name' => $nextWorker->getFullName(),
+                'date' => $nextShift->getDate(),
+                'start_time' => $nextShift->getStartTimeShort(),
+                'end_time' => $nextShift->getEndTimeShort(),
+            ] : null,
+        ];
+    }
+
+    /**
+     * Build the live attendance summary for a limited user's store.
+     *
+     * @return array{workers: list<array{worker_name: string, status: 'break'|'present'}>, stale_count: int}
+     */
+    private function limitedAttendanceOperations(User $owner, Store $store): array
+    {
+        $today = CarbonImmutable::now(AttendanceService::BUSINESS_TIMEZONE)->toDateString();
+        $attendanceQuery = AttendanceSession::query();
+        AttendanceSession::scopeForUser($attendanceQuery, $owner);
+        AttendanceSession::scopeForStore($attendanceQuery, $store->getKey());
+        AttendanceSession::querySelect($attendanceQuery);
+        $attendanceSessions = $attendanceQuery->whereNotNull('active_worker_id')->get();
+        $breakSessionIds = DB::table('attendance_breaks')
+            ->whereIn('active_session_id', $attendanceSessions
+                ->map(static fn(AttendanceSession $session): int => $session->getKey())
+                ->all())
+            ->pluck('active_session_id')
+            ->map(static fn(mixed $id): int => Typer::parseInt($id))
+            ->all();
+
+        $workerQuery = Worker::query();
+        Worker::scopeForUser($workerQuery, $owner);
+        Worker::querySelect($workerQuery);
+        $workers = $workerQuery->whereKey($attendanceSessions
+            ->map(static fn(AttendanceSession $session): int => $session->getWorkerId())
+            ->unique()
+            ->values()
+            ->all())
+            ->get()
+            ->keyBy(static fn(Worker $worker): int => $worker->getKey());
+
         $attendanceRows = [];
         $staleCount = 0;
         foreach ($attendanceSessions as $session) {
@@ -414,21 +452,9 @@ class DashboardController
             }
         }
 
-        $nextWorker = $nextShift instanceof Shift ? $workers->get($nextShift->getWorkerId()) : null;
-
         return [
-            'current_shifts' => $currentShiftRows,
-            'next_shift' => $nextShift instanceof Shift && $nextWorker instanceof Worker ? [
-                'id' => $nextShift->getKey(),
-                'worker_name' => $nextWorker->getFullName(),
-                'date' => $nextShift->getDate(),
-                'start_time' => $nextShift->getStartTimeShort(),
-                'end_time' => $nextShift->getEndTimeShort(),
-            ] : null,
-            'attendance' => [
-                'workers' => $attendanceRows,
-                'stale_count' => $staleCount,
-            ],
+            'workers' => $attendanceRows,
+            'stale_count' => $staleCount,
         ];
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Validation;
 
+use App\Enums\LimitedUserSectionEnum;
 use App\Models\User;
 use Thinkycz\LaravelCore\Validation\AuthValidity;
 use Thinkycz\LaravelCore\Validation\BaseValidity;
@@ -66,5 +67,24 @@ class UserValidity
     public function assignedStoreId(): Validity
     {
         return $this->baseValidity->id()->exists('stores', 'id', ['user_id', (string) $this->adminId]);
+    }
+
+    /**
+     * Enabled limited-user sections collection.
+     */
+    public function enabledSections(): Validity
+    {
+        return $this->baseValidity->array()->max(\count(LimitedUserSectionEnum::cases()));
+    }
+
+    /**
+     * One enabled limited-user section.
+     */
+    public function enabledSection(): Validity
+    {
+        return $this->baseValidity->make()
+            ->string(64)
+            ->in(LimitedUserSectionEnum::values())
+            ->distinct(true, false);
     }
 }

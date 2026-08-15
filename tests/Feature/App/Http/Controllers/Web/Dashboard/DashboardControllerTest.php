@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\LimitedUserSectionEnum;
 use App\Models\AttendanceBreak;
 use App\Models\AttendanceSession;
 use App\Models\Item;
@@ -212,14 +213,14 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response = $this->be($limited, 'users')->get('/dashboard', $this->inertiaHeaders());
 
     $response->assertOk();
-    \expect($response->json('props.operations.current_shifts'))->toHaveCount(1);
-    $response->assertJsonPath('props.operations.current_shifts.0.worker_name', 'Anna Nováková');
-    $response->assertJsonPath('props.operations.current_shifts.0.start_time', '08:00');
-    $response->assertJsonPath('props.operations.current_shifts.0.end_time', '12:00');
-    $response->assertJsonPath('props.operations.next_shift.worker_name', 'Boris Malý');
-    $response->assertJsonPath('props.operations.next_shift.date', '2026-07-22');
-    $response->assertJsonPath('props.operations.next_shift.start_time', '14:00');
-    $response->assertJsonPath('props.operations.next_shift.end_time', '18:00');
+    \expect($response->json('props.operations.shifts.current_shifts'))->toHaveCount(1);
+    $response->assertJsonPath('props.operations.shifts.current_shifts.0.worker_name', 'Anna Nováková');
+    $response->assertJsonPath('props.operations.shifts.current_shifts.0.start_time', '08:00');
+    $response->assertJsonPath('props.operations.shifts.current_shifts.0.end_time', '12:00');
+    $response->assertJsonPath('props.operations.shifts.next_shift.worker_name', 'Boris Malý');
+    $response->assertJsonPath('props.operations.shifts.next_shift.date', '2026-07-22');
+    $response->assertJsonPath('props.operations.shifts.next_shift.start_time', '14:00');
+    $response->assertJsonPath('props.operations.shifts.next_shift.end_time', '18:00');
     \expect($response->json('props.operations.attendance.workers'))->toHaveCount(2);
     $response->assertJsonPath('props.operations.attendance.workers.0.worker_name', 'Anna Nováková');
     $response->assertJsonPath('props.operations.attendance.workers.0.status', 'present');
@@ -247,10 +248,29 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response = $this->be($limited, 'users')->get('/dashboard', $this->inertiaHeaders());
 
     $response->assertOk();
-    \expect($response->json('props.operations.current_shifts'))->toBe([]);
+    \expect($response->json('props.operations.shifts.current_shifts'))->toBe([]);
     $response->assertJsonPath('props.operations.attendance.workers.0.worker_name', 'Anna Nováková');
 
     CarbonImmutable::setTestNow();
+});
+
+\test('limited dashboard omits disabled shifts attendance and checklists', function (): void {
+    $admin = UserFactory::new()->admin()->createOne();
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $limited = UserFactory::new()->limited($store)->createOne([
+        'disabled_sections' => [
+            LimitedUserSectionEnum::SHIFTS->value,
+            LimitedUserSectionEnum::ATTENDANCE->value,
+            LimitedUserSectionEnum::CHECKLISTS->value,
+        ],
+    ]);
+
+    $response = $this->be($limited, 'users')->get('/dashboard', $this->inertiaHeaders());
+
+    $response->assertOk();
+    $response->assertJsonPath('props.operations.shifts', null);
+    $response->assertJsonPath('props.operations.attendance', null);
+    $response->assertJsonPath('props.checklists', null);
 });
 
 \test('dashboard noticeboard filters active expired searched and trashed cards for the active store', function (): void {

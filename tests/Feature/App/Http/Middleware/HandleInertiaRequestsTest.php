@@ -52,6 +52,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     static::assertNotNull($authUser);
     static::assertSame($user->getEmail(), $authUser['email']);
     static::assertSame($user->getKey(), $authUser['id']);
+    static::assertSame($user->getEnabledSectionValues(), $authUser['enabled_sections']);
 });
 
 \test('share resolves flash to session values', function (): void {

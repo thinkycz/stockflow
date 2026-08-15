@@ -40,7 +40,11 @@ type FinancialRow = {
     kind: 'automatic' | 'manual';
     direction: 'income' | 'expense';
     source_type:
-        'revenue' | 'stock_movement' | 'wage' | 'recurring_expense' | null;
+        | 'revenue'
+        | 'stock_movement'
+        | 'wage'
+        | 'recurring_expense'
+        | null;
     source_key: string | null;
     label: string;
     occurred_on: string | null;

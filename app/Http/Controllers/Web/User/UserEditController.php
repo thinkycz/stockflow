@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\User;
 
+use App\Enums\LimitedUserSectionEnum;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\UserValidity;
 use App\Models\Store;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Typer;
 
 class UserEditController
 {
@@ -35,8 +37,10 @@ class UserEditController
                 'email' => $user->getEmail(),
                 'is_admin' => $user->isAdmin(),
                 'assigned_store_id' => $user->getAssignedStoreId(),
+                'enabled_sections' => $user->getEnabledSectionValues(),
             ],
             'stores' => $stores,
+            'section_options' => LimitedUserSectionEnum::values(),
         ]);
     }
 
@@ -62,6 +66,8 @@ class UserEditController
             // Limited users: password optional, store assignment required.
             $rules['password'] = $validity->password()->nullable()->confirmed()->toArray();
             $rules['assigned_store_id'] = $validity->assignedStoreId()->required()->toArray();
+            $rules['enabled_sections'] = $validity->enabledSections()->nullable()->present()->toArray();
+            $rules['enabled_sections.*'] = $validity->enabledSection()->required()->toArray();
         }
 
         $validated = $this->validateRequest($request, $rules);
@@ -79,6 +85,10 @@ class UserEditController
 
             if (!$isSelf) {
                 $attributes['assigned_store_id'] = $validated->parseInt('assigned_store_id');
+                $attributes['disabled_sections'] = \array_values(\array_diff(
+                    LimitedUserSectionEnum::values(),
+                    Typer::assertStringArray($validated->assertArray('enabled_sections')),
+                ));
             }
 
             // Guard: an admin can never demote themselves.

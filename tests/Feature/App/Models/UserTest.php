@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\LimitedUserSectionEnum;
 use App\Models\Store;
 use App\Models\User;
 use Database\Factories\UserFactory;
@@ -63,6 +64,34 @@ use Thinkycz\LaravelCore\Support\Typer;
     $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
 
     static::assertSame($user->meResource()->resource, $user->resource()->resource);
+});
+
+\test('limited users have every section enabled by default', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+
+    \expect($user->getDisabledSections())->toBe([])
+        ->and($user->getEnabledSectionValues())->toBe(LimitedUserSectionEnum::values());
+
+    foreach (LimitedUserSectionEnum::cases() as $section) {
+        \expect($user->canAccessSection($section))->toBeTrue();
+    }
+});
+
+\test('limited users cannot access disabled sections while admins always can', function (): void {
+    $limited = Typer::assertInstance(UserFactory::new()->createOne([
+        'disabled_sections' => [
+            LimitedUserSectionEnum::SHIFTS->value,
+            LimitedUserSectionEnum::ATTENDANCE->value,
+        ],
+    ]), User::class);
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne([
+        'disabled_sections' => [LimitedUserSectionEnum::SHIFTS->value],
+    ]), User::class);
+
+    \expect($limited->canAccessSection(LimitedUserSectionEnum::SHIFTS))->toBeFalse()
+        ->and($limited->canAccessSection(LimitedUserSectionEnum::ATTENDANCE))->toBeFalse()
+        ->and($limited->canAccessSection(LimitedUserSectionEnum::RECIPES))->toBeTrue()
+        ->and($admin->canAccessSection(LimitedUserSectionEnum::SHIFTS))->toBeTrue();
 });
 
 \test('database tokens relationship is defined', function (): void {

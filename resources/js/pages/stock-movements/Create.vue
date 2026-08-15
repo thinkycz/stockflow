@@ -235,7 +235,9 @@ function searchItems(term: string): void {
         searchAbortController = new AbortController();
         const signal = searchAbortController.signal;
         window.axios
-            .get(route('items.search', { q: term }), { signal })
+            .get(route('items.search', { q: term, mode: form.mode }), {
+                signal,
+            })
             .then((response: { data: { items: ItemOption[] } }) => {
                 if (!signal.aborted) {
                     searchResults.value = response.data.items;

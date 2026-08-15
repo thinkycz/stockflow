@@ -1064,6 +1064,19 @@
             "assigned_store": "Priradená predajňa",
             "select_store": "Vyberte predajňu"
         },
+        "sections": {
+            "title": "Prístup k sekciám",
+            "description": "Povolené sekcie sa používateľovi zobrazia v aplikácii a bude k nim mať prístup.",
+            "incoming": "Príjem tovaru",
+            "consumption": "Výdaj / spotreba",
+            "statements": "Výkazy",
+            "inventory_counts": "Inventúra",
+            "shifts": "Smeny",
+            "attendance": "Dochádzka",
+            "checklists": "Checklisty",
+            "recipes": "Recepty",
+            "gift_vouchers": "Darčekové poukážky"
+        },
         "actions": {
             "delete": "Zmazať"
         },

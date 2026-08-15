@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
+import Checkbox from '@/components/ui/Checkbox.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
@@ -11,6 +12,7 @@ import PageHeader from '@/components/ui/PageHeader.vue';
 import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
+import type { LimitedUserSection } from '@/types';
 
 type StoreOption = {
     id: number;
@@ -22,6 +24,7 @@ type UserData = {
     email: string;
     is_admin: boolean;
     assigned_store_id: number | null;
+    enabled_sections: LimitedUserSection[];
 };
 
 type Fields = {
@@ -29,11 +32,13 @@ type Fields = {
     password: string;
     password_confirmation: string;
     assigned_store_id: string;
+    enabled_sections: LimitedUserSection[];
 };
 
 const props = defineProps<{
     user: UserData;
     stores: StoreOption[];
+    section_options: LimitedUserSection[];
 }>();
 
 const { t } = useI18n();
@@ -50,7 +55,21 @@ const form = useForm<Fields>({
     assigned_store_id: props.user.assigned_store_id
         ? String(props.user.assigned_store_id)
         : '',
+    enabled_sections: [...props.user.enabled_sections],
 });
+
+function sectionEnabled(section: LimitedUserSection): boolean {
+    return form.enabled_sections.includes(section);
+}
+
+function setSectionEnabled(
+    section: LimitedUserSection,
+    enabled: boolean,
+): void {
+    form.enabled_sections = enabled
+        ? [...form.enabled_sections, section]
+        : form.enabled_sections.filter((value) => value !== section);
+}
 
 function submit(): void {
     form.put(route('users.update', props.user.id));
@@ -133,6 +152,41 @@ function submit(): void {
                             required
                         />
                         <FieldError :message="form.errors.assigned_store_id" />
+                    </div>
+
+                    <div
+                        v-if="!isSelf"
+                        class="space-y-4 border-t border-outline-glass pt-5"
+                    >
+                        <div>
+                            <h2
+                                class="font-heading text-sm font-bold text-on-surface"
+                            >
+                                {{ t('users.sections.title') }}
+                            </h2>
+                            <p class="mt-1 text-xs text-on-surface-variant">
+                                {{ t('users.sections.description') }}
+                            </p>
+                        </div>
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <div
+                                v-for="section in section_options"
+                                :key="section"
+                                class="flex items-center gap-2 rounded-xl border border-outline-glass bg-surface-container-lowest px-3 py-3"
+                            >
+                                <Checkbox
+                                    :id="`section-${section}`"
+                                    :model-value="sectionEnabled(section)"
+                                    @update:model-value="
+                                        setSectionEnabled(section, $event)
+                                    "
+                                />
+                                <Label :for="`section-${section}`">
+                                    {{ t(`users.sections.${section}`) }}
+                                </Label>
+                            </div>
+                        </div>
+                        <FieldError :message="form.errors.enabled_sections" />
                     </div>
 
                     <div

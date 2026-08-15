@@ -84,12 +84,12 @@
 - Registration has been removed. The single main admin account (`test@test.com`)
   is seeded by `UserSeeder` and provisions additional limited accounts from the
   `/users` section. Limited users are pinned to exactly one store
-  (`assigned_store_id`) and may only see Dashboard, Příjem zboží,
-  Výdej / spotřeba, Výkazy (Statements), Inventura, Směny, Docházka, Recepty, and
-  Settings. Their Dashboard does not expose inventory statistics and instead
-  provides a store-scoped live operations summary (current and next shifts,
-  current attendance, breaks, and stale attendance warnings) plus four compact
-  actions for receipt, consumption, statements, and inventory. Store-scoped inputs are fixed and any
+  (`assigned_store_id`). The admin can independently disable Příjem zboží,
+  Výdej / spotřeba, Výkazy, Inventura, Směny, Docházka, Checklisty, Recepty, and
+  Dárkové poukazy while Noticeboard remains available. Disabled sections are
+  removed from navigation and Dashboard summaries and are enforced on their
+  authenticated read and write routes. New and existing limited users have all
+  sections enabled by default. Store-scoped inputs remain fixed and any
   cross-store access returns 403.
 - Recipe data belongs to the main admin company and is independent of the active
   store. The catalog is initialized once from `TEACHA-recipes.pdf`; a deterministic

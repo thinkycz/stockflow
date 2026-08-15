@@ -34,6 +34,7 @@ import { useRoute } from '@/composables/useRoute';
 import { useSharedProps } from '@/composables/useSharedProps';
 import {
     canViewShiftCalendar,
+    limitedUserSectionKeys,
     storeSectionNavigationKeys,
     type StoreSectionNavigationKey,
 } from '@/lib/sidebar-navigation';
@@ -183,6 +184,7 @@ const storeNavItems = computed<NavItem[]>(() =>
             isAdmin.value,
             auth.value.user?.assigned_store_id ?? null,
         ),
+        auth.value.user?.enabled_sections ?? limitedUserSectionKeys,
     ).map((key) => storeNavItemsByKey.value[key]),
 );
 

@@ -32,6 +32,8 @@ import DashboardChecklistSection from '@/components/checklists/DashboardChecklis
 import type { ChecklistDashboardPayload } from '@/components/checklists/DashboardChecklistSection.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
+import { useSharedProps } from '@/composables/useSharedProps';
+import { canAccessLimitedSection } from '@/lib/limited-user-sections';
 import {
     formatDateTime,
     formatDate,
@@ -63,18 +65,20 @@ type RecentMovement = {
 };
 
 type Operations = {
-    current_shifts: Array<{
-        id: number;
-        worker_name: string;
-        start_time: string;
-        end_time: string;
-    }>;
-    next_shift: {
-        id: number;
-        worker_name: string;
-        date: string;
-        start_time: string;
-        end_time: string;
+    shifts: {
+        current_shifts: Array<{
+            id: number;
+            worker_name: string;
+            start_time: string;
+            end_time: string;
+        }>;
+        next_shift: {
+            id: number;
+            worker_name: string;
+            date: string;
+            start_time: string;
+            end_time: string;
+        } | null;
     } | null;
     attendance: {
         workers: Array<{
@@ -105,37 +109,49 @@ const { t } = useI18n();
 useBoundLocale();
 
 const route = useRoute();
+const { auth } = useSharedProps();
 
-const limitedActions = computed(() => [
-    {
-        key: 'incoming',
-        href: route('stock-movements.create', { mode: 'incoming' }),
-        title: t('dashboard.actions.incoming.title'),
-        description: t('dashboard.actions.incoming.description'),
-        icon: PackagePlus,
-    },
-    {
-        key: 'consumption',
-        href: route('stock-movements.create', { mode: 'consumption' }),
-        title: t('dashboard.actions.consumption.title'),
-        description: t('dashboard.actions.consumption.description'),
-        icon: PackageMinus,
-    },
-    {
-        key: 'statements',
-        href: route('statements.index'),
-        title: t('dashboard.actions.statements.title'),
-        description: t('dashboard.actions.statements.description'),
-        icon: Receipt,
-    },
-    {
-        key: 'inventory',
-        href: route('inventory-counts.index'),
-        title: t('dashboard.actions.inventory.title'),
-        description: t('dashboard.actions.inventory.description'),
-        icon: ClipboardList,
-    },
-]);
+const limitedActions = computed(() =>
+    [
+        {
+            key: 'incoming',
+            section: 'incoming' as const,
+            href: route('stock-movements.create', { mode: 'incoming' }),
+            title: t('dashboard.actions.incoming.title'),
+            description: t('dashboard.actions.incoming.description'),
+            icon: PackagePlus,
+        },
+        {
+            key: 'consumption',
+            section: 'consumption' as const,
+            href: route('stock-movements.create', { mode: 'consumption' }),
+            title: t('dashboard.actions.consumption.title'),
+            description: t('dashboard.actions.consumption.description'),
+            icon: PackageMinus,
+        },
+        {
+            key: 'statements',
+            section: 'statements' as const,
+            href: route('statements.index'),
+            title: t('dashboard.actions.statements.title'),
+            description: t('dashboard.actions.statements.description'),
+            icon: Receipt,
+        },
+        {
+            key: 'inventory',
+            section: 'inventory_counts' as const,
+            href: route('inventory-counts.index'),
+            title: t('dashboard.actions.inventory.title'),
+            description: t('dashboard.actions.inventory.description'),
+            icon: ClipboardList,
+        },
+    ].filter((action) =>
+        canAccessLimitedSection(
+            auth.value.user?.enabled_sections ?? [],
+            action.section,
+        ),
+    ),
+);
 </script>
 
 <template>
@@ -152,9 +168,12 @@ const limitedActions = computed(() => [
             />
 
             <template v-if="!props.is_admin">
-                <section v-if="operations" class="flex flex-col gap-4">
+                <section
+                    v-if="operations?.shifts || operations?.attendance"
+                    class="flex flex-col gap-4"
+                >
                     <div class="grid gap-4 lg:grid-cols-3">
-                        <Card padded>
+                        <Card v-if="operations?.shifts" padded>
                             <div class="flex items-center gap-2">
                                 <Users :size="17" class="text-primary" />
                                 <h3
@@ -166,14 +185,18 @@ const limitedActions = computed(() => [
                                 </h3>
                             </div>
                             <p
-                                v-if="operations.current_shifts.length === 0"
+                                v-if="
+                                    operations.shifts.current_shifts.length ===
+                                    0
+                                "
                                 class="mt-4 text-sm text-on-surface-variant"
                             >
                                 {{ t('dashboard.operations.no_current_shift') }}
                             </p>
                             <ul v-else class="mt-4 space-y-3">
                                 <li
-                                    v-for="shift in operations.current_shifts"
+                                    v-for="shift in operations.shifts
+                                        .current_shifts"
                                     :key="shift.id"
                                     class="flex items-center justify-between gap-3"
                                 >
@@ -193,7 +216,7 @@ const limitedActions = computed(() => [
                             </ul>
                         </Card>
 
-                        <Card padded>
+                        <Card v-if="operations?.shifts" padded>
                             <div class="flex items-center gap-2">
                                 <Clock3 :size="17" class="text-primary" />
                                 <h3
@@ -203,7 +226,7 @@ const limitedActions = computed(() => [
                                 </h3>
                             </div>
                             <p
-                                v-if="!operations.next_shift"
+                                v-if="!operations.shifts.next_shift"
                                 class="mt-4 text-sm text-on-surface-variant"
                             >
                                 {{ t('dashboard.operations.no_next_shift') }}
@@ -212,18 +235,27 @@ const limitedActions = computed(() => [
                                 <p
                                     class="text-sm font-semibold text-on-surface"
                                 >
-                                    {{ operations.next_shift.worker_name }}
+                                    {{
+                                        operations.shifts.next_shift.worker_name
+                                    }}
                                 </p>
                                 <p class="mt-1 text-xs text-on-surface-variant">
-                                    {{ formatDate(operations.next_shift.date) }}
-                                    · {{ operations.next_shift.start_time }}–{{
-                                        operations.next_shift.end_time
+                                    {{
+                                        formatDate(
+                                            operations.shifts.next_shift.date,
+                                        )
+                                    }}
+                                    ·
+                                    {{
+                                        operations.shifts.next_shift.start_time
+                                    }}–{{
+                                        operations.shifts.next_shift.end_time
                                     }}
                                 </p>
                             </div>
                         </Card>
 
-                        <Card padded>
+                        <Card v-if="operations?.attendance" padded>
                             <div class="flex items-center gap-2">
                                 <ClipboardCheck
                                     :size="17"

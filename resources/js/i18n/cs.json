@@ -1064,6 +1064,19 @@
             "assigned_store": "Přiřazená prodejna",
             "select_store": "Vyberte prodejnu"
         },
+        "sections": {
+            "title": "Přístup k sekcím",
+            "description": "Povolené sekce se uživateli zobrazí v aplikaci a bude k nim mít přístup.",
+            "incoming": "Příjem zboží",
+            "consumption": "Výdej / spotřeba",
+            "statements": "Výkazy",
+            "inventory_counts": "Inventura",
+            "shifts": "Směny",
+            "attendance": "Docházka",
+            "checklists": "Checklisty",
+            "recipes": "Recepty",
+            "gift_vouchers": "Dárkové poukazy"
+        },
         "actions": {
             "delete": "Smazat"
         },

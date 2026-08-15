@@ -153,54 +153,54 @@ Resolver::resolveRouteRegistrar()
         $router->get('noticeboard-cards/{noticeboardCard}/image', [NoticeboardCardController::class, 'image'])->whereNumber('noticeboardCard')->name('noticeboard-cards.image');
 
         // Statements (admin + limited)
-        $router->get('statements', StatementIndexController::class)->name('statements.index');
-        $router->put('statements/{statement}', StatementUpdateController::class)->whereNumber('statement')->name('statements.update');
-        $router->put('statements/{statement}/today', StatementTodayUpdateController::class)->whereNumber('statement')->name('statements.today.update');
-        $router->post('statements/{statement}/clear', StatementClearController::class)->whereNumber('statement')->name('statements.clear');
-        $router->get('statements/{statement}/history', StatementHistoryController::class)->whereNumber('statement')->name('statements.history');
-        $router->get('statements/versions/{version}', StatementVersionShowController::class)->whereNumber('version')->name('statements.versions.show');
-        $router->post('statements/versions/{version}/restore', StatementVersionRestoreController::class)->whereNumber('version')->name('statements.versions.restore');
+        $router->get('statements', StatementIndexController::class)->middleware('limited-section:statements')->name('statements.index');
+        $router->put('statements/{statement}', StatementUpdateController::class)->whereNumber('statement')->middleware('limited-section:statements')->name('statements.update');
+        $router->put('statements/{statement}/today', StatementTodayUpdateController::class)->whereNumber('statement')->middleware('limited-section:statements')->name('statements.today.update');
+        $router->post('statements/{statement}/clear', StatementClearController::class)->whereNumber('statement')->middleware('limited-section:statements')->name('statements.clear');
+        $router->get('statements/{statement}/history', StatementHistoryController::class)->whereNumber('statement')->middleware('limited-section:statements')->name('statements.history');
+        $router->get('statements/versions/{version}', StatementVersionShowController::class)->whereNumber('version')->middleware('limited-section:statements')->name('statements.versions.show');
+        $router->post('statements/versions/{version}/restore', StatementVersionRestoreController::class)->whereNumber('version')->middleware('limited-section:statements')->name('statements.versions.restore');
 
         // Inventory counts (admin + limited)
-        $router->get('inventory-counts', InventoryCountIndexController::class)->name('inventory-counts.index');
-        $router->post('inventory-counts', InventoryCountUpdateController::class)->name('inventory-counts.update');
-        $router->post('inventory-counts/drafts', InventoryDraftStartController::class)->name('inventory-counts.drafts.start');
-        $router->put('inventory-counts/drafts/{session}/rows', InventoryDraftRowController::class)->whereNumber('session')->name('inventory-counts.drafts.rows.update');
-        $router->post('inventory-counts/drafts/{session}/close', InventoryDraftCloseController::class)->whereNumber('session')->name('inventory-counts.drafts.close');
-        $router->post('inventory-counts/drafts/{session}/cancel', InventoryDraftCancelController::class)->whereNumber('session')->name('inventory-counts.drafts.cancel');
-        $router->get('inventory-counts/history', InventoryCountHistoryController::class)->name('inventory-counts.history');
-        $router->get('inventory-counts/{session}', InventoryCountShowController::class)->whereNumber('session')->name('inventory-counts.show');
+        $router->get('inventory-counts', InventoryCountIndexController::class)->middleware('limited-section:inventory_counts')->name('inventory-counts.index');
+        $router->post('inventory-counts', InventoryCountUpdateController::class)->middleware('limited-section:inventory_counts')->name('inventory-counts.update');
+        $router->post('inventory-counts/drafts', InventoryDraftStartController::class)->middleware('limited-section:inventory_counts')->name('inventory-counts.drafts.start');
+        $router->put('inventory-counts/drafts/{session}/rows', InventoryDraftRowController::class)->whereNumber('session')->middleware('limited-section:inventory_counts')->name('inventory-counts.drafts.rows.update');
+        $router->post('inventory-counts/drafts/{session}/close', InventoryDraftCloseController::class)->whereNumber('session')->middleware('limited-section:inventory_counts')->name('inventory-counts.drafts.close');
+        $router->post('inventory-counts/drafts/{session}/cancel', InventoryDraftCancelController::class)->whereNumber('session')->middleware('limited-section:inventory_counts')->name('inventory-counts.drafts.cancel');
+        $router->get('inventory-counts/history', InventoryCountHistoryController::class)->middleware('limited-section:inventory_counts')->name('inventory-counts.history');
+        $router->get('inventory-counts/{session}', InventoryCountShowController::class)->whereNumber('session')->middleware('limited-section:inventory_counts')->name('inventory-counts.show');
 
         // Manual consumption (admin + limited assigned-store users)
-        $router->get('stock-movements/create', [StockMovementCreateController::class, 'create'])->name('stock-movements.create');
-        $router->post('stock-movements', [StockMovementCreateController::class, 'store'])->name('stock-movements.store');
-        $router->get('items/search', ItemSearchController::class)->name('items.search');
+        $router->get('stock-movements/create', [StockMovementCreateController::class, 'create'])->middleware('limited-stock-movement')->name('stock-movements.create');
+        $router->post('stock-movements', [StockMovementCreateController::class, 'store'])->middleware('limited-stock-movement')->name('stock-movements.store');
+        $router->get('items/search', ItemSearchController::class)->middleware('limited-stock-movement')->name('items.search');
 
         // Shifts (admin + limited view)
-        $router->get('shifts', ShiftIndexController::class)->name('shifts.index');
-        $router->post('shift-share-links', ShiftShareLinkStoreController::class)->name('shift-share-links.store');
-        $router->delete('shift-share-links/{shiftShareLink}', ShiftShareLinkDestroyController::class)->whereNumber('shiftShareLink')->name('shift-share-links.destroy');
+        $router->get('shifts', ShiftIndexController::class)->middleware('limited-section:shifts')->name('shifts.index');
+        $router->post('shift-share-links', ShiftShareLinkStoreController::class)->middleware('limited-section:shifts')->name('shift-share-links.store');
+        $router->delete('shift-share-links/{shiftShareLink}', ShiftShareLinkDestroyController::class)->whereNumber('shiftShareLink')->middleware('limited-section:shifts')->name('shift-share-links.destroy');
 
         // Attendance (admin + limited assigned-store users)
-        $router->get('attendance', AttendanceIndexController::class)->name('attendance.index');
-        $router->post('attendance/actions', AttendanceActionController::class)->name('attendance.actions.store');
+        $router->get('attendance', AttendanceIndexController::class)->middleware('limited-section:attendance')->name('attendance.index');
+        $router->post('attendance/actions', AttendanceActionController::class)->middleware('limited-section:attendance')->name('attendance.actions.store');
 
         // Gift vouchers (admin + limited redemption)
-        $router->get('gift-vouchers', GiftVoucherIndexController::class)->name('gift-vouchers.index');
-        $router->post('gift-vouchers/lookup', GiftVoucherLookupController::class)->name('gift-vouchers.lookup');
-        $router->post('gift-vouchers/{voucher}/redeem', GiftVoucherRedeemController::class)->whereNumber('voucher')->name('gift-vouchers.redeem');
+        $router->get('gift-vouchers', GiftVoucherIndexController::class)->middleware('limited-section:gift_vouchers')->name('gift-vouchers.index');
+        $router->post('gift-vouchers/lookup', GiftVoucherLookupController::class)->middleware('limited-section:gift_vouchers')->name('gift-vouchers.lookup');
+        $router->post('gift-vouchers/{voucher}/redeem', GiftVoucherRedeemController::class)->whereNumber('voucher')->middleware('limited-section:gift_vouchers')->name('gift-vouchers.redeem');
 
         // Store checklists (admin + limited completion)
-        $router->put('checklist-items/{checklistItem}', ChecklistItemController::class)->whereNumber('checklistItem')->name('checklist-items.update');
+        $router->put('checklist-items/{checklistItem}', ChecklistItemController::class)->whereNumber('checklistItem')->middleware('limited-section:checklists')->name('checklist-items.update');
 
         // Company recipes (admin + limited read/test)
-        $router->get('recipes', RecipeIndexController::class)->name('recipes.index');
-        $router->get('recipes/{recipe}', RecipeShowController::class)->whereNumber('recipe')->name('recipes.show');
-        $router->get('recipe-tests/{recipeTest}', [RecipeTestController::class, 'show'])->whereNumber('recipeTest')->name('recipe-tests.show');
-        $router->put('recipe-tests/{recipeTest}', [RecipeTestController::class, 'update'])->whereNumber('recipeTest')->name('recipe-tests.update');
-        $router->post('recipe-test-sessions', [RecipeTestSessionController::class, 'store'])->name('recipe-test-sessions.store');
-        $router->get('recipe-test-sessions/{session}', [RecipeTestSessionController::class, 'show'])->whereNumber('session')->name('recipe-test-sessions.show');
-        $router->put('recipe-test-sessions/{session}', [RecipeTestSessionController::class, 'update'])->whereNumber('session')->name('recipe-test-sessions.update');
+        $router->get('recipes', RecipeIndexController::class)->middleware('limited-section:recipes')->name('recipes.index');
+        $router->get('recipes/{recipe}', RecipeShowController::class)->whereNumber('recipe')->middleware('limited-section:recipes')->name('recipes.show');
+        $router->get('recipe-tests/{recipeTest}', [RecipeTestController::class, 'show'])->whereNumber('recipeTest')->middleware('limited-section:recipes')->name('recipe-tests.show');
+        $router->put('recipe-tests/{recipeTest}', [RecipeTestController::class, 'update'])->whereNumber('recipeTest')->middleware('limited-section:recipes')->name('recipe-tests.update');
+        $router->post('recipe-test-sessions', [RecipeTestSessionController::class, 'store'])->middleware('limited-section:recipes')->name('recipe-test-sessions.store');
+        $router->get('recipe-test-sessions/{session}', [RecipeTestSessionController::class, 'show'])->whereNumber('session')->middleware('limited-section:recipes')->name('recipe-test-sessions.show');
+        $router->put('recipe-test-sessions/{session}', [RecipeTestSessionController::class, 'update'])->whereNumber('session')->middleware('limited-section:recipes')->name('recipe-test-sessions.update');
 
         // Settings
         $router->get('verify-email', [VerifyEmailController::class, 'create'])->name('verify-email.show');

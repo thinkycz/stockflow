@@ -2,10 +2,30 @@
 
 declare(strict_types=1);
 
+use App\Enums\LimitedUserSectionEnum;
 use App\Models\Store;
 use App\Models\User;
 use Database\Factories\UserFactory;
 use Thinkycz\LaravelCore\Support\Typer;
+
+\test('admin sees enabled sections when editing a limited user', function (): void {
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $limited = Typer::assertInstance(UserFactory::new()->limited($store)->createOne([
+        'disabled_sections' => [LimitedUserSectionEnum::SHIFTS->value],
+    ]), User::class);
+
+    $this->actingAs($admin)
+        ->get(\route('users.edit', $limited))
+        ->assertOk()
+        ->assertInertia(static fn($page) => $page
+            ->component('users/Edit')
+            ->where('user.enabled_sections', \array_values(\array_filter(
+                LimitedUserSectionEnum::values(),
+                static fn(string $section): bool => $section !== LimitedUserSectionEnum::SHIFTS->value,
+            )))
+            ->where('section_options', LimitedUserSectionEnum::values()));
+});
 
 \test('admin can update a limited user', function (): void {
     $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
@@ -16,6 +36,10 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response = $this->actingAs($admin)->put(\route('users.update', $limited), [
         'email' => 'renamed@example.com',
         'assigned_store_id' => $storeB->getKey(),
+        'enabled_sections' => [
+            LimitedUserSectionEnum::INCOMING->value,
+            LimitedUserSectionEnum::RECIPES->value,
+        ],
     ]);
 
     $response->assertRedirect(\route('users.index'));
@@ -23,6 +47,55 @@ use Thinkycz\LaravelCore\Support\Typer;
     $limited->refresh();
     \expect($limited->getEmail())->toBe('renamed@example.com');
     \expect($limited->getAssignedStoreId())->toBe($storeB->getKey());
+    \expect($limited->getEnabledSectionValues())->toBe([
+        LimitedUserSectionEnum::INCOMING->value,
+        LimitedUserSectionEnum::RECIPES->value,
+    ]);
+});
+
+\test('admin can disable and re-enable every section for a limited user', function (): void {
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $limited = Typer::assertInstance(UserFactory::new()->limited($store)->createOne(), User::class);
+
+    $payload = [
+        'email' => $limited->getEmail(),
+        'assigned_store_id' => $store->getKey(),
+    ];
+
+    $this->actingAs($admin)
+        ->put(\route('users.update', $limited), [...$payload, 'enabled_sections' => []])
+        ->assertRedirect(\route('users.index'));
+
+    \expect($limited->refresh()->getEnabledSectionValues())->toBe([]);
+    \expect($limited->getDisabledSections())->toHaveCount(\count(LimitedUserSectionEnum::cases()));
+
+    $this->actingAs($admin)
+        ->put(\route('users.update', $limited), [
+            ...$payload,
+            'enabled_sections' => LimitedUserSectionEnum::values(),
+        ])
+        ->assertRedirect(\route('users.index'));
+
+    \expect($limited->refresh()->getEnabledSectionValues())->toBe(LimitedUserSectionEnum::values());
+    \expect($limited->getDisabledSections())->toBe([]);
+});
+
+\test('enabled sections reject unknown and duplicate values', function (): void {
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $limited = Typer::assertInstance(UserFactory::new()->limited($store)->createOne(), User::class);
+
+    $this->actingAs($admin)
+        ->withHeaders($this->inertiaHeaders())
+        ->put(\route('users.update', $limited), [
+            'email' => $limited->getEmail(),
+            'assigned_store_id' => $store->getKey(),
+            'enabled_sections' => ['unknown', 'unknown'],
+        ])
+        ->assertSessionHasErrors(['enabled_sections.0', 'enabled_sections.1']);
+
+    \expect($limited->refresh()->getDisabledSections())->toBe([]);
 });
 
 \test('admin cannot transfer a limited user to a foreign store', function (): void {
@@ -37,6 +110,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->put(\route('users.update', $limited), [
             'email' => $limited->getEmail(),
             'assigned_store_id' => $foreign->getKey(),
+            'enabled_sections' => LimitedUserSectionEnum::values(),
         ])
         ->assertRedirect()
         ->assertSessionHasErrors(['assigned_store_id']);

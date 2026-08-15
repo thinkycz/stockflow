@@ -1,5 +1,16 @@
 import type { Config as ZiggyConfig } from 'ziggy-js';
 
+export type LimitedUserSection =
+    | 'incoming'
+    | 'consumption'
+    | 'statements'
+    | 'inventory_counts'
+    | 'shifts'
+    | 'attendance'
+    | 'checklists'
+    | 'recipes'
+    | 'gift_vouchers';
+
 export interface AuthUser {
     id: number;
     email: string;
@@ -8,6 +19,7 @@ export interface AuthUser {
     email_verified_at: string | null;
     is_admin: boolean;
     assigned_store_id: number | null;
+    enabled_sections: LimitedUserSection[];
 }
 
 export interface StoreOption {

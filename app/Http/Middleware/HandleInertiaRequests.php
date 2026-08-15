@@ -106,6 +106,7 @@ class HandleInertiaRequests extends Middleware
             'email_verified_at' => $user->getEmailVerifiedAt()?->toJSON(),
             'is_admin' => $user->isAdmin(),
             'assigned_store_id' => $user->getAssignedStoreId(),
+            'enabled_sections' => $user->getEnabledSectionValues(),
         ];
     }
 

@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Console\Commands\BackfillInventoryConsumptionCommand;
 use App\Console\Commands\GenerateDailyChecklistsCommand;
 use App\Console\Commands\PruneNoticeboardCardsCommand;
+use App\Http\Middleware\EnsureLimitedUserCanAccessSection;
+use App\Http\Middleware\EnsureLimitedUserCanAccessStockMovementSection;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ResolveActiveStore;
@@ -45,6 +47,8 @@ return Application::configure(basePath: \dirname(__DIR__))
 
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
+            'limited-section' => EnsureLimitedUserCanAccessSection::class,
+            'limited-stock-movement' => EnsureLimitedUserCanAccessStockMovementSection::class,
         ]);
 
         $middleware->web(append: [

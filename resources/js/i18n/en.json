@@ -1064,6 +1064,19 @@
             "assigned_store": "Assigned store",
             "select_store": "Select a store"
         },
+        "sections": {
+            "title": "Section access",
+            "description": "Enabled sections are visible in the application and accessible to this user.",
+            "incoming": "Incoming stock",
+            "consumption": "Issue / consumption",
+            "statements": "Statements",
+            "inventory_counts": "Inventory counts",
+            "shifts": "Shifts",
+            "attendance": "Attendance",
+            "checklists": "Checklists",
+            "recipes": "Recipes",
+            "gift_vouchers": "Gift vouchers"
+        },
         "actions": {
             "delete": "Delete"
         },

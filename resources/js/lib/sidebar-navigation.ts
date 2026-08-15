@@ -23,6 +23,7 @@ export type StoreSectionNavigationKey =
 export function storeSectionNavigationKeys(
     isAdmin: boolean,
     canViewOperations: boolean,
+    enabledSections: LimitedUserSection[] = limitedUserSectionKeys,
 ): StoreSectionNavigationKey[] {
     if (isAdmin) {
         return [
@@ -49,7 +50,11 @@ export function storeSectionNavigationKeys(
         ...(canViewOperations ? (['shifts', 'attendance'] as const) : []),
         'recipes',
         'gift_vouchers',
-    ];
+    ].filter(
+        (key): key is StoreSectionNavigationKey =>
+            key === 'dashboard' ||
+            enabledSections.includes(key as LimitedUserSection),
+    );
 }
 
 export function isStoreSectionUrl(url: string, isAdmin: boolean): boolean {
@@ -84,3 +89,7 @@ export function isStoreSectionUrl(url: string, isAdmin: boolean): boolean {
         parsed.searchParams.get('mode') ?? '',
     );
 }
+import { limitedUserSectionKeys } from '@/lib/limited-user-sections';
+import type { LimitedUserSection } from '@/types';
+
+export { limitedUserSectionKeys } from '@/lib/limited-user-sections';

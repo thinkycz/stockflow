@@ -43,6 +43,23 @@ describe('sidebar navigation', () => {
         expect(admin).not.toContain('statistics');
     });
 
+    test('filters disabled limited-user sections independently', () => {
+        const limited = storeSectionNavigationKeys(false, true, [
+            'incoming',
+            'consumption',
+            'statements',
+            'inventory_counts',
+            'attendance',
+            'checklists',
+            'recipes',
+            'gift_vouchers',
+        ]);
+
+        expect(limited).not.toContain('shifts');
+        expect(limited).toContain('attendance');
+        expect(limited[0]).toBe('dashboard');
+    });
+
     test('classifies admin store section pages including child routes', () => {
         expect(isStoreSectionUrl('/dashboard?status=active', true)).toBe(true);
         expect(isStoreSectionUrl('/statements/history', true)).toBe(true);

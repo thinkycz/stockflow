@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\LimitedUserSectionEnum;
 use App\Enums\StoreStatusEnum;
 use App\Http\Resources\UserResource;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -15,6 +16,7 @@ use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 use Illuminate\Support\Carbon;
 use RuntimeException;
 use Thinkycz\LaravelCore\Models\BaseUser;
+use Thinkycz\LaravelCore\Support\Typer;
 
 class User extends BaseUser implements MustVerifyEmail
 {
@@ -241,6 +243,51 @@ class User extends BaseUser implements MustVerifyEmail
     }
 
     /**
+     * Sections disabled for this limited user.
+     *
+     * @return list<LimitedUserSectionEnum>
+     */
+    public function getDisabledSections(): array
+    {
+        $value = $this->getAttribute('disabled_sections');
+
+        if ($value === null) {
+            return [];
+        }
+
+        return \array_values(\array_map(
+            static fn(string $section): LimitedUserSectionEnum => LimitedUserSectionEnum::from($section),
+            Typer::assertStringArray(Typer::assertArray($value)),
+        ));
+    }
+
+    /**
+     * Effective enabled section values in presentation order.
+     *
+     * @return list<string>
+     */
+    public function getEnabledSectionValues(): array
+    {
+        $disabled = $this->getDisabledSections();
+
+        return \array_values(\array_map(
+            static fn(LimitedUserSectionEnum $section): string => $section->value,
+            \array_filter(
+                LimitedUserSectionEnum::cases(),
+                static fn(LimitedUserSectionEnum $section): bool => !\in_array($section, $disabled, true),
+            ),
+        ));
+    }
+
+    /**
+     * Whether the user can access one operational section.
+     */
+    public function canAccessSection(LimitedUserSectionEnum $section): bool
+    {
+        return $this->isAdmin() || !\in_array($section, $this->getDisabledSections(), true);
+    }
+
+    /**
      * Email getter.
      */
     public function getEmail(): string
@@ -335,6 +382,7 @@ class User extends BaseUser implements MustVerifyEmail
             'operational_digest_started_on' => 'date',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'disabled_sections' => 'array',
         ];
     }
 }

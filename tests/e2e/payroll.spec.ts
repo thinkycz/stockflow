@@ -75,10 +75,14 @@ test('admin adjusts closes and prints payroll while limited users are denied', a
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByText('E2E shared tips')).toBeVisible();
 
-    let popupPromise = page.waitForEvent('popup');
+    const detailUrl = page.url();
     await page.getByRole('button', { name: 'Print', exact: true }).click();
-    await page.getByRole('menuitem', { name: 'Print simple payslip' }).click();
-    let printPage = await popupPromise;
+    const simplePrintHref = await page
+        .getByRole('menuitem', { name: 'Print simple payslip' })
+        .getAttribute('href');
+    expect(simplePrintHref).not.toBeNull();
+    await page.goto(simplePrintHref!);
+    const printPage = page;
     await expect(printPage.getByText('Payslip', { exact: true })).toBeVisible();
     await expect(printPage.getByText('Base pay')).toBeVisible();
     await expect(
@@ -91,23 +95,34 @@ test('admin adjusts closes and prints payroll while limited users are denied', a
     await expect(printPage.getByText('Adjustments')).toBeVisible();
     await expect(printPage.getByText('E2E shared tips')).toBeVisible();
     await expect(printPage.locator('table')).toHaveCount(1);
+    await expect(printPage.getByTestId('payroll-wage-calculation')).toHaveCount(
+        0,
+    );
+    await expect(printPage.getByText('Payable hours')).toHaveCount(0);
     await expect(
-        printPage.getByTestId('payroll-wage-calculation'),
-    ).toContainText('10.5 h');
-    await expect(
-        printPage.getByTestId('payroll-wage-calculation'),
-    ).toContainText('150.00');
-    await printPage.close();
+        printPage.getByTestId('payroll-receipt-confirmation'),
+    ).toContainText(
+        'By signing, I confirm proper receipt of the payment in the amount shown above for the stated period.',
+    );
+    await expect(printPage.getByText('Receipt date')).toBeVisible();
+    await expect(printPage.getByText('Worker signature')).toBeVisible();
+    await page.goto(detailUrl);
 
-    popupPromise = page.waitForEvent('popup');
     await page.getByRole('button', { name: 'Print', exact: true }).click();
-    await page
+    const detailedPrintHref = await page
         .getByRole('menuitem', { name: 'Print detailed payslip' })
-        .click();
-    printPage = await popupPromise;
+        .getAttribute('href');
+    expect(detailedPrintHref).not.toBeNull();
+    await page.goto(detailedPrintHref!);
     await expect(printPage.getByText('Payslip', { exact: true })).toBeVisible();
     await expect(printPage.locator('table')).not.toHaveCount(0);
-    await printPage.close();
+    await expect(
+        printPage.getByRole('columnheader', { name: 'Rate' }),
+    ).toBeVisible();
+    await expect(
+        printPage.getByTestId('payroll-receipt-confirmation'),
+    ).toHaveCount(0);
+    await page.goto(detailUrl);
 
     await page.getByRole('link', { name: 'Back to payslip overview' }).click();
     await expect(page.getByRole('heading', { name: 'Payslips' })).toBeVisible();

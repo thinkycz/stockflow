@@ -32,10 +32,6 @@ function date(value: string): string {
     );
 }
 
-function hours(value: number): string {
-    return `${new Intl.NumberFormat(locale.value, { maximumFractionDigits: 2 }).format(value)} h`;
-}
-
 onMounted(async () => {
     await nextTick();
     window.print();
@@ -136,16 +132,6 @@ onMounted(async () => {
                     <span>{{ t('payroll.actual') }}</span>
                     <strong>{{ duration(payslip.actual_seconds) }}</strong>
                 </div>
-                <div v-if="simple" class="flex justify-between gap-4">
-                    <span>{{ t('payroll.payable_hours') }}</span>
-                    <strong
-                        data-testid="payroll-wage-calculation"
-                        class="text-right"
-                    >
-                        {{ hours(payslip.payable_hours) }} ×
-                        {{ formatMoney(payslip.payable_hourly_rate) }} / h
-                    </strong>
-                </div>
                 <div class="flex justify-between">
                     <span>{{ t('payroll.base_amount') }}</span>
                     <strong>{{ formatMoney(payslip.base_amount) }}</strong>
@@ -165,6 +151,36 @@ onMounted(async () => {
                 >
                     <span>{{ t('payroll.final_amount') }}</span>
                     <span>{{ formatMoney(payslip.final_amount) }}</span>
+                </div>
+            </section>
+
+            <section
+                v-if="simple"
+                data-testid="payroll-receipt-confirmation"
+                class="payslip__receipt-confirmation mt-10 border-t pt-6 text-sm"
+            >
+                <p class="leading-relaxed">
+                    {{ t('payroll.receipt_confirmation') }}
+                </p>
+                <div class="mt-10 grid grid-cols-2 gap-10">
+                    <div>
+                        <span class="block text-xs">
+                            {{ t('payroll.receipt_date') }}
+                        </span>
+                        <span
+                            class="mt-8 block border-b border-black"
+                            aria-hidden="true"
+                        ></span>
+                    </div>
+                    <div>
+                        <span class="block text-xs">
+                            {{ t('payroll.worker_signature') }}
+                        </span>
+                        <span
+                            class="mt-8 block border-b border-black"
+                            aria-hidden="true"
+                        ></span>
+                    </div>
                 </div>
             </section>
 
@@ -195,6 +211,11 @@ onMounted(async () => {
 
 .payslip:last-child {
     break-after: auto;
+}
+
+.payslip__receipt-confirmation {
+    break-inside: avoid;
+    page-break-inside: avoid;
 }
 
 @media print {

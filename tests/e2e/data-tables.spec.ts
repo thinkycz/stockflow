@@ -39,12 +39,8 @@ test('tables share the payslip frame and become labelled cards on mobile', async
         await expect(cells.nth(index)).toHaveAttribute('data-label', /.+/);
     }
 
-    const details = row.locator('details');
-    if ((await details.getAttribute('open')) === null) {
-        await details.locator('summary').click();
-    }
-    await expect(details).toHaveAttribute('open', '');
-    await expect(row.locator('.data-table-frame--nested')).toBeAttached();
+    await expect(row.locator('details')).toHaveCount(0);
+    await expect(row.locator('.data-table-frame--nested')).toHaveCount(0);
 
     const hasHorizontalOverflow = await page.evaluate(
         () =>
@@ -80,4 +76,11 @@ test('simple payslips print consecutively with cut lines', async ({ page }) => {
     await expect(payslip).toHaveCSS('break-inside', 'avoid');
     await expect(payslip).toHaveCSS('min-height', '0px');
     await expect(payslip).toHaveCSS('border-bottom-style', 'dashed');
+
+    const confirmations = page.getByTestId('payroll-receipt-confirmation');
+    await expect(confirmations).toHaveCount(
+        await page.locator('.payslip--simple').count(),
+    );
+    await expect(confirmations.first()).toBeVisible();
+    await expect(confirmations.first()).toHaveCSS('break-inside', 'avoid');
 });

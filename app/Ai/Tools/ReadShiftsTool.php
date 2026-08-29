@@ -31,8 +31,34 @@ final class ReadShiftsTool extends AbstractReadResourceTool
     public function schema(JsonSchema $schema): array
     {
         return [
-            'store_id' => $schema->integer()->description('Optional owned store filter.'),
-            'limit' => $schema->integer()->min(1)->max(50)->description('Optional result limit; defaults to 20.'),
+            'request' => $schema->anyOf([
+                $schema->object([
+                    'operation' => $schema->string()->enum(['list'])->required(),
+                    'store_id' => $schema->integer()->description('Optional owned store filter.'),
+                    'worker_id' => $schema->integer(),
+                    'year' => $schema->integer()->min(2000)->max(2100),
+                    'month' => $schema->integer()->min(1)->max(12),
+                    'date_from' => $schema->string(),
+                    'date_to' => $schema->string(),
+                    'limit' => $schema->integer()->min(1)->max(50),
+                    'cursor' => $schema->string(),
+                ])->withoutAdditionalProperties(),
+                $schema->object([
+                    'operation' => $schema->string()->enum(['summary'])->required(),
+                    'store_id' => $schema->integer()->description('Optional owned store filter.'),
+                    'worker_id' => $schema->integer(),
+                    'year' => $schema->integer()->min(2000)->max(2100),
+                    'month' => $schema->integer()->min(1)->max(12),
+                    'date_from' => $schema->string(),
+                    'date_to' => $schema->string(),
+                    'required_start_time' => $schema->string(),
+                    'required_end_time' => $schema->string(),
+                ])->withoutAdditionalProperties(),
+                $schema->object([
+                    'operation' => $schema->string()->enum(['detail'])->required(),
+                    'id' => $schema->integer()->required(),
+                ])->withoutAdditionalProperties(),
+            ])->required(),
         ];
     }
 

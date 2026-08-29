@@ -12,8 +12,25 @@ use App\Ai\Operations\Recipes\RecipeOperationExecutor;
 use App\Ai\Operations\Statements\StatementOperationExecutor;
 use App\Ai\Operations\Workforce\WorkforceOperationExecutor;
 use App\Ai\Tools\AskUserChoiceTool;
-use App\Ai\Tools\ConfiguredReadResourceTool;
+use App\Ai\Tools\ReadAttendanceTool;
+use App\Ai\Tools\ReadChecklistsTool;
+use App\Ai\Tools\ReadFinancialReportsTool;
+use App\Ai\Tools\ReadGiftVouchersTool;
+use App\Ai\Tools\ReadInventoryCountsTool;
+use App\Ai\Tools\ReadItemsTool;
+use App\Ai\Tools\ReadNoticeboardTool;
+use App\Ai\Tools\ReadPayrollTool;
+use App\Ai\Tools\ReadRecipesTool;
+use App\Ai\Tools\ReadRecipeTestsTool;
+use App\Ai\Tools\ReadRecurringExpensesTool;
+use App\Ai\Tools\ReadSettingsTool;
+use App\Ai\Tools\ReadShiftRequestsTool;
+use App\Ai\Tools\ReadShiftShareLinksTool;
 use App\Ai\Tools\ReadShiftsTool;
+use App\Ai\Tools\ReadStatementsTool;
+use App\Ai\Tools\ReadStockMovementsTool;
+use App\Ai\Tools\ReadStoresTool;
+use App\Ai\Tools\ReadUsersTool;
 use App\Ai\Tools\ReadWorkersTool;
 use App\Ai\Tools\WriteAttendanceTool;
 use App\Ai\Tools\WriteChecklistsTool;
@@ -56,10 +73,11 @@ final class AssistantToolCatalog
         $recipes = Resolver::resolve(RecipeOperationExecutor::class);
         $statements = Resolver::resolve(StatementOperationExecutor::class);
         $workforce = Resolver::resolve(WorkforceOperationExecutor::class);
-        $tools = [
+
+        return [
             new AskUserChoiceTool(),
-            new ConfiguredReadResourceTool($actor, $conversationId, 'read_stores', 'stores', 'Read owned stores and their operational state.', true),
-            new ConfiguredReadResourceTool($actor, $conversationId, 'read_users', 'users', 'Read managed limited users without credentials.', true),
+            new ReadStoresTool($actor, $conversationId),
+            new ReadUsersTool($actor, $conversationId),
             new WriteStoresTool($actor, $conversationId, $administration),
             new WriteUsersTool($actor, $conversationId, $administration),
             new ReadShiftsTool($actor, $conversationId),
@@ -82,25 +100,23 @@ final class AssistantToolCatalog
             new WriteFinancialReportsTool($actor, $conversationId, $finance),
             new WriteRecurringExpensesTool($actor, $conversationId, $finance),
             new WriteGiftVouchersTool($actor, $conversationId, $finance),
+            new ReadSettingsTool($actor, $conversationId),
+            new ReadAttendanceTool($actor, $conversationId),
+            new ReadShiftRequestsTool($actor, $conversationId),
+            new ReadShiftShareLinksTool($actor, $conversationId),
+            new ReadChecklistsTool($actor, $conversationId),
+            new ReadNoticeboardTool($actor, $conversationId),
+            new ReadItemsTool($actor, $conversationId),
+            new ReadInventoryCountsTool($actor, $conversationId),
+            new ReadStockMovementsTool($actor, $conversationId),
+            new ReadStatementsTool($actor, $conversationId),
+            new ReadRecipesTool($actor, $conversationId),
+            new ReadRecipeTestsTool($actor, $conversationId),
+            new ReadPayrollTool($actor, $conversationId),
+            new ReadFinancialReportsTool($actor, $conversationId),
+            new ReadRecurringExpensesTool($actor, $conversationId),
+            new ReadGiftVouchersTool($actor, $conversationId),
         ];
-
-        foreach (AssistantResourceToolDefinitions::reads() as $name => $definition) {
-            if (\in_array($name, ['read_workers', 'read_shifts', 'read_stores', 'read_users'], true)) {
-                continue;
-            }
-
-            $tools[] = new ConfiguredReadResourceTool(
-                $actor,
-                $conversationId,
-                $name,
-                $definition['resource'],
-                $definition['description'],
-                $definition['searchable'],
-                $definition['store_scoped'],
-            );
-        }
-
-        return $tools;
     }
 
     /**

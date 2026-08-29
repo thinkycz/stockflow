@@ -52,6 +52,21 @@ return [
             'block_for' => null,
             'after_commit' => true,
         ],
+
+        'assistant' => [
+            'driver' => $env->appEnvMap([
+                'local' => 'sync',
+                'testing' => 'sync',
+                'development' => 'redis',
+                'staging' => 'redis',
+                'production' => 'redis',
+            ]),
+            'connection' => $env->parseNullableString('REDIS_QUEUE_CONNECTION') ?? 'default',
+            'queue' => 'assistant',
+            'retry_after' => ($env->parseNullableInt('AI_ASSISTANT_TIMEOUT_SECONDS') ?? 120) + 60,
+            'block_for' => 5,
+            'after_commit' => true,
+        ],
     ],
 
     /*

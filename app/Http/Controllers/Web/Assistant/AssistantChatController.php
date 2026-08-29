@@ -7,9 +7,13 @@ namespace App\Http\Controllers\Web\Assistant;
 use App\Ai\Agents\StockflowAssistant;
 use App\Ai\AssistantConversationLock;
 use App\Ai\AssistantDecisionGuard;
+use App\Ai\AssistantTurnService;
+use App\Ai\AssistantTurnStream;
 use App\Ai\ConversationRepository;
 use App\Http\Controllers\Web\Concerns\ThrottlesWebRequests;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
+use App\Jobs\RunAssistantTurnJob;
+use App\Models\AssistantTurn;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -35,6 +39,7 @@ class AssistantChatController
     public function __invoke(Request $request): Response
     {
         $promptMaxCharacters = Config::inject()->assertInt('ai.assistant.prompt_max_characters');
+        $durableTurns = Config::inject()->assertBool('ai.assistant.durable_turns');
         $validated = $this->validateRequest($request, [
             'message' => ['nullable', 'string', 'max:' . $promptMaxCharacters, 'required_without:decisions', 'prohibited_with:decisions'],
             'conversation_id' => ['nullable', 'uuid', 'required_without:message'],
@@ -42,6 +47,7 @@ class AssistantChatController
             'decisions.*' => ['required', 'array:action,option_id'],
             'decisions.*.action' => ['required', 'string', 'in:approve,reject,select'],
             'decisions.*.option_id' => ['nullable', 'string', 'max:100'],
+            'turn_id' => [$durableTurns ? 'required' : 'nullable', 'uuid'],
         ]);
 
         $this->hit($this->limit());
@@ -67,11 +73,92 @@ class AssistantChatController
         }
 
         $conversation = Typer::assertInstance($conversation, Conversation::class);
-        $decisionPayload = $validated->parseArray('decisions');
+        $decisions = Typer::assertStringKeyArray($validated->parseArray('decisions'));
 
-        $prompt = $message ?? Resolver::resolve(AssistantDecisionGuard::class)->decisions($conversation, $decisionPayload);
-        $lockService = Resolver::resolve(AssistantConversationLock::class);
-        $lock = $lockService->acquire($conversationId);
+        if ($message === null) {
+            Resolver::resolve(AssistantDecisionGuard::class)->decisions($conversation, $decisions);
+        }
+
+        if (!$durableTurns) {
+            return $this->legacyStream($request, $user, $conversation, $conversationId, $message, $decisions, $repository);
+        }
+
+        $turnId = $validated->parseNullableString('turn_id') ?? Str::uuid()->toString();
+        $turns = Resolver::resolve(AssistantTurnService::class);
+        $active = $turns->activeForConversation($conversationId, $user);
+
+        if ($active !== null && $turnId !== $active->getTurnId()) {
+            \abort(409, 'This assistant conversation is already running in another tab.');
+        }
+
+        $submission = $turns->createOrFind(
+            $user,
+            $conversation,
+            $turnId,
+            $message === null ? 'decisions' : 'message',
+            $message === null ? ['decisions' => $decisions] : ['message' => $message],
+        );
+
+        if (!$submission['created']) {
+            return $this->durableResponse($submission['turn'], $conversation, $repository);
+        }
+
+        $admissionLock = Resolver::resolve(AssistantConversationLock::class)->tryAcquire($conversationId);
+
+        if ($admissionLock === null) {
+            $submission['turn']->delete();
+            \abort(409, 'This assistant conversation is already running in another tab.');
+        }
+
+        $admissionLock->release();
+        \dispatch(new RunAssistantTurnJob($turnId));
+
+        return $this->durableResponse($submission['turn'], $conversation, $repository);
+    }
+
+    /**
+     * Throttle assistant turns after validation succeeds.
+     */
+    protected function limit(RequestSignature|null $signature = null): Limit
+    {
+        $signature = $signature instanceof RequestSignature ? $signature : RequestSignature::default();
+
+        return Limit::perMinute(Config::inject()->assertInt('ai.assistant.rate_limit_per_minute'))->by($signature->hash());
+    }
+
+    /**
+     * Tail the durable journal while exposing canonical conversation headers.
+     */
+    private function durableResponse(
+        AssistantTurn $turn,
+        Conversation $conversation,
+        ConversationRepository $repository,
+    ): Response {
+        $response = Resolver::resolve(AssistantTurnStream::class)->response($turn);
+        $summary = $repository->sidebarSummary($conversation);
+        $response->headers->set('x-conversation-id', $repository->conversationId($conversation));
+        $response->headers->set('x-conversation-title', \rawurlencode($summary['title']));
+
+        return $response;
+    }
+
+    /**
+     * Keep the pre-migration transport available during the guarded production rollout.
+     *
+     * @param array<string, mixed> $decisions
+     */
+    private function legacyStream(
+        Request $request,
+        User $user,
+        Conversation $conversation,
+        string $conversationId,
+        string|null $message,
+        array $decisions,
+        ConversationRepository $repository,
+    ): Response {
+        $prompt = $message ?? Resolver::resolve(AssistantDecisionGuard::class)->decisions($conversation, $decisions);
+        $locks = Resolver::resolve(AssistantConversationLock::class);
+        $lock = $locks->acquire($conversationId);
 
         try {
             $response = StockflowAssistant::make(actor: $user, assistantConversationId: $conversationId)
@@ -90,16 +177,6 @@ class AssistantChatController
         $response->headers->set('x-conversation-id', $conversationId);
         $response->headers->set('x-conversation-title', \rawurlencode($summary['title']));
 
-        return $lockService->protect($response, $lock);
-    }
-
-    /**
-     * Throttle assistant turns after validation succeeds.
-     */
-    protected function limit(RequestSignature|null $signature = null): Limit
-    {
-        $signature = $signature instanceof RequestSignature ? $signature : RequestSignature::default();
-
-        return Limit::perMinute(Config::inject()->assertInt('ai.assistant.rate_limit_per_minute'))->by($signature->hash());
+        return $locks->protect($response, $lock);
     }
 }

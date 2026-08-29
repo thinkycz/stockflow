@@ -98,10 +98,14 @@ use Laravel\Ai\Tools\ToolNameResolver;
             continue;
         }
 
-        $result = \json_decode($tool->handle(new Request(['limit' => 1], 'read-call')), true, 32, \JSON_THROW_ON_ERROR);
+        $result = \json_decode($tool->handle(new Request([
+            'request' => ['operation' => 'list', 'limit' => 1],
+        ], 'read-call')), true, 32, \JSON_THROW_ON_ERROR);
 
-        \expect($result['limit'])->toBe(1)
-            ->and($result['count'])->toBeLessThanOrEqual(1)
+        \expect($result['version'])->toBe(2)
+            ->and($result['returned_count'])->toBeLessThanOrEqual(1)
+            ->and($result['complete'])->toBeBool()
+            ->and($result['has_more'])->toBeBool()
             ->and($result['records'])->toBeArray();
     }
 });

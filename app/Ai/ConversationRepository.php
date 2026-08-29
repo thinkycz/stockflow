@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Laravel\Ai\Models\Conversation;
 use Laravel\Ai\Models\ConversationMessage;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class ConversationRepository
@@ -62,7 +63,15 @@ class ConversationRepository
      */
     public function delete(Conversation $conversation): void
     {
-        DB::transaction(static function () use ($conversation): void {
+        $conversationId = $this->conversationId($conversation);
+
+        DB::transaction(static function () use ($conversation, $conversationId): void {
+            $turnIds = DB::table('assistant_turns')
+                ->where('conversation_id', $conversationId)
+                ->pluck('id');
+            DB::table('assistant_turn_events')->whereIn('turn_id', $turnIds)->delete();
+            DB::table('assistant_turns')->where('conversation_id', $conversationId)->delete();
+            DB::table('assistant_conversation_summaries')->where('conversation_id', $conversationId)->delete();
             $conversation->messages()->delete();
             $conversation->delete();
         });
@@ -71,9 +80,9 @@ class ConversationRepository
     /**
      * Serialize a conversation and stored messages for the Vercel Vue client.
      *
-     * @return array{id: string, title: string, messages: list<array{id: string, role: string, metadata: array{created_at: string}, parts: list<array<string, mixed>>}>}
+     * @return array{id: string, title: string, messages: list<array{id: string, role: string, metadata: array{created_at: string}, parts: list<array<string, mixed>>}>, active_turn: array{id: string, status: string, kind: string, message: string|null, queued_at: string}|null}
      */
-    public function assistantPayload(Conversation $conversation): array
+    public function assistantPayload(Conversation $conversation, User|null $actor = null): array
     {
         $messages = [];
 
@@ -81,10 +90,15 @@ class ConversationRepository
             $messages[] = $this->messagePayload($message);
         }
 
+        $actor ??= User::mustAuth();
+        $turns = Resolver::resolve(AssistantTurnService::class);
+        $turn = $turns->recoverableForConversation($this->conversationId($conversation), $actor);
+
         return [
             'id' => $this->conversationId($conversation),
             'title' => $this->title($conversation),
             'messages' => $messages,
+            'active_turn' => $turn === null ? null : $turns->payload($turn),
         ];
     }
 

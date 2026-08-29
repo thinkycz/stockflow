@@ -19,6 +19,20 @@ final class AssistantConversationLock
      */
     public function acquire(string $conversationId): Lock
     {
+        $lock = $this->tryAcquire($conversationId);
+
+        if (!$lock instanceof Lock) {
+            \abort(409, 'This assistant conversation is already running in another tab.');
+        }
+
+        return $lock;
+    }
+
+    /**
+     * Try to acquire a distributed execution lock without throwing an HTTP response.
+     */
+    public function tryAcquire(string $conversationId): Lock|null
+    {
         $repository = Resolver::resolveCacheManager()
             ->store(Config::inject()->assertString('ai.assistant.lock_store'));
         $store = $repository->getStore();
@@ -32,11 +46,7 @@ final class AssistantConversationLock
             Config::inject()->assertInt('ai.assistant.timeout_seconds') + 10,
         );
 
-        if ($lock->get() !== true) {
-            \abort(409, 'This assistant conversation is already running in another tab.');
-        }
-
-        return $lock;
+        return $lock->get() === true ? $lock : null;
     }
 
     /**

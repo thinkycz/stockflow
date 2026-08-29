@@ -8,6 +8,8 @@ The main-admin assistant is implemented and ready for code review and deployment
 
 - Access and ownership: every page, load, prompt, continuation, and deletion resolves through the authenticated main admin and owned conversations.
 - Streaming and persistence: new and existing conversations use Laravel AI persistence and return Vercel-compatible text, tool, approval, result, and error parts with the conversation ID header.
+- Durable delivery: when enabled, each submission is stored before generation, executed once on the Redis `assistant` queue, and tailed from an encrypted typed event journal. Consecutive text deltas are coalesced and the finish event is always last. Reload and transient disconnects reconnect by stable turn UUID; queued user text remains visible and canonical SDK messages reconcile after completion.
+- Complete reads: all 20 concrete read tools return explicit complete/partial metadata, encrypted filter-bound cursors, and bounded results. Exact shift-month aggregation covers records beyond the first 50 and returns merged daily intervals and missing days; assistant instructions forbid negative/exhaustive claims from partial pages.
 - Approval boundary: every mutation or external effect implements native approval; the browser can only approve or cancel and cannot submit edited arguments, technical context, or rejection text. Multiple writes proposed in one response are shown in one complete review and one click submits a distinct locked decision for every displayed tool call.
 - Human parity: application operations call shared domain services used by the web controllers. Normal records, reversals, snapshots, operational activities, notifications, and transaction boundaries remain authoritative.
 - Audit and replay: the supplemental sanitized ledger follows native lifecycle events, uses a unique conversation/tool-call key, serializes execution per conversation, and never repeats a completed or failed domain command.
@@ -18,10 +20,10 @@ The main-admin assistant is implemented and ready for code review and deployment
 ## Automated evidence
 
 - `make fix` completed successfully.
-- `make check` completed successfully with PHPStan at max, formatting checks, zero Composer/npm audit findings, platform and Composer validation, frontend type-check/build, 73 Vitest tests, and 815 passing Pest tests. The opt-in live provider smoke is the sole intentional skip.
+- `make check` completed successfully with PHPStan at max, formatting checks, zero Composer/npm audit findings, platform and Composer validation, frontend type-check/build, 75 Vitest tests, and 842 passing Pest tests / 28,270 assertions. The opt-in live provider smoke is the sole intentional skip.
 - Assistant-focused coverage includes access, ownership, validation, throttling, stream headers, persistent approvals and choices, read-only approve/reject decisions, grouped multi-resource decisions, locked option selection, missing/unknown/stale decisions, lock contention, replay, audit redaction/status transitions, provider failures, post-execution generation failures, and retention pruning.
 - The architecture suite proves 20 unique final writer classes, serializes every action-specific schema, resolves every supported route to a native tool/action pair, verifies that every declared writer action maps back to a route, and fails on unclassified authenticated mutations.
-- `make e2e` completed with 58/58 Playwright scenarios passing. Its 13 assistant scenarios cover navigation placement, full-height desktop geometry, an explicit `read_shifts` stream, safe Markdown, delayed proposal progress with buttons appearing without reload, a 30-action single-review continuation, locked clarification selection, bounded server failures, read-only stock-movement approval, cancellation, persisted reload/resume, non-technical worker confirmation, and the mobile conversation drawer.
+- `make e2e` completed with 61/61 Playwright scenarios passing. Its 15 assistant scenarios cover navigation placement, full-height desktop geometry, conversation creation/timestamps, an explicit `read_shifts` stream, safe Markdown, delayed proposal progress with buttons appearing without reload, a 30-action single-review continuation, locked clarification selection, bounded server failures, read-only stock-movement approval, cancellation, persisted reload/resume, non-technical worker confirmation, and the mobile conversation drawer.
 
 ## Runtime evidence
 
@@ -37,6 +39,7 @@ The main-admin assistant is implemented and ready for code review and deployment
 
 - `OpenRouterSmokeTest` requires `OPENROUTER_SMOKE_TEST=true` and a real `OPENROUTER_API_KEY`; it is intentionally skipped in CI and local default runs.
 - Deployment must confirm the native OpenRouter connection, the `minimax/minimax-m3:free` tool-calling path, and accepted OpenRouter/upstream-provider data policies before setting `AI_ASSISTANT_ENABLED=true`.
+- Deploy `2026_08_29_000001_create_assistant_turn_tables.php` before enabling durable turns. Add a Forge supervisor for `php artisan queue:work assistant --queue=assistant --tries=1 --timeout=150`, keep Redis `retry_after` above the 120-second provider timeout, then set `AI_ASSISTANT_DURABLE_TURNS=true`. The scheduled watchdog must be visible in `schedule:list`.
 
 ## Verdict
 

@@ -156,6 +156,7 @@ $matrix = [
     // Authenticated mutation-shaped routes intentionally outside assistant operations.
     'excluded' => [
         'assistant.chat' => 'Assistant control-plane streaming endpoint, not a domain operation.',
+        'assistant.turns.cancel' => 'Durable assistant transport lifecycle, not an application-domain operation.',
         'assistant.conversations.destroy' => 'Assistant transcript lifecycle, not an application-domain operation.',
         'logout' => 'Authentication lifecycle is excluded from chat.',
         'settings.password.update' => 'Password and credential flows are excluded from chat.',

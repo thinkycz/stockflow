@@ -96,7 +96,13 @@
             "thinking": "Thinking…",
             "reading": "Loading data…",
             "preparing": "Preparing the action…",
-            "running": "Completing the action…"
+            "running": "Completing the action…",
+            "reconnecting": "Reconnecting…"
+        },
+        "read_result": {
+            "complete": "Loaded {count} records.",
+            "partial": "Loaded {count} records; more are available.",
+            "summary": "Analysis complete."
         },
         "choice": {
             "title": "Choose one option",

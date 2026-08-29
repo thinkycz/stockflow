@@ -45,5 +45,9 @@ return [
         'timeout_seconds' => $env->parseNullableInt('AI_ASSISTANT_TIMEOUT_SECONDS') ?? 120,
         'rate_limit_per_minute' => $env->parseNullableInt('AI_ASSISTANT_RATE_LIMIT_PER_MINUTE') ?? 20,
         'tool_result_limit' => $env->parseNullableInt('AI_ASSISTANT_TOOL_RESULT_LIMIT') ?? 50,
+        'tool_result_max_bytes' => $env->parseNullableInt('AI_ASSISTANT_TOOL_RESULT_MAX_BYTES') ?? 65536,
+        'context_max_rows' => $env->parseNullableInt('AI_ASSISTANT_CONTEXT_MAX_ROWS') ?? 300,
+        'context_max_characters' => $env->parseNullableInt('AI_ASSISTANT_CONTEXT_MAX_CHARACTERS') ?? 500000,
+        'durable_turns' => $env->parseBool('AI_ASSISTANT_DURABLE_TURNS'),
     ],
 ];

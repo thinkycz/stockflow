@@ -96,7 +96,13 @@
             "thinking": "Přemýšlím…",
             "reading": "Načítám data…",
             "preparing": "Připravuji akci…",
-            "running": "Dokončuji akci…"
+            "running": "Dokončuji akci…",
+            "reconnecting": "Obnovuji spojení…"
+        },
+        "read_result": {
+            "complete": "Načteno {count} záznamů.",
+            "partial": "Načteno {count} záznamů, jsou dostupné další.",
+            "summary": "Analýza dokončena."
         },
         "choice": {
             "title": "Vyberte jednu možnost",

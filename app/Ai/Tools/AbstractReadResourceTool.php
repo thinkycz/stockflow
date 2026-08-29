@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Ai\Tools;
 
 use App\Ai\AssistantDataQueryService;
+use App\Ai\AssistantTurnCancellation;
 use App\Enums\AssistantActionClassificationEnum;
 use App\Models\Store;
 use App\Models\User;
@@ -28,9 +29,15 @@ abstract class AbstractReadResourceTool implements AuditableAssistantTool, Tool
      */
     final public function handle(Request $request): string
     {
+        Resolver::resolve(AssistantTurnCancellation::class)->ensureNotRequested();
+        $arguments = Typer::assertStringKeyArray($request->all());
+        $input = \is_array($arguments['request'] ?? null)
+            ? Typer::assertStringKeyArray($arguments['request'])
+            : $arguments;
+
         return \json_encode(
             Resolver::resolve(AssistantDataQueryService::class)->query($this->actor, [
-                ...Typer::assertStringKeyArray($request->all()),
+                ...$input,
                 'resource' => $this->resource(),
             ]),
             \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE,

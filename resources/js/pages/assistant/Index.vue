@@ -22,6 +22,7 @@ import { useI18n } from 'vue-i18n';
 import AssistantApprovalCard from '@/components/assistant/AssistantApprovalCard.vue';
 import AssistantApprovalGroup from '@/components/assistant/AssistantApprovalGroup.vue';
 import AssistantMarkdown from '@/components/assistant/AssistantMarkdown.vue';
+import AssistantReadResultStatus from '@/components/assistant/AssistantReadResultStatus.vue';
 import AssistantToolProgress from '@/components/assistant/AssistantToolProgress.vue';
 import Alert from '@/components/ui/Alert.vue';
 import Button from '@/components/ui/Button.vue';
@@ -49,6 +50,15 @@ type ConversationPayload = {
     id: string;
     title: string;
     messages: AssistantUIMessage[];
+    active_turn: AssistantTurnPayload | null;
+};
+
+type AssistantTurnPayload = {
+    id: string;
+    status: string;
+    kind: string;
+    message: string | null;
+    queued_at: string;
 };
 
 type AssistantMessageMetadata = {
@@ -65,6 +75,7 @@ type ToolPart = {
     type: string;
     state: string;
     toolCallId: string;
+    output?: unknown;
 };
 
 const props = defineProps<{
@@ -85,6 +96,31 @@ const liveMessageTimestamps = new Map<string, string>();
 const messageViewport = ref<HTMLElement | null>(null);
 const conversationNavOpen = ref(false);
 const followsLatestMessage = ref(true);
+const activeTurnId = ref<string | null>(
+    props.conversation?.active_turn?.id ?? null,
+);
+const hasServerDurableTurn = ref(false);
+const reconnecting = ref(false);
+const reconnectAttempts = ref(0);
+
+function initialMessages(): AssistantUIMessage[] {
+    const persisted = props.conversation?.messages ?? [];
+    const turn = props.conversation?.active_turn;
+
+    if (turn?.kind !== 'message' || turn.message === null) {
+        return persisted;
+    }
+
+    return [
+        ...persisted,
+        {
+            id: `turn-${turn.id}`,
+            role: 'user',
+            metadata: { created_at: turn.queued_at },
+            parts: [{ type: 'text', text: turn.message }],
+        },
+    ];
+}
 
 function csrfHeader(): Record<string, string> {
     const cookie = document.cookie
@@ -140,6 +176,12 @@ const transport = new DefaultChatTransport<AssistantUIMessage>({
         const response = await globalThis.fetch(input, init);
         const returnedConversationId =
             response.headers.get('x-conversation-id');
+        const returnedTurnId = response.headers.get('x-assistant-turn-id');
+
+        if (returnedTurnId !== null) {
+            activeTurnId.value = returnedTurnId;
+            hasServerDurableTurn.value = true;
+        }
 
         if (returnedConversationId !== null) {
             conversationId.value = returnedConversationId;
@@ -158,7 +200,9 @@ const transport = new DefaultChatTransport<AssistantUIMessage>({
 
         return response;
     },
-    prepareSendMessagesRequest: ({ messages }) => {
+    prepareSendMessagesRequest: ({ messages, trigger }) => {
+        const turnId = crypto.randomUUID();
+        activeTurnId.value = turnId;
         const decisions = assistantDecisionBody(messages, choiceSelections);
 
         if (Object.keys(decisions).length > 0) {
@@ -166,19 +210,32 @@ const transport = new DefaultChatTransport<AssistantUIMessage>({
                 body: {
                     conversation_id: conversationId.value,
                     decisions,
+                    turn_id: turnId,
                 },
             };
         }
 
-        const last = messages.at(-1);
+        const last =
+            trigger === 'regenerate-message'
+                ? [...messages]
+                      .reverse()
+                      .find((message) => message.role === 'user')
+                : messages.at(-1);
 
         return {
             body: {
                 conversation_id: conversationId.value,
                 message: last === undefined ? '' : assistantMessageText(last),
+                turn_id: turnId,
             },
         };
     },
+    prepareReconnectToStreamRequest: () => ({
+        api:
+            activeTurnId.value === null
+                ? route('assistant.chat')
+                : route('assistant.turns.stream', activeTurnId.value),
+    }),
 });
 
 const {
@@ -188,14 +245,20 @@ const {
     sendMessage,
     addToolApprovalResponse,
     regenerate,
-    stop,
+    stop: stopLocal,
+    resumeStream,
     clearError,
 } = useChat<AssistantUIMessage>({
     id: props.conversation?.id,
-    messages: props.conversation?.messages ?? [],
+    messages: initialMessages(),
     transport,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
     onFinish: async () => {
+        const shouldReconcile = hasServerDurableTurn.value;
+        activeTurnId.value = null;
+        hasServerDurableTurn.value = false;
+        reconnecting.value = false;
+        reconnectAttempts.value = 0;
         await scrollToLatest();
 
         if (
@@ -209,16 +272,60 @@ const {
                 route('assistant.conversations.show', conversationId.value),
             );
         }
+
+        if (shouldReconcile) {
+            router.reload({
+                only: ['conversation', 'conversations'],
+            });
+        }
+    },
+    onError: () => {
+        if (activeTurnId.value === null || reconnectAttempts.value >= 3) {
+            reconnecting.value = false;
+
+            return;
+        }
+
+        reconnecting.value = true;
+        const delay = 500 * 2 ** reconnectAttempts.value;
+        reconnectAttempts.value += 1;
+        window.setTimeout(() => {
+            void resumeStream().finally(() => {
+                reconnecting.value = false;
+            });
+        }, delay);
     },
 });
 
+async function stop(): Promise<void> {
+    const turnId = activeTurnId.value;
+
+    if (turnId !== null) {
+        await globalThis.fetch(route('assistant.turns.cancel', turnId), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: csrfHeader(),
+        });
+    }
+
+    await stopLocal();
+    reconnecting.value = false;
+}
+
 const isBusy = computed(
-    () => status.value === 'submitted' || status.value === 'streaming',
+    () =>
+        status.value === 'submitted' ||
+        status.value === 'streaming' ||
+        reconnecting.value,
 );
 const hasPendingApprovals = computed(() =>
     hasPendingAssistantApprovals(messages.value),
 );
 const activityLabel = computed(() => {
+    if (reconnecting.value) {
+        return t('assistant.progress.reconnecting');
+    }
+
     const latest = messages.value.at(-1);
     const activeTool = [...(latest?.parts.filter(isToolUIPart) ?? [])]
         .reverse()
@@ -321,7 +428,9 @@ function hasPrimaryMessageContent(message: AssistantUIMessage): boolean {
         (part) =>
             part.type === 'text' ||
             (!isActionApprovalPart(message, part) &&
-                (showsToolCard(part) || showsToolProgress(part))),
+                (showsToolCard(part) ||
+                    showsToolProgress(part) ||
+                    showsReadResult(part))),
     );
 }
 
@@ -378,6 +487,14 @@ function showsToolCard(part: AssistantUIMessage['parts'][number]): boolean {
         ['output-available', 'output-denied', 'output-error'].includes(
             part.state,
         )
+    );
+}
+
+function showsReadResult(part: AssistantUIMessage['parts'][number]): boolean {
+    return (
+        isToolUIPart(part) &&
+        part.type.startsWith('tool-read_') &&
+        part.state === 'output-available'
     );
 }
 
@@ -444,6 +561,15 @@ onMounted(async () => {
 
     if (viewport !== null) {
         viewport.scrollTop = viewport.scrollHeight;
+    }
+
+    if (
+        activeTurnId.value !== null &&
+        ['queued', 'running', 'cancel_requested'].includes(
+            props.conversation?.active_turn?.status ?? '',
+        )
+    ) {
+        await resumeStream();
     }
 });
 
@@ -675,6 +801,10 @@ async function destroyConversation(
                                     "
                                     :part="toolPart(part)"
                                     @decide="decide"
+                                />
+                                <AssistantReadResultStatus
+                                    v-else-if="showsReadResult(part)"
+                                    :output="toolPart(part).output"
                                 />
                                 <AssistantToolProgress
                                     v-else-if="showsToolProgress(part)"

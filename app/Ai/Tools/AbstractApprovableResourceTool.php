@@ -6,6 +6,7 @@ namespace App\Ai\Tools;
 
 use App\Ai\Agents\StockflowAssistant;
 use App\Ai\AssistantActionAuditService;
+use App\Ai\AssistantTurnCancellation;
 use App\Enums\AssistantActionClassificationEnum;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -45,6 +46,7 @@ abstract class AbstractApprovableResourceTool implements Approvable, AuditableAs
      */
     final public function handle(Request $request): string
     {
+        Resolver::resolve(AssistantTurnCancellation::class)->ensureNotRequested();
         $arguments = Typer::assertStringKeyArray($request->all());
         $toolCallId = Typer::assertString($request->toolCallId());
         $audit = Resolver::resolve(AssistantActionAuditService::class);
@@ -82,6 +84,8 @@ abstract class AbstractApprovableResourceTool implements Approvable, AuditableAs
      */
     final public function shouldRequestApproval(Request $request): Approval|null
     {
+        Resolver::resolve(AssistantTurnCancellation::class)->ensureNotRequested();
+
         try {
             return $this->laravelShouldRequestApproval($request);
         } catch (Throwable $exception) {

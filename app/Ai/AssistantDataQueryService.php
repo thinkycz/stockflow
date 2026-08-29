@@ -26,9 +26,11 @@ use App\Models\StoreItem;
 use App\Models\User;
 use App\Models\Worker;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use InvalidArgumentException;
 use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Typer;
 
 final class AssistantDataQueryService
 {
@@ -37,11 +39,12 @@ final class AssistantDataQueryService
      *
      * @param array<string, mixed> $arguments
      *
-     * @return array{resource: string, count: int, limit: int, records: list<array<string, mixed>>}
+     * @return array<string, mixed>
      */
     public function query(User $actor, array $arguments): array
     {
         $resource = \is_string($arguments['resource'] ?? null) ? $arguments['resource'] : '';
+        $operation = \is_string($arguments['operation'] ?? null) ? $arguments['operation'] : 'list';
         $search = \is_string($arguments['search'] ?? null) && \mb_trim($arguments['search']) !== ''
             ? \mb_trim($arguments['search'])
             : null;
@@ -50,7 +53,117 @@ final class AssistantDataQueryService
             \max(\is_int($arguments['limit'] ?? null) ? $arguments['limit'] : 20, 1),
             Config::inject()->assertInt('ai.assistant.tool_result_limit'),
         );
-        $records = match ($resource) {
+        $cursor = Resolver::resolve(AssistantReadCursor::class);
+        $cursorValue = \is_string($arguments['cursor'] ?? null) ? $arguments['cursor'] : null;
+        $cursorState = $cursorValue === null
+            ? ['offset' => 0, 'as_of' => Carbon::now()->toJSON()]
+            : $cursor->decode($actor, $resource, $arguments, $cursorValue);
+
+        if ($operation === 'summary') {
+            return $this->summary($actor, $resource, $arguments, $cursorState['as_of']);
+        }
+
+        if ($operation === 'detail') {
+            $id = Typer::parseNullableInt($arguments['id'] ?? null);
+
+            if ($id === null) {
+                throw new InvalidArgumentException('A resource identifier is required for detail reads.');
+            }
+
+            $record = null;
+
+            foreach ($this->resourceRecords($actor, $resource, $search, $storeId, 10000, $arguments) as $candidate) {
+                if (($candidate['id'] ?? null) === $id) {
+                    $record = $candidate;
+
+                    break;
+                }
+            }
+
+            if (!\is_array($record)) {
+                throw new InvalidArgumentException('The requested resource does not exist or is not authorized.');
+            }
+
+            return [
+                'version' => 2,
+                'resource' => $resource,
+                'operation' => 'detail',
+                'as_of' => $cursorState['as_of'],
+                'returned_count' => 1,
+                'complete' => true,
+                'has_more' => false,
+                'next_cursor' => null,
+                'records' => [$record],
+                'summary' => null,
+                'warnings' => [],
+                'truncated_fields' => [],
+            ];
+        }
+
+        if ($operation !== 'list') {
+            throw new InvalidArgumentException('Unknown Stockflow read operation.');
+        }
+
+        $fetchLimit = $cursorState['offset'] + $limit + 1;
+        $records = $this->resourceRecords($actor, $resource, $search, $storeId, $fetchLimit, $arguments);
+        $records = \array_slice($records, $cursorState['offset'], $limit + 1);
+        $hasMore = $limit < \count($records);
+        $truncatedFields = [];
+        $records = $this->boundRecords(\array_slice($records, 0, $limit), $truncatedFields);
+        $envelope = [
+            'version' => 2,
+            'resource' => $resource,
+            'operation' => 'list',
+            'as_of' => $cursorState['as_of'],
+            'returned_count' => \count($records),
+            'complete' => !$hasMore,
+            'has_more' => $hasMore,
+            'next_cursor' => $hasMore
+                ? $cursor->encode($actor, $resource, $arguments, $cursorState['offset'] + \count($records), $cursorState['as_of'])
+                : null,
+            'records' => \array_values($records),
+            'summary' => null,
+            'warnings' => [
+                ...($hasMore ? ['PARTIAL_RESULT'] : []),
+                ...($truncatedFields === [] ? [] : ['TRUNCATED_FIELDS']),
+            ],
+            'truncated_fields' => \array_values(\array_unique($truncatedFields)),
+        ];
+
+        $maxBytes = Config::inject()->assertInt('ai.assistant.tool_result_max_bytes');
+
+        while ($maxBytes < \mb_strlen(\json_encode($envelope, \JSON_THROW_ON_ERROR)) && \count($envelope['records']) > 1) {
+            \array_pop($envelope['records']);
+            $envelope['returned_count'] = \count($envelope['records']);
+            $envelope['complete'] = false;
+            $envelope['has_more'] = true;
+            $envelope['warnings'] = \array_values(\array_unique([...$envelope['warnings'], 'PARTIAL_RESULT', 'RESULT_SIZE_LIMIT']));
+            $envelope['next_cursor'] = $cursor->encode(
+                $actor,
+                $resource,
+                $arguments,
+                $cursorState['offset'] + \count($envelope['records']),
+                $cursorState['as_of'],
+            );
+        }
+
+        return $envelope;
+    }
+
+    /**
+     * @param array<string, mixed> $arguments
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function resourceRecords(
+        User $actor,
+        string $resource,
+        string|null $search,
+        int|null $storeId,
+        int $limit,
+        array $arguments,
+    ): array {
+        return match ($resource) {
             'stores' => $this->stores($actor, $search, $limit),
             'settings' => $this->settings($actor),
             'items' => $this->items($actor, $search, $limit),
@@ -60,7 +173,7 @@ final class AssistantDataQueryService
             'statements' => $this->statements($actor, $storeId, $limit),
             'workers' => $this->workers($actor, $search, $limit),
             'attendance' => $this->attendance($actor, $storeId, $limit),
-            'shifts' => $this->shifts($actor, $storeId, $limit),
+            'shifts' => $this->shifts($actor, $storeId, $limit, $arguments),
             'shift_requests' => $this->shiftRequests($actor, $storeId, $limit),
             'shift_share_links' => $this->shiftShareLinks($actor, $storeId, $limit),
             'checklists' => $this->checklists($actor, $storeId, $limit),
@@ -74,13 +187,6 @@ final class AssistantDataQueryService
             'users' => $this->users($actor, $search, $limit),
             default => throw new InvalidArgumentException('Unknown Stockflow data resource.'),
         };
-
-        return [
-            'resource' => $resource,
-            'count' => \count($records),
-            'limit' => $limit,
-            'records' => \array_values($records),
-        ];
     }
 
     /**
@@ -320,16 +426,13 @@ final class AssistantDataQueryService
     /**
      * Query scheduled shifts.
      *
+     * @param array<string, mixed> $arguments
+     *
      * @return array<int, array<string, mixed>>
      */
-    private function shifts(User $actor, int|null $storeId, int $limit): array
+    private function shifts(User $actor, int|null $storeId, int $limit, array $arguments = []): array
     {
-        $query = Shift::query();
-        Shift::scopeForUser($query, $actor->resolveScopeUser());
-
-        if ($storeId !== null) {
-            Shift::scopeForStore($query, $storeId);
-        }
+        $query = $this->shiftQuery($actor, $storeId, $arguments);
 
         return Shift::querySelect($query)->orderByDesc('date')->orderBy('start_time')->limit($limit)->get()
             ->map(static fn(Shift $shift): array => [
@@ -342,6 +445,303 @@ final class AssistantDataQueryService
                 'duration_minutes' => $shift->getDurationMinutes(),
                 'url' => Resolver::resolveUrlGenerator()->route('shifts.index', ['store_id' => $shift->getStoreId()]),
             ])->values()->all();
+    }
+
+    /**
+     * @param array<string, mixed> $arguments
+     *
+     * @return array<string, mixed>
+     */
+    private function summary(User $actor, string $resource, array $arguments, string $asOf): array
+    {
+        $summary = $resource === 'shifts'
+            ? $this->shiftSummary($actor, $arguments)
+            : $this->genericSummary($actor, $resource, $arguments);
+
+        return [
+            'version' => 2,
+            'resource' => $resource,
+            'operation' => 'summary',
+            'as_of' => $asOf,
+            'returned_count' => 0,
+            'complete' => true,
+            'has_more' => false,
+            'next_cursor' => null,
+            'records' => [],
+            'summary' => $summary,
+            'warnings' => [],
+        ];
+    }
+
+    /**
+     * Bound long scalar fields before encoding a provider result.
+     *
+     * @param array<int, array<string, mixed>> $records
+     * @param list<string> $truncatedFields
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function boundRecords(array $records, array &$truncatedFields): array
+    {
+        foreach ($records as $index => $record) {
+            foreach ($record as $field => $value) {
+                if (!\is_string($value) || \mb_strlen($value) <= 2000) {
+                    continue;
+                }
+
+                $records[$index][$field] = \mb_substr($value, 0, 2000) . '…';
+                $truncatedFields[] = $field;
+            }
+        }
+
+        return $records;
+    }
+
+    /**
+     * @param array<string, mixed> $arguments
+     *
+     * @return array<string, mixed>
+     */
+    private function shiftSummary(User $actor, array $arguments): array
+    {
+        $storeId = \is_int($arguments['store_id'] ?? null) ? $arguments['store_id'] : null;
+        $query = $this->shiftQuery($actor, $storeId, $arguments);
+        $shifts = Shift::querySelect($query)->orderBy('date')->orderBy('start_time')->get();
+        $dates = $shifts->map(static fn(Shift $shift): string => $shift->getDate())->unique()->values();
+        $requiredStart = Typer::parseNullableString($arguments['required_start_time'] ?? null);
+        $requiredEnd = Typer::parseNullableString($arguments['required_end_time'] ?? null);
+        $requiredStartMinutes = $this->timeMinutes($requiredStart);
+        $requiredEndMinutes = $this->timeMinutes($requiredEnd);
+        $canDetermineCoverage = $requiredStartMinutes !== null && $requiredEndMinutes !== null;
+        $range = $this->shiftDateRange($arguments, $dates->first(), $dates->last());
+        $coverage = [];
+        $daysWithoutShifts = [];
+        $daysWithoutFullCoverage = [];
+
+        if ($range !== null) {
+            [$date, $lastDate] = $range;
+
+            while ($date->lessThanOrEqualTo($lastDate)) {
+                $dateString = $date->toDateString();
+                $intervals = [];
+
+                foreach ($shifts->filter(static fn(Shift $shift): bool => $dateString === $shift->getDate()) as $shift) {
+                    $start = $this->timeMinutes($shift->getStartTime());
+                    $end = $this->timeMinutes($shift->getEndTime());
+
+                    if ($start === null || $end === null) {
+                        continue;
+                    }
+
+                    $intervals[] = [$start, $end <= $start ? $end + 1440 : $end];
+                }
+
+                $merged = $this->mergeIntervals($intervals);
+                $coversRequired = $canDetermineCoverage
+                    ? $this->intervalsCover($merged, $requiredStartMinutes, $requiredEndMinutes)
+                    : null;
+
+                if ($merged === []) {
+                    $daysWithoutShifts[] = $dateString;
+                }
+
+                if ($coversRequired === false) {
+                    $daysWithoutFullCoverage[] = $dateString;
+                }
+
+                $coverage[] = [
+                    'date' => $dateString,
+                    'scheduled_intervals' => \array_map(fn(array $interval): array => [
+                        'start_time' => $this->minutesTime($interval[0]),
+                        'end_time' => $this->minutesTime($interval[1]),
+                    ], $merged),
+                    'covers_required_interval' => $coversRequired,
+                ];
+                $date = $date->copy()->addDay();
+            }
+        }
+
+        return [
+            'shift_count' => $shifts->count(),
+            'scheduled_days' => $dates->count(),
+            'first_shift_date' => $dates->first(),
+            'last_shift_date' => $dates->last(),
+            'total_scheduled_minutes' => $shifts->sum(static fn(Shift $shift): int => $shift->getDurationMinutes()),
+            'can_determine_full_coverage' => $canDetermineCoverage,
+            'required_start_time' => $requiredStart,
+            'required_end_time' => $requiredEnd,
+            'fully_covered' => $canDetermineCoverage ? $daysWithoutFullCoverage === [] : null,
+            'days_without_shifts' => $daysWithoutShifts,
+            'days_without_full_coverage' => $canDetermineCoverage ? $daysWithoutFullCoverage : null,
+            'daily_coverage' => $coverage,
+        ];
+    }
+
+    /**
+     * Resolve the complete date range requested for a shift analysis.
+     *
+     * @param array<string, mixed> $arguments
+     *
+     * @return array{Carbon, Carbon}|null
+     */
+    private function shiftDateRange(array $arguments, mixed $firstShiftDate, mixed $lastShiftDate): array|null
+    {
+        $year = Typer::parseNullableInt($arguments['year'] ?? null);
+        $month = Typer::parseNullableInt($arguments['month'] ?? null);
+
+        if ($year !== null && $month !== null) {
+            $first = Carbon::parse(\sprintf('%04d-%02d-01', $year, $month))->startOfDay();
+
+            return [$first, $first->copy()->endOfMonth()->startOfDay()];
+        }
+
+        $from = Typer::parseNullableString($arguments['date_from'] ?? null);
+        $to = Typer::parseNullableString($arguments['date_to'] ?? null);
+        $first = $from ?? (\is_string($firstShiftDate) ? $firstShiftDate : null);
+        $last = $to ?? (\is_string($lastShiftDate) ? $lastShiftDate : null);
+
+        return $first === null || $last === null ? null : [Carbon::parse($first)->startOfDay(), Carbon::parse($last)->startOfDay()];
+    }
+
+    /**
+     * Parse an HH:MM application time into minutes from midnight.
+     */
+    private function timeMinutes(string|null $time): int|null
+    {
+        if ($time === null || \preg_match('/^(?<hour>[01]\\d|2[0-3]):(?<minute>[0-5]\\d)/', $time, $matches) !== 1) {
+            return null;
+        }
+
+        return ((int) $matches['hour'] * 60) + (int) $matches['minute'];
+    }
+
+    /**
+     * Merge overlapping scheduled intervals across workers.
+     *
+     * @param list<array{int, int}> $intervals
+     *
+     * @return list<array{int, int}>
+     */
+    private function mergeIntervals(array $intervals): array
+    {
+        \usort($intervals, static fn(array $left, array $right): int => $left[0] <=> $right[0]);
+        $merged = [];
+
+        foreach ($intervals as $interval) {
+            $last = \array_key_last($merged);
+
+            if ($last === null || $merged[$last][1] < $interval[0]) {
+                $merged[] = $interval;
+
+                continue;
+            }
+
+            $merged[$last][1] = \max($merged[$last][1], $interval[1]);
+        }
+
+        return $merged;
+    }
+
+    /**
+     * Determine whether merged intervals cover the entire requested window.
+     *
+     * @param list<array{int, int}> $intervals
+     */
+    private function intervalsCover(array $intervals, int $start, int $end): bool
+    {
+        $end = $end <= $start ? $end + 1440 : $end;
+
+        foreach ($intervals as $interval) {
+            if ($interval[0] <= $start && $end <= $interval[1]) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Format minutes from midnight, retaining next-day intervals unambiguously.
+     */
+    private function minutesTime(int $minutes): string
+    {
+        $suffix = $minutes >= 1440 ? '+1d' : '';
+        $minutes %= 1440;
+
+        return \sprintf('%02d:%02d%s', \intdiv($minutes, 60), $minutes % 60, $suffix);
+    }
+
+    /**
+     * @param array<string, mixed> $arguments
+     *
+     * @return array<string, int>
+     */
+    private function genericSummary(User $actor, string $resource, array $arguments): array
+    {
+        $search = Typer::parseNullableString($arguments['search'] ?? null);
+        $storeId = Typer::parseNullableInt($arguments['store_id'] ?? null);
+        $count = \count(match ($resource) {
+            'stores' => $this->stores($actor, $search, \PHP_INT_MAX),
+            'settings' => $this->settings($actor),
+            'items' => $this->items($actor, $search, \PHP_INT_MAX),
+            'inventory_counts' => $this->inventoryCounts($actor, $storeId, \PHP_INT_MAX),
+            'stock_movements' => $this->movements($actor, $search, $storeId, \PHP_INT_MAX),
+            'statements' => $this->statements($actor, $storeId, \PHP_INT_MAX),
+            'workers' => $this->workers($actor, $search, \PHP_INT_MAX),
+            'attendance' => $this->attendance($actor, $storeId, \PHP_INT_MAX),
+            'shift_requests' => $this->shiftRequests($actor, $storeId, \PHP_INT_MAX),
+            'shift_share_links' => $this->shiftShareLinks($actor, $storeId, \PHP_INT_MAX),
+            'checklists' => $this->checklists($actor, $storeId, \PHP_INT_MAX),
+            'noticeboard' => $this->noticeboard($actor, $search, $storeId, \PHP_INT_MAX),
+            'recipes' => $this->recipes($actor, $search, \PHP_INT_MAX),
+            'recipe_tests' => $this->recipeTests($actor, \PHP_INT_MAX),
+            'payroll' => $this->payroll($actor, $storeId, \PHP_INT_MAX),
+            'income_expenses' => $this->financialReports($actor, $storeId, \PHP_INT_MAX),
+            'recurring_expenses' => $this->recurringExpenses($actor, $search, $storeId, \PHP_INT_MAX),
+            'gift_vouchers' => $this->vouchers($actor, \PHP_INT_MAX),
+            'users' => $this->users($actor, $search, \PHP_INT_MAX),
+            default => throw new InvalidArgumentException('Unknown Stockflow data resource.'),
+        });
+
+        return ['record_count' => $count];
+    }
+
+    /**
+     * @param array<string, mixed> $arguments
+     *
+     * @return Builder<Shift>
+     */
+    private function shiftQuery(User $actor, int|null $storeId, array $arguments): Builder
+    {
+        $query = Shift::query();
+        Shift::scopeForUser($query, $actor->resolveScopeUser());
+
+        if ($storeId !== null) {
+            Shift::scopeForStore($query, $storeId);
+        }
+
+        $workerId = Typer::parseNullableInt($arguments['worker_id'] ?? null);
+        if ($workerId !== null) {
+            $query->where('worker_id', $workerId);
+        }
+
+        $year = Typer::parseNullableInt($arguments['year'] ?? null);
+        $month = Typer::parseNullableInt($arguments['month'] ?? null);
+        if ($year !== null && $month !== null) {
+            Shift::scopeForMonth($query, $year, $month);
+        }
+
+        $dateFrom = Typer::parseNullableString($arguments['date_from'] ?? null);
+        if ($dateFrom !== null) {
+            $query->whereDate('date', '>=', $dateFrom);
+        }
+
+        $dateTo = Typer::parseNullableString($arguments['date_to'] ?? null);
+        if ($dateTo !== null) {
+            $query->whereDate('date', '<=', $dateTo);
+        }
+
+        return $query;
     }
 
     /**

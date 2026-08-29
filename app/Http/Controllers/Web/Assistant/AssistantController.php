@@ -65,7 +65,7 @@ class AssistantController
         $repository = Resolver::resolve(ConversationRepository::class);
 
         return Inertia::render('assistant/Index', [
-            'conversation' => $conversation instanceof Conversation ? $repository->assistantPayload($conversation) : null,
+            'conversation' => $conversation instanceof Conversation ? $repository->assistantPayload($conversation, $user) : null,
             'conversations' => $repository->recentForSidebar($user),
         ]);
     }

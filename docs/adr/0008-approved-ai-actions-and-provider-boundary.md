@@ -22,13 +22,17 @@ The main administrator needs a conversational interface that can inspect live St
 - An approved tool invokes the same application command/service as the equivalent human action. Tools never persist domain models directly.
 - Existing domain records and transactional operational activities remain canonical. A separate sanitized assistant action ledger records tool proposals, decisions, execution, outcomes, and timing for 90 days.
 - Conversations persist until the main admin deletes them; deleting a conversation does not delete its assistant audit rows.
+- Read tools return a versioned completeness envelope. A bounded page is never evidence that no other record exists: encrypted cursors bind actor, resource, normalized filters, and snapshot time, while exact summaries answer aggregate questions without page truncation. Provider results are capped at 50 records and 64 KiB.
+- Assistant turns are created before provider work and run on the dedicated Redis `assistant` queue. Encrypted event rows are the resumable delivery journal; Laravel AI conversation rows, native approvals, domain records, and assistant action audits remain authoritative rather than being replaced by that journal.
+- Client-generated turn UUIDs make duplicate submissions idempotent. Browser or proxy disconnects only detach the event tail and do not cancel the provider job. Cancellation is explicit, checked before tool invocation, and never reverses a domain mutation that already completed.
+- Conversation context retains complete recent semantic turns (up to 300 stored rows and 500,000 serialized characters) and a bounded older text/action memory. Raw historical live-data tool values are omitted from memory and current-state questions require a fresh read.
 - OpenRouter with `minimax/minimax-m3:free` is the sole configured provider and model. The accepted boundary includes processing by OpenRouter and whichever eligible upstream provider serves the requested model under the deployment account's data-policy settings.
 - No web, MCP, filesystem, shell, arbitrary SQL, hosted tool search, or nested mutation agent is exposed.
 - `AssistantToolCatalog` only constructs tools, resolves persisted native names, and exposes capability metadata for route-parity tests. It does not authorize, validate, preview, or execute business actions.
 
 ## Consequences
 
-New application mutations must map to one native writer action or be explicitly classified before route-parity checks pass. Invalid proposals return a bounded repairable tool result without producing an approval card or domain write. A grouped confirmation is a presentation and decision-submission boundary, not a cross-domain transaction; each approved native action retains its existing service transaction and independent result. Provider outages make the assistant unavailable but do not affect ordinary Stockflow workflows.
+New application mutations must map to one native writer action or be explicitly classified before route-parity checks pass. Invalid proposals return a bounded repairable tool result without producing an approval card or domain write. A grouped confirmation is a presentation and decision-submission boundary, not a cross-domain transaction; each approved native action retains its existing service transaction and independent result. Provider outages make the assistant unavailable but do not affect ordinary Stockflow workflows. Durable event rows are retained for 24 hours, while abandoned turns are marked failed by a scheduled watchdog. Production enablement requires the assistant migration, a one-attempt Forge worker for the `assistant` queue with a timeout above provider generation, and `AI_ASSISTANT_DURABLE_TURNS=true`.
 
 ## Accepted risk
 

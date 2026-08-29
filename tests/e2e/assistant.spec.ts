@@ -223,6 +223,12 @@ test.describe('main-admin AI assistant', () => {
         );
 
         await expect(page.getByText('Latest failed input')).toBeVisible();
+        await expect(page.getByText('Latest failed input')).toHaveCount(1);
+        await expect(
+            page.getByText(
+                'This streamed answer remains visible after reload.',
+            ),
+        ).toBeVisible();
         await expect(
             page.getByText(
                 'The assistant response was interrupted. You can safely retry it.',

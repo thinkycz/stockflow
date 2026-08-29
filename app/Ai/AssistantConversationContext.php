@@ -7,7 +7,9 @@ namespace App\Ai;
 use App\Enums\AssistantActionClassificationEnum;
 use App\Enums\AssistantActionStatusEnum;
 use App\Models\AssistantActionAudit;
+use App\Models\AssistantTurn;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
 use Laravel\Ai\Contracts\ConversationStore;
 use Laravel\Ai\Messages\AssistantMessage;
@@ -33,7 +35,10 @@ final class AssistantConversationContext
         $maxRows = Config::inject()->assertInt('ai.assistant.context_max_rows');
         $fetchRows = \min(3000, $maxRows * 3);
         $this->assertStoredToolIntegrity($conversationId, $fetchRows);
-        $messages = Resolver::resolve(ConversationStore::class)->getLatestConversationMessages($conversationId, $fetchRows);
+        $messages = $this->withoutCurrentReplayPrompt(
+            Resolver::resolve(ConversationStore::class)->getLatestConversationMessages($conversationId, $fetchRows),
+            $conversationId,
+        );
         $groups = $this->semanticGroups($messages);
         $selected = [];
         $characters = 0;
@@ -232,6 +237,42 @@ final class AssistantConversationContext
         }
 
         return $groups;
+    }
+
+    /**
+     * Laravel AI appends the retry prompt itself, so omit its persisted copy from history.
+     *
+     * @param Collection<int, Message> $messages
+     *
+     * @return Collection<int, Message>
+     */
+    private function withoutCurrentReplayPrompt(Collection $messages, string $conversationId): Collection
+    {
+        $turnId = Context::get('assistant_turn_id');
+        if (!\is_string($turnId)) {
+            return $messages;
+        }
+
+        $turn = AssistantTurn::query()
+            ->whereKey($turnId)
+            ->where('conversation_id', $conversationId)
+            ->first();
+
+        if (!$turn instanceof AssistantTurn ||
+            $turn->getParentTurnId() === null ||
+            $turn->getRecoveryMode() !== 'replay_without_action'
+        ) {
+            return $messages;
+        }
+
+        $logical = Resolver::resolve(AssistantTurnService::class)->logicalUserMessage($turn);
+        if ($logical === null) {
+            return $messages;
+        }
+
+        return $messages
+            ->reject(static fn(Message $message): bool => $message->role === MessageRole::User && $message->content === $logical['message'])
+            ->values();
     }
 
     /**

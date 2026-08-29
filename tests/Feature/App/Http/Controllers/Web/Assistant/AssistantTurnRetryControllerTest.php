@@ -12,6 +12,7 @@ use App\Models\AssistantTurn;
 use App\Models\User;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Str;
+use Laravel\Ai\Models\Conversation;
 use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -35,6 +36,23 @@ use Thinkycz\LaravelCore\Support\Typer;
     ]);
     $failedResponse->streamedContent();
     $conversationId = Typer::assertString($failedResponse->headers->get('x-conversation-id'));
+    $conversation = Typer::assertInstance(
+        $admin->conversations()->whereKey($conversationId)->first(),
+        Conversation::class,
+    );
+    $conversation->messages()->create([
+        'id' => Str::uuid()->toString(),
+        'participant_type' => $admin->getMorphClass(),
+        'participant_id' => $admin->getKey(),
+        'agent' => StockflowAssistant::class,
+        'role' => 'user',
+        'content' => 'Analyze current stock',
+        'attachments' => [],
+        'tool_calls' => [],
+        'tool_results' => [],
+        'usage' => [],
+        'meta' => [],
+    ]);
     $this->travel(1)->seconds();
 
     StockflowAssistant::fake(['Recovered safely']);
@@ -49,7 +67,8 @@ use Thinkycz\LaravelCore\Support\Typer;
     $retry = Typer::assertInstance(AssistantTurn::query()->whereKey($retryTurnId)->first(), AssistantTurn::class);
     \expect($retry->getParentTurnId())->toBe($failedTurnId)
         ->and($retry->getRecoveryMode())->toBe('replay_without_action')
-        ->and($retry->getStatus())->toBe(AssistantTurnStatusEnum::COMPLETED);
+        ->and($retry->getStatus())->toBe(AssistantTurnStatusEnum::COMPLETED)
+        ->and($conversation->messages()->where('role', 'user')->where('content', 'Analyze current stock')->count())->toBe(1);
 
     $this->be($admin, 'users')
         ->get('/assistant/conversations/' . $conversationId, $this->inertiaHeaders())

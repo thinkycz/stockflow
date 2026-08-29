@@ -12,6 +12,7 @@ use App\Models\User;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
+use Laravel\Ai\Models\Conversation;
 use Laravel\Ai\Prompts\AgentPrompt;
 use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -105,6 +106,56 @@ use Thinkycz\LaravelCore\Support\Typer;
     $turn = Typer::assertInstance(AssistantTurn::query()->whereKey($turnId)->first(), AssistantTurn::class);
     \expect($turn->getStatus())->toBe(AssistantTurnStatusEnum::COMPLETED)
         ->and($admin->conversations()->whereKey($conversationId)->value('title'))->toBe($message);
+});
+
+\test('derived context maintenance cannot downgrade a natively persisted assistant response', function (): void {
+    StockflowAssistant::fake(['This canonical answer must remain visible.']);
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    StockflowConversationTitleAgent::fake(static function () use ($admin): string {
+        $conversation = Typer::assertInstance(
+            $admin->conversations()->latest('created_at')->first(),
+            Conversation::class,
+        );
+        $conversation->messages()->create([
+            'id' => Str::uuid()->toString(),
+            'participant_type' => $admin->getMorphClass(),
+            'participant_id' => $admin->getKey(),
+            'agent' => StockflowAssistant::class,
+            'role' => 'assistant',
+            'content' => '',
+            'attachments' => [],
+            'tool_calls' => [[
+                'id' => 'malformed-post-persistence-call',
+                'name' => 'read_recipes',
+                'arguments' => ['request' => ['operation' => 'list']],
+            ]],
+            'tool_results' => [],
+            'usage' => [],
+            'meta' => [],
+        ]);
+
+        return 'Persisted response';
+    });
+    $turnId = Str::uuid()->toString();
+
+    $response = $this->be($admin, 'users')->postJson('/assistant/chat', [
+        'message' => 'Keep the completed answer',
+        'turn_id' => $turnId,
+    ]);
+    $conversationId = Typer::assertString($response->headers->get('x-conversation-id'));
+    $stream = $response->streamedContent();
+    $turn = Typer::assertInstance(AssistantTurn::query()->whereKey($turnId)->first(), AssistantTurn::class);
+    $conversation = Typer::assertInstance(
+        $admin->conversations()->whereKey($conversationId)->first(),
+        Conversation::class,
+    );
+
+    \expect($stream)->not->toContain('AI assistant generation failed.')
+        ->and($turn->getStatus())->toBe(AssistantTurnStatusEnum::COMPLETED)
+        ->and($conversation->messages()
+            ->where('role', 'assistant')
+            ->where('content', 'This canonical answer must remain visible.')
+            ->exists())->toBeTrue();
 });
 
 \test('queued turns hydrate their optimistic user message and can be cancelled by their owner', function (): void {

@@ -6,6 +6,7 @@ use App\Ai\Agents\StockflowAssistant;
 use App\Enums\AssistantTurnStatusEnum;
 use App\Models\AssistantActionAudit;
 use App\Models\AssistantTurn;
+use App\Models\AssistantTurnEvent;
 use App\Models\User;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Carbon;
@@ -111,6 +112,156 @@ function createAssistantHydrationTurn(
         ->assertJsonPath('props.conversation.active_turn.can_retry', true);
 });
 
+\test('a failed turn hydrates the assistant text that was durably streamed before interruption', function (): void {
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $conversation = Typer::assertInstance($admin->conversations()->create([
+        'id' => Str::uuid()->toString(),
+        'title' => 'Interrupted answer',
+    ]), Conversation::class);
+    $failed = \createAssistantHydrationTurn(
+        $admin,
+        $conversation,
+        AssistantTurnStatusEnum::FAILED,
+        Carbon::parse('2026-08-29 22:03:30'),
+        'Audit all recipes',
+    );
+
+    AssistantTurnEvent::query()->create([
+        'turn_id' => $failed->getTurnId(),
+        'sequence' => 1,
+        'event_type' => 'text-delta',
+        'payload' => ['type' => 'text-delta', 'id' => 'partial-answer', 'delta' => 'I checked 49 recipes. '],
+        'created_at' => Carbon::parse('2026-08-29 22:03:32'),
+        'updated_at' => Carbon::parse('2026-08-29 22:03:32'),
+    ]);
+    AssistantTurnEvent::query()->create([
+        'turn_id' => $failed->getTurnId(),
+        'sequence' => 2,
+        'event_type' => 'text-delta',
+        'payload' => ['type' => 'text-delta', 'id' => 'partial-answer', 'delta' => 'The audit was interrupted here.'],
+        'created_at' => Carbon::parse('2026-08-29 22:03:33'),
+        'updated_at' => Carbon::parse('2026-08-29 22:03:33'),
+    ]);
+
+    $this->be($admin, 'users')
+        ->get('/assistant/conversations/' . $conversation->getKey(), $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.conversation.active_turn.partial_response.id', 'turn-' . $failed->getTurnId() . '-partial')
+        ->assertJsonPath('props.conversation.active_turn.partial_response.text', 'I checked 49 recipes. The audit was interrupted here.')
+        ->assertJsonPath('props.conversation.active_turn.partial_response.created_at', Carbon::parse('2026-08-29 22:03:32')->toJSON());
+});
+
+\test('a failed retry hydrates one root user message when the original input was never persisted', function (): void {
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $conversation = Typer::assertInstance($admin->conversations()->create([
+        'id' => Str::uuid()->toString(),
+        'title' => 'Failed retry lineage',
+    ]), Conversation::class);
+    $rootQueuedAt = Carbon::parse('2026-08-29 22:03:30');
+    $original = \createAssistantHydrationTurn(
+        $admin,
+        $conversation,
+        AssistantTurnStatusEnum::FAILED,
+        $rootQueuedAt,
+        'Audit all recipes',
+    );
+    \createAssistantHydrationTurn(
+        $admin,
+        $conversation,
+        AssistantTurnStatusEnum::FAILED,
+        Carbon::parse('2026-08-29 22:04:30'),
+        'Audit all recipes',
+        $original->getTurnId(),
+    );
+
+    $this->be($admin, 'users')
+        ->get('/assistant/conversations/' . $conversation->getKey(), $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.conversation.active_turn.message', 'Audit all recipes')
+        ->assertJsonPath('props.conversation.active_turn.queued_at', $rootQueuedAt->toJSON());
+});
+
+\test('a failed retry does not append its input after the logical user message was persisted', function (): void {
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $conversation = Typer::assertInstance($admin->conversations()->create([
+        'id' => Str::uuid()->toString(),
+        'title' => 'Persisted retry input',
+    ]), Conversation::class);
+    $original = \createAssistantHydrationTurn(
+        $admin,
+        $conversation,
+        AssistantTurnStatusEnum::FAILED,
+        Carbon::parse('2026-08-29 22:03:30'),
+        'Audit all recipes',
+    );
+    \createAssistantHydrationTurn(
+        $admin,
+        $conversation,
+        AssistantTurnStatusEnum::FAILED,
+        Carbon::parse('2026-08-29 22:04:30'),
+        'Audit all recipes',
+        $original->getTurnId(),
+    );
+    foreach (['2026-08-29 22:03:45', '2026-08-29 22:04:20'] as $createdAt) {
+        $conversation->messages()->create([
+            'id' => Str::uuid()->toString(),
+            'participant_type' => $admin->getMorphClass(),
+            'participant_id' => $admin->getKey(),
+            'agent' => StockflowAssistant::class,
+            'role' => 'user',
+            'content' => 'Audit all recipes',
+            'attachments' => [],
+            'tool_calls' => [],
+            'tool_results' => [],
+            'usage' => [],
+            'meta' => [],
+            'created_at' => Carbon::parse($createdAt),
+            'updated_at' => Carbon::parse($createdAt),
+        ]);
+    }
+
+    $this->be($admin, 'users')
+        ->get('/assistant/conversations/' . $conversation->getKey(), $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonCount(1, 'props.conversation.messages')
+        ->assertJsonPath('props.conversation.active_turn.message', null);
+});
+
+\test('a native assistant response persisted after turn admission suppresses a stale failed lifecycle', function (): void {
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $conversation = Typer::assertInstance($admin->conversations()->create([
+        'id' => Str::uuid()->toString(),
+        'title' => 'Persisted answer',
+    ]), Conversation::class);
+    \createAssistantHydrationTurn(
+        $admin,
+        $conversation,
+        AssistantTurnStatusEnum::FAILED,
+        Carbon::parse('2026-08-29 22:03:30'),
+        'Audit all recipes',
+    );
+    $conversation->messages()->create([
+        'id' => Str::uuid()->toString(),
+        'participant_type' => $admin->getMorphClass(),
+        'participant_id' => $admin->getKey(),
+        'agent' => StockflowAssistant::class,
+        'role' => 'assistant',
+        'content' => 'The complete audit is stored.',
+        'attachments' => [],
+        'tool_calls' => [],
+        'tool_results' => [],
+        'usage' => [],
+        'meta' => [],
+        'created_at' => Carbon::parse('2026-08-29 22:03:45'),
+        'updated_at' => Carbon::parse('2026-08-29 22:03:45'),
+    ]);
+
+    $this->be($admin, 'users')
+        ->get('/assistant/conversations/' . $conversation->getKey(), $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.conversation.active_turn', null);
+});
+
 \test('newer non-recoverable turns suppress an older failed turn', function (AssistantTurnStatusEnum $status): void {
     $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
     $conversation = Typer::assertInstance($admin->conversations()->create([
@@ -160,7 +311,7 @@ function createAssistantHydrationTurn(
         $conversation,
         AssistantTurnStatusEnum::FAILED,
         Carbon::parse('2026-08-29 22:04:30'),
-        'Retried input',
+        'Original failed input',
         $original->getTurnId(),
     );
 
@@ -168,7 +319,7 @@ function createAssistantHydrationTurn(
         ->get('/assistant/conversations/' . $conversation->getKey(), $this->inertiaHeaders())
         ->assertOk()
         ->assertJsonPath('props.conversation.active_turn.id', $retry->getTurnId())
-        ->assertJsonPath('props.conversation.active_turn.message', 'Retried input');
+        ->assertJsonPath('props.conversation.active_turn.message', 'Original failed input');
 });
 
 \test('latest active durable turns remain resumable', function (AssistantTurnStatusEnum $status): void {

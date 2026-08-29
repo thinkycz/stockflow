@@ -9,15 +9,20 @@ use App\Enums\AssistantActionStatusEnum;
 use App\Enums\AssistantTurnStatusEnum;
 use App\Models\AssistantActionAudit;
 use App\Models\AssistantTurn;
+use App\Models\AssistantTurnEvent;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use Laravel\Ai\Models\Conversation;
+use Laravel\Ai\Models\ConversationMessage;
 use Thinkycz\LaravelCore\Support\Typer;
 
 final class AssistantTurnService
 {
+    private const int PARTIAL_RESPONSE_MAX_CHARACTERS = 100000;
+
     /**
      * Create an idempotent durable turn or return the matching existing submission.
      *
@@ -116,6 +121,10 @@ final class AssistantTurnService
             return null;
         }
 
+        if ($turn->getStatus() === AssistantTurnStatusEnum::FAILED && $this->hasCanonicalAssistantResponse($turn)) {
+            return null;
+        }
+
         return $turn;
     }
 
@@ -197,7 +206,12 @@ final class AssistantTurnService
      */
     public function payload(AssistantTurn $turn): array
     {
-        $input = $turn->getInputPayload();
+        $logical = $this->logicalUserMessage($turn);
+        $message = $logical['message'] ?? null;
+
+        if ($logical !== null && $this->hasCanonicalUserMessage($logical['message'], $logical['queued_at'], $turn->getConversationId())) {
+            $message = null;
+        }
 
         return [
             'id' => $turn->getTurnId(),
@@ -212,11 +226,86 @@ final class AssistantTurnService
                     ? 'The assistant response was interrupted. You can safely retry this turn.'
                     : 'The action completed, but the assistant response was interrupted. Continue without repeating the action.',
             ] : null,
-            'message' => $turn->getKind() === 'message' && \is_string($input['message'] ?? null)
-                ? $input['message']
+            'message' => $message,
+            'queued_at' => ($logical['queued_at'] ?? $turn->getQueuedAt())->toJSON(),
+            'partial_response' => $turn->getStatus() === AssistantTurnStatusEnum::FAILED
+                ? $this->partialResponse($turn)
                 : null,
-            'queued_at' => $turn->getQueuedAt()->toJSON(),
         ];
+    }
+
+    /**
+     * Resolve the user-authored input shared by an original turn and its retries.
+     *
+     * @return array{message: string, queued_at: Carbon}|null
+     */
+    public function logicalUserMessage(AssistantTurn $turn): array|null
+    {
+        $root = $this->rootTurn($turn);
+        $input = $root->getInputPayload();
+
+        if ($root->getKind() !== 'message' || !\is_string($input['message'] ?? null)) {
+            return null;
+        }
+
+        return [
+            'message' => $input['message'],
+            'queued_at' => $root->getQueuedAt(),
+        ];
+    }
+
+    /**
+     * Find native user rows duplicated by retries from the same logical turn.
+     *
+     * @return list<string>
+     */
+    public function duplicateCanonicalUserMessageIds(string $conversationId, User $actor): array
+    {
+        /** @var array<string, array{root: AssistantTurn, ended_at: Carbon}> $lineages */
+        $lineages = [];
+
+        foreach (AssistantTurn::query()
+            ->where('conversation_id', $conversationId)
+            ->where('actor_user_id', $actor->getKey())
+            ->whereNotNull('parent_turn_id')
+            ->orderBy('created_at')
+            ->get() as $retry) {
+            $retry = Typer::assertInstance($retry, AssistantTurn::class);
+            $root = $this->rootTurn($retry);
+            $endedAt = Typer::assertInstance(
+                $retry->getAttribute('completed_at') ?? $retry->getAttribute('updated_at'),
+                Carbon::class,
+            );
+            $current = $lineages[$root->getTurnId()] ?? null;
+
+            if ($current === null || $current['ended_at']->isBefore($endedAt)) {
+                $lineages[$root->getTurnId()] = ['root' => $root, 'ended_at' => $endedAt];
+            }
+        }
+
+        $duplicates = [];
+
+        foreach ($lineages as $lineage) {
+            $logical = $this->logicalUserMessage($lineage['root']);
+            if ($logical === null) {
+                continue;
+            }
+
+            $ids = ConversationMessage::query()
+                ->where('conversation_id', $conversationId)
+                ->where('role', 'user')
+                ->where('content', $logical['message'])
+                ->whereBetween('created_at', [$logical['queued_at'], $lineage['ended_at']])
+                ->orderBy('created_at')
+                ->orderBy('id')
+                ->pluck('id')
+                ->map(static fn(mixed $id): string => Typer::assertString($id))
+                ->all();
+
+            $duplicates = [...$duplicates, ...\array_slice($ids, 1)];
+        }
+
+        return \array_values(\array_unique($duplicates));
     }
 
     /**
@@ -253,6 +342,103 @@ final class AssistantTurnService
                 'tool' => $audit->getToolName(),
                 'result' => Typer::assertStringKeyArray(Typer::assertArray($audit->getAttribute('result_summary') ?? [])),
             ])->all());
+    }
+
+    /**
+     * Resolve the first attempt so every retry lineage owns one visible user message.
+     */
+    private function rootTurn(AssistantTurn $turn): AssistantTurn
+    {
+        $root = $turn;
+        $visited = [$root->getTurnId() => true];
+
+        while ($root->getParentTurnId() !== null) {
+            $parent = AssistantTurn::query()
+                ->whereKey($root->getParentTurnId())
+                ->where('actor_user_id', $turn->getActorUserId())
+                ->where('conversation_id', $turn->getConversationId())
+                ->first();
+
+            if (!$parent instanceof AssistantTurn || isset($visited[$parent->getTurnId()])) {
+                break;
+            }
+
+            $root = $parent;
+            $visited[$root->getTurnId()] = true;
+        }
+
+        return $root;
+    }
+
+    /**
+     * Determine whether the SDK already stored the logical input for this retry lineage.
+     */
+    private function hasCanonicalUserMessage(string $message, Carbon $queuedAt, string $conversationId): bool
+    {
+        return ConversationMessage::query()
+            ->where('conversation_id', $conversationId)
+            ->where('role', 'user')
+            ->where('content', $message)
+            ->where('created_at', '>=', $queuedAt)
+            ->exists();
+    }
+
+    /**
+     * A native response stored after admission is authoritative even if derived work failed later.
+     */
+    private function hasCanonicalAssistantResponse(AssistantTurn $turn): bool
+    {
+        foreach (ConversationMessage::query()
+            ->where('conversation_id', $turn->getConversationId())
+            ->where('role', 'assistant')
+            ->where('created_at', '>=', $turn->getQueuedAt())
+            ->get() as $message) {
+            if (Typer::assertString($message->getAttribute('content')) !== '' ||
+                Typer::assertArray($message->getAttribute('tool_calls') ?? []) !== [] ||
+                Typer::assertArray($message->getAttribute('tool_results') ?? []) !== []
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Reconstruct bounded visible text from the durable journal after a provider interruption.
+     *
+     * @return array{id: string, text: string, created_at: string}|null
+     */
+    private function partialResponse(AssistantTurn $turn): array|null
+    {
+        $text = '';
+        $createdAt = null;
+
+        foreach ($turn->events()->where('event_type', 'text-delta')->orderBy('sequence')->get() as $event) {
+            $event = Typer::assertInstance($event, AssistantTurnEvent::class);
+            $delta = Typer::parseNullableString($event->getPayload()['delta'] ?? null);
+
+            if ($delta === null || $delta === '') {
+                continue;
+            }
+
+            $createdAt ??= Typer::assertInstance($event->getAttribute('created_at'), Carbon::class);
+            $text = \mb_substr($text . $delta, 0, self::PARTIAL_RESPONSE_MAX_CHARACTERS);
+
+            if (\mb_strlen($text) >= self::PARTIAL_RESPONSE_MAX_CHARACTERS) {
+                break;
+            }
+        }
+
+        if ($text === '' || !$createdAt instanceof Carbon) {
+            return null;
+        }
+
+        return [
+            'id' => 'turn-' . $turn->getTurnId() . '-partial',
+            'text' => $text,
+            'created_at' => $createdAt->toJSON(),
+        ];
     }
 
     /**

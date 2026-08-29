@@ -6,9 +6,12 @@ use App\Ai\Agents\StockflowAssistant;
 use App\Ai\AssistantConversationContext;
 use App\Enums\AssistantActionClassificationEnum;
 use App\Enums\AssistantActionStatusEnum;
+use App\Enums\AssistantTurnStatusEnum;
 use App\Models\AssistantActionAudit;
+use App\Models\AssistantTurn;
 use App\Models\User;
 use Database\Factories\UserFactory;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Str;
 use Laravel\Ai\Models\Conversation;
 use Thinkycz\LaravelCore\Support\Config;
@@ -145,6 +148,65 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($summary)->toContain('Remember the staffing preference')
         ->toContain('Completed action: write_shifts')
         ->not->toContain('SECRET LIVE VALUE');
+});
+
+\test('a retry sends its prompt once instead of duplicating the persisted logical input in model context', function (): void {
+    Config::inject()->assign('ai.assistant.context_max_rows', 300);
+    Config::inject()->assign('ai.assistant.context_max_characters', 500000);
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $conversation = Typer::assertInstance($admin->conversations()->create([
+        'id' => Str::uuid()->toString(),
+        'title' => 'Retry context',
+    ]), Conversation::class);
+    $conversation->messages()->create([
+        'id' => Str::ulid()->toString(),
+        'participant_type' => $admin->getMorphClass(),
+        'participant_id' => $admin->getKey(),
+        'agent' => StockflowAssistant::class,
+        'role' => 'user',
+        'content' => 'Audit all recipes',
+        'attachments' => [],
+        'tool_calls' => [],
+        'tool_results' => [],
+        'usage' => [],
+        'meta' => [],
+    ]);
+    $payload = ['message' => 'Audit all recipes'];
+    $root = AssistantTurn::query()->forceCreate([
+        'id' => Str::uuid()->toString(),
+        'actor_user_id' => $admin->getKey(),
+        'conversation_id' => $conversation->getKey(),
+        'parent_turn_id' => null,
+        'kind' => 'message',
+        'recovery_mode' => 'normal',
+        'status' => AssistantTurnStatusEnum::FAILED->value,
+        'input_hash' => \hash('sha256', \json_encode($payload, \JSON_THROW_ON_ERROR)),
+        'input_payload' => $payload,
+        'queued_at' => \now()->subMinute(),
+        'completed_at' => \now()->subMinute(),
+    ]);
+    $retry = AssistantTurn::query()->forceCreate([
+        'id' => Str::uuid()->toString(),
+        'actor_user_id' => $admin->getKey(),
+        'conversation_id' => $conversation->getKey(),
+        'parent_turn_id' => $root->getTurnId(),
+        'kind' => 'message',
+        'recovery_mode' => 'replay_without_action',
+        'status' => AssistantTurnStatusEnum::RUNNING->value,
+        'input_hash' => \hash('sha256', \json_encode($payload, \JSON_THROW_ON_ERROR)),
+        'input_payload' => $payload,
+        'queued_at' => \now(),
+        'started_at' => \now(),
+    ]);
+    Context::add('assistant_turn_id', $retry->getTurnId());
+
+    try {
+        $messages = (new AssistantConversationContext())->recentMessages(Typer::assertString($conversation->getKey()));
+    } finally {
+        Context::forget('assistant_turn_id');
+    }
+
+    \expect($messages)->toBe([]);
 });
 
 \test('stored parallel tool calls require exactly one result or one unresolved approval', function (): void {

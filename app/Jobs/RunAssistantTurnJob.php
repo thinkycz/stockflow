@@ -106,6 +106,9 @@ final class RunAssistantTurnJob implements ShouldQueue
             return;
         }
 
+        $nativeStreamCompleted = false;
+        $completionStatus = AssistantTurnStatusEnum::COMPLETED;
+
         try {
             $turns->transition($turn, AssistantTurnStatusEnum::RUNNING);
             Context::add('assistant_turn_id', $turn->getTurnId());
@@ -152,6 +155,11 @@ final class RunAssistantTurnJob implements ShouldQueue
                 $awaitingApproval = $awaitingApproval || $event instanceof ToolApprovalRequest;
             }
 
+            $nativeStreamCompleted = true;
+            $completionStatus = $awaitingApproval
+                ? AssistantTurnStatusEnum::AWAITING_APPROVAL
+                : AssistantTurnStatusEnum::COMPLETED;
+
             if ($lastStreamEnd instanceof StreamEnd) {
                 if (\in_array($turn->getKind(), ['message', 'recovery'], true)) {
                     $titles->generate(
@@ -165,16 +173,19 @@ final class RunAssistantTurnJob implements ShouldQueue
                 $events->record($turn, $lastStreamEnd, $pendingMessageId);
             }
 
+            $turns->transition($turn, $completionStatus);
             $context->recentMessages($turn->getConversationId());
-
-            $turns->transition(
-                $turn,
-                $awaitingApproval ? AssistantTurnStatusEnum::AWAITING_APPROVAL : AssistantTurnStatusEnum::COMPLETED,
-            );
             $context->refreshSummary($conversation);
         } catch (AssistantTurnCancelledException) {
             $turns->transition($turn, AssistantTurnStatusEnum::CANCELLED);
         } catch (Throwable $exception) {
+            if ($nativeStreamCompleted) {
+                $turns->transition($turn, $completionStatus);
+                \report($exception);
+
+                return;
+            }
+
             $events->error($turn, 'AI assistant generation failed.');
             $turns->transition($turn, AssistantTurnStatusEnum::FAILED, $exception->getMessage());
             \report($exception);

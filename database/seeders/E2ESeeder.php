@@ -8,6 +8,7 @@ use App\Ai\Agents\StockflowAssistant;
 use App\Enums\AssistantTurnStatusEnum;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\AssistantTurn;
+use App\Models\AssistantTurnEvent;
 use App\Models\AttendanceSession;
 use App\Models\Shift;
 use App\Models\ShiftPreset;
@@ -237,6 +238,20 @@ class E2ESeeder extends Seeder
                 'completed_at' => '2026-08-29 20:05:30',
                 'created_at' => '2026-08-29 20:05:30',
                 'updated_at' => '2026-08-29 20:05:30',
+            ],
+        );
+        AssistantTurnEvent::query()->updateOrCreate(
+            [
+                'turn_id' => '019fef6f-a4ab-7813-a09c-518d7157e2ea',
+                'sequence' => 1,
+            ],
+            [
+                'event_type' => 'text-delta',
+                'payload' => [
+                    'type' => 'text-delta',
+                    'id' => 'e2e-interrupted-answer',
+                    'delta' => 'This streamed answer remains visible after reload.',
+                ],
             ],
         );
 

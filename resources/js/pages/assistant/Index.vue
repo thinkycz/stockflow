@@ -63,6 +63,11 @@ type AssistantTurnPayload = {
     can_retry: boolean;
     completed_actions: Record<string, unknown>[];
     failure: { code: string; message: string } | null;
+    partial_response: {
+        id: string;
+        text: string;
+        created_at: string;
+    } | null;
 };
 
 type AssistantMessageMetadata = {
@@ -117,20 +122,30 @@ const lastConsumedTurnEventId = ref(0);
 function initialMessages(): AssistantUIMessage[] {
     const persisted = props.conversation?.messages ?? [];
     const turn = props.conversation?.active_turn;
+    const hydrated = [...persisted];
 
-    if (turn?.kind !== 'message' || turn.message === null) {
-        return persisted;
-    }
-
-    return [
-        ...persisted,
-        {
+    if (turn?.kind === 'message' && turn.message !== null) {
+        hydrated.push({
             id: `turn-${turn.id}`,
             role: 'user',
             metadata: { created_at: turn.queued_at },
             parts: [{ type: 'text', text: turn.message }],
-        },
-    ];
+        });
+    }
+
+    if (
+        turn?.partial_response !== null &&
+        turn?.partial_response !== undefined
+    ) {
+        hydrated.push({
+            id: turn.partial_response.id,
+            role: 'assistant',
+            metadata: { created_at: turn.partial_response.created_at },
+            parts: [{ type: 'text', text: turn.partial_response.text }],
+        });
+    }
+
+    return hydrated;
 }
 
 function csrfHeader(): Record<string, string> {
@@ -340,6 +355,9 @@ const {
         if (shouldReconcile) {
             router.reload({
                 only: ['conversation', 'conversations'],
+                onSuccess: () => {
+                    messages.value = initialMessages();
+                },
             });
         }
     },

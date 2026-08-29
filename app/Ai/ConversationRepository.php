@@ -84,18 +84,24 @@ class ConversationRepository
      */
     public function assistantPayload(Conversation $conversation, User|null $actor = null): array
     {
+        $actor ??= User::mustAuth();
+        $turns = Resolver::resolve(AssistantTurnService::class);
+        $conversationId = $this->conversationId($conversation);
+        $duplicateUserMessageIds = $turns->duplicateCanonicalUserMessageIds($conversationId, $actor);
         $messages = [];
 
         foreach ($conversation->messages()->orderBy('id')->get() as $message) {
+            if (\in_array(Typer::assertString($message->getKey()), $duplicateUserMessageIds, true)) {
+                continue;
+            }
+
             $messages[] = $this->messagePayload($message);
         }
 
-        $actor ??= User::mustAuth();
-        $turns = Resolver::resolve(AssistantTurnService::class);
-        $turn = $turns->recoverableForConversation($this->conversationId($conversation), $actor);
+        $turn = $turns->recoverableForConversation($conversationId, $actor);
 
         return [
-            'id' => $this->conversationId($conversation),
+            'id' => $conversationId,
             'title' => $this->title($conversation),
             'messages' => $messages,
             'active_turn' => $turn === null ? null : $turns->payload($turn),

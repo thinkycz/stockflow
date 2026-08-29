@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Ai\Agents\StockflowAssistant;
+use App\Ai\Agents\StockflowConversationTitleAgent;
 use App\Enums\AssistantActionClassificationEnum;
 use App\Enums\AssistantActionStatusEnum;
 use App\Enums\AssistantTurnStatusEnum;
@@ -17,6 +18,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 \beforeEach(function (): void {
     Config::inject()->assign('ai.assistant.enabled', true);
     Config::inject()->assign('ai.assistant.durable_turns', true);
+    StockflowConversationTitleAgent::fake(['Generated conversation title']);
     $this->withSession(['_token' => 'assistant-retry-test-token'])
         ->withHeader('X-CSRF-TOKEN', 'assistant-retry-test-token');
 });

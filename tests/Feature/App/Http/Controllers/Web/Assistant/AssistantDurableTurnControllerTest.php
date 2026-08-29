@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Ai\Agents\StockflowAssistant;
+use App\Ai\Agents\StockflowConversationTitleAgent;
 use App\Enums\AssistantTurnStatusEnum;
 use App\Jobs\RunAssistantTurnJob;
 use App\Models\AssistantTurn;
@@ -11,12 +12,14 @@ use App\Models\User;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
+use Laravel\Ai\Prompts\AgentPrompt;
 use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Typer;
 
 \beforeEach(function (): void {
     Config::inject()->assign('ai.assistant.enabled', true);
     Config::inject()->assign('ai.assistant.durable_turns', true);
+    StockflowConversationTitleAgent::fake(['Generated conversation title']);
     $this->withSession(['_token' => 'assistant-durable-test-token'])
         ->withHeader('X-CSRF-TOKEN', 'assistant-durable-test-token');
 });
@@ -47,6 +50,61 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->and(AssistantTurnEvent::query()->where('turn_id', $turnId)->whereNull('event_type')->doesntExist())->toBeTrue()
         ->and(AssistantTurnEvent::query()->where('turn_id', $turnId)->latest('sequence')->value('event_type'))->toBe('finish');
     StockflowAssistant::assertPromptedTimes(1);
+});
+
+\test('the first completed durable turn replaces the message placeholder with an AI generated title', function (): void {
+    StockflowAssistant::fake(['Výdaj byl připraven ke kontrole.', 'Doplnění bylo zaznamenáno.']);
+    StockflowConversationTitleAgent::fake(['## “Nákup výrobníku ledu.”']);
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $turnId = Str::uuid()->toString();
+
+    $response = $this->be($admin, 'users')->postJson('/assistant/chat', [
+        'message' => 'Přidej dnes jednorázový výdaj za výrobník ledu na Žižkově za 34 303 Kč',
+        'turn_id' => $turnId,
+    ]);
+    $conversationId = Typer::assertString($response->headers->get('x-conversation-id'));
+
+    $response->assertOk();
+    $response->streamedContent();
+
+    \expect($admin->conversations()->whereKey($conversationId)->value('title'))
+        ->toBe('Nákup výrobníku ledu');
+    StockflowConversationTitleAgent::assertPrompted(function (AgentPrompt $prompt): bool {
+        return \str_contains($prompt->prompt, 'Přidej dnes jednorázový výdaj') &&
+            \str_contains($prompt->prompt, 'Výdaj byl připraven ke kontrole.');
+    });
+
+    $followUp = $this->be($admin, 'users')->postJson('/assistant/chat', [
+        'conversation_id' => $conversationId,
+        'message' => 'Ještě doplň poznámku k nákupu',
+        'turn_id' => Str::uuid()->toString(),
+    ]);
+    $followUp->streamedContent();
+
+    \expect($admin->conversations()->whereKey($conversationId)->value('title'))
+        ->toBe('Nákup výrobníku ledu');
+    StockflowConversationTitleAgent::assertPromptedTimes(1);
+});
+
+\test('optional title generation failure keeps the placeholder without failing the durable turn', function (): void {
+    StockflowAssistant::fake(['Hotovo.']);
+    StockflowConversationTitleAgent::fake(static function (): never {
+        throw new RuntimeException('Optional title provider failure');
+    });
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $turnId = Str::uuid()->toString();
+    $message = 'Zkontroluj dnešní směny na Žižkově';
+
+    $response = $this->be($admin, 'users')->postJson('/assistant/chat', [
+        'message' => $message,
+        'turn_id' => $turnId,
+    ]);
+    $conversationId = Typer::assertString($response->headers->get('x-conversation-id'));
+    $response->streamedContent();
+
+    $turn = Typer::assertInstance(AssistantTurn::query()->whereKey($turnId)->first(), AssistantTurn::class);
+    \expect($turn->getStatus())->toBe(AssistantTurnStatusEnum::COMPLETED)
+        ->and($admin->conversations()->whereKey($conversationId)->value('title'))->toBe($message);
 });
 
 \test('queued turns hydrate their optimistic user message and can be cancelled by their owner', function (): void {

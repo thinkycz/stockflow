@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Ai\Agents\StockflowAssistant;
 use App\Ai\AssistantConversationContext;
 use App\Ai\AssistantConversationLock;
+use App\Ai\AssistantConversationTitleService;
 use App\Ai\AssistantDecisionGuard;
 use App\Ai\AssistantTurnEventRecorder;
 use App\Ai\AssistantTurnService;
@@ -22,6 +23,7 @@ use InvalidArgumentException;
 use Laravel\Ai\Models\Conversation;
 use Laravel\Ai\Streaming\Events\StreamEnd;
 use Laravel\Ai\Streaming\Events\StreamEvent;
+use Laravel\Ai\Streaming\Events\TextDelta;
 use Laravel\Ai\Streaming\Events\ToolApprovalRequest;
 use Thinkycz\LaravelCore\Support\Typer;
 use Throwable;
@@ -68,6 +70,7 @@ final class RunAssistantTurnJob implements ShouldQueue
         AssistantDecisionGuard $decisions,
         AssistantConversationLock $locks,
         AssistantConversationContext $context,
+        AssistantConversationTitleService $titles,
     ): void {
         $turn = AssistantTurn::query()->whereKey($this->turnId)->first();
 
@@ -119,6 +122,7 @@ final class RunAssistantTurnJob implements ShouldQueue
                 ->stream($prompt);
             $awaitingApproval = false;
             $lastStreamEnd = null;
+            $textDeltas = [];
 
             foreach ($response as $event) {
                 if (!$event instanceof StreamEvent) {
@@ -140,11 +144,24 @@ final class RunAssistantTurnJob implements ShouldQueue
                     continue;
                 }
 
+                if ($event instanceof TextDelta) {
+                    $textDeltas[] = $event;
+                }
+
                 $events->record($turn, $event, $pendingMessageId);
                 $awaitingApproval = $awaitingApproval || $event instanceof ToolApprovalRequest;
             }
 
             if ($lastStreamEnd instanceof StreamEnd) {
+                if (\in_array($turn->getKind(), ['message', 'recovery'], true)) {
+                    $titles->generate(
+                        $conversation,
+                        $actor,
+                        Typer::assertString($input['message'] ?? null),
+                        TextDelta::combine($textDeltas),
+                    );
+                }
+
                 $events->record($turn, $lastStreamEnd, $pendingMessageId);
             }
 

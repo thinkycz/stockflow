@@ -3,12 +3,17 @@
 declare(strict_types=1);
 
 use App\Ai\Agents\StockflowAssistant;
+use App\Ai\Agents\StockflowConversationTitleAgent;
 use App\Models\AssistantTurnEvent;
 use App\Models\User;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Str;
 use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Typer;
+
+\beforeEach(function (): void {
+    StockflowConversationTitleAgent::fake(['Generated conversation title']);
+});
 
 \test('an administrator can replay only an owned durable turn stream', function (): void {
     Config::inject()->assign('ai.assistant.enabled', true);

@@ -9,6 +9,7 @@ use App\Ai\AssistantToolCatalog;
 use App\Ai\Tools\AuditableAssistantTool;
 use App\Models\Store;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Laravel\Ai\Attributes\RepairToolCalls;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
@@ -39,12 +40,17 @@ class StockflowAssistant implements Agent, Conversational, HasTools
      */
     public function instructions(): string
     {
+        $businessTimezone = Config::inject()->assertString('app.schedule_timezone');
+        $businessNow = CarbonImmutable::now($businessTimezone);
         $activeStoreId = $this->actor->getActiveStoreId();
         $activeStore = $activeStoreId === null
             ? null
             : $this->actor->stores()->whereKey($activeStoreId)->first();
         $activeStoreContext = $activeStore instanceof Store
-            ? $activeStore->getName() . ' (#' . $activeStore->getKey() . ')'
+            ? $activeStore->getName()
+                . ' (#' . $activeStore->getKey()
+                . ', ' . ($activeStore->isWarehouse() ? 'warehouse' : 'retail')
+                . ', ' . $activeStore->getStatus()->value . ')'
             : 'none';
 
         $memory = Resolver::resolve(AssistantConversationContext::class)->summary($this->assistantConversationId);
@@ -55,6 +61,8 @@ class StockflowAssistant implements Agent, Conversational, HasTools
         return <<<INSTRUCTIONS
             You are the main administrator's Stockflow assistant.
             Answer from Stockflow tools when a question depends on live application data. Never invent records or claim an action happened without a successful tool result.
+            The authoritative business date and time is {$businessNow->format('l, Y-m-d H:i:s P')} in {$businessTimezone}. Today is {$businessNow->toDateString()} and the current business month is {$businessNow->format('Y-m')}. The administrator locale is {$this->actor->getLocale()}.
+            Resolve relative dates such as “today”, “tomorrow”, “yesterday”, “this week”, “this month”, and “this year” from this authoritative snapshot. Convert relative dates to explicit ISO dates and business periods before calling a tool. Never derive the current date or period from model knowledge, conversation timestamps, record identifiers, or older conversation memory.
             The active store is {$activeStoreContext}. Treat phrases such as “current store” as this snapshotted store. Ask for clarification before proposing a write when the target store or record is ambiguous.
             When a missing value must be chosen from 2 to 4 meaningful known options, use ask_user_choice and wait for the administrator's selection. Use a short normal chat question for genuinely free-form information. A choice only clarifies intent and never approves a mutation.
             For a mutation, the selected native writer's action schema is authoritative. Do not infer additional required fields from conventional business software, and do not ask for values that the schema marks optional or does not list.

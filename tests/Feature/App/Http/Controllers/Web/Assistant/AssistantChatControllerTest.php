@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Ai\Agents\StockflowAssistant;
+use App\Ai\Agents\StockflowConversationTitleAgent;
 use App\Models\User;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Str;
@@ -15,6 +16,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 \beforeEach(function (): void {
     Config::inject()->assign('ai.assistant.enabled', true);
+    StockflowConversationTitleAgent::fake(['Generated conversation title']);
     $this->withSession(['_token' => 'assistant-chat-test-token'])
         ->withHeader('X-CSRF-TOKEN', 'assistant-chat-test-token');
 });

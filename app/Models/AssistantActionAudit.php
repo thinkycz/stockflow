@@ -47,7 +47,7 @@ class AssistantActionAudit extends BaseModel
     public static function querySelect(Builder $query): Builder
     {
         return $query->select([
-            'id', 'actor_user_id', 'actor_email', 'conversation_id', 'invocation_id', 'tool_call_id',
+            'id', 'actor_user_id', 'actor_email', 'conversation_id', 'turn_id', 'invocation_id', 'tool_call_id',
             'tool_invocation_id', 'tool_name', 'domain', 'operation', 'classification', 'status',
             'store_id', 'store_name', 'target_type', 'target_id', 'arguments', 'result_summary',
             'error_summary', 'proposed_at', 'decided_at', 'started_at', 'completed_at', 'duration_ms',

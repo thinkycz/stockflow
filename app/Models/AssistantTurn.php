@@ -57,7 +57,7 @@ class AssistantTurn extends BaseModel
     public static function querySelect(Builder $query): Builder
     {
         return $query->select([
-            'id', 'actor_user_id', 'conversation_id', 'kind', 'status', 'input_hash', 'input_payload',
+            'id', 'actor_user_id', 'conversation_id', 'parent_turn_id', 'kind', 'recovery_mode', 'status', 'input_hash', 'input_payload',
             'error_summary', 'queued_at', 'started_at', 'completed_at', 'cancel_requested_at',
             'created_at', 'updated_at',
         ]);
@@ -103,6 +103,22 @@ class AssistantTurn extends BaseModel
     public function getKind(): string
     {
         return Typer::assertString($this->getAttribute('kind'));
+    }
+
+    /**
+     * Identifier of the failed turn from which this retry was created.
+     */
+    public function getParentTurnId(): string|null
+    {
+        return Typer::parseNullableString($this->getAttribute('parent_turn_id'));
+    }
+
+    /**
+     * Safe retry strategy selected for this turn.
+     */
+    public function getRecoveryMode(): string
+    {
+        return Typer::assertString($this->getAttribute('recovery_mode'));
     }
 
     /**

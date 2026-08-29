@@ -34,9 +34,33 @@ export async function assistantResponseError(
     response: Response,
     fallbackMessage: string,
 ): Promise<Error> {
+    let message = fallbackMessage;
+
+    if (response.status < 500) {
+        try {
+            const body = (await response.clone().json()) as {
+                message?: unknown;
+                error?: { message?: unknown };
+            };
+            const candidate =
+                typeof body.error?.message === 'string'
+                    ? body.error.message
+                    : body.message;
+
+            if (typeof candidate === 'string' && candidate.trim() !== '') {
+                message = candidate;
+            }
+        } catch {
+            // Non-JSON failures intentionally use the localized safe fallback.
+        }
+    }
+
     await response.body?.cancel();
 
-    return new Error(fallbackMessage);
+    const error = new Error(message);
+    error.name = `AssistantHttp${response.status}`;
+
+    return error;
 }
 
 export function assistantMessageText(message: UIMessage): string {

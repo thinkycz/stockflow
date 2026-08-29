@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Ai\Agents\StockflowAssistant;
+use App\Models\AssistantTurnEvent;
 use App\Models\User;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Str;
@@ -26,6 +27,14 @@ use Thinkycz\LaravelCore\Support\Typer;
     $reconnect = $this->be($admin, 'users')->get('/assistant/turns/' . $turnId . '/stream');
     $reconnect->assertOk()->assertHeader('x-assistant-turn-id', $turnId);
     \expect($reconnect->streamedContent())->toContain('Durable');
+
+    $firstSequence = Typer::assertInt(AssistantTurnEvent::query()->where('turn_id', $turnId)->min('sequence'));
+    $resumed = $this->be($admin, 'users')
+        ->withHeader('Last-Event-ID', (string) $firstSequence)
+        ->get('/assistant/turns/' . $turnId . '/stream');
+    \expect($resumed->streamedContent())
+        ->not->toContain('"type":"start"')
+        ->toContain('Durable');
 
     $this->be($other, 'users')->get('/assistant/turns/' . $turnId . '/stream')->assertNotFound();
 });

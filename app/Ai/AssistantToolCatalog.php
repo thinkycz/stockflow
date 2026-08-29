@@ -152,4 +152,35 @@ final class AssistantToolCatalog
 
         return $capabilities;
     }
+
+    /**
+     * Expose the non-executing read datasets used by route-parity checks.
+     *
+     * @return array<string, list<string>>
+     */
+    public function readCapabilities(): array
+    {
+        return [
+            'read_stores' => ['stores'],
+            'read_users' => ['users'],
+            'read_workers' => ['workers'],
+            'read_settings' => ['profile', 'integrations', 'digests'],
+            'read_attendance' => ['sessions', 'monthly_report'],
+            'read_shifts' => ['shifts'],
+            'read_shift_requests' => ['requests', 'month_locks'],
+            'read_shift_share_links' => ['share_links'],
+            'read_checklists' => ['days', 'items'],
+            'read_noticeboard' => ['cards'],
+            'read_items' => ['catalog', 'store_stock'],
+            'read_inventory_counts' => ['sessions'],
+            'read_stock_movements' => ['movements'],
+            'read_statements' => ['reports', 'days'],
+            'read_recipes' => ['recipes', 'categories'],
+            'read_recipe_tests' => ['sessions', 'attempts'],
+            'read_payroll' => ['reports', 'payslips'],
+            'read_financial_reports' => ['reports', 'rows'],
+            'read_recurring_expenses' => ['expenses', 'versions'],
+            'read_gift_vouchers' => ['vouchers', 'batches'],
+        ];
+    }
 }

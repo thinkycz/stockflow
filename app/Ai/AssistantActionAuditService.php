@@ -10,6 +10,7 @@ use App\Enums\AssistantActionClassificationEnum;
 use App\Enums\AssistantActionStatusEnum;
 use App\Models\AssistantActionAudit;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Context;
 use Laravel\Ai\Events\InvokingTool;
 use Laravel\Ai\Events\ToolApprovalRequested;
 use Laravel\Ai\Events\ToolApprovalResolved;
@@ -43,6 +44,7 @@ final class AssistantActionAuditService
             'actor_user_id' => $event->agent->actor()->getKey(),
             'actor_email' => $event->agent->actor()->getEmail(),
             'conversation_id' => $event->agent->assistantConversationId(),
+            'turn_id' => $this->currentTurnId(),
             'invocation_id' => $event->invocationId,
             'tool_name' => $event->tool->name(),
             'domain' => $event->tool->auditDomain(),
@@ -61,12 +63,14 @@ final class AssistantActionAuditService
      */
     public function toolInvoked(ToolInvoked $event): void
     {
-        AssistantActionAudit::query()->where('tool_invocation_id', $event->toolInvocationId)->update([
-            'status' => AssistantActionStatusEnum::SUCCEEDED->value,
-            'result_summary' => $this->summary($event->result),
-            'completed_at' => Carbon::now(),
-            'duration_ms' => $event->time,
-        ]);
+        AssistantActionAudit::query()->where('tool_invocation_id', $event->toolInvocationId)
+            ->whereNotIn('status', [AssistantActionStatusEnum::SUCCEEDED->value, AssistantActionStatusEnum::FAILED->value, AssistantActionStatusEnum::REJECTED->value])
+            ->update([
+                'status' => AssistantActionStatusEnum::SUCCEEDED->value,
+                'result_summary' => $this->readSummary($event->result),
+                'completed_at' => Carbon::now(),
+                'duration_ms' => $event->time,
+            ]);
     }
 
     /**
@@ -74,12 +78,14 @@ final class AssistantActionAuditService
      */
     public function toolFailed(ToolFailed $event): void
     {
-        AssistantActionAudit::query()->where('tool_invocation_id', $event->toolInvocationId)->update([
-            'status' => AssistantActionStatusEnum::FAILED->value,
-            'error_summary' => $this->truncate($event->exception->getMessage()),
-            'completed_at' => Carbon::now(),
-            'duration_ms' => $event->time,
-        ]);
+        AssistantActionAudit::query()->where('tool_invocation_id', $event->toolInvocationId)
+            ->whereNotIn('status', [AssistantActionStatusEnum::SUCCEEDED->value, AssistantActionStatusEnum::FAILED->value, AssistantActionStatusEnum::REJECTED->value])
+            ->update([
+                'status' => AssistantActionStatusEnum::FAILED->value,
+                'error_summary' => $this->truncate($event->exception->getMessage()),
+                'completed_at' => Carbon::now(),
+                'duration_ms' => $event->time,
+            ]);
     }
 
     /**
@@ -116,6 +122,7 @@ final class AssistantActionAuditService
             ], [
                 'actor_user_id' => $event->agent->actor()->getKey(),
                 'actor_email' => $event->agent->actor()->getEmail(),
+                'turn_id' => $this->currentTurnId(),
                 'invocation_id' => $event->invocationId,
                 'tool_name' => $pending->tool,
                 'domain' => $tool->auditDomain(),
@@ -195,6 +202,7 @@ final class AssistantActionAuditService
         ], [
             'actor_user_id' => $agent->actor()->getKey(),
             'actor_email' => $agent->actor()->getEmail(),
+            'turn_id' => $this->currentTurnId(),
             'invocation_id' => $toolCallId,
             'tool_name' => $tool->name(),
             'domain' => $tool->auditDomain(),
@@ -249,6 +257,7 @@ final class AssistantActionAuditService
                 'actor_user_id' => $agent->actor()->getKey(),
                 'actor_email' => $agent->actor()->getEmail(),
                 'conversation_id' => $agent->assistantConversationId(),
+                'turn_id' => $this->currentTurnId(),
                 'invocation_id' => $toolInvocationId ?? $toolCallId,
                 'tool_call_id' => $toolCallId,
                 'tool_name' => $tool->name(),
@@ -263,6 +272,7 @@ final class AssistantActionAuditService
         }
 
         $audit->update([
+            'turn_id' => $audit->getAttribute('turn_id') ?? $this->currentTurnId(),
             'tool_invocation_id' => $toolInvocationId,
             'arguments' => $this->sanitize($arguments),
             'status' => AssistantActionStatusEnum::RUNNING->value,
@@ -417,6 +427,42 @@ final class AssistantActionAuditService
         }
 
         return ['value' => \is_scalar($result) || $result === null ? $result : '[OMITTED]'];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function readSummary(mixed $result): array
+    {
+        $summary = $this->summary($result);
+        $decoded = \is_string($result) ? \json_decode($result, true) : $result;
+        if (!\is_array($decoded) || ($decoded['version'] ?? null) !== 2) {
+            return $summary;
+        }
+
+        $summary['_read_audit'] = [
+            'dataset' => Typer::parseNullableString($decoded['dataset'] ?? null),
+            'applied_filters' => $this->sanitize(Typer::assertArray($decoded['applied_filters'] ?? [])),
+            'complete' => (bool) ($decoded['complete'] ?? false),
+            'returned_count' => Typer::parseNullableInt($decoded['returned_count'] ?? null),
+            'has_more' => (bool) ($decoded['has_more'] ?? false),
+            'warnings' => $this->sanitize(Typer::assertArray($decoded['warnings'] ?? [])),
+            'bytes' => \is_string($result)
+                ? \mb_strlen($result, '8bit')
+                : \mb_strlen(\json_encode($result, \JSON_THROW_ON_ERROR), '8bit'),
+        ];
+
+        return $summary;
+    }
+
+    /**
+     * Return the durable turn currently invoking the tool, when available.
+     */
+    private function currentTurnId(): string|null
+    {
+        $turnId = Context::get('assistant_turn_id');
+
+        return \is_string($turnId) ? $turnId : null;
     }
 
     /**

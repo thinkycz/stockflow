@@ -48,6 +48,6 @@ return [
         'tool_result_max_bytes' => $env->parseNullableInt('AI_ASSISTANT_TOOL_RESULT_MAX_BYTES') ?? 65536,
         'context_max_rows' => $env->parseNullableInt('AI_ASSISTANT_CONTEXT_MAX_ROWS') ?? 300,
         'context_max_characters' => $env->parseNullableInt('AI_ASSISTANT_CONTEXT_MAX_CHARACTERS') ?? 500000,
-        'durable_turns' => $env->parseBool('AI_ASSISTANT_DURABLE_TURNS'),
+        'durable_turns' => true,
     ],
 ];

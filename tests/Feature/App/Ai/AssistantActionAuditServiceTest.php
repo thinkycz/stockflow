@@ -9,6 +9,7 @@ use App\Models\AssistantActionAudit;
 use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\StoreItem;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Str;
 use Laravel\Ai\Approvals\PendingApproval;
 use Laravel\Ai\Events\InvokingTool;
@@ -171,10 +172,12 @@ use Thinkycz\LaravelCore\Support\Typer;
 \test('native read-tool lifecycle events record bounded success and failure outcomes', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
     $conversationId = Str::uuid()->toString();
+    $turnId = Str::uuid()->toString();
     $agent = new StockflowAssistant($admin, $conversationId);
     $tool = new ReadWorkersTool($admin, $conversationId);
-    $arguments = ['search' => null, 'limit' => 10];
+    $arguments = ['request' => ['operation' => 'summary', 'search' => 'Leo']];
     $events = Resolver::resolveEventDispatcher();
+    Context::add('assistant_turn_id', $turnId);
 
     $events->dispatch(new InvokingTool('read-invocation', 'read-tool-success', $agent, $tool, $arguments));
     $events->dispatch(new ToolInvoked(
@@ -183,13 +186,38 @@ use Thinkycz\LaravelCore\Support\Typer;
         $agent,
         $tool,
         $arguments,
-        ['items' => [['id' => 1]], 'oversized' => \str_repeat('x', 3000)],
+        [
+            'version' => 2,
+            'ok' => true,
+            'resource' => 'workers',
+            'operation' => 'summary',
+            'dataset' => 'workers',
+            'applied_filters' => ['search' => 'Leo'],
+            'complete' => true,
+            'has_more' => false,
+            'returned_count' => 0,
+            'warnings' => [],
+            'summary' => ['worker_count' => 1],
+            'oversized' => \str_repeat('x', 3000),
+        ],
         12.5,
     ));
     $succeeded = AssistantActionAudit::query()->where('tool_invocation_id', 'read-tool-success')->sole();
+    $result = Typer::assertStringKeyArray(Typer::assertArray($succeeded->getAttribute('result_summary')));
+    $readAudit = Typer::assertStringKeyArray(Typer::assertArray($result['_read_audit'] ?? null));
 
     \expect($succeeded->getStatus())->toBe(AssistantActionStatusEnum::SUCCEEDED)
-        ->and(\mb_strlen(Typer::assertString($succeeded->getAttribute('result_summary')['oversized'] ?? null)))->toBe(2000);
+        ->and($succeeded->getAttribute('turn_id'))->toBe($turnId)
+        ->and($succeeded->getAttribute('operation'))->toBe('summary')
+        ->and(\mb_strlen(Typer::assertString($result['oversized'] ?? null)))->toBe(2000)
+        ->and($readAudit)->toMatchArray([
+            'dataset' => 'workers',
+            'applied_filters' => ['search' => 'Leo'],
+            'complete' => true,
+            'returned_count' => 0,
+            'has_more' => false,
+        ])
+        ->and($readAudit['bytes'])->toBeInt();
 
     $events->dispatch(new InvokingTool('failed-invocation', 'read-tool-failed', $agent, $tool, $arguments));
     $events->dispatch(new ToolFailed(
@@ -205,4 +233,6 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     \expect($failed->getStatus())->toBe(AssistantActionStatusEnum::FAILED)
         ->and(\mb_strlen(Typer::assertString($failed->getAttribute('error_summary'))))->toBe(2000);
+
+    Context::forget('assistant_turn_id');
 });

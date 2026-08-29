@@ -8,6 +8,7 @@ use App\Ai\AssistantTurnService;
 use App\Ai\AssistantTurnStream;
 use App\Ai\ConversationRepository;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Thinkycz\LaravelCore\Support\Resolver;
 
@@ -16,7 +17,7 @@ final class AssistantTurnStreamController
     /**
      * Replay and follow one owned durable turn journal.
      */
-    public function __invoke(string $turn): Response
+    public function __invoke(Request $request, string $turn): Response
     {
         $user = User::mustAuth();
         $owned = Resolver::resolve(AssistantTurnService::class)->findOwned($turn, $user);
@@ -29,7 +30,8 @@ final class AssistantTurnStreamController
             return \response()->noContent();
         }
 
-        $response = Resolver::resolve(AssistantTurnStream::class)->response($owned);
+        $lastEventId = $request->headers->get('Last-Event-ID');
+        $response = Resolver::resolve(AssistantTurnStream::class)->response($owned, \is_string($lastEventId) && \ctype_digit($lastEventId) ? (int) $lastEventId : 0);
         $repository = Resolver::resolve(ConversationRepository::class);
         $conversation = $repository->findOwned($owned->getConversationId(), $user);
 

@@ -200,6 +200,11 @@ test.describe('main-admin AI assistant', () => {
                 exact: true,
             }),
         ).toHaveCount(0);
+        await expect(
+            sidebar
+                .getByRole('button', { name: 'Delete conversation' })
+                .first(),
+        ).toBeVisible();
 
         const messageViewport = mainContent.locator('[aria-live="polite"]');
         const maximumScroll = await messageViewport.evaluate(

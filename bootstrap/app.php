@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Console\Commands\BackfillInventoryConsumptionCommand;
+use App\Console\Commands\DiagnoseAssistantCommand;
 use App\Console\Commands\GenerateDailyChecklistsCommand;
 use App\Console\Commands\PruneNoticeboardCardsCommand;
 use App\Http\Middleware\EnsureLimitedUserCanAccessSection;
@@ -14,6 +15,7 @@ use App\Jobs\CreateDailyOperationalDigestJob;
 use App\Jobs\MaintainAssistantTurnsJob;
 use App\Jobs\PruneAssistantActionAuditsJob;
 use App\Jobs\PruneOperationalDigestHistoryJob;
+use App\Jobs\RecordAssistantQueueHeartbeatJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -74,6 +76,7 @@ return Application::configure(basePath: \dirname(__DIR__))
     ])
     ->withCommands([
         BackfillInventoryConsumptionCommand::class,
+        DiagnoseAssistantCommand::class,
         GenerateDailyChecklistsCommand::class,
         PruneNoticeboardCardsCommand::class,
     ])
@@ -131,6 +134,12 @@ return Application::configure(basePath: \dirname(__DIR__))
         $schedule
             ->job(new MaintainAssistantTurnsJob())
             ->everyFiveMinutes()
+            ->withoutOverlapping()
+            ->onOneServer();
+
+        $schedule
+            ->job(new RecordAssistantQueueHeartbeatJob())
+            ->everyMinute()
             ->withoutOverlapping()
             ->onOneServer();
     })

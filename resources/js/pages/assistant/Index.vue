@@ -59,6 +59,10 @@ type AssistantTurnPayload = {
     kind: string;
     message: string | null;
     queued_at: string;
+    recovery_mode: string;
+    can_retry: boolean;
+    completed_actions: Record<string, unknown>[];
+    failure: { code: string; message: string } | null;
 };
 
 type AssistantMessageMetadata = {
@@ -100,8 +104,15 @@ const activeTurnId = ref<string | null>(
     props.conversation?.active_turn?.id ?? null,
 );
 const hasServerDurableTurn = ref(false);
+const hydratedFailure = ref<string | null>(
+    props.conversation?.active_turn?.failure?.message ?? null,
+);
+const hydratedFailureCode = ref<string | null>(
+    props.conversation?.active_turn?.failure?.code ?? null,
+);
 const reconnecting = ref(false);
 const reconnectAttempts = ref(0);
+const lastConsumedTurnEventId = ref(0);
 
 function initialMessages(): AssistantUIMessage[] {
     const persisted = props.conversation?.messages ?? [];
@@ -168,6 +179,49 @@ function syncConversationSummary(
     ];
 }
 
+function trackAssistantEventIds(response: Response): Response {
+    if (
+        response.body === null ||
+        response.headers.get('x-assistant-turn-id') === null
+    ) {
+        return response;
+    }
+
+    const decoder = new TextDecoder();
+    let pending = '';
+    const body = response.body.pipeThrough(
+        new TransformStream<Uint8Array, Uint8Array>({
+            transform(chunk, controller) {
+                pending += decoder.decode(chunk, { stream: true });
+                const lines = pending.split('\n');
+                pending = lines.pop() ?? '';
+
+                for (const line of lines) {
+                    if (!line.startsWith('id:')) {
+                        continue;
+                    }
+
+                    const sequence = Number.parseInt(line.slice(3).trim(), 10);
+                    if (Number.isSafeInteger(sequence) && sequence > 0) {
+                        lastConsumedTurnEventId.value = Math.max(
+                            lastConsumedTurnEventId.value,
+                            sequence,
+                        );
+                    }
+                }
+
+                controller.enqueue(chunk);
+            },
+        }),
+    );
+
+    return new Response(body, {
+        headers: response.headers,
+        status: response.status,
+        statusText: response.statusText,
+    });
+}
+
 const transport = new DefaultChatTransport<AssistantUIMessage>({
     api: route('assistant.chat'),
     credentials: 'same-origin',
@@ -198,11 +252,12 @@ const transport = new DefaultChatTransport<AssistantUIMessage>({
             );
         }
 
-        return response;
+        return trackAssistantEventIds(response);
     },
     prepareSendMessagesRequest: ({ messages, trigger }) => {
         const turnId = crypto.randomUUID();
         activeTurnId.value = turnId;
+        lastConsumedTurnEventId.value = 0;
         const decisions = assistantDecisionBody(messages, choiceSelections);
 
         if (Object.keys(decisions).length > 0) {
@@ -230,12 +285,21 @@ const transport = new DefaultChatTransport<AssistantUIMessage>({
             },
         };
     },
-    prepareReconnectToStreamRequest: () => ({
-        api:
-            activeTurnId.value === null
-                ? route('assistant.chat')
-                : route('assistant.turns.stream', activeTurnId.value),
-    }),
+    prepareReconnectToStreamRequest: () => {
+        const headers: Record<string, string> = csrfHeader();
+
+        if (lastConsumedTurnEventId.value > 0) {
+            headers['Last-Event-ID'] = String(lastConsumedTurnEventId.value);
+        }
+
+        return {
+            api:
+                activeTurnId.value === null
+                    ? route('assistant.chat')
+                    : route('assistant.turns.stream', activeTurnId.value),
+            headers,
+        };
+    },
 });
 
 const {
@@ -244,7 +308,6 @@ const {
     error,
     sendMessage,
     addToolApprovalResponse,
-    regenerate,
     stop: stopLocal,
     resumeStream,
     clearError,
@@ -259,6 +322,7 @@ const {
         hasServerDurableTurn.value = false;
         reconnecting.value = false;
         reconnectAttempts.value = 0;
+        lastConsumedTurnEventId.value = 0;
         await scrollToLatest();
 
         if (
@@ -354,11 +418,91 @@ async function submit(): Promise<void> {
     draft.value = '';
     pendingConversationTitle.value = message;
     clearError();
+    hydratedFailure.value = null;
+    hydratedFailureCode.value = null;
     followsLatestMessage.value = true;
     await sendMessage({
         text: message,
         metadata: { created_at: new Date().toISOString() },
     });
+}
+
+const displayedError = computed(() => {
+    if (hydratedFailureCode.value === 'POST_ACTION_GENERATION_FAILED') {
+        return t('assistant.failures.post_action');
+    }
+    if (hydratedFailureCode.value === 'TURN_FAILED') {
+        return t('assistant.failures.interrupted');
+    }
+
+    switch (error.value?.name) {
+        case 'AssistantHttp409':
+            return t('assistant.failures.busy');
+        case 'AssistantHttp422':
+            return t('assistant.failures.invalid');
+        case 'AssistantHttp429':
+            return t('assistant.failures.rate_limited');
+        default:
+            return error.value?.message ?? hydratedFailure.value;
+    }
+});
+const canRetryTurn = computed(
+    () =>
+        props.conversation?.active_turn?.can_retry === true ||
+        hasServerDurableTurn.value,
+);
+
+async function retryFailedTurn(): Promise<void> {
+    const failedTurnId = activeTurnId.value;
+    if (failedTurnId === null) {
+        return;
+    }
+
+    try {
+        const response = await globalThis.fetch(
+            route('assistant.turns.retry', failedTurnId),
+            {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    ...csrfHeader(),
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ turn_id: crypto.randomUUID() }),
+            },
+        );
+
+        if (!response.ok) {
+            const failure = await assistantResponseError(
+                response,
+                t('assistant.unavailable'),
+            );
+            hydratedFailure.value = failure.message;
+            hydratedFailureCode.value = null;
+
+            return;
+        }
+
+        const payload = (await response.json()) as { turn_id: string };
+        activeTurnId.value = payload.turn_id;
+        hasServerDurableTurn.value = true;
+        lastConsumedTurnEventId.value = 0;
+        hydratedFailure.value = null;
+        hydratedFailureCode.value = null;
+        clearError();
+        reconnecting.value = true;
+        await resumeStream().finally(() => {
+            reconnecting.value = false;
+        });
+    } catch (failure) {
+        hydratedFailure.value =
+            failure instanceof Error
+                ? failure.message
+                : t('assistant.unavailable');
+        hydratedFailureCode.value = null;
+        reconnecting.value = false;
+    }
 }
 
 async function decide(payload: ApprovalDecision): Promise<void> {
@@ -861,15 +1005,16 @@ async function destroyConversation(
                 <div
                     class="shrink-0 border-t border-outline-glass bg-surface-container-lowest p-3 sm:p-4"
                 >
-                    <Alert v-if="error" variant="error" class="mb-3">
+                    <Alert v-if="displayedError" variant="error" class="mb-3">
                         <div
                             class="flex flex-wrap items-center justify-between gap-2"
                         >
-                            <span>{{ error.message }}</span>
+                            <span>{{ displayedError }}</span>
                             <Button
+                                v-if="canRetryTurn"
                                 variant="ghost"
                                 size="compact"
-                                @click="regenerate()"
+                                @click="retryFailedTurn()"
                             >
                                 <RefreshCw :size="13" />
                                 {{ t('assistant.retry') }}

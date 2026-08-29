@@ -18,6 +18,7 @@ use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Context;
+use InvalidArgumentException;
 use Laravel\Ai\Models\Conversation;
 use Laravel\Ai\Streaming\Events\StreamEnd;
 use Laravel\Ai\Streaming\Events\StreamEvent;
@@ -106,10 +107,13 @@ final class RunAssistantTurnJob implements ShouldQueue
             $turns->transition($turn, AssistantTurnStatusEnum::RUNNING);
             Context::add('assistant_turn_id', $turn->getTurnId());
             $input = $turn->getInputPayload();
-            $prompt = $turn->getKind() === 'message'
-                ? Typer::assertString($input['message'] ?? null)
-                : $decisions->decisions($conversation, Typer::assertStringKeyArray(Typer::assertArray($input['decisions'] ?? null)));
+            $prompt = match ($turn->getKind()) {
+                'message', 'recovery' => Typer::assertString($input['message'] ?? null),
+                'decisions' => $decisions->decisions($conversation, Typer::assertStringKeyArray(Typer::assertArray($input['decisions'] ?? null))),
+                default => throw new InvalidArgumentException('Unknown assistant turn kind.'),
+            };
             $pendingMessageId = $conversations->latestPendingMessageId($conversation);
+            $context->recentMessages($turn->getConversationId());
             $response = StockflowAssistant::make(actor: $actor, assistantConversationId: $turn->getConversationId())
                 ->continue($turn->getConversationId(), $actor)
                 ->stream($prompt);
@@ -143,6 +147,8 @@ final class RunAssistantTurnJob implements ShouldQueue
             if ($lastStreamEnd instanceof StreamEnd) {
                 $events->record($turn, $lastStreamEnd, $pendingMessageId);
             }
+
+            $context->recentMessages($turn->getConversationId());
 
             $turns->transition(
                 $turn,

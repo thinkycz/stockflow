@@ -4,8 +4,16 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools;
 
+use App\Models\Shift;
+use App\Models\Worker;
+use App\Services\ShiftCoverageReadService;
+use App\Services\ShiftOverviewService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\JsonSchema\Types\Type;
+use InvalidArgumentException;
+use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Typer;
 
 final class ReadShiftsTool extends AbstractReadResourceTool
 {
@@ -22,7 +30,7 @@ final class ReadShiftsTool extends AbstractReadResourceTool
      */
     public function description(): string
     {
-        return 'Read scheduled shifts in owned stores with worker, date, time, duration, and application links.';
+        return 'Read scheduled shifts with workers, rates, duration, monthly worker totals, attendance ratings, and exact daily coverage. Opening coverage is conclusive only when a required time range is supplied.';
     }
 
     /**
@@ -68,5 +76,77 @@ final class ReadShiftsTool extends AbstractReadResourceTool
     protected function resource(): string
     {
         return 'shifts';
+    }
+
+    /**
+     * @param array<string, mixed> $request
+     *
+     * @return array<string, mixed>
+     */
+    protected function execute(array $request): array
+    {
+        $operation = Typer::parseNullableString($request['operation'] ?? null) ?? 'list';
+        if ($operation === 'detail') {
+            $id = Typer::parseNullableInt($request['id'] ?? null);
+            if ($id === null) { throw new InvalidArgumentException('A shift identifier is required.'); }
+            $query = Shift::query();
+            Shift::scopeForUser($query, $this->actor->resolveScopeUser());
+
+            return $this->detailResult($request, 'shifts', $this->record($query->findOrFail($id)));
+        }
+        $query = $this->query($request);
+        if ($operation === 'summary') {
+            $shifts = $query->orderBy('date')->orderBy('start_time')->get();
+            $summary = Resolver::resolve(ShiftCoverageReadService::class)->summarize($shifts, $request);
+            $storeId = Typer::parseNullableInt($request['store_id'] ?? null);
+            if ($storeId !== null) {
+                $workers = Worker::query();
+                Worker::scopeForUser($workers, $this->actor->resolveScopeUser());
+                $overview = Resolver::resolve(ShiftOverviewService::class)->build($this->actor->resolveScopeUser(), $this->ownedStore($storeId, true), $shifts, $workers->get(), true);
+                $summary = [...$summary, ...$overview];
+            }
+
+            return $this->summaryResult($request, 'shifts', $summary, $shifts->isEmpty() ? 'NO_SCHEDULED_SHIFTS' : null);
+        }
+        if ($operation !== 'list') { throw new InvalidArgumentException('Unknown shift read operation.'); }
+
+        return $this->paginateById($query, $request, 'shifts', $request, fn(Shift $shift): array => $this->record($shift));
+    }
+
+    /**
+     * @param array<string, mixed> $request
+     *
+     * @return Builder<Shift>
+     */
+    private function query(array $request): Builder
+    {
+        $query = Shift::query();
+        Shift::scopeForUser($query, $this->actor->resolveScopeUser());
+        $storeId = Typer::parseNullableInt($request['store_id'] ?? null);
+        if ($storeId !== null) { $this->ownedStore($storeId);
+            Shift::scopeForStore($query, $storeId); }
+        $workerId = Typer::parseNullableInt($request['worker_id'] ?? null);
+        if ($workerId !== null) { Shift::scopeForWorker($query, $workerId); }
+        $year = Typer::parseNullableInt($request['year'] ?? null);
+        $month = Typer::parseNullableInt($request['month'] ?? null);
+        if ($year !== null && $month !== null) { Shift::scopeForMonth($query, $year, $month); }
+        $from = Typer::parseNullableString($request['date_from'] ?? null);
+        if ($from !== null) { $query->whereDate('date', '>=', $from); }
+        $to = Typer::parseNullableString($request['date_to'] ?? null);
+        if ($to !== null) { $query->whereDate('date', '<=', $to); }
+
+        return $query;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function record(Shift $shift): array
+    {
+        $workerQuery = Worker::query();
+        Worker::scopeForUser($workerQuery, $this->actor->resolveScopeUser());
+        $worker = $workerQuery->find($shift->getWorkerId());
+
+        return ['id' => $shift->getKey(), 'store_id' => $shift->getStoreId(), 'worker_id' => $shift->getWorkerId(), 'worker_name' => $worker instanceof Worker ? $worker->getFullName() : null, 'date' => $shift->getDate(), 'start_time' => $shift->getStartTimeShort(), 'end_time' => $shift->getEndTimeShort(), 'duration_minutes' => $shift->getDurationMinutes(), 'hourly_rate' => $shift->getHourlyRate(), 'url' => Resolver::resolveUrlGenerator()->route('shifts.index', ['store_id' => $shift->getStoreId()])];
     }
 }

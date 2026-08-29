@@ -81,9 +81,13 @@ describe('assistant chat protocol helpers', () => {
             },
         );
 
-        await expect(
-            assistantResponseError(response, 'The assistant is unavailable.'),
-        ).resolves.toEqual(new Error('The assistant is unavailable.'));
+        const error = await assistantResponseError(
+            response,
+            'The assistant is unavailable.',
+        );
+
+        expect(error.message).toBe('The assistant is unavailable.');
+        expect(error.name).toBe('AssistantHttp500');
     });
 
     it('does not expose a JSON exception message in the chat interface', async () => {
@@ -92,9 +96,43 @@ describe('assistant chat protocol helpers', () => {
             { status: 500 },
         );
 
-        await expect(
-            assistantResponseError(response, 'The assistant is unavailable.'),
-        ).resolves.toEqual(new Error('The assistant is unavailable.'));
+        const error = await assistantResponseError(
+            response,
+            'The assistant is unavailable.',
+        );
+
+        expect(error.message).toBe('The assistant is unavailable.');
+        expect(error.name).toBe('AssistantHttp500');
+    });
+
+    it('surfaces a bounded safe client error with its HTTP category', async () => {
+        const response = Response.json(
+            { error: { message: 'Another assistant turn is already active.' } },
+            { status: 409 },
+        );
+
+        const error = await assistantResponseError(
+            response,
+            'The assistant is unavailable.',
+        );
+
+        expect(error.message).toBe('Another assistant turn is already active.');
+        expect(error.name).toBe('AssistantHttp409');
+    });
+
+    it('categorizes hidden server failures without exposing their payload', async () => {
+        const response = Response.json(
+            { message: 'provider-secret-and-stack-trace' },
+            { status: 503 },
+        );
+
+        const error = await assistantResponseError(
+            response,
+            'The assistant is unavailable.',
+        );
+
+        expect(error.message).toBe('The assistant is unavailable.');
+        expect(error.name).toBe('AssistantHttp503');
     });
 
     it('builds separate read-only approve and reject decisions', () => {

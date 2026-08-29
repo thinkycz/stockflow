@@ -110,6 +110,37 @@ use Laravel\Ai\Tools\ToolNameResolver;
     }
 });
 
+\test('every concrete reader publishes closed typed branches and bounded list limits', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $catalog = new AssistantToolCatalog();
+    $tools = \collect($catalog->tools($admin, 'native-read-schemas'))->keyBy(ToolNameResolver::resolve(...));
+
+    foreach ($catalog->readCapabilities() as $name => $declaredDatasets) {
+        $tool = $tools->get($name);
+        $schema = (new ObjectSchema($tool->schema(new JsonSchemaTypeFactory())))->toSchema();
+        $branches = $schema['properties']['request']['anyOf'];
+        $operations = [];
+        $schemaDatasets = [];
+
+        foreach ($branches as $branch) {
+            \expect($branch['additionalProperties'])->toBeFalse();
+            $operations[] = $branch['properties']['operation']['enum'][0];
+
+            if (isset($branch['properties']['limit'])) {
+                \expect($branch['properties']['limit']['maximum'])->toBeLessThanOrEqual(50);
+            }
+            foreach ($branch['properties']['dataset']['enum'] ?? [] as $dataset) {
+                $schemaDatasets[] = $dataset;
+            }
+        }
+
+        \expect($operations)->toContain('list', 'summary');
+        if ($schemaDatasets !== []) {
+            \expect(\array_values(\array_unique($schemaDatasets)))->toEqualCanonicalizing($declaredDatasets);
+        }
+    }
+});
+
 \test('every native writer publishes one action branch per declared capability', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
     $catalog = new AssistantToolCatalog();

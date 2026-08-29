@@ -9,7 +9,6 @@ use Illuminate\Support\Str;
 use Laravel\Ai\Models\ConversationMessage;
 use Laravel\Ai\Prompts\AgentPrompt;
 use Laravel\Ai\Responses\Data\ToolCall;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -38,6 +37,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response = $this->be($admin, 'users')->postJson('/assistant/chat', [
         'message' => 'Hello',
         'conversation_id' => null,
+        'turn_id' => Str::uuid()->toString(),
     ]);
 
     $response->assertOk()
@@ -47,9 +47,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     \expect($response->streamedContent())
         ->toContain('"type":"text-delta"')
-        ->toContain('"delta":"Hello"')
-        ->toContain('"delta":" from"')
-        ->toContain('"delta":" Stockflow"')
+        ->toContain('"delta":"Hello from Stockflow"')
         ->and($admin->conversations()->whereKey($conversationId)->exists())->toBeTrue()
         ->and(ConversationMessage::query()->where('conversation_id', $conversationId)->where('role', 'user')->exists())->toBeTrue();
 });
@@ -67,6 +65,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $response = $this->be($admin, 'users')->postJson('/assistant/chat', [
         'message' => 'Receive two units',
+        'turn_id' => Str::uuid()->toString(),
     ]);
     $conversationId = Typer::assertString($response->headers->get('x-conversation-id'));
 
@@ -91,6 +90,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $this->be($admin, 'users')->postJson('/assistant/chat', [
         'message' => 'Hello',
         'conversation_id' => $conversation->getKey(),
+        'turn_id' => Str::uuid()->toString(),
     ])->assertNotFound();
 
     StockflowAssistant::assertNeverPrompted();
@@ -103,6 +103,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'message' => 'Hello',
         'conversation_id' => Str::uuid()->toString(),
         'decisions' => ['call-1' => ['action' => 'approve']],
+        'turn_id' => Str::uuid()->toString(),
     ])->assertUnprocessable()->assertJsonValidationErrors(['message', 'decisions']);
 
     StockflowAssistant::assertNeverPrompted();
@@ -113,6 +114,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $this->be($admin, 'users')->postJson('/assistant/chat', [
         'decisions' => [],
+        'turn_id' => Str::uuid()->toString(),
     ])->assertUnprocessable()->assertJsonValidationErrors(['conversation_id', 'decisions']);
 
     StockflowAssistant::assertNeverPrompted();
@@ -155,6 +157,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $this->be($admin, 'users')->postJson('/assistant/chat', [
         'conversation_id' => $conversation->getKey(),
+        'turn_id' => Str::uuid()->toString(),
         'decisions' => [
             'call-locked' => ['action' => 'edit', 'arguments' => $arguments],
         ],
@@ -179,6 +182,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $this->be($admin, 'users')->postJson('/assistant/chat', [
         'conversation_id' => $conversation->getKey(),
+        'turn_id' => Str::uuid()->toString(),
         'decisions' => [
             'approve-with-arguments' => ['action' => 'approve', 'arguments' => $arguments],
         ],
@@ -196,6 +200,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $this->be($admin, 'users')->postJson('/assistant/chat', [
         'conversation_id' => $conversation->getKey(),
+        'turn_id' => Str::uuid()->toString(),
         'decisions' => [
             'edit-without-arguments' => ['action' => 'edit'],
         ],
@@ -213,6 +218,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $response = $this->be($admin, 'users')->postJson('/assistant/chat', [
         'conversation_id' => $conversation->getKey(),
+        'turn_id' => Str::uuid()->toString(),
         'decisions' => [
             'rejected-call' => ['action' => 'reject'],
         ],
@@ -247,6 +253,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $response = $this->be($admin, 'users')->postJson('/assistant/chat', [
         'conversation_id' => $conversation->getKey(),
+        'turn_id' => Str::uuid()->toString(),
         'decisions' => [
             'choice-call' => ['action' => 'select', 'option_id' => 'ostrava'],
         ],
@@ -278,6 +285,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $this->be($admin, 'users')->postJson('/assistant/chat', [
         'conversation_id' => $conversation->getKey(),
+        'turn_id' => Str::uuid()->toString(),
         'decisions' => [
             'choice-call' => ['action' => 'select', 'option_id' => 'prague'],
         ],
@@ -305,6 +313,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $response = $this->be($admin, 'users')->postJson('/assistant/chat', [
         'conversation_id' => $conversation->getKey(),
+        'turn_id' => Str::uuid()->toString(),
         'decisions' => [
             'first-call' => ['action' => 'approve'],
             'second-call' => ['action' => 'reject'],
@@ -326,18 +335,17 @@ use Thinkycz\LaravelCore\Support\Typer;
         throw new RuntimeException('The AI provider is unavailable.');
     });
     $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $turnId = Str::uuid()->toString();
 
     $response = $this->be($admin, 'users')->postJson('/assistant/chat', [
         'message' => 'What is in stock?',
+        'turn_id' => $turnId,
     ]);
 
     $response->assertOk();
-    $stream = Typer::assertInstance($response->baseResponse, StreamedResponse::class);
-    $callback = $stream->getCallback();
-
-    \expect($callback)->not->toBeNull()
-        ->and(static fn(): mixed => $callback())
-        ->toThrow(RuntimeException::class, 'The AI provider is unavailable.');
+    \expect($response->streamedContent())
+        ->toContain('AI assistant generation failed.')
+        ->not->toContain('The AI provider is unavailable.');
     StockflowAssistant::assertPromptedTimes(1);
 });
 
@@ -357,6 +365,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         $this->be($admin, 'users')->postJson('/assistant/chat', [
             'conversation_id' => $conversation->getKey(),
             'message' => 'Run concurrently',
+            'turn_id' => Str::uuid()->toString(),
         ])->assertConflict();
     } finally {
         $lock->release();

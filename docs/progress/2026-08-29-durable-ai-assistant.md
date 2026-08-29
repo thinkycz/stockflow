@@ -9,7 +9,9 @@ turns survive browser/proxy disconnects without repeating approved mutations.
 
 - Production `read_shifts` returned at most 50 newest rows without pagination or
   truncation metadata, causing early-month shifts to be treated as absent.
-- All 20 read resources use the same bounded query service and result envelope.
+- All 20 read resources now own their typed datasets, tenant-scoped queries,
+  direct details, filters, and summaries. They share only the bounded result
+  envelope, cursor, cancellation, safe-error, and audit mechanics.
 - Laravel AI persists canonical conversation rows only after a streamed response
   finishes.
 - The assistant UI hides completed `read_*` tool parts.
@@ -44,8 +46,9 @@ turns survive browser/proxy disconnects without repeating approved mutations.
 
 ## Implemented Evidence
 
-- All 20 provider-facing reads are concrete `read_*` classes. The former
-  `ConfiguredReadResourceTool` is removed.
+- All 20 provider-facing reads are deep concrete `read_*` classes. The former
+  central `AssistantDataQueryService`, `AbstractCatalogReadTool`, and shallow
+  metadata dispatch path are removed.
 - List responses use the version 2 completeness envelope, fetch one extra row,
   expose encrypted 30-minute cursors bound to actor/resource/filters, and remain
   under a 64 KiB encoded budget.
@@ -62,14 +65,13 @@ turns survive browser/proxy disconnects without repeating approved mutations.
 - Conversation context now keeps up to 300 stored rows / 500,000 serialized
   characters in complete semantic turns and maintains text/action memory for
   older rows without copying raw live tool results.
+- Durable queued turns are mandatory whenever the assistant is enabled. Failed
+  turns use an explicit child retry; recovery after a successful mutation is
+  continuation-only and cannot replay the mutation.
 
-## Verification So Far
+## Verification at Initial Durable-Turn Delivery
 
-- Focused PHPStan (level max): passing.
-- Vue TypeScript check: passing.
-- Assistant-focused Pest suite: 66 passing plus one opt-in provider smoke skip.
-- `make fix`: passing.
-- `make check`: passing with PHPStan max, dependency audits, production build,
-  75 Vitest tests, and 842 Pest tests / 28,270 assertions.
-- `make e2e`: 61 Playwright scenarios passing, including all 15 assistant
-  scenarios and the durable-aware canonical reconciliation path.
+These counts describe the initial durable-turn delivery. The current deep-reader
+refactor is verified in
+`docs/verification/2026-08-28-main-admin-ai-assistant.md` so historical counts
+are not mistaken for the current suite.

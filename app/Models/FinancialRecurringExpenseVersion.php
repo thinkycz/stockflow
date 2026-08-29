@@ -50,6 +50,18 @@ class FinancialRecurringExpenseVersion extends BaseModel
     public function getFinancialRecurringExpenseId(): int { return $this->assertInt('financial_recurring_expense_id'); }
 
     /**
+     * Loaded or queried recurring expense.
+     */
+    public function getRecurringExpense(): FinancialRecurringExpense
+    {
+        if ($this->relationLoaded('recurringExpense')) {
+            return $this->assertRelationship('recurringExpense', FinancialRecurringExpense::class);
+        }
+
+        return $this->recurringExpense()->firstOrFail();
+    }
+
+    /**
      * Get effective month.
      */
     public function getEffectiveFrom(): string

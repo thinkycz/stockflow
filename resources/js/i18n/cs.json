@@ -91,6 +91,13 @@
         "stop": "Zastavit generování",
         "stop_short": "Zastavit",
         "retry": "Zkusit znovu",
+        "failures": {
+            "busy": "Tato konverzace už běží v jiné kartě.",
+            "invalid": "V požadavku nelze pokračovat. Obnovte konverzaci a zkuste to znovu.",
+            "rate_limited": "Příliš mnoho požadavků na asistenta. Chvíli počkejte a zkuste to znovu.",
+            "interrupted": "Odpověď asistenta byla přerušena. Můžete ji bezpečně zopakovat.",
+            "post_action": "Akce proběhla, ale odpověď byla přerušena. Pokračujte bez opakování akce."
+        },
         "thinking": "Stockflow pracuje…",
         "progress": {
             "thinking": "Přemýšlím…",

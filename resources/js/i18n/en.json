@@ -91,6 +91,13 @@
         "stop": "Stop generation",
         "stop_short": "Stop",
         "retry": "Retry",
+        "failures": {
+            "busy": "This conversation is already running in another tab.",
+            "invalid": "The request could not be continued. Refresh the conversation and try again.",
+            "rate_limited": "Too many assistant requests. Wait a moment and try again.",
+            "interrupted": "The assistant response was interrupted. You can safely retry it.",
+            "post_action": "The action completed, but the response was interrupted. Continue without repeating the action."
+        },
         "thinking": "Stockflow is working…",
         "progress": {
             "thinking": "Thinking…",

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Web\Assistant\AssistantChatController;
 use App\Http\Controllers\Web\Assistant\AssistantController;
 use App\Http\Controllers\Web\Assistant\AssistantTurnCancelController;
+use App\Http\Controllers\Web\Assistant\AssistantTurnRetryController;
 use App\Http\Controllers\Web\Assistant\AssistantTurnStreamController;
 use App\Http\Controllers\Web\Attendance\AttendanceActionController;
 use App\Http\Controllers\Web\Attendance\AttendanceCorrectionController;
@@ -220,6 +221,7 @@ Resolver::resolveRouteRegistrar()
             $router->post('assistant/chat', AssistantChatController::class)->name('assistant.chat');
             $router->get('assistant/turns/{turn}/stream', AssistantTurnStreamController::class)->whereUuid('turn')->name('assistant.turns.stream');
             $router->post('assistant/turns/{turn}/cancel', AssistantTurnCancelController::class)->whereUuid('turn')->name('assistant.turns.cancel');
+            $router->post('assistant/turns/{turn}/retry', AssistantTurnRetryController::class)->whereUuid('turn')->name('assistant.turns.retry');
             $router->get('assistant/conversations/{conversation}', [AssistantController::class, 'show'])->whereUuid('conversation')->name('assistant.conversations.show');
             $router->delete('assistant/conversations/{conversation}', [AssistantController::class, 'destroy'])->whereUuid('conversation')->name('assistant.conversations.destroy');
         });

@@ -54,6 +54,18 @@ class ChecklistItem extends BaseModel
     public function getChecklistDayId(): int { return $this->assertInt('checklist_day_id'); }
 
     /**
+     * Loaded or queried checklist day.
+     */
+    public function getDay(): ChecklistDay
+    {
+        if ($this->relationLoaded('day')) {
+            return $this->assertRelationship('day', ChecklistDay::class);
+        }
+
+        return $this->day()->firstOrFail();
+    }
+
+    /**
      * Shift assignment.
      */
     public function getShift(): ChecklistShiftEnum { return Typer::assertInstance($this->getAttribute('shift'), ChecklistShiftEnum::class); }

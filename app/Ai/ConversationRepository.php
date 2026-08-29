@@ -80,7 +80,7 @@ class ConversationRepository
     /**
      * Serialize a conversation and stored messages for the Vercel Vue client.
      *
-     * @return array{id: string, title: string, messages: list<array{id: string, role: string, metadata: array{created_at: string}, parts: list<array<string, mixed>>}>, active_turn: array{id: string, status: string, kind: string, message: string|null, queued_at: string}|null}
+     * @return array<string, mixed>
      */
     public function assistantPayload(Conversation $conversation, User|null $actor = null): array
     {

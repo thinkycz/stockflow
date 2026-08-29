@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Ai;
 
+use App\Enums\AssistantActionClassificationEnum;
+use App\Enums\AssistantActionStatusEnum;
 use App\Enums\AssistantTurnStatusEnum;
+use App\Models\AssistantActionAudit;
 use App\Models\AssistantTurn;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -22,7 +25,7 @@ final class AssistantTurnService
      *
      * @return array{turn: AssistantTurn, created: bool}
      */
-    public function createOrFind(User $actor, Conversation $conversation, string $id, string $kind, array $payload): array
+    public function createOrFind(User $actor, Conversation $conversation, string $id, string $kind, array $payload, string|null $parentTurnId = null, string $recoveryMode = 'normal'): array
     {
         $hash = \hash('sha256', \json_encode($payload, \JSON_THROW_ON_ERROR));
         $existing = $this->findOwned($id, $actor);
@@ -38,7 +41,9 @@ final class AssistantTurnService
                 'id' => $id,
                 'actor_user_id' => $actor->getKey(),
                 'conversation_id' => Typer::assertString($conversation->getKey()),
+                'parent_turn_id' => $parentTurnId,
                 'kind' => $kind,
+                'recovery_mode' => $recoveryMode,
                 'status' => AssistantTurnStatusEnum::QUEUED->value,
                 'input_hash' => $hash,
                 'input_payload' => $payload,
@@ -185,7 +190,7 @@ final class AssistantTurnService
     /**
      * Build the safe frontend hydration payload for a recoverable turn.
      *
-     * @return array{id: string, status: string, kind: string, message: string|null, queued_at: string}
+     * @return array<string, mixed>
      */
     public function payload(AssistantTurn $turn): array
     {
@@ -195,11 +200,56 @@ final class AssistantTurnService
             'id' => $turn->getTurnId(),
             'status' => $turn->getStatus()->value,
             'kind' => $turn->getKind(),
+            'recovery_mode' => $turn->getRecoveryMode(),
+            'can_retry' => $turn->getStatus() === AssistantTurnStatusEnum::FAILED,
+            'completed_actions' => $this->completedActions($turn),
+            'failure' => $turn->getStatus() === AssistantTurnStatusEnum::FAILED ? [
+                'code' => $this->completedActions($turn) === [] ? 'TURN_FAILED' : 'POST_ACTION_GENERATION_FAILED',
+                'message' => $this->completedActions($turn) === []
+                    ? 'The assistant response was interrupted. You can safely retry this turn.'
+                    : 'The action completed, but the assistant response was interrupted. Continue without repeating the action.',
+            ] : null,
             'message' => $turn->getKind() === 'message' && \is_string($input['message'] ?? null)
                 ? $input['message']
                 : null,
             'queued_at' => $turn->getQueuedAt()->toJSON(),
         ];
+    }
+
+    /**
+     * @return array{turn: AssistantTurn, created: bool}
+     */
+    public function retry(User $actor, Conversation $conversation, AssistantTurn $failed, string $newTurnId): array
+    {
+        if ($failed->getActorUserId() !== $actor->getKey() || $failed->getConversationId() !== Typer::assertString($conversation->getKey()) || $failed->getStatus() !== AssistantTurnStatusEnum::FAILED) {
+            throw new InvalidArgumentException('Only an owned failed assistant turn can be retried.');
+        }
+
+        $completedActions = $this->completedActions($failed);
+        if ($completedActions !== []) {
+            return $this->createOrFind($actor, $conversation, $newTurnId, 'recovery', [
+                'message' => "Continue after the previous response failed. The following mutations already succeeded and must not be proposed or executed again:\n" . \json_encode($completedActions, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_UNICODE) . "\nExplain the completed outcome and continue with any remaining non-duplicate work.",
+            ], $failed->getTurnId(), 'continuation_after_action');
+        }
+
+        return $this->createOrFind($actor, $conversation, $newTurnId, $failed->getKind(), $failed->getInputPayload(), $failed->getTurnId(), 'replay_without_action');
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function completedActions(AssistantTurn $turn): array
+    {
+        return \array_values(AssistantActionAudit::query()
+            ->where('turn_id', $turn->getTurnId())
+            ->where('classification', AssistantActionClassificationEnum::MUTATION->value)
+            ->where('status', AssistantActionStatusEnum::SUCCEEDED->value)
+            ->orderBy('id')
+            ->get()
+            ->map(static fn(AssistantActionAudit $audit): array => [
+                'tool' => $audit->getToolName(),
+                'result' => Typer::assertStringKeyArray(Typer::assertArray($audit->getAttribute('result_summary') ?? [])),
+            ])->all());
     }
 
     /**

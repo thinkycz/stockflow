@@ -72,6 +72,26 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($turn->getStatus())->toBe(AssistantTurnStatusEnum::CANCEL_REQUESTED);
 });
 
+\test('turn admission atomically permits only one active turn per conversation', function (): void {
+    Queue::fake();
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $firstTurnId = Str::uuid()->toString();
+    $first = $this->be($admin, 'users')->postJson('/assistant/chat', [
+        'message' => 'First queued request',
+        'turn_id' => $firstTurnId,
+    ]);
+    $conversationId = Typer::assertString($first->headers->get('x-conversation-id'));
+
+    $this->be($admin, 'users')->postJson('/assistant/chat', [
+        'conversation_id' => $conversationId,
+        'message' => 'Competing request',
+        'turn_id' => Str::uuid()->toString(),
+    ])->assertConflict();
+
+    \expect(AssistantTurn::query()->where('conversation_id', $conversationId)->count())->toBe(1);
+    Queue::assertPushed(RunAssistantTurnJob::class, 1);
+});
+
 \test('reconnect streams are ownership scoped', function (): void {
     StockflowAssistant::fake(['Reconnectable']);
     $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);

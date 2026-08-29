@@ -186,6 +186,16 @@ helpers before introducing new ones.
 MySQL 8, Redis, cron, and supervisor are the production runtime services
 declared in `composer.json` / `docker-compose.yml` (when present).
 
+## Main-admin AI assistant
+
+The `/assistant` workspace is an admin-only Laravel AI conversation client. It exposes 20 stable resource-level read/write pairs plus `ask_user_choice`. Writers use native human approval and the same application services as human controllers; tools never persist domain models directly.
+
+Readers are deep resource modules rather than a central dispatch switch. Each reader owns closed JSON Schema branches, tenant scopes, direct detail resolution, UI-equivalent filters, and service-backed summaries. Shared read code is restricted to cancellation, version 2 envelopes, encrypted actor/dataset/filter-bound keyset cursors, 50-row and 64 KiB limits, safe errors, and audit metadata. `config/assistant_read_route_parity.php` maps every authenticated GET data route to a reader dataset or a documented exclusion.
+
+Every browser submission is persisted as an `assistant_turn` before provider work and executed once on the dedicated Redis `assistant` queue. Encrypted ordered `assistant_turn_events` provide SSE replay with event IDs and `Last-Event-ID` continuation; a browser disconnect does not cancel generation. Conversation admission is locked atomically, retries create linked child turns, and successful mutations force continuation-only recovery after a later provider failure.
+
+Laravel AI conversation rows remain canonical. The application supplies complete semantic turns under an explicit 300-row/500,000-character budget, verifies exact tool-call/result pairing before provider steps, and rolls older user intent plus audited action outcomes into versioned memory without retaining stale analytical values. A separate 90-day audit ledger is correlated to durable turn IDs. `stockflow:assistant:diagnose` checks provider/model configuration, migrations, Redis locks, queue timeout/heartbeat, and stale turns.
+
 ## Internationalization (i18n)
 
 The backend (`lang/*.json`) and frontend (`resources/js/i18n/*.json`) translation files are separate but mirrored. This duplication is a deliberate design tradeoff to keep the frontend independent of API calls for localizing core UI shells during bootstrap. In the long term, they can be consolidated by either exposing a backend localization API endpoint or generating the client JSON files from the server JSON files during a build step.

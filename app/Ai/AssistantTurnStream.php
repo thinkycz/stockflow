@@ -14,10 +14,10 @@ final class AssistantTurnStream
     /**
      * Replay persisted events and follow the journal until the turn terminates.
      */
-    public function response(AssistantTurn $turn): StreamedResponse
+    public function response(AssistantTurn $turn, int $afterSequence = 0): StreamedResponse
     {
-        return \response()->stream(function () use ($turn): void {
-            $sequence = 0;
+        return \response()->stream(function () use ($turn, $afterSequence): void {
+            $sequence = \max(0, $afterSequence);
             $lastHeartbeat = \microtime(true);
             $deadline = \microtime(true) + Config::inject()->assertInt('ai.assistant.timeout_seconds') + 30;
 
@@ -30,6 +30,7 @@ final class AssistantTurnStream
 
                 foreach ($batch as $event) {
                     $sequence = $event->getSequence();
+                    echo 'id: ' . $sequence . "\n";
                     echo 'data: ' . \json_encode($event->getPayload(), \JSON_THROW_ON_ERROR) . "\n\n";
                     if (\ob_get_level() > 0) {
                         \ob_flush();
@@ -40,6 +41,7 @@ final class AssistantTurnStream
                 $turn->refresh();
 
                 if ($turn->getStatus()->terminal() && $batch->isEmpty()) {
+                    echo 'id: ' . $sequence . "\n";
                     echo "data: [DONE]\n\n";
 
                     return;

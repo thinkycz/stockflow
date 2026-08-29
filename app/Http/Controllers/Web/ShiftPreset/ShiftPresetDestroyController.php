@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Web\ShiftPreset;
 use App\Models\ShiftPreset;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\WorkforceManagementService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,7 +28,7 @@ class ShiftPresetDestroyController
             \abort(404);
         }
 
-        $shiftPreset->delete();
+        (new WorkforceManagementService())->deletePreset($admin, $store, $shiftPreset);
         Inertia::flash('success', \__('Shift preset deleted.'));
 
         return Resolver::resolveRedirector()->route('shifts.index', [

@@ -15,13 +15,24 @@ function normalized(value: string): string {
     return value.replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
-function instructionKey(text: string): { key: string; amount: string | null } {
+function instructionKey(
+    text: string,
+    instructionId: string | null,
+): { key: string; amount: string | null } {
     const match = normalized(text).match(/^add ([\d.,]+) (g|ml) (.+)$/);
-    if (!match) return { key: `text|${normalized(text)}`, amount: null };
+    if (!match)
+        return {
+            key: instructionId
+                ? `id|${instructionId}`
+                : `text|${normalized(text)}`,
+            amount: null,
+        };
     const [, amount = '', unit = '', remainder = ''] = match;
     const [ingredient = '', target = ''] = remainder.split(' into ');
     return {
-        key: `amount|${unit}|${ingredient}|${target}`,
+        key: instructionId
+            ? `id|${instructionId}`
+            : `amount|${unit}|${ingredient}|${target}`,
         amount,
     };
 }
@@ -42,26 +53,37 @@ async function completeCurrentRecipe(
     await reference
         .getByRole('link', { name: recipeName, exact: true })
         .click();
+    await expect(
+        reference.getByRole('heading', { name: recipeName, exact: true }),
+    ).toBeVisible();
     if (variantName) {
         await reference
             .getByRole('tab', { name: variantName, exact: true })
             .click();
     }
+    await expect(
+        reference.getByTestId('recipe-instruction').first(),
+    ).toBeVisible();
     const correct = (
         await reference
             .getByTestId('recipe-instruction')
             .evaluateAll((elements) =>
-                elements.map(
-                    (element) => element.lastElementChild?.textContent ?? '',
-                ),
+                elements.map((element) => ({
+                    text: element.lastElementChild?.textContent ?? '',
+                    instructionId: element.getAttribute('data-instruction-id'),
+                })),
             )
-    ).map(instructionKey);
+    ).map(({ text, instructionId }) => instructionKey(text, instructionId));
     await reference.close();
 
     const rows = page.getByTestId('session-instruction');
     for (let target = 0; target < correct.length; target += 1) {
         const keys = await rows.evaluateAll((elements) =>
             elements.map((element) => {
+                const instructionId = element.getAttribute(
+                    'data-instruction-id',
+                );
+                if (instructionId) return `id|${instructionId}`;
                 const text = element.getAttribute('data-instruction-text');
                 if (text)
                     return `text|${text.replace(/\s+/g, ' ').trim().toLowerCase()}`;

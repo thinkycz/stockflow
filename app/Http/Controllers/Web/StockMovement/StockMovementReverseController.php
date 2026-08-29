@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Web\StockMovement;
 
 use App\Models\StockMovement;
 use App\Models\User;
-use App\Services\StockMovementService;
+use App\Operations\Inventory\ManageInventory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,17 +18,12 @@ class StockMovementReverseController
     /**
      * Create an immutable compensating movement.
      */
-    public function __invoke(Request $request, StockMovement $stockMovement, StockMovementService $service): RedirectResponse
+    public function __invoke(Request $request, StockMovement $stockMovement, ManageInventory $operation): RedirectResponse
     {
-        $validated = $request->validate([
-            'reason' => ['required', 'string', 'max:2000'],
-        ]);
-
-        $payload = Typer::assertArray($validated);
-        $service->reverseMovement(
-            $stockMovement,
+        $operation->reverseMovement(
             User::mustAuth(),
-            Typer::assertString($payload['reason']),
+            $stockMovement->getKey(),
+            Typer::assertStringKeyArray($request->all()),
         );
 
         Inertia::flash('success', \__('Stock movement reversed.'));

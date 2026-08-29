@@ -6,7 +6,6 @@ namespace App\Http\Controllers\Web\Recipe;
 
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\RecipeValidity;
-use App\Models\Recipe;
 use App\Models\RecipeCategory;
 use App\Models\User;
 use App\Services\RecipeCatalogService;
@@ -45,12 +44,7 @@ class RecipeCategoryController
     public function store(Request $request): RedirectResponse
     {
         $owner = User::mustAuth();
-        $name = $this->name($request, $owner);
-        $lastPosition = Typer::assertNullableInt(RecipeCategory::query()->where('user_id', $owner->getKey())->max('position'));
-        RecipeCategory::query()->create([
-            'user_id' => $owner->getKey(), 'name' => $name,
-            'position' => ($lastPosition ?? 0) + 1,
-        ]);
+        (new RecipeCatalogService())->createCategory($owner, $this->name($request, $owner));
         Inertia::flash('success', \__('Recipe category created.'));
 
         return Resolver::resolveRedirector()->route('recipe-categories.index');
@@ -62,8 +56,7 @@ class RecipeCategoryController
     public function update(Request $request, RecipeCategory $recipeCategory): RedirectResponse
     {
         $owner = User::mustAuth();
-        $recipeCategory->setAttribute('name', $this->name($request, $owner));
-        $recipeCategory->save();
+        (new RecipeCatalogService())->updateCategory($owner, $recipeCategory, $this->name($request, $owner));
         Inertia::flash('success', \__('Recipe category saved.'));
 
         return Resolver::resolveRedirector()->route('recipe-categories.index');
@@ -74,10 +67,9 @@ class RecipeCategoryController
      */
     public function destroy(RecipeCategory $recipeCategory): RedirectResponse
     {
-        if (Recipe::query()->where('recipe_category_id', $recipeCategory->getKey())->exists()) {
+        if (!(new RecipeCatalogService())->deleteCategory(User::mustAuth(), $recipeCategory)) {
             Inertia::flash('error', \__('A category containing recipes cannot be deleted.'));
         } else {
-            $recipeCategory->delete();
             Inertia::flash('success', \__('Recipe category deleted.'));
         }
 

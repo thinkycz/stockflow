@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Web\Settings;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\StoreValidity;
 use App\Models\User;
+use App\Services\AdministrationManagementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -41,10 +42,11 @@ class SettingsController
             'locale' => $authValidity->locale()->required()->toArray(),
         ]);
 
-        $user->update([
-            'email' => $validated->assertString('email'),
-            'locale' => $validated->assertString('locale'),
-        ]);
+        (new AdministrationManagementService())->updateProfile(
+            $user,
+            $validated->assertString('email'),
+            $validated->assertString('locale'),
+        );
 
         Inertia::flash('success', \__('Profile updated.'));
 
@@ -94,9 +96,7 @@ class SettingsController
         ]);
         $channel = \mb_trim($validated->assertNullableString('company_slack_channel') ?? '');
 
-        $user->update([
-            'company_slack_channel' => $channel === '' ? null : $channel,
-        ]);
+        (new AdministrationManagementService())->updateSlackChannel($user, $channel === '' ? null : $channel);
 
         Inertia::flash('success', \__('Slack settings updated.'));
 

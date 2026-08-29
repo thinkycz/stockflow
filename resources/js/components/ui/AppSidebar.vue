@@ -15,6 +15,7 @@ import {
     LayoutDashboard,
     ListChecks,
     LogOut,
+    BotMessageSquare,
     PackageMinus,
     PackagePlus,
     Receipt,
@@ -48,7 +49,7 @@ withDefaults(
     },
 );
 
-const { auth } = useSharedProps();
+const { app, auth } = useSharedProps();
 const { t } = useI18n();
 
 const route = useRoute();
@@ -224,6 +225,17 @@ const adminManagementNavItems = computed<NavItem[]>(() => [
         icon: HardHat,
         active: activeUrl.value.startsWith('/workers'),
     },
+    ...(app.value.assistant_enabled
+        ? [
+              {
+                  key: 'assistant',
+                  href: route('assistant.index'),
+                  label: t('nav.assistant'),
+                  icon: BotMessageSquare,
+                  active: activeUrl.value.startsWith('/assistant'),
+              },
+          ]
+        : []),
 ]);
 
 type NavSection = {

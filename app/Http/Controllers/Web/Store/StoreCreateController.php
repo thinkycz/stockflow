@@ -4,16 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Store;
 
-use App\Enums\StoreStatusEnum;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\StoreValidity;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\ChecklistService;
-use Carbon\CarbonImmutable;
+use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -49,26 +46,15 @@ class StoreCreateController
 
         $slackChannel = \mb_trim($validated->assertNullableString('slack_channel') ?? '');
 
-        $store = DB::transaction(static function () use ($user, $validated, $slackChannel): Store {
-            $store = Store::query()->create([
-                'user_id' => $user->getKey(),
-                'name' => $validated->assertString('name'),
-                'address' => $validated->assertNullableString('address'),
-                'status' => $validated->assertString('status'),
-                'notes' => $validated->assertNullableString('notes'),
-                'slack_channel' => $slackChannel === '' ? null : $slackChannel,
-                'is_warehouse' => $validated->parseBool('is_warehouse'),
-            ]);
-            if (!$store->isWarehouse()) {
-                $service = new ChecklistService();
-                $service->initializeStore($store);
-                if ($store->getStatus() === StoreStatusEnum::ACTIVE) {
-                    $service->ensureDay($store, CarbonImmutable::now(ChecklistService::TIMEZONE));
-                }
-            }
-
-            return $store;
-        });
+        $store = (new AdministrationManagementService())->createStore(
+            $user,
+            $validated->assertString('name'),
+            $validated->assertNullableString('address'),
+            $validated->assertString('status'),
+            $validated->assertNullableString('notes'),
+            $slackChannel === '' ? null : $slackChannel,
+            $validated->parseBool('is_warehouse'),
+        );
 
         Inertia::flash('success', \__('Store created.'));
 

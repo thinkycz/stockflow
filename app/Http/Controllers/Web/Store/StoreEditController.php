@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\StoreValidity;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -55,14 +56,16 @@ class StoreEditController
 
         $slackChannel = \mb_trim($validated->assertNullableString('slack_channel') ?? '');
 
-        $store->update([
-            'name' => $validated->assertString('name'),
-            'address' => $validated->assertNullableString('address'),
-            'status' => $validated->assertString('status'),
-            'notes' => $validated->assertNullableString('notes'),
-            'slack_channel' => $slackChannel === '' ? null : $slackChannel,
-            'is_warehouse' => $validated->parseBool('is_warehouse'),
-        ]);
+        (new AdministrationManagementService())->updateStore(
+            $user,
+            $store,
+            $validated->assertString('name'),
+            $validated->assertNullableString('address'),
+            $validated->assertString('status'),
+            $validated->assertNullableString('notes'),
+            $slackChannel === '' ? null : $slackChannel,
+            $validated->parseBool('is_warehouse'),
+        );
 
         Inertia::flash('success', \__('Store updated.'));
 

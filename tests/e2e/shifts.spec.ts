@@ -22,7 +22,9 @@ test('public shift requests toggle and appear in the admin calendar overlay', as
     await expect(page.getByRole('button', { name: 'Full view' })).toBeVisible();
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.getByRole('button', { name: 'Submit requests' }).click();
-    await page.getByLabel('Employee').selectOption({ label: 'E2E Worker' });
+    await page
+        .getByLabel('Employee', { exact: true })
+        .selectOption({ label: 'E2E Worker' });
     await page.getByLabel('Time from').selectOption('09:00');
     await page.getByLabel('Time to').selectOption('17:00');
     await page.getByRole('button', { name: 'Start selecting' }).click();
@@ -54,11 +56,15 @@ test('public shift requests toggle and appear in the admin calendar overlay', as
     await page.getByRole('button', { name: 'Next month' }).click();
     await expect(page.getByTestId('mobile-full-view')).toBeVisible();
     await page.getByRole('button', { name: 'Previous month' }).click();
+    await expect(
+        page.getByTestId(`mobile-full-calendar-day-${date}`),
+    ).toBeVisible();
     await page.setViewportSize({ width: 1280, height: 720 });
 
-    await page.getByRole('button', { name: 'Done' }).click();
     await page.getByLabel('Time from').selectOption('10:00');
     await page.getByLabel('Time to').selectOption('18:00');
+    await expect(page.getByLabel('Time from')).toHaveValue('10:00');
+    await expect(page.getByLabel('Time to')).toHaveValue('18:00');
     await page.getByRole('button', { name: 'Start selecting' }).click();
     await day.click();
     await expect(day.getByTestId('calendar-shift-request')).toContainText(
@@ -79,6 +85,7 @@ test('public shift requests toggle and appear in the admin calendar overlay', as
     await page.getByLabel('Email').fill('test@test.com');
     await page.getByLabel('Password', { exact: true }).fill('password');
     await page.getByRole('button', { name: 'Log in' }).click();
+    await page.waitForURL(/\/dashboard$/);
     await page.goto(`/shifts?year=${year}&month=${month}`);
 
     await expect(
@@ -97,7 +104,9 @@ test('public shift requests toggle and appear in the admin calendar overlay', as
         'shift-request-approval-form',
     );
     await expect(approvalForm).toContainText(`E2E Worker · ${date}`);
-    await expect(approvalForm.getByLabel('Employee')).toHaveCount(0);
+    await expect(
+        approvalForm.getByLabel('Employee', { exact: true }),
+    ).toHaveCount(0);
     await approvalForm.getByLabel('Start').selectOption('10:15');
     await approvalForm.getByLabel('End').selectOption('18:15');
     await approvalForm
@@ -138,7 +147,9 @@ test('quick-added shifts are time ordered and feedback uses the global toast', a
     await page.goto('/shifts?year=2026&month=7');
     const day = page.getByTestId('calendar-day-2026-07-15');
 
-    await page.getByLabel('Employee').selectOption({ label: 'E2E Worker' });
+    await page
+        .getByLabel('Employee', { exact: true })
+        .selectOption({ label: 'E2E Worker' });
     await page
         .getByLabel('Shift preset')
         .selectOption({ label: 'Evening (18:00–22:00)' });

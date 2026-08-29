@@ -10,12 +10,11 @@ use App\Models\Shift;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\ShiftAssignmentService;
+use App\Services\WorkforceManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
-use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class ShiftUpdateController
@@ -44,32 +43,16 @@ class ShiftUpdateController
         $date = $validated->assertString('date');
         $startTime = $validated->assertString('start_time');
         $endTime = $validated->assertString('end_time');
-        $service = new ShiftAssignmentService();
-
-        if (!$validated->parseBool('allow_overlap') && $service->findOverlaps(
+        (new WorkforceManagementService())->updateShift(
             $admin,
             $store,
+            $shift,
             $worker,
             $date,
             $startTime,
             $endTime,
-            $shift->getKey(),
-        )->isNotEmpty()) {
-            Thrower::default()->message('overlap', \__('This shift overlaps an existing assignment.'))->throw();
-        }
-
-        $attributes = [
-            'worker_id' => $workerId,
-            'date' => $date,
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-        ];
-
-        if ($workerId !== $shift->getWorkerId()) {
-            $attributes['hourly_rate'] = $worker->getHourlyRate();
-        }
-
-        $shift->update($attributes);
+            $validated->parseBool('allow_overlap'),
+        );
 
         Inertia::flash('success', \__('Shift updated.'));
 

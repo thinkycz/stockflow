@@ -49,6 +49,7 @@ class RecipeTestService
             $correct[] = ['token' => $token, 'text' => $instruction->getText()];
             $snapshotInstructions[] = [
                 'token' => $token,
+                'instruction_id' => $instruction->getKey(),
                 'type' => $instruction->getType(),
                 'text' => $instruction->getText(),
                 'action_key' => $instruction->getActionKey(),

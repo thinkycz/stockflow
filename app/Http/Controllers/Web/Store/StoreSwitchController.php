@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\StoreValidity;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\AdministrationManagementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -60,7 +61,7 @@ class StoreSwitchController
 
         // Persist the active store choice onto the user model so it
         // survives session expiry and works across devices.
-        $user->setActiveStoreId($store->getKey());
+        (new AdministrationManagementService())->switchStore($user, $store);
 
         if ($request->expectsJson()) {
             return new JsonResponse([

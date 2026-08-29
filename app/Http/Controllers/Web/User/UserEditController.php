@@ -9,9 +9,9 @@ use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\UserValidity;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -72,34 +72,17 @@ class UserEditController
 
         $validated = $this->validateRequest($request, $rules);
 
-        DB::transaction(static function () use ($user, $validated, $admin, $isSelf): void {
-            $attributes = [
-                'email' => $validated->assertString('email'),
-            ];
-
-            $password = $validated->assertNullableString('password');
-
-            if ($password !== null && $password !== '') {
-                $attributes['password'] = $password;
-            }
-
-            if (!$isSelf) {
-                $attributes['assigned_store_id'] = $validated->parseInt('assigned_store_id');
-                $attributes['disabled_sections'] = \array_values(\array_diff(
-                    LimitedUserSectionEnum::values(),
-                    Typer::assertStringArray($validated->assertArray('enabled_sections')),
-                ));
-            }
-
-            // Guard: an admin can never demote themselves.
-            if ($user->is($admin)) {
-                $attributes['is_admin'] = true;
-                $attributes['parent_user_id'] = null;
-                $attributes['assigned_store_id'] = null;
-            }
-
-            $user->update($attributes);
-        });
+        $assignedStore = $isSelf
+            ? null
+            : Store::query()->where('user_id', $admin->getKey())->whereKey($validated->parseInt('assigned_store_id'))->firstOrFail();
+        (new AdministrationManagementService())->updateUser(
+            $admin,
+            $user,
+            $validated->assertString('email'),
+            $validated->assertNullableString('password'),
+            $assignedStore,
+            $isSelf ? null : \array_values(Typer::assertStringArray($validated->assertArray('enabled_sections'))),
+        );
 
         Inertia::flash('success', \__('User updated.'));
 

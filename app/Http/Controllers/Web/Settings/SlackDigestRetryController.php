@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Web\Settings;
 
 use App\Models\OperationalDailyDigest;
 use App\Models\User;
-use App\Services\DailyOperationalDigestService;
+use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -25,7 +25,7 @@ class SlackDigestRetryController
             ->whereKey($digest)
             ->firstOrFail(), OperationalDailyDigest::class);
 
-        (new DailyOperationalDigestService())->retry($company, $model);
+        (new AdministrationManagementService())->retrySlackDigest($company, $model);
         Inertia::flash('success', \__('Daily Slack digest queued again.'));
 
         return Resolver::resolveRedirector()->route('settings.slack-digests.show', ['digest' => $model->getKey()]);

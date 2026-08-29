@@ -20,6 +20,7 @@ import { useRoute } from '@/composables/useRoute';
 
 type Instruction = {
     token: string;
+    instruction_id: number | null;
     type: 'ingredient' | 'action';
     text: string | null;
     action_key: string;
@@ -299,6 +300,9 @@ function correctInstructions(recipe: SessionRecipe): Instruction[] {
                             draggable="true"
                             data-testid="session-instruction"
                             :data-instruction-token="instruction.token"
+                            :data-instruction-id="
+                                instruction.instruction_id || undefined
+                            "
                             :data-instruction-text="
                                 instruction.text || undefined
                             "

@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Web\Shift;
 use App\Models\ShiftShareLink;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\WorkforceManagementService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,7 +40,7 @@ class ShiftShareLinkDestroyController
             \abort(404);
         }
 
-        $link->delete();
+        (new WorkforceManagementService())->deleteShareLink($admin, $store, $link);
         Inertia::flash('success', \__('Public link deleted.'));
 
         return Resolver::resolveRedirector()->route('shifts.index', [

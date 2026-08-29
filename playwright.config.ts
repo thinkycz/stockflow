@@ -29,6 +29,7 @@ export default defineConfig({
         timeout: 60000,
         env: {
             APP_ENV: 'testing',
+            AI_ASSISTANT_ENABLED: 'true',
             CACHE_STORE: 'array',
             E2E_DISABLE_THROTTLE: 'true',
             SESSION_SECURE_COOKIE: 'false',

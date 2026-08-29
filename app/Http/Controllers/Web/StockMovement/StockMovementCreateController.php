@@ -6,13 +6,11 @@ namespace App\Http\Controllers\Web\StockMovement;
 
 use App\Enums\AdjustmentReasonEnum;
 use App\Enums\StockMovementClassificationEnum;
-use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
-use App\Http\Validation\StockMovementValidity;
 use App\Models\Item;
 use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
-use App\Services\StockMovementService;
+use App\Operations\Inventory\CreateStockMovement;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,8 +21,6 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 class StockMovementCreateController
 {
-    use ValidatesWebRequests;
-
     /**
      * Show the dynamic create-movement form.
      */
@@ -113,57 +109,10 @@ class StockMovementCreateController
     /**
      * Validate and persist a new stock movement.
      */
-    public function store(Request $request, StockMovementService $service): RedirectResponse
+    public function store(Request $request, CreateStockMovement $command): RedirectResponse
     {
         $user = User::mustAuth();
-        $owner = $user->resolveScopeUser();
-        $validity = StockMovementValidity::inject($owner->getKey());
-        $mode = $request->input('mode');
-        $isAdjustment = $mode === 'adjustment';
-        $isConsumption = $mode === 'consumption';
-        $isIncoming = $mode === 'incoming';
-
-        $rules = [
-            'note' => $validity->note()->nullable()->toArray(),
-            'occurred_at' => $user->isAdmin()
-                ? ['nullable', 'date', 'before_or_equal:now']
-                : ['prohibited'],
-            'items' => $validity->items()->required()->toArray(),
-            'items.*.item_id' => $validity->rowItemId()->required()->toArray(),
-        ];
-
-        if ($isAdjustment) {
-            $rules['mode'] = $validity->baseValidity->mode(['adjustment'])->nullable()->toArray();
-            $rules['store_id'] = $validity->activeStoreId()->required()->toArray();
-            $rules['items.*.quantity_after'] = $validity->rowQuantityAfter()->required()->toArray();
-            $rules['items.*.adjustment_reason'] = $validity->rowAdjustmentReason()->required()->toArray();
-        } elseif ($isConsumption) {
-            $rules['mode'] = $validity->baseValidity->mode(['consumption'])->required()->toArray();
-            $rules['store_id'] = $validity->activeStoreId()->required()->toArray();
-            $rules['items.*.quantity'] = $validity->rowQuantity()->required()->toArray();
-        } elseif ($isIncoming) {
-            $rules['mode'] = $validity->baseValidity->mode(['incoming'])->required()->toArray();
-            $rules['store_id'] = $validity->activeStoreId()->required()->toArray();
-            $rules['items.*.quantity'] = $validity->rowQuantity()->required()->toArray();
-        } else {
-            $rules['mode'] = $validity->baseValidity->mode(['transfer'])->nullable()->toArray();
-            $rules['source_store_id'] = $validity->activeStoreId()->nullable()->toArray();
-            $rules['store_id'] = $validity->activeStoreId()->required()->toArray();
-            $rules['items.*.quantity'] = $validity->rowQuantity()->required()->toArray();
-        }
-
-        $validated = $this->validateRequest($request, $rules);
-
-        $payload = [
-            'mode' => $isAdjustment ? 'adjustment' : ($isConsumption ? 'consumption' : ($isIncoming ? 'incoming' : 'transfer')),
-            'store_id' => Typer::parseNullableInt($validated->mixed('store_id')),
-            'source_store_id' => Typer::parseNullableInt($validated->mixed('source_store_id')),
-            'note' => $validated->assertNullableString('note'),
-            'occurred_at' => $validated->assertNullableString('occurred_at'),
-            'items' => $validated->assertArray('items'),
-        ];
-
-        $movement = $service->createMovement($payload, $user);
+        $movement = $command->execute($user, Typer::assertStringKeyArray($request->all()));
 
         Inertia::flash('success', \__('Stock movement created.'));
 

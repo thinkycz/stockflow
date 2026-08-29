@@ -4,59 +4,23 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\InventoryCount;
 
-use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
-use App\Http\Validation\InventoryCountValidity;
-use App\Models\Store;
 use App\Models\User;
-use App\Services\InventorySessionService;
+use App\Operations\Inventory\ManageInventory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Typer;
 
 class InventoryCountUpdateController
 {
-    use ValidatesWebRequests;
-
     /**
      * Persist a batch of inventory counts for the selected store.
      */
-    public function __invoke(Request $request, InventorySessionService $service): RedirectResponse
+    public function __invoke(Request $request, ManageInventory $operation): RedirectResponse
     {
         $user = User::mustAuth();
-        $scopeUser = $user->resolveScopeUser();
-        $validity = InventoryCountValidity::inject($scopeUser->getKey());
-
-        $validated = $this->validateRequest($request, [
-            'store_id' => $validity->storeId()->required()->toArray(),
-            'rows' => $validity->rows()->required()->toArray(),
-            'rows.*.item_id' => $validity->itemId()->required()->toArray(),
-            'rows.*.quantity' => $validity->rowQuantity()->nullable()->toArray(),
-            'rows.*.classification' => $validity->rowClassification()->nullable()->toArray(),
-            'rows.*.note' => $validity->rowNote()->nullable()->toArray(),
-        ]);
-
-        $storeId = $validated->parseInt('store_id');
-        /** @var array<int, array<string, mixed>> $rows */
-        $rows = $validated->assertArray('rows');
-
-        $storeLookup = Store::query();
-        Store::scopeForUser($storeLookup, $scopeUser);
-        $store = $storeLookup->whereKey($storeId)->first();
-
-        if (!$store instanceof Store) {
-            \abort(404);
-        }
-
-        if (!$user->isAdmin()) {
-            $assignedStoreId = $user->getAssignedStoreId();
-
-            if ($assignedStoreId === null || $assignedStoreId !== $store->getKey()) {
-                \abort(403);
-            }
-        }
-
-        $session = $service->createSession($user, $store, $rows);
+        $session = $operation->createCount($user, Typer::assertStringKeyArray($request->all()));
 
         Inertia::flash('success', \__('Inventory count saved.'));
 

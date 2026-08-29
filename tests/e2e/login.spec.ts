@@ -11,7 +11,7 @@ test.describe('Full user journey', () => {
 
         await page.waitForURL(/\/dashboard/);
         await expect(
-            page.getByRole('heading', { name: 'Dashboard' }),
+            page.getByRole('heading', { name: 'Noticeboard' }),
         ).toBeVisible();
 
         await page.goto('/settings');
@@ -19,7 +19,8 @@ test.describe('Full user journey', () => {
 
         await page.waitForURL(/\/settings$/);
 
-        await page.getByRole('button', { name: 'Log out' }).click();
+        await page.getByRole('button', { name: 'User menu' }).click();
+        await page.getByRole('menuitem', { name: 'Log out' }).click();
         await page.waitForURL(/\/login|\/$/);
     });
 

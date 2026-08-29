@@ -24,15 +24,15 @@ test('admin adjusts closes and prints payroll while limited users are denied', a
     await expect(page.getByTestId('active-store-pill')).toBeVisible();
 
     await page.getByRole('button', { name: 'Add worker' }).click();
-    await page.getByRole('combobox', { name: 'Worker' }).fill('Off Schedule');
-    await page.getByRole('option', { name: 'Off Schedule Worker' }).click();
+    await page.getByRole('combobox', { name: 'Worker' }).fill('Payroll Only');
+    await page.getByRole('option', { name: 'Payroll Only Worker' }).click();
     await page
         .getByRole('dialog')
         .getByRole('button', { name: 'Add worker' })
         .click();
     const addedRow = page
         .locator('[data-testid^="payroll-row-"]')
-        .filter({ hasText: 'Off Schedule Worker' });
+        .filter({ hasText: 'Payroll Only Worker' });
     await expect(addedRow).toContainText('0 h');
     await addedRow.getByRole('link', { name: 'Detail' }).click();
     await page.getByRole('button', { name: 'Remove from report' }).click();
@@ -41,7 +41,7 @@ test('admin adjusts closes and prints payroll while limited users are denied', a
     await expect(
         page
             .locator('[data-testid^="payroll-row-"]')
-            .filter({ hasText: 'Off Schedule Worker' }),
+            .filter({ hasText: 'Payroll Only Worker' }),
     ).toHaveCount(0);
 
     const row = page

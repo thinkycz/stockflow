@@ -43,6 +43,7 @@ class HandleInertiaRequests extends Middleware
                 'name' => Config::inject()->assertString('app.name'),
                 'locale' => Config::inject()->assertString('app.locale'),
                 'locales' => Config::inject()->assertArray('app.locales'),
+                'assistant_enabled' => Config::inject()->assertBool('ai.assistant.enabled'),
             ],
             'auth' => [
                 'user' => fn(): array|null => $this->user(),

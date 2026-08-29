@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Statement;
 
-use App\Models\Statement;
 use App\Models\User;
-use App\Services\StatementService;
+use App\Operations\Statements\ManageStatements;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -22,29 +21,10 @@ class StatementClearController
      * so limited users can clear statements owned by their admin. A limited
      * user may only clear statements attached to their assigned store.
      */
-    public function __invoke(Request $request, StatementService $service): RedirectResponse
+    public function __invoke(Request $request, ManageStatements $operation): RedirectResponse
     {
         $user = User::mustAuth();
-        $scopeUser = $user->resolveScopeUser();
-
-        $statement = Statement::query()
-            ->where('user_id', $scopeUser->getKey())
-            ->whereKey(Typer::parseInt($request->route('statement')))
-            ->first();
-
-        if (!$statement instanceof Statement) {
-            \abort(404);
-        }
-
-        if (!$user->isAdmin()) {
-            $assignedStoreId = $user->getAssignedStoreId();
-
-            if ($assignedStoreId === null || $assignedStoreId !== $statement->getStoreId()) {
-                \abort(403);
-            }
-        }
-
-        $service->clear($statement, $user);
+        $statement = $operation->clear($user, Typer::parseInt($request->route('statement')));
 
         Inertia::flash('success', \__('Statement cleared.'));
 

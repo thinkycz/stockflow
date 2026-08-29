@@ -98,6 +98,48 @@ class RecipeCatalogService
     }
 
     /**
+     * Create a category at the end of the company's recipe catalog.
+     */
+    public function createCategory(User $owner, string $name): RecipeCategory
+    {
+        $lastPosition = Typer::assertNullableInt(RecipeCategory::query()
+            ->where('user_id', $owner->getKey())
+            ->max('position'));
+
+        return Typer::assertInstance(RecipeCategory::query()->create([
+            'user_id' => $owner->getKey(),
+            'name' => $name,
+            'position' => ($lastPosition ?? 0) + 1,
+        ]), RecipeCategory::class);
+    }
+
+    /**
+     * Rename an owned recipe category.
+     */
+    public function updateCategory(User $owner, RecipeCategory $category, string $name): RecipeCategory
+    {
+        $this->assertCategoryOwner($owner, $category);
+        $category->setAttribute('name', $name);
+        $category->save();
+
+        return $category;
+    }
+
+    /**
+     * Delete an empty owned category and report whether it was removed.
+     */
+    public function deleteCategory(User $owner, RecipeCategory $category): bool
+    {
+        $this->assertCategoryOwner($owner, $category);
+
+        if (Recipe::query()->where('recipe_category_id', $category->getKey())->exists()) {
+            return false;
+        }
+
+        return $category->delete();
+    }
+
+    /**
      * @param list<array{name: string|null, instructions: list<array<string, mixed>>}> $variants
      */
     public function save(User $owner, RecipeCategory $category, Recipe|null $recipe, string $name, string|null $note, array $variants): Recipe
@@ -163,9 +205,7 @@ class RecipeCatalogService
      */
     public function moveCategory(User $owner, RecipeCategory $category, string $direction): void
     {
-        if ($category->getUserId() !== $owner->getKey()) {
-            throw new InvalidArgumentException('Recipe category does not belong to this company.');
-        }
+        $this->assertCategoryOwner($owner, $category);
 
         DB::transaction(static function () use ($owner, $category, $direction): void {
             $target = Typer::assertInstance(RecipeCategory::query()->whereKey($category->getKey())->lockForUpdate()->firstOrFail(), RecipeCategory::class);
@@ -260,5 +300,15 @@ class RecipeCatalogService
         }
 
         return $normalized;
+    }
+
+    /**
+     * Ensure a recipe category belongs to the selected company owner.
+     */
+    private function assertCategoryOwner(User $owner, RecipeCategory $category): void
+    {
+        if ($category->getUserId() !== $owner->getKey()) {
+            throw new InvalidArgumentException('Recipe category does not belong to this company.');
+        }
     }
 }

@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\WorkerValidity;
 use App\Models\User;
 use App\Models\Worker;
+use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -54,15 +55,17 @@ class WorkerEditController
             'calendar_color' => $validity->calendarColor()->nullable()->toArray(),
         ]);
 
-        $worker->update([
-            'first_name' => $validated->assertString('first_name'),
-            'last_name' => $validated->assertString('last_name'),
-            'hourly_rate' => $validated->parseFloat('hourly_rate'),
-            'calendar_color' => Worker::normalizeCalendarColor($validated->assertNullableString('calendar_color')),
-            'attendance_rating_enabled' => $validated->has('attendance_rating_enabled')
+        (new AdministrationManagementService())->updateWorker(
+            $admin,
+            $worker,
+            $validated->assertString('first_name'),
+            $validated->assertString('last_name'),
+            $validated->parseFloat('hourly_rate'),
+            $validated->assertNullableString('calendar_color'),
+            $validated->has('attendance_rating_enabled')
                 ? $validated->parseBool('attendance_rating_enabled')
                 : $worker->isAttendanceRatingEnabled(),
-        ]);
+        );
 
         Inertia::flash('success', \__('Worker updated.'));
 

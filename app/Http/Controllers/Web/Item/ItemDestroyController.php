@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Item;
 
-use App\Models\InventorySessionItem;
 use App\Models\Item;
-use App\Models\StockMovementItem;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\User;
+use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
-use Thinkycz\LaravelCore\Support\Thrower;
 
 class ItemDestroyController
 {
@@ -21,30 +18,7 @@ class ItemDestroyController
      */
     public function __invoke(Item $item): RedirectResponse
     {
-        $hasMovements = StockMovementItem::query()
-            ->whereHas('stockMovement', static function (Builder $query) use ($item): void {
-                $query->where('user_id', $item->getUserId());
-            })
-            ->where('item_id', $item->getKey())
-            ->exists();
-
-        if ($hasMovements) {
-            $thrower = new Thrower(Resolver::resolveValidatorFactory()->make([], []));
-            $thrower->message('item', \__('Cannot delete an item that has stock movement history.'));
-            $thrower->throw();
-        }
-
-        DB::transaction(static function () use ($item): void {
-            InventorySessionItem::query()
-                ->where('item_id', $item->getKey())
-                ->whereHas('session', static function (Builder $query): void {
-                    $query->where('status', 'draft');
-                })
-                ->delete();
-
-            $item->storeItems()->delete();
-            $item->delete();
-        });
+        (new AdministrationManagementService())->deleteItem(User::mustAuth(), $item);
 
         Inertia::flash('success', \__('Item deleted.'));
 

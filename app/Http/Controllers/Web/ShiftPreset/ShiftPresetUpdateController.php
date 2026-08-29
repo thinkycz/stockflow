@@ -9,6 +9,7 @@ use App\Http\Validation\ShiftPresetValidity;
 use App\Models\ShiftPreset;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\WorkforceManagementService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -44,11 +45,14 @@ class ShiftPresetUpdateController
             'end_time' => $validity->endTime()->required()->toArray(),
         ]);
 
-        $shiftPreset->update([
-            'name' => $validated->assertString('name'),
-            'start_time' => $validated->assertString('start_time'),
-            'end_time' => $validated->assertString('end_time'),
-        ]);
+        (new WorkforceManagementService())->updatePreset(
+            $admin,
+            $store,
+            $shiftPreset,
+            $validated->assertString('name'),
+            $validated->assertString('start_time'),
+            $validated->assertString('end_time'),
+        );
 
         Inertia::flash('success', \__('Shift preset updated.'));
 

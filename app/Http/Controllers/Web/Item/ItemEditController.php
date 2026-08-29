@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\ItemValidity;
 use App\Models\Item;
 use App\Models\User;
+use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -51,13 +52,15 @@ class ItemEditController
             'description' => $itemValidity->description()->nullable()->toArray(),
         ]);
 
-        $item->update([
-            'title' => $validated->assertString('title'),
-            'sku' => $validated->assertNullableString('sku'),
-            'unit' => $validated->assertNullableString('unit'),
-            'purchase_price' => $validated->assertString('purchase_price'),
-            'description' => $validated->assertNullableString('description'),
-        ]);
+        (new AdministrationManagementService())->updateItem(
+            User::mustAuth(),
+            $item,
+            $validated->assertString('title'),
+            $validated->assertNullableString('sku'),
+            $validated->assertNullableString('unit'),
+            $validated->assertString('purchase_price'),
+            $validated->assertNullableString('description'),
+        );
 
         Inertia::flash('success', \__('Item updated.'));
 

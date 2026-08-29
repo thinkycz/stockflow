@@ -1,0 +1,26 @@
+# Main-Admin AI Assistant – traceability matrix
+
+| Req ID | Requirement                                                    | Status   | Verification evidence                                                                                      | Notes                                                          |
+| ------ | -------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| R1     | Admin-only dedicated assistant destination                     | verified | Assistant controller feature tests; navigation and E2E access coverage                                     | Guest and limited-user access is denied                        |
+| R2     | Persistent streaming conversations                             | verified | New/existing conversation, stream-header, hydration, deletion, and reload/resume tests                     | Transcript remains until manual deletion                       |
+| R3     | Questions over bounded live app data                           | verified | All 20 concrete read tools execute in `NativeResourceToolArchitectureTest`; streamed read-query E2E        | Results are capped at 50 raw records                           |
+| R4     | Native approval before every write/effect                      | verified | Mutation tool, native decision-validation, rejection, grouped-decision, and E2E approval tests             | One click resolves only the fully displayed proposal set       |
+| R5     | Read-only business approval decisions                          | verified | Controller contract and E2E approval/rejection tests reject browser arguments and rejection text           | Only approve or reject crosses the public business boundary    |
+| R6     | Human-equivalent domain execution                              | verified | Shared service extraction, command-equivalence tests, native writer tests, and existing controller tests   | AI tools do not persist Eloquent domain models directly        |
+| R7     | Full current business-mutation parity                          | verified | Bidirectional native tool/action checks in `AssistantMutationParityArchitectureTest`                       | All authenticated mutation routes are mapped or classified     |
+| R8     | Supplemental AI tool audit                                     | verified | Proposal, approval/edit/reject, invocation, success, failure, replay, redaction, and event tests           | Domain records remain canonical                                |
+| R9     | 90-day Prague-local audit pruning                              | verified | `PruneAssistantActionAuditsJobTest`; scheduled daily at 04:30 Europe/Prague                                | Conversation deletion does not delete the ledger               |
+| R10    | OpenRouter MiniMax M3 free provider                            | verified | Native `laravel/ai` OpenRouter config, explicit provider/model contract test, provider fakes, opt-in smoke | Live smoke awaits deployment credentials                       |
+| R11    | Responsive Inertia/Vue approval UX                             | verified | Vitest assistant transport tests and desktop/mobile Playwright scenarios                                   | Multi-action proposals use one bounded review and one decision |
+| R12    | Czech, English, and Slovak locale parity                       | verified | Identical assistant key sets pass frontend checks; locale E2E remains green                                | Approval and interaction copy is present in all three locales  |
+| R13    | Exclude auth, credentials, provider config, and binary uploads | verified | Route-parity exclusions, native catalog constraints, validation constraints, and audit-redaction tests     | Existing noticeboard/voucher images may be removed by approval |
+| R14    | Safe Markdown and plain-language approval presentation         | verified | Sanitizer contract, production build, signed-in Chrome check, and Markdown/confirmation E2E                | User messages remain plain text; provider reasoning is hidden  |
+| R15    | Clickable server-locked clarification choices                  | verified | Native tool, controller contract, hydration, decision unit, and selection E2E tests                        | Choice selection never executes a business mutation            |
+| R16    | Visible streamed tool progress without refresh                 | verified | Delayed tool-call E2E, atomic state-key rendering, activity/stop controls, and near-bottom scrolling logic | Partial approval cards are not mounted                         |
+
+## Contract controls
+
+- `config/assistant_route_parity.php` is the durable classification of supported, semantically read-only, and excluded mutation-shaped routes.
+- The architecture test fails whenever a new authenticated mutation route is unclassified, a route points to an undeclared native writer action, or a writer action has no route/documented assistant-only capability.
+- The non-executing catalog exposes 40 stable native business resource tools plus `ask_user_choice`; arbitrary URLs, SQL, shell, filesystem, web, MCP, hosted tool search, and nested mutation agents are unavailable.

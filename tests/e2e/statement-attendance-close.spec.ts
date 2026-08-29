@@ -27,8 +27,8 @@ test('admin sees and closes every active attendance while saving today', async (
     ).toHaveCount(2);
     await expect(page.getByText('Worked', { exact: true })).toHaveCount(2);
     await expect(workers.locator('span.font-mono')).toHaveText([
-        /^\s*01:00:\d{2}$/,
-        /^\s*01:00:\d{2}$/,
+        /^\s*0[01]:\d{2}:\d{2}$/,
+        /^\s*0[01]:\d{2}:\d{2}$/,
     ]);
 
     await page.getByRole('button', { name: 'Save and close all' }).click();

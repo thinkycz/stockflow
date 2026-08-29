@@ -25,10 +25,11 @@ test.describe('Locale switcher', () => {
         page,
     }) => {
         await expect(
-            page.getByRole('heading', { name: 'Dashboard' }),
+            page.getByRole('heading', { name: 'Noticeboard' }),
         ).toBeVisible();
+        await page.getByRole('button', { name: 'User menu' }).click();
         await expect(
-            page.getByRole('button', { name: 'Log out' }),
+            page.getByRole('menuitem', { name: 'Log out' }),
         ).toBeVisible();
 
         await page.goto('/settings');
@@ -40,8 +41,9 @@ test.describe('Locale switcher', () => {
         await expect(
             page.getByRole('heading', { name: 'Nastavení' }),
         ).toBeVisible();
+        await page.getByRole('button', { name: 'Uživatelské menu' }).click();
         await expect(
-            page.getByRole('button', { name: 'Odhlásit se' }),
+            page.getByRole('menuitem', { name: 'Odhlásit se' }),
         ).toBeVisible();
 
         await switcher.selectOption('sk');
@@ -50,8 +52,9 @@ test.describe('Locale switcher', () => {
         await expect(
             page.getByRole('heading', { name: 'Nastavenia' }),
         ).toBeVisible();
+        await page.getByRole('button', { name: 'Používateľské menu' }).click();
         await expect(
-            page.getByRole('button', { name: 'Odhlásiť sa' }),
+            page.getByRole('menuitem', { name: 'Odhlásiť sa' }),
         ).toBeVisible();
 
         await switcher.selectOption('en');
@@ -60,8 +63,9 @@ test.describe('Locale switcher', () => {
         await expect(
             page.getByRole('heading', { name: 'Settings' }),
         ).toBeVisible();
+        await page.getByRole('button', { name: 'User menu' }).click();
         await expect(
-            page.getByRole('button', { name: 'Log out' }),
+            page.getByRole('menuitem', { name: 'Log out' }),
         ).toBeVisible();
     });
 
@@ -76,8 +80,9 @@ test.describe('Locale switcher', () => {
 
         await page.getByRole('link', { name: 'Nástěnka', exact: true }).click();
         await page.waitForURL(/\/dashboard$/);
+        await page.getByRole('button', { name: 'Uživatelské menu' }).click();
         await page
-            .getByRole('link', { name: 'Nastavení', exact: true })
+            .getByRole('menuitem', { name: 'Nastavení', exact: true })
             .click();
         await page.waitForURL(/\/settings$/);
 

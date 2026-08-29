@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Web\Settings;
 
 use App\Models\User;
-use App\Notifications\SlackTestNotification;
+use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Notifications\AnonymousNotifiable;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
-use Thinkycz\LaravelCore\Support\Typer;
 
 class SlackTestController
 {
@@ -20,18 +18,11 @@ class SlackTestController
     public function __invoke(): RedirectResponse
     {
         $user = User::mustAuth();
-        $channel = \mb_trim($user->getCompanySlackChannel() ?? '');
-
-        if ($channel === '') {
+        if (!(new AdministrationManagementService())->testSlackChannel($user)) {
             Inertia::flash('error', \__('Configure a Slack channel before sending a test notification.'));
 
             return Resolver::resolveRedirector()->route('settings.show');
         }
-
-        Resolver::resolveNotificationFactory()->send(
-            (new AnonymousNotifiable())->route('slack', $channel),
-            new SlackTestNotification(Typer::assertString($user->getAttribute('email'))),
-        );
 
         Inertia::flash('success', \__('Test Slack notification sent.'));
 

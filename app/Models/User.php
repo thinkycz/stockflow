@@ -14,12 +14,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 use Illuminate\Support\Carbon;
+use Laravel\Ai\Concerns\HasConversations;
 use RuntimeException;
 use Thinkycz\LaravelCore\Models\BaseUser;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class User extends BaseUser implements MustVerifyEmail
 {
+    use HasConversations;
+
     /**
      * Scope a query to admin users only.
      *

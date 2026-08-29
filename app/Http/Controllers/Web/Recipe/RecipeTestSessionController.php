@@ -152,6 +152,9 @@ class RecipeTestSessionController
             $requiresAmount = \in_array($unit, ['g', 'ml'], true) && ($instruction['quantity_value'] ?? null) !== null;
             $row = [
                 'token' => $token,
+                'instruction_id' => isset($instruction['instruction_id'])
+                    ? Typer::parseInt($instruction['instruction_id'])
+                    : null,
                 'type' => Typer::assertString($instruction['type'] ?? 'action'),
                 'text' => $requiresAmount ? null : Typer::assertString($instruction['text'] ?? ''),
                 'action_key' => Typer::assertString($instruction['action_key'] ?? 'other'),

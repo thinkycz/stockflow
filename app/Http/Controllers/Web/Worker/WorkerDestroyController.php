@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Worker;
 
-use App\Models\Shift;
+use App\Models\User;
 use App\Models\Worker;
+use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -21,17 +22,11 @@ class WorkerDestroyController
      */
     public function __invoke(Worker $worker): RedirectResponse
     {
-        $shiftQuery = Shift::query();
-        Shift::scopeForWorker($shiftQuery, $worker->getKey());
-
-        if ($shiftQuery->exists()) {
+        if (!(new AdministrationManagementService())->deleteWorker(User::mustAuth(), $worker)) {
             Inertia::flash('error', \__('Cannot delete a worker with existing shifts.'));
 
             return Resolver::resolveRedirector()->route('workers.index');
         }
-
-        $worker->delete();
-
         Inertia::flash('success', \__('Worker deleted.'));
 
         return Resolver::resolveRedirector()->route('workers.index');

@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\InventoryCount;
 
-use App\Models\InventorySession;
 use App\Models\User;
-use App\Services\InventorySessionService;
+use App\Operations\Inventory\ManageInventory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -16,26 +15,13 @@ class InventoryDraftRowController
     /**
      * Autosave one counted inventory row.
      */
-    public function __invoke(Request $request, InventorySessionService $service): JsonResponse
+    public function __invoke(Request $request, ManageInventory $operation): JsonResponse
     {
-        $user = User::mustAuth();
-        $session = InventorySession::query()
-            ->where('user_id', $user->resolveScopeUser()->getKey())
-            ->whereKey(Typer::parseInt($request->route('session')))
-            ->first();
-
-        if (!$session instanceof InventorySession) {
-            \abort(404);
-        }
-
-        $validated = $request->validate([
-            'item_id' => ['required', 'integer'],
-            'quantity' => ['required', 'numeric', 'min:0'],
-            'classification' => ['nullable', 'string'],
-            'note' => ['nullable', 'string'],
-            'client_version' => ['required', 'integer', 'min:1'],
-        ]);
-        $row = $service->saveDraftRow($user, $session, Typer::assertArray($validated));
+        $row = $operation->saveDraftRow(
+            User::mustAuth(),
+            Typer::parseInt($request->route('session')),
+            Typer::assertStringKeyArray($request->all()),
+        );
 
         return new JsonResponse([
             'saved' => true,

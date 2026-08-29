@@ -11,6 +11,7 @@ use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ResolveActiveStore;
 use App\Jobs\CreateDailyOperationalDigestJob;
+use App\Jobs\PruneAssistantActionAuditsJob;
 use App\Jobs\PruneOperationalDigestHistoryJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
@@ -115,6 +116,13 @@ return Application::configure(basePath: \dirname(__DIR__))
         $schedule
             ->job(new PruneOperationalDigestHistoryJob())
             ->dailyAt('04:15')
+            ->timezone($timezone)
+            ->withoutOverlapping()
+            ->onOneServer();
+
+        $schedule
+            ->job(new PruneAssistantActionAuditsJob())
+            ->dailyAt('04:30')
             ->timezone($timezone)
             ->withoutOverlapping()
             ->onOneServer();

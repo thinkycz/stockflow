@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Ai\Agents\StockflowAssistant;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\AttendanceSession;
 use App\Models\Shift;
@@ -46,6 +47,110 @@ class E2ESeeder extends Seeder
         if (!$store instanceof Store) {
             return;
         }
+
+        $crossStore = Store::query()
+            ->where('user_id', $user->getKey())
+            ->whereKeyNot($store->getKey())
+            ->where('is_warehouse', false)
+            ->orderBy('name')
+            ->first();
+
+        if ($crossStore instanceof Store) {
+            $conversation = $user->conversations()->updateOrCreate(
+                ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e0'],
+                ['title' => 'Pending cross-store transfer'],
+            );
+            $conversation->messages()->updateOrCreate(
+                ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e1'],
+                [
+                    'participant_type' => $user->getMorphClass(),
+                    'participant_id' => $user->getKey(),
+                    'agent' => StockflowAssistant::class,
+                    'role' => 'assistant',
+                    'content' => '',
+                    'attachments' => [],
+                    'tool_calls' => [[
+                        'id' => 'e2e-cross-store-transfer',
+                        'name' => 'write_stock_movements',
+                        'arguments' => [
+                            'request' => [
+                                'action' => 'create_stock_movement',
+                                'mode' => 'transfer',
+                                'store_id' => $crossStore->getKey(),
+                                'source_store_id' => $store->getKey(),
+                                'values' => [
+                                    'note' => 'E2E transfer proposal',
+                                    'items' => [],
+                                ],
+                            ],
+                        ],
+                    ]],
+                    'tool_results' => [],
+                    'usage' => [],
+                    'meta' => [],
+                    'approval_state' => ['pending' => [
+                        'e2e-cross-store-transfer' => \json_encode([
+                            'version' => 2,
+                            'kind' => 'action_confirmation',
+                            'summary_key' => 'assistant.action_summaries.create_stock_movement',
+                            'summary_params' => [
+                                'mode' => 'transfer',
+                                'items_count' => 0,
+                                'store' => $crossStore->getName(),
+                            ],
+                        ], \JSON_THROW_ON_ERROR),
+                    ]],
+                ],
+            );
+        }
+
+        $workerConversation = $user->conversations()->updateOrCreate(
+            ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e3'],
+            ['title' => 'Pending worker creation'],
+        );
+        $workerConversation->messages()->updateOrCreate(
+            ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e4'],
+            [
+                'participant_type' => $user->getMorphClass(),
+                'participant_id' => $user->getKey(),
+                'agent' => StockflowAssistant::class,
+                'role' => 'assistant',
+                'content' => '',
+                'attachments' => [],
+                'tool_calls' => [[
+                    'id' => 'e2e-create-worker',
+                    'name' => 'write_workers',
+                    'arguments' => [
+                        'request' => [
+                            'action' => 'create_worker',
+                            'values' => [
+                                'first_name' => 'E2E',
+                                'last_name' => 'Proposal',
+                                'hourly_rate' => 130,
+                            ],
+                        ],
+                    ],
+                ]],
+                'tool_results' => [],
+                'usage' => [],
+                'meta' => [],
+                'approval_state' => ['pending' => [
+                    'e2e-create-worker' => \json_encode([
+                        'version' => 1,
+                        'tool' => 'write_workers',
+                        'operation' => 'create_worker',
+                        'store' => null,
+                        'sanitized_arguments' => [
+                            'values' => [
+                                'first_name' => 'E2E',
+                                'last_name' => 'Proposal',
+                                'hourly_rate' => 130,
+                            ],
+                        ],
+                    ], \JSON_THROW_ON_ERROR),
+                ]],
+            ],
+        );
 
         ShiftShareLink::query()->updateOrCreate(
             ['token' => 'e2e-shift-calendar-token'],
@@ -126,6 +231,14 @@ class E2ESeeder extends Seeder
             ],
             ['hourly_rate' => 200],
         );
+        Worker::query()->updateOrCreate(
+            [
+                'user_id' => $user->getKey(),
+                'first_name' => 'Payroll Only',
+                'last_name' => 'Worker',
+            ],
+            ['hourly_rate' => 200],
+        );
         $deviationShift = Shift::query()->updateOrCreate(
             [
                 'user_id' => $user->getKey(),
@@ -190,6 +303,12 @@ class E2ESeeder extends Seeder
             );
         }
 
+        $activeAttendanceStartedAt = $localNow->subHour();
+
+        if (!$activeAttendanceStartedAt->isSameDay($localNow)) {
+            $activeAttendanceStartedAt = $localNow->startOfDay();
+        }
+
         foreach ([$worker, $secondWorker] as $activeWorker) {
             if (AttendanceSession::query()->where('active_worker_id', $activeWorker->getKey())->exists()) {
                 continue;
@@ -202,7 +321,7 @@ class E2ESeeder extends Seeder
                 'created_by_user_id' => $limited->getKey(),
                 'active_worker_id' => $activeWorker->getKey(),
                 'hourly_rate' => $activeWorker->getHourlyRate(),
-                'started_at' => CarbonImmutable::now('UTC')->subHour(),
+                'started_at' => $activeAttendanceStartedAt->utc(),
             ]);
         }
 

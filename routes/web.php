@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Web\Assistant\AssistantChatController;
+use App\Http\Controllers\Web\Assistant\AssistantController;
 use App\Http\Controllers\Web\Attendance\AttendanceActionController;
 use App\Http\Controllers\Web\Attendance\AttendanceCorrectionController;
 use App\Http\Controllers\Web\Attendance\AttendanceDeviationReviewController;
@@ -111,6 +113,7 @@ use App\Http\Controllers\Web\Worker\WorkerCreateController;
 use App\Http\Controllers\Web\Worker\WorkerDestroyController;
 use App\Http\Controllers\Web\Worker\WorkerEditController;
 use App\Http\Controllers\Web\Worker\WorkerIndexController;
+use App\Http\Middleware\EnsureAiAssistantIsEnabled;
 use App\Http\Middleware\EnsureInertiaUserIsAuthenticated;
 use App\Models\User;
 use Illuminate\Routing\Router;
@@ -210,6 +213,13 @@ Resolver::resolveRouteRegistrar()
 Resolver::resolveRouteRegistrar()
     ->middleware([EnsureInertiaUserIsAuthenticated::class, 'admin'])
     ->group(static function (Router $router): void {
+        $router->middleware(EnsureAiAssistantIsEnabled::class)->group(static function (Router $router): void {
+            $router->get('assistant', [AssistantController::class, 'index'])->name('assistant.index');
+            $router->post('assistant/chat', AssistantChatController::class)->name('assistant.chat');
+            $router->get('assistant/conversations/{conversation}', [AssistantController::class, 'show'])->whereUuid('conversation')->name('assistant.conversations.show');
+            $router->delete('assistant/conversations/{conversation}', [AssistantController::class, 'destroy'])->whereUuid('conversation')->name('assistant.conversations.destroy');
+        });
+
         // Settings
         $router->get('settings', [SettingsController::class, 'edit'])->name('settings.show');
         $router->post('settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');

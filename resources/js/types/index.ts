@@ -32,6 +32,7 @@ export interface AppMeta {
     name: string;
     locale: string;
     locales: string[];
+    assistant_enabled: boolean;
 }
 
 export interface FlashProps {

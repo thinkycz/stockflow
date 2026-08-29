@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Statement;
 
-use App\Models\StatementVersion;
 use App\Models\User;
-use App\Services\StatementService;
+use App\Operations\Statements\ManageStatements;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -22,31 +21,9 @@ class StatementVersionRestoreController
      * when the version is owned by their parent (admin) and the
      * underlying statement belongs to their assigned store.
      */
-    public function __invoke(int $version, StatementService $service): RedirectResponse
+    public function __invoke(int $version, ManageStatements $operation): RedirectResponse
     {
-        $user = User::mustAuth();
-        $scopeUser = $user->resolveScopeUser();
-
-        $versionModel = StatementVersion::query()
-            ->where('user_id', $scopeUser->getKey())
-            ->whereKey($version)
-            ->first();
-
-        if (!$versionModel instanceof StatementVersion) {
-            \abort(404);
-        }
-
-        $statement = $versionModel->getStatement();
-
-        if (!$user->isAdmin()) {
-            $assignedStoreId = $user->getAssignedStoreId();
-
-            if ($assignedStoreId === null || $assignedStoreId !== $statement->getStoreId()) {
-                \abort(403);
-            }
-        }
-
-        $service->restoreVersion($versionModel, $user);
+        $statement = $operation->restoreVersion(User::mustAuth(), $version);
 
         Inertia::flash('success', \__('Statement restored from version.'));
 

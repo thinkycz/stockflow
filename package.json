@@ -9,6 +9,7 @@
         "test:unit": "vitest run"
     },
     "dependencies": {
+        "@ai-sdk/vue": "^4.0.83",
         "@inertiajs/vite": "^3.0.0",
         "@inertiajs/vue3": "^3.0.0",
         "@lucide/vue": "^1.17.0",
@@ -16,8 +17,11 @@
         "@tiptap/starter-kit": "^3.29.0",
         "@tiptap/vue-3": "^3.29.0",
         "@vitejs/plugin-vue": "^6.0.0",
+        "ai": "^7.0.83",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "dompurify": "^3.4.14",
+        "markdown-it": "^15.0.1",
         "tailwind-merge": "^2.5.5",
         "vue": "^3.5.0",
         "vue-i18n": "^10.0.8",
@@ -27,6 +31,7 @@
         "@playwright/test": "^1.48.0",
         "@prettier/plugin-xml": "^3.4.0",
         "@tailwindcss/vite": "^4.0.0",
+        "@types/markdown-it": "^14.2.0",
         "@types/node": "^22.10.0",
         "@vue/tsconfig": "^0.7.0",
         "axios": "^1.8.2",

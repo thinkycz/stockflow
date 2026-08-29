@@ -8,9 +8,9 @@ use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\UserValidity;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -46,16 +46,13 @@ class UserCreateController
             'assigned_store_id' => $validity->assignedStoreId()->required()->toArray(),
         ]);
 
-        $user = DB::transaction(static function () use ($admin, $validated): User {
-            return User::query()->create([
-                'email' => $validated->assertString('email'),
-                'password' => $validated->assertString('password'),
-                'locale' => $admin->getLocale(),
-                'is_admin' => false,
-                'parent_user_id' => $admin->getKey(),
-                'assigned_store_id' => $validated->parseInt('assigned_store_id'),
-            ]);
-        });
+        $store = Store::query()->where('user_id', $admin->getKey())->whereKey($validated->parseInt('assigned_store_id'))->firstOrFail();
+        (new AdministrationManagementService())->createUser(
+            $admin,
+            $validated->assertString('email'),
+            $validated->assertString('password'),
+            $store,
+        );
 
         Inertia::flash('success', \__('User created.'));
 

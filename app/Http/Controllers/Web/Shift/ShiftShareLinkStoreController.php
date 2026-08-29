@@ -6,13 +6,12 @@ namespace App\Http\Controllers\Web\Shift;
 
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\ShiftShareLinkValidity;
-use App\Models\ShiftShareLink;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\WorkforceManagementService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
 
@@ -46,12 +45,7 @@ class ShiftShareLinkStoreController
             'name' => ShiftShareLinkValidity::inject($store->getKey())->name()->required()->toArray(),
         ]);
 
-        ShiftShareLink::query()->create([
-            'user_id' => $admin->getKey(),
-            'store_id' => $store->getKey(),
-            'name' => $validated->assertString('name'),
-            'token' => Str::random(64),
-        ]);
+        (new WorkforceManagementService())->createShareLink($admin, $store, $validated->assertString('name'));
 
         Inertia::flash('success', \__('Public link created.'));
 

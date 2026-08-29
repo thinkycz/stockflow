@@ -9,9 +9,15 @@ import FlashToasts from '@/components/ui/FlashToasts.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 
-defineProps<{
-    title: string;
-}>();
+const props = withDefaults(
+    defineProps<{
+        title: string;
+        fullBleed?: boolean;
+    }>(),
+    {
+        fullBleed: false,
+    },
+);
 
 const { t } = useI18n();
 
@@ -71,7 +77,10 @@ function onBackdropKeydown(event: KeyboardEvent): void {
     <Head :title="title" />
 
     <div
-        class="flex min-h-screen flex-col bg-surface-bg font-sans antialiased md:flex-row"
+        :class="[
+            'flex flex-col bg-surface-bg font-sans antialiased md:flex-row',
+            props.fullBleed ? 'h-dvh overflow-hidden' : 'min-h-screen',
+        ]"
     >
         <!-- Desktop Sidebar -->
         <aside
@@ -128,12 +137,29 @@ function onBackdropKeydown(event: KeyboardEvent): void {
             </div>
         </Transition>
 
-        <main class="flex flex-1 flex-col">
-            <div class="flex flex-1 flex-col p-4 md:p-8">
-                <div class="z-10 flex flex-1 flex-col max-w-7xl w-full mx-auto">
+        <main
+            :class="[
+                'flex min-w-0 flex-1 flex-col',
+                props.fullBleed && 'min-h-0 overflow-hidden',
+            ]"
+        >
+            <div
+                :class="[
+                    'flex flex-1 flex-col',
+                    props.fullBleed ? 'min-h-0' : 'p-4 md:p-8',
+                ]"
+            >
+                <div
+                    :class="[
+                        'z-10 flex flex-1 flex-col',
+                        props.fullBleed
+                            ? 'min-h-0 w-full'
+                            : 'mx-auto w-full max-w-7xl',
+                    ]"
+                >
                     <FlashToasts mobile-header-offset />
 
-                    <div class="flex-1">
+                    <div :class="['flex-1', props.fullBleed && 'flex min-h-0']">
                         <slot />
                     </div>
                 </div>

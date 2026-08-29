@@ -41,6 +41,7 @@ test('tables share the payslip frame and become labelled cards on mobile', async
 
     await expect(row.locator('details')).toHaveCount(0);
     await expect(row.locator('.data-table-frame--nested')).toHaveCount(0);
+    await expect(row.getByRole('link', { name: 'Detail' })).toBeVisible();
 
     const hasHorizontalOverflow = await page.evaluate(
         () =>

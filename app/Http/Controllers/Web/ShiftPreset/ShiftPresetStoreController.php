@@ -6,9 +6,9 @@ namespace App\Http\Controllers\Web\ShiftPreset;
 
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\ShiftPresetValidity;
-use App\Models\ShiftPreset;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\WorkforceManagementService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -44,13 +44,13 @@ class ShiftPresetStoreController
             'end_time' => $validity->endTime()->required()->toArray(),
         ]);
 
-        ShiftPreset::query()->create([
-            'user_id' => $admin->getKey(),
-            'store_id' => $store->getKey(),
-            'name' => $validated->assertString('name'),
-            'start_time' => $validated->assertString('start_time'),
-            'end_time' => $validated->assertString('end_time'),
-        ]);
+        (new WorkforceManagementService())->createPreset(
+            $admin,
+            $store,
+            $validated->assertString('name'),
+            $validated->assertString('start_time'),
+            $validated->assertString('end_time'),
+        );
 
         Inertia::flash('success', \__('Shift preset created.'));
 

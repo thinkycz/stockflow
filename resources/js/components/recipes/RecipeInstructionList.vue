@@ -27,6 +27,7 @@ defineProps<{ instructions: RecipeInstructionData[] }>();
             :key="instruction.id ?? `${instruction.text}-${index}`"
             class="flex items-center gap-2.5 px-3 py-2 text-sm text-on-surface"
             data-testid="recipe-instruction"
+            :data-instruction-id="instruction.id"
         >
             <span
                 class="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white"

@@ -9,13 +9,12 @@ use App\Http\Validation\ShiftValidity;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\ShiftAssignmentService;
+use App\Services\WorkforceManagementService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
-use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class ShiftStoreController
@@ -48,20 +47,15 @@ class ShiftStoreController
         $date = $validated->assertString('date');
         $startTime = $validated->assertString('start_time');
         $endTime = $validated->assertString('end_time');
-        $service = new ShiftAssignmentService();
-
-        if (!$validated->parseBool('allow_overlap') && $service->findOverlaps(
+        (new WorkforceManagementService())->createShift(
             $admin,
             $store,
             $worker,
             $date,
             $startTime,
             $endTime,
-        )->isNotEmpty()) {
-            Thrower::default()->message('overlap', \__('This shift overlaps an existing assignment.'))->throw();
-        }
-
-        $service->create($admin, $store, $worker, $date, $startTime, $endTime);
+            $validated->parseBool('allow_overlap'),
+        );
 
         Inertia::flash('success', \__('Shift created.'));
 

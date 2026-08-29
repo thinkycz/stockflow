@@ -13,7 +13,8 @@ async function login(
 }
 
 async function logout(page: import('@playwright/test').Page): Promise<void> {
-    await page.getByRole('button', { name: 'Log out' }).click();
+    await page.getByRole('button', { name: 'User menu' }).click();
+    await page.getByRole('menuitem', { name: 'Log out' }).click();
     await page.waitForURL(/\/login$/);
 }
 

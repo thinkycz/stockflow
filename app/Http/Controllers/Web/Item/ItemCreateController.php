@@ -7,11 +7,10 @@ namespace App\Http\Controllers\Web\Item;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\ItemValidity;
 use App\Models\Item;
-use App\Models\StoreItem;
 use App\Models\User;
+use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -46,26 +45,14 @@ class ItemCreateController
             'description' => $itemValidity->description()->nullable()->toArray(),
         ]);
 
-        $warehouseId = $user->warehouse()->getKey();
-
-        $item = DB::transaction(function () use ($user, $validated, $warehouseId): Item {
-            $item = Item::query()->create([
-                'user_id' => $user->getKey(),
-                'title' => $validated->assertString('title'),
-                'sku' => $validated->assertNullableString('sku'),
-                'unit' => $validated->assertNullableString('unit'),
-                'purchase_price' => $validated->assertString('purchase_price'),
-                'description' => $validated->assertNullableString('description'),
-            ]);
-
-            StoreItem::query()->create([
-                'store_id' => $warehouseId,
-                'item_id' => $item->getKey(),
-                'quantity' => 0,
-            ]);
-
-            return $item;
-        });
+        $item = (new AdministrationManagementService())->createItem(
+            $user,
+            $validated->assertString('title'),
+            $validated->assertNullableString('sku'),
+            $validated->assertNullableString('unit'),
+            $validated->assertString('purchase_price'),
+            $validated->assertNullableString('description'),
+        );
 
         Inertia::flash('success', \__('Item created.'));
 

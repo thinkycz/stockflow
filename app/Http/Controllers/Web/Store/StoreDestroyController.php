@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Store;
 
-use App\Models\StockMovement;
 use App\Models\Store;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\User;
+use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
-use Thinkycz\LaravelCore\Support\Thrower;
 
 class StoreDestroyController
 {
@@ -19,24 +18,7 @@ class StoreDestroyController
      */
     public function __invoke(Store $store): RedirectResponse
     {
-        $hasInventory = $store->storeItems()->exists();
-        $hasAssignedUser = $store->assignedUser()->exists();
-
-        $hasMovements = StockMovement::query()
-            ->where('user_id', $store->getUserId())
-            ->where(static function (Builder $query) use ($store): void {
-                $query->where('store_id', $store->getKey())
-                    ->orWhere('source_store_id', $store->getKey());
-            })
-            ->exists();
-
-        if ($hasInventory || $hasMovements || $hasAssignedUser) {
-            $thrower = new Thrower(Resolver::resolveValidatorFactory()->make([], []));
-            $thrower->message('store', \__('Cannot delete a store that has inventory or stock movement history.'));
-            $thrower->throw();
-        }
-
-        $store->delete();
+        (new AdministrationManagementService())->deleteStore(User::mustAuth(), $store);
 
         Inertia::flash('success', \__('Store deleted.'));
 

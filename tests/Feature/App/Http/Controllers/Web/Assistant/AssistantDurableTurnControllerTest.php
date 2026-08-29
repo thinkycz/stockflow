@@ -31,7 +31,9 @@ use Thinkycz\LaravelCore\Support\Typer;
     $conversationId = Typer::assertString($first->headers->get('x-conversation-id'));
 
     $first->assertOk()->assertHeader('x-assistant-turn-id', $turnId);
-    \expect($first->streamedContent())->toContain('"delta":"Durable answer"');
+    \expect($first->streamedContent())
+        ->toContain('"delta":"Durable"')
+        ->toContain('"delta":" answer"');
 
     $second = $this->be($admin, 'users')->postJson('/assistant/chat', [
         ...$payload,
@@ -39,7 +41,8 @@ use Thinkycz\LaravelCore\Support\Typer;
     ]);
 
     \expect($second->streamedContent())
-        ->toContain('"delta":"Durable answer"')
+        ->toContain('"delta":"Durable"')
+        ->toContain('"delta":" answer"')
         ->and(AssistantTurn::query()->count())->toBe(1)
         ->and(AssistantTurnEvent::query()->where('turn_id', $turnId)->whereNull('event_type')->doesntExist())->toBeTrue()
         ->and(AssistantTurnEvent::query()->where('turn_id', $turnId)->latest('sequence')->value('event_type'))->toBe('finish');

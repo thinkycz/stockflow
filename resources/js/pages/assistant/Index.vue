@@ -1048,7 +1048,10 @@ async function destroyConversation(
                         </Button>
                     </div>
 
-                    <form class="flex items-end gap-2" @submit.prevent="submit">
+                    <form
+                        class="flex items-stretch gap-2"
+                        @submit.prevent="submit"
+                    >
                         <Textarea
                             v-model="draft"
                             :placeholder="t('assistant.placeholder')"
@@ -1060,6 +1063,7 @@ async function destroyConversation(
                         <Button
                             type="submit"
                             size="icon"
+                            class="h-auto w-[3.125rem] shrink-0"
                             :disabled="
                                 (draft?.trim() ?? '') === '' ||
                                 hasPendingApprovals ||
@@ -1070,9 +1074,6 @@ async function destroyConversation(
                             <Send :size="15" />
                         </Button>
                     </form>
-                    <p class="mt-2 text-[11px] text-on-surface-variant">
-                        {{ t('assistant.disclaimer') }}
-                    </p>
                 </div>
             </section>
         </div>

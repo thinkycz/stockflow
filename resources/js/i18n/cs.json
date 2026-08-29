@@ -116,7 +116,6 @@
             "selected": "Volba přijata"
         },
         "unavailable": "AI asistent je dočasně nedostupný. Zkuste to prosím znovu.",
-        "disclaimer": "Výsledky před použitím zkontrolujte. Každý navržený soubor změn vyžaduje vaše výslovné schválení.",
         "prompts": {
             "low_stock": "Které položky mají v aktuální prodejně nízkou zásobu?",
             "today": "Shrň dnešní provoz.",

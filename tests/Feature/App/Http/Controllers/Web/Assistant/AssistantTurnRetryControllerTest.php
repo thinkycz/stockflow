@@ -27,10 +27,13 @@ use Thinkycz\LaravelCore\Support\Typer;
     });
     $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
     $failedTurnId = Str::uuid()->toString();
-    $this->be($admin, 'users')->postJson('/assistant/chat', [
+    $failedResponse = $this->be($admin, 'users')->postJson('/assistant/chat', [
         'message' => 'Analyze current stock',
         'turn_id' => $failedTurnId,
-    ])->streamedContent();
+    ]);
+    $failedResponse->streamedContent();
+    $conversationId = Typer::assertString($failedResponse->headers->get('x-conversation-id'));
+    $this->travel(1)->seconds();
 
     StockflowAssistant::fake(['Recovered safely']);
     $retryTurnId = Str::uuid()->toString();
@@ -45,6 +48,11 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($retry->getParentTurnId())->toBe($failedTurnId)
         ->and($retry->getRecoveryMode())->toBe('replay_without_action')
         ->and($retry->getStatus())->toBe(AssistantTurnStatusEnum::COMPLETED);
+
+    $this->be($admin, 'users')
+        ->get('/assistant/conversations/' . $conversationId, $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.conversation.active_turn', null);
 });
 
 \test('retry after a completed mutation creates continuation only recovery', function (): void {

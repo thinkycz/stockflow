@@ -2,6 +2,8 @@ import { expect, test, type Page, type Route } from '@playwright/test';
 
 const pendingConversationId = '019fef6f-a4ab-7813-a09c-518d7157e2e0';
 const pendingWorkerConversationId = '019fef6f-a4ab-7813-a09c-518d7157e2e3';
+const resolvedFailureConversationId = '019fef6f-a4ab-7813-a09c-518d7157e2e5';
+const latestFailureConversationId = '019fef6f-a4ab-7813-a09c-518d7157e2e9';
 
 async function login(page: Page): Promise<void> {
     await page.goto('/login');
@@ -166,6 +168,71 @@ test.describe('main-admin AI assistant', () => {
         );
     });
 
+    test('matches the send button height to the composer on desktop and mobile', async ({
+        page,
+    }) => {
+        await page.goto('/assistant');
+
+        for (const viewport of [
+            { width: 1280, height: 720 },
+            { width: 390, height: 844 },
+        ]) {
+            await page.setViewportSize(viewport);
+
+            const composerBox = await page
+                .getByPlaceholder(
+                    'Ask Stockflow a question or describe a task…',
+                )
+                .boundingBox();
+            const sendBox = await page
+                .getByRole('button', { name: 'Send message' })
+                .boundingBox();
+
+            expect(composerBox).not.toBeNull();
+            expect(sendBox).not.toBeNull();
+            expect(
+                Math.abs((composerBox?.height ?? 0) - (sendBox?.height ?? 0)),
+            ).toBeLessThanOrEqual(1);
+            expect(sendBox?.width).toBeGreaterThanOrEqual(48);
+        }
+    });
+
+    test('does not resurrect a failed turn after its successful retry', async ({
+        page,
+    }) => {
+        await page.goto(
+            `/assistant/conversations/${resolvedFailureConversationId}`,
+        );
+
+        await expect(
+            page.getByText('Recovered answer after retry.'),
+        ).toBeVisible();
+        await expect(page.getByText('Stale retry input')).toHaveCount(0);
+        await expect(
+            page.getByText(
+                'The assistant response was interrupted. You can safely retry it.',
+            ),
+        ).toHaveCount(0);
+    });
+
+    test('keeps a genuine latest failure visible and retryable', async ({
+        page,
+    }) => {
+        await page.goto(
+            `/assistant/conversations/${latestFailureConversationId}`,
+        );
+
+        await expect(page.getByText('Latest failed input')).toBeVisible();
+        await expect(
+            page.getByText(
+                'The assistant response was interrupted. You can safely retry it.',
+            ),
+        ).toBeVisible();
+        await expect(
+            page.getByRole('button', { name: 'Retry', exact: true }),
+        ).toBeVisible();
+    });
+
     test('keeps new chat in the conversation sidebar and opens saved conversations at the latest message', async ({
         page,
     }) => {
@@ -242,6 +309,114 @@ test.describe('main-admin AI assistant', () => {
 
         await expect(
             page.getByText('No shifts are scheduled in this period.'),
+        ).toBeVisible();
+        await expect(
+            page.getByText(
+                'Review results before relying on them. Every proposed set of changes requires your explicit approval.',
+            ),
+        ).toHaveCount(0);
+    });
+
+    test('renders text deltas before the assistant response finishes', async ({
+        page,
+    }) => {
+        await page.addInitScript(() => {
+            const originalFetch = window.fetch.bind(window);
+
+            window.fetch = async (input, init) => {
+                const url =
+                    typeof input === 'string'
+                        ? input
+                        : input instanceof URL
+                          ? input.toString()
+                          : input.url;
+
+                if (!url.includes('/assistant/chat')) {
+                    return originalFetch(input, init);
+                }
+
+                const encoder = new TextEncoder();
+                const event = (part: object): Uint8Array =>
+                    encoder.encode(`data: ${JSON.stringify(part)}\n\n`);
+                const stream = new ReadableStream<Uint8Array>({
+                    start(controller) {
+                        controller.enqueue(
+                            event({
+                                type: 'start',
+                                messageId: 'streaming-text-message',
+                            }),
+                        );
+                        controller.enqueue(
+                            event({
+                                type: 'text-start',
+                                id: 'streaming-text-part',
+                            }),
+                        );
+
+                        window.setTimeout(() => {
+                            controller.enqueue(
+                                event({
+                                    type: 'text-delta',
+                                    id: 'streaming-text-part',
+                                    delta: 'Streaming begins',
+                                }),
+                            );
+                        }, 100);
+
+                        window.setTimeout(() => {
+                            controller.enqueue(
+                                event({
+                                    type: 'text-delta',
+                                    id: 'streaming-text-part',
+                                    delta: ' before the response ends.',
+                                }),
+                            );
+                        }, 800);
+
+                        window.setTimeout(() => {
+                            controller.enqueue(
+                                event({
+                                    type: 'text-end',
+                                    id: 'streaming-text-part',
+                                }),
+                            );
+                            controller.enqueue(
+                                event({
+                                    type: 'finish',
+                                    finishReason: 'stop',
+                                }),
+                            );
+                            controller.enqueue(
+                                encoder.encode('data: [DONE]\n\n'),
+                            );
+                            controller.close();
+                        }, 900);
+                    },
+                });
+
+                return new Response(stream, {
+                    status: 200,
+                    headers: {
+                        'Content-Type': 'text/event-stream',
+                        'x-vercel-ai-ui-message-stream': 'v1',
+                    },
+                });
+            };
+        });
+
+        await page.goto('/assistant');
+        await page
+            .getByPlaceholder('Ask Stockflow a question or describe a task…')
+            .fill('Stream the answer.');
+        await page.getByRole('button', { name: 'Send message' }).click();
+
+        await expect(page.getByText('Streaming begins')).toBeVisible();
+        await expect(
+            page.getByText('Streaming begins before the response ends.'),
+        ).toHaveCount(0);
+        await expect(page.getByRole('button', { name: 'Stop' })).toBeVisible();
+        await expect(
+            page.getByText('Streaming begins before the response ends.'),
         ).toBeVisible();
     });
 

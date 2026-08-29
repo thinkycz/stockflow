@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Ai\Agents\StockflowAssistant;
+use App\Enums\AssistantTurnStatusEnum;
 use App\Enums\StockMovementTypeEnum;
+use App\Models\AssistantTurn;
 use App\Models\AttendanceSession;
 use App\Models\Shift;
 use App\Models\ShiftPreset;
@@ -149,6 +151,92 @@ class E2ESeeder extends Seeder
                         ],
                     ], \JSON_THROW_ON_ERROR),
                 ]],
+            ],
+        );
+
+        $resolvedFailureConversation = $user->conversations()->updateOrCreate(
+            ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e5'],
+            ['title' => 'Recovered assistant response'],
+        );
+        $resolvedFailureConversation->messages()->updateOrCreate(
+            ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e6'],
+            [
+                'participant_type' => $user->getMorphClass(),
+                'participant_id' => $user->getKey(),
+                'agent' => StockflowAssistant::class,
+                'role' => 'assistant',
+                'content' => 'Recovered answer after retry.',
+                'attachments' => [],
+                'tool_calls' => [],
+                'tool_results' => [],
+                'usage' => [],
+                'meta' => [],
+            ],
+        );
+        $failedTurnId = '019fef6f-a4ab-7813-a09c-518d7157e2e7';
+        $failedPayload = ['message' => 'Stale retry input'];
+        AssistantTurn::query()->updateOrCreate(
+            ['id' => $failedTurnId],
+            [
+                'actor_user_id' => $user->getKey(),
+                'conversation_id' => $resolvedFailureConversation->getKey(),
+                'parent_turn_id' => null,
+                'kind' => 'message',
+                'recovery_mode' => 'normal',
+                'status' => AssistantTurnStatusEnum::FAILED->value,
+                'input_hash' => \hash('sha256', \json_encode($failedPayload, \JSON_THROW_ON_ERROR)),
+                'input_payload' => $failedPayload,
+                'error_summary' => 'Temporary provider failure',
+                'queued_at' => '2026-08-29 20:03:30',
+                'started_at' => '2026-08-29 20:03:30',
+                'completed_at' => '2026-08-29 20:03:30',
+                'created_at' => '2026-08-29 20:03:30',
+                'updated_at' => '2026-08-29 20:03:30',
+            ],
+        );
+        $completedPayload = ['message' => 'Retry the interrupted response'];
+        AssistantTurn::query()->updateOrCreate(
+            ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e8'],
+            [
+                'actor_user_id' => $user->getKey(),
+                'conversation_id' => $resolvedFailureConversation->getKey(),
+                'parent_turn_id' => $failedTurnId,
+                'kind' => 'message',
+                'recovery_mode' => 'replay_without_action',
+                'status' => AssistantTurnStatusEnum::COMPLETED->value,
+                'input_hash' => \hash('sha256', \json_encode($completedPayload, \JSON_THROW_ON_ERROR)),
+                'input_payload' => [],
+                'error_summary' => null,
+                'queued_at' => '2026-08-29 20:04:30',
+                'started_at' => '2026-08-29 20:04:30',
+                'completed_at' => '2026-08-29 20:04:31',
+                'created_at' => '2026-08-29 20:04:30',
+                'updated_at' => '2026-08-29 20:04:31',
+            ],
+        );
+
+        $latestFailureConversation = $user->conversations()->updateOrCreate(
+            ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e9'],
+            ['title' => 'Latest assistant failure'],
+        );
+        $latestFailurePayload = ['message' => 'Latest failed input'];
+        AssistantTurn::query()->updateOrCreate(
+            ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2ea'],
+            [
+                'actor_user_id' => $user->getKey(),
+                'conversation_id' => $latestFailureConversation->getKey(),
+                'parent_turn_id' => null,
+                'kind' => 'message',
+                'recovery_mode' => 'normal',
+                'status' => AssistantTurnStatusEnum::FAILED->value,
+                'input_hash' => \hash('sha256', \json_encode($latestFailurePayload, \JSON_THROW_ON_ERROR)),
+                'input_payload' => $latestFailurePayload,
+                'error_summary' => 'Temporary provider failure',
+                'queued_at' => '2026-08-29 20:05:30',
+                'started_at' => '2026-08-29 20:05:30',
+                'completed_at' => '2026-08-29 20:05:30',
+                'created_at' => '2026-08-29 20:05:30',
+                'updated_at' => '2026-08-29 20:05:30',
             ],
         );
 

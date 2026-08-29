@@ -47,7 +47,8 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     \expect($response->streamedContent())
         ->toContain('"type":"text-delta"')
-        ->toContain('"delta":"Hello from Stockflow"')
+        ->toContain('"delta":"Hello"')
+        ->toContain('"delta":" from Stockflow"')
         ->and($admin->conversations()->whereKey($conversationId)->exists())->toBeTrue()
         ->and(ConversationMessage::query()->where('conversation_id', $conversationId)->where('role', 'user')->exists())->toBeTrue();
 });

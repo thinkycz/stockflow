@@ -104,16 +104,19 @@ final class AssistantTurnService
         $turn = AssistantTurn::query()
             ->where('conversation_id', $conversationId)
             ->where('actor_user_id', $actor->getKey())
-            ->whereIn('status', [
-                AssistantTurnStatusEnum::QUEUED->value,
-                AssistantTurnStatusEnum::RUNNING->value,
-                AssistantTurnStatusEnum::CANCEL_REQUESTED->value,
-                AssistantTurnStatusEnum::FAILED->value,
-            ])
             ->latest('created_at')
             ->first();
 
-        return $turn instanceof AssistantTurn ? $turn : null;
+        if (!$turn instanceof AssistantTurn || !\in_array($turn->getStatus(), [
+            AssistantTurnStatusEnum::QUEUED,
+            AssistantTurnStatusEnum::RUNNING,
+            AssistantTurnStatusEnum::CANCEL_REQUESTED,
+            AssistantTurnStatusEnum::FAILED,
+        ], true)) {
+            return null;
+        }
+
+        return $turn;
     }
 
     /**

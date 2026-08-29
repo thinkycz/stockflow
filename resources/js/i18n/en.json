@@ -116,7 +116,6 @@
             "selected": "Choice received"
         },
         "unavailable": "The AI assistant is temporarily unavailable. Please try again.",
-        "disclaimer": "Review results before relying on them. Every proposed set of changes requires your explicit approval.",
         "prompts": {
             "low_stock": "Which items are low in the current store?",
             "today": "Summarize today's operations.",

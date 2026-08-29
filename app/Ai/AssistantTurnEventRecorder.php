@@ -13,7 +13,9 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 final class AssistantTurnEventRecorder
 {
-    private const int TEXT_BATCH_CHARACTERS = 1024;
+    private const int TEXT_BATCH_CHARACTERS = 256;
+
+    private const float TEXT_BATCH_SECONDS = 0.1;
 
     /**
      * Whether the native stream start event has already been journaled.
@@ -31,6 +33,13 @@ final class AssistantTurnEventRecorder
      * Turn owning the currently buffered text delta.
      */
     private string|null $pendingTextTurnId = null;
+
+    /**
+     * Last time a visible chunk was persisted for each native text part.
+     *
+     * @var array<string, float>
+     */
+    private array $lastTextFlushAt = [];
 
     /**
      * Persist one native Laravel AI event in Vercel stream format.
@@ -93,6 +102,7 @@ final class AssistantTurnEventRecorder
         $this->pendingTextDelta = null;
         $this->pendingTextTurnId = null;
         $this->append($turn, $payload);
+        $this->lastTextFlushAt[Typer::assertString($payload['id'] ?? null)] = \microtime(true);
     }
 
     /**
@@ -126,7 +136,13 @@ final class AssistantTurnEventRecorder
                 . Typer::assertString($payload['delta'] ?? null);
         }
 
-        if (self::TEXT_BATCH_CHARACTERS <= \mb_strlen(Typer::assertString($this->pendingTextDelta['delta'] ?? null))) {
+        $partId = Typer::assertString($this->pendingTextDelta['id'] ?? null);
+        $lastFlushAt = $this->lastTextFlushAt[$partId] ?? null;
+
+        if ($lastFlushAt === null ||
+            self::TEXT_BATCH_CHARACTERS <= \mb_strlen(Typer::assertString($this->pendingTextDelta['delta'] ?? null)) ||
+            self::TEXT_BATCH_SECONDS <= \microtime(true) - $lastFlushAt
+        ) {
             $this->flush($turn);
         }
     }

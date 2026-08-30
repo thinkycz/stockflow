@@ -26,6 +26,19 @@ use Thinkycz\LaravelCore\Support\Config;
         ->toContain('Do not infer additional required fields');
 });
 
+\test('Stockflow assistant grounds named business entities in the matching company dataset', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $instructions = (new StockflowAssistant($admin, Str::uuid()->toString()))->instructions();
+
+    \expect($instructions)
+        ->toContain('Named Stockflow business entities default to the company\'s saved data')
+        ->toContain('For a named recipe or preparation question, call read_recipes with operation=lookup')
+        ->toContain('Recipes and recipe categories are company-wide, not active-store scoped')
+        ->toContain('A result is complete only for its exact resource, dataset, operation, and applied filters')
+        ->toContain('Never use a sibling dataset, such as recipe categories, to claim that a recipe does not exist')
+        ->toContain('Do not substitute general knowledge for matching saved data');
+});
+
 \test('Stockflow assistant receives authoritative Prague runtime and active store context', function (): void {
     CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-08-29 20:56:00', 'UTC'));
 

@@ -31,7 +31,7 @@ final class AssistantResourceToolDefinitions
             'read_inventory_counts' => self::read('inventory_counts', 'Read inventory count drafts and completed sessions.', false, true),
             'read_stock_movements' => self::read('stock_movements', 'Read recent stock movements and reversals.', true, true),
             'read_statements' => self::read('statements', 'Read statement months and version metadata.', false, true),
-            'read_recipes' => self::read('recipes', 'Read recipe categories and recipes.', true),
+            'read_recipes' => self::read('recipes', 'Look up complete company recipes and instructions, or read recipe category metadata.', true),
             'read_recipe_tests' => self::read('recipe_tests', 'Read recipe test sessions and attempts.'),
             'read_payroll' => self::read('payroll', 'Read payroll report lifecycle and worker totals.', false, true),
             'read_financial_reports' => self::read('income_expenses', 'Read financial report lifecycle and totals.', false, true),

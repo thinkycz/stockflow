@@ -11,6 +11,7 @@ use App\Enums\AssistantActionStatusEnum;
 use App\Models\AssistantActionAudit;
 use App\Models\Worker;
 use Illuminate\JsonSchema\JsonSchemaTypeFactory;
+use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\ObjectSchema;
 use Laravel\Ai\Tools\Request;
 use Laravel\Ai\Tools\ToolNameResolver;
@@ -139,6 +140,24 @@ use Laravel\Ai\Tools\ToolNameResolver;
             \expect(\array_values(\array_unique($schemaDatasets)))->toEqualCanonicalizing($declaredDatasets);
         }
     }
+});
+
+\test('recipe reader exposes a closed natural-language lookup branch', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $tool = (new AssistantToolCatalog())->find($admin, 'recipe-lookup-schema', 'read_recipes');
+
+    \expect($tool)->toBeInstanceOf(Tool::class);
+    $schema = (new ObjectSchema($tool->schema(new JsonSchemaTypeFactory())))->toSchema();
+    $branches = $schema['properties']['request']['anyOf'];
+    $lookup = \collect($branches)->first(
+        static fn(array $branch): bool => ($branch['properties']['operation']['enum'][0] ?? null) === 'lookup',
+    );
+
+    \expect($lookup)->toBeArray()
+        ->and($lookup['additionalProperties'])->toBeFalse()
+        ->and($lookup['required'])->toContain('operation', 'dataset', 'query')
+        ->and($lookup['properties']['dataset']['enum'])->toBe(['recipes'])
+        ->and($lookup['properties']['limit']['maximum'])->toBeLessThanOrEqual(50);
 });
 
 \test('every native writer publishes one action branch per declared capability', function (): void {

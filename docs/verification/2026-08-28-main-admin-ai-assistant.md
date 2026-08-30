@@ -37,6 +37,7 @@ The main-admin assistant is implemented and ready for code review and deployment
 - A second signed-in Chrome check reproduced a 30-shift proposal where the first approved card remained on “Finishing action…” because 29 sibling approvals were unresolved. The same persisted response now hydrates as one 30-row review with one Perform/Cancel surface; no production decision was submitted during verification.
 - A streamed-order regression fixture proved that providers can emit approvals before later explanatory text. Business confirmations now render as a separate message after all normal assistant content regardless of event order, matching the refreshed layout. All 13 assistant browser scenarios pass and signed-in Chrome confirms the same ordering for an existing multi-shift conversation.
 - Successful mutation state is surfaced from the audit/domain result even when the model follow-up generation fails; its approval is not resubmitted.
+- A signed-in production Chrome inspection reproduced a generic Oolong Milk Tea answer followed by an invalid absence claim based on category metadata. The recipe reader now provides a one-call, company-scoped natural-language lookup with full saved variants and ordered instructions; its regression resolves the saved recipe from the original Czech question and excludes another company's match. Agent instructions also make named Stockflow entities the default source and forbid negative claims from sibling datasets.
 
 ## Deferred external evidence
 

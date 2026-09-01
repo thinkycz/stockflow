@@ -20,6 +20,7 @@ use App\Models\Worker;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Seeder;
+use Laravel\Ai\Models\Conversation;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class E2ESeeder extends Seeder
@@ -56,9 +57,12 @@ class E2ESeeder extends Seeder
             ->first();
 
         if ($crossStore instanceof Store) {
-            $conversation = $user->conversations()->updateOrCreate(
-                ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e0'],
-                ['title' => 'Pending cross-store transfer'],
+            $conversation = Typer::assertInstance(
+                $user->conversations()->updateOrCreate(
+                    ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e0'],
+                    ['title' => 'Pending cross-store transfer'],
+                ),
+                Conversation::class,
             );
             $conversation->messages()->updateOrCreate(
                 ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e1'],
@@ -104,9 +108,12 @@ class E2ESeeder extends Seeder
             );
         }
 
-        $workerConversation = $user->conversations()->updateOrCreate(
-            ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e3'],
-            ['title' => 'Pending worker creation'],
+        $workerConversation = Typer::assertInstance(
+            $user->conversations()->updateOrCreate(
+                ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e3'],
+                ['title' => 'Pending worker creation'],
+            ),
+            Conversation::class,
         );
         $workerConversation->messages()->updateOrCreate(
             ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e4'],
@@ -152,9 +159,12 @@ class E2ESeeder extends Seeder
             ],
         );
 
-        $resolvedFailureConversation = $user->conversations()->updateOrCreate(
-            ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e5'],
-            ['title' => 'Recovered assistant response'],
+        $resolvedFailureConversation = Typer::assertInstance(
+            $user->conversations()->updateOrCreate(
+                ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e5'],
+                ['title' => 'Recovered assistant response'],
+            ),
+            Conversation::class,
         );
         $resolvedFailureConversation->messages()->updateOrCreate(
             ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e6'],
@@ -213,9 +223,12 @@ class E2ESeeder extends Seeder
             ],
         );
 
-        $latestFailureConversation = $user->conversations()->updateOrCreate(
-            ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e9'],
-            ['title' => 'Latest assistant failure'],
+        $latestFailureConversation = Typer::assertInstance(
+            $user->conversations()->updateOrCreate(
+                ['id' => '019fef6f-a4ab-7813-a09c-518d7157e2e9'],
+                ['title' => 'Latest assistant failure'],
+            ),
+            Conversation::class,
         );
         $latestFailurePayload = ['message' => 'Latest failed input'];
         AssistantTurn::query()->updateOrCreate(

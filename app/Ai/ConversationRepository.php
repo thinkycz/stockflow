@@ -26,7 +26,7 @@ class ConversationRepository
         $payload = [];
 
         foreach ($user->conversations()->select(['id', 'title', 'updated_at'])->orderByDesc('updated_at')->limit($limit)->get() as $conversation) {
-            $payload[] = $this->sidebarSummary($conversation);
+            $payload[] = $this->sidebarSummary(Typer::assertInstance($conversation, Conversation::class));
         }
 
         return $payload;

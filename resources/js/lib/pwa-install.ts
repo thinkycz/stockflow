@@ -29,7 +29,10 @@ export type PwaInstallSnapshot = {
 };
 
 export type PwaInstallResult =
-    'instructions' | 'accepted' | 'dismissed' | 'unavailable';
+    | 'instructions'
+    | 'accepted'
+    | 'dismissed'
+    | 'unavailable';
 
 export type PwaInstallController = {
     snapshot: () => PwaInstallSnapshot;

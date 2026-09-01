@@ -22,6 +22,7 @@ help:
 	@echo "  make lint         - run prettier --check and pint --test"
 	@echo "  make frontend     - run npm run type-check and npm run build"
 	@echo "  make test-unit    - run the vitest unit suite"
+	@echo "  make deploy-smoke - verify Laravel's production caches can be built"
 	@echo "  make test-coverage - run PHPUnit with coverage"
 	@echo "  make clean        - delete node_modules and vendor (keeps lockfiles)"
 	@echo "  make serve        - serve the app on 0.0.0.0:8000"
@@ -29,7 +30,7 @@ help:
 	@echo "                    - provision the named environment"
 
 .PHONY: check
-check: stan lint audit frontend test-unit test
+check: stan lint audit frontend test-unit deploy-smoke test
 
 .PHONY: audit
 audit: ./vendor ./composer.lock ./node_modules ./package-lock.json
@@ -50,6 +51,11 @@ frontend: ./node_modules
 .PHONY: test-unit
 test-unit: ./node_modules/.bin/vitest
 	npm run test:unit
+
+.PHONY: deploy-smoke
+deploy-smoke: ./vendor ./.env
+	${MAKE_ARTISAN} optimize
+	${MAKE_ARTISAN} optimize:clear
 
 .PHONY: lint
 lint: ./node_modules/.bin/prettier ./vendor/bin/pint

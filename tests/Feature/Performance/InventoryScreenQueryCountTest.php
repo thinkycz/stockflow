@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
         'user_id' => $user->getKey(),
         'is_warehouse' => false,
     ]);
-    $user->update(['active_store_id' => $store->getKey()]);
+    $this->withSession(\activeStoreSession($store));
 
     Item::factory()->count(30)->create(['user_id' => $user->getKey()])
         ->each(static function (Item $item) use ($store): void {

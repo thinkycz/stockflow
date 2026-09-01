@@ -161,7 +161,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-08-03 09:00:00', 'Europe/Prague'));
     $admin = UserFactory::new()->admin()->createOne();
     $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
-    $admin->setActiveStoreId($store->getKey());
+    $this->withSession(\activeStoreSession($store));
     $worker = Worker::factory()->create(['user_id' => $admin->getKey(), 'first_name' => 'Anna', 'last_name' => 'Nováková']);
 
     $response = $this->be($admin, 'users')->get('/dashboard', $this->inertiaHeaders());
@@ -276,7 +276,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 \test('dashboard noticeboard filters active expired searched and trashed cards for the active store', function (): void {
     [$admin, $store] = \createIsolatedUserWithWarehouse();
     $otherStore = Store::factory()->create(['user_id' => $admin->getKey()]);
-    $admin->setActiveStoreId($store->getKey());
+    $this->withSession(\activeStoreSession($store));
     $active = NoticeboardCard::factory()->create([
         'user_id' => $admin->getKey(),
         'store_id' => $store->getKey(),
@@ -333,7 +333,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 \test('dashboard noticeboard paginates twenty four newest cards at a time', function (): void {
     [$admin, $store] = \createIsolatedUserWithWarehouse();
-    $admin->setActiveStoreId($store->getKey());
+    $this->withSession(\activeStoreSession($store));
     NoticeboardCard::factory()->count(25)->create([
         'user_id' => $admin->getKey(),
         'store_id' => $store->getKey(),

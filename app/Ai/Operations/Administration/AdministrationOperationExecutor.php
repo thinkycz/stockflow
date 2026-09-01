@@ -473,7 +473,7 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
             'create_store' => 'Creates the store and initializes checklist records for a retail store.',
             'update_store' => 'Updates the selected store metadata and Slack destination.',
             'delete_store' => 'Deletes the selected unused and unassigned store.',
-            'switch_active_store' => 'Persists the selected active store for the main admin.',
+            'switch_active_store' => 'Persists the selected active store for the current browser session.',
             'create_user' => 'Creates a limited account with a server-generated secret and the selected store assignment.',
             'update_user' => 'Updates the limited account email and assigned store without handling a password.',
             'delete_user' => 'Deletes the selected limited account.',

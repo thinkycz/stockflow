@@ -33,6 +33,7 @@ class StockflowAssistant implements Agent, Conversational, HasTools
     public function __construct(
         private readonly User $actor,
         private readonly string $assistantConversationId,
+        private readonly int|null $activeStoreId = null,
     ) {}
 
     /**
@@ -42,10 +43,9 @@ class StockflowAssistant implements Agent, Conversational, HasTools
     {
         $businessTimezone = Config::inject()->assertString('app.schedule_timezone');
         $businessNow = CarbonImmutable::now($businessTimezone);
-        $activeStoreId = $this->actor->getActiveStoreId();
-        $activeStore = $activeStoreId === null
+        $activeStore = $this->activeStoreId === null
             ? null
-            : $this->actor->stores()->whereKey($activeStoreId)->first();
+            : $this->actor->stores()->whereKey($this->activeStoreId)->first();
         $activeStoreContext = $activeStore instanceof Store
             ? $activeStore->getName()
                 . ' (#' . $activeStore->getKey()
@@ -147,6 +147,7 @@ class StockflowAssistant implements Agent, Conversational, HasTools
             $this->actor,
             $this->assistantConversationId,
             $name,
+            $this->activeStoreId,
         );
 
         return $tool instanceof AuditableAssistantTool ? $tool : null;
@@ -162,6 +163,7 @@ class StockflowAssistant implements Agent, Conversational, HasTools
         yield from Resolver::resolve(AssistantToolCatalog::class)->tools(
             $this->actor,
             $this->assistantConversationId,
+            $this->activeStoreId,
         );
     }
 }

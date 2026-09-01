@@ -16,7 +16,9 @@ use App\Enums\AssistantTurnStatusEnum;
 use App\Exceptions\AssistantTurnCancelledException;
 use App\Models\AssistantTurn;
 use App\Models\User;
+use App\Support\ActiveStoreResolver;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Context;
 use InvalidArgumentException;
@@ -28,7 +30,7 @@ use Laravel\Ai\Streaming\Events\ToolApprovalRequest;
 use Thinkycz\LaravelCore\Support\Typer;
 use Throwable;
 
-final class RunAssistantTurnJob implements ShouldQueue
+final class RunAssistantTurnJob implements ShouldBeEncrypted, ShouldQueue
 {
     use Queueable;
 
@@ -54,6 +56,14 @@ final class RunAssistantTurnJob implements ShouldQueue
          * Bounded conversation-lock admission attempt.
          */
         public readonly int $lockAttempt = 0,
+        /**
+         * Active-store snapshot from the browser session that submitted the turn.
+         */
+        public readonly int|null $activeStoreId = null,
+        /**
+         * Encrypted queue context used only to update the originating browser session.
+         */
+        public readonly string|null $browserSessionId = null,
     )
     {
         $this->onConnection('assistant');
@@ -98,7 +108,12 @@ final class RunAssistantTurnJob implements ShouldQueue
 
         if ($lock === null) {
             if ($this->lockAttempt < 3) {
-                \dispatch(new self($this->turnId, $this->lockAttempt + 1))->delay(\now()->addSecond());
+                \dispatch(new self(
+                    $this->turnId,
+                    $this->lockAttempt + 1,
+                    $this->activeStoreId,
+                    $this->browserSessionId,
+                ))->delay(\now()->addSecond());
             } else {
                 $turns->transition($turn, AssistantTurnStatusEnum::FAILED, 'The conversation remained busy.');
             }
@@ -112,6 +127,7 @@ final class RunAssistantTurnJob implements ShouldQueue
         try {
             $turns->transition($turn, AssistantTurnStatusEnum::RUNNING);
             Context::add('assistant_turn_id', $turn->getTurnId());
+            Context::add(ActiveStoreResolver::SESSION_ID_CONTEXT, $this->browserSessionId);
             $input = $turn->getInputPayload();
             $prompt = match ($turn->getKind()) {
                 'message', 'recovery' => Typer::assertString($input['message'] ?? null),
@@ -120,7 +136,11 @@ final class RunAssistantTurnJob implements ShouldQueue
             };
             $pendingMessageId = $conversations->latestPendingMessageId($conversation);
             $context->recentMessages($turn->getConversationId());
-            $response = StockflowAssistant::make(actor: $actor, assistantConversationId: $turn->getConversationId())
+            $response = StockflowAssistant::make(
+                actor: $actor,
+                assistantConversationId: $turn->getConversationId(),
+                activeStoreId: $this->activeStoreId,
+            )
                 ->continue($turn->getConversationId(), $actor)
                 ->stream($prompt);
             $awaitingApproval = false;
@@ -191,6 +211,7 @@ final class RunAssistantTurnJob implements ShouldQueue
             \report($exception);
         } finally {
             Context::forget('assistant_turn_id');
+            Context::forget(ActiveStoreResolver::SESSION_ID_CONTEXT);
             $lock->release();
         }
     }

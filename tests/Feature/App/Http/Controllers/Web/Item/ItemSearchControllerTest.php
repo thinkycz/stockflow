@@ -136,7 +136,7 @@ use App\Models\StoreItem;
         'quantity' => 3,
     ]);
 
-    $user->setActiveStoreId($retail->getKey());
+    $this->withSession(\activeStoreSession($retail));
 
     $response = $this->be($user, 'users')->get('/items/search?q=tracked');
 

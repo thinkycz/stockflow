@@ -75,7 +75,6 @@ class MigrateSingleCompanyCommand extends Command
                 $orphan->update([
                     'parent_user_id' => $admin->getKey(),
                     'assigned_store_id' => $assignedStore->getKey(),
-                    'active_store_id' => $assignedStore->getKey(),
                     'is_admin' => false,
                 ]);
             }, 3);

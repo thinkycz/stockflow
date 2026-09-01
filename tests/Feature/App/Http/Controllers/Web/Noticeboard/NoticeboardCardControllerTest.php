@@ -18,7 +18,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');
     [$admin, $store] = \createIsolatedUserWithWarehouse();
     $store->update(['slack_channel' => '#warehouse']);
-    $admin->setActiveStoreId($store->getKey());
+    $this->withSession(\activeStoreSession($store));
 
     $response = $this->be($admin, 'users')->post('/noticeboard-cards', [
         'title' => 'Důležitá zpráva',
@@ -40,7 +40,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 \test('card validation rejects invalid rich text and stores expiration at Prague end of day in UTC', function (): void {
     [$admin, $store] = \createIsolatedUserWithWarehouse();
-    $admin->setActiveStoreId($store->getKey());
+    $this->withSession(\activeStoreSession($store));
     $base = [
         'title' => 'Platná kartička',
         'body_html' => '<p>Viditelný obsah</p>',
@@ -118,7 +118,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 \test('stale card update is rejected without overwriting newer content', function (): void {
     [$admin, $store] = \createIsolatedUserWithWarehouse();
-    $admin->setActiveStoreId($store->getKey());
+    $this->withSession(\activeStoreSession($store));
     $card = NoticeboardCard::factory()->create([
         'user_id' => $admin->getKey(),
         'store_id' => $store->getKey(),
@@ -145,7 +145,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 \test('card image is private and available only inside the assigned store', function (): void {
     Storage::fake(FilesystemDiskEnum::Private->value);
     [$admin, $store] = \createIsolatedUserWithWarehouse();
-    $admin->setActiveStoreId($store->getKey());
+    $this->withSession(\activeStoreSession($store));
 
     $this->be($admin, 'users')->post('/noticeboard-cards', [
         'title' => 'S obrázkem',
@@ -167,7 +167,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     Storage::fake(FilesystemDiskEnum::Private->value);
     [$admin, $store] = \createIsolatedUserWithWarehouse();
     $otherStore = Store::factory()->create(['user_id' => $admin->getKey()]);
-    $admin->setActiveStoreId($store->getKey());
+    $this->withSession(\activeStoreSession($store));
     Storage::disk(FilesystemDiskEnum::Private->value)->put('noticeboard/old.png', 'old');
     $card = NoticeboardCard::factory()->create([
         'user_id' => $admin->getKey(),
@@ -213,7 +213,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 \test('only admin can restore and permanently delete a trashed card', function (): void {
     Storage::fake(FilesystemDiskEnum::Private->value);
     [$admin, $store] = \createIsolatedUserWithWarehouse();
-    $admin->setActiveStoreId($store->getKey());
+    $this->withSession(\activeStoreSession($store));
     $limited = Typer::assertInstance(UserFactory::new()->limited($store)->createOne(), User::class);
     $card = NoticeboardCard::factory()->create([
         'user_id' => $admin->getKey(),

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\Store;
 use App\Models\User;
+use App\Support\ActiveStoreResolver;
 use Database\Factories\UserFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
@@ -40,6 +41,16 @@ function createIsolatedUserWithWarehouse(): array
     ]);
 
     return [$user, $warehouse];
+}
+
+/**
+ * Build the browser-session payload for an active store.
+ *
+ * @return array{active_store_id: int}
+ */
+function activeStoreSession(Store $store): array
+{
+    return [ActiveStoreResolver::SESSION_KEY => $store->getKey()];
 }
 
 /**

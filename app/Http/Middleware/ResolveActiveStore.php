@@ -10,16 +10,16 @@ use App\Support\ActiveStoreResolver;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Thinkycz\LaravelCore\Support\Typer;
 
 /**
  * Resolves the active store for the current request before
  * HandleInertiaRequests runs, so the resolved value can be shared with
  * every Inertia page.
  *
- * For admins this reads the `active_store_id` column on the user model
- * (set by {@see \App\Http\Controllers\Web\Store\StoreSwitchController})
- * and validates that the store still belongs to the user. For limited
- * users the assigned store is used unconditionally.
+ * For admins this reads the active store from the browser session and
+ * validates that the store still belongs to the user. For limited users
+ * the assigned store is used unconditionally.
  */
 class ResolveActiveStore
 {
@@ -44,23 +44,27 @@ class ResolveActiveStore
     /**
      * Resolve the active store for the given user.
      *
-     * Limited users are pinned to their assigned store; the persisted
-     * active_store_id on the user model is ignored for them.
+     * Limited users are pinned to their assigned store; any stale active
+     * store session value is cleared because they cannot switch stores.
      */
     private function resolveForUser(User $user, Request $request): Store|null
     {
         if (!$user->isAdmin()) {
+            $request->session()->forget(ActiveStoreResolver::SESSION_KEY);
+
             return ActiveStoreResolver::resolve($request, $user);
         }
 
-        $persistedId = $user->getActiveStoreId();
+        $sessionId = Typer::parseNullableInt($request->session()->get(ActiveStoreResolver::SESSION_KEY));
 
-        if ($persistedId !== null) {
-            $match = $this->findOwned($user, $persistedId);
+        if ($sessionId !== null) {
+            $match = $this->findOwned($user, $sessionId);
 
             if ($match instanceof Store) {
                 return $match;
             }
+
+            $request->session()->forget(ActiveStoreResolver::SESSION_KEY);
         }
 
         return ActiveStoreResolver::resolve($request, $user);

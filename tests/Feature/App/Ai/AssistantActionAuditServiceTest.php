@@ -23,7 +23,6 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 \test('native approval lifecycle events create a sanitized durable audit and record rejection', function (): void {
     [$admin, $warehouse] = \createIsolatedUserWithWarehouse();
-    $admin->setActiveStoreId($warehouse->getKey());
     $item = Item::factory()->create(['user_id' => $admin->getKey()]);
     StoreItem::query()->create([
         'store_id' => $warehouse->getKey(),

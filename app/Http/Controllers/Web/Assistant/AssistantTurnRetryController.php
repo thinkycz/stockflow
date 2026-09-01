@@ -10,6 +10,7 @@ use App\Ai\ConversationRepository;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Jobs\RunAssistantTurnJob;
 use App\Models\User;
+use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
 use Laravel\Ai\Models\Conversation;
 use Symfony\Component\HttpFoundation\Response;
@@ -58,7 +59,11 @@ final class AssistantTurnRetryController
         }
 
         if ($shouldDispatch) {
-            \dispatch(new RunAssistantTurnJob($submission['turn']->getTurnId()));
+            \dispatch(new RunAssistantTurnJob(
+                turnId: $submission['turn']->getTurnId(),
+                activeStoreId: ActiveStoreResolver::resolve($request, $actor)?->getKey(),
+                browserSessionId: $request->session()->getId(),
+            ));
         }
 
         return \response()->json([

@@ -42,10 +42,7 @@ class E2ESeeder extends Seeder
             ->orderBy('name')
             ->first();
 
-        $user->update([
-            'locale' => 'en',
-            'active_store_id' => $store?->getKey(),
-        ]);
+        $user->update(['locale' => 'en']);
 
         if (!$store instanceof Store) {
             return;

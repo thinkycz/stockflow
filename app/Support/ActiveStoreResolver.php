@@ -14,7 +14,7 @@ use Thinkycz\LaravelCore\Support\Typer;
  *
  *   1. `?store_id=` query override (lets shared links jump straight to a store).
  *   2. `active_store` request attribute set by the ResolveActiveStore
- *      middleware (read from the `active_store_id` column on the user model).
+ *      middleware (read from the current browser session).
  *   3. The first non-warehouse store the user owns; for limited users
  *      this is their assigned store.
  *
@@ -23,6 +23,16 @@ use Thinkycz\LaravelCore\Support\Typer;
  */
 final class ActiveStoreResolver
 {
+    /**
+     * Session key used to persist the active store per browser session.
+     */
+    public const string SESSION_KEY = 'active_store_id';
+
+    /**
+     * Queue context key carrying an encrypted originating session identifier.
+     */
+    public const string SESSION_ID_CONTEXT = 'active_store_browser_session_id';
+
     /**
      * Request attribute name used to pass the resolved store between
      * middleware and controllers.

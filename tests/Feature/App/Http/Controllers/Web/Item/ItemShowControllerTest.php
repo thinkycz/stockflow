@@ -108,7 +108,7 @@ use App\Models\StoreItem;
         'adjustment_reason' => null,
     ]);
 
-    $user->setActiveStoreId($retail->getKey());
+    $this->withSession(\activeStoreSession($retail));
 
     $response = $this->be($user, 'users')->get("/items/{$item->getKey()}", $this->inertiaHeaders());
 
@@ -134,7 +134,7 @@ use App\Models\StoreItem;
         'quantity' => 15,
     ]);
 
-    $user->setActiveStoreId($retail->getKey());
+    $this->withSession(\activeStoreSession($retail));
 
     $response = $this->be($user, 'users')->get("/items/{$item->getKey()}", $this->inertiaHeaders());
 

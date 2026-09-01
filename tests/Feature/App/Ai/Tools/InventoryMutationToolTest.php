@@ -13,7 +13,6 @@ use Laravel\Ai\Tools\Request;
 
 \test('inventory mutation tool requires approval and posts through the stock movement command', function (): void {
     [$admin, $warehouse] = \createIsolatedUserWithWarehouse();
-    $admin->setActiveStoreId($warehouse->getKey());
     $item = Item::factory()->create([
         'user_id' => $admin->getKey(),
         'title' => 'Assistant coffee',

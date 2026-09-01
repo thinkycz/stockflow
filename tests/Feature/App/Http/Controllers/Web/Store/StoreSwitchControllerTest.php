@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use App\Models\Store;
 use App\Models\User;
+use App\Support\ActiveStoreResolver;
 use Database\Factories\UserFactory;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
 \test('admin can switch the active store', function (): void {
@@ -22,7 +24,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         ], $this->inertiaHeaders());
 
     $response->assertRedirect();
-    $this->assertSame($retail->getKey(), $user->fresh()->getActiveStoreId());
+    $response->assertSessionHas(ActiveStoreResolver::SESSION_KEY, $retail->getKey());
 });
 
 \test('admin store switch returns JSON when requested', function (): void {
@@ -41,22 +43,95 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $response->assertOk();
     $response->assertJsonPath('active_store.id', $retail->getKey());
-    $this->assertSame($retail->getKey(), $user->fresh()->getActiveStoreId());
+    $response->assertSessionHas(ActiveStoreResolver::SESSION_KEY, $retail->getKey());
 });
 
-\test('statements index picks up the persisted active store', function (): void {
-    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+\test('same admin keeps independent active stores in separate browser sessions', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $storeA = Store::factory()->create([
+        'user_id' => $user->getKey(),
+        'is_warehouse' => false,
+        'name' => 'Machine A store',
+    ]);
+    $storeB = Store::factory()->create([
+        'user_id' => $user->getKey(),
+        'is_warehouse' => false,
+        'name' => 'Machine B store',
+    ]);
+    $session = Resolver::resolveSessionStore();
+    $cookieName = $session->getName();
+    $machineA = \str_repeat('a', 40);
+    $machineB = \str_repeat('b', 40);
+
+    $this->be($user, 'users')
+        ->withCookie($cookieName, $machineA)
+        ->post('/stores/switch', ['store_id' => $storeA->getKey()])
+        ->assertRedirect()
+        ->assertSessionHas(ActiveStoreResolver::SESSION_KEY, $storeA->getKey());
+
+    $session->flush();
+
+    $this->withCookie($cookieName, $machineB)
+        ->post('/stores/switch', ['store_id' => $storeB->getKey()])
+        ->assertRedirect()
+        ->assertSessionHas(ActiveStoreResolver::SESSION_KEY, $storeB->getKey());
+
+    $session->flush();
+
+    $this->withCookie($cookieName, $machineA)
+        ->get('/statements', $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.filters.store_id', $storeA->getKey());
+
+    $session->flush();
+
+    $this->withCookie($cookieName, $machineB)
+        ->get('/statements', $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.filters.store_id', $storeB->getKey());
+});
+
+\test('statements index picks up the session active store', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    Store::factory()->create([
+        'user_id' => $user->getKey(),
+        'is_warehouse' => false,
+        'name' => 'Alpha retail',
+    ]);
     $retail = Store::factory()->create([
+        'user_id' => $user->getKey(),
+        'is_warehouse' => false,
+        'name' => 'Zulu retail',
+    ]);
+
+    $this->be($user, 'users')
+        ->withSession([ActiveStoreResolver::SESSION_KEY => $retail->getKey()])
+        ->get('/statements', $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.filters.store_id', $retail->getKey());
+});
+
+\test('query override does not replace the session active store', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $sessionStore = Store::factory()->create([
+        'user_id' => $user->getKey(),
+        'is_warehouse' => false,
+    ]);
+    $overrideStore = Store::factory()->create([
         'user_id' => $user->getKey(),
         'is_warehouse' => false,
     ]);
 
-    $user->setActiveStoreId($retail->getKey());
-
     $this->be($user, 'users')
-        ->get('/statements', $this->inertiaHeaders())
+        ->withSession([ActiveStoreResolver::SESSION_KEY => $sessionStore->getKey()])
+        ->get('/statements?store_id=' . $overrideStore->getKey(), $this->inertiaHeaders())
         ->assertOk()
-        ->assertJsonPath('props.filters.store_id', $retail->getKey());
+        ->assertJsonPath('props.filters.store_id', $overrideStore->getKey())
+        ->assertSessionHas(ActiveStoreResolver::SESSION_KEY, $sessionStore->getKey());
+
+    $this->get('/statements', $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.filters.store_id', $sessionStore->getKey());
 });
 
 \test('admin cannot switch to a store they do not own', function (): void {
@@ -89,18 +164,20 @@ use Thinkycz\LaravelCore\Support\Typer;
     );
 
     $this->be($limited, 'users')
-        ->withSession(['_token' => 'test'])
+        ->withSession([
+            '_token' => 'test',
+            ActiveStoreResolver::SESSION_KEY => $store->getKey(),
+        ])
         ->withHeaders(['X-CSRF-TOKEN' => 'test'])
         ->post('/stores/switch', [
             'store_id' => $store->getKey(),
         ], $this->inertiaHeaders())
-        ->assertRedirect('/dashboard');
-
-    $this->assertNull($limited->fresh()->getActiveStoreId());
+        ->assertRedirect('/dashboard')
+        ->assertSessionMissing(ActiveStoreResolver::SESSION_KEY);
 });
 
-\test('statements index ignores a stale active store pointing at a deleted store', function (): void {
-    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+\test('statements index clears a stale session active store pointing at a deleted store', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
     $retail = Store::factory()->create([
         'user_id' => $user->getKey(),
         'is_warehouse' => false,
@@ -110,14 +187,34 @@ use Thinkycz\LaravelCore\Support\Typer;
         'is_warehouse' => false,
     ]);
 
-    // Point the user at the doomed store, then delete it.
-    $user->setActiveStoreId($doomed->getKey());
     $doomed->delete();
 
     $response = $this->be($user, 'users')
+        ->withSession([ActiveStoreResolver::SESSION_KEY => $doomed->getKey()])
         ->get('/statements', $this->inertiaHeaders());
 
     $response->assertOk();
-    // The resolver falls back to the first owned retail store.
-    $response->assertJsonPath('props.filters.store_id', $retail->getKey());
+    $response
+        ->assertJsonPath('props.filters.store_id', $retail->getKey())
+        ->assertSessionMissing(ActiveStoreResolver::SESSION_KEY);
+});
+
+\test('statements index clears a session active store owned by another admin', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $retail = Store::factory()->create([
+        'user_id' => $user->getKey(),
+        'is_warehouse' => false,
+    ]);
+    [$other] = \createIsolatedUserWithWarehouse();
+    $foreign = Store::factory()->create([
+        'user_id' => $other->getKey(),
+        'is_warehouse' => false,
+    ]);
+
+    $this->be($user, 'users')
+        ->withSession([ActiveStoreResolver::SESSION_KEY => $foreign->getKey()])
+        ->get('/statements', $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.filters.store_id', $retail->getKey())
+        ->assertSessionMissing(ActiveStoreResolver::SESSION_KEY);
 });

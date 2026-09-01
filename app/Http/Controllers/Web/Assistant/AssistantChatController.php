@@ -14,6 +14,7 @@ use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Jobs\RunAssistantTurnJob;
 use App\Models\AssistantTurn;
 use App\Models\User;
+use App\Support\ActiveStoreResolver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -97,7 +98,11 @@ class AssistantChatController
         }
 
         if ($shouldDispatch) {
-            \dispatch(new RunAssistantTurnJob($turnId));
+            \dispatch(new RunAssistantTurnJob(
+                turnId: $turnId,
+                activeStoreId: ActiveStoreResolver::resolve($request, $user)?->getKey(),
+                browserSessionId: $request->session()->getId(),
+            ));
         }
 
         return $this->durableResponse($submission['turn'], $conversation, $repository);

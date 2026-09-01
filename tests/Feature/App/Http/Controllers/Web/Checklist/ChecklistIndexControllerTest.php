@@ -10,7 +10,7 @@ use Database\Factories\UserFactory;
 \test('admin can open store checklist management and limited user cannot', function (): void {
     $admin = UserFactory::new()->admin()->createOne();
     $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
-    $admin->setActiveStoreId($store->getKey());
+    $this->withSession(\activeStoreSession($store));
 
     $this->be($admin, 'users')->get('/checklists', $this->inertiaHeaders())
         ->assertOk()
@@ -24,7 +24,7 @@ use Database\Factories\UserFactory;
 \test('history status filter is applied before pagination', function (): void {
     $admin = UserFactory::new()->admin()->createOne();
     $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
-    $admin->setActiveStoreId($store->getKey());
+    $this->withSession(\activeStoreSession($store));
     $start = CarbonImmutable::parse('2026-01-01');
 
     foreach (\range(0, 31) as $offset) {

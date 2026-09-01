@@ -11,7 +11,7 @@ use Database\Factories\UserFactory;
 \test('admin replaces one ordered template group transactionally', function (): void {
     $admin = UserFactory::new()->admin()->createOne();
     $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
-    $admin->setActiveStoreId($store->getKey());
+    $this->withSession(\activeStoreSession($store));
 
     $this->be($admin, 'users')->put(\route('checklists.templates.update'), [
         'scope' => ChecklistTemplateScopeEnum::Weekly->value,

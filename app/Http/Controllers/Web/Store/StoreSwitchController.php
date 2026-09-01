@@ -8,7 +8,7 @@ use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\StoreValidity;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\AdministrationManagementService;
+use App\Support\ActiveStoreResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +16,7 @@ use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
 
 /**
- * Persist the admin's choice of active store onto the user model.
+ * Persist the admin's choice of active store into the browser session.
  *
  * Limited users cannot switch stores; they are pinned to their assigned
  * store and the request is rejected with a 403 + flash.
@@ -59,9 +59,7 @@ class StoreSwitchController
             return Resolver::resolveRedirector()->back();
         }
 
-        // Persist the active store choice onto the user model so it
-        // survives session expiry and works across devices.
-        (new AdministrationManagementService())->switchStore($user, $store);
+        $request->session()->put(ActiveStoreResolver::SESSION_KEY, $store->getKey());
 
         if ($request->expectsJson()) {
             return new JsonResponse([

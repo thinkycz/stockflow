@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Ai\Tools;
 
 use App\Models\OperationalDailyDigest;
+use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\JsonSchema\Types\Type;
@@ -14,6 +15,14 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 final class ReadSettingsTool extends AbstractReadResourceTool
 {
+    /**
+     * Create a settings reader with the browser session's store snapshot.
+     */
+    public function __construct(User $actor, string $conversationId, private readonly int|null $activeStoreId = null)
+    {
+        parent::__construct($actor, $conversationId);
+    }
+
     /**
      * Stable provider-facing tool name.
      */
@@ -85,7 +94,7 @@ final class ReadSettingsTool extends AbstractReadResourceTool
             return $this->singleResult($request, $operation, 'profile', [
                 'email' => $this->actor->getEmail(),
                 'locale' => $this->actor->getLocale(),
-                'active_store_id' => $this->actor->getActiveStoreId(),
+                'active_store_id' => $this->activeStoreId,
                 'url' => Resolver::resolveUrlGenerator()->route('settings.show'),
             ]);
         }

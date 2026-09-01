@@ -1,5 +1,9 @@
 # Mobile store switch stale data
 
+> Superseded on 2026-09-01: active-store persistence now lives in the
+> browser session instead of `users.active_store_id`, so different devices
+> using the same account keep independent store contexts.
+
 ## Symptom
 
 After choosing a different store from the mobile navigation, the current page

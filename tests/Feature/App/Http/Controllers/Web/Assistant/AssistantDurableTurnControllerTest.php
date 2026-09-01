@@ -8,8 +8,10 @@ use App\Enums\AssistantTurnStatusEnum;
 use App\Jobs\RunAssistantTurnJob;
 use App\Models\AssistantTurn;
 use App\Models\AssistantTurnEvent;
+use App\Models\Store;
 use App\Models\User;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Laravel\Ai\Models\Conversation;
@@ -160,15 +162,25 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 \test('queued turns hydrate their optimistic user message and can be cancelled by their owner', function (): void {
     Queue::fake();
-    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->createOne([
+        'user_id' => $admin->getKey(),
+        'is_warehouse' => false,
+    ]);
     $turnId = Str::uuid()->toString();
-    $response = $this->be($admin, 'users')->postJson('/assistant/chat', [
+    $response = $this->be($admin, 'users')->withSession(\activeStoreSession($store))->postJson('/assistant/chat', [
         'message' => 'Keep this visible',
         'turn_id' => $turnId,
     ]);
     $conversationId = Typer::assertString($response->headers->get('x-conversation-id'));
 
-    Queue::assertPushed(RunAssistantTurnJob::class, static fn(RunAssistantTurnJob $job): bool => $job->turnId === $turnId);
+    Queue::assertPushed(
+        RunAssistantTurnJob::class,
+        static fn(RunAssistantTurnJob $job): bool => $job instanceof ShouldBeEncrypted &&
+        $job->turnId === $turnId &&
+        $job->activeStoreId === $store->getKey() &&
+        $job->browserSessionId !== null,
+    );
 
     $this->be($admin, 'users')
         ->get('/assistant/conversations/' . $conversationId, $this->inertiaHeaders())

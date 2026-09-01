@@ -17,12 +17,16 @@ use App\Models\StoreItem;
 use App\Models\User;
 use App\Models\Worker;
 use App\Notifications\SlackTestNotification;
+use App\Support\ActiveStoreResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Thrower;
+use Thinkycz\LaravelCore\Support\Typer;
 
 class AdministrationManagementService
 {
@@ -198,12 +202,31 @@ class AdministrationManagementService
     }
 
     /**
-     * Persist the main admin's active-store selection.
+     * Persist the main admin's active-store selection in the originating session.
      */
     public function switchStore(User $actor, Store $store): void
     {
         $this->authorizeStore($actor, $store);
-        $actor->setActiveStoreId($store->getKey());
+        $browserSessionId = Typer::parseNullableString(Context::get(ActiveStoreResolver::SESSION_ID_CONTEXT));
+        $request = Resolver::resolveRequest();
+
+        if ($request->hasSession() && ($browserSessionId === null || \hash_equals($request->session()->getId(), $browserSessionId))) {
+            $request->session()->put(ActiveStoreResolver::SESSION_KEY, $store->getKey());
+
+            return;
+        }
+
+        if ($browserSessionId === null) {
+            throw new RuntimeException('An active browser session is required to switch stores.');
+        }
+
+        $session = Resolver::resolveSessionStore();
+        $session->flush();
+        $session->setId($browserSessionId);
+        $session->start();
+        $session->put(ActiveStoreResolver::SESSION_KEY, $store->getKey());
+        $session->save();
+        $session->flush();
     }
 
     /**

@@ -51,9 +51,8 @@ use Thinkycz\LaravelCore\Support\Config;
         ]);
 
         $admin->update(['locale' => 'cs']);
-        $admin->setActiveStoreId($store->getKey());
 
-        $instructions = (new StockflowAssistant($admin, Str::uuid()->toString()))->instructions();
+        $instructions = (new StockflowAssistant($admin, Str::uuid()->toString(), $store->getKey()))->instructions();
 
         \expect($instructions)
             ->toContain('The authoritative business date and time is Saturday, 2026-08-29 22:56:00 +02:00 in Europe/Prague.')

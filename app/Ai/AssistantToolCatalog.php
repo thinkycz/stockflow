@@ -64,7 +64,7 @@ final class AssistantToolCatalog
      *
      * @return list<Tool>
      */
-    public function tools(User $actor, string $conversationId): array
+    public function tools(User $actor, string $conversationId, int|null $activeStoreId = null): array
     {
         $administration = Resolver::resolve(AdministrationOperationExecutor::class);
         $finance = Resolver::resolve(FinanceOperationExecutor::class);
@@ -100,7 +100,7 @@ final class AssistantToolCatalog
             new WriteFinancialReportsTool($actor, $conversationId, $finance),
             new WriteRecurringExpensesTool($actor, $conversationId, $finance),
             new WriteGiftVouchersTool($actor, $conversationId, $finance),
-            new ReadSettingsTool($actor, $conversationId),
+            new ReadSettingsTool($actor, $conversationId, $activeStoreId),
             new ReadAttendanceTool($actor, $conversationId),
             new ReadShiftRequestsTool($actor, $conversationId),
             new ReadShiftShareLinksTool($actor, $conversationId),
@@ -122,9 +122,9 @@ final class AssistantToolCatalog
     /**
      * Resolve a persisted provider-facing tool name for approval continuation.
      */
-    public function find(User $actor, string $conversationId, string $name): Tool|null
+    public function find(User $actor, string $conversationId, string $name, int|null $activeStoreId = null): Tool|null
     {
-        foreach ($this->tools($actor, $conversationId) as $tool) {
+        foreach ($this->tools($actor, $conversationId, $activeStoreId) as $tool) {
             if ($name === ToolNameResolver::resolve($tool)) {
                 return $tool;
             }

@@ -11,7 +11,7 @@ use Database\Factories\UserFactory;
 \test('admin excuses and restores a checklist day with audit events', function (): void {
     $admin = UserFactory::new()->admin()->createOne();
     $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
-    $admin->setActiveStoreId($store->getKey());
+    $this->withSession(\activeStoreSession($store));
     $day = (new ChecklistService())->ensureDay($store, CarbonImmutable::now('Europe/Prague'));
 
     $this->be($admin, 'users')->put(\route('checklist-days.excuse', $day->getKey()), ['reason' => 'Státní svátek'])

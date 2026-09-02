@@ -56,6 +56,7 @@ use App\Http\Controllers\Web\Payroll\PayrollIndexController;
 use App\Http\Controllers\Web\Payroll\PayrollLifecycleController;
 use App\Http\Controllers\Web\Payroll\PayrollPrintController;
 use App\Http\Controllers\Web\Payroll\PayrollShowController;
+use App\Http\Controllers\Web\Payroll\PayrollTipDistributionController;
 use App\Http\Controllers\Web\Payroll\PayrollWageOverrideController;
 use App\Http\Controllers\Web\Payroll\PayrollWorkerController;
 use App\Http\Controllers\Web\Recipe\RecipeArchiveController;
@@ -254,6 +255,7 @@ Resolver::resolveRouteRegistrar()
         $router->post('payroll/workers', [PayrollWorkerController::class, 'store'])->name('payroll.workers.store');
         $router->delete('payroll/workers/{worker}', [PayrollWorkerController::class, 'destroy'])->whereNumber('worker')->name('payroll.workers.destroy');
         $router->post('payroll/adjustments', [PayrollAdjustmentController::class, 'store'])->name('payroll.adjustments.store');
+        $router->post('payroll/tip-distributions', [PayrollTipDistributionController::class, 'store'])->name('payroll.tip-distributions.store');
         $router->put('payroll/adjustments/{payrollAdjustment}', [PayrollAdjustmentController::class, 'update'])->whereNumber('payrollAdjustment')->name('payroll.adjustments.update');
         $router->delete('payroll/adjustments/{payrollAdjustment}', [PayrollAdjustmentController::class, 'destroy'])->whereNumber('payrollAdjustment')->name('payroll.adjustments.destroy');
         $router->put('payroll/wage-override', [PayrollWageOverrideController::class, 'update'])->name('payroll.wage-override.update');

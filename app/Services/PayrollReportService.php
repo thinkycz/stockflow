@@ -16,6 +16,9 @@ use App\Models\Shift;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
+use Brick\Math\BigDecimal;
+use Brick\Math\BigInteger;
+use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -318,6 +321,76 @@ class PayrollReportService
                 'amount' => \round($amount, 2),
                 'reason' => $reason,
             ]);
+        });
+    }
+
+    /**
+     * Distribute one tip amount between workers by their payable hours.
+     */
+    public function distributeTips(User $admin, Store $store, int $year, int $month, float $amount): void
+    {
+        DB::transaction(function () use ($admin, $store, $year, $month, $amount): void {
+            $report = $this->openReport($admin, $store, $year, $month);
+            $totalCents = BigDecimal::of((string) $amount)
+                ->multipliedBy(100)
+                ->toScale(0, RoundingMode::HalfUp)
+                ->toInt();
+            if ($totalCents <= 0) {
+                $this->fail('amount', Typer::assertString(\__('The tip amount must be greater than zero.')));
+            }
+
+            $allocations = [];
+            $totalWeight = 0;
+            foreach (Typer::assertArray($this->build($admin, $store, $year, $month)['payslips'] ?? null) as $value) {
+                $payslip = Typer::assertStringKeyArray(Typer::assertArray($value));
+                $weight = BigDecimal::of((string) Typer::parseFloat($payslip['payable_hours'] ?? null))
+                    ->multipliedBy(100)
+                    ->toScale(0, RoundingMode::HalfUp)
+                    ->toInt();
+                if ($weight <= 0) {
+                    continue;
+                }
+                $allocations[] = [
+                    'worker_id' => Typer::assertInt($payslip['worker_id'] ?? null),
+                    'weight' => $weight,
+                    'remainder' => 0,
+                    'share_cents' => 0,
+                ];
+                $totalWeight += $weight;
+            }
+            if ($allocations === []) {
+                $this->fail('amount', Typer::assertString(\__('Tips cannot be distributed because no worker has payable hours.')));
+            }
+
+            $allocatedCents = 0;
+            foreach ($allocations as $index => $allocation) {
+                [$share, $remainder] = BigInteger::of($totalCents)
+                    ->multipliedBy($allocation['weight'])
+                    ->quotientAndRemainder($totalWeight);
+                $allocations[$index]['share_cents'] = $share->toInt();
+                $allocations[$index]['remainder'] = $remainder->toInt();
+                $allocatedCents += $share->toInt();
+            }
+            \usort($allocations, static function (array $left, array $right): int {
+                $remainderOrder = $right['remainder'] <=> $left['remainder'];
+
+                return $remainderOrder !== 0 ? $remainderOrder : $left['worker_id'] <=> $right['worker_id'];
+            });
+            for ($index = 0; $index < $totalCents - $allocatedCents; ++$index) {
+                ++$allocations[$index]['share_cents'];
+            }
+
+            foreach ($allocations as $allocation) {
+                if ($allocation['share_cents'] === 0) {
+                    continue;
+                }
+                $report->adjustments()->create([
+                    'worker_id' => $allocation['worker_id'],
+                    'type' => PayrollAdjustmentTypeEnum::TIP->value,
+                    'amount' => \number_format($allocation['share_cents'] / 100, 2, '.', ''),
+                    'reason' => Typer::assertString(\__('Proportionally distributed tips')),
+                ]);
+            }
         });
     }
 

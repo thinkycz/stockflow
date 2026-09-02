@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\PayrollAdjustmentTypeEnum;
 use App\Models\AttendanceSession;
 use App\Models\FinancialReport;
+use App\Models\PayrollAdjustment;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\Worker;
@@ -182,6 +183,84 @@ use Thinkycz\LaravelCore\Support\Config;
             'Invalid',
         ))->toThrow(ValidationException::class);
     Notification::assertNothingSent();
+});
+
+\test('tips are distributed by payable hours with an exact deterministic total', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $workers = [];
+    foreach ([1, 2, 3] as $hours) {
+        $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+        Shift::factory()->create([
+            'user_id' => $admin->getKey(),
+            'store_id' => $store->getKey(),
+            'worker_id' => $worker->getKey(),
+            'date' => '2026-07-10',
+            'start_time' => '08:00',
+            'end_time' => \sprintf('%02d:00', 8 + $hours),
+            'hourly_rate' => 100,
+        ]);
+        $workers[] = $worker;
+    }
+    $zeroHourWorker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new PayrollReportService();
+    $service->addWorker($admin, $store, 2026, 7, $zeroHourWorker);
+
+    $service->distributeTips($admin, $store, 2026, 7, 600);
+    $payslips = \collect($service->build($admin, $store, 2026, 7)['payslips'])
+        ->keyBy('worker_id');
+
+    \expect($payslips[$workers[0]->getKey()]['tip_amount'])->toBe(100.0)
+        ->and($payslips[$workers[1]->getKey()]['tip_amount'])->toBe(200.0)
+        ->and($payslips[$workers[2]->getKey()]['tip_amount'])->toBe(300.0)
+        ->and($payslips[$zeroHourWorker->getKey()]['tip_amount'])->toBe(0.0)
+        ->and((float) PayrollAdjustment::query()->sum('amount'))->toBe(600.0)
+        ->and(PayrollAdjustment::query()->pluck('reason')->unique()->all())
+        ->toBe([\__('Proportionally distributed tips')]);
+});
+
+\test('tip distribution assigns rounding cents deterministically', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $workers = Worker::factory()->count(3)->create(['user_id' => $admin->getKey()]);
+    foreach ($workers as $worker) {
+        Shift::factory()->create([
+            'user_id' => $admin->getKey(),
+            'store_id' => $store->getKey(),
+            'worker_id' => $worker->getKey(),
+            'date' => '2026-07-10',
+            'start_time' => '08:00',
+            'end_time' => '09:00',
+        ]);
+    }
+
+    (new PayrollReportService())->distributeTips($admin, $store, 2026, 7, 100);
+
+    \expect(PayrollAdjustment::query()->orderBy('worker_id')->pluck('amount')->all())
+        ->toBe(['33.34', '33.33', '33.33']);
+});
+
+\test('tip distribution requires payable hours and an open report', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new PayrollReportService();
+
+    \expect(fn() => $service->distributeTips($admin, $store, 2026, 7, 100))
+        ->toThrow(ValidationException::class);
+
+    Shift::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $worker->getKey(),
+        'date' => '2026-07-10',
+        'start_time' => '08:00',
+        'end_time' => '09:00',
+    ]);
+    $service->close($admin, $store, 2026, 7);
+
+    \expect(fn() => $service->distributeTips($admin, $store, 2026, 7, 100))
+        ->toThrow(ValidationException::class);
 });
 
 \test('monthly wage override replaces planned hours and rate and can be reset', function (): void {

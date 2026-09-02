@@ -352,6 +352,32 @@ class E2ESeeder extends Seeder
             ],
             ['hourly_rate' => 200],
         );
+        Shift::query()->updateOrCreate(
+            [
+                'user_id' => $user->getKey(),
+                'store_id' => $store->getKey(),
+                'worker_id' => $worker->getKey(),
+                'date' => '2026-08-10',
+                'start_time' => '08:00',
+            ],
+            [
+                'end_time' => '10:00',
+                'hourly_rate' => $worker->getHourlyRate(),
+            ],
+        );
+        Shift::query()->updateOrCreate(
+            [
+                'user_id' => $user->getKey(),
+                'store_id' => $store->getKey(),
+                'worker_id' => $secondWorker->getKey(),
+                'date' => '2026-08-11',
+                'start_time' => '08:00',
+            ],
+            [
+                'end_time' => '09:00',
+                'hourly_rate' => $secondWorker->getHourlyRate(),
+            ],
+        );
         $deviationShift = Shift::query()->updateOrCreate(
             [
                 'user_id' => $user->getKey(),

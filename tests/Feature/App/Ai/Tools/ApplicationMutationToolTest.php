@@ -12,6 +12,7 @@ use App\Models\FinancialReportManualRow;
 use App\Models\InventorySession;
 use App\Models\Item;
 use App\Models\NoticeboardCard;
+use App\Models\PayrollAdjustment;
 use App\Models\RecipeCategory;
 use App\Models\Shift;
 use App\Models\Store;
@@ -217,6 +218,48 @@ use Laravel\Ai\Tools\Request;
         ->and($row->getLabel())->toBe('Assistant repair')
         ->and($row->getAmount())->toBe(125.5)
         ->and($row->getNote())->toBe('Approved repair');
+});
+
+\test('payroll assistant distributes tips through the shared payroll service', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create([
+        'user_id' => $admin->getKey(),
+        'is_warehouse' => false,
+    ]);
+    $workers = Worker::factory()->count(2)->create(['user_id' => $admin->getKey()]);
+    foreach ([1, 2] as $index => $hours) {
+        Shift::factory()->create([
+            'user_id' => $admin->getKey(),
+            'store_id' => $store->getKey(),
+            'worker_id' => $workers[$index]->getKey(),
+            'date' => '2026-08-10',
+            'start_time' => '08:00',
+            'end_time' => \sprintf('%02d:00', 8 + $hours),
+        ]);
+    }
+    $tool = \nativeResourceTool($admin, 'conversation-payroll-tips', 'write_payroll');
+    $arguments = \nativeResourceArguments([
+        'operation' => 'distribute_payroll_tips',
+        'store_id' => $store->getKey(),
+        'target_id' => null,
+        'context_json' => \json_encode(['year' => 2026, 'month' => 8], \JSON_THROW_ON_ERROR),
+        'values_json' => \json_encode(['amount' => 90], \JSON_THROW_ON_ERROR),
+    ]);
+
+    \expect($tool->shouldRequestApproval(new Request($arguments, 'call-payroll-tips')))
+        ->toBeInstanceOf(Approval::class)
+        ->and(PayrollAdjustment::query()->count())->toBe(0);
+
+    $result = \json_decode(
+        $tool->handle(new Request($arguments, 'call-payroll-tips', 'invocation-payroll-tips')),
+        true,
+        32,
+        \JSON_THROW_ON_ERROR,
+    );
+
+    \expect($result['operation'])->toBe('distribute_payroll_tips')
+        ->and(PayrollAdjustment::query()->orderBy('worker_id')->pluck('amount')->all())
+        ->toBe(['30.00', '60.00']);
 });
 
 \test('recipe assistant creates a category through the shared catalog service', function (): void {

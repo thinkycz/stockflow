@@ -192,7 +192,7 @@ final class AssistantResourceToolDefinitions
                     ]),
                 ]),
             ]),
-            'write_payroll' => self::writer('payroll', 'Manage payroll report lifecycle, workers, wage overrides, and adjustments.', [
+            'write_payroll' => self::writer('payroll', 'Manage payroll report lifecycle, workers, wage overrides, adjustments, and proportional tip distribution.', [
                 'close_payroll_report' => self::payrollAction(),
                 'reopen_payroll_report' => self::payrollAction(),
                 'add_payroll_worker' => self::payrollAction(false, ['worker_id' => self::id()]),
@@ -205,6 +205,9 @@ final class AssistantResourceToolDefinitions
                 'create_payroll_adjustment' => self::payrollAction(false, ['worker_id' => self::id()], self::payrollAdjustmentValues()),
                 'update_payroll_adjustment' => self::payrollAction(true, ['worker_id' => self::id()], self::payrollAdjustmentValues()),
                 'delete_payroll_adjustment' => self::payrollAction(true),
+                'distribute_payroll_tips' => self::payrollAction(false, [], [
+                    'amount' => self::number(true, 'Total tip amount', 0.01, null, 'money'),
+                ]),
             ]),
             'write_financial_reports' => self::writer('financial_reports', 'Manage financial reports, manual rows, and automatic-row overrides.', [
                 'copy_previous_financial_rows' => self::financialAction(),

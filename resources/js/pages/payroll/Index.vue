@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, router, useForm } from '@inertiajs/vue3';
-import { LockKeyhole, Plus, UnlockKeyhole } from '@lucide/vue';
-import { ref } from 'vue';
+import { HandCoins, LockKeyhole, Plus, UnlockKeyhole } from '@lucide/vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PayrollPrintMenu from '@/components/payroll/PayrollPrintMenu.vue';
 import Badge from '@/components/ui/Badge.vue';
@@ -11,6 +11,7 @@ import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import FilterField from '@/components/ui/FilterField.vue';
+import Input from '@/components/ui/Input.vue';
 import MonthPicker from '@/components/ui/MonthPicker.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import Label from '@/components/ui/Label.vue';
@@ -35,11 +36,29 @@ const route = useRoute();
 const dialog = useDialog();
 const lifecycleProcessing = ref(false);
 const workerModalOpen = ref(false);
+const tipModalOpen = ref(false);
 const workerForm = useForm({
     year: props.filters.year,
     month: props.filters.month,
     worker_id: null as number | null,
 });
+const tipForm = useForm({
+    year: props.filters.year,
+    month: props.filters.month,
+    amount: '',
+});
+const tipEligiblePayslips = computed(
+    () =>
+        props.payroll_report?.payslips.filter(
+            (payslip) => payslip.payable_hours > 0,
+        ) ?? [],
+);
+const tipEligibleHours = computed(() =>
+    tipEligiblePayslips.value.reduce(
+        (total, payslip) => total + payslip.payable_hours,
+        0,
+    ),
+);
 
 function openWorkerModal(): void {
     workerForm.clearErrors();
@@ -57,6 +76,29 @@ function submitWorker(): void {
         {
             preserveScroll: true,
             onSuccess: () => (workerModalOpen.value = false),
+        },
+    );
+}
+
+function openTipModal(): void {
+    tipForm.clearErrors();
+    tipForm.year = props.filters.year;
+    tipForm.month = props.filters.month;
+    tipForm.amount = '';
+    tipModalOpen.value = true;
+}
+
+function submitTips(): void {
+    tipForm.post(
+        route('payroll.tip-distributions.store', {
+            store_id: props.active_store?.id ?? null,
+        }),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                tipModalOpen.value = false;
+                tipForm.reset('amount');
+            },
         },
     );
 }
@@ -157,6 +199,15 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                                 })
                             "
                         />
+                        <Button
+                            v-if="payroll_report?.status === 'open'"
+                            variant="secondary"
+                            @click="openTipModal"
+                        >
+                            <HandCoins :size="15" />{{
+                                t('payroll.distribute_tips')
+                            }}
+                        </Button>
                         <Button
                             v-if="
                                 payroll_report?.status === 'open' &&
@@ -295,6 +346,82 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                 </tbody>
             </DataTable>
         </div>
+
+        <Modal
+            :open="tipModalOpen"
+            :title="t('payroll.distribute_tips')"
+            @close="tipModalOpen = false"
+        >
+            <form class="space-y-5" @submit.prevent="submitTips">
+                <p class="text-sm leading-6 text-on-surface-variant">
+                    {{ t('payroll.tip_distribution_help') }}
+                </p>
+
+                <div
+                    class="flex flex-wrap gap-x-6 gap-y-2 rounded-xl bg-surface-container-low px-4 py-3 text-sm"
+                >
+                    <p>
+                        <span class="text-on-surface-variant">
+                            {{ t('payroll.tip_eligible_workers') }}:
+                        </span>
+                        <strong class="ml-1 text-on-surface">
+                            {{ tipEligiblePayslips.length }}
+                        </strong>
+                    </p>
+                    <p>
+                        <span class="text-on-surface-variant">
+                            {{ t('payroll.payable_hours') }}:
+                        </span>
+                        <strong class="ml-1 text-on-surface">
+                            {{ hours(tipEligibleHours) }}
+                        </strong>
+                    </p>
+                </div>
+
+                <p
+                    v-if="tipEligiblePayslips.length === 0"
+                    class="rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-on-surface"
+                >
+                    {{ t('payroll.tip_distribution_no_hours') }}
+                </p>
+
+                <div class="space-y-2">
+                    <Label for="payroll-tip-amount" required>
+                        {{ t('payroll.tip_distribution_amount') }}
+                    </Label>
+                    <Input
+                        id="payroll-tip-amount"
+                        v-model="tipForm.amount"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        autocomplete="off"
+                        :invalid="Boolean(tipForm.errors.amount)"
+                        autofocus
+                        required
+                    />
+                    <FieldError :message="tipForm.errors.amount" />
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <Button variant="secondary" @click="tipModalOpen = false">
+                        {{ t('common.cancel') }}
+                    </Button>
+                    <Button
+                        type="submit"
+                        :disabled="
+                            tipForm.processing ||
+                            Number(tipForm.amount) <= 0 ||
+                            tipEligiblePayslips.length === 0
+                        "
+                    >
+                        <HandCoins :size="15" />{{
+                            t('payroll.distribute_tips')
+                        }}
+                    </Button>
+                </div>
+            </form>
+        </Modal>
 
         <Modal
             :open="workerModalOpen"

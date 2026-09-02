@@ -151,6 +151,7 @@ final class FinanceOperationExecutor implements AssistantOperationExecutor
             'reset_payroll_wage_override' => $this->payroll->deleteWageOverride($actor, $store, Typer::assertInt($year), Typer::assertInt($month), Typer::parseInt($context['worker_id'] ?? null)),
             'update_payroll_adjustment' => $this->payroll->updateAdjustment($actor, $store, Typer::assertInt($year), Typer::assertInt($month), Typer::assertInt($targetId), PayrollAdjustmentTypeEnum::from(Typer::assertString($values['type'] ?? null)), Typer::parseFloat($values['amount'] ?? null), Typer::assertString($values['reason'] ?? null)),
             'delete_payroll_adjustment' => $this->payroll->deleteAdjustment($actor, $store, Typer::assertInt($year), Typer::assertInt($month), Typer::assertInt($targetId)),
+            'distribute_payroll_tips' => $this->payroll->distributeTips($actor, $store, Typer::assertInt($year), Typer::assertInt($month), Typer::parseFloat($values['amount'] ?? null)),
             'update_voucher_branding' => $this->branding->update($actor, Typer::assertString($values['public_name'] ?? null), Typer::parseNullableString($values['message'] ?? null), null, Typer::parseBool($values['remove_logo'] ?? false)),
             default => throw new InvalidArgumentException('Unknown finance operation.'),
         };
@@ -175,6 +176,7 @@ final class FinanceOperationExecutor implements AssistantOperationExecutor
             \in_array($identifier, ['create_financial_row', 'update_financial_row'], true) => [...$period, ...$values],
             \in_array($identifier, ['set_financial_override', 'reset_financial_override'], true) => [...$period, 'source_type' => $context['source_type'] ?? null, 'source_key' => $context['source_key'] ?? null, ...$values],
             \in_array($identifier, ['close_payroll_report', 'reopen_payroll_report'], true) => $period,
+            $identifier === 'distribute_payroll_tips' => [...$period, ...$values],
             \in_array($identifier, ['add_payroll_worker', 'remove_payroll_worker', 'reset_payroll_wage_override'], true) => [...$period, 'worker_id' => $context['worker_id'] ?? null],
             \in_array($identifier, ['set_payroll_wage_override', 'create_payroll_adjustment'], true) => [...$period, 'worker_id' => $context['worker_id'] ?? null, ...$values],
             $identifier === 'update_payroll_adjustment' => [...$period, 'worker_id' => $context['worker_id'] ?? $actor->getKey(), ...$values],
@@ -191,6 +193,7 @@ final class FinanceOperationExecutor implements AssistantOperationExecutor
             'close_payroll_report', 'reopen_payroll_report', 'remove_payroll_worker', 'reset_payroll_wage_override', 'delete_payroll_adjustment' => ['year' => $payroll->year()->required()->toArray(), 'month' => $payroll->month()->required()->toArray()],
             'add_payroll_worker' => ['year' => $payroll->year()->required()->toArray(), 'month' => $payroll->month()->required()->toArray(), 'worker_id' => $payroll->workerId()->required()->toArray()],
             'set_payroll_wage_override' => ['year' => $payroll->year()->required()->toArray(), 'month' => $payroll->month()->required()->toArray(), 'worker_id' => $payroll->workerId()->required()->toArray(), 'hours' => $payroll->hours()->required()->toArray(), 'hourly_rate' => $payroll->hourlyRate()->required()->toArray()],
+            'distribute_payroll_tips' => ['year' => $payroll->year()->required()->toArray(), 'month' => $payroll->month()->required()->toArray(), 'amount' => $payroll->amount()->required()->toArray()],
             'create_payroll_adjustment', 'update_payroll_adjustment' => ['year' => $payroll->year()->required()->toArray(), 'month' => $payroll->month()->required()->toArray(), 'worker_id' => $payroll->workerId()->required()->toArray(), 'type' => $payroll->type()->required()->toArray(), 'amount' => $payroll->amount()->required()->toArray(), 'reason' => $payroll->reason()->required()->toArray()],
             'issue_gift_vouchers' => ['quantity' => $voucher->quantity()->required()->toArray(), 'amount' => $voucher->amount()->required()->toArray(), 'expires_on' => $voucher->expiresOn()->nullable()->toArray()],
             'update_voucher_branding' => ['public_name' => $voucher->publicName()->required()->toArray(), 'message' => $voucher->message()->nullable()->toArray(), 'remove_logo' => $voucher->removeLogo()->nullable()->toArray()],

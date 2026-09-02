@@ -23,6 +23,28 @@ test('admin adjusts closes and prints payroll while limited users are denied', a
     await expect(page.getByRole('heading', { name: 'Payslips' })).toBeVisible();
     await expect(page.getByTestId('active-store-pill')).toBeVisible();
 
+    const e2eWorkerRow = page
+        .locator('[data-testid^="payroll-row-"]')
+        .filter({ hasText: 'E2E Worker' });
+    const activeEmployeeRow = page
+        .locator('[data-testid^="payroll-row-"]')
+        .filter({ hasText: 'Active Employee' });
+    await page.getByRole('button', { name: 'Distribute tips' }).click();
+    const tipDialog = page.getByRole('dialog');
+    await expect(tipDialog).toContainText('Eligible workers: 2');
+    await expect(tipDialog).toContainText('Payable hours: 3 h');
+    await tipDialog.getByLabel('Total tip amount').fill('600');
+    await tipDialog
+        .getByRole('button', { name: 'Distribute tips', exact: true })
+        .click();
+    await expect(
+        page.getByText('Tips distributed proportionally.'),
+    ).toBeVisible();
+    await expect(e2eWorkerRow.locator('td').nth(3)).toContainText('400.00');
+    await expect(activeEmployeeRow.locator('td').nth(3)).toContainText(
+        '200.00',
+    );
+
     await page.getByRole('button', { name: 'Add worker' }).click();
     await page.getByRole('combobox', { name: 'Worker' }).fill('Payroll Only');
     await page.getByRole('option', { name: 'Payroll Only Worker' }).click();
@@ -44,13 +66,12 @@ test('admin adjusts closes and prints payroll while limited users are denied', a
             .filter({ hasText: 'Payroll Only Worker' }),
     ).toHaveCount(0);
 
-    const row = page
-        .locator('[data-testid^="payroll-row-"]')
-        .filter({ hasText: 'E2E Worker' });
-    await expect(row).toBeVisible();
-    await expect(row.getByRole('link')).toHaveCount(1);
-    await expect(row.getByRole('link', { name: 'Detail' })).toBeVisible();
-    await row.getByRole('link', { name: 'Detail' }).click();
+    await expect(e2eWorkerRow).toBeVisible();
+    await expect(e2eWorkerRow.getByRole('link')).toHaveCount(1);
+    await expect(
+        e2eWorkerRow.getByRole('link', { name: 'Detail' }),
+    ).toBeVisible();
+    await e2eWorkerRow.getByRole('link', { name: 'Detail' }).click();
     await page.waitForURL((url) => {
         return (
             /\/payroll\/workers\/\d+$/.test(url.pathname) &&

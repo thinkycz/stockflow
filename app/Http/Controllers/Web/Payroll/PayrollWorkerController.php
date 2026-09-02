@@ -33,6 +33,7 @@ class PayrollWorkerController
         ]);
         $workerQuery = Worker::query();
         Worker::scopeForUser($workerQuery, $admin);
+        Worker::scopeActive($workerQuery);
         $worker = $workerQuery->whereKey($payload->parseInt('worker_id'))->firstOrFail();
         (new PayrollReportService())->addWorker(
             $admin,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\Item;
 use App\Models\Store;
 use App\Models\StoreItem;
+use Database\Factories\UserFactory;
 
 \test('search returns matching items scoped to the authenticated user', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();
@@ -144,4 +145,32 @@ use App\Models\StoreItem;
     $data = $response->json('items.0');
     \expect($data)->toHaveKey('store_quantity');
     \expect((float) $data['store_quantity'])->toBe(3.0);
+});
+
+\test('limited user search exposes only assigned store availability', function (): void {
+    [$admin, $warehouse] = \createIsolatedUserWithWarehouse();
+    $assignedStore = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $otherStore = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $limited = UserFactory::new()->limited($assignedStore)->createOne();
+    $item = Item::factory()->create([
+        'user_id' => $admin->getKey(),
+        'title' => 'Private tracked item',
+        'purchase_price' => '99.50',
+    ]);
+
+    StoreItem::factory()->create(['store_id' => $warehouse->getKey(), 'item_id' => $item->getKey(), 'quantity' => 11]);
+    StoreItem::factory()->create(['store_id' => $assignedStore->getKey(), 'item_id' => $item->getKey(), 'quantity' => 7]);
+    StoreItem::factory()->create(['store_id' => $otherStore->getKey(), 'item_id' => $item->getKey(), 'quantity' => 33]);
+
+    $response = $this->be($limited, 'users')->get('/items/search?q=private');
+
+    $response->assertOk();
+    $data = $response->json('items.0');
+    \expect($data)
+        ->toMatchArray([
+            'id' => $item->getKey(),
+            'title' => 'Private tracked item',
+            'available_quantity' => 7,
+        ])
+        ->not->toHaveKeys(['purchase_price', 'warehouse_quantity', 'store_quantity', 'quantities_by_store']);
 });

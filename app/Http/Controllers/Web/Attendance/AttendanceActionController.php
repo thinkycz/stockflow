@@ -38,6 +38,7 @@ class AttendanceActionController
         ]);
         $workerQuery = Worker::query();
         Worker::scopeForUser($workerQuery, $owner);
+        Worker::scopeActive($workerQuery);
         $worker = $workerQuery->whereKey($validated->parseInt('worker_id'))->firstOrFail();
         (new AttendanceService())->perform(
             $user,

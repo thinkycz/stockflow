@@ -15,7 +15,9 @@ import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import { useDialog } from '@/composables/useDialog';
 import { useRoute } from '@/composables/useRoute';
+import { useSharedProps } from '@/composables/useSharedProps';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { withActionErrorToast } from '@/lib/action-errors';
 
 type Transaction = {
     id?: number;
@@ -56,6 +58,7 @@ const props = defineProps<{
         period_to: string | null;
         original_name: string;
         store_name: string;
+        store_active: boolean;
         account_number: string | null;
         iban: string | null;
         opening_balance: string | null;
@@ -83,6 +86,7 @@ const props = defineProps<{
 const { t } = useI18n();
 const route = useRoute();
 const dialog = useDialog();
+const { errors: pageErrors } = useSharedProps();
 const filter = ref('all');
 const resultFilter = ref('all');
 const form = useForm<{ transactions: Transaction[] }>({
@@ -181,6 +185,22 @@ const confirmationBlocked = computed(
         ),
 );
 
+const statementError = computed(() => errorFor('statement'));
+
+function errorFor(key: string): string | undefined {
+    return (
+        (form.errors as Record<string, string | undefined>)[key] ??
+        pageErrors.value[key]
+    );
+}
+
+function transactionError(
+    index: number,
+    field: keyof Transaction,
+): string | undefined {
+    return errorFor(`transactions.${index}.${field}`);
+}
+
 function addRow(): void {
     form.transactions.push({
         booked_on: props.statement.period_from ?? '',
@@ -209,9 +229,9 @@ function removeRow(index: number): void {
 function save(): void {
     form.put(
         route('bank-statements.update', { bankStatement: props.statement.id }),
-        {
+        withActionErrorToast({
             preserveScroll: true,
-        },
+        }),
     );
 }
 
@@ -226,6 +246,8 @@ async function confirmStatement(): Promise<void> {
         return;
     router.post(
         route('bank-statements.confirm', { bankStatement: props.statement.id }),
+        {},
+        withActionErrorToast({ preserveScroll: true }),
     );
 }
 
@@ -241,12 +263,16 @@ async function reopenStatement(): Promise<void> {
         return;
     router.post(
         route('bank-statements.reopen', { bankStatement: props.statement.id }),
+        {},
+        withActionErrorToast({ preserveScroll: true }),
     );
 }
 
 function retry(): void {
     router.post(
         route('bank-statements.retry', { bankStatement: props.statement.id }),
+        {},
+        withActionErrorToast({ preserveScroll: true }),
     );
 }
 
@@ -273,7 +299,11 @@ function badgeVariant(
                 :title="t('bank_statements.detail.title')"
                 :subtitle="props.statement.original_name"
             >
-                <template #context><StoreContextIndicator /></template>
+                <template #context>
+                    <StoreContextIndicator
+                        :store="{ name: statement.store_name }"
+                    />
+                </template>
                 <template #actions>
                     <Link
                         :href="
@@ -289,7 +319,10 @@ function badgeVariant(
                         >
                     </Link>
                     <Button
-                        v-if="props.statement.status === 'failed'"
+                        v-if="
+                            props.statement.store_active &&
+                            props.statement.status === 'failed'
+                        "
                         variant="secondary"
                         @click="retry"
                     >
@@ -298,7 +331,10 @@ function badgeVariant(
                         }}
                     </Button>
                     <Button
-                        v-if="props.statement.status === 'confirmed'"
+                        v-if="
+                            props.statement.store_active &&
+                            props.statement.status === 'confirmed'
+                        "
                         variant="warning"
                         @click="reopenStatement"
                     >
@@ -317,6 +353,9 @@ function badgeVariant(
 
             <Alert v-if="!props.statement.terminal" variant="info">
                 {{ t('bank_statements.processing') }}
+            </Alert>
+            <Alert v-if="statementError" variant="error">
+                {{ statementError }}
             </Alert>
             <Alert v-if="props.statement.last_error" variant="error">
                 {{ t(`bank_statements.errors.${props.statement.last_error}`) }}
@@ -473,21 +512,41 @@ function badgeVariant(
                                 "
                             >
                                 <td>
-                                    <Input
-                                        v-if="props.statement.editable"
-                                        v-model="transaction.booked_on"
-                                        type="date"
-                                        class="min-w-32"
-                                    /><span v-else>{{
+                                    <div v-if="props.statement.editable">
+                                        <Input
+                                            v-model="transaction.booked_on"
+                                            type="date"
+                                            class="min-w-32"
+                                        />
+                                        <FieldError
+                                            :message="
+                                                transactionError(
+                                                    index,
+                                                    'booked_on',
+                                                )
+                                            "
+                                        />
+                                    </div>
+                                    <span v-else>{{
                                         transaction.booked_on
                                     }}</span>
                                 </td>
                                 <td>
-                                    <Input
-                                        v-if="props.statement.editable"
-                                        v-model="transaction.item_type"
-                                        class="min-w-44"
-                                    /><span v-else>{{
+                                    <div v-if="props.statement.editable">
+                                        <Input
+                                            v-model="transaction.item_type"
+                                            class="min-w-44"
+                                        />
+                                        <FieldError
+                                            :message="
+                                                transactionError(
+                                                    index,
+                                                    'item_type',
+                                                )
+                                            "
+                                        />
+                                    </div>
+                                    <span v-else>{{
                                         transaction.item_type
                                     }}</span>
                                     <p
@@ -503,13 +562,23 @@ function badgeVariant(
                                     </p>
                                 </td>
                                 <td>
-                                    <Select
-                                        v-if="props.statement.editable"
-                                        v-model="transaction.category"
-                                        :options="categoryOptions"
-                                        class="min-w-36"
-                                        density="compact"
-                                    /><span v-else>{{
+                                    <div v-if="props.statement.editable">
+                                        <Select
+                                            v-model="transaction.category"
+                                            :options="categoryOptions"
+                                            class="min-w-36"
+                                            density="compact"
+                                        />
+                                        <FieldError
+                                            :message="
+                                                transactionError(
+                                                    index,
+                                                    'category',
+                                                )
+                                            "
+                                        />
+                                    </div>
+                                    <span v-else>{{
                                         t(
                                             `bank_statements.category.${transaction.category}`,
                                         )
@@ -520,28 +589,46 @@ function badgeVariant(
                                         v-if="props.statement.editable"
                                         class="flex min-w-64 gap-1"
                                     >
-                                        <Input
-                                            :model-value="
-                                                transaction.sales_from ?? ''
-                                            "
-                                            type="date"
-                                            @update:model-value="
-                                                transaction.sales_from = String(
-                                                    $event || '',
-                                                )
-                                            "
-                                        />
-                                        <Input
-                                            :model-value="
-                                                transaction.sales_to ?? ''
-                                            "
-                                            type="date"
-                                            @update:model-value="
-                                                transaction.sales_to = String(
-                                                    $event || '',
-                                                )
-                                            "
-                                        />
+                                        <div class="flex-1">
+                                            <Input
+                                                :model-value="
+                                                    transaction.sales_from ?? ''
+                                                "
+                                                type="date"
+                                                @update:model-value="
+                                                    transaction.sales_from =
+                                                        String($event || '')
+                                                "
+                                            />
+                                            <FieldError
+                                                :message="
+                                                    transactionError(
+                                                        index,
+                                                        'sales_from',
+                                                    )
+                                                "
+                                            />
+                                        </div>
+                                        <div class="flex-1">
+                                            <Input
+                                                :model-value="
+                                                    transaction.sales_to ?? ''
+                                                "
+                                                type="date"
+                                                @update:model-value="
+                                                    transaction.sales_to =
+                                                        String($event || '')
+                                                "
+                                            />
+                                            <FieldError
+                                                :message="
+                                                    transactionError(
+                                                        index,
+                                                        'sales_to',
+                                                    )
+                                                "
+                                            />
+                                        </div>
                                     </div>
                                     <span v-else
                                         >{{ transaction.sales_from ?? '—' }} –
@@ -549,13 +636,23 @@ function badgeVariant(
                                     >
                                 </td>
                                 <td class="text-right">
-                                    <Input
-                                        v-if="props.statement.editable"
-                                        v-model="transaction.amount"
-                                        type="number"
-                                        step="0.01"
-                                        class="min-w-28 text-right"
-                                    /><span v-else
+                                    <div v-if="props.statement.editable">
+                                        <Input
+                                            v-model="transaction.amount"
+                                            type="number"
+                                            step="0.01"
+                                            class="min-w-28 text-right"
+                                        />
+                                        <FieldError
+                                            :message="
+                                                transactionError(
+                                                    index,
+                                                    'amount',
+                                                )
+                                            "
+                                        />
+                                    </div>
+                                    <span v-else
                                         >{{ transaction.amount }} CZK</span
                                     >
                                 </td>

@@ -56,18 +56,29 @@ class StatementService
      */
     public function findOrCreateForMonth(User $user, Store $store, int $year, int $month): Statement
     {
-        $query = Statement::query();
-        Statement::scopeForUser($query, $user);
-        Statement::scopeForStore($query, $store->getKey());
-        Statement::scopeForMonth($query, $year, $month);
-
-        $statement = $query->first();
-
-        if ($statement instanceof Statement) {
-            return $statement;
-        }
-
         return DB::transaction(function () use ($user, $store, $year, $month): Statement {
+            $store = Typer::assertInstance(
+                Store::query()
+                    ->where('user_id', $user->getKey())
+                    ->whereKey($store->getKey())
+                    ->lockForUpdate()
+                    ->firstOrFail(),
+                Store::class,
+            );
+            if (!$store->isActive()) {
+                \abort(404);
+            }
+
+            $query = Statement::query();
+            Statement::scopeForUser($query, $user);
+            Statement::scopeForStore($query, $store->getKey());
+            Statement::scopeForMonth($query, $year, $month);
+            $statement = $query->lockForUpdate()->first();
+
+            if ($statement instanceof Statement) {
+                return $statement;
+            }
+
             $statement = Statement::query()->create([
                 'user_id' => $user->getKey(),
                 'store_id' => $store->getKey(),
@@ -96,7 +107,7 @@ class StatementService
 
             StatementDay::query()->insert($rows);
 
-            $this->snapshot($statement, $user);
+            $this->snapshotLocked($statement, $user);
 
             return $statement->fresh(['days']) ?? $statement;
         });
@@ -112,48 +123,8 @@ class StatementService
     public function updateDays(Statement $statement, array $rows, User $user): void
     {
         DB::transaction(function () use ($statement, $rows, $user): void {
-            $existing = $statement->days()->get()->keyBy(static fn(StatementDay $day): string => $day->getDate());
-            $seen = [];
-
-            foreach ($rows as $row) {
-                $row = Typer::assertArray($row);
-                $date = Typer::assertString($row['date'] ?? '');
-                $day = $existing->get($date);
-
-                if (!$day instanceof StatementDay) {
-                    continue;
-                }
-
-                $seen[$date] = true;
-                $cash = Typer::parseFloat($row['cash'] ?? 0);
-                $card = Typer::parseFloat($row['card'] ?? 0);
-                $wolt = Typer::parseFloat($row['wolt'] ?? 0);
-                $bolt = Typer::parseFloat($row['bolt'] ?? 0);
-                $boltCash = Typer::parseFloat($row['bolt_cash'] ?? 0);
-                $foodora = Typer::parseFloat($row['foodora'] ?? 0);
-
-                $update = [
-                    'cash' => $cash,
-                    'card' => $card,
-                    'wolt' => $wolt,
-                    'bolt' => $bolt,
-                    'bolt_cash' => $boltCash,
-                    'foodora' => $foodora,
-                    'total' => \round($cash + $card + $wolt + $bolt + $boltCash + $foodora, 2),
-                ];
-
-                // Only admins can toggle the cash-checked flag. Limited
-                // users keep the existing value so a save from a non-admin
-                // never silently clears an admin's confirmation.
-                if ($user->isAdmin()) {
-                    $update['cash_checked'] = (bool) ($row['cash_checked'] ?? false);
-                }
-
-                $day->update($update);
-            }
-
-            $this->snapshot($statement, $user);
-            $this->notify($statement, $user, OperationalActivityTypeEnum::STATEMENT_SAVED);
+            $statement = $this->lockActiveStatement($statement);
+            $this->updateDaysLocked($statement, $rows, $user);
         });
     }
 
@@ -165,7 +136,8 @@ class StatementService
     public function updateDaysAndCloseAttendances(Statement $statement, array $rows, User $user): void
     {
         DB::transaction(function () use ($statement, $rows, $user): void {
-            $this->updateDays($statement, $rows, $user);
+            $statement = $this->lockActiveStatement($statement);
+            $this->updateDaysLocked($statement, $rows, $user);
             (new AttendanceService())->closeActiveCurrentDayAttendances($user, $statement->getStore());
         });
     }
@@ -178,6 +150,7 @@ class StatementService
     public function clear(Statement $statement, User $user): void
     {
         DB::transaction(function () use ($statement, $user): void {
+            $statement = $this->lockActiveStatement($statement);
             $statement->days()->update([
                 'cash' => 0,
                 'card' => 0,
@@ -189,7 +162,7 @@ class StatementService
                 'cash_checked' => false,
             ]);
 
-            $this->snapshot($statement, $user);
+            $this->snapshotLocked($statement, $user);
             $this->notify($statement, $user, OperationalActivityTypeEnum::STATEMENT_CLEARED);
         });
     }
@@ -204,40 +177,9 @@ class StatementService
     public function snapshot(Statement $statement, User $user): StatementVersion
     {
         return DB::transaction(function () use ($statement, $user): StatementVersion {
-            $version = StatementVersion::query()->create([
-                'user_id' => $statement->getUserId(),
-                'statement_id' => $statement->getKey(),
-                'created_by' => $user->getKey(),
-                'snapshot_at' => Carbon::now(),
-                'note' => null,
-            ]);
+            $statement = $this->lockActiveStatement($statement);
 
-            $versionId = $version->getKey();
-            $rows = [];
-            $now = Carbon::now();
-
-            foreach ($statement->days()->orderBy('date')->get() as $day) {
-                $rows[] = [
-                    'version_id' => $versionId,
-                    'date' => $day->getDate(),
-                    'cash' => $day->getCash(),
-                    'card' => $day->getCard(),
-                    'wolt' => $day->getWolt(),
-                    'bolt' => $day->getBolt(),
-                    'bolt_cash' => $day->getBoltCash(),
-                    'foodora' => $day->getFoodora(),
-                    'total' => $day->getTotal(),
-                    'cash_checked' => $day->getCashChecked(),
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
-            }
-
-            if ($rows !== []) {
-                StatementVersionDay::query()->insert($rows);
-            }
-
-            return $version->fresh(['days']) ?? $version;
+            return $this->snapshotLocked($statement, $user);
         });
     }
 
@@ -249,9 +191,19 @@ class StatementService
     public function restoreVersion(StatementVersion $version, User $user): void
     {
         DB::transaction(function () use ($version, $user): void {
-            $statement = $version->getStatement();
+            $statement = $this->lockActiveStatement($version->getStatement());
+            $version = Typer::assertInstance(
+                StatementVersion::query()
+                    ->where('statement_id', $statement->getKey())
+                    ->whereKey($version->getKey())
+                    ->lockForUpdate()
+                    ->firstOrFail(),
+                StatementVersion::class,
+            );
 
-            $existing = $statement->days()->get()->keyBy(static fn(StatementDay $day): string => $day->getDate());
+            $this->snapshotLocked($statement, $user);
+
+            $existing = $statement->days()->lockForUpdate()->get()->keyBy(static fn(StatementDay $day): string => $day->getDate());
 
             foreach ($version->days()->orderBy('date')->get() as $versionDay) {
                 $day = $existing->get($versionDay->getDate());
@@ -272,7 +224,6 @@ class StatementService
                 ]);
             }
 
-            $this->snapshot($statement, $user);
             $this->notify($statement, $user, OperationalActivityTypeEnum::STATEMENT_RESTORED);
         });
     }
@@ -510,6 +461,120 @@ class StatementService
                 'foodora' => \round($foodoraTotal, 2),
             ],
         ];
+    }
+
+    /**
+     * Update statement rows while the owning active store and statement are locked.
+     *
+     * @param array<int, array<string, mixed>> $rows
+     */
+    private function updateDaysLocked(Statement $statement, array $rows, User $user): void
+    {
+        $existing = $statement->days()->lockForUpdate()->get()->keyBy(static fn(StatementDay $day): string => $day->getDate());
+
+        foreach ($rows as $row) {
+            $row = Typer::assertArray($row);
+            $date = Typer::assertString($row['date'] ?? '');
+            $day = $existing->get($date);
+
+            if (!$day instanceof StatementDay) {
+                continue;
+            }
+
+            $cash = Typer::parseFloat($row['cash'] ?? 0);
+            $card = Typer::parseFloat($row['card'] ?? 0);
+            $wolt = Typer::parseFloat($row['wolt'] ?? 0);
+            $bolt = Typer::parseFloat($row['bolt'] ?? 0);
+            $boltCash = Typer::parseFloat($row['bolt_cash'] ?? 0);
+            $foodora = Typer::parseFloat($row['foodora'] ?? 0);
+
+            $update = [
+                'cash' => $cash,
+                'card' => $card,
+                'wolt' => $wolt,
+                'bolt' => $bolt,
+                'bolt_cash' => $boltCash,
+                'foodora' => $foodora,
+                'total' => \round($cash + $card + $wolt + $bolt + $boltCash + $foodora, 2),
+            ];
+
+            if ($user->isAdmin()) {
+                $update['cash_checked'] = (bool) ($row['cash_checked'] ?? false);
+            }
+
+            $day->update($update);
+        }
+
+        $this->snapshotLocked($statement, $user);
+        $this->notify($statement, $user, OperationalActivityTypeEnum::STATEMENT_SAVED);
+    }
+
+    /**
+     * Capture a snapshot after the caller has acquired the statement lock.
+     */
+    private function snapshotLocked(Statement $statement, User $user): StatementVersion
+    {
+        $version = StatementVersion::query()->create([
+            'user_id' => $statement->getUserId(),
+            'statement_id' => $statement->getKey(),
+            'created_by' => $user->getKey(),
+            'snapshot_at' => Carbon::now(),
+            'note' => null,
+        ]);
+
+        $rows = [];
+        $now = Carbon::now();
+
+        foreach ($statement->days()->orderBy('date')->get() as $day) {
+            $rows[] = [
+                'version_id' => $version->getKey(),
+                'date' => $day->getDate(),
+                'cash' => $day->getCash(),
+                'card' => $day->getCard(),
+                'wolt' => $day->getWolt(),
+                'bolt' => $day->getBolt(),
+                'bolt_cash' => $day->getBoltCash(),
+                'foodora' => $day->getFoodora(),
+                'total' => $day->getTotal(),
+                'cash_checked' => $day->getCashChecked(),
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        if ($rows !== []) {
+            StatementVersionDay::query()->insert($rows);
+        }
+
+        return $version->fresh(['days']) ?? $version;
+    }
+
+    /**
+     * Lock the store before its statement and reject writes to inactive history.
+     */
+    private function lockActiveStatement(Statement $statement): Statement
+    {
+        $store = Typer::assertInstance(
+            Store::query()
+                ->where('user_id', $statement->getUserId())
+                ->whereKey($statement->getStoreId())
+                ->lockForUpdate()
+                ->firstOrFail(),
+            Store::class,
+        );
+        if (!$store->isActive()) {
+            \abort(404);
+        }
+
+        return Typer::assertInstance(
+            Statement::query()
+                ->where('user_id', $statement->getUserId())
+                ->where('store_id', $store->getKey())
+                ->whereKey($statement->getKey())
+                ->lockForUpdate()
+                ->firstOrFail(),
+            Statement::class,
+        );
     }
 
     /**

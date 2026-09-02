@@ -89,3 +89,20 @@ use Database\Factories\UserFactory;
         ->post(\route('statements.versions.restore', ['version' => $versionB->getKey()]))
         ->assertForbidden();
 });
+
+\test('an inactive store statement version cannot be restored', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $user->getKey()]);
+    $statement = Statement::factory()->forStore($store)->forMonth(2026, 6)->create();
+    $day = StatementDay::factory()->for($statement, 'statement')->create(['cash' => 10, 'total' => 10]);
+    $version = StatementVersion::factory()->forStatement($statement)->byCreator($user)->create();
+    StatementVersionDay::factory()->forVersion($version)->create(['date' => $day->getDate(), 'cash' => 0, 'total' => 0]);
+    $store->update(['status' => 'inactive']);
+
+    $this->actingAs($user)
+        ->post(\route('statements.versions.restore', ['version' => $version->getKey()]))
+        ->assertNotFound();
+
+    \expect($day->refresh()->getCash())->toBe(10.0)
+        ->and(StatementVersion::query()->where('statement_id', $statement->getKey())->count())->toBe(1);
+});

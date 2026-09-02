@@ -9,6 +9,7 @@ use App\Http\Validation\PayrollReportValidity;
 use App\Models\User;
 use App\Models\Worker;
 use App\Services\PayrollReportService;
+use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -29,6 +30,7 @@ class PayrollWageOverrideController
         $payload = $this->overridePayload($request);
         $workerQuery = Worker::query();
         Worker::scopeForUser($workerQuery, $admin);
+        Worker::scopeActive($workerQuery);
         $worker = $workerQuery->whereKey($payload->parseInt('worker_id'))->firstOrFail();
         (new PayrollReportService())->upsertWageOverride(
             $admin,
@@ -36,8 +38,8 @@ class PayrollWageOverrideController
             $payload->parseInt('year'),
             $payload->parseInt('month'),
             $worker,
-            $payload->parseFloat('hours'),
-            $payload->parseFloat('hourly_rate'),
+            Money::input($request->input('hours')),
+            Money::input($request->input('hourly_rate')),
         );
         Inertia::flash('success', \__('Payroll wage override saved.'));
 

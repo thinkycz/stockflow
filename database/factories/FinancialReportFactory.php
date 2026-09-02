@@ -24,7 +24,7 @@ class FinancialReportFactory extends Factory
         $now = Carbon::now();
 
         return [
-            'user_id' => static fn(): int => UserFactory::new()->createOne()->getKey(),
+            'user_id' => static fn(): int => UserFactory::new()->admin()->createOne()->getKey(),
             'store_id' => static fn(): int => Store::factory()->createOne()->getKey(),
             'year' => $now->year,
             'month' => $now->month,

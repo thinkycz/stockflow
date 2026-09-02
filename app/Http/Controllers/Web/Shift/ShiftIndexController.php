@@ -89,6 +89,7 @@ class ShiftIndexController
                     'last_name' => $worker->getLastName(),
                     'color' => $worker->getCalendarColor(),
                     'attendance_rating_enabled' => $worker->isAttendanceRatingEnabled(),
+                    'archived' => $worker->isArchived(),
                 ];
             },
         )->all();

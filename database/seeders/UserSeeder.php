@@ -6,16 +6,21 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Database\Factories\UserFactory;
+use Database\Seeders\Concerns\OnlyRunsInDemoEnvironment;
 use Illuminate\Database\Seeder;
 use RuntimeException;
 
 class UserSeeder extends Seeder
 {
+    use OnlyRunsInDemoEnvironment;
+
     /**
      * Seed the application's database.
      */
     public function run(): void
     {
+        $this->ensureDemoEnvironment();
+
         $adminQuery = User::query();
         User::scopeAdmin($adminQuery);
         $adminCount = $adminQuery->count();

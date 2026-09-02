@@ -118,6 +118,7 @@ use App\Http\Controllers\Web\Worker\WorkerCreateController;
 use App\Http\Controllers\Web\Worker\WorkerDestroyController;
 use App\Http\Controllers\Web\Worker\WorkerEditController;
 use App\Http\Controllers\Web\Worker\WorkerIndexController;
+use App\Http\Controllers\Web\Worker\WorkerRestoreController;
 use App\Http\Middleware\EnsureAiAssistantIsEnabled;
 use App\Http\Middleware\EnsureInertiaUserIsAuthenticated;
 use App\Models\User;
@@ -333,6 +334,7 @@ Resolver::resolveRouteRegistrar()
         $router->get('workers/{worker}/edit', [WorkerEditController::class, 'edit'])->whereNumber('worker')->name('workers.edit');
         $router->put('workers/{worker}', [WorkerEditController::class, 'update'])->whereNumber('worker')->name('workers.update');
         $router->delete('workers/{worker}', WorkerDestroyController::class)->whereNumber('worker')->name('workers.destroy');
+        $router->post('workers/{worker}/restore', WorkerRestoreController::class)->whereNumber('worker')->name('workers.restore');
 
         // Shifts (admin write)
         $router->post('shifts', ShiftStoreController::class)->name('shifts.store');

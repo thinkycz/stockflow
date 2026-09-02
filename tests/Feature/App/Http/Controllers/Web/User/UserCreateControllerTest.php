@@ -106,3 +106,28 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response->assertRedirect('/dashboard');
     \expect(User::query()->where('email', 'colleague@example.com')->exists())->toBeFalse();
 });
+
+\test('user creation exposes and accepts only active retail stores', function (): void {
+    [$admin, $warehouse] = \createIsolatedUserWithWarehouse();
+    $active = Store::factory()->create(['user_id' => $admin->getKey(), 'name' => 'Active']);
+    $inactive = Store::factory()->inactive()->create(['user_id' => $admin->getKey(), 'name' => 'Inactive']);
+
+    $this->actingAs($admin)
+        ->get(\route('users.create'), $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonCount(1, 'props.stores')
+        ->assertJsonPath('props.stores.0.id', $active->getKey());
+
+    foreach ([$warehouse, $inactive] as $store) {
+        $this->actingAs($admin)
+            ->post(\route('users.store'), [
+                'email' => 'blocked-' . $store->getKey() . '@example.com',
+                'password' => 'secret123',
+                'password_confirmation' => 'secret123',
+                'assigned_store_id' => $store->getKey(),
+            ])
+            ->assertNotFound();
+    }
+
+    \expect(User::query()->where('email', 'like', 'blocked-%')->exists())->toBeFalse();
+});

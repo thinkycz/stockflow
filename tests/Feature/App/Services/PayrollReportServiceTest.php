@@ -393,3 +393,168 @@ use Thinkycz\LaravelCore\Support\Config;
             ->toThrow(ValidationException::class);
     }
 });
+
+\test('payroll validation treats an exact cent balance as zero', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new PayrollReportService();
+
+    $service->addWorker($admin, $store, 2026, 7, $worker);
+    $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 1, 1);
+    $service->createAdjustment(
+        $admin,
+        $store,
+        2026,
+        7,
+        $worker,
+        PayrollAdjustmentTypeEnum::TIP,
+        0.01,
+        'Cent tip',
+    );
+    $service->createAdjustment(
+        $admin,
+        $store,
+        2026,
+        7,
+        $worker,
+        PayrollAdjustmentTypeEnum::DEDUCTION,
+        0.07,
+        'Cent deduction',
+    );
+
+    $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 1, 0.06);
+
+    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['final_amount'])->toBe(0.0)
+        ->and(fn() => $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 1, 0.05))
+        ->toThrow(ValidationException::class);
+});
+
+\test('restoring automatic wages accepts exact zero and rejects a negative cent', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    Shift::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $worker->getKey(),
+        'date' => '2026-07-10',
+        'start_time' => '08:00',
+        'end_time' => '09:00',
+        'hourly_rate' => 0.06,
+    ]);
+    $service = new PayrollReportService();
+    $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 1, 1);
+    $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::TIP, 0.01, 'Cent tip');
+    $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::DEDUCTION, 0.07, 'Cent deduction');
+
+    $service->deleteWageOverride($admin, $store, 2026, 7, $worker->getKey());
+    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['final_amount'])->toBe(0.0);
+
+    $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 1, 1);
+    $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::DEDUCTION, 0.01, 'Extra cent');
+    \expect(fn() => $service->deleteWageOverride($admin, $store, 2026, 7, $worker->getKey()))
+        ->toThrow(ValidationException::class);
+});
+
+\test('creating a deduction accepts exact zero and rejects a negative cent', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new PayrollReportService();
+    $service->addWorker($admin, $store, 2026, 7, $worker);
+    $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 1, 0.06);
+    $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::TIP, 0.01, 'Cent tip');
+
+    $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::DEDUCTION, 0.07, 'Cent deduction');
+    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['final_amount'])->toBe(0.0)
+        ->and(fn() => $service->createAdjustment(
+            $admin,
+            $store,
+            2026,
+            7,
+            $worker,
+            PayrollAdjustmentTypeEnum::DEDUCTION,
+            0.01,
+            'Negative cent',
+        ))->toThrow(ValidationException::class);
+});
+
+\test('no-activity workers can receive a first wage override but not an unfunded deduction', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $overrideWorker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $deductionWorker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new PayrollReportService();
+
+    $service->upsertWageOverride($admin, $store, 2026, 7, $overrideWorker, 2, 125);
+
+    $payslip = $service->buildDetail($admin, $store, 2026, 7, $overrideWorker->getKey());
+    \expect($payslip)->not->toBeNull()
+        ->and($payslip['payslip']['base_amount'])->toBe(250.0)
+        ->and($payslip['payslip']['final_amount'])->toBe(250.0)
+        ->and(fn() => $service->createAdjustment(
+            $admin,
+            $store,
+            2026,
+            7,
+            $deductionWorker,
+            PayrollAdjustmentTypeEnum::DEDUCTION,
+            0.01,
+            'Unfunded deduction',
+        ))->toThrow(ValidationException::class);
+
+    \expect(PayrollAdjustment::query()->where('worker_id', $deductionWorker->getKey())->exists())->toBeFalse();
+});
+
+\test('updating an adjustment accepts exact zero and rejects a negative cent', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new PayrollReportService();
+    $service->addWorker($admin, $store, 2026, 7, $worker);
+    $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 1, 0.06);
+    $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::TIP, 0.01, 'Cent tip');
+    $adjustment = $service->createAdjustment(
+        $admin,
+        $store,
+        2026,
+        7,
+        $worker,
+        PayrollAdjustmentTypeEnum::DEDUCTION,
+        0.06,
+        'Cent deduction',
+    );
+
+    $service->updateAdjustment($admin, $store, 2026, 7, $adjustment->getKey(), PayrollAdjustmentTypeEnum::DEDUCTION, 0.07, 'Exact zero');
+    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['final_amount'])->toBe(0.0)
+        ->and(fn() => $service->updateAdjustment(
+            $admin,
+            $store,
+            2026,
+            7,
+            $adjustment->getKey(),
+            PayrollAdjustmentTypeEnum::DEDUCTION,
+            0.08,
+            'Negative cent',
+        ))->toThrow(ValidationException::class);
+});
+
+\test('deleting a tip accepts exact zero and rejects a negative cent', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new PayrollReportService();
+    $service->addWorker($admin, $store, 2026, 7, $worker);
+    $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 1, 0.06);
+    $tip = $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::TIP, 0.01, 'Cent tip');
+    $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::DEDUCTION, 0.06, 'Cent deduction');
+
+    $service->deleteAdjustment($admin, $store, 2026, 7, $tip->getKey());
+    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['final_amount'])->toBe(0.0);
+
+    $tip = $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::TIP, 0.01, 'Cent tip');
+    $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::DEDUCTION, 0.01, 'Extra cent');
+    \expect(fn() => $service->deleteAdjustment($admin, $store, 2026, 7, $tip->getKey()))
+        ->toThrow(ValidationException::class);
+});

@@ -30,6 +30,7 @@ use Illuminate\Support\Carbon;
         ->component('statements/History')
         ->where('statement.id', $statement->getKey())
         ->where('statement.store_name', $store->getName())
+        ->where('statement.store_active', true)
         ->where('statement.year', 2026)
         ->where('statement.month', 6)
         ->has('rows', 1)

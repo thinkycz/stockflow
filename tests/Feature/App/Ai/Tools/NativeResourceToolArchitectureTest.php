@@ -9,6 +9,8 @@ use App\Ai\Tools\ConfiguredWriteResourceTool;
 use App\Ai\Tools\WriteWorkersTool;
 use App\Enums\AssistantActionStatusEnum;
 use App\Models\AssistantActionAudit;
+use App\Models\ChecklistDay;
+use App\Models\Store;
 use App\Models\Worker;
 use Illuminate\JsonSchema\JsonSchemaTypeFactory;
 use Laravel\Ai\Contracts\Tool;
@@ -189,7 +191,7 @@ use Laravel\Ai\Tools\ToolNameResolver;
     $branches = $schema['properties']['request']['anyOf'];
     $create = $branches[0]['properties'];
 
-    \expect($branches)->toHaveCount(3)
+    \expect($branches)->toHaveCount(4)
         ->and($create['action']['enum'])->toBe(['create_worker'])
         ->and($create['values']['required'])->toBe(['first_name', 'last_name', 'hourly_rate'])
         ->and($create['values']['properties'])->toHaveKeys([
@@ -201,6 +203,56 @@ use Laravel\Ai\Tools\ToolNameResolver;
         ])
         ->and($create['values']['additionalProperties'])->toBeFalse();
 });
+
+\test('worker assistant exposes restoration as a separate approved lifecycle action', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey(), 'archived_at' => \now()]);
+    $tool = new WriteWorkersTool($admin, 'native-worker-restore');
+    $arguments = ['request' => ['action' => 'restore_worker', 'target_id' => $worker->getKey()]];
+
+    \expect($tool->shouldRequestApproval(new Request($arguments, 'worker-restore-call')))
+        ->toBeInstanceOf(Laravel\Ai\Approvals\Approval::class);
+
+    $result = \json_decode(
+        $tool->handle(new Request($arguments, 'worker-restore-call', 'worker-restore-invocation')),
+        true,
+        32,
+        \JSON_THROW_ON_ERROR,
+    );
+
+    \expect($result['operation'])->toBe('restore_worker')
+        ->and($worker->refresh()->isArchived())->toBeFalse();
+});
+
+\test('store assistant returns its typed archival outcome', function (bool $historical): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    if ($historical) {
+        ChecklistDay::factory()->create([
+            'user_id' => $admin->getKey(),
+            'store_id' => $store->getKey(),
+            'date' => '2026-01-01',
+        ]);
+    }
+    $tool = (new AssistantToolCatalog())->find($admin, 'native-store-removal', 'write_stores');
+    $arguments = ['request' => [
+        'action' => 'delete_store',
+        'store_id' => $store->getKey(),
+        'target_id' => $store->getKey(),
+    ]];
+
+    $result = \json_decode(
+        $tool->handle(new Request($arguments, 'store-removal-call', 'store-removal-invocation')),
+        true,
+        32,
+        \JSON_THROW_ON_ERROR,
+    );
+
+    \expect($result['record']['removal_outcome'])->toBe('archived');
+})->with([
+    'assistant audit is store history' => [false],
+    'existing business history' => [true],
+]);
 
 \test('minimal native worker creation reaches Laravel approval without optional fields', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();

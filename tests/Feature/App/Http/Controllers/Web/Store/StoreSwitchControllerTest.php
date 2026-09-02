@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\StoreStatusEnum;
 use App\Models\Store;
 use App\Models\User;
 use App\Support\ActiveStoreResolver;
@@ -150,6 +151,33 @@ use Thinkycz\LaravelCore\Support\Typer;
         ], $this->inertiaHeaders());
 
     $response->assertRedirect()->assertSessionHasErrors();
+});
+
+\test('inactive stores are excluded from switching and active-store fallback', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $active = Store::factory()->create([
+        'user_id' => $user->getKey(),
+        'is_warehouse' => false,
+        'status' => StoreStatusEnum::ACTIVE->value,
+        'name' => 'Active retail',
+    ]);
+    $inactive = Store::factory()->create([
+        'user_id' => $user->getKey(),
+        'is_warehouse' => false,
+        'status' => StoreStatusEnum::INACTIVE->value,
+        'name' => 'Inactive retail',
+    ]);
+
+    $switchResponse = $this->be($user, 'users')->post('/stores/switch', ['store_id' => $inactive->getKey()]);
+
+    $switchResponse->assertRedirect();
+    \assertInertiaFlash($switchResponse, 'error', \__('Selected store is not available.'));
+
+    $this->withSession([ActiveStoreResolver::SESSION_KEY => $inactive->getKey()])
+        ->get('/dashboard', $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.active_store.id', $active->getKey())
+        ->assertJsonCount(2, 'props.available_stores');
 });
 
 \test('limited user is rejected when calling the switch endpoint', function (): void {

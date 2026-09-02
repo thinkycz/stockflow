@@ -27,7 +27,15 @@ class AttendanceCorrectionService
     public function create(User $actor, Store $store, Worker $worker, CarbonImmutable $startedAt, CarbonImmutable $endedAt, array $breaks, string $reason): AttendanceSession
     {
         return DB::transaction(function () use ($actor, $store, $worker, $startedAt, $endedAt, $breaks, $reason): AttendanceSession {
-            $this->authorize($actor, $store, $worker);
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            $worker = Typer::assertInstance(
+                Worker::query()->whereKey($worker->getKey())->lockForUpdate()->firstOrFail(),
+                Worker::class,
+            );
+            $this->authorize($actor, $store, $worker, true);
             $this->validateIntervals($startedAt, $endedAt, $breaks);
             $shift = (new AttendanceService())->findMatchingShift($actor, $store, $worker, $startedAt);
             $session = AttendanceSession::query()->create([
@@ -53,9 +61,16 @@ class AttendanceCorrectionService
     public function update(User $actor, AttendanceSession $session, Worker $worker, CarbonImmutable $startedAt, CarbonImmutable $endedAt, array $breaks, string $reason): AttendanceSession
     {
         return DB::transaction(function () use ($actor, $session, $worker, $startedAt, $endedAt, $breaks, $reason): AttendanceSession {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($session->getStoreId())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
             $locked = AttendanceSession::query()->whereKey($session->getKey())->lockForUpdate()->firstOrFail();
-            $store = Store::query()->whereKey($locked->getStoreId())->firstOrFail();
-            $this->authorize($actor, $store, $worker);
+            $worker = Typer::assertInstance(
+                Worker::query()->whereKey($worker->getKey())->lockForUpdate()->firstOrFail(),
+                Worker::class,
+            );
+            $this->authorize($actor, $store, $worker, $worker->getKey() !== $locked->getWorkerId());
             $before = $this->snapshot($locked);
             $this->validateIntervals($startedAt, $endedAt, $breaks);
             $shift = (new AttendanceService())->findMatchingShift($actor, $store, $worker, $startedAt);
@@ -81,8 +96,11 @@ class AttendanceCorrectionService
     public function void(User $actor, AttendanceSession $session, string $reason): AttendanceSession
     {
         return DB::transaction(function () use ($actor, $session, $reason): AttendanceSession {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($session->getStoreId())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
             $locked = AttendanceSession::query()->whereKey($session->getKey())->lockForUpdate()->firstOrFail();
-            $store = Store::query()->whereKey($locked->getStoreId())->firstOrFail();
             $worker = Worker::query()->whereKey($locked->getWorkerId())->firstOrFail();
             $this->authorize($actor, $store, $worker);
             $before = $this->snapshot($locked);
@@ -119,9 +137,9 @@ class AttendanceCorrectionService
     /**
      * Ensure corrections are made by the owning administrator for a retail store.
      */
-    private function authorize(User $actor, Store $store, Worker $worker): void
+    private function authorize(User $actor, Store $store, Worker $worker, bool $requiresActiveWorker = false): void
     {
-        if (!$actor->isAdmin() || $store->isWarehouse() || $store->getUserId() !== $actor->getKey() || $worker->getUserId() !== $actor->getKey()) {
+        if (!$actor->isAdmin() || !$store->isActive() || $store->isWarehouse() || $store->getUserId() !== $actor->getKey() || $worker->getUserId() !== $actor->getKey() || ($requiresActiveWorker && $worker->isArchived())) {
             $this->fail('store_id', Typer::assertString(\__('Attendance correction is not allowed.')));
         }
     }

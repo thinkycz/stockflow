@@ -202,9 +202,12 @@ The backend (`lang/*.json`) and frontend (`resources/js/i18n/*.json`) translatio
 
 ## Role-based access control
 
-There is exactly one **main admin** per deployment, seeded as
-`test@test.com` (`is_admin = true`, `parent_user_id = null`). The admin
-provisions **limited users** (`is_admin = false`,
+There is exactly one **main admin** per deployment. It is provisioned on an
+empty database with `stockflow:admin:bootstrap <email>` and never by a
+deployment seeder (`is_admin = true`, `parent_user_id = null`). The
+`stockflow:identity:diagnose` production gate rejects a missing administrator,
+an invalid single-company identity shape, or the known `test@test.com / password`
+demo credential. The admin provisions **limited users** (`is_admin = false`,
 `parent_user_id = admin.id`, `assigned_store_id = one-of-admin-stores`)
 from the `/users` section.
 

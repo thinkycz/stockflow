@@ -89,4 +89,12 @@ class WorkerValidity
     {
         return $this->baseValidity->search();
     }
+
+    /**
+     * Worker lifecycle list filter.
+     */
+    public function status(): Validity
+    {
+        return $this->baseValidity->make()->string(16)->in(['active', 'archived', 'all']);
+    }
 }

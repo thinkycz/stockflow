@@ -38,6 +38,7 @@ const props = defineProps<{
         id: number;
         store_id: number;
         store_name: string;
+        store_active: boolean;
         year: number;
         month: number;
     };
@@ -144,7 +145,9 @@ async function restore(): Promise<void> {
                         >#{{ version.id }}</span
                     >
                 </h1>
-                <StoreContextIndicator />
+                <StoreContextIndicator
+                    :store="{ name: props.statement.store_name }"
+                />
                 <div
                     class="flex flex-wrap items-center gap-2 text-xs text-on-surface-variant"
                 >
@@ -319,6 +322,7 @@ async function restore(): Promise<void> {
                 </DataTable>
 
                 <div
+                    v-if="props.statement.store_active"
                     class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end"
                 >
                     <Button type="button" @click="restore">

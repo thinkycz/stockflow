@@ -19,7 +19,7 @@ class ShiftShareLinkFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => static fn(): int => UserFactory::new()->createOne()->getKey(),
+            'user_id' => static fn(): int => UserFactory::new()->admin()->createOne()->getKey(),
             'store_id' => static fn(array $attributes): int => StoreFactory::new()->createOne([
                 'user_id' => $attributes['user_id'],
             ])->getKey(),

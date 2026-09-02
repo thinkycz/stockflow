@@ -23,7 +23,7 @@ class PayrollPrintController
     public function __invoke(Request $request): Response
     {
         $admin = User::mustAuth();
-        $store = ActiveStoreResolver::resolve($request, $admin);
+        $store = ActiveStoreResolver::resolveIncludingInactive($request, $admin);
         if (!$store instanceof Store || $store->isWarehouse()) {
             \abort(404);
         }

@@ -6,6 +6,7 @@ use App\Enums\FinancialDirectionEnum;
 use App\Enums\FinancialSourceTypeEnum;
 use App\Enums\PayrollAdjustmentTypeEnum;
 use App\Enums\StockMovementTypeEnum;
+use App\Models\FinancialReport;
 use App\Models\FinancialReportManualRow;
 use App\Models\Shift;
 use App\Models\Statement;
@@ -232,6 +233,21 @@ use Thinkycz\LaravelCore\Support\Config;
         ->and($row(6))->toBeNull();
 });
 
+\test('closed financial periods reject every recurring expense mutation', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new FinancialReportService();
+    $expense = $service->createRecurringExpense($admin, $store, 2026, 1, 'Rent', 100, 31, null);
+    FinancialReport::factory()->forStore($store)->forMonth(2026, 7)->create(['status' => 'closed']);
+
+    \expect(fn() => $service->createRecurringExpense($admin, $store, 2026, 7, 'Internet', 50, 10, null))
+        ->toThrow(ValidationException::class)
+        ->and(fn() => $service->changeRecurringExpense($admin, $store, $expense->getKey(), 2026, 7, 'Rent', 120, 15, null))
+        ->toThrow(ValidationException::class)
+        ->and(fn() => $service->terminateRecurringExpense($admin, $store, $expense->getKey(), 2026, 7))
+        ->toThrow(ValidationException::class);
+});
+
 \test('recurring expense uses monthly overrides and closed snapshots refresh only after reopen', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $admin->getKey()]);
@@ -248,11 +264,22 @@ use Thinkycz\LaravelCore\Support\Config;
     );
     (new PayrollReportService())->close($admin, $store, 2026, 7);
     $service->close($admin, $store, 2026, 7);
-    $service->changeRecurringExpense($admin, $store, $expense->getKey(), 2026, 7, 'Internet', 200, 10, null);
+    \expect(fn() => $service->changeRecurringExpense(
+        $admin,
+        $store,
+        $expense->getKey(),
+        2026,
+        7,
+        'Internet',
+        200,
+        10,
+        null,
+    ))->toThrow(ValidationException::class);
 
     $closed = \collect($service->build($admin, $store, 2026, 7)['expense_rows'])
         ->firstWhere('source_type', FinancialSourceTypeEnum::RECURRING_EXPENSE->value);
     $service->reopen($admin, $store, 2026, 7);
+    $service->changeRecurringExpense($admin, $store, $expense->getKey(), 2026, 7, 'Internet', 200, 10, null);
     $service->resetOverride(
         $admin,
         $store,

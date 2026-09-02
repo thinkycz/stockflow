@@ -96,23 +96,25 @@ class FinancialReportService
      */
     public function setOverride(User $admin, Store $store, int $year, int $month, FinancialSourceTypeEnum $sourceType, string $sourceKey, float $amount): void
     {
-        $report = $this->openReport($admin, $store, $year, $month);
-        $exists = false;
-        foreach ([...$this->revenueRows($admin, $store, $year, $month), ...$this->stockRows($admin, $store, $year, $month), ...$this->wageRows($admin, $store, $year, $month), ...$this->recurringExpenseRows($admin, $store, $year, $month)] as $row) {
-            if ($row['source_type'] === $sourceType->value && $row['source_key'] === $sourceKey) {
-                $exists = true;
-                break;
+        DB::transaction(function () use ($admin, $store, $year, $month, $sourceType, $sourceKey, $amount): void {
+            $report = $this->openReport($admin, $store, $year, $month);
+            $exists = false;
+            foreach ([...$this->revenueRows($admin, $store, $year, $month), ...$this->stockRows($admin, $store, $year, $month), ...$this->wageRows($admin, $store, $year, $month), ...$this->recurringExpenseRows($admin, $store, $year, $month)] as $row) {
+                if ($row['source_type'] === $sourceType->value && $row['source_key'] === $sourceKey) {
+                    $exists = true;
+                    break;
+                }
             }
-        }
 
-        if (!$exists) {
-            Thrower::default()->message('source_key', \__('The selected calculated row no longer exists.'))->throw();
-        }
+            if (!$exists) {
+                Thrower::default()->message('source_key', \__('The selected calculated row no longer exists.'))->throw();
+            }
 
-        FinancialReportOverride::query()->updateOrCreate(
-            ['financial_report_id' => $report->getKey(), 'source_type' => $sourceType->value, 'source_key' => $sourceKey],
-            ['amount' => \round($amount, 2)],
-        );
+            FinancialReportOverride::query()->updateOrCreate(
+                ['financial_report_id' => $report->getKey(), 'source_type' => $sourceType->value, 'source_key' => $sourceKey],
+                ['amount' => \round($amount, 2)],
+            );
+        });
     }
 
     /**
@@ -120,8 +122,10 @@ class FinancialReportService
      */
     public function resetOverride(User $admin, Store $store, int $year, int $month, FinancialSourceTypeEnum $sourceType, string $sourceKey): void
     {
-        $report = $this->requireOpenReport($admin, $store, $year, $month);
-        $report->overrides()->where('source_type', $sourceType->value)->where('source_key', $sourceKey)->delete();
+        DB::transaction(function () use ($admin, $store, $year, $month, $sourceType, $sourceKey): void {
+            $report = $this->requireOpenReport($admin, $store, $year, $month);
+            $report->overrides()->where('source_type', $sourceType->value)->where('source_key', $sourceKey)->delete();
+        });
     }
 
     /**
@@ -129,13 +133,13 @@ class FinancialReportService
      */
     public function createManualRow(User $admin, Store $store, int $year, int $month, FinancialDirectionEnum $direction, string $label, string $occurredOn, float $amount, string|null $note): FinancialReportManualRow
     {
-        return $this->openReport($admin, $store, $year, $month)->manualRows()->create([
+        return DB::transaction(fn(): FinancialReportManualRow => $this->openReport($admin, $store, $year, $month)->manualRows()->create([
             'direction' => $direction->value,
             'label' => $label,
             'occurred_on' => $occurredOn,
             'amount' => \round($amount, 2),
             'note' => $note,
-        ]);
+        ]));
     }
 
     /**
@@ -143,8 +147,10 @@ class FinancialReportService
      */
     public function updateManualRow(User $admin, Store $store, int $year, int $month, int $rowId, FinancialDirectionEnum $direction, string $label, string $occurredOn, float $amount, string|null $note): void
     {
-        $row = $this->manualRow($this->requireOpenReport($admin, $store, $year, $month), $rowId);
-        $row->update(['direction' => $direction->value, 'label' => $label, 'occurred_on' => $occurredOn, 'amount' => \round($amount, 2), 'note' => $note]);
+        DB::transaction(function () use ($admin, $store, $year, $month, $rowId, $direction, $label, $occurredOn, $amount, $note): void {
+            $row = $this->manualRow($this->requireOpenReport($admin, $store, $year, $month), $rowId);
+            $row->update(['direction' => $direction->value, 'label' => $label, 'occurred_on' => $occurredOn, 'amount' => \round($amount, 2), 'note' => $note]);
+        });
     }
 
     /**
@@ -152,7 +158,9 @@ class FinancialReportService
      */
     public function deleteManualRow(User $admin, Store $store, int $year, int $month, int $rowId): void
     {
-        $this->manualRow($this->requireOpenReport($admin, $store, $year, $month), $rowId)->delete();
+        DB::transaction(function () use ($admin, $store, $year, $month, $rowId): void {
+            $this->manualRow($this->requireOpenReport($admin, $store, $year, $month), $rowId)->delete();
+        });
     }
 
     /**
@@ -199,7 +207,8 @@ class FinancialReportService
     {
         $this->assertStore($admin, $store);
 
-        return DB::transaction(static function () use ($admin, $store, $year, $month, $label, $amount, $dueDay, $note): FinancialRecurringExpense {
+        return DB::transaction(function () use ($admin, $store, $year, $month, $label, $amount, $dueDay, $note): FinancialRecurringExpense {
+            $this->openReport($admin, $store, $year, $month);
             $startsOn = new CarbonImmutable($year . '-' . $month . '-01');
             $expense = FinancialRecurringExpense::query()->create([
                 'user_id' => $admin->getKey(),
@@ -225,6 +234,7 @@ class FinancialReportService
     {
         $this->assertStore($admin, $store);
         DB::transaction(function () use ($admin, $store, $expenseId, $year, $month, $label, $amount, $dueDay, $note): void {
+            $this->openReport($admin, $store, $year, $month);
             $expense = $this->recurringExpense($admin, $store, $expenseId, true);
             $effectiveFrom = new CarbonImmutable($year . '-' . $month . '-01');
             if ($effectiveFrom->toDateString() < $expense->getStartsOn()) {
@@ -250,6 +260,7 @@ class FinancialReportService
     {
         $this->assertStore($admin, $store);
         DB::transaction(function () use ($admin, $store, $expenseId, $year, $month): void {
+            $this->openReport($admin, $store, $year, $month);
             $expense = $this->recurringExpense($admin, $store, $expenseId, true);
             $endsBefore = new CarbonImmutable($year . '-' . $month . '-01');
             if ($endsBefore->toDateString() < $expense->getStartsOn()) {
@@ -316,20 +327,17 @@ class FinancialReportService
     public function close(User $admin, Store $store, int $year, int $month): void
     {
         DB::transaction(function () use ($admin, $store, $year, $month): void {
+            $report = $this->openReport($admin, $store, $year, $month);
             $payrollQuery = PayrollReport::query();
             PayrollReport::scopeForUser($payrollQuery, $admin);
             $payrollReport = $payrollQuery
                 ->where('store_id', $store->getKey())
                 ->where('year', $year)
                 ->where('month', $month)
+                ->lockForUpdate()
                 ->first();
             if (!$payrollReport instanceof PayrollReport || !$payrollReport->isClosed()) {
                 Thrower::default()->message('report', Typer::assertString(\__('Close the payroll report before closing the financial report.')))->throw();
-            }
-            $report = $this->openReport($admin, $store, $year, $month);
-            $report = FinancialReport::query()->lockForUpdate()->findOrFail($report->getKey());
-            if ($report->isClosed()) {
-                $this->failClosed();
             }
             $payload = $this->build($admin, $store, $year, $month);
             unset($payload['report']);
@@ -349,6 +357,7 @@ class FinancialReportService
     public function reopen(User $admin, Store $store, int $year, int $month): void
     {
         DB::transaction(function () use ($admin, $store, $year, $month): void {
+            $store = $this->lockedActiveStore($admin, $store);
             $report = $this->findReport($admin, $store, $year, $month);
             if (!$report instanceof FinancialReport) {
                 Thrower::default()->message('report', \__('The financial report does not exist.'))->throw();
@@ -677,11 +686,12 @@ class FinancialReportService
      */
     private function openReport(User $admin, Store $store, int $year, int $month): FinancialReport
     {
-        $this->assertStore($admin, $store);
+        $store = $this->lockedActiveStore($admin, $store);
         $report = FinancialReport::query()->firstOrCreate(
             ['user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'year' => $year, 'month' => $month],
             ['status' => FinancialReportStatusEnum::OPEN->value],
         );
+        $report = FinancialReport::query()->whereKey($report->getKey())->lockForUpdate()->firstOrFail();
         if ($report->isClosed()) {
             $this->failClosed();
         }
@@ -694,7 +704,15 @@ class FinancialReportService
      */
     private function requireOpenReport(User $admin, Store $store, int $year, int $month): FinancialReport
     {
-        $report = $this->findReport($admin, $store, $year, $month);
+        $store = $this->lockedActiveStore($admin, $store);
+        $query = FinancialReport::query();
+        FinancialReport::scopeForUser($query, $admin);
+        $report = $query
+            ->where('store_id', $store->getKey())
+            ->where('year', $year)
+            ->where('month', $month)
+            ->lockForUpdate()
+            ->first();
         if (!$report instanceof FinancialReport) {
             Thrower::default()->message('report', \__('The financial report does not exist.'))->throw();
         }
@@ -703,6 +721,20 @@ class FinancialReportService
         }
 
         return $report;
+    }
+
+    /**
+     * Lock and recheck a store before any prospective period mutation.
+     */
+    private function lockedActiveStore(User $admin, Store $store): Store
+    {
+        $store = Typer::assertInstance(
+            Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+            Store::class,
+        );
+        $this->assertActiveStore($admin, $store);
+
+        return $store;
     }
 
     /**
@@ -719,6 +751,17 @@ class FinancialReportService
     private function assertStore(User $admin, Store $store): void
     {
         if (!$admin->isAdmin() || $store->getUserId() !== $admin->getKey() || $store->isWarehouse()) {
+            \abort(404);
+        }
+    }
+
+    /**
+     * Enforce mutation scope for an active retail store.
+     */
+    private function assertActiveStore(User $admin, Store $store): void
+    {
+        $this->assertStore($admin, $store);
+        if (!$store->isActive()) {
             \abort(404);
         }
     }

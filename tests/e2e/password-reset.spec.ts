@@ -5,25 +5,23 @@ test.describe('Password reset flow', () => {
         await page.goto('/forgot-password');
 
         await page.getByLabel('Email').fill('nobody@example.com');
-        await page.getByRole('button', { name: 'Send password' }).click();
+        await page.getByRole('button', { name: 'Send reset link' }).click();
 
         await expect(page).toHaveURL(/\/forgot-password/);
     });
 
-    test('forgot password shows validation error for unknown email', async ({
+    test('forgot password does not reveal an unknown email', async ({
         page,
     }) => {
         await page.goto('/forgot-password');
 
         await page.getByLabel('Email').fill('nobody@example.com');
-        await page.getByRole('button', { name: 'Send password' }).click();
+        await page.getByRole('button', { name: 'Send reset link' }).click();
 
-        await expect(
-            page
-                .getByRole('alert')
-                .filter({ hasText: /unable|user/i })
-                .first(),
-        ).toBeVisible();
+        await expect(page.getByRole('status')).toContainText(
+            'We have emailed your password reset link.',
+        );
+        await expect(page.getByRole('alert')).toHaveCount(0);
     });
 
     test('reset password page requires email and token', async ({ page }) => {

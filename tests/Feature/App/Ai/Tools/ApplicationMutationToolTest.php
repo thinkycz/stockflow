@@ -21,6 +21,7 @@ use App\Models\Worker;
 use Illuminate\Support\Str;
 use Laravel\Ai\Approvals\Approval;
 use Laravel\Ai\Tools\Request;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 \test('administration mutation tool exposes the exact worker creation contract to the model', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
@@ -161,6 +162,29 @@ use Laravel\Ai\Tools\Request;
     \expect($card->getTitle())->toBe('Assistant notice')
         ->and($card->getBodyHtml())->toContain('<strong>notice</strong>')
         ->not->toContain('<script');
+});
+
+\test('operations assistant cannot mutate noticeboard history for an inactive store', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->inactive()->create(['user_id' => $admin->getKey()]);
+    $tool = \nativeResourceTool($admin, 'conversation-inactive-noticeboard', 'write_noticeboard');
+    $arguments = \nativeResourceArguments([
+        'operation' => 'create_noticeboard_card',
+        'store_id' => $store->getKey(),
+        'target_id' => null,
+        'context_json' => '{}',
+        'values_json' => \json_encode([
+            'body_html' => '<p>Late assistant notice</p>',
+            'label' => 'important',
+            'color' => 'yellow',
+            'size' => 'medium',
+            'expires_on' => null,
+        ], \JSON_THROW_ON_ERROR),
+    ]);
+
+    \expect(fn() => $tool->handle(new Request($arguments, 'late-notice', 'late-notice-invocation')))
+        ->toThrow(HttpException::class)
+        ->and(NoticeboardCard::query()->where('store_id', $store->getKey())->exists())->toBeFalse();
 });
 
 \test('application mutation tool rejects cross-company locked store identifiers before approval', function (): void {

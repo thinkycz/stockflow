@@ -71,20 +71,17 @@ class StockMovementService
         /** @var array<int, array<string, mixed>> $rows */
         $rows = Typer::assertArray($payload['items'] ?? []);
 
-        $sourceStore = null;
-        $destinationStore = null;
-
         if ($type === StockMovementTypeEnum::INCOMING) {
-            $destinationStore = $this->resolveStore($owner, Typer::assertInt($storeId), 'store_id');
+            $this->resolveStore($owner, Typer::assertInt($storeId), 'store_id');
         }
 
         if ($type === StockMovementTypeEnum::TRANSFER) {
-            $sourceStore = $this->resolveStore($owner, Typer::assertInt($sourceStoreId), 'source_store_id');
-            $destinationStore = $this->resolveStore($owner, Typer::assertInt($storeId), 'store_id');
+            $this->resolveStore($owner, Typer::assertInt($sourceStoreId), 'source_store_id');
+            $this->resolveStore($owner, Typer::assertInt($storeId), 'store_id');
         }
 
         if ($type === StockMovementTypeEnum::ADJUSTMENT || $type === StockMovementTypeEnum::CONSUMPTION) {
-            $destinationStore = $this->resolveStore($owner, Typer::assertInt($storeId), 'store_id');
+            $this->resolveStore($owner, Typer::assertInt($storeId), 'store_id');
         }
 
         $persistedStoreId = $storeId;
@@ -107,10 +104,17 @@ class StockMovementService
             $rows,
             $user,
             $owner,
-            $sourceStore,
-            $destinationStore,
+            $affectedStoreIds,
             $occurredAt,
         ): StockMovement {
+            $lockedStores = $this->lockActiveStores($owner, $affectedStoreIds);
+            $destinationStore = Typer::assertInstance(
+                $lockedStores[Typer::assertInt($persistedStoreId)] ?? null,
+                Store::class,
+            );
+            $sourceStore = $persistedSourceStoreId === null
+                ? null
+                : Typer::assertInstance($lockedStores[$persistedSourceStoreId] ?? null, Store::class);
             $year = (int) $occurredAt->format('Y');
             $number = StockMovementSequence::next($type, $year);
 
@@ -292,6 +296,11 @@ class StockMovementService
         }
 
         return DB::transaction(function () use ($movement, $user, $reason): StockMovement {
+            $storeIds = \array_values(\array_filter(
+                [$movement->getStoreId(), $movement->getSourceStoreId()],
+                static fn(int|null $id): bool => $id !== null,
+            ));
+            $lockedStores = $this->lockActiveStores($user->resolveScopeUser(), $storeIds);
             $movement = StockMovement::query()->whereKey($movement->getKey())->lockForUpdate()->firstOrFail();
             $movement->loadMissing(['movementItems.item', 'store', 'sourceStore']);
 
@@ -308,20 +317,12 @@ class StockMovementService
             if ($movement->getReversedAt() !== null || StockMovement::query()->where('reversal_of_id', $movement->getKey())->exists()) {
                 $this->fail(['stock_movement' => \__('This stock movement has already been reversed.')]);
             }
-            $destinationStore = $movement->getStore();
-            $sourceStore = $movement->getSourceStore();
-
-            if ($destinationStore === null) {
-                $this->fail([
-                    'stock_movement' => \__('Cannot reverse this movement because the destination store no longer exists.'),
-                ]);
-            }
-
-            if ($type === StockMovementTypeEnum::TRANSFER && $sourceStore === null) {
-                $this->fail([
-                    'stock_movement' => \__('Cannot reverse this movement because the source store no longer exists.'),
-                ]);
-            }
+            $destinationStoreId = Typer::assertInt($movement->getStoreId());
+            $destinationStore = Typer::assertInstance($lockedStores[$destinationStoreId] ?? null, Store::class);
+            $sourceStoreId = $movement->getSourceStoreId();
+            $sourceStore = $sourceStoreId === null
+                ? null
+                : Typer::assertInstance($lockedStores[$sourceStoreId] ?? null, Store::class);
 
             $reversal = StockMovement::query()->create([
                 'user_id' => $movement->getUserId(),
@@ -446,6 +447,36 @@ class StockMovementService
         }
 
         return $store;
+    }
+
+    /**
+     * Lock every affected store in stable id order and reject inactive targets.
+     *
+     * @param list<int> $storeIds
+     *
+     * @return array<int, Store>
+     */
+    private function lockActiveStores(User $owner, array $storeIds): array
+    {
+        \sort($storeIds);
+        $query = Store::query();
+        Store::scopeForUser($query, $owner);
+        $stores = $query->whereIn('id', $storeIds)->orderBy('id')->lockForUpdate()->get();
+        $locked = [];
+
+        foreach ($stores as $value) {
+            $store = Typer::assertInstance($value, Store::class);
+            if (!$store->isActive()) {
+                $this->fail(['store_id' => \__('Store not found.')]);
+            }
+            $locked[$store->getKey()] = $store;
+        }
+
+        if (\count($locked) !== \count($storeIds)) {
+            $this->fail(['store_id' => \__('Store not found.')]);
+        }
+
+        return $locked;
     }
 
     /**

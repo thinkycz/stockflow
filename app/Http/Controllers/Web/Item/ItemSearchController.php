@@ -34,7 +34,7 @@ class ItemSearchController
         $activeStoreId = $activeStore instanceof Store ? $activeStore->getKey() : null;
 
         $owner = $user->resolveScopeUser();
-        $items = $term === '' ? [] : $this->search($owner, $term, $activeStoreId);
+        $items = $term === '' ? [] : $this->search($owner, $term, $activeStoreId, $user->isAdmin());
 
         return new JsonResponse(['items' => $items]);
     }
@@ -42,7 +42,7 @@ class ItemSearchController
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function search(User $user, string $term, int|null $activeStoreId): array
+    private function search(User $user, string $term, int|null $activeStoreId, bool $isAdmin): array
     {
         $itemsQuery = Item::query();
         Item::scopeForUser($itemsQuery, $user);
@@ -69,6 +69,9 @@ class ItemSearchController
         $storeItemRows = StoreItem::query()
             ->select(['id', 'store_id', 'item_id', 'quantity'])
             ->whereIn('item_id', $itemIds)
+            ->when(!$isAdmin, static function (Builder $query) use ($activeStoreId): void {
+                $query->where('store_id', $activeStoreId ?? 0);
+            })
             ->whereHas('store', static function (Builder $query) use ($user): void {
                 $query->where('user_id', $user->getKey());
             })
@@ -79,8 +82,20 @@ class ItemSearchController
                 = (float) $storeItemRow->getQuantity();
         }
 
-        return $items->map(static function (Item $item) use ($storeQuantitiesByItem, $defaultWarehouseId, $activeStoreId): array {
+        return $items->map(static function (Item $item) use ($storeQuantitiesByItem, $defaultWarehouseId, $activeStoreId, $isAdmin): array {
             $byStore = $storeQuantitiesByItem[$item->getKey()] ?? [];
+
+            if (!$isAdmin) {
+                return [
+                    'id' => $item->getKey(),
+                    'title' => $item->getTitle(),
+                    'sku' => $item->getSku(),
+                    'unit' => $item->getUnit(),
+                    'available_quantity' => $activeStoreId === null
+                        ? 0
+                        : ($byStore[(string) $activeStoreId] ?? 0),
+                ];
+            }
 
             return [
                 'id' => $item->getKey(),

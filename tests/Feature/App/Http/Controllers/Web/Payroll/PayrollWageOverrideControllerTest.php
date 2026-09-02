@@ -38,3 +38,19 @@ use App\Models\Worker;
     ])->assertRedirect();
     \expect(PayrollWageOverride::query()->count())->toBe(0);
 });
+
+\test('archived worker cannot receive a new wage override', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey(), 'archived_at' => \now()]);
+
+    $this->be($admin, 'users')->put('/payroll/wage-override?store_id=' . $store->getKey(), [
+        'year' => 2026,
+        'month' => 7,
+        'worker_id' => $worker->getKey(),
+        'hours' => 12.5,
+        'hourly_rate' => 150,
+    ])->assertNotFound();
+
+    \expect(PayrollWageOverride::query()->count())->toBe(0);
+});

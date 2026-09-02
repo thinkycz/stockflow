@@ -10,8 +10,11 @@ use App\Models\ShiftShareLink;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Thinkycz\LaravelCore\Support\Thrower;
+use Thinkycz\LaravelCore\Support\Typer;
 
 class WorkforceManagementService
 {
@@ -107,38 +110,56 @@ class WorkforceManagementService
         string $endTime,
         bool $allowOverlap,
     ): Shift {
-        $this->authorize($actor, $store, $worker);
+        return DB::transaction(function () use ($actor, $store, $shift, $worker, $date, $startTime, $endTime, $allowOverlap): Shift {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            $worker = Typer::assertInstance(
+                Worker::query()->whereKey($worker->getKey())->lockForUpdate()->firstOrFail(),
+                Worker::class,
+            );
+            $shift = Typer::assertInstance(
+                Shift::query()->whereKey($shift->getKey())->lockForUpdate()->firstOrFail(),
+                Shift::class,
+            );
+            $this->authorize($actor, $store, $worker);
 
-        if ($shift->getUserId() !== $actor->getKey() || $shift->getStoreId() !== $store->getKey()) {
-            \abort(404);
-        }
+            if ($worker->isArchived() && ($worker->getKey() !== $shift->getWorkerId() || $date >= CarbonImmutable::today()->toDateString())) {
+                Thrower::default()->message('worker_id', \__('Archived workers cannot receive new work.'))->throw();
+            }
 
-        if (!$allowOverlap && (new ShiftAssignmentService())->findOverlaps(
-            $actor,
-            $store,
-            $worker,
-            $date,
-            $startTime,
-            $endTime,
-            $shift->getKey(),
-        )->isNotEmpty()) {
-            Thrower::default()->message('overlap', \__('This shift overlaps an existing assignment.'))->throw();
-        }
+            if ($shift->getUserId() !== $actor->getKey() || $shift->getStoreId() !== $store->getKey()) {
+                \abort(404);
+            }
 
-        $attributes = [
-            'worker_id' => $worker->getKey(),
-            'date' => $date,
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-        ];
+            if (!$allowOverlap && (new ShiftAssignmentService())->findOverlaps(
+                $actor,
+                $store,
+                $worker,
+                $date,
+                $startTime,
+                $endTime,
+                $shift->getKey(),
+            )->isNotEmpty()) {
+                Thrower::default()->message('overlap', \__('This shift overlaps an existing assignment.'))->throw();
+            }
 
-        if ($worker->getKey() !== $shift->getWorkerId()) {
-            $attributes['hourly_rate'] = $worker->getHourlyRate();
-        }
+            $attributes = [
+                'worker_id' => $worker->getKey(),
+                'date' => $date,
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+            ];
 
-        $shift->update($attributes);
+            if ($worker->getKey() !== $shift->getWorkerId()) {
+                $attributes['hourly_rate'] = $worker->getHourlyRate();
+            }
 
-        return $shift->refresh();
+            $shift->update($attributes);
+
+            return $shift->refresh();
+        });
     }
 
     /**
@@ -146,11 +167,23 @@ class WorkforceManagementService
      */
     public function deleteShift(User $actor, Store $store, Shift $shift): void
     {
-        if (!$actor->isAdmin() || $shift->getUserId() !== $actor->getKey() || $shift->getStoreId() !== $store->getKey()) {
-            \abort(404);
-        }
+        DB::transaction(function () use ($actor, $store, $shift): void {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            $shift = Typer::assertInstance(
+                Shift::query()->whereKey($shift->getKey())->lockForUpdate()->firstOrFail(),
+                Shift::class,
+            );
+            $this->authorizeStore($actor, $store);
 
-        $shift->delete();
+            if ($shift->getUserId() !== $actor->getKey() || $shift->getStoreId() !== $store->getKey()) {
+                \abort(404);
+            }
+
+            $shift->delete();
+        });
     }
 
     /**
@@ -158,15 +191,21 @@ class WorkforceManagementService
      */
     public function createPreset(User $actor, Store $store, string $name, string $startTime, string $endTime): ShiftPreset
     {
-        $this->authorizeStore($actor, $store);
+        return DB::transaction(function () use ($actor, $store, $name, $startTime, $endTime): ShiftPreset {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            $this->authorizeStore($actor, $store);
 
-        return ShiftPreset::query()->create([
-            'user_id' => $actor->getKey(),
-            'store_id' => $store->getKey(),
-            'name' => $name,
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-        ]);
+            return ShiftPreset::query()->create([
+                'user_id' => $actor->getKey(),
+                'store_id' => $store->getKey(),
+                'name' => $name,
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+            ]);
+        });
     }
 
     /**
@@ -174,10 +213,20 @@ class WorkforceManagementService
      */
     public function updatePreset(User $actor, Store $store, ShiftPreset $preset, string $name, string $startTime, string $endTime): ShiftPreset
     {
-        $this->authorizePreset($actor, $store, $preset);
-        $preset->update(['name' => $name, 'start_time' => $startTime, 'end_time' => $endTime]);
+        return DB::transaction(function () use ($actor, $store, $preset, $name, $startTime, $endTime): ShiftPreset {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            $preset = Typer::assertInstance(
+                ShiftPreset::query()->whereKey($preset->getKey())->lockForUpdate()->firstOrFail(),
+                ShiftPreset::class,
+            );
+            $this->authorizePreset($actor, $store, $preset);
+            $preset->update(['name' => $name, 'start_time' => $startTime, 'end_time' => $endTime]);
 
-        return $preset->refresh();
+            return $preset->refresh();
+        });
     }
 
     /**
@@ -185,8 +234,18 @@ class WorkforceManagementService
      */
     public function deletePreset(User $actor, Store $store, ShiftPreset $preset): void
     {
-        $this->authorizePreset($actor, $store, $preset);
-        $preset->delete();
+        DB::transaction(function () use ($actor, $store, $preset): void {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            $preset = Typer::assertInstance(
+                ShiftPreset::query()->whereKey($preset->getKey())->lockForUpdate()->firstOrFail(),
+                ShiftPreset::class,
+            );
+            $this->authorizePreset($actor, $store, $preset);
+            $preset->delete();
+        });
     }
 
     /**
@@ -194,14 +253,20 @@ class WorkforceManagementService
      */
     public function createShareLink(User $actor, Store $store, string $name): ShiftShareLink
     {
-        $this->authorizeStore($actor, $store);
+        return DB::transaction(function () use ($actor, $store, $name): ShiftShareLink {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            $this->authorizeStore($actor, $store);
 
-        return ShiftShareLink::query()->create([
-            'user_id' => $actor->getKey(),
-            'store_id' => $store->getKey(),
-            'name' => $name,
-            'token' => Str::random(64),
-        ]);
+            return ShiftShareLink::query()->create([
+                'user_id' => $actor->getKey(),
+                'store_id' => $store->getKey(),
+                'name' => $name,
+                'token' => Str::random(64),
+            ]);
+        });
     }
 
     /**
@@ -209,13 +274,23 @@ class WorkforceManagementService
      */
     public function deleteShareLink(User $actor, Store $store, ShiftShareLink $link): void
     {
-        $this->authorizeStore($actor, $store);
+        DB::transaction(function () use ($actor, $store, $link): void {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            $link = Typer::assertInstance(
+                ShiftShareLink::query()->whereKey($link->getKey())->lockForUpdate()->firstOrFail(),
+                ShiftShareLink::class,
+            );
+            $this->authorizeStore($actor, $store);
 
-        if ($link->getUserId() !== $actor->getKey() || $link->getStoreId() !== $store->getKey()) {
-            \abort(404);
-        }
+            if ($link->getUserId() !== $actor->getKey() || $link->getStoreId() !== $store->getKey()) {
+                \abort(404);
+            }
 
-        $link->delete();
+            $link->delete();
+        });
     }
 
     /**
@@ -235,7 +310,7 @@ class WorkforceManagementService
      */
     private function authorizeStore(User $actor, Store $store): void
     {
-        if (!$actor->isAdmin() || $store->getUserId() !== $actor->getKey()) {
+        if (!$actor->isAdmin() || $store->getUserId() !== $actor->getKey() || !$store->isActive() || $store->isWarehouse()) {
             \abort(404);
         }
     }

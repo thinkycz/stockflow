@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { CircleCheck, CircleOff, Plus, Pencil, Trash2 } from '@lucide/vue';
+import {
+    CircleCheck,
+    CircleOff,
+    Plus,
+    Pencil,
+    RotateCcw,
+    Trash2,
+} from '@lucide/vue';
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -10,6 +17,7 @@ import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import SearchFilter from '@/components/ui/SearchFilter.vue';
+import Select from '@/components/ui/Select.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { useDialog } from '@/composables/useDialog';
@@ -23,11 +31,13 @@ type WorkerRow = {
     color: string;
     hourly_rate: number;
     attendance_rating_enabled: boolean;
+    archived: boolean;
 };
 
 const props = defineProps<{
     workers: WorkerRow[];
     search: string;
+    status: 'active' | 'archived' | 'all';
 }>();
 
 const { t } = useI18n();
@@ -38,17 +48,22 @@ const route = useRoute();
 const dialog = useDialog();
 
 const searchTerm = ref<string>(props.search || '');
+const status = ref<'active' | 'archived' | 'all'>(props.status);
 const filtering = ref(false);
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
-watch(searchTerm, (value) => {
+watch([searchTerm, status], ([value, lifecycleStatus]) => {
     if (searchTimer !== null) {
         clearTimeout(searchTimer);
     }
     searchTimer = setTimeout(() => {
         router.get(
             route('workers.index'),
-            { search: value || undefined },
+            {
+                search: value || undefined,
+                status:
+                    lifecycleStatus === 'active' ? undefined : lifecycleStatus,
+            },
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -58,6 +73,12 @@ watch(searchTerm, (value) => {
         );
     }, 300);
 });
+
+const statusOptions = [
+    { value: 'active', label: t('workers.filters.active') },
+    { value: 'archived', label: t('workers.filters.archived') },
+    { value: 'all', label: t('workers.filters.all') },
+];
 
 async function destroyWorker(worker: WorkerRow): Promise<void> {
     if (
@@ -70,6 +91,14 @@ async function destroyWorker(worker: WorkerRow): Promise<void> {
     )
         return;
     router.delete(route('workers.destroy', worker.id), withActionErrorToast());
+}
+
+function restoreWorker(worker: WorkerRow): void {
+    router.post(
+        route('workers.restore', worker.id),
+        {},
+        withActionErrorToast(),
+    );
 }
 </script>
 
@@ -91,6 +120,12 @@ async function destroyWorker(worker: WorkerRow): Promise<void> {
                             :placeholder="t('workers.search_placeholder')"
                             :busy="filtering"
                             class="w-full sm:w-72"
+                        />
+                        <Select
+                            v-model="status"
+                            :options="statusOptions"
+                            :aria-label="t('workers.filters.label')"
+                            class="w-full sm:w-40"
                         />
                         <Link :href="route('workers.create')">
                             <Button>
@@ -191,6 +226,7 @@ async function destroyWorker(worker: WorkerRow): Promise<void> {
                             <td>
                                 <div class="flex items-center gap-1">
                                     <Link
+                                        v-if="!worker.archived"
                                         :href="route('workers.edit', worker.id)"
                                     >
                                         <Button
@@ -202,6 +238,16 @@ async function destroyWorker(worker: WorkerRow): Promise<void> {
                                         </Button>
                                     </Link>
                                     <Button
+                                        v-if="worker.archived"
+                                        variant="ghost"
+                                        type="button"
+                                        :aria-label="t('workers.restore')"
+                                        @click="restoreWorker(worker)"
+                                    >
+                                        <RotateCcw :size="14" />
+                                    </Button>
+                                    <Button
+                                        v-else
                                         variant="ghost"
                                         type="button"
                                         :aria-label="t('common.delete')"

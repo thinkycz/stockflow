@@ -34,15 +34,19 @@ class ChecklistIndexController
     public function __invoke(Request $request): Response
     {
         $admin = User::mustAuth();
-        $store = ActiveStoreResolver::resolve($request, $admin);
+        $store = ActiveStoreResolver::resolveIncludingInactive($request, $admin);
+        $tab = $request->string('tab')->toString() === 'history' ? 'history' : 'templates';
+        if ($store instanceof Store && !$store->isActive()) {
+            $tab = 'history';
+        }
         $payload = [
-            'active_store' => $store instanceof Store ? ['id' => $store->getKey(), 'name' => $store->getName(), 'is_warehouse' => $store->isWarehouse()] : null,
+            'active_store' => $store instanceof Store ? ['id' => $store->getKey(), 'name' => $store->getName(), 'is_warehouse' => $store->isWarehouse(), 'is_active' => $store->isActive()] : null,
             'templates' => $this->emptyTemplates(),
             'history' => ['data' => [], 'current_page' => 1, 'last_page' => 1, 'total' => 0],
             'history_detail' => null,
             'workers' => [],
             'filters' => [
-                'tab' => $request->string('tab')->toString() === 'history' ? 'history' : 'templates',
+                'tab' => $tab,
                 'scope' => $request->string('scope')->toString() === 'weekly' ? 'weekly' : 'daily',
                 'weekday' => \max(1, \min(7, $request->integer('weekday', 1))),
                 'from' => $request->string('from')->toString(),
@@ -57,9 +61,12 @@ class ChecklistIndexController
         }
 
         $service = new ChecklistService();
-        $service->initializeStore($store);
+        if ($store->isActive()) {
+            $service->initializeStore($store);
+        }
         $payload['templates'] = $this->templates($store);
-        $payload['workers'] = Worker::query()->where('user_id', $admin->getKey())->orderBy('first_name')->orderBy('last_name')->get()
+        $workerQuery = Worker::query()->where('user_id', $admin->getKey());
+        $payload['workers'] = $workerQuery->orderBy('first_name')->orderBy('last_name')->get()
             ->map(static fn(Worker $worker): array => ['id' => $worker->getKey(), 'name' => $worker->getFullName()])->all();
         $payload['history'] = $this->history($request, $store, $service);
         $payload['history_detail'] = $this->detail($request, $store, $service);

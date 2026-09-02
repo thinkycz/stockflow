@@ -26,73 +26,79 @@ class RecipeTestService
      */
     public function start(User $actor, Worker $worker, Recipe $recipe): RecipeTestAttempt
     {
-        $owner = $actor->resolveScopeUser();
-        if ($actor->isAdmin() || $worker->getUserId() !== $owner->getKey() || $recipe->getUserId() !== $owner->getKey() || $recipe->isArchived()) {
-            throw new InvalidArgumentException('Recipe test is not available.');
-        }
-
-        $variants = $recipe->variants()->has('instructions', '>=', 2)->with('instructions')->get();
-        if ($variants->isEmpty()) {
-            throw new InvalidArgumentException('Recipe has no testable variant.');
-        }
-        $variant = Typer::assertInstance($variants->get(\random_int(0, $variants->count() - 1)), RecipeVariant::class);
-        $instructions = $variant->getInstructions();
-        if ($instructions->count() < 2) {
-            throw new InvalidArgumentException('Recipe variant must have at least two steps.');
-        }
-
-        $correct = [];
-        $snapshotInstructions = [];
-        foreach ($instructions as $value) {
-            $instruction = Typer::assertInstance($value, RecipeInstruction::class);
-            $token = Str::uuid()->toString();
-            $correct[] = ['token' => $token, 'text' => $instruction->getText()];
-            $snapshotInstructions[] = [
-                'token' => $token,
-                'instruction_id' => $instruction->getKey(),
-                'type' => $instruction->getType(),
-                'text' => $instruction->getText(),
-                'action_key' => $instruction->getActionKey(),
-                'quantity_value' => $instruction->getQuantityValue(),
-                'quantity_text' => $instruction->getQuantityText(),
-                'unit' => $instruction->getUnit(),
-                'ingredient_name' => $instruction->getIngredientName(),
-                'target' => $instruction->getTarget(),
-                'icon_group' => $instruction->getIconGroup(),
-                'is_inferred' => $instruction->isInferred(),
-            ];
-        }
-        $presented = \array_column($correct, 'token');
-        \shuffle($presented);
-        if ($presented === \array_column($correct, 'token')) {
-            $first = \array_shift($presented);
-            if (\is_string($first)) {
-                $presented[] = $first;
+        return DB::transaction(static function () use ($actor, $worker, $recipe): RecipeTestAttempt {
+            $worker = Typer::assertInstance(
+                Worker::query()->whereKey($worker->getKey())->lockForUpdate()->firstOrFail(),
+                Worker::class,
+            );
+            $owner = $actor->resolveScopeUser();
+            if ($actor->isAdmin() || $worker->getUserId() !== $owner->getKey() || $worker->isArchived() || $recipe->getUserId() !== $owner->getKey() || $recipe->isArchived()) {
+                throw new InvalidArgumentException('Recipe test is not available.');
             }
-        }
 
-        return Typer::assertInstance(RecipeTestAttempt::query()->create([
-            'user_id' => $owner->getKey(),
-            'recipe_id' => $recipe->getKey(),
-            'recipe_variant_id' => $variant->getKey(),
-            'worker_id' => $worker->getKey(),
-            'actor_user_id' => $actor->getKey(),
-            'recipe_name' => $recipe->getName(),
-            'variant_name' => $variant->getName(),
-            'worker_name' => $worker->getFullName(),
-            'actor_name' => $actor->getEmail(),
-            'correct_steps' => $correct,
-            'variant_snapshot' => [
+            $variants = $recipe->variants()->has('instructions', '>=', 2)->with('instructions')->get();
+            if ($variants->isEmpty()) {
+                throw new InvalidArgumentException('Recipe has no testable variant.');
+            }
+            $variant = Typer::assertInstance($variants->get(\random_int(0, $variants->count() - 1)), RecipeVariant::class);
+            $instructions = $variant->getInstructions();
+            if ($instructions->count() < 2) {
+                throw new InvalidArgumentException('Recipe variant must have at least two steps.');
+            }
+
+            $correct = [];
+            $snapshotInstructions = [];
+            foreach ($instructions as $value) {
+                $instruction = Typer::assertInstance($value, RecipeInstruction::class);
+                $token = Str::uuid()->toString();
+                $correct[] = ['token' => $token, 'text' => $instruction->getText()];
+                $snapshotInstructions[] = [
+                    'token' => $token,
+                    'instruction_id' => $instruction->getKey(),
+                    'type' => $instruction->getType(),
+                    'text' => $instruction->getText(),
+                    'action_key' => $instruction->getActionKey(),
+                    'quantity_value' => $instruction->getQuantityValue(),
+                    'quantity_text' => $instruction->getQuantityText(),
+                    'unit' => $instruction->getUnit(),
+                    'ingredient_name' => $instruction->getIngredientName(),
+                    'target' => $instruction->getTarget(),
+                    'icon_group' => $instruction->getIconGroup(),
+                    'is_inferred' => $instruction->isInferred(),
+                ];
+            }
+            $presented = \array_column($correct, 'token');
+            \shuffle($presented);
+            if ($presented === \array_column($correct, 'token')) {
+                $first = \array_shift($presented);
+                if (\is_string($first)) {
+                    $presented[] = $first;
+                }
+            }
+
+            return Typer::assertInstance(RecipeTestAttempt::query()->create([
+                'user_id' => $owner->getKey(),
+                'recipe_id' => $recipe->getKey(),
+                'recipe_variant_id' => $variant->getKey(),
+                'worker_id' => $worker->getKey(),
+                'actor_user_id' => $actor->getKey(),
+                'recipe_name' => $recipe->getName(),
                 'variant_name' => $variant->getName(),
-                'instructions' => $snapshotInstructions,
-            ],
-            'presented_tokens' => $presented,
-            'submitted_tokens' => null,
-            'score' => null,
-            'passed' => null,
-            'started_at' => Carbon::now(),
-            'submitted_at' => null,
-        ]), RecipeTestAttempt::class);
+                'worker_name' => $worker->getFullName(),
+                'actor_name' => $actor->getEmail(),
+                'correct_steps' => $correct,
+                'variant_snapshot' => [
+                    'variant_name' => $variant->getName(),
+                    'instructions' => $snapshotInstructions,
+                ],
+                'presented_tokens' => $presented,
+                'submitted_tokens' => null,
+                'score' => null,
+                'passed' => null,
+                'started_at' => Carbon::now(),
+                'submitted_at' => null,
+            ]), RecipeTestAttempt::class);
+        });
     }
 
     /**

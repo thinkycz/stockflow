@@ -67,8 +67,9 @@ type SummaryRow = {
 };
 
 const props = defineProps<{
-    store: { id: number; name: string } | null;
+    store: { id: number; name: string; is_active: boolean } | null;
     workers: Worker[];
+    active_workers: Worker[];
     filters: { month: string; worker_id: number | null } | null;
     report: {
         month: string;
@@ -90,6 +91,7 @@ const reportWorkerId = ref(
 const correctionOpen = ref(false);
 const editingSessionId = ref<number | null>(null);
 const correctionForm = useForm({
+    store_id: props.store?.id ?? null,
     worker_id: '',
     started_at: '',
     ended_at: '',
@@ -99,6 +101,7 @@ const correctionForm = useForm({
 const reviewOpen = ref(false);
 const activeDeviation = ref<DeviationRow | null>(null);
 const reviewForm = useForm({
+    store_id: props.store?.id ?? null,
     decision: 'approved' as 'approved' | 'rejected',
     reason: '',
     start_time: '',
@@ -126,6 +129,22 @@ const deviationsBySession = computed(
             ]),
         ),
 );
+const correctionWorkerOptions = computed(() => {
+    const workers = [...props.active_workers];
+    if (editingSessionId.value !== null) {
+        const selected = props.workers.find(
+            (worker) => String(worker.id) === correctionForm.worker_id,
+        );
+        if (selected && !workers.some((worker) => worker.id === selected.id)) {
+            workers.push(selected);
+        }
+    }
+
+    return workers.map((worker) => ({
+        value: String(worker.id),
+        label: `${worker.first_name} ${worker.last_name}`,
+    }));
+});
 const reportTotals = computed(() =>
     (props.report?.summary ?? []).reduce(
         (total, row) => ({
@@ -224,7 +243,11 @@ function submitReview(decision: 'approved' | 'rejected'): void {
 function applyFilters(): void {
     router.get(
         route('attendance.report'),
-        { month: reportMonth.value, worker_id: reportWorkerId.value || null },
+        {
+            store_id: props.store?.id ?? null,
+            month: reportMonth.value,
+            worker_id: reportWorkerId.value || null,
+        },
         { preserveState: true, preserveScroll: true },
     );
 }
@@ -270,7 +293,7 @@ async function voidSession(id: number): Promise<void> {
     if (reason?.trim()) {
         router.post(
             route('attendance.sessions.void', id),
-            { reason: reason.trim() },
+            { store_id: props.store?.id ?? null, reason: reason.trim() },
             withActionErrorToast(),
         );
     }
@@ -296,7 +319,7 @@ function removeBreak(index: number): void {
                     </BackLink>
                 </template>
                 <template #context>
-                    <StoreContextIndicator />
+                    <StoreContextIndicator :store="store" />
                 </template>
             </PageHeader>
 
@@ -350,6 +373,7 @@ function removeBreak(index: number): void {
                                 route('attendance.print', {
                                     month: reportMonth,
                                     worker_id: reportWorkerId || null,
+                                    store_id: store.id,
                                 })
                             "
                             target="_blank"
@@ -359,7 +383,11 @@ function removeBreak(index: number): void {
                                 {{ t('attendance.report.print') }}
                             </Button>
                         </Link>
-                        <Button variant="secondary" @click="openCreate">
+                        <Button
+                            v-if="store.is_active"
+                            variant="secondary"
+                            @click="openCreate"
+                        >
                             <Plus :size="15" />
                             {{ t('attendance.correction.create') }}
                         </Button>
@@ -502,7 +530,10 @@ function removeBreak(index: number): void {
                             </td>
                             <td class="space-x-2">
                                 <Button
-                                    v-if="deviationsBySession.get(row.id)"
+                                    v-if="
+                                        store.is_active &&
+                                        deviationsBySession.get(row.id)
+                                    "
                                     variant="ghost"
                                     size="compact"
                                     @click="
@@ -531,6 +562,7 @@ function removeBreak(index: number): void {
                                     </Badge>
                                 </Button>
                                 <Button
+                                    v-if="store.is_active"
                                     variant="ghost"
                                     size="compact"
                                     @click="openEdit(row)"
@@ -538,7 +570,7 @@ function removeBreak(index: number): void {
                                     {{ t('common.edit') }}
                                 </Button>
                                 <Button
-                                    v-if="!row.voided"
+                                    v-if="store.is_active && !row.voided"
                                     variant="ghost"
                                     size="compact"
                                     class="text-error-red hover:text-error-red"
@@ -689,12 +721,7 @@ function removeBreak(index: number): void {
                     <Label>{{ t('attendance.worker') }}</Label>
                     <Select
                         v-model="correctionForm.worker_id"
-                        :options="
-                            workers.map((worker) => ({
-                                value: String(worker.id),
-                                label: `${worker.first_name} ${worker.last_name}`,
-                            }))
-                        "
+                        :options="correctionWorkerOptions"
                         required
                     />
                 </div>

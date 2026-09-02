@@ -82,7 +82,15 @@ class PayrollWageOverride extends BaseModel
      */
     public function getHours(): float
     {
-        return Typer::parseFloat($this->getAttribute('hours'));
+        return (float) $this->getHoursDecimal();
+    }
+
+    /**
+     * Manually payable hours without floating-point conversion.
+     */
+    public function getHoursDecimal(): string
+    {
+        return Typer::assertString($this->getAttribute('hours'));
     }
 
     /**
@@ -90,7 +98,15 @@ class PayrollWageOverride extends BaseModel
      */
     public function getHourlyRate(): float
     {
-        return Typer::parseFloat($this->getAttribute('hourly_rate'));
+        return (float) $this->getHourlyRateDecimal();
+    }
+
+    /**
+     * Manually payable hourly rate without floating-point conversion.
+     */
+    public function getHourlyRateDecimal(): string
+    {
+        return Typer::assertString($this->getAttribute('hourly_rate'));
     }
 
     /**
@@ -100,6 +116,9 @@ class PayrollWageOverride extends BaseModel
      */
     protected function casts(): array
     {
-        return [];
+        return [
+            'hours' => 'decimal:2',
+            'hourly_rate' => 'decimal:2',
+        ];
     }
 }

@@ -1,6 +1,6 @@
 include:
   - project: 'p4858/ci-cd/gitlab-ci'
-    ref: main
+    ref: 96725394d4ca7f4568bef07e088b312def6a6a39
     file: '/src/laravel.yml'
 
 mysql-invariants:
@@ -20,4 +20,5 @@ mysql-invariants:
   script:
     - composer install --no-interaction --prefer-dist
     - php artisan migrate --force
-    - php -d memory_limit=512M vendor/bin/pest tests/Feature/App/Models/StockMovementSequenceTest.php tests/Feature/App/Services/StockMovementServiceTest.php tests/Feature/App/Services/InventorySessionServiceTest.php tests/Feature/App/Http/Controllers/Web/StockMovement/StockMovementReverseControllerTest.php
+    - php -r 'if (!extension_loaded("pcntl")) { fwrite(STDERR, "The mysql-invariants job requires ext-pcntl.\n"); exit(1); }'
+    - php -d memory_limit=512M vendor/bin/pest tests/Feature/App/Models/StockMovementSequenceTest.php tests/Feature/App/Services/StockMovementServiceTest.php tests/Feature/App/Services/InventorySessionServiceTest.php tests/Feature/App/Services/MySqlPeriodMutationConcurrencyTest.php tests/Feature/App/Services/AdministrationManagementLifecycleServiceTest.php tests/Feature/App/Http/Controllers/Web/StockMovement/StockMovementReverseControllerTest.php tests/Feature/App/Http/Controllers/Web/Store/StoreDestroyControllerTest.php tests/Feature/App/Http/Controllers/Web/Worker/WorkerDestroyControllerTest.php

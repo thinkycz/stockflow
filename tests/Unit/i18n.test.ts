@@ -80,6 +80,16 @@ describe('i18n configurations', () => {
         expect([...flattenKeys(messages.sk)].sort()).toEqual(englishKeys);
     });
 
+    test('forgot-password copy describes the reset-link flow', () => {
+        expect(messages.en.auth.forgot.submit).toBe('Send reset link');
+        expect(messages.en.auth.forgot.subtitle).toContain('reset link');
+        expect(messages.en.auth.forgot.subtitle).not.toContain(
+            'generated password',
+        );
+        expect(messages.cs.auth.forgot.subtitle).toContain('odkaz');
+        expect(messages.sk.auth.forgot.subtitle).toContain('odkaz');
+    });
+
     test('Czech attendance-close copy uses the brigádník terminology', () => {
         expect(messages.cs.statements.attendance_close.workers).toBe(
             'Brigádníci',

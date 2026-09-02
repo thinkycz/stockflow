@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, router, useForm } from '@inertiajs/vue3';
+import { router, useForm } from '@inertiajs/vue3';
 import {
     Ban,
     CheckCircle2,
@@ -158,10 +158,12 @@ function issue(): void {
 }
 
 function saveBranding(): void {
-    brandingForm.put(route('gift-voucher-settings.update'), {
-        forceFormData: true,
-        preserveScroll: true,
-    });
+    brandingForm
+        .transform((data) => ({ ...data, _method: 'put' }))
+        .post(route('gift-voucher-settings.update'), {
+            forceFormData: true,
+            preserveScroll: true,
+        });
 }
 
 function chooseLogo(event: Event): void {
@@ -179,6 +181,12 @@ function applyFilters(): void {
         },
         { preserveState: true, preserveScroll: true },
     );
+}
+
+function openPrint(url: string): void {
+    const printWindow = window.open(url, '_blank');
+
+    if (printWindow !== null) printWindow.opener = null;
 }
 
 async function voidVoucher(voucher: GiftVoucherRow): Promise<void> {
@@ -461,18 +469,21 @@ function statusVariant(
                                 </Badge>
                             </div>
                         </div>
-                        <Link
+                        <Button
                             v-if="batch.counts.active > 0"
-                            :href="
-                                route('gift-voucher-batches.print', batch.id)
+                            variant="secondary"
+                            @click="
+                                openPrint(
+                                    route(
+                                        'gift-voucher-batches.print',
+                                        batch.id,
+                                    ),
+                                )
                             "
-                            target="_blank"
                         >
-                            <Button variant="secondary">
-                                <Printer :size="15" />
-                                {{ t('gift_vouchers.actions.print_active') }}
-                            </Button>
-                        </Link>
+                            <Printer :size="15" />
+                            {{ t('gift_vouchers.actions.print_active') }}
+                        </Button>
                     </div>
 
                     <DataTable v-if="batch.vouchers.length" density="compact">
@@ -534,28 +545,24 @@ function statusVariant(
                                     "
                                 >
                                     <div class="flex items-center gap-1">
-                                        <Link
+                                        <Button
                                             v-if="voucher.status === 'active'"
-                                            :href="
-                                                route(
-                                                    'gift-vouchers.print',
-                                                    voucher.id,
+                                            variant="ghost"
+                                            size="icon"
+                                            :aria-label="
+                                                t('gift_vouchers.actions.print')
+                                            "
+                                            @click="
+                                                openPrint(
+                                                    route(
+                                                        'gift-vouchers.print',
+                                                        voucher.id,
+                                                    ),
                                                 )
                                             "
-                                            target="_blank"
                                         >
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                :aria-label="
-                                                    t(
-                                                        'gift_vouchers.actions.print',
-                                                    )
-                                                "
-                                            >
-                                                <Printer :size="14" />
-                                            </Button>
-                                        </Link>
+                                            <Printer :size="14" />
+                                        </Button>
                                         <Button
                                             v-if="voucher.status === 'active'"
                                             variant="ghost"

@@ -302,6 +302,7 @@ final class OperationsOperationExecutor implements AssistantOperationExecutor
     {
         $query = Worker::query();
         Worker::scopeForUser($query, $actor->resolveScopeUser());
+        Worker::scopeActive($query);
 
         return Typer::assertInstance($query->whereKey($workerId)->firstOrFail(), Worker::class);
     }

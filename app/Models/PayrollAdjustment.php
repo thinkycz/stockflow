@@ -91,7 +91,15 @@ class PayrollAdjustment extends BaseModel
      */
     public function getAmount(): float
     {
-        return (float) Typer::assertString($this->getAttribute('amount'));
+        return (float) $this->getAmountDecimal();
+    }
+
+    /**
+     * Adjustment amount without floating-point conversion.
+     */
+    public function getAmountDecimal(): string
+    {
+        return Typer::assertString($this->getAttribute('amount'));
     }
 
     /**

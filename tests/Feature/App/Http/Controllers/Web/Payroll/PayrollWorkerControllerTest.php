@@ -23,3 +23,17 @@ use App\Models\Worker;
         ->assertRedirect('/payroll?store_id=' . $store->getKey() . '&year=2026&month=7');
     \expect(PayrollWorkerEntry::query()->count())->toBe(0);
 });
+
+\test('archived worker cannot be added to payroll', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey(), 'archived_at' => \now()]);
+
+    $this->be($admin, 'users')->post('/payroll/workers?store_id=' . $store->getKey(), [
+        'year' => 2026,
+        'month' => 7,
+        'worker_id' => $worker->getKey(),
+    ])->assertNotFound();
+
+    \expect(PayrollWorkerEntry::query()->count())->toBe(0);
+});

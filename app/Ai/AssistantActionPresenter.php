@@ -13,6 +13,7 @@ final class AssistantActionPresenter
         'create_worker',
         'update_worker',
         'delete_worker',
+        'restore_worker',
         'create_shift',
         'quick_add_shift',
         'update_shift',

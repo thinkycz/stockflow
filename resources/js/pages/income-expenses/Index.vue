@@ -75,7 +75,12 @@ type FinancialSection = {
 };
 
 const props = defineProps<{
-    active_store: { id: number; name: string; is_warehouse: boolean } | null;
+    active_store: {
+        id: number;
+        name: string;
+        is_warehouse: boolean;
+        is_active: boolean;
+    } | null;
     filters: { year: number; month: number };
     financial_report: FinancialReport | null;
 }>();
@@ -109,6 +114,7 @@ const financialSections = computed<FinancialSection[]>(() => {
 });
 
 const manualForm = useForm({
+    store_id: props.active_store?.id ?? null,
     year: props.filters.year,
     month: props.filters.month,
     direction: 'expense' as 'income' | 'expense',
@@ -119,6 +125,7 @@ const manualForm = useForm({
 });
 
 const overrideForm = useForm({
+    store_id: props.active_store?.id ?? null,
     year: props.filters.year,
     month: props.filters.month,
     source_type: 'revenue',
@@ -147,7 +154,7 @@ function changeMonth(value: string): void {
     if (year && month) {
         router.get(
             route('income-expenses.index'),
-            { year, month },
+            { year, month, store_id: props.active_store?.id ?? null },
             { preserveState: true },
         );
     }
@@ -201,7 +208,11 @@ async function deleteManual(row: FinancialRow): Promise<void> {
     router.delete(
         route('income-expenses.manual-rows.destroy', row.manual_row_id),
         withActionErrorToast({
-            data: { year: props.filters.year, month: props.filters.month },
+            data: {
+                store_id: props.active_store?.id ?? null,
+                year: props.filters.year,
+                month: props.filters.month,
+            },
         }),
     );
 }
@@ -230,6 +241,7 @@ function resetOverride(row: FinancialRow): void {
         route('income-expenses.overrides.destroy'),
         withActionErrorToast({
             data: {
+                store_id: props.active_store?.id ?? null,
                 year: props.filters.year,
                 month: props.filters.month,
                 source_type: row.source_type,
@@ -265,7 +277,11 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
     lifecycleProcessing.value = true;
     router.post(
         route(`income-expenses.${action}`),
-        { year: props.filters.year, month: props.filters.month },
+        {
+            store_id: props.active_store?.id ?? null,
+            year: props.filters.year,
+            month: props.filters.month,
+        },
         withActionErrorToast({
             onFinish: () => (lifecycleProcessing.value = false),
         }),
@@ -339,7 +355,10 @@ function rowHref(row: FinancialRow): string | null {
             >
                 <template #context>
                     <div class="mt-2 flex flex-wrap items-center gap-3">
-                        <StoreContextIndicator class="mt-0" />
+                        <StoreContextIndicator
+                            :store="active_store"
+                            class="mt-0"
+                        />
                         <Badge
                             v-if="financial_report"
                             :variant="
@@ -376,6 +395,7 @@ function rowHref(row: FinancialRow): string | null {
                                     {
                                         year: filters.year,
                                         month: filters.month,
+                                        store_id: active_store?.id ?? null,
                                     },
                                 )
                             "
@@ -387,7 +407,10 @@ function rowHref(row: FinancialRow): string | null {
                             </Button>
                         </Link>
                         <template
-                            v-if="financial_report?.report.status === 'open'"
+                            v-if="
+                                active_store?.is_active &&
+                                financial_report?.report.status === 'open'
+                            "
                         >
                             <Button
                                 variant="warning"
@@ -400,7 +423,10 @@ function rowHref(row: FinancialRow): string | null {
                             </Button>
                         </template>
                         <Button
-                            v-if="financial_report?.report.status === 'closed'"
+                            v-if="
+                                active_store?.is_active &&
+                                financial_report?.report.status === 'closed'
+                            "
                             variant="secondary"
                             :disabled="lifecycleProcessing"
                             @click="lifecycle('reopen')"
@@ -474,7 +500,10 @@ function rowHref(row: FinancialRow): string | null {
                             {{ t(`income_expenses.sections.${section.key}`) }}
                         </h2>
                         <Button
-                            v-if="financial_report.report.status === 'open'"
+                            v-if="
+                                active_store?.is_active &&
+                                financial_report.report.status === 'open'
+                            "
                             variant="secondary"
                             size="compact"
                             @click="
@@ -587,8 +616,9 @@ function rowHref(row: FinancialRow): string | null {
                                 <td class="px-5 py-4">
                                     <div
                                         v-if="
+                                            active_store?.is_active &&
                                             financial_report.report.status ===
-                                            'open'
+                                                'open'
                                         "
                                         class="flex justify-end gap-1"
                                     >

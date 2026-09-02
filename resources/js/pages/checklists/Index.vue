@@ -57,7 +57,12 @@ type HistoryDetail = HistoryRow & {
 };
 
 const props = defineProps<{
-    active_store: { id: number; name: string; is_warehouse: boolean } | null;
+    active_store: {
+        id: number;
+        name: string;
+        is_warehouse: boolean;
+        is_active: boolean;
+    } | null;
     templates: { daily: ShiftTasks; weekly: Record<number, ShiftTasks> };
     history: {
         data: HistoryRow[];
@@ -141,10 +146,14 @@ const statusOptions = computed(() =>
                 : t(`checklists.status.${value}`),
     })),
 );
-const primaryTabs = computed(() => [
-    { value: 'templates', label: t('checklists.tabs.templates') },
-    { value: 'history', label: t('checklists.tabs.history') },
-]);
+const primaryTabs = computed(() =>
+    props.active_store?.is_active
+        ? [
+              { value: 'templates', label: t('checklists.tabs.templates') },
+              { value: 'history', label: t('checklists.tabs.history') },
+          ]
+        : [{ value: 'history', label: t('checklists.tabs.history') }],
+);
 const historyDetailItems = computed(() => ({
     morning:
         props.history_detail?.items.filter(
@@ -185,7 +194,12 @@ function scopeUrl(
     scope: 'daily' | 'weekly',
     weekday = props.filters.weekday,
 ): string {
-    return route('checklists.index', { scope, weekday, tab: 'templates' });
+    return route('checklists.index', {
+        store_id: props.active_store?.id ?? null,
+        scope,
+        weekday,
+        tab: 'templates',
+    });
 }
 function addTask(shift: 'morning' | 'afternoon'): void {
     drafts[shift].push({ id: 0, text: '' });
@@ -208,6 +222,7 @@ function save(shift: 'morning' | 'afternoon'): void {
     router.put(
         route('checklists.templates.update'),
         {
+            store_id: props.active_store?.id ?? null,
             scope: props.filters.scope,
             weekday:
                 props.filters.scope === 'weekly' ? props.filters.weekday : null,
@@ -225,16 +240,28 @@ function save(shift: 'morning' | 'afternoon'): void {
 function applyHistoryFilters(): void {
     router.get(
         route('checklists.index'),
-        { tab: 'history', ...historyFilters },
+        {
+            store_id: props.active_store?.id ?? null,
+            tab: 'history',
+            ...historyFilters,
+        },
         { preserveState: true },
     );
 }
 function selectPrimaryTab(tab: string): void {
     if (tab !== 'templates' && tab !== 'history') return;
-    router.get(route('checklists.index', { tab }), {}, { preserveState: true });
+    router.get(
+        route('checklists.index', {
+            store_id: props.active_store?.id ?? null,
+            tab,
+        }),
+        {},
+        { preserveState: true },
+    );
 }
 function detailUrl(dayId: number): string {
     return route('checklists.index', {
+        store_id: props.active_store?.id ?? null,
         tab: 'history',
         day_id: dayId,
         ...historyFilters,
@@ -243,12 +270,16 @@ function detailUrl(dayId: number): string {
 function closeDetail(): void {
     router.get(
         route('checklists.index'),
-        { tab: 'history', ...historyFilters },
+        {
+            store_id: props.active_store?.id ?? null,
+            tab: 'history',
+            ...historyFilters,
+        },
         { preserveState: true },
     );
 }
 async function changeExcuse(excused: boolean): Promise<void> {
-    if (!props.history_detail) return;
+    if (!props.history_detail || !props.active_store?.is_active) return;
     const reason = await dialog.prompt({
         title: excused
             ? t('checklists.history.excuse')
@@ -263,13 +294,16 @@ async function changeExcuse(excused: boolean): Promise<void> {
     if (excused)
         router.put(
             route('checklist-days.excuse', props.history_detail.id),
-            { reason },
+            { store_id: props.active_store.id, reason },
             options,
         );
     else
         router.delete(
             route('checklist-days.excuse.destroy', props.history_detail.id),
-            { ...options, data: { reason } },
+            {
+                ...options,
+                data: { store_id: props.active_store.id, reason },
+            },
         );
 }
 </script>
@@ -282,7 +316,7 @@ async function changeExcuse(excused: boolean): Promise<void> {
                 :subtitle="t('checklists.subtitle')"
             >
                 <template v-if="active_store" #context>
-                    <StoreContextIndicator />
+                    <StoreContextIndicator :store="active_store" />
                 </template>
             </PageHeader>
 
@@ -340,6 +374,7 @@ async function changeExcuse(excused: boolean): Promise<void> {
                                     {{ t(`checklists.shifts.${shift}`) }}
                                 </h2>
                                 <Button
+                                    v-if="active_store.is_active"
                                     variant="secondary"
                                     size="compact"
                                     @click="addTask(shift)"
@@ -357,8 +392,10 @@ async function changeExcuse(excused: boolean): Promise<void> {
                                     <Input
                                         v-model="task.text"
                                         :aria-label="t('checklists.task')"
+                                        :disabled="!active_store.is_active"
                                     />
                                     <Button
+                                        v-if="active_store.is_active"
                                         variant="ghost"
                                         size="icon"
                                         :disabled="index === 0"
@@ -367,6 +404,7 @@ async function changeExcuse(excused: boolean): Promise<void> {
                                         ><ArrowUp :size="15"
                                     /></Button>
                                     <Button
+                                        v-if="active_store.is_active"
                                         variant="ghost"
                                         size="icon"
                                         :disabled="
@@ -377,6 +415,7 @@ async function changeExcuse(excused: boolean): Promise<void> {
                                         ><ArrowDown :size="15"
                                     /></Button>
                                     <Button
+                                        v-if="active_store.is_active"
                                         variant="ghost"
                                         size="icon"
                                         :aria-label="t('common.delete')"
@@ -392,6 +431,7 @@ async function changeExcuse(excused: boolean): Promise<void> {
                                 </p>
                             </div>
                             <Button
+                                v-if="active_store.is_active"
                                 class="mt-5"
                                 :disabled="saving !== null"
                                 @click="save(shift)"
@@ -515,6 +555,7 @@ async function changeExcuse(excused: boolean): Promise<void> {
                                 :per-page="history.per_page"
                                 :base-url="route('checklists.index')"
                                 :query-params="{
+                                    store_id: active_store.id,
                                     tab: 'history',
                                     ...historyFilters,
                                 }"
@@ -690,7 +731,7 @@ async function changeExcuse(excused: boolean): Promise<void> {
                 </div>
             </div>
 
-            <template v-if="history_detail" #footer>
+            <template v-if="history_detail && active_store?.is_active" #footer>
                 <Button
                     v-if="!history_detail.excuse_reason"
                     variant="warning"

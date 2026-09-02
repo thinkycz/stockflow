@@ -72,6 +72,11 @@ class InventorySessionService
         $this->authoriseStore($user, $store);
 
         return DB::transaction(function () use ($user, $owner, $store): InventorySession {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            $this->authoriseStore($user, $store);
             $existing = InventorySession::query()
                 ->where('user_id', $owner->getKey())
                 ->where('active_store_key', $store->getKey())
@@ -259,6 +264,12 @@ class InventorySessionService
         $owner = $user->isAdmin() ? $user : $this->resolveOwner($user);
 
         return DB::transaction(function () use ($user, $owner, $store, $rows, $note, $now): InventorySession {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            $this->authoriseStore($user, $store);
+
             $session = InventorySession::query()->create([
                 'user_id' => $owner->getKey(),
                 'store_id' => $store->getKey(),
@@ -869,7 +880,7 @@ class InventorySessionService
      */
     private function authoriseStore(User $user, Store $store): void
     {
-        if ($store->getUserId() !== $user->resolveScopeUser()->getKey()) {
+        if ($store->getUserId() !== $user->resolveScopeUser()->getKey() || !$store->isActive()) {
             \abort(404);
         }
 

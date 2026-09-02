@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 use App\Models\User;
 use Database\Factories\UserFactory;
+use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\ItemSeeder;
+use Database\Seeders\RecipeCatalogSeeder;
+use Database\Seeders\StoreSeeder;
 use Database\Seeders\UserSeeder;
 
 \test('user seeder provisions one admin and is idempotent', function (): void {
@@ -23,3 +27,15 @@ use Database\Seeders\UserSeeder;
 
     \expect(fn() => \app(UserSeeder::class)->run())->toThrow(RuntimeException::class);
 });
+
+\test('demo seeders refuse to run outside local and testing', function (string $seeder): void {
+    $this->app->detectEnvironment(static fn(): string => 'production');
+
+    \expect(fn() => \app($seeder)->run())->toThrow(RuntimeException::class);
+})->with([
+    DatabaseSeeder::class,
+    UserSeeder::class,
+    StoreSeeder::class,
+    ItemSeeder::class,
+    RecipeCatalogSeeder::class,
+]);

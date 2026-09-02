@@ -35,6 +35,7 @@ class ShiftRequestService
                 Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
                 Store::class,
             );
+            $this->assertAdminStore($admin, $lockedStore);
             $shiftRequestQuery = ShiftRequest::query()
                 ->whereKey($shiftRequestId)
                 ->where('user_id', $admin->getKey())
@@ -47,9 +48,11 @@ class ShiftRequestService
                 Worker::query()
                     ->whereKey($shiftRequest->getWorkerId())
                     ->where('user_id', $admin->getKey())
+                    ->lockForUpdate()
                     ->firstOrFail(),
                 Worker::class,
             );
+            $this->assertWorker($lockedStore, $worker);
             $assignmentService = new ShiftAssignmentService();
             $existingShift = $assignmentService->findExact(
                 $admin,
@@ -100,6 +103,13 @@ class ShiftRequestService
     {
         return DB::transaction(function () use ($store, $worker, $date, $startTime, $endTime): array {
             $lockedStore = Typer::assertInstance(Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(), Store::class);
+            if (!$lockedStore->isActive() || $lockedStore->isWarehouse()) {
+                Thrower::default()->message('store_id', \__('The selected store is invalid.'))->throw();
+            }
+            $worker = Typer::assertInstance(
+                Worker::query()->whereKey($worker->getKey())->lockForUpdate()->firstOrFail(),
+                Worker::class,
+            );
             $this->assertWorker($lockedStore, $worker);
             $period = CarbonImmutable::parse($date)->startOfMonth();
             $this->assertFuturePeriod($period->year, $period->month);
@@ -148,6 +158,7 @@ class ShiftRequestService
 
         DB::transaction(function () use ($admin, $store, $year, $month, $locked): void {
             $lockedStore = Typer::assertInstance(Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(), Store::class);
+            $this->assertAdminStore($admin, $lockedStore);
 
             if ($locked) {
                 ShiftRequestMonthLock::query()->updateOrCreate(
@@ -209,7 +220,7 @@ class ShiftRequestService
      */
     private function assertWorker(Store $store, Worker $worker): void
     {
-        if ($worker->getUserId() !== $store->getUserId()) {
+        if ($worker->getUserId() !== $store->getUserId() || $worker->isArchived()) {
             Thrower::default()->message('worker_id', \__('The selected worker is invalid.'))->throw();
         }
     }
@@ -219,7 +230,7 @@ class ShiftRequestService
      */
     private function assertAdminStore(User $admin, Store $store): void
     {
-        if (!$admin->isAdmin() || $admin->getKey() !== $store->getUserId()) {
+        if (!$admin->isAdmin() || $admin->getKey() !== $store->getUserId() || !$store->isActive() || $store->isWarehouse()) {
             Thrower::default()->message('store_id', \__('The selected store is invalid.'))->throw();
         }
     }

@@ -37,11 +37,16 @@ class IncomeExpenseIndexController
             $year = $now->year;
             $month = $now->month;
         }
-        $store = ActiveStoreResolver::resolve($request, $admin);
+        $store = ActiveStoreResolver::resolveIncludingInactive($request, $admin);
         $service = new FinancialReportService();
 
         return Inertia::render('income-expenses/Index', [
-            'active_store' => $store instanceof Store ? ['id' => $store->getKey(), 'name' => $store->getName(), 'is_warehouse' => $store->isWarehouse()] : null,
+            'active_store' => $store instanceof Store ? [
+                'id' => $store->getKey(),
+                'name' => $store->getName(),
+                'is_warehouse' => $store->isWarehouse(),
+                'is_active' => $store->isActive(),
+            ] : null,
             'filters' => ['year' => $year, 'month' => $month],
             'financial_report' => $store instanceof Store && !$store->isWarehouse()
                 ? $service->build($admin, $store, $year, $month)

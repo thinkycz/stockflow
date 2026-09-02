@@ -43,7 +43,9 @@ class SharedShiftRequestToggleController
             'end_time' => $validity->endTime()->required()->toArray(),
         ]);
         $this->hit($this->limit());
-        $worker = Typer::assertInstance(Worker::query()->find($validated->parseInt('worker_id')), Worker::class);
+        $workerQuery = Worker::query();
+        Worker::scopeActive($workerQuery);
+        $worker = Typer::assertInstance($workerQuery->findOrFail($validated->parseInt('worker_id')), Worker::class);
         $result = (new ShiftRequestService())->toggle(
             $store,
             $worker,

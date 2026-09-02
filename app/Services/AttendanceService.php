@@ -113,7 +113,7 @@ class AttendanceService
     public function closeActiveCurrentDayAttendances(User $actor, Store $store): void
     {
         $scopeUser = $actor->resolveScopeUser();
-        if ($store->isWarehouse() || $store->getUserId() !== $scopeUser->getKey() ||
+        if ($store->isWarehouse() || !$store->isActive() || $store->getUserId() !== $scopeUser->getKey() ||
             (!$actor->isAdmin() && $actor->getAssignedStoreId() !== $store->getKey())) {
             \abort(403);
         }
@@ -147,8 +147,16 @@ class AttendanceService
     public function perform(User $actor, Store $store, Worker $worker, AttendanceActionEnum $action, bool $allowWithoutShift = false): AttendanceSession
     {
         return DB::transaction(function () use ($actor, $store, $worker, $action, $allowWithoutShift): AttendanceSession {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            $worker = Typer::assertInstance(
+                Worker::query()->whereKey($worker->getKey())->lockForUpdate()->firstOrFail(),
+                Worker::class,
+            );
             $scopeUser = $actor->resolveScopeUser();
-            if ($store->isWarehouse() || $store->getUserId() !== $scopeUser->getKey() || $worker->getUserId() !== $scopeUser->getKey() ||
+            if ($store->isWarehouse() || !$store->isActive() || $store->getUserId() !== $scopeUser->getKey() || $worker->getUserId() !== $scopeUser->getKey() ||
                 (!$actor->isAdmin() && $actor->getAssignedStoreId() !== $store->getKey())) {
                 $this->fail('store_id', Typer::assertString(\__('Attendance is not available for this store.')));
             }
@@ -156,6 +164,10 @@ class AttendanceService
             $active = AttendanceSession::query()->where('active_worker_id', $worker->getKey())->lockForUpdate()->first();
 
             if ($action === AttendanceActionEnum::ARRIVAL) {
+                if ($worker->isArchived()) {
+                    $this->fail('worker_id', Typer::assertString(\__('Archived workers cannot receive new work.')));
+                }
+
                 if ($active instanceof AttendanceSession) {
                     $this->fail('action', Typer::assertString(\__('This worker already has an open attendance session.')));
                 }

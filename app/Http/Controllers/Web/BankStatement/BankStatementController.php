@@ -32,7 +32,7 @@ final class BankStatementController
     public function index(Request $request): Response
     {
         $user = User::mustAuth();
-        $store = ActiveStoreResolver::resolve($request, $user);
+        $store = ActiveStoreResolver::resolveIncludingInactive($request, $user);
         $statements = [];
 
         if ($store instanceof Store) {
@@ -74,7 +74,11 @@ final class BankStatementController
             $request->session()->put(ActiveStoreResolver::SESSION_KEY, $result['statement']->getStoreId());
         }
 
-        Inertia::flash('success', $result['created'] ? \__('Bank statement queued.') : \__('This bank statement was already uploaded.'));
+        if ($result['created'] && !$result['queued']) {
+            Inertia::flash('error', \__('The bank statement could not be queued. Retry it from the import page.'));
+        } else {
+            Inertia::flash('success', $result['created'] ? \__('Bank statement queued.') : \__('This bank statement was already uploaded.'));
+        }
 
         return Resolver::resolveRedirector()->route('bank-statements.show', ['bankStatement' => $result['statement']->getKey()]);
     }
@@ -87,7 +91,7 @@ final class BankStatementController
         BankStatementService $service,
         BankStatementReconciliationService $reconciliation,
     ): Response {
-        $statement = $this->activeStatement($request, $service);
+        $statement = $this->activeStatement($request, $service, false);
 
         return Inertia::render('bank-statements/Show', [
             'statement' => self::detailPayload($statement),
@@ -103,7 +107,7 @@ final class BankStatementController
      */
     public function original(Request $request, BankStatementService $service): StreamedResponse
     {
-        $statement = $this->activeStatement($request, $service);
+        $statement = $this->activeStatement($request, $service, false);
         $contents = $service->originalContents($statement);
 
         return Resolver::resolveResponseFactory()
@@ -198,12 +202,17 @@ final class BankStatementController
         $statement = $this->activeStatement($request, $service);
 
         try {
-            $service->retry($statement);
+            $queued = $service->retry($statement);
         } catch (InvalidArgumentException $exception) {
             Thrower::default()->message('statement', \__($exception->getMessage()))->throw();
         }
 
-        Inertia::flash('success', \__('Bank statement queued again.'));
+        Inertia::flash(
+            $queued ? 'success' : 'error',
+            $queued
+                ? \__('Bank statement queued again.')
+                : \__('The bank statement could not be queued. Retry it from the import page.'),
+        );
 
         return Resolver::resolveRedirector()->back();
     }
@@ -236,9 +245,12 @@ final class BankStatementController
      */
     private static function detailPayload(BankStatement $statement): array
     {
+        $storeActive = $statement->getStore()->isActive();
+
         return [
             ...self::summaryPayload($statement),
             'store_name' => $statement->getStore()->getName(),
+            'store_active' => $storeActive,
             'account_number' => $statement->getMaskedAccountNumber(),
             'iban' => $statement->getMaskedIban(),
             'opening_balance' => $statement->getOpeningBalance(),
@@ -249,7 +261,7 @@ final class BankStatementController
             'debit_count' => $statement->getDebitCount(),
             'parse_warnings' => $statement->getParseWarnings(),
             'last_error' => $statement->getLastError(),
-            'editable' => $statement->getStatus() === BankStatementStatusEnum::REVIEW,
+            'editable' => $storeActive && $statement->getStatus() === BankStatementStatusEnum::REVIEW,
             'terminal' => \in_array($statement->getStatus(), [BankStatementStatusEnum::REVIEW, BankStatementStatusEnum::CONFIRMED, BankStatementStatusEnum::FAILED], true),
         ];
     }
@@ -293,12 +305,13 @@ final class BankStatementController
     /**
      * Resolve a statement and require it to belong to the currently active store.
      */
-    private function activeStatement(Request $request, BankStatementService $service): BankStatement
+    private function activeStatement(Request $request, BankStatementService $service, bool $requireActiveStore = true): BankStatement
     {
         $user = User::mustAuth();
-        $store = ActiveStoreResolver::resolve($request, $user);
         $statement = $service->findOwned($user, Typer::parseInt($request->route('bankStatement')));
-
+        $store = $requireActiveStore
+            ? ActiveStoreResolver::resolve($request, $user)
+            : ActiveStoreResolver::resolveIncludingInactive($request, $user);
         if (!$store instanceof Store || $statement->getStoreId() !== $store->getKey()) {
             \abort(404);
         }

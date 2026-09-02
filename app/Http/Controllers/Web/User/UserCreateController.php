@@ -46,7 +46,10 @@ class UserCreateController
             'assigned_store_id' => $validity->assignedStoreId()->required()->toArray(),
         ]);
 
-        $store = Store::query()->where('user_id', $admin->getKey())->whereKey($validated->parseInt('assigned_store_id'))->firstOrFail();
+        $storeQuery = Store::query()->where('user_id', $admin->getKey());
+        Store::scopeActive($storeQuery);
+        Store::scopeRetail($storeQuery);
+        $store = $storeQuery->whereKey($validated->parseInt('assigned_store_id'))->firstOrFail();
         (new AdministrationManagementService())->createUser(
             $admin,
             $validated->assertString('email'),
@@ -68,6 +71,8 @@ class UserCreateController
     {
         $query = Store::query();
         Store::scopeForUser($query, $admin);
+        Store::scopeActive($query);
+        Store::scopeRetail($query);
 
         return $query->orderBy('name')
             ->get()

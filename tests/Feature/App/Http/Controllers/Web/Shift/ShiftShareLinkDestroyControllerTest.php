@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\StoreStatusEnum;
 use App\Models\ShiftShareLink;
 use App\Models\Store;
 use Database\Factories\UserFactory;
@@ -57,4 +58,23 @@ use Database\Factories\UserFactory;
         ->assertForbidden();
 
     \expect($link->fresh())->not->toBeNull();
+});
+
+\test('inactive stores expose no public shift token endpoints', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create([
+        'user_id' => $admin->getKey(),
+        'is_warehouse' => false,
+        'status' => StoreStatusEnum::INACTIVE->value,
+    ]);
+    ShiftShareLink::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'token' => 'inactive-store-token',
+    ]);
+
+    $this->get('/public/shifts/inactive-store-token', $this->inertiaHeaders())->assertNotFound();
+    $this->get('/public/shifts/inactive-store-token/manifest.webmanifest')->assertNotFound();
+    $this->get('/public/shifts/inactive-store-token/requests', $this->inertiaHeaders())->assertNotFound();
+    $this->postJson('/public/shifts/inactive-store-token/requests/toggle')->assertNotFound();
 });

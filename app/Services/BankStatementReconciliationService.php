@@ -16,7 +16,6 @@ use App\Models\User;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
-use Illuminate\Database\Eloquent\Builder;
 
 class BankStatementReconciliationService
 {
@@ -134,16 +133,7 @@ class BankStatementReconciliationService
         $query = BankStatement::query();
         BankStatement::scopeForUser($query, $user->resolveScopeUser());
         BankStatement::scopeForStore($query, $store->getKey());
-        $query->where(static function (Builder $query) use ($year, $month): void {
-            $query->where(static function (Builder $query) use ($year, $month): void {
-                BankStatement::scopeForMonth($query, $year, $month);
-            })->orWhere(static function (Builder $query): void {
-                $query->whereNull('period_from')->whereIn('status', [
-                    BankStatementStatusEnum::QUEUED->value,
-                    BankStatementStatusEnum::PROCESSING->value,
-                ]);
-            });
-        });
+        BankStatement::scopeForMonth($query, $year, $month);
         $statement = $query->latest()->first();
 
         if (!$statement instanceof BankStatement) {

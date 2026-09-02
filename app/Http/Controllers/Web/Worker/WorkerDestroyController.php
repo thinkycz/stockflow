@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Worker;
 
+use App\Enums\RemovalOutcomeEnum;
 use App\Models\User;
 use App\Models\Worker;
 use App\Services\AdministrationManagementService;
@@ -22,12 +23,17 @@ class WorkerDestroyController
      */
     public function __invoke(Worker $worker): RedirectResponse
     {
-        if (!(new AdministrationManagementService())->deleteWorker(User::mustAuth(), $worker)) {
-            Inertia::flash('error', \__('Cannot delete a worker with existing shifts.'));
+        $outcome = (new AdministrationManagementService())->deleteWorker(User::mustAuth(), $worker);
+
+        if ($outcome === RemovalOutcomeEnum::BLOCKED) {
+            Inertia::flash('error', \__('Resolve active attendance and future worker scheduling before removing this worker.'));
 
             return Resolver::resolveRedirector()->route('workers.index');
         }
-        Inertia::flash('success', \__('Worker deleted.'));
+
+        Inertia::flash('success', $outcome === RemovalOutcomeEnum::ARCHIVED
+            ? \__('Worker archived.')
+            : \__('Worker deleted.'));
 
         return Resolver::resolveRedirector()->route('workers.index');
     }

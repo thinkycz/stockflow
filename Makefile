@@ -13,7 +13,7 @@ MAKE_ARTISAN ?= ${MAKE_PHP} ./artisan
 .PHONY: help
 help:
 	@echo "Available targets:"
-	@echo "  make check        - run stan, lint, audit, frontend build/type-check, and unit tests"
+	@echo "  make check        - run stan, lint, audits, frontend checks, unit tests, and e2e"
 	@echo "  make fix          - run prettier -w and pint to format the codebase"
 	@echo "  make test         - run the PHP test suite"
 	@echo "  make e2e          - run the Playwright e2e suite"
@@ -30,7 +30,7 @@ help:
 	@echo "                    - provision the named environment"
 
 .PHONY: check
-check: stan lint audit frontend test-unit deploy-smoke test
+check: stan lint audit frontend test-unit deploy-smoke test e2e
 
 .PHONY: audit
 audit: ./vendor ./composer.lock ./node_modules ./package-lock.json
@@ -107,7 +107,21 @@ local: ./.env
 	${MAKE_ARTISAN} up
 
 .PHONY: development
-development: ./.env
+development: deploy
+	${MAKE_ARTISAN} up
+
+.PHONY: staging
+staging: deploy
+	${MAKE_ARTISAN} up
+
+.PHONY: production
+production: deploy
+	${MAKE_ARTISAN} stockflow:identity:diagnose
+	${MAKE_ARTISAN} stockflow:assistant:diagnose
+	${MAKE_ARTISAN} up
+
+.PHONY: deploy
+deploy: ./.env
 	${MAKE_COMPOSER} install
 	npm install --install-links
 	${MAKE_ARTISAN} optimize:clear
@@ -118,7 +132,6 @@ development: ./.env
 	${MAKE_ARTISAN} view:clear
 	${MAKE_ARTISAN} clear-compiled
 	${MAKE_ARTISAN} migrate --force
-	${MAKE_ARTISAN} db:seed --force
 	${MAKE_COMPOSER} install -a --no-dev
 	npm install --omit dev --install-links
 	${MAKE_ARTISAN} optimize
@@ -128,13 +141,6 @@ development: ./.env
 	${MAKE_ARTISAN} view:cache
 	${MAKE_ARTISAN} storage:link --force
 	${MAKE_ARTISAN} queue:restart
-	${MAKE_ARTISAN} up
-
-.PHONY: staging
-staging: development
-
-.PHONY: production
-production: development
 
 .PHONY: serve
 serve: ./vendor ./.env

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\BankStatementStatusEnum;
 use App\Enums\BankStatementTransactionCategoryEnum;
 use App\Models\BankStatement;
 use App\Models\BankStatementTransaction;
@@ -39,6 +40,19 @@ use App\Services\BankStatementReconciliationService;
 
     \expect((new BankStatementReconciliationService())->forTransaction($transaction)['status'])
         ->toBe('mismatch');
+});
+
+\test('period-less active imports are not attributed to every report month', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $user->getKey()]);
+    BankStatement::factory()->forStore($store)->create([
+        'status' => BankStatementStatusEnum::QUEUED->value,
+        'period_from' => null,
+        'period_to' => null,
+    ]);
+
+    \expect((new BankStatementReconciliationService())->monthlyStatus($user, $store, 2026, 8))
+        ->toMatchArray(['statement_id' => null, 'status' => 'not_uploaded']);
 });
 
 \test('marketplace formulas include bolt cash and excluded movements never affect sales checks', function (): void {

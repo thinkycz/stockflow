@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\LimitedUserSectionEnum;
+use App\Enums\RemovalOutcomeEnum;
 use App\Enums\StoreStatusEnum;
 use App\Models\InventorySessionItem;
 use App\Models\Item;
 use App\Models\OperationalDailyDigest;
-use App\Models\Shift;
-use App\Models\StockMovement;
 use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Models\StoreItem;
@@ -18,8 +17,10 @@ use App\Models\User;
 use App\Models\Worker;
 use App\Notifications\SlackTestNotification;
 use App\Support\ActiveStoreResolver;
+use App\Support\ChecklistDefaultTemplate;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
@@ -130,6 +131,10 @@ class AdministrationManagementService
     ): Store {
         $this->assertAdmin($actor);
 
+        if ($isWarehouse) {
+            Thrower::default()->message('is_warehouse', \__('Additional warehouses cannot be created.'))->throw();
+        }
+
         return DB::transaction(static function () use ($actor, $name, $address, $status, $notes, $slackChannel, $isWarehouse): Store {
             $store = Store::query()->create([
                 'user_id' => $actor->getKey(),
@@ -141,13 +146,10 @@ class AdministrationManagementService
                 'is_warehouse' => $isWarehouse,
             ]);
 
-            if (!$store->isWarehouse()) {
+            if (!$store->isWarehouse() && $store->isActive()) {
                 $checklists = new ChecklistService();
                 $checklists->initializeStore($store);
-
-                if ($store->getStatus() === StoreStatusEnum::ACTIVE) {
-                    $checklists->ensureDay($store, CarbonImmutable::now(ChecklistService::TIMEZONE));
-                }
+                $checklists->ensureDay($store, CarbonImmutable::now(ChecklistService::TIMEZONE));
             }
 
             return $store;
@@ -168,37 +170,72 @@ class AdministrationManagementService
         bool $isWarehouse,
     ): Store {
         $this->authorizeStore($actor, $store);
-        $store->update([
-            'name' => $name,
-            'address' => $address,
-            'status' => $status,
-            'notes' => $notes,
-            'slack_channel' => $slackChannel,
-            'is_warehouse' => $isWarehouse,
-        ]);
 
-        return $store->refresh();
+        return DB::transaction(function () use ($actor, $store, $name, $address, $status, $notes, $slackChannel, $isWarehouse): Store {
+            $lockedStore = Typer::assertInstance(Store::query()->lockForUpdate()->findOrFail($store->getKey()), Store::class);
+            $this->authorizeStore($actor, $lockedStore);
+
+            if ($isWarehouse !== $lockedStore->isWarehouse()) {
+                Thrower::default()->message('is_warehouse', \__('The warehouse role cannot be changed.'))->throw();
+            }
+
+            if ($lockedStore->isWarehouse() && $status !== StoreStatusEnum::ACTIVE->value) {
+                Thrower::default()->message('status', \__('The required warehouse must remain active.'))->throw();
+            }
+
+            if ($lockedStore->getStatus() === StoreStatusEnum::ACTIVE &&
+                $status === StoreStatusEnum::INACTIVE->value &&
+                $this->storeHasLiveWork($lockedStore)
+            ) {
+                Thrower::default()->message('status', \__('Resolve active store work before deactivating this store.'))->throw();
+            }
+
+            $wasInactive = !$lockedStore->isActive();
+            $lockedStore->update([
+                'name' => $name,
+                'address' => $address,
+                'status' => $status,
+                'notes' => $notes,
+                'slack_channel' => $slackChannel,
+            ]);
+
+            $lockedStore = $lockedStore->refresh();
+            if ($wasInactive && $lockedStore->isActive() && !$lockedStore->isWarehouse()) {
+                $checklists = new ChecklistService();
+                $checklists->initializeStore($lockedStore);
+                $checklists->ensureDay($lockedStore, CarbonImmutable::now(ChecklistService::TIMEZONE));
+            }
+
+            return $lockedStore;
+        });
     }
 
     /**
-     * Delete an unused and unassigned store.
+     * Delete a pristine store, deactivate a historical store, or block live work.
      */
-    public function deleteStore(User $actor, Store $store): void
+    public function deleteStore(User $actor, Store $store): RemovalOutcomeEnum
     {
         $this->authorizeStore($actor, $store);
-        $hasMovements = StockMovement::query()
-            ->where('user_id', $actor->getKey())
-            ->where(static function (Builder $query) use ($store): void {
-                $query->where('store_id', $store->getKey())
-                    ->orWhere('source_store_id', $store->getKey());
-            })
-            ->exists();
 
-        if ($store->storeItems()->exists() || $hasMovements || $store->assignedUser()->exists()) {
-            Thrower::default()->message('store', \__('Cannot delete a store that has inventory or stock movement history.'))->throw();
-        }
+        return DB::transaction(function () use ($actor, $store): RemovalOutcomeEnum {
+            $lockedStore = Typer::assertInstance(Store::query()->lockForUpdate()->findOrFail($store->getKey()), Store::class);
+            $this->authorizeStore($actor, $lockedStore);
 
-        $store->delete();
+            if ($this->storeHasLiveWork($lockedStore)) {
+                return RemovalOutcomeEnum::BLOCKED;
+            }
+
+            if ($this->storeHasHistory($lockedStore)) {
+                $lockedStore->update(['status' => StoreStatusEnum::INACTIVE->value]);
+
+                return RemovalOutcomeEnum::ARCHIVED;
+            }
+
+            $lockedStore->storeItems()->where('quantity', 0)->delete();
+            $lockedStore->delete();
+
+            return RemovalOutcomeEnum::DELETED;
+        });
     }
 
     /**
@@ -207,6 +244,9 @@ class AdministrationManagementService
     public function switchStore(User $actor, Store $store): void
     {
         $this->authorizeStore($actor, $store);
+        if (!$store->isActive()) {
+            \abort(404);
+        }
         $browserSessionId = Typer::parseNullableString(Context::get(ActiveStoreResolver::SESSION_ID_CONTEXT));
         $request = Resolver::resolveRequest();
 
@@ -236,14 +276,25 @@ class AdministrationManagementService
     {
         $this->authorizeStore($actor, $assignedStore);
 
-        return DB::transaction(static fn(): User => User::query()->create([
-            'email' => $email,
-            'password' => $password,
-            'locale' => $actor->getLocale(),
-            'is_admin' => false,
-            'parent_user_id' => $actor->getKey(),
-            'assigned_store_id' => $assignedStore->getKey(),
-        ]));
+        return DB::transaction(function () use ($actor, $email, $password, $assignedStore): User {
+            $assignedStore = Typer::assertInstance(
+                Store::query()->whereKey($assignedStore->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            $this->authorizeStore($actor, $assignedStore);
+            if (!$assignedStore->isActive() || $assignedStore->isWarehouse()) {
+                \abort(404);
+            }
+
+            return User::query()->create([
+                'email' => $email,
+                'password' => $password,
+                'locale' => $actor->getLocale(),
+                'is_admin' => false,
+                'parent_user_id' => $actor->getKey(),
+                'assigned_store_id' => $assignedStore->getKey(),
+            ]);
+        });
     }
 
     /**
@@ -266,11 +317,20 @@ class AdministrationManagementService
             \abort(422);
         }
 
-        if ($assignedStore instanceof Store) {
-            $this->authorizeStore($actor, $assignedStore);
-        }
+        DB::transaction(function () use ($actor, $target, $email, $password, $assignedStore, $enabledSections, $isSelf): void {
+            if (!$isSelf) {
+                $assignedStore = Typer::assertInstance(
+                    Store::query()->whereKey($assignedStore->getKey())->lockForUpdate()->firstOrFail(),
+                    Store::class,
+                );
+                $this->authorizeStore($actor, $assignedStore);
+                if (!$assignedStore->isActive() || $assignedStore->isWarehouse()) {
+                    \abort(404);
+                }
+            }
 
-        DB::transaction(static function () use ($target, $email, $password, $assignedStore, $enabledSections, $isSelf): void {
+            $target = Typer::assertInstance(User::query()->whereKey($target->getKey())->lockForUpdate()->firstOrFail(), User::class);
+            $this->authorizeManagedUser($actor, $target);
             $attributes = ['email' => $email];
 
             if ($password !== null && $password !== '') {
@@ -334,6 +394,7 @@ class AdministrationManagementService
             'hourly_rate' => $hourlyRate,
             'calendar_color' => Worker::normalizeCalendarColor($calendarColor),
             'attendance_rating_enabled' => $attendanceRatingEnabled,
+            'archived_at' => null,
         ]);
     }
 
@@ -362,15 +423,50 @@ class AdministrationManagementService
     }
 
     /**
-     * Delete a worker only when no shift history references it.
+     * Delete a pristine worker, archive a historical worker, or block live work.
      */
-    public function deleteWorker(User $actor, Worker $worker): bool
+    public function deleteWorker(User $actor, Worker $worker): RemovalOutcomeEnum
     {
         $this->authorizeWorker($actor, $worker);
-        $query = Shift::query();
-        Shift::scopeForWorker($query, $worker->getKey());
 
-        return !$query->exists() && $worker->delete();
+        return DB::transaction(function () use ($actor, $worker): RemovalOutcomeEnum {
+            $lockedWorker = Typer::assertInstance(Worker::query()->lockForUpdate()->findOrFail($worker->getKey()), Worker::class);
+            $this->authorizeWorker($actor, $lockedWorker);
+
+            if ($lockedWorker->isArchived()) {
+                return RemovalOutcomeEnum::ARCHIVED;
+            }
+
+            if ($this->workerHasLiveWork($lockedWorker)) {
+                return RemovalOutcomeEnum::BLOCKED;
+            }
+
+            if ($this->workerHasHistory($lockedWorker)) {
+                $lockedWorker->update(['archived_at' => CarbonImmutable::now()]);
+
+                return RemovalOutcomeEnum::ARCHIVED;
+            }
+
+            $lockedWorker->delete();
+
+            return RemovalOutcomeEnum::DELETED;
+        });
+    }
+
+    /**
+     * Return an archived worker to prospective work selectors.
+     */
+    public function restoreWorker(User $actor, Worker $worker): Worker
+    {
+        $this->authorizeWorker($actor, $worker);
+
+        return DB::transaction(function () use ($actor, $worker): Worker {
+            $lockedWorker = Typer::assertInstance(Worker::query()->lockForUpdate()->findOrFail($worker->getKey()), Worker::class);
+            $this->authorizeWorker($actor, $lockedWorker);
+            $lockedWorker->update(['archived_at' => null]);
+
+            return $lockedWorker->refresh();
+        });
     }
 
     /**
@@ -485,5 +581,185 @@ class AdministrationManagementService
         if ($worker->getUserId() !== $actor->getKey()) {
             \abort(404);
         }
+    }
+
+    /**
+     * Live attendance and future scheduling must be resolved before archival.
+     */
+    private function workerHasLiveWork(Worker $worker): bool
+    {
+        $workerId = $worker->getKey();
+        $today = CarbonImmutable::today()->toDateString();
+
+        if (DB::table('attendance_sessions')->where('worker_id', $workerId)->whereNull('ended_at')->whereNull('voided_at')->exists()) {
+            return true;
+        }
+
+        if (DB::table('attendance_sessions')->where('active_worker_id', $workerId)->whereNull('ended_at')->whereNull('voided_at')->exists()) {
+            return true;
+        }
+
+        if (DB::table('shifts')->where('worker_id', $workerId)->whereDate('date', '>=', $today)->exists()) {
+            return true;
+        }
+
+        return DB::table('shift_requests')->where('worker_id', $workerId)->whereDate('date', '>=', $today)->exists();
+    }
+
+    /**
+     * Any historical reference keeps the worker row and its identity intact.
+     */
+    private function workerHasHistory(Worker $worker): bool
+    {
+        $workerId = $worker->getKey();
+        $references = [
+            ['shifts', 'worker_id'],
+            ['shift_requests', 'worker_id'],
+            ['attendance_sessions', 'worker_id'],
+            ['attendance_sessions', 'active_worker_id'],
+            ['payroll_adjustments', 'worker_id'],
+            ['payroll_wage_overrides', 'worker_id'],
+            ['payroll_worker_entries', 'worker_id'],
+            ['checklist_items', 'completed_by_worker_id'],
+            ['checklist_events', 'worker_id'],
+            ['recipe_test_attempts', 'worker_id'],
+            ['recipe_test_sessions', 'worker_id'],
+        ];
+
+        foreach ($references as [$table, $column]) {
+            if (DB::table($table)->where($column, $workerId)->exists()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Store state that must be resolved rather than implicitly cancelled.
+     */
+    private function storeHasLiveWork(Store $store): bool
+    {
+        $storeId = $store->getKey();
+        $today = CarbonImmutable::today()->toDateString();
+
+        if ($store->isWarehouse() || $store->assignedUser()->exists() || $store->storeItems()->where('quantity', '!=', 0)->exists()) {
+            return true;
+        }
+
+        if (DB::table('inventory_sessions')->where('store_id', $storeId)->where('status', 'draft')->exists()) {
+            return true;
+        }
+
+        if (DB::table('attendance_sessions')->where('store_id', $storeId)->whereNull('ended_at')->whereNull('voided_at')->exists()) {
+            return true;
+        }
+
+        if (DB::table('shifts')->where('store_id', $storeId)->whereDate('date', '>=', $today)->exists()) {
+            return true;
+        }
+
+        if (DB::table('shift_requests')->where('store_id', $storeId)->whereDate('date', '>=', $today)->exists()) {
+            return true;
+        }
+
+        return DB::table('bank_statements')->where('store_id', $storeId)->whereIn('status', ['queued', 'processing', 'review'])->exists();
+    }
+
+    /**
+     * Historical and manually configured records require deactivation, not cascading deletion.
+     */
+    private function storeHasHistory(Store $store): bool
+    {
+        $storeId = $store->getKey();
+        $references = [
+            ['stock_movements', 'store_id'],
+            ['stock_movements', 'source_store_id'],
+            ['inventory_sessions', 'store_id'],
+            ['statements', 'store_id'],
+            ['shifts', 'store_id'],
+            ['shift_presets', 'store_id'],
+            ['attendance_sessions', 'store_id'],
+            ['attendance_deviation_reviews', 'store_id'],
+            ['financial_reports', 'store_id'],
+            ['financial_recurring_expenses', 'store_id'],
+            ['payroll_reports', 'store_id'],
+            ['noticeboard_cards', 'store_id'],
+            ['gift_vouchers', 'redeemed_store_id'],
+            ['gift_voucher_events', 'store_id'],
+            ['bank_statements', 'store_id'],
+            ['shift_requests', 'store_id'],
+            ['shift_request_month_locks', 'store_id'],
+            ['shift_share_links', 'store_id'],
+            ['assistant_action_audits', 'store_id'],
+        ];
+
+        foreach ($references as [$table, $column]) {
+            if (DB::table($table)->where($column, $storeId)->exists()) {
+                return true;
+            }
+        }
+
+        if ($this->storeHasChecklistHistory($storeId)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Ignore untouched generated checklist scaffolding while preserving real checklist history.
+     */
+    private function storeHasChecklistHistory(int $storeId): bool
+    {
+        if (DB::table('checklist_days')
+            ->where('store_id', $storeId)
+            ->where(static function (QueryBuilder $query): void {
+                $query->whereDate('date', '<', CarbonImmutable::now(ChecklistService::TIMEZONE)->toDateString())
+                    ->orWhereNotNull('excused_at');
+            })
+            ->exists()
+        ) {
+            return true;
+        }
+
+        if (DB::table('checklist_items')
+            ->join('checklist_days', 'checklist_days.id', '=', 'checklist_items.checklist_day_id')
+            ->where('checklist_days.store_id', $storeId)
+            ->whereNotNull('checklist_items.completed_at')
+            ->exists()
+        ) {
+            return true;
+        }
+
+        if (DB::table('checklist_events')
+            ->join('checklist_days', 'checklist_days.id', '=', 'checklist_events.checklist_day_id')
+            ->where('checklist_days.store_id', $storeId)
+            ->exists()
+        ) {
+            return true;
+        }
+
+        $actual = DB::table('checklist_template_tasks')
+            ->where('store_id', $storeId)
+            ->orderBy('scope')
+            ->orderBy('weekday')
+            ->orderBy('shift')
+            ->orderBy('position')
+            ->get(['scope', 'weekday', 'shift', 'text', 'position'])
+            ->map(static fn(object $task): array => [
+                'scope' => Typer::assertString($task->scope),
+                'weekday' => Typer::parseNullableInt($task->weekday),
+                'shift' => Typer::assertString($task->shift),
+                'text' => Typer::assertString($task->text),
+                'position' => Typer::parseInt($task->position),
+            ])
+            ->all();
+        $expected = ChecklistDefaultTemplate::tasks();
+        $sort = static fn(array $left, array $right): int => \json_encode($left, \JSON_THROW_ON_ERROR) <=> \json_encode($right, \JSON_THROW_ON_ERROR);
+        \usort($actual, $sort);
+        \usort($expected, $sort);
+
+        return $actual !== [] && $actual !== $expected;
     }
 }

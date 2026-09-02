@@ -5,6 +5,12 @@ declare(strict_types=1);
 use Thinkycz\LaravelCore\Support\Env;
 
 $env = Env::inject();
+$allowedOrigins = [$env->mustParseString('APP_URL')];
+$optionalOrigin = $env->parseNullableString('CORS_ALLOWED_ORIGIN');
+
+if ($optionalOrigin !== null && $optionalOrigin !== '') {
+    $allowedOrigins[] = $optionalOrigin;
+}
 
 return [
     /*
@@ -20,14 +26,11 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
-        $env->mustParseString('APP_URL'),
-        $env->parseNullableString('CORS_ALLOWED_ORIGIN'),
-    ],
+    'allowed_origins' => $allowedOrigins,
 
     'allowed_origins_patterns' => [],
 

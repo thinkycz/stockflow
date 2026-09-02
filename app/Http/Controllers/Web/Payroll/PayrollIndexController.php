@@ -36,12 +36,12 @@ class PayrollIndexController
             $year = $now->year;
             $month = $now->month;
         }
-        $store = ActiveStoreResolver::resolve($request, $admin);
+        $store = ActiveStoreResolver::resolveIncludingInactive($request, $admin);
         $payrollReport = $store instanceof Store && !$store->isWarehouse()
             ? (new PayrollReportService())->build($admin, $store, $year, $month)
             : null;
         $availableWorkers = [];
-        if ($payrollReport !== null && ($payrollReport['status'] ?? null) === 'open') {
+        if ($store?->isActive() === true && $payrollReport !== null && ($payrollReport['status'] ?? null) === 'open') {
             $workerIds = [];
             foreach (Typer::assertArray($payrollReport['payslips'] ?? null) as $value) {
                 $payslip = Typer::assertStringKeyArray(Typer::assertArray($value));
@@ -49,6 +49,7 @@ class PayrollIndexController
             }
             $workerQuery = Worker::query();
             Worker::scopeForUser($workerQuery, $admin);
+            Worker::scopeActive($workerQuery);
             Worker::querySelect($workerQuery);
             $availableWorkers = $workerQuery
                 ->whereNotIn('id', $workerIds)
@@ -68,6 +69,7 @@ class PayrollIndexController
                 'id' => $store->getKey(),
                 'name' => $store->getName(),
                 'is_warehouse' => $store->isWarehouse(),
+                'is_active' => $store->isActive(),
             ] : null,
             'filters' => ['year' => $year, 'month' => $month],
             'payroll_report' => $payrollReport,

@@ -15,16 +15,22 @@ reporty předpokládají jediného vlastníka dat.
 - Veřejný endpoint `POST /api/v1/auth/register` neexistuje.
 - Deployment má právě jednoho hlavního administrátora. Ten nemá rodiče ani
   přiřazenou pobočku; omezený účet má hlavního administrátora i pobočku.
-- `UserSeeder` je idempotentní ve všech prostředích. V prázdné databázi založí
-  `test@test.com / password` a sklad, při jednom adminovi nic nemění a při více
-  adminech bezpečně selže.
+- Demo seedery smějí běžet pouze v prostředích `local` a `testing`. Deployment
+  prostředí `development`, `staging` a `production` seedery nespouštějí.
+- V prázdné databázi se hlavní administrátor a sklad vytvoří příkazem
+  `php artisan stockflow:admin:bootstrap <email>`. Heslo a potvrzení se zadávají
+  skrytě, nejsou součástí argumentů procesu. Stejný příkaz je idempotentní;
+  přepínač `--rotate` heslo výslovně změní a zneplatní existující tokeny.
+- Příkaz odmítne více administrátorů, osiřelé kořenové účty i jiný existující
+  e-mail. `stockflow:identity:diagnose` je povinná produkční kontrola po migraci.
 - Osiřelé kořenové účty se před zpřísněním invariantů převedou příkazem
   `php artisan stockflow:migrate-single-company --dry-run` a teprve po kontrole
   ostrým spuštěním.
 - Číslování skladových dokladů je firemní podle `(type, year)`.
 
-## Přijaté riziko
+## Nahrazené riziko
 
-Známé bootstrap údaje jsou vědomě přijaté provozní riziko. Aplikace nevynucuje
-změnu hesla; provozovatel musí přístup k novému deploymentu omezit a heslo
-změnit běžnou správou účtu.
+Původně přijaté známé údaje `test@test.com / password` již nejsou v nasazeném
+prostředí povolené. Stávající instalace musí heslo změnit příkazem
+`php artisan stockflow:admin:bootstrap test@test.com --rotate`; produkční kontrola
+do té doby selže.

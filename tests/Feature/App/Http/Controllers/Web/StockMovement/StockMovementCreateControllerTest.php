@@ -489,6 +489,27 @@ use Database\Factories\UserFactory;
             ->value('quantity'))->toBe(6.5);
 });
 
+\test('limited user stock movement preload exposes only assigned store availability', function (): void {
+    [$admin, $warehouse] = \createIsolatedUserWithWarehouse();
+    $assignedStore = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $otherStore = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $limited = UserFactory::new()->limited($assignedStore)->createOne();
+    $item = Item::factory()->create(['user_id' => $admin->getKey(), 'purchase_price' => '99.50']);
+    StoreItem::factory()->create(['store_id' => $warehouse->getKey(), 'item_id' => $item->getKey(), 'quantity' => 11]);
+    StoreItem::factory()->create(['store_id' => $assignedStore->getKey(), 'item_id' => $item->getKey(), 'quantity' => 7]);
+    StoreItem::factory()->create(['store_id' => $otherStore->getKey(), 'item_id' => $item->getKey(), 'quantity' => 33]);
+
+    $this->be($limited, 'users')
+        ->get(\route('stock-movements.create', ['mode' => 'consumption', 'item_id' => $item->getKey()]))
+        ->assertOk()
+        ->assertInertia(static fn($page) => $page
+            ->where('items.0.id', $item->getKey())
+            ->where('items.0.available_quantity', 7)
+            ->missing('items.0.purchase_price')
+            ->missing('items.0.warehouse_quantity')
+            ->missing('items.0.quantities_by_store'));
+});
+
 \test('limited user cannot record incoming stock at another store', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
     $assignedStore = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);

@@ -53,7 +53,7 @@ class StoreSwitchController
 
         $store = Store::query()->whereKey($storeId)->first();
 
-        if (!$store instanceof Store || $store->getUserId() !== $user->getKey()) {
+        if (!$store instanceof Store || $store->getUserId() !== $user->getKey() || !$store->isActive()) {
             Inertia::flash('error', \__('Selected store is not available.'));
 
             return Resolver::resolveRedirector()->back();

@@ -50,6 +50,18 @@ describe('payroll ui contract', () => {
         expect(source).toContain('payslip.can_remove');
         expect(source).not.toContain('<Card :padded="false"');
         expect(source).not.toContain('variant="nested"');
+        expect(source).toContain('active_store.is_active &&');
+        expect(source).toContain('store_id: props.active_store.id');
+    });
+
+    test('inactive overview reports are read only and keep exact store context', () => {
+        const source = readFileSync(
+            resolve(resourcesRoot, 'pages/payroll/Index.vue'),
+            'utf8',
+        );
+
+        expect(source).toContain('active_store?.is_active &&');
+        expect(source).toContain('store_id: props.active_store?.id ?? null');
     });
 
     test('the print menu exposes one accessible trigger and two menu items', () => {

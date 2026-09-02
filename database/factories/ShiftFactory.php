@@ -22,7 +22,7 @@ class ShiftFactory extends Factory
     public function definition(): array
     {
         $hour = $this->faker->numberBetween(8, 18);
-        $user = UserFactory::new()->createOne();
+        $user = UserFactory::new()->admin()->createOne();
         $worker = Worker::factory()->createOne(['user_id' => $user->getKey()]);
 
         return [

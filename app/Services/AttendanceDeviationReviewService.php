@@ -54,6 +54,10 @@ class AttendanceDeviationReviewService
             $expectedStartTime,
             $expectedEndTime,
         ): AttendanceDeviationReview {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
             $lockedShift = Shift::query()->whereKey($shift->getKey())->lockForUpdate()->firstOrFail();
             $this->authorize($actor, $store, $lockedShift);
             $sessions = $this->lockedSessions($actor, $store, $lockedShift);
@@ -197,6 +201,7 @@ class AttendanceDeviationReviewService
     {
         if (
             !$actor->isAdmin() ||
+            !$store->isActive() ||
             $store->isWarehouse() ||
             $store->getUserId() !== $actor->getKey() ||
             $shift->getUserId() !== $actor->getKey() ||

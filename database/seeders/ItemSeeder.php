@@ -6,15 +6,20 @@ namespace Database\Seeders;
 
 use App\Models\Item;
 use App\Models\User;
+use Database\Seeders\Concerns\OnlyRunsInDemoEnvironment;
 use Illuminate\Database\Seeder;
 
 class ItemSeeder extends Seeder
 {
+    use OnlyRunsInDemoEnvironment;
+
     /**
      * Seed the application's items.
      */
     public function run(): void
     {
+        $this->ensureDemoEnvironment();
+
         $user = User::query()->first();
 
         if (!$user instanceof User) {

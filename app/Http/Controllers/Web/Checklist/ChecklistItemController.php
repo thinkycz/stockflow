@@ -41,7 +41,9 @@ class ChecklistItemController
             'lock_version' => $validity->lockVersion()->required()->toArray(),
         ]);
         $workerId = $validated->assertNullableInt('worker_id');
-        $worker = $workerId === null ? null : Worker::query()->where('user_id', $actor->resolveScopeUser()->getKey())->whereKey($workerId)->firstOrFail();
+        $workerQuery = Worker::query()->where('user_id', $actor->resolveScopeUser()->getKey());
+        Worker::scopeActive($workerQuery);
+        $worker = $workerId === null ? null : $workerQuery->whereKey($workerId)->firstOrFail();
         try {
             (new ChecklistService())->updateItem($checklistItem, $store, $actor, $worker, $validated->parseBool('completed'), $validated->parseInt('lock_version'));
         } catch (RuntimeException) {

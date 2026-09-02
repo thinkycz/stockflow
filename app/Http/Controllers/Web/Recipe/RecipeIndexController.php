@@ -54,7 +54,9 @@ class RecipeIndexController
         $workers = [];
         $testableRecipeCount = 0;
         if (!$actor->isAdmin()) {
-            $workers = Worker::query()->where('user_id', $owner->getKey())->orderBy('first_name')->orderBy('last_name')->get()
+            $workerQuery = Worker::query()->where('user_id', $owner->getKey());
+            Worker::scopeActive($workerQuery);
+            $workers = $workerQuery->orderBy('first_name')->orderBy('last_name')->get()
                 ->map(static fn(Worker $worker): array => ['id' => $worker->getKey(), 'name' => $worker->getFullName()])->all();
             $testableRecipeCount = Recipe::query()->where('user_id', $owner->getKey())->whereNull('archived_at')
                 ->whereHas('variants', static fn(Builder $query): Builder => $query->has('instructions', '>=', 2))->count();

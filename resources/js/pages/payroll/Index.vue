@@ -25,7 +25,12 @@ import { formatMoney } from '@/lib/format';
 import type { PayrollReport } from '@/types/payroll';
 
 const props = defineProps<{
-    active_store: { id: number; name: string; is_warehouse: boolean } | null;
+    active_store: {
+        id: number;
+        name: string;
+        is_warehouse: boolean;
+        is_active: boolean;
+    } | null;
     filters: { year: number; month: number };
     payroll_report: PayrollReport | null;
     available_workers: { id: number; title: string }[];
@@ -38,11 +43,13 @@ const lifecycleProcessing = ref(false);
 const workerModalOpen = ref(false);
 const tipModalOpen = ref(false);
 const workerForm = useForm({
+    store_id: props.active_store?.id ?? null,
     year: props.filters.year,
     month: props.filters.month,
     worker_id: null as number | null,
 });
 const tipForm = useForm({
+    store_id: props.active_store?.id ?? null,
     year: props.filters.year,
     month: props.filters.month,
     amount: '',
@@ -154,7 +161,11 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
     lifecycleProcessing.value = true;
     router.post(
         route(`payroll.${action}`),
-        { year: props.filters.year, month: props.filters.month },
+        {
+            store_id: props.active_store?.id ?? null,
+            year: props.filters.year,
+            month: props.filters.month,
+        },
         withActionErrorToast({
             onFinish: () => (lifecycleProcessing.value = false),
         }),
@@ -175,7 +186,10 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
             >
                 <template #context>
                     <div class="mt-2 flex flex-wrap items-center gap-3">
-                        <StoreContextIndicator class="mt-0" />
+                        <StoreContextIndicator
+                            :store="active_store"
+                            class="mt-0"
+                        />
                         <Badge
                             v-if="payroll_report"
                             :variant="
@@ -219,7 +233,10 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                             "
                         />
                         <Button
-                            v-if="payroll_report?.status === 'open'"
+                            v-if="
+                                active_store?.is_active &&
+                                payroll_report?.status === 'open'
+                            "
                             variant="secondary"
                             @click="openTipModal"
                         >
@@ -229,6 +246,7 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                         </Button>
                         <Button
                             v-if="
+                                active_store?.is_active &&
                                 payroll_report?.status === 'open' &&
                                 available_workers.length > 0
                             "
@@ -238,7 +256,10 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                             <Plus :size="15" />{{ t('payroll.add_worker') }}
                         </Button>
                         <Button
-                            v-if="payroll_report?.status === 'open'"
+                            v-if="
+                                active_store?.is_active &&
+                                payroll_report?.status === 'open'
+                            "
                             variant="warning"
                             :disabled="lifecycleProcessing"
                             @click="lifecycle('close')"
@@ -246,7 +267,9 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                             <LockKeyhole :size="15" />{{ t('payroll.close') }}
                         </Button>
                         <Button
-                            v-else-if="payroll_report"
+                            v-else-if="
+                                active_store?.is_active && payroll_report
+                            "
                             variant="secondary"
                             :disabled="lifecycleProcessing"
                             @click="lifecycle('reopen')"

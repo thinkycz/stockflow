@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\Concerns\ResolvesPayrollReportContext;
 use App\Http\Validation\PayrollReportValidity;
 use App\Models\User;
 use App\Services\PayrollReportService;
+use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -35,7 +36,7 @@ class PayrollTipDistributionController
             $store,
             $payload->parseInt('year'),
             $payload->parseInt('month'),
-            $payload->parseFloat('amount'),
+            Money::input($request->input('amount')),
         );
         Inertia::flash('success', \__('Tips distributed proportionally.'));
 

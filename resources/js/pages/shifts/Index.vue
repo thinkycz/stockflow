@@ -49,6 +49,7 @@ type Worker = {
     last_name: string;
     color: string;
     attendance_rating_enabled: boolean;
+    archived: boolean;
 };
 
 type Shift = {
@@ -460,10 +461,12 @@ for (let h = 0; h < 24; h++) {
 }
 
 const workerOptions = computed(() =>
-    props.workers.map((worker) => ({
-        value: String(worker.id),
-        label: `${worker.first_name} ${worker.last_name}`,
-    })),
+    props.workers
+        .filter((worker) => !worker.archived)
+        .map((worker) => ({
+            value: String(worker.id),
+            label: `${worker.first_name} ${worker.last_name}`,
+        })),
 );
 const presetOptions = computed(() =>
     (props.shift_presets ?? []).map((preset) => ({
@@ -502,8 +505,7 @@ function openDayModal(date: string): void {
     form.start_time = '09:00';
     form.end_time = '16:00';
     form.allow_overlap = false;
-    form.worker_id =
-        props.workers.length > 0 ? String(props.workers[0].id) : '';
+    form.worker_id = workerOptions.value[0]?.value ?? '';
     modalOpen.value = true;
 }
 
@@ -532,8 +534,7 @@ function cancelEdit(): void {
     editingShiftId.value = null;
     editingRequestId.value = null;
     requestApprovalForm.reset();
-    form.worker_id =
-        props.workers.length > 0 ? String(props.workers[0].id) : '';
+    form.worker_id = workerOptions.value[0]?.value ?? '';
     form.date = modalDate.value;
     form.start_time = '09:00';
     form.end_time = '16:00';
@@ -664,10 +665,7 @@ function submitShift(): void {
                     form.start_time = '09:00';
                     form.end_time = '16:00';
                     form.allow_overlap = false;
-                    form.worker_id =
-                        props.workers.length > 0
-                            ? String(props.workers[0].id)
-                            : '';
+                    form.worker_id = workerOptions.value[0]?.value ?? '';
                 },
             },
         );
@@ -688,10 +686,7 @@ function submitShift(): void {
                     form.start_time = nextShiftStart;
                     form.end_time = '21:00';
                     form.allow_overlap = false;
-                    form.worker_id =
-                        props.workers.length > 0
-                            ? String(props.workers[0].id)
-                            : '';
+                    form.worker_id = workerOptions.value[0]?.value ?? '';
                 },
             },
         );

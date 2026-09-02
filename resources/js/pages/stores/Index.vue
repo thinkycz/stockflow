@@ -239,6 +239,7 @@ async function destroyStore(store: StoreRow): Promise<void> {
                                         </Button>
                                     </Link>
                                     <Button
+                                        v-if="!store.is_warehouse"
                                         variant="ghost"
                                         type="button"
                                         :aria-label="t('common.delete')"

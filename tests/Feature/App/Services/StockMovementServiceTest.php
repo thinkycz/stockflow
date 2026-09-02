@@ -159,7 +159,7 @@ use Thinkycz\LaravelCore\Support\Config;
     \expect($movement->getNumber())->toStartWith('CON-');
     \expect($row->getClassification()?->value)->toBe('consumption');
     \expect($row->getQuantityDifference())->toBe(-3);
-    \expect(StoreItem::query()->where('store_id', $store->getKey())->where('item_id', $item->getKey())->value('quantity'))->toBe(7);
+    \expect((float) StoreItem::query()->where('store_id', $store->getKey())->where('item_id', $item->getKey())->value('quantity'))->toBe(7.0);
 });
 
 \test('outgoing movement fails when source has insufficient stock', function (): void {

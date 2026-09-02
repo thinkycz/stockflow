@@ -83,3 +83,17 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     static::assertNotEmpty($broker::INVALID_TOKEN);
 });
+
+\test('a reset token is consumed exactly once', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->createOne(['password' => 'old-password']), User::class);
+    $token = Resolver::resolvePasswordBroker('users')->createToken($user);
+    $payload = ['email' => $user->getEmail(), 'password' => 'first-password', 'token' => $token];
+
+    $this->post('/reset-password', $payload)->assertRedirect('/dashboard');
+    Resolver::resolveDatabaseTokenGuard('users')->logout();
+    $this->post('/reset-password', [...$payload, 'password' => 'second-password'])
+        ->assertUnprocessable();
+
+    \expect(Hash::check('first-password', $user->refresh()->getAuthPassword()))->toBeTrue()
+        ->and(Hash::check('second-password', $user->getAuthPassword()))->toBeFalse();
+});

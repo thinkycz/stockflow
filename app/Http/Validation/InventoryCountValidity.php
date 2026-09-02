@@ -34,11 +34,16 @@ class InventoryCountValidity
     }
 
     /**
-     * Store id validation rules (any owned store).
+     * Store id validation rules (an active owned store).
      */
     public function storeId(): Validity
     {
-        return $this->baseValidity->id()->exists('stores', 'id', ['user_id', (string) $this->userId]);
+        return $this->baseValidity->id()->exists('stores', 'id', [
+            'user_id',
+            (string) $this->userId,
+            'status',
+            'active',
+        ]);
     }
 
     /**

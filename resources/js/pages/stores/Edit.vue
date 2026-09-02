@@ -97,6 +97,7 @@ function submit(): void {
                         <Select
                             id="status"
                             v-model="form.status"
+                            :disabled="store.is_warehouse"
                             :options="[
                                 {
                                     value: 'active',
@@ -149,6 +150,7 @@ function submit(): void {
                         <Checkbox
                             id="is_warehouse"
                             v-model="form.is_warehouse"
+                            disabled
                         />
                         <Label for="is_warehouse">{{
                             t('stores.columns.is_warehouse')

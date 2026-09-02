@@ -48,14 +48,14 @@ use Illuminate\Support\Carbon;
 });
 
 \test('inventory count index excludes foreign stores from the list', function (): void {
-    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+    [$user] = \createIsolatedUserWithWarehouse();
     [$other] = \createIsolatedUserWithWarehouse();
     $foreignStore = Store::factory()->create(['user_id' => $other->getKey()]);
 
     $response = $this->be($user, 'users')
         ->get('/inventory-counts?store_id=' . $foreignStore->getKey(), $this->inertiaHeaders());
 
-    // The resolver rejects the foreign store id and falls back to the
-    // user's first owned retail store (the warehouse).
-    \expect($response->json('props.store.id'))->toBe($warehouse->getKey());
+    // An explicit foreign store id is rejected without silently selecting
+    // another store on the user's behalf.
+    \expect($response->json('props.store'))->toBeNull();
 });

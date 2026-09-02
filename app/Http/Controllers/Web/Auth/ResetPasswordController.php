@@ -6,10 +6,9 @@ namespace App\Http\Controllers\Web\Auth;
 
 use App\Http\Controllers\Web\Concerns\ThrottlesWebRequests;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
+use App\Services\PasswordResetService;
 use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -50,33 +49,21 @@ class ResetPasswordController
 
         $this->hit($this->limit());
 
-        $user = Typer::assertNullableInstance(Resolver::resolveEloquentUserProvider('users')->retrieveByCredentials([
-            'email' => $validated->assertString('email'),
-        ]), BaseUser::class);
-
-        if ($user instanceof BaseUser === false) {
+        $result = (new PasswordResetService())->reset(
+            'users',
+            'users',
+            $validated->assertString('email'),
+            $validated->assertString('token'),
+            $validated->assertString('password'),
+        );
+        if ($result === PasswordBroker::INVALID_USER) {
             Thrower::default()->message('email', Typer::assertString(\__(PasswordBroker::INVALID_USER)))->throw();
         }
-
-        $broker = Resolver::resolvePasswordBroker('users');
-
-        if (!$broker->tokenExists($user, $validated->assertString('token'))) {
+        if ($result === PasswordBroker::INVALID_TOKEN) {
             Thrower::default()->message('token', Typer::assertString(\__(PasswordBroker::INVALID_TOKEN)))->throw();
         }
 
-        DB::transaction(function () use ($user, $validated, $broker): void {
-            $user->update([
-                'password' => $validated->assertString('password'),
-            ]);
-
-            if ($user->getRememberToken() !== '') {
-                Resolver::resolveEloquentUserProvider('users')->updateRememberToken($user, Str::random(60));
-            }
-
-            $user->databaseTokens()->getQuery()->delete();
-            $broker->deleteToken($user);
-        });
-
+        $user = Typer::assertInstance($result, BaseUser::class);
         Resolver::resolveDatabaseTokenGuard('users')->login($user);
 
         return Resolver::resolveRedirector()->route('dashboard');

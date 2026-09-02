@@ -22,7 +22,12 @@ import { formatMoney } from '@/lib/format';
 import type { PayrollAdjustment, Payslip } from '@/types/payroll';
 
 const props = defineProps<{
-    active_store: { id: number; name: string; is_warehouse: boolean };
+    active_store: {
+        id: number;
+        name: string;
+        is_warehouse: boolean;
+        is_active: boolean;
+    };
     filters: { year: number; month: number };
     report: {
         id: number | null;
@@ -40,6 +45,7 @@ const adjustmentModalOpen = ref(false);
 const wageModalOpen = ref(false);
 const editingAdjustment = ref<PayrollAdjustment | null>(null);
 const adjustmentForm = useForm({
+    store_id: props.active_store.id,
     year: props.filters.year,
     month: props.filters.month,
     worker_id: props.payslip.worker_id,
@@ -48,6 +54,7 @@ const adjustmentForm = useForm({
     reason: '',
 });
 const wageForm = useForm({
+    store_id: props.active_store.id,
     year: props.filters.year,
     month: props.filters.month,
     worker_id: props.payslip.worker_id,
@@ -124,7 +131,11 @@ async function deleteAdjustment(adjustment: PayrollAdjustment): Promise<void> {
     router.delete(
         route('payroll.adjustments.destroy', adjustment.id),
         withActionErrorToast({
-            data: { year: props.filters.year, month: props.filters.month },
+            data: {
+                store_id: props.active_store.id,
+                year: props.filters.year,
+                month: props.filters.month,
+            },
             preserveScroll: true,
         }),
     );
@@ -159,6 +170,7 @@ async function resetWageOverride(): Promise<void> {
         route('payroll.wage-override.destroy'),
         withActionErrorToast({
             data: {
+                store_id: props.active_store.id,
                 year: props.filters.year,
                 month: props.filters.month,
                 worker_id: props.payslip.worker_id,
@@ -187,6 +199,7 @@ async function removeWorker(): Promise<void> {
         }),
         withActionErrorToast({
             data: {
+                store_id: props.active_store.id,
                 year: props.filters.year,
                 month: props.filters.month,
             },
@@ -254,20 +267,28 @@ async function removeWorker(): Promise<void> {
                         "
                     />
                     <Button
-                        v-if="report.status === 'open'"
+                        v-if="
+                            active_store.is_active && report.status === 'open'
+                        "
                         variant="secondary"
                         @click="openWageOverride"
                     >
                         <Pencil :size="15" />{{ t('payroll.edit_wage') }}
                     </Button>
                     <Button
-                        v-if="report.status === 'open'"
+                        v-if="
+                            active_store.is_active && report.status === 'open'
+                        "
                         @click="openAdjustment()"
                     >
                         <Plus :size="15" />{{ t('payroll.add_adjustment') }}
                     </Button>
                     <Button
-                        v-if="report.status === 'open' && payslip.can_remove"
+                        v-if="
+                            active_store.is_active &&
+                            report.status === 'open' &&
+                            payslip.can_remove
+                        "
                         variant="danger"
                         @click="removeWorker"
                     >
@@ -433,7 +454,9 @@ async function removeWorker(): Promise<void> {
                         {{ t('payroll.adjustments') }}
                     </h2>
                     <Button
-                        v-if="report.status === 'open'"
+                        v-if="
+                            active_store.is_active && report.status === 'open'
+                        "
                         variant="secondary"
                         size="compact"
                         @click="openAdjustment()"
@@ -450,7 +473,10 @@ async function removeWorker(): Promise<void> {
                                 {{ t('payroll.amount') }}
                             </th>
                             <th
-                                v-if="report.status === 'open'"
+                                v-if="
+                                    active_store.is_active &&
+                                    report.status === 'open'
+                                "
                                 class="text-right"
                             >
                                 {{ t('common.actions') }}
@@ -474,7 +500,10 @@ async function removeWorker(): Promise<void> {
                                 {{ formatMoney(adjustment.amount) }}
                             </td>
                             <td
-                                v-if="report.status === 'open'"
+                                v-if="
+                                    active_store.is_active &&
+                                    report.status === 'open'
+                                "
                                 class="text-right"
                             >
                                 <div class="flex justify-end gap-1">

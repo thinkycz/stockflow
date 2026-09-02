@@ -68,6 +68,7 @@
   details; it is hidden on Management and Settings pages and when no active
   store exists.
 - Minimal API compatibility:
+    - `GET /api/v1/csrf-cookie`
     - `/api/v1/auth/*`
     - `/api/v1/me/*`
     - `/api/v1/password/*`
@@ -78,12 +79,21 @@
 - Default guard: `users`.
 - Guard driver: `database_token`.
 - Login issues an HTTP-only bearer cookie through `Thinkycz\LaravelCore\Guards\DatabaseTokenGuard`.
+- Unsafe API requests using that cookie require a matching double-submit
+  `XSRF-TOKEN` cookie and `X-XSRF-TOKEN` header. Requests authenticated with an
+  `Authorization: Bearer` header are unchanged.
+- Forgot-password requests always return the same public result. Existing users
+  receive an expiring reset link; requesting a link never changes a password or
+  revokes a current database token. Tokens are revoked only after a successful reset.
 - Inertia pages receive the current user through `HandleInertiaRequests` shared props
   (`auth.user.is_admin`, `auth.user.assigned_store_id`).
 - Web form submissions use Laravel redirects, validation errors, and flash messages.
-- Registration has been removed. The single main admin account (`test@test.com`)
-  is seeded by `UserSeeder` and provisions additional limited accounts from the
-  `/users` section. Limited users are pinned to exactly one store
+- Registration has been removed. After migration, the single main admin is
+  created with `php artisan stockflow:admin:bootstrap <email>` and a password
+  entered through hidden prompts. `php artisan stockflow:identity:diagnose`
+  verifies the one-admin invariant, initial warehouse, absence of orphan root
+  users, and removal of the demo credential. Limited users are provisioned from
+  the `/users` section and pinned to exactly one store
   (`assigned_store_id`). The admin can independently disable Příjem zboží,
   Výdej / spotřeba, Výkazy, Inventura, Směny, Docházka, Checklisty, Recepty, and
   Dárkové poukazy while Noticeboard remains available. Disabled sections are
@@ -140,19 +150,29 @@
 | ------------------------------------------------- | ------------------------ |
 | `{app_name}_{env}_database_token_users`           | local bearer token       |
 | `__Host-{app_name}_{env}_database_token_users`    | non-local bearer token   |
+| `XSRF-TOKEN`                                      | readable API CSRF token  |
 | `{app_name}_{env}_session` / `__Host-..._session` | Laravel session/CSRF use |
 
 ## Tooling
 
-| command              | description                         |
-| -------------------- | ----------------------------------- |
-| `composer run dev`   | Laravel server, queue, logs, Vite   |
-| `npm run dev`        | Vite development server             |
-| `npm run type-check` | Vue TypeScript check                |
-| `npm run build`      | production frontend build           |
-| `composer test`      | Laravel test suite                  |
-| `make fix`           | Prettier and Pint formatting        |
-| `make check`         | static analysis, lint, audit, tests |
+| command                             | description                                 |
+| ----------------------------------- | ------------------------------------------- |
+| `composer run dev`                  | Laravel server, queue, logs, Vite           |
+| `npm run dev`                       | Vite development server                     |
+| `npm run type-check`                | Vue TypeScript check                        |
+| `npm run build`                     | production frontend build                   |
+| `composer test`                     | Laravel test suite                          |
+| `make fix`                          | Prettier and Pint formatting                |
+| `make check`                        | static analysis, audits, build, tests, e2e  |
+| `stockflow:admin:bootstrap <email>` | provision/rotate the main admin             |
+| `stockflow:identity:diagnose`       | verify production identity readiness        |
+| `stockflow:assistant:diagnose`      | verify assistant config and queue heartbeat |
+
+Production runs the assistant workload on its own one-attempt worker. Supervisor
+can invoke `provision/supervisor/assistant.sh`; its defaults select the
+`assistant` connection and queue with a 150-second timeout. Keep the scheduler
+running so the heartbeat and stale bank-import maintenance jobs stay current,
+then require both identity and assistant diagnostics before release.
 
 ## Env
 

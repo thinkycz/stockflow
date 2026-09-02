@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\Auth\CsrfCookieShowController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\EmailVerification\EmailVerificationResendController;
@@ -14,6 +15,10 @@ use App\Http\Controllers\Api\Password\PasswordResetController;
 use App\Http\Controllers\Api\Password\PasswordUpdateController;
 use Illuminate\Routing\Router;
 use Thinkycz\LaravelCore\Support\Resolver;
+
+Resolver::resolveRouteRegistrar()
+    ->get('v1/csrf-cookie', CsrfCookieShowController::class)
+    ->name('v1.csrf-cookie');
 
 Resolver::resolveRouteRegistrar()
     ->prefix('v1/me')

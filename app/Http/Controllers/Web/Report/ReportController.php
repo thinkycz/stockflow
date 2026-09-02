@@ -34,7 +34,7 @@ class ReportController
         $start = $now->copy()->setDate($year, $month, 1)->startOfMonth();
         $end = $start->copy()->endOfMonth();
         $cutoff = $end->isFuture() ? $now : $end;
-        $activeStore = ActiveStoreResolver::resolve($request, $user);
+        $activeStore = ActiveStoreResolver::resolveIncludingInactive($request, $user);
         $statementService = Resolver::resolve(StatementService::class);
         $inventoryService = Resolver::resolve(InventoryReportService::class);
         $financialReport = $statementService->buildReport($user, $activeStore?->getKey(), $year, $month);

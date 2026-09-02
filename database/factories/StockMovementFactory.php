@@ -25,7 +25,7 @@ class StockMovementFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => static fn(): int => UserFactory::new()->createOne()->getKey(),
+            'user_id' => static fn(): int => UserFactory::new()->admin()->createOne()->getKey(),
             'number' => 'IN-' . Carbon::now()->year . '-' . \mb_str_pad((string) $this->faker->unique()->numberBetween(1, 9999), 4, '0', \STR_PAD_LEFT),
             'type' => StockMovementTypeEnum::INCOMING->value,
             'origin' => StockMovementOriginEnum::MANUAL->value,

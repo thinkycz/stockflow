@@ -10,6 +10,9 @@ use App\Models\User;
 use App\Models\Worker;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
+use Thinkycz\LaravelCore\Support\Thrower;
+use Thinkycz\LaravelCore\Support\Typer;
 
 class ShiftAssignmentService
 {
@@ -73,15 +76,38 @@ class ShiftAssignmentService
         string $startTime,
         string $endTime,
     ): Shift {
-        return Shift::query()->create([
-            'user_id' => $user->getKey(),
-            'store_id' => $store->getKey(),
-            'worker_id' => $worker->getKey(),
-            'date' => $date,
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-            'hourly_rate' => $worker->getHourlyRate(),
-        ]);
+        return DB::transaction(function () use ($user, $store, $worker, $date, $startTime, $endTime): Shift {
+            $lockedStore = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            $lockedWorker = Typer::assertInstance(
+                Worker::query()->whereKey($worker->getKey())->lockForUpdate()->firstOrFail(),
+                Worker::class,
+            );
+
+            if ($lockedWorker->getUserId() !== $user->getKey() ||
+                $lockedStore->getUserId() !== $user->getKey() ||
+                !$lockedStore->isActive() ||
+                $lockedStore->isWarehouse()
+            ) {
+                \abort(404);
+            }
+
+            if ($lockedWorker->isArchived()) {
+                Thrower::default()->message('worker_id', \__('Archived workers cannot receive new work.'))->throw();
+            }
+
+            return Shift::query()->create([
+                'user_id' => $user->getKey(),
+                'store_id' => $lockedStore->getKey(),
+                'worker_id' => $lockedWorker->getKey(),
+                'date' => $date,
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+                'hourly_rate' => $lockedWorker->getHourlyRate(),
+            ]);
+        });
     }
 
     /**

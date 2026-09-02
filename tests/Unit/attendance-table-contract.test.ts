@@ -6,6 +6,14 @@ const source = readFileSync(
     resolve(process.cwd(), 'resources/js/pages/attendance/Index.vue'),
     'utf8',
 );
+const reportSource = readFileSync(
+    resolve(process.cwd(), 'resources/js/pages/attendance/Report.vue'),
+    'utf8',
+);
+const checklistSource = readFileSync(
+    resolve(process.cwd(), 'resources/js/pages/checklists/Index.vue'),
+    'utf8',
+);
 
 describe('attendance table contract', () => {
     test('keeps the DataTable standalone below a separate timer Card', () => {
@@ -40,5 +48,31 @@ describe('attendance table contract', () => {
             expect(source).toContain(action);
         }
         expect(source).toContain('row.quality.average_score');
+    });
+
+    test('inactive historical reports are read only and keep exact store context', () => {
+        expect(reportSource).toContain('store.is_active &&');
+        expect(reportSource).toContain('v-if="store.is_active"');
+        expect(reportSource).toContain('store_id: props.store?.id ?? null');
+    });
+
+    test('uses active workers for new corrections while retaining historical filter workers', () => {
+        expect(reportSource).toContain('active_workers: Worker[]');
+        expect(reportSource).toContain(
+            'const correctionWorkerOptions = computed',
+        );
+        expect(reportSource).toContain(
+            'const workers = [...props.active_workers]',
+        );
+        expect(reportSource).toContain(':options="correctionWorkerOptions"');
+    });
+
+    test('keeps inactive checklist history in exact store context and read only', () => {
+        expect(checklistSource).toContain('is_active: boolean');
+        expect(checklistSource).toContain('store_id: props.active_store?.id');
+        expect(checklistSource).toContain('v-if="active_store.is_active"');
+        expect(checklistSource).toContain(
+            'history_detail && active_store?.is_active',
+        );
     });
 });

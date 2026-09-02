@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Database\Seeders\RecipeCatalogSeeder;
+use App\Services\RecipeCatalogMigrationService;
 use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration {
@@ -11,6 +11,6 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        (new RecipeCatalogSeeder())->replaceAll();
+        (new RecipeCatalogMigrationService())->replace(true);
     }
 };

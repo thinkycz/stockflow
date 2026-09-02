@@ -146,3 +146,28 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $response->assertForbidden();
 });
+
+\test('user editing exposes and accepts only active retail stores', function (): void {
+    [$admin, $warehouse] = \createIsolatedUserWithWarehouse();
+    $active = Store::factory()->create(['user_id' => $admin->getKey(), 'name' => 'Active']);
+    $inactive = Store::factory()->inactive()->create(['user_id' => $admin->getKey(), 'name' => 'Inactive']);
+    $limited = Typer::assertInstance(UserFactory::new()->limited($active)->createOne(), User::class);
+
+    $this->actingAs($admin)
+        ->get(\route('users.edit', $limited), $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonCount(1, 'props.stores')
+        ->assertJsonPath('props.stores.0.id', $active->getKey());
+
+    foreach ([$warehouse, $inactive] as $store) {
+        $this->actingAs($admin)
+            ->put(\route('users.update', $limited), [
+                'email' => $limited->getEmail(),
+                'assigned_store_id' => $store->getKey(),
+                'enabled_sections' => LimitedUserSectionEnum::values(),
+            ])
+            ->assertNotFound();
+
+        \expect($limited->refresh()->getAssignedStoreId())->toBe($active->getKey());
+    }
+});

@@ -74,8 +74,13 @@ class ShiftShareLink extends BaseModel
         self::scopeForToken($query, $token);
         self::querySelect($query);
         $link = $query->with('store')->first();
+        if (!$link instanceof self) {
+            return null;
+        }
 
-        return $link instanceof self ? $link->getStore() : null;
+        $store = $link->getStore();
+
+        return $store->isActive() ? $store : null;
     }
 
     /**

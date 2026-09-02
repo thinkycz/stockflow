@@ -53,6 +53,9 @@ class StockMovementCreateController
         $storeQuantitiesByItem = [];
         $storeItemRows = StoreItem::query()
             ->select(['id', 'store_id', 'item_id', 'quantity'])
+            ->when(!$user->isAdmin(), static function (Builder $query) use ($user): void {
+                $query->where('store_id', $user->getAssignedStoreId() ?? 0);
+            })
             ->whereHas('store', static function (Builder $query) use ($owner): void {
                 $query->where('user_id', $owner->getKey());
             })
@@ -74,15 +77,25 @@ class StockMovementCreateController
 
             if ($defaultItem instanceof Item) {
                 $byStore = $storeQuantitiesByItem[$defaultItem->getKey()] ?? [];
-                $items = [[
+                $itemPayload = [
                     'id' => $defaultItem->getKey(),
                     'title' => $defaultItem->getTitle(),
                     'sku' => $defaultItem->getSku(),
                     'unit' => $defaultItem->getUnit(),
-                    'warehouse_quantity' => (float) ($byStore[(string) $defaultWarehouse->getKey()] ?? 0),
-                    'quantities_by_store' => $byStore,
-                    'purchase_price' => $defaultItem->getPurchasePrice(),
-                ]];
+                ];
+
+                if ($user->isAdmin()) {
+                    $itemPayload['warehouse_quantity'] = (float) ($byStore[(string) $defaultWarehouse->getKey()] ?? 0);
+                    $itemPayload['quantities_by_store'] = $byStore;
+                    $itemPayload['purchase_price'] = $defaultItem->getPurchasePrice();
+                } else {
+                    $assignedStoreId = $user->getAssignedStoreId();
+                    $itemPayload['available_quantity'] = $assignedStoreId === null
+                        ? 0
+                        : (float) ($byStore[(string) $assignedStoreId] ?? 0);
+                }
+
+                $items = [$itemPayload];
             }
         }
 

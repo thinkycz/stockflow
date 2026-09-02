@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Console\Commands\AdminBootstrapCommand;
 use App\Console\Commands\BackfillInventoryConsumptionCommand;
 use App\Console\Commands\DiagnoseAssistantCommand;
 use App\Console\Commands\GenerateDailyChecklistsCommand;
+use App\Console\Commands\IdentityReadinessCommand;
 use App\Console\Commands\PruneNoticeboardCardsCommand;
+use App\Http\Middleware\EnsureApiCookieCsrf;
 use App\Http\Middleware\EnsureLimitedUserCanAccessSection;
 use App\Http\Middleware\EnsureLimitedUserCanAccessStockMovementSection;
 use App\Http\Middleware\EnsureUserIsAdmin;
@@ -13,6 +16,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ResolveActiveStore;
 use App\Jobs\CreateDailyOperationalDigestJob;
 use App\Jobs\MaintainAssistantTurnsJob;
+use App\Jobs\MaintainBankStatementImportsJob;
 use App\Jobs\PruneAssistantActionAuditsJob;
 use App\Jobs\PruneOperationalDigestHistoryJob;
 use App\Jobs\RecordAssistantQueueHeartbeatJob;
@@ -69,6 +73,7 @@ return Application::configure(basePath: \dirname(__DIR__))
             SetRequestFormatMiddleware::class . ':json',
             ValidateAcceptHeaderMiddleware::class . ':application/vnd.api+json,application/json',
             ValidateContentTypeHeaderMiddleware::class . ':form,json',
+            EnsureApiCookieCsrf::class,
         ]);
     })
     ->withSingletons([
@@ -76,8 +81,10 @@ return Application::configure(basePath: \dirname(__DIR__))
     ])
     ->withCommands([
         BackfillInventoryConsumptionCommand::class,
+        AdminBootstrapCommand::class,
         DiagnoseAssistantCommand::class,
         GenerateDailyChecklistsCommand::class,
+        IdentityReadinessCommand::class,
         PruneNoticeboardCardsCommand::class,
     ])
     ->withSchedule(static function (Schedule $schedule): void {
@@ -138,6 +145,12 @@ return Application::configure(basePath: \dirname(__DIR__))
             ->onOneServer();
 
         $schedule
+            ->job(new MaintainBankStatementImportsJob())
+            ->everyFiveMinutes()
+            ->withoutOverlapping()
+            ->onOneServer();
+
+        $schedule
             ->job(new RecordAssistantQueueHeartbeatJob())
             ->everyMinute()
             ->withoutOverlapping()
@@ -174,7 +187,7 @@ return Application::configure(basePath: \dirname(__DIR__))
 
             return Resolver::resolveRedirector()
                 ->to($exception->redirectTo ?? Resolver::resolveUrlGenerator()->previous())
-                ->withInput(Arr::except($request->input(), [
+                ->withInput($request->except([
                     'current_password',
                     'current_password_confirmation',
                     'password',

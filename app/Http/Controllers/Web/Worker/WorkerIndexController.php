@@ -34,12 +34,19 @@ class WorkerIndexController
 
         $validated = $this->validateRequest($request, [
             'search' => $validity->search()->nullable()->toArray(),
+            'status' => $validity->status()->nullable()->toArray(),
         ]);
 
         $search = $validated->assertNullableString('search') ?? '';
+        $status = $validated->assertNullableString('status') ?? 'active';
 
         $baseQuery = Worker::query();
         Worker::scopeForUser($baseQuery, $admin);
+        if ($status === 'active') {
+            Worker::scopeActive($baseQuery);
+        } elseif ($status === 'archived') {
+            Worker::scopeArchived($baseQuery);
+        }
         $query = Worker::querySelect($baseQuery)->orderBy('last_name')->orderBy('first_name');
 
         if ($search !== '') {
@@ -54,12 +61,14 @@ class WorkerIndexController
                 'color' => $worker->getCalendarColor(),
                 'hourly_rate' => $worker->getHourlyRate(),
                 'attendance_rating_enabled' => $worker->isAttendanceRatingEnabled(),
+                'archived' => $worker->isArchived(),
             ];
         })->all();
 
         return Inertia::render('workers/Index', [
             'workers' => $rows,
             'search' => $search,
+            'status' => $status,
         ]);
     }
 }

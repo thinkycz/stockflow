@@ -48,6 +48,25 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->where('workers.0.last_name', 'Novak'));
 });
 
+\test('worker index defaults to active workers and can filter archived workers', function (): void {
+    $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
+    $active = Worker::factory()->create(['user_id' => $admin->getKey(), 'first_name' => 'Active']);
+    $archived = Worker::factory()->create(['user_id' => $admin->getKey(), 'first_name' => 'Archived', 'archived_at' => \now()]);
+
+    $this->actingAs($admin)->get(\route('workers.index'))
+        ->assertInertia(static fn($page) => $page
+            ->has('workers', 1)
+            ->where('workers.0.id', $active->getKey())
+            ->where('status', 'active'));
+
+    $this->actingAs($admin)->get(\route('workers.index', ['status' => 'archived']))
+        ->assertInertia(static fn($page) => $page
+            ->has('workers', 1)
+            ->where('workers.0.id', $archived->getKey())
+            ->where('workers.0.archived', true)
+            ->where('status', 'archived'));
+});
+
 \test('limited user is bounced away from the workers index', function (): void {
     $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
     $store = App\Models\Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);

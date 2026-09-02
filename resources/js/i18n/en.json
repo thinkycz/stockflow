@@ -175,6 +175,7 @@
             "restore_checklist_day": "Restore the checklist day in {store}.",
             "restore_noticeboard_card": "Restore the notice in {store}.",
             "restore_statement_version": "Restore the selected statement version.",
+            "restore_worker": "Restore the worker.",
             "retry_slack_digest": "Retry the failed Slack summary.",
             "reverse_gift_voucher_redemption": "Reverse the gift voucher redemption.",
             "reverse_stock_movement": "Reverse the stock movement in {store}.",
@@ -264,8 +265,8 @@
         },
         "forgot": {
             "title": "Forgot password",
-            "subtitle": "Send a new generated password using the core mail flow.",
-            "submit": "Send password"
+            "subtitle": "Enter your email address and we will send you a secure password reset link.",
+            "submit": "Send reset link"
         },
         "reset": {
             "title": "Reset password",
@@ -1207,7 +1208,10 @@
         },
         "errors": {
             "provider_or_parse_failed": "The AI provider could not process this statement. Try again.",
-            "duplicate_statement": "This statement has already been imported for this store and period."
+            "duplicate_statement": "This statement has already been imported for this store and period.",
+            "queue_dispatch_failed": "The statement could not be queued. Try again.",
+            "processing_timeout": "Processing took too long. Retry the statement.",
+            "invalid_parser_payload": "The extracted statement data is invalid. Check the document and try again."
         },
         "warnings": {
             "credit_count_mismatch": "Incoming count does not match.",
@@ -1384,6 +1388,13 @@
         "add_worker": "Add worker",
         "search_placeholder": "Search workers...",
         "confirm_delete": "Are you sure you want to delete this worker?",
+        "restore": "Restore worker",
+        "filters": {
+            "label": "Status",
+            "active": "Active",
+            "archived": "Archived",
+            "all": "All workers"
+        },
         "attendance_rating_enabled": "Rate attendance",
         "attendance_rating_help": "Turning this off hides attendance ratings, while arrivals, departures, reports and payroll remain unchanged.",
         "calendar_color": {

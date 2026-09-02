@@ -58,6 +58,12 @@ const props = defineProps<{
         month: number;
     } | null;
     today_day: DayRow | null;
+    store: {
+        id: number;
+        name: string;
+        is_active: boolean;
+    } | null;
+    editable: boolean;
     filters: {
         store_id: number | null;
         year: number;
@@ -221,6 +227,7 @@ function selectMonth(value: string): void {
     router.get(
         route('statements.index'),
         {
+            store_id: props.filters.store_id,
             year,
             month,
         },
@@ -245,6 +252,7 @@ function rowCashTotal(row: DayRow): number {
 
 const showTodayPanel = computed(
     () =>
+        props.editable &&
         props.today_statement !== null &&
         props.today_day !== null &&
         rowTotal(props.today_day) === 0,
@@ -424,7 +432,7 @@ function submitPendingSave(closeAttendances: boolean): void {
                 :subtitle="t('statements.subtitle')"
             >
                 <template #context>
-                    <StoreContextIndicator />
+                    <StoreContextIndicator :store="props.store" />
                 </template>
                 <template #actions>
                     <div
@@ -659,6 +667,7 @@ function submitPendingSave(closeAttendances: boolean): void {
                                         step="0.01"
                                         min="0"
                                         class="text-right"
+                                        :disabled="!props.editable"
                                         @update:model-value="
                                             (value) =>
                                                 updateEditing(
@@ -676,6 +685,7 @@ function submitPendingSave(closeAttendances: boolean): void {
                                         step="0.01"
                                         min="0"
                                         class="text-right"
+                                        :disabled="!props.editable"
                                         @update:model-value="
                                             (value) =>
                                                 updateEditing(
@@ -693,6 +703,7 @@ function submitPendingSave(closeAttendances: boolean): void {
                                         step="0.01"
                                         min="0"
                                         class="text-right"
+                                        :disabled="!props.editable"
                                         @update:model-value="
                                             (value) =>
                                                 updateEditing(
@@ -710,6 +721,7 @@ function submitPendingSave(closeAttendances: boolean): void {
                                         step="0.01"
                                         min="0"
                                         class="text-right"
+                                        :disabled="!props.editable"
                                         @update:model-value="
                                             (value) =>
                                                 updateEditing(
@@ -729,6 +741,7 @@ function submitPendingSave(closeAttendances: boolean): void {
                                         step="0.01"
                                         min="0"
                                         class="text-right"
+                                        :disabled="!props.editable"
                                         @update:model-value="
                                             (value) =>
                                                 updateEditing(
@@ -746,6 +759,7 @@ function submitPendingSave(closeAttendances: boolean): void {
                                         step="0.01"
                                         min="0"
                                         class="text-right"
+                                        :disabled="!props.editable"
                                         @update:model-value="
                                             (value) =>
                                                 updateEditing(
@@ -780,6 +794,7 @@ function submitPendingSave(closeAttendances: boolean): void {
                                 <td v-if="props.is_admin" class="text-center">
                                     <Checkbox
                                         :model-value="day.cash_checked"
+                                        :disabled="!props.editable"
                                         @update:model-value="
                                             (value) =>
                                                 updateEditing(
@@ -859,6 +874,7 @@ function submitPendingSave(closeAttendances: boolean): void {
                     </DataTable>
 
                     <div
+                        v-if="props.editable"
                         class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end"
                     >
                         <Button

@@ -11,13 +11,15 @@ use App\Models\StatementDay;
 use App\Models\Store;
 use Database\Factories\UserFactory;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
 \test('bank statement section is admin only and scoped to the active store', function (): void {
-    [$admin, $store] = \createIsolatedUserWithWarehouse();
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $otherStore = Store::factory()->create(['user_id' => $admin->getKey()]);
     $limited = UserFactory::new()->limited($store)->createOne();
     $statement = BankStatement::factory()->forStore($store)->create();
@@ -27,10 +29,49 @@ use Thinkycz\LaravelCore\Support\Typer;
     $this->be($admin, 'users')->get('/bank-statements/' . $statement->getKey())->assertNotFound();
 });
 
+\test('queue dispatch failure preserves the import as a retryable failed row', function (): void {
+    Storage::fake(FilesystemDiskEnum::Private->value);
+    Bus::shouldReceive('dispatch')->once()->andThrow(new RuntimeException('redis unavailable'));
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $this->withSession(\activeStoreSession($store));
+
+    $response = $this->be($admin, 'users')->post('/bank-statements', [
+        'document' => UploadedFile::fake()->createWithContent('statement.pdf', "%PDF-1.7\nsynthetic statement"),
+    ])->assertRedirect();
+    \assertInertiaFlash($response, 'error', \__('The bank statement could not be queued. Retry it from the import page.'));
+
+    $statement = Typer::assertInstance(BankStatement::query()->sole(), BankStatement::class);
+    \expect($statement->getStatus())->toBe(BankStatementStatusEnum::FAILED)
+        ->and($statement->getLastError())->toBe('queue_dispatch_failed');
+    Storage::disk(FilesystemDiskEnum::Private->value)->assertExists($statement->getOriginalPath());
+});
+
+\test('retry dispatch failure leaves the original row failed and retryable', function (): void {
+    Bus::shouldReceive('dispatch')->once()->andThrow(new RuntimeException('redis unavailable'));
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $statement = BankStatement::factory()->forStore($store)->create([
+        'status' => BankStatementStatusEnum::FAILED->value,
+        'last_error' => 'provider_or_parse_failed',
+    ]);
+    $this->withSession(\activeStoreSession($store));
+
+    $response = $this->be($admin, 'users')
+        ->post('/bank-statements/' . $statement->getKey() . '/retry')
+        ->assertRedirect();
+    \assertInertiaFlash($response, 'error', \__('The bank statement could not be queued. Retry it from the import page.'));
+
+    \expect($statement->fresh()?->getStatus())->toBe(BankStatementStatusEnum::FAILED)
+        ->and($statement->fresh()?->getLastError())->toBe('queue_dispatch_failed')
+        ->and(BankStatement::query()->count())->toBe(1);
+});
+
 \test('admin uploads one real PDF privately and exact duplicates reuse the existing import', function (): void {
     Queue::fake();
     Storage::fake(FilesystemDiskEnum::Private->value);
-    [$admin, $store] = \createIsolatedUserWithWarehouse();
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $otherStore = Store::factory()->create(['user_id' => $admin->getKey()]);
     $this->withSession(\activeStoreSession($store));
     $pdf = static fn(): UploadedFile => UploadedFile::fake()->createWithContent('statement.pdf', "%PDF-1.7\nsynthetic statement");
@@ -51,7 +92,8 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('upload rejects non PDF files and oversized PDF files', function (): void {
-    [$admin, $store] = \createIsolatedUserWithWarehouse();
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $this->withSession(\activeStoreSession($store));
 
     $this->be($admin, 'users')->withHeader('Accept', 'application/json')->post('/bank-statements', [
@@ -64,7 +106,8 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 \test('private original requires the active store and disables caching', function (): void {
     Storage::fake(FilesystemDiskEnum::Private->value);
-    [$admin, $store] = \createIsolatedUserWithWarehouse();
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $otherStore = Store::factory()->create(['user_id' => $admin->getKey()]);
     $statement = BankStatement::factory()->forStore($store)->create(['original_path' => 'bank-statements/secret.pdf']);
     Storage::disk(FilesystemDiskEnum::Private->value)->put(
@@ -81,8 +124,27 @@ use Thinkycz\LaravelCore\Support\Typer;
     $this->be($admin, 'users')->get('/bank-statements/' . $statement->getKey() . '/original')->assertNotFound();
 });
 
+\test('inactive store bank history remains readable without mutation actions', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->inactive()->create(['user_id' => $admin->getKey()]);
+    $statement = BankStatement::factory()->forStore($store)->create([
+        'status' => BankStatementStatusEnum::REVIEW->value,
+    ]);
+
+    $this->be($admin, 'users')
+        ->get('/bank-statements/' . $statement->getKey() . '?store_id=' . $store->getKey(), $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.statement.store_active', false)
+        ->assertJsonPath('props.statement.editable', false);
+
+    $this->be($admin, 'users')
+        ->post('/bank-statements/' . $statement->getKey() . '/confirm')
+        ->assertNotFound();
+});
+
 \test('review can be edited confirmed and reopened without changing daily reports', function (): void {
-    [$admin, $store] = \createIsolatedUserWithWarehouse();
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $this->withSession(\activeStoreSession($store));
     $statement = BankStatement::factory()->forStore($store)->create([
         'total_credits' => '99.00',
@@ -124,7 +186,8 @@ use Thinkycz\LaravelCore\Support\Typer;
 });
 
 \test('confirmation is blocked by integrity warnings and missing sales periods', function (): void {
-    [$admin, $store] = \createIsolatedUserWithWarehouse();
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $this->withSession(\activeStoreSession($store));
     $statement = BankStatement::factory()->forStore($store)->create([
         'parse_warnings' => ['balance_mismatch'],

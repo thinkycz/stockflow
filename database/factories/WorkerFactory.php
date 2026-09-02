@@ -20,12 +20,13 @@ class WorkerFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => static fn(): int => UserFactory::new()->createOne()->getKey(),
+            'user_id' => static fn(): int => UserFactory::new()->admin()->createOne()->getKey(),
             'first_name' => $this->faker->firstName(),
             'last_name' => $this->faker->lastName(),
             'calendar_color' => null,
             'hourly_rate' => $this->faker->randomFloat(2, 150, 500),
             'attendance_rating_enabled' => true,
+            'archived_at' => null,
         ];
     }
 }

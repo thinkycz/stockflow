@@ -72,8 +72,61 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->and($fresh->getLastError())->toBe('provider_or_parse_failed');
 });
 
-\test('a second parsed copy of the same logical statement is rejected', function (): void {
+\test('invalid parser money is classified separately from provider failures', function (): void {
+    Storage::fake(FilesystemDiskEnum::Private->value);
     [, $store] = \createIsolatedUserWithWarehouse();
+    Storage::disk(FilesystemDiskEnum::Private->value)->put(
+        'bank-statements/test.pdf',
+        Resolver::resolveEncrypter()->encryptString('%PDF-1.7 test'),
+    );
+    $statement = BankStatement::factory()->forStore($store)->create([
+        'status' => BankStatementStatusEnum::QUEUED->value,
+        'original_path' => 'bank-statements/test.pdf',
+    ]);
+    $payload = \parsedBankStatementPayload();
+    $payload['transactions'][0]['amount'] = '1000.001';
+    BankStatementParser::fake([$payload]);
+
+    (new ParseBankStatementJob($statement->getKey()))->handle(new BankStatementService());
+
+    \expect($statement->fresh()?->getStatus())->toBe(BankStatementStatusEnum::FAILED)
+        ->and($statement->fresh()?->getLastError())->toBe('invalid_parser_payload');
+});
+
+\test('malformed structured parser fields are classified as invalid payloads', function (string $path, mixed $value): void {
+    Storage::fake(FilesystemDiskEnum::Private->value);
+    [, $store] = \createIsolatedUserWithWarehouse();
+    Storage::disk(FilesystemDiskEnum::Private->value)->put(
+        'bank-statements/test.pdf',
+        Resolver::resolveEncrypter()->encryptString('%PDF-1.7 test'),
+    );
+    $statement = BankStatement::factory()->forStore($store)->create([
+        'status' => BankStatementStatusEnum::QUEUED->value,
+        'original_path' => 'bank-statements/test.pdf',
+    ]);
+    $payload = \parsedBankStatementPayload();
+    \data_set($payload, $path, $value);
+    BankStatementParser::fake([$payload]);
+
+    (new ParseBankStatementJob($statement->getKey()))->handle(new BankStatementService());
+
+    \expect($statement->fresh()?->getStatus())->toBe(BankStatementStatusEnum::FAILED)
+        ->and($statement->fresh()?->getLastError())->toBe('invalid_parser_payload');
+})->with([
+    ['period_to', '2026-02-30'],
+    ['transactions.0.category', 'invented'],
+    ['transactions.0.item_type', null],
+    ['bank_code', '12345678901234567'],
+    ['credit_count', 'not-an-integer'],
+    ['debit_count', 1.5],
+    ['available_balance', false],
+    ['transactions.0.executed_on', false],
+    ['transactions.0.amount', '10000000000000.00'],
+]);
+
+\test('a second parsed copy of the same logical statement is rejected', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $attributes = [
         'status' => BankStatementStatusEnum::QUEUED->value,
         'bank_code' => null,
@@ -91,4 +144,16 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($first->fresh()?->getStatus())->toBe(BankStatementStatusEnum::REVIEW)
         ->and($second->fresh()?->getStatus())->toBe(BankStatementStatusEnum::FAILED)
         ->and($second->fresh()?->getLastError())->toBe('duplicate_statement');
+});
+
+\test('an exhausted parser job leaves no active processing row', function (): void {
+    [, $store] = \createIsolatedUserWithWarehouse();
+    $statement = BankStatement::factory()->forStore($store)->create([
+        'status' => BankStatementStatusEnum::PROCESSING->value,
+    ]);
+
+    (new ParseBankStatementJob($statement->getKey()))->failed(null);
+
+    \expect($statement->fresh()?->getStatus())->toBe(BankStatementStatusEnum::FAILED)
+        ->and($statement->fresh()?->getLastError())->toBe('processing_timeout');
 });

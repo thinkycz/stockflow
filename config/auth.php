@@ -85,13 +85,10 @@ return [
     | generating more password reset tokens. This prevents the user from
     | quickly generating a very large amount of password reset tokens.
     |
-    | Also there can be set to only send raw password instead of reset flow.
-    |
     */
 
     'passwords' => [
         'users' => [
-            'send_raw_password' => true,
             'provider' => 'users',
             'table' => 'user_password_resets',
             'expire' => 60,

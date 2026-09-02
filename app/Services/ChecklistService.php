@@ -43,6 +43,9 @@ class ChecklistService
 
         DB::transaction(static function () use ($store): void {
             $lockedStore = Typer::assertInstance(Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(), Store::class);
+            if ($lockedStore->isWarehouse() || !$lockedStore->isActive()) {
+                throw new InvalidArgumentException('Checklists are available only for active retail stores.');
+            }
 
             if ($lockedStore->getChecklistsInitializedAt() !== null) {
                 return;
@@ -77,6 +80,13 @@ class ChecklistService
         $this->initializeStore($store);
 
         return DB::transaction(function () use ($store, $date): ChecklistDay {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            if ($store->isWarehouse() || !$store->isActive()) {
+                throw new InvalidArgumentException('Checklists are available only for active retail stores.');
+            }
             $existing = ChecklistDay::query()
                 ->where('store_id', $store->getKey())
                 ->whereDate('date', $date->toDateString())
@@ -157,6 +167,10 @@ class ChecklistService
         }
 
         DB::transaction(static function () use ($store, $scope, $weekday, $shift, $texts): void {
+            $store = Typer::assertInstance(Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(), Store::class);
+            if ($store->isWarehouse() || !$store->isActive()) {
+                throw new InvalidArgumentException('Checklists are available only for active retail stores.');
+            }
             $query = ChecklistTemplateTask::query()
                 ->where('store_id', $store->getKey())
                 ->where('scope', $scope->value)
@@ -190,6 +204,19 @@ class ChecklistService
         int $version,
     ): ChecklistItem {
         return DB::transaction(function () use ($item, $store, $actor, $worker, $completed, $version): ChecklistItem {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            if ($store->isWarehouse() || !$store->isActive() || $store->getUserId() !== $actor->resolveScopeUser()->getKey()) {
+                throw new InvalidArgumentException('Checklists are available only for active retail stores.');
+            }
+            if ($worker instanceof Worker) {
+                $worker = Typer::assertInstance(
+                    Worker::query()->whereKey($worker->getKey())->lockForUpdate()->firstOrFail(),
+                    Worker::class,
+                );
+            }
             $locked = Typer::assertInstance(ChecklistItem::query()->whereKey($item->getKey())->lockForUpdate()->firstOrFail(), ChecklistItem::class);
             $day = Typer::assertInstance(ChecklistDay::query()->whereKey($locked->getChecklistDayId())->lockForUpdate()->firstOrFail(), ChecklistDay::class);
 
@@ -205,7 +232,7 @@ class ChecklistService
             if ($completed && !$worker instanceof Worker) {
                 throw new InvalidArgumentException('A worker is required.');
             }
-            if ($worker instanceof Worker && $worker->getUserId() !== $actor->resolveScopeUser()->getKey()) {
+            if ($worker instanceof Worker && ($worker->getUserId() !== $actor->resolveScopeUser()->getKey() || ($completed && $worker->isArchived()))) {
                 throw new InvalidArgumentException('Worker does not belong to this company.');
             }
 
@@ -257,7 +284,17 @@ class ChecklistService
     public function excuseDay(ChecklistDay $day, User $actor, string $reason, bool $excused): void
     {
         DB::transaction(function () use ($day, $actor, $reason, $excused): void {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($day->getStoreId())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            if ($store->isWarehouse() || !$store->isActive() || $store->getUserId() !== $actor->getKey()) {
+                throw new InvalidArgumentException('Checklists are available only for active retail stores.');
+            }
             $locked = Typer::assertInstance(ChecklistDay::query()->whereKey($day->getKey())->lockForUpdate()->firstOrFail(), ChecklistDay::class);
+            if ($locked->getStoreId() !== $store->getKey()) {
+                throw new InvalidArgumentException('Checklist day does not belong to this store.');
+            }
             $locked->setAttribute('excused_by_user_id', $excused ? $actor->getKey() : null);
             $locked->setAttribute('excuse_reason', $excused ? $reason : null);
             $locked->setAttribute('excused_at', $excused ? CarbonImmutable::now() : null);
@@ -271,7 +308,6 @@ class ChecklistService
                 'created_at' => CarbonImmutable::now(),
             ]);
 
-            $store = Typer::assertInstance(Store::query()->whereKey($locked->getStoreId())->firstOrFail(), Store::class);
             $this->notifyChecklist(
                 $excused
                     ? OperationalActivityTypeEnum::CHECKLIST_DAY_EXCUSED
@@ -329,7 +365,9 @@ class ChecklistService
             ];
         }
 
-        $workers = Worker::query()->where('user_id', $actor->resolveScopeUser()->getKey())->orderBy('first_name')->orderBy('last_name')->get()
+        $workerQuery = Worker::query()->where('user_id', $actor->resolveScopeUser()->getKey());
+        Worker::scopeActive($workerQuery);
+        $workers = $workerQuery->orderBy('first_name')->orderBy('last_name')->get()
             ->map(static fn(Worker $worker): array => ['id' => $worker->getKey(), 'name' => $worker->getFullName()])->all();
 
         return [

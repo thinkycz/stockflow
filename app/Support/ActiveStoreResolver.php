@@ -51,14 +51,10 @@ final class ActiveStoreResolver
             return self::resolveForLimitedUser($user);
         }
 
-        $requestedId = Typer::parseNullableInt($request->query('store_id'));
+        $requestedId = Typer::parseNullableInt($request->input('store_id'));
 
         if ($requestedId !== null) {
-            $match = self::findOwned($user, $requestedId);
-
-            if ($match instanceof Store) {
-                return $match;
-            }
+            return self::findOwned($user, $requestedId);
         }
 
         $attribute = $request->attributes->get(self::ATTRIBUTE);
@@ -68,6 +64,25 @@ final class ActiveStoreResolver
         }
 
         return self::firstOwned($user);
+    }
+
+    /**
+     * Resolve an explicitly requested historical store for read-only reports.
+     */
+    public static function resolveIncludingInactive(Request $request, User $user): Store|null
+    {
+        if ($user->isAdmin()) {
+            $requestedId = Typer::parseNullableInt($request->input('store_id'));
+            if ($requestedId !== null) {
+                $query = Store::query();
+                Store::scopeForUser($query, $user);
+                $store = $query->whereKey($requestedId)->first();
+
+                return $store instanceof Store ? $store : null;
+            }
+        }
+
+        return self::resolve($request, $user);
     }
 
     /**
@@ -105,6 +120,7 @@ final class ActiveStoreResolver
     {
         $query = Store::query();
         Store::scopeForUser($query, $user);
+        Store::scopeActive($query);
 
         $store = $query->whereKey($storeId)->first();
 
@@ -119,6 +135,7 @@ final class ActiveStoreResolver
     {
         $query = Store::query();
         Store::scopeForUser($query, self::resolveScopeUser($user));
+        Store::scopeActive($query);
         $stores = $query->orderBy('name')->get()->all();
 
         foreach ($stores as $store) {

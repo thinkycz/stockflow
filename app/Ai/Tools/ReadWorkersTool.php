@@ -29,7 +29,11 @@ final class ReadWorkersTool extends AbstractReadResourceTool
      */
     public function schema(JsonSchema $schema): array
     {
-        $filters = ['search' => $schema->string(), 'attendance_rating_enabled' => $schema->boolean()];
+        $filters = [
+            'search' => $schema->string(),
+            'attendance_rating_enabled' => $schema->boolean(),
+            'lifecycle_status' => $schema->string()->enum(['active', 'archived', 'all']),
+        ];
 
         return ['request' => $schema->anyOf([
             $schema->object(['operation' => $schema->string()->enum(['list'])->required(), ...$filters, 'limit' => $schema->integer()->min(1)->max(50), 'cursor' => $schema->string()])->withoutAdditionalProperties(),
@@ -49,6 +53,7 @@ final class ReadWorkersTool extends AbstractReadResourceTool
         if ($operation === 'detail') { return $this->detailResult($request, 'workers', $this->record($this->worker(Typer::parseNullableInt($request['id'] ?? null)))); }
         $query = Worker::query();
         Worker::scopeForUser($query, $this->actor->resolveScopeUser());
+        $this->lifecycle($query, $request);
         $this->filters($query, $request);
         if ($operation === 'summary') {
             $workers = $query->get();
@@ -94,6 +99,23 @@ final class ReadWorkersTool extends AbstractReadResourceTool
     }
 
     /**
+     * Default assistant listings to workers available for new work.
+     *
+     * @param Builder<Worker> $query
+     * @param array<string, mixed> $request
+     */
+    private function lifecycle(Builder $query, array $request): void
+    {
+        $status = Typer::parseNullableString($request['lifecycle_status'] ?? null) ?? 'active';
+
+        if ($status === 'active') {
+            Worker::scopeActive($query);
+        } elseif ($status === 'archived') {
+            Worker::scopeArchived($query);
+        }
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function record(Worker $worker): array
@@ -102,6 +124,7 @@ final class ReadWorkersTool extends AbstractReadResourceTool
             'id' => $worker->getKey(), 'first_name' => $worker->getFirstName(), 'last_name' => $worker->getLastName(),
             'name' => $worker->getFullName(), 'hourly_rate' => $worker->getHourlyRate(),
             'attendance_rating_enabled' => $worker->isAttendanceRatingEnabled(), 'calendar_color' => $worker->getCalendarColor(),
+            'archived' => $worker->isArchived(),
             'url' => Resolver::resolveUrlGenerator()->route('workers.edit', $worker->getKey()),
         ];
     }

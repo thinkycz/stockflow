@@ -37,7 +37,9 @@ class RecipeTestSessionController
         $owner = $actor->resolveScopeUser();
         $validity = RecipeValidity::inject($owner->getKey());
         $validated = $this->validateRequest($request, ['worker_id' => $validity->workerId()->required()->toArray()]);
-        $worker = Typer::assertInstance(Worker::query()->where('user_id', $owner->getKey())->whereKey($validated->assertInt('worker_id'))->firstOrFail(), Worker::class);
+        $workerQuery = Worker::query()->where('user_id', $owner->getKey());
+        Worker::scopeActive($workerQuery);
+        $worker = Typer::assertInstance($workerQuery->whereKey($validated->assertInt('worker_id'))->firstOrFail(), Worker::class);
         try {
             $session = (new RecipeTestSessionService())->start($actor, $worker);
         } catch (InvalidArgumentException $exception) {

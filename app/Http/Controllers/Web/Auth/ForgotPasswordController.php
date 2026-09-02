@@ -6,16 +6,11 @@ namespace App\Http\Controllers\Web\Auth;
 
 use App\Http\Controllers\Web\Concerns\ThrottlesWebRequests;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
+use App\Services\PasswordResetRequestService;
 use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
-use Thinkycz\LaravelCore\Models\BaseUser;
-use Thinkycz\LaravelCore\Support\Resolver;
-use Thinkycz\LaravelCore\Support\Thrower;
-use Thinkycz\LaravelCore\Support\Typer;
 use Thinkycz\LaravelCore\Validation\AuthValidity;
 
 class ForgotPasswordController
@@ -34,7 +29,7 @@ class ForgotPasswordController
     /**
      * Send or apply the reset flow configured by the core package.
      */
-    public function store(Request $request): Response
+    public function store(Request $request, PasswordResetRequestService $passwordReset): Response
     {
         $authValidity = AuthValidity::inject();
 
@@ -44,27 +39,9 @@ class ForgotPasswordController
 
         $this->hit($this->limit());
 
-        $user = Typer::assertNullableInstance(Resolver::resolveEloquentUserProvider('users')->retrieveByCredentials([
-            'email' => $validated->assertString('email'),
-        ]), BaseUser::class);
+        $passwordReset->send('users', $validated->assertString('email'));
 
-        if ($user instanceof BaseUser === false) {
-            Thrower::default()->message('email', Typer::assertString(\__(PasswordBroker::INVALID_USER)))->throw();
-        }
-
-        $password = Str::password(16);
-
-        DB::transaction(static function () use ($user, $password): void {
-            $user->update([
-                'password' => $password,
-            ]);
-
-            $user->databaseTokens()->getQuery()->delete();
-        });
-
-        $user->sendPasswordNewPasswordSettedNotification($password);
-
-        Inertia::flash('success', \__('A new password has been sent to your email address.'));
+        Inertia::flash('success', \__(PasswordBroker::RESET_LINK_SENT));
 
         return Inertia::render('auth/ForgotPassword');
     }

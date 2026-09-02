@@ -23,7 +23,7 @@ class NoticeboardCardFactory extends Factory
      */
     public function definition(): array
     {
-        $user = UserFactory::new()->createOne();
+        $user = UserFactory::new()->admin()->createOne();
         $store = Store::factory()->createOne(['user_id' => $user->getKey()]);
 
         return [

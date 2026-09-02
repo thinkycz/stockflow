@@ -61,7 +61,7 @@ use App\Models\StockMovementSequence;
     \expect(StockMovementSequence::query()->count())->toBe(1);
 });
 \test('next() seeds the sequence from existing stock_movements when the counter is missing', function (): void {
-    $user = Database\Factories\UserFactory::new()->createOne();
+    $user = Database\Factories\UserFactory::new()->admin()->createOne();
 
     // Simulate stock_movements that were created without going
     // through the sequence (seeders, migrations, older code).
@@ -76,7 +76,7 @@ use App\Models\StockMovementSequence;
 });
 
 \test('next() advances the sequence when it is behind the actual data', function (): void {
-    $user = Database\Factories\UserFactory::new()->createOne();
+    $user = Database\Factories\UserFactory::new()->admin()->createOne();
 
     // Sequence thinks it is at 1, but the actual data already has
     // numbers up to 0005.

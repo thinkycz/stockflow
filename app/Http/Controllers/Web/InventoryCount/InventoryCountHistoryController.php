@@ -47,7 +47,7 @@ class InventoryCountHistoryController
         Item::scopeForUser($itemsQuery, $scopeUser);
         $items = $itemsQuery->orderBy('title')->get()->all();
 
-        $store = ActiveStoreResolver::resolve($request, $user);
+        $store = ActiveStoreResolver::resolveIncludingInactive($request, $user);
 
         $itemId = Typer::parseNullableInt($request->query('item_id'));
         $item = null;

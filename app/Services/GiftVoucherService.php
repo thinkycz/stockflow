@@ -138,6 +138,10 @@ class GiftVoucherService
     public function redeem(User $actor, Store $store, GiftVoucher $voucher): GiftVoucher
     {
         return DB::transaction(function () use ($actor, $store, $voucher): GiftVoucher {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
             $locked = GiftVoucher::query()->with('giftVoucherBatch')->lockForUpdate()->findOrFail($voucher->getKey());
             $owner = $actor->resolveScopeUser();
 
@@ -145,6 +149,7 @@ class GiftVoucherService
                 $locked->getUserId() !== $owner->getKey() ||
                 $store->getUserId() !== $owner->getKey() ||
                 $store->isWarehouse() ||
+                !$store->isActive() ||
                 (!$actor->isAdmin() && $actor->getAssignedStoreId() !== $store->getKey())
             ) {
                 \abort(403);

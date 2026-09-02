@@ -77,6 +77,7 @@ class ResolveActiveStore
     {
         $query = Store::query();
         Store::scopeForUser($query, $user);
+        Store::scopeActive($query);
 
         $store = $query->whereKey($storeId)->first();
 

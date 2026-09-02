@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\Password;
 
 use App\Enums\GuardEnum;
-use App\Models\User;
+use App\Services\PasswordResetService;
 use Illuminate\Contracts\Auth\PasswordBroker;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Thinkycz\LaravelCore\Http\ApiFormRequest;
 use Thinkycz\LaravelCore\Models\BaseUser;
@@ -31,40 +30,25 @@ class PasswordResetController extends AutomaticController
 
         $passwordDriver = $validated->parseNullableString('guard') ?? $this->getDefaultPasswordDriver();
 
-        $passwordBroker = Resolver::resolvePasswordBroker($passwordDriver);
-
-        $userProvider = Resolver::resolveEloquentUserProvider($this->getUserProviderForPasswordDriver($passwordDriver));
-
-        $user = Typer::assertNullableInstance($userProvider->retrieveByCredentials([
-            'email' => $validated->assertString('email'),
-        ]), BaseUser::class);
-
-        if ($user instanceof BaseUser === false) {
+        $result = (new PasswordResetService())->reset(
+            $passwordDriver,
+            $this->getUserProviderForPasswordDriver($passwordDriver),
+            $validated->assertString('email'),
+            $validated->assertString('token'),
+            $validated->assertString('password'),
+        );
+        if ($result === PasswordBroker::INVALID_USER) {
             $request->thrower()
                 ->error('email', PasswordBroker::INVALID_USER)
                 ->throw();
         }
-
-        $tokenExists = $passwordBroker->tokenExists($user, $validated->assertString('token'));
-
-        if ($tokenExists === false) {
+        if ($result === PasswordBroker::INVALID_TOKEN) {
             $request->thrower()
                 ->error('token', PasswordBroker::INVALID_TOKEN)
                 ->throw();
         }
 
-        $user->update([
-            'password' => $validated->assertString('password'),
-        ]);
-
-        if ($user->getRememberToken() !== '') {
-            $userProvider->updateRememberToken($user, Str::random(60));
-        }
-
-        $user->databaseTokens()->getQuery()->delete();
-
-        $passwordBroker->deleteToken($user);
-
+        $user = Typer::assertInstance($result, BaseUser::class);
         Resolver::resolveDatabaseTokenGuard($user->getTable())->login($user);
 
         return $user->meResource()->response();

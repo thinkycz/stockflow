@@ -12,6 +12,7 @@ use App\Models\BankStatement;
 use App\Models\BankStatementTransaction;
 use App\Models\Store;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -26,10 +27,15 @@ final class BankStatementService
     /**
      * Store an original document and queue its first parsing attempt.
      *
-     * @return array{statement: BankStatement, created: bool}
+     * @return array{statement: BankStatement, created: bool, queued: bool}
      */
     public function upload(User $actor, Store $store, UploadedFile $file): array
     {
+        $owner = $actor->resolveScopeUser();
+        if ($store->getUserId() !== $owner->getKey() || !$store->isActive() || $store->isWarehouse()) {
+            \abort(404);
+        }
+
         $sha256 = \hash_file('sha256', $file->getPathname());
 
         if ($sha256 === false) {
@@ -37,12 +43,12 @@ final class BankStatementService
         }
 
         $existing = BankStatement::query()
-            ->where('user_id', $actor->getKey())
+            ->where('user_id', $owner->getKey())
             ->where('sha256', $sha256)
             ->first();
 
         if ($existing instanceof BankStatement) {
-            return ['statement' => $existing, 'created' => false];
+            return ['statement' => $existing, 'created' => false, 'queued' => false];
         }
 
         $path = 'bank-statements/' . $actor->getKey() . '/' . $store->getKey() . '/' . Str::random(40) . '.pdf.encrypted';
@@ -55,27 +61,71 @@ final class BankStatementService
         }
 
         try {
-            $statement = BankStatement::query()->create([
-                'user_id' => $actor->getKey(),
-                'store_id' => $store->getKey(),
-                'uploaded_by_user_id' => $actor->getKey(),
-                'status' => BankStatementStatusEnum::QUEUED->value,
-                'original_path' => $path,
-                'original_name' => $file->getClientOriginalName(),
-                'original_mime' => 'application/pdf',
-                'original_size' => $file->getSize(),
-                'sha256' => $sha256,
-                'attempt_count' => 0,
-                'queued_at' => \now(),
-            ]);
+            $result = DB::transaction(function () use ($actor, $owner, $store, $file, $path, $sha256): array {
+                $store = Typer::assertInstance(
+                    Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                    Store::class,
+                );
+                if ($store->getUserId() !== $owner->getKey() || !$store->isActive() || $store->isWarehouse()) {
+                    \abort(404);
+                }
+
+                $existing = BankStatement::query()
+                    ->where('user_id', $owner->getKey())
+                    ->where('sha256', $sha256)
+                    ->first();
+                if ($existing instanceof BankStatement) {
+                    return ['statement' => $existing, 'created' => false];
+                }
+
+                return [
+                    'statement' => BankStatement::query()->create([
+                        'user_id' => $owner->getKey(),
+                        'store_id' => $store->getKey(),
+                        'uploaded_by_user_id' => $actor->getKey(),
+                        'status' => BankStatementStatusEnum::QUEUED->value,
+                        'original_path' => $path,
+                        'original_name' => $file->getClientOriginalName(),
+                        'original_mime' => 'application/pdf',
+                        'original_size' => $file->getSize(),
+                        'sha256' => $sha256,
+                        'attempt_count' => 0,
+                        'queued_at' => \now(),
+                    ]),
+                    'created' => true,
+                ];
+            });
+        } catch (QueryException $exception) {
+            if (!$this->isUniqueConstraintViolation($exception)) {
+                Resolver::resolveFilesystemManager()->disk(FilesystemDiskEnum::Private->value)->delete($path);
+                throw $exception;
+            }
+
+            Resolver::resolveFilesystemManager()->disk(FilesystemDiskEnum::Private->value)->delete($path);
+            $existing = BankStatement::query()
+                ->where('user_id', $owner->getKey())
+                ->where('sha256', $sha256)
+                ->first();
+            if (!$existing instanceof BankStatement) {
+                throw $exception;
+            }
+
+            return ['statement' => $existing, 'created' => false, 'queued' => false];
         } catch (Throwable $throwable) {
             Resolver::resolveFilesystemManager()->disk(FilesystemDiskEnum::Private->value)->delete($path);
             throw $throwable;
         }
 
-        \dispatch(new ParseBankStatementJob($statement->getKey()));
+        $statement = $result['statement'];
+        if (!$result['created']) {
+            Resolver::resolveFilesystemManager()->disk(FilesystemDiskEnum::Private->value)->delete($path);
 
-        return ['statement' => $statement, 'created' => true];
+            return ['statement' => $statement, 'created' => false, 'queued' => false];
+        }
+
+        $queued = $this->dispatchParsing($statement);
+
+        return ['statement' => $statement, 'created' => true, 'queued' => $queued];
     }
 
     /**
@@ -108,77 +158,94 @@ final class BankStatementService
      */
     public function applyParsed(BankStatement $statement, array $payload): void
     {
-        $warnings = (new BankStatementIntegrityService())->warnings($payload);
+        $integrity = new BankStatementIntegrityService();
+        $integrity->validateParsedPayload($payload);
 
-        if (Typer::assertString($payload['bank_code'] ?? null) !== '0800') {
-            $warnings[] = 'unsupported_bank';
-        }
+        try {
+            DB::transaction(function () use ($statement, $payload, $integrity): void {
+                $this->lockActiveStore($statement->getStoreId());
+                $statement = $this->lockedStatement($statement);
+                if (!\in_array($statement->getStatus(), [BankStatementStatusEnum::QUEUED, BankStatementStatusEnum::PROCESSING], true)) {
+                    throw new InvalidArgumentException('statement_not_parseable');
+                }
 
-        if (Typer::assertString($payload['currency'] ?? null) !== 'CZK') {
-            $warnings[] = 'unsupported_currency';
-        }
+                $warnings = $integrity->warnings($payload);
 
-        $logicalDuplicate = BankStatement::query()
-            ->where('user_id', $statement->getUserId())
-            ->where('store_id', $statement->getStoreId())
-            ->where('bank_code', Typer::assertString($payload['bank_code'] ?? null))
-            ->where('statement_number', Typer::assertString($payload['statement_number'] ?? null))
-            ->whereDate('period_from', Typer::assertString($payload['period_from'] ?? null))
-            ->whereDate('period_to', Typer::assertString($payload['period_to'] ?? null))
-            ->whereKeyNot($statement->getKey())
-            ->exists();
+                if (Typer::assertString($payload['bank_code'] ?? null) !== '0800') {
+                    $warnings[] = 'unsupported_bank';
+                }
 
-        if ($logicalDuplicate) {
-            $statement->update([
-                'status' => BankStatementStatusEnum::FAILED->value,
-                'last_error' => 'duplicate_statement',
-                'parsed_at' => \now(),
-            ]);
+                if (Typer::assertString($payload['currency'] ?? null) !== 'CZK') {
+                    $warnings[] = 'unsupported_currency';
+                }
 
-            return;
-        }
+                $logicalDuplicate = BankStatement::query()
+                    ->where('user_id', $statement->getUserId())
+                    ->where('store_id', $statement->getStoreId())
+                    ->where('bank_code', Typer::assertString($payload['bank_code'] ?? null))
+                    ->where('statement_number', Typer::assertString($payload['statement_number'] ?? null))
+                    ->whereDate('period_from', Typer::assertString($payload['period_from'] ?? null))
+                    ->whereDate('period_to', Typer::assertString($payload['period_to'] ?? null))
+                    ->whereKeyNot($statement->getKey())
+                    ->exists();
 
-        DB::transaction(function () use ($statement, $payload, $warnings): void {
-            $statement->transactions()->delete();
+                if ($logicalDuplicate) {
+                    $statement->update([
+                        'status' => BankStatementStatusEnum::FAILED->value,
+                        'last_error' => 'duplicate_statement',
+                        'parsed_at' => \now(),
+                    ]);
 
-            $position = 0;
+                    return;
+                }
 
-            foreach (Typer::assertArray($payload['transactions'] ?? []) as $transaction) {
-                $row = Typer::assertStringKeyArray(Typer::assertArray($transaction));
-                ++$position;
-                $statement->transactions()->create([
-                    ...$this->transactionAttributes($row),
-                    'position' => $position,
-                    'source_payload' => $row,
-                    'manually_edited' => false,
+                $statement->transactions()->delete();
+
+                $position = 0;
+
+                foreach (Typer::assertArray($payload['transactions'] ?? []) as $transaction) {
+                    $row = Typer::assertStringKeyArray(Typer::assertArray($transaction));
+                    ++$position;
+                    $statement->transactions()->create([
+                        ...$this->transactionAttributes($row),
+                        'position' => $position,
+                        'source_payload' => $row,
+                        'manually_edited' => false,
+                    ]);
+                }
+
+                $statement->update([
+                    'status' => BankStatementStatusEnum::REVIEW->value,
+                    'bank_code' => Typer::assertString($payload['bank_code'] ?? null),
+                    'bank_name' => Typer::assertString($payload['bank_name'] ?? null),
+                    'account_name' => Typer::parseNullableString($payload['account_name'] ?? null),
+                    'account_number' => Typer::parseNullableString($payload['account_number'] ?? null),
+                    'iban' => Typer::parseNullableString($payload['iban'] ?? null),
+                    'bic' => Typer::parseNullableString($payload['bic'] ?? null),
+                    'currency' => Typer::assertString($payload['currency'] ?? null),
+                    'statement_number' => Typer::assertString($payload['statement_number'] ?? null),
+                    'period_from' => Typer::assertString($payload['period_from'] ?? null),
+                    'period_to' => Typer::assertString($payload['period_to'] ?? null),
+                    'opening_balance' => \trim(Typer::assertString($payload['opening_balance'] ?? null)),
+                    'total_credits' => \trim(Typer::assertString($payload['total_credits'] ?? null)),
+                    'total_debits' => \trim(Typer::assertString($payload['total_debits'] ?? null)),
+                    'closing_balance' => \trim(Typer::assertString($payload['closing_balance'] ?? null)),
+                    'available_balance' => $this->nullableTrimmedString($payload['available_balance'] ?? null),
+                    'credit_count' => Typer::parseInt($payload['credit_count'] ?? null),
+                    'debit_count' => Typer::parseInt($payload['debit_count'] ?? null),
+                    'parse_warnings' => \array_values(\array_unique($warnings)),
+                    'raw_ai_response' => $payload,
+                    'last_error' => null,
+                    'parsed_at' => \now(),
                 ]);
+            });
+        } catch (QueryException $exception) {
+            if (!$this->isLogicalStatementUniquenessViolation($exception)) {
+                throw $exception;
             }
 
-            $statement->update([
-                'status' => BankStatementStatusEnum::REVIEW->value,
-                'bank_code' => Typer::assertString($payload['bank_code'] ?? null),
-                'bank_name' => Typer::assertString($payload['bank_name'] ?? null),
-                'account_name' => Typer::parseNullableString($payload['account_name'] ?? null),
-                'account_number' => Typer::parseNullableString($payload['account_number'] ?? null),
-                'iban' => Typer::parseNullableString($payload['iban'] ?? null),
-                'bic' => Typer::parseNullableString($payload['bic'] ?? null),
-                'currency' => Typer::assertString($payload['currency'] ?? null),
-                'statement_number' => Typer::assertString($payload['statement_number'] ?? null),
-                'period_from' => Typer::assertString($payload['period_from'] ?? null),
-                'period_to' => Typer::assertString($payload['period_to'] ?? null),
-                'opening_balance' => Typer::assertString($payload['opening_balance'] ?? null),
-                'total_credits' => Typer::assertString($payload['total_credits'] ?? null),
-                'total_debits' => Typer::assertString($payload['total_debits'] ?? null),
-                'closing_balance' => Typer::assertString($payload['closing_balance'] ?? null),
-                'available_balance' => Typer::parseNullableString($payload['available_balance'] ?? null),
-                'credit_count' => Typer::parseInt($payload['credit_count'] ?? null),
-                'debit_count' => Typer::parseInt($payload['debit_count'] ?? null),
-                'parse_warnings' => \array_values(\array_unique($warnings)),
-                'raw_ai_response' => $payload,
-                'last_error' => null,
-                'parsed_at' => \now(),
-            ]);
-        });
+            $this->fail($statement, 'duplicate_statement');
+        }
     }
 
     /**
@@ -188,11 +255,13 @@ final class BankStatementService
      */
     public function updateDraft(BankStatement $statement, array $rows): void
     {
-        if ($statement->getStatus() !== BankStatementStatusEnum::REVIEW) {
-            throw new InvalidArgumentException('statement_not_editable');
-        }
-
         DB::transaction(function () use ($statement, $rows): void {
+            $this->lockActiveStore($statement->getStoreId());
+            $statement = $this->lockedStatement($statement);
+            if ($statement->getStatus() !== BankStatementStatusEnum::REVIEW) {
+                throw new InvalidArgumentException('statement_not_editable');
+            }
+
             $existingById = [];
 
             foreach ($statement->getTransactions() as $existing) {
@@ -239,27 +308,31 @@ final class BankStatementService
      */
     public function confirm(BankStatement $statement, User $actor): void
     {
-        if ($statement->getStatus() !== BankStatementStatusEnum::REVIEW) {
-            throw new InvalidArgumentException('statement_not_confirmable');
-        }
-
-        if ($statement->getParseWarnings() !== []) {
-            throw new InvalidArgumentException('statement_integrity_failed');
-        }
-
-        foreach ($statement->getTransactions() as $transaction) {
-            if ($transaction->getCategory()->reconciliable() &&
-                ($transaction->getSalesFrom() === null || $transaction->getSalesTo() === null)
-            ) {
-                throw new InvalidArgumentException('statement_period_missing');
+        DB::transaction(function () use ($statement, $actor): void {
+            $this->lockActiveStore($statement->getStoreId());
+            $statement = $this->lockedStatement($statement);
+            if ($statement->getStatus() !== BankStatementStatusEnum::REVIEW) {
+                throw new InvalidArgumentException('statement_not_confirmable');
             }
-        }
 
-        $statement->update([
-            'status' => BankStatementStatusEnum::CONFIRMED->value,
-            'confirmed_by_user_id' => $actor->getKey(),
-            'confirmed_at' => \now(),
-        ]);
+            if ($statement->getParseWarnings() !== []) {
+                throw new InvalidArgumentException('statement_integrity_failed');
+            }
+
+            foreach ($statement->getTransactions() as $transaction) {
+                if ($transaction->getCategory()->reconciliable() &&
+                    ($transaction->getSalesFrom() === null || $transaction->getSalesTo() === null)
+                ) {
+                    throw new InvalidArgumentException('statement_period_missing');
+                }
+            }
+
+            $statement->update([
+                'status' => BankStatementStatusEnum::CONFIRMED->value,
+                'confirmed_by_user_id' => $actor->getKey(),
+                'confirmed_at' => \now(),
+            ]);
+        });
     }
 
     /**
@@ -267,35 +340,47 @@ final class BankStatementService
      */
     public function reopen(BankStatement $statement, User $actor): void
     {
-        if ($statement->getStatus() !== BankStatementStatusEnum::CONFIRMED) {
-            throw new InvalidArgumentException('statement_not_reopenable');
-        }
+        DB::transaction(function () use ($statement, $actor): void {
+            $this->lockActiveStore($statement->getStoreId());
+            $statement = $this->lockedStatement($statement);
+            if ($statement->getStatus() !== BankStatementStatusEnum::CONFIRMED) {
+                throw new InvalidArgumentException('statement_not_reopenable');
+            }
 
-        $statement->update([
-            'status' => BankStatementStatusEnum::REVIEW->value,
-            'reopened_by_user_id' => $actor->getKey(),
-            'reopened_at' => \now(),
-            'confirmed_by_user_id' => null,
-            'confirmed_at' => null,
-        ]);
+            $statement->update([
+                'status' => BankStatementStatusEnum::REVIEW->value,
+                'reopened_by_user_id' => $actor->getKey(),
+                'reopened_at' => \now(),
+                'confirmed_by_user_id' => null,
+                'confirmed_at' => null,
+            ]);
+        });
     }
 
     /**
      * Queue a new parsing attempt without discarding the current draft first.
      */
-    public function retry(BankStatement $statement): void
+    public function retry(BankStatement $statement): bool
     {
-        if (!\in_array($statement->getStatus(), [BankStatementStatusEnum::REVIEW, BankStatementStatusEnum::FAILED], true)) {
-            throw new InvalidArgumentException('statement_not_retryable');
-        }
+        $statement = DB::transaction(function () use ($statement): BankStatement {
+            $this->lockActiveStore($statement->getStoreId());
+            $statement = $this->lockedStatement($statement);
+            if (!\in_array($statement->getStatus(), [BankStatementStatusEnum::REVIEW, BankStatementStatusEnum::FAILED], true)) {
+                throw new InvalidArgumentException('statement_not_retryable');
+            }
 
-        $statement->update([
-            'status' => BankStatementStatusEnum::QUEUED->value,
-            'last_error' => null,
-            'queued_at' => \now(),
-        ]);
+            $statement->update([
+                'status' => BankStatementStatusEnum::QUEUED->value,
+                'last_error' => null,
+                'queued_at' => \now(),
+                'started_at' => null,
+                'parsed_at' => null,
+            ]);
 
-        \dispatch(new ParseBankStatementJob($statement->getKey()));
+            return $statement;
+        });
+
+        return $this->dispatchParsing($statement);
     }
 
     /**
@@ -303,11 +388,18 @@ final class BankStatementService
      */
     public function fail(BankStatement $statement, string $error): void
     {
-        $statement->update([
-            'status' => BankStatementStatusEnum::FAILED->value,
-            'last_error' => $error,
-            'parsed_at' => \now(),
-        ]);
+        DB::transaction(function () use ($statement, $error): void {
+            $statement = $this->lockedStatement($statement);
+            if (!\in_array($statement->getStatus(), [BankStatementStatusEnum::QUEUED, BankStatementStatusEnum::PROCESSING], true)) {
+                return;
+            }
+
+            $statement->update([
+                'status' => BankStatementStatusEnum::FAILED->value,
+                'last_error' => $error,
+                'parsed_at' => \now(),
+            ]);
+        });
     }
 
     /**
@@ -328,7 +420,7 @@ final class BankStatementService
             'booked_on' => Typer::assertString($row['booked_on'] ?? null),
             'executed_on' => Typer::parseNullableString($row['executed_on'] ?? null),
             'item_type' => Typer::assertString($row['item_type'] ?? null),
-            'amount' => Typer::assertString($row['amount'] ?? null),
+            'amount' => \trim(Typer::assertString($row['amount'] ?? null)),
             'currency' => Typer::assertString($row['currency'] ?? null),
             'counterparty_name' => Typer::parseNullableString($row['counterparty_name'] ?? null),
             'counterparty_account' => $existing instanceof BankStatementTransaction
@@ -343,5 +435,85 @@ final class BankStatementService
             'sales_to' => Typer::parseNullableString($row['sales_to'] ?? null),
             'review_note' => Typer::parseNullableString($row['review_note'] ?? null),
         ];
+    }
+
+    /**
+     * Resolve the current parent state under a row lock.
+     */
+    private function lockedStatement(BankStatement $statement): BankStatement
+    {
+        return Typer::assertInstance(
+            BankStatement::query()->whereKey($statement->getKey())->lockForUpdate()->firstOrFail(),
+            BankStatement::class,
+        );
+    }
+
+    /**
+     * Block prospective import mutations after a store is deactivated.
+     */
+    private function lockActiveStore(int $storeId): Store
+    {
+        $store = Typer::assertInstance(
+            Store::query()->whereKey($storeId)->lockForUpdate()->firstOrFail(),
+            Store::class,
+        );
+        if (!$store->isActive() || $store->isWarehouse()) {
+            \abort(404);
+        }
+
+        return $store;
+    }
+
+    /**
+     * Match only database uniqueness failures, preserving unrelated integrity errors.
+     */
+    private function isUniqueConstraintViolation(QueryException $exception): bool
+    {
+        $driverCode = $exception->errorInfo[1] ?? null;
+
+        return (string) $exception->getCode() === '23000' && \in_array($driverCode, [19, 1062], true);
+    }
+
+    /**
+     * Match only the statement identity index used by parser finalization.
+     */
+    private function isLogicalStatementUniquenessViolation(QueryException $exception): bool
+    {
+        if (!$this->isUniqueConstraintViolation($exception)) {
+            return false;
+        }
+
+        $message = $exception->getMessage();
+
+        return \str_contains($message, 'bank_statements_logical_unique') ||
+            (\str_contains($message, 'bank_statements.user_id') &&
+                \str_contains($message, 'bank_statements.store_id') &&
+                \str_contains($message, 'bank_statements.statement_number'));
+    }
+
+    /**
+     * Queue parsing while preserving a recoverable failed row on transport errors.
+     */
+    private function dispatchParsing(BankStatement $statement): bool
+    {
+        try {
+            \dispatch(new ParseBankStatementJob($statement->getKey()));
+        } catch (Throwable) {
+            $this->fail($statement, 'queue_dispatch_failed');
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Trim an optional parser string without changing null semantics.
+     */
+    private function nullableTrimmedString(mixed $value): string|null
+    {
+        $value = Typer::parseNullableString($value);
+
+        return $value === null ? null : \trim($value);
     }
 }

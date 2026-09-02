@@ -8,6 +8,7 @@ use App\Models\Concerns\BelongsToUser;
 use Database\Factories\WorkerFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Models\BaseModel;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -58,6 +59,26 @@ class Worker extends BaseModel
     }
 
     /**
+     * Scope a query to workers available for new work.
+     *
+     * @param Builder<Worker> $query
+     */
+    public static function scopeActive(Builder $query): void
+    {
+        $query->whereNull('archived_at');
+    }
+
+    /**
+     * Scope a query to archived workers retained for historical records.
+     *
+     * @param Builder<Worker> $query
+     */
+    public static function scopeArchived(Builder $query): void
+    {
+        $query->whereNotNull('archived_at');
+    }
+
+    /**
      * Restrict the query to a curated set of columns for list views.
      *
      * @param Builder<Worker> $query
@@ -66,7 +87,7 @@ class Worker extends BaseModel
      */
     public static function querySelect(Builder $query): Builder
     {
-        return $query->select(['id', 'user_id', 'first_name', 'last_name', 'calendar_color', 'hourly_rate', 'attendance_rating_enabled', 'created_at', 'updated_at']);
+        return $query->select(['id', 'user_id', 'first_name', 'last_name', 'calendar_color', 'hourly_rate', 'attendance_rating_enabled', 'archived_at', 'created_at', 'updated_at']);
     }
 
     /**
@@ -146,7 +167,15 @@ class Worker extends BaseModel
      */
     public function getHourlyRate(): float
     {
-        return (float) Typer::assertString($this->getAttribute('hourly_rate'));
+        return (float) $this->getHourlyRateDecimal();
+    }
+
+    /**
+     * Hourly rate without floating-point conversion.
+     */
+    public function getHourlyRateDecimal(): string
+    {
+        return Typer::assertString($this->getAttribute('hourly_rate'));
     }
 
     /**
@@ -155,6 +184,22 @@ class Worker extends BaseModel
     public function isAttendanceRatingEnabled(): bool
     {
         return $this->assertBool('attendance_rating_enabled');
+    }
+
+    /**
+     * Archive timestamp, retained separately from deletion semantics.
+     */
+    public function getArchivedAt(): Carbon|null
+    {
+        return $this->assertNullableCarbon('archived_at');
+    }
+
+    /**
+     * Whether this worker is unavailable for new work.
+     */
+    public function isArchived(): bool
+    {
+        return $this->getArchivedAt() instanceof Carbon;
     }
 
     /**
@@ -175,6 +220,7 @@ class Worker extends BaseModel
         return [
             'hourly_rate' => 'decimal:2',
             'attendance_rating_enabled' => 'boolean',
+            'archived_at' => 'datetime',
         ];
     }
 }

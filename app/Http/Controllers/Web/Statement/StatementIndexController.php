@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Web\Statement;
 
 use App\Models\Statement;
 use App\Models\StatementDay;
+use App\Models\Store;
 use App\Models\User;
 use App\Services\AttendanceService;
 use App\Services\BankStatementReconciliationService;
@@ -42,7 +43,7 @@ class StatementIndexController
         }
 
         $scopeUser = $user->resolveScopeUser();
-        $store = ActiveStoreResolver::resolve($request, $user);
+        $store = ActiveStoreResolver::resolveIncludingInactive($request, $user);
 
         $now = Carbon::now(StatementService::TIMEZONE);
         $year = Typer::parseNullableInt($request->query('year')) ?? $now->year;
@@ -53,17 +54,32 @@ class StatementIndexController
         $todayStatement = null;
         $todayDay = null;
 
-        if ($store !== null) {
-            $statement = $service->findOrCreateForMonth($scopeUser, $store, $year, $month);
+        if ($store instanceof Store) {
+            if ($store->isActive()) {
+                $statement = $service->findOrCreateForMonth($scopeUser, $store, $year, $month);
+            } else {
+                $query = Statement::query();
+                Statement::scopeForUser($query, $scopeUser);
+                Statement::scopeForStore($query, $store->getKey());
+                Statement::scopeForMonth($query, $year, $month);
+                $statement = $query->first();
+            }
+        }
+
+        if ($statement instanceof Statement) {
             $days = $statement->days()->orderBy('date')->get()->map(
                 static fn(StatementDay $day): array => self::dayPayload($day),
             )->all();
+        }
 
+        if ($store instanceof Store && $store->isActive()) {
             $todayStatement = $year === $now->year && $month === $now->month
                 ? $statement
                 : $service->findOrCreateForMonth($scopeUser, $store, $now->year, $now->month);
-            $resolvedTodayDay = $todayStatement->days()->whereDate('date', $now->toDateString())->first();
-            $todayDay = $resolvedTodayDay instanceof StatementDay ? self::dayPayload($resolvedTodayDay) : null;
+            if ($todayStatement instanceof Statement) {
+                $resolvedTodayDay = $todayStatement->days()->whereDate('date', $now->toDateString())->first();
+                $todayDay = $resolvedTodayDay instanceof StatementDay ? self::dayPayload($resolvedTodayDay) : null;
+            }
         }
 
         return Inertia::render('statements/Index', [
@@ -81,6 +97,12 @@ class StatementIndexController
                 'month' => $todayStatement->getMonth(),
             ] : null,
             'today_day' => $todayDay,
+            'store' => $store instanceof Store ? [
+                'id' => $store->getKey(),
+                'name' => $store->getName(),
+                'is_active' => $store->isActive(),
+            ] : null,
+            'editable' => $store?->isActive() ?? false,
             'filters' => [
                 'store_id' => $store?->getKey(),
                 'year' => $year,
@@ -90,7 +112,7 @@ class StatementIndexController
             'bank_reconciliation' => $user->isAdmin()
                 ? $bankReconciliation->monthlyStatus($scopeUser, $store, $year, $month)
                 : null,
-            'active_attendances' => $store !== null
+            'active_attendances' => $store instanceof Store && $store->isActive()
                 ? (new AttendanceService())->activeCurrentDayEmployees($user, $store)
                 : [],
         ]);

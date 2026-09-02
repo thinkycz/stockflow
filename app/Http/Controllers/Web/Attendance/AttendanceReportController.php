@@ -26,9 +26,9 @@ class AttendanceReportController
     public function __invoke(Request $request): Response
     {
         $admin = User::mustAuth();
-        $store = ActiveStoreResolver::resolve($request, $admin);
+        $store = ActiveStoreResolver::resolveIncludingInactive($request, $admin);
         if (!$store instanceof Store || $store->isWarehouse()) {
-            return Inertia::render('attendance/Report', ['store' => null, 'workers' => [], 'filters' => null, 'report' => null]);
+            return Inertia::render('attendance/Report', ['store' => null, 'workers' => [], 'active_workers' => [], 'filters' => null, 'report' => null]);
         }
 
         $monthValue = $request->query('month');
@@ -39,10 +39,18 @@ class AttendanceReportController
         Worker::scopeForUser($workerQuery, $admin);
         Worker::querySelect($workerQuery);
         $workers = $workerQuery->orderBy('last_name')->orderBy('first_name')->take(self::TAKE)->get();
+        $activeWorkerQuery = Worker::query();
+        Worker::scopeForUser($activeWorkerQuery, $admin);
+        Worker::scopeActive($activeWorkerQuery);
+        Worker::querySelect($activeWorkerQuery);
+        $activeWorkers = $activeWorkerQuery->orderBy('last_name')->orderBy('first_name')->take(self::TAKE)->get();
 
         return Inertia::render('attendance/Report', [
-            'store' => ['id' => $store->getKey(), 'name' => $store->getName()],
+            'store' => ['id' => $store->getKey(), 'name' => $store->getName(), 'is_active' => $store->isActive()],
             'workers' => $workers->map(static fn(Worker $worker): array => [
+                'id' => $worker->getKey(), 'first_name' => $worker->getFirstName(), 'last_name' => $worker->getLastName(),
+            ])->all(),
+            'active_workers' => $activeWorkers->map(static fn(Worker $worker): array => [
                 'id' => $worker->getKey(), 'first_name' => $worker->getFirstName(), 'last_name' => $worker->getLastName(),
             ])->all(),
             'filters' => ['month' => $month, 'worker_id' => $workerId],

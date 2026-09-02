@@ -20,7 +20,7 @@ class ItemFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => static fn(): int => UserFactory::new()->createOne()->getKey(),
+            'user_id' => static fn(): int => UserFactory::new()->admin()->createOne()->getKey(),
             'title' => $this->faker->unique()->words(2, true),
             'sku' => $this->faker->unique()->bothify('SKU-####'),
             'unit' => $this->faker->randomElement(['pcs', 'g', 'ml', 'bag']),

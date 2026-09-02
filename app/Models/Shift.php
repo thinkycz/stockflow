@@ -178,7 +178,15 @@ class Shift extends BaseModel
      */
     public function getHourlyRate(): float
     {
-        return (float) Typer::assertString($this->getAttribute('hourly_rate'));
+        return (float) $this->getHourlyRateDecimal();
+    }
+
+    /**
+     * Snapshotted hourly rate without floating-point conversion.
+     */
+    public function getHourlyRateDecimal(): string
+    {
+        return Typer::assertString($this->getAttribute('hourly_rate'));
     }
 
     /**

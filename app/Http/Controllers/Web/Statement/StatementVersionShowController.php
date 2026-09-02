@@ -70,6 +70,7 @@ class StatementVersionShowController
                 'id' => $statement->getKey(),
                 'store_id' => $store->getKey(),
                 'store_name' => $store->getName(),
+                'store_active' => $store->isActive(),
                 'year' => $statement->getYear(),
                 'month' => $statement->getMonth(),
             ],

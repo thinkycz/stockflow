@@ -26,6 +26,7 @@ const props = defineProps<{
         id: number;
         store_id: number;
         store_name: string;
+        store_active: boolean;
         year: number;
         month: number;
     };
@@ -74,7 +75,9 @@ const totals = computed(() => ({
                     <p class="mt-1 text-sm text-on-surface-variant">
                         {{ t('statements.history.subtitle') }}
                     </p>
-                    <StoreContextIndicator />
+                    <StoreContextIndicator
+                        :store="{ name: props.statement.store_name }"
+                    />
                 </div>
             </header>
 

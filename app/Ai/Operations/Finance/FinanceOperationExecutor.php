@@ -23,6 +23,7 @@ use App\Services\FinancialReportService;
 use App\Services\GiftVoucherBrandingService;
 use App\Services\GiftVoucherService;
 use App\Services\PayrollReportService;
+use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use InvalidArgumentException;
@@ -117,7 +118,7 @@ final class FinanceOperationExecutor implements AssistantOperationExecutor
             'create_recurring_expense' => $this->createRecurring($actor, Typer::assertInstance($resolvedStore, Store::class), $values),
             'update_recurring_expense' => $this->updateRecurring($actor, Typer::assertInstance($resolvedStore, Store::class), Typer::assertInt($targetId), $values),
             'terminate_recurring_expense' => $this->terminateRecurring($actor, Typer::assertInstance($resolvedStore, Store::class), Typer::assertInt($targetId), $values),
-            'create_payroll_adjustment' => $this->payroll->createAdjustment($actor, Typer::assertInstance($resolvedStore, Store::class), Typer::assertInt($year), Typer::assertInt($month), $this->worker($actor, Typer::parseInt($context['worker_id'] ?? null)), PayrollAdjustmentTypeEnum::from(Typer::assertString($values['type'] ?? null)), Typer::parseFloat($values['amount'] ?? null), Typer::assertString($values['reason'] ?? null))->getKey(),
+            'create_payroll_adjustment' => $this->payroll->createAdjustment($actor, Typer::assertInstance($resolvedStore, Store::class), Typer::assertInt($year), Typer::assertInt($month), $this->worker($actor, Typer::parseInt($context['worker_id'] ?? null)), PayrollAdjustmentTypeEnum::from(Typer::assertString($values['type'] ?? null)), Money::input($values['amount'] ?? null), Typer::assertString($values['reason'] ?? null))->getKey(),
             'issue_gift_vouchers' => $this->issueVouchers($actor, $values),
             'redeem_gift_voucher' => $this->vouchers->redeem($actor, Typer::assertInstance($resolvedStore, Store::class), $this->voucher($actor, Typer::assertInt($targetId)))->getKey(),
             'void_gift_voucher' => $this->vouchers->void($actor, $this->voucher($actor, Typer::assertInt($targetId)), Typer::assertString($values['reason'] ?? null))->getKey(),
@@ -147,11 +148,11 @@ final class FinanceOperationExecutor implements AssistantOperationExecutor
             'reopen_payroll_report' => $this->payroll->reopen($actor, $store, Typer::assertInt($year), Typer::assertInt($month)),
             'add_payroll_worker' => $this->payroll->addWorker($actor, $store, Typer::assertInt($year), Typer::assertInt($month), $this->worker($actor, Typer::parseInt($context['worker_id'] ?? null))),
             'remove_payroll_worker' => $this->payroll->removeWorker($actor, $store, Typer::assertInt($year), Typer::assertInt($month), Typer::parseInt($context['worker_id'] ?? null)),
-            'set_payroll_wage_override' => $this->payroll->upsertWageOverride($actor, $store, Typer::assertInt($year), Typer::assertInt($month), $this->worker($actor, Typer::parseInt($context['worker_id'] ?? null)), Typer::parseFloat($values['hours'] ?? null), Typer::parseFloat($values['hourly_rate'] ?? null)),
+            'set_payroll_wage_override' => $this->payroll->upsertWageOverride($actor, $store, Typer::assertInt($year), Typer::assertInt($month), $this->worker($actor, Typer::parseInt($context['worker_id'] ?? null)), Money::input($values['hours'] ?? null), Money::input($values['hourly_rate'] ?? null)),
             'reset_payroll_wage_override' => $this->payroll->deleteWageOverride($actor, $store, Typer::assertInt($year), Typer::assertInt($month), Typer::parseInt($context['worker_id'] ?? null)),
-            'update_payroll_adjustment' => $this->payroll->updateAdjustment($actor, $store, Typer::assertInt($year), Typer::assertInt($month), Typer::assertInt($targetId), PayrollAdjustmentTypeEnum::from(Typer::assertString($values['type'] ?? null)), Typer::parseFloat($values['amount'] ?? null), Typer::assertString($values['reason'] ?? null)),
+            'update_payroll_adjustment' => $this->payroll->updateAdjustment($actor, $store, Typer::assertInt($year), Typer::assertInt($month), Typer::assertInt($targetId), PayrollAdjustmentTypeEnum::from(Typer::assertString($values['type'] ?? null)), Money::input($values['amount'] ?? null), Typer::assertString($values['reason'] ?? null)),
             'delete_payroll_adjustment' => $this->payroll->deleteAdjustment($actor, $store, Typer::assertInt($year), Typer::assertInt($month), Typer::assertInt($targetId)),
-            'distribute_payroll_tips' => $this->payroll->distributeTips($actor, $store, Typer::assertInt($year), Typer::assertInt($month), Typer::parseFloat($values['amount'] ?? null)),
+            'distribute_payroll_tips' => $this->payroll->distributeTips($actor, $store, Typer::assertInt($year), Typer::assertInt($month), Money::input($values['amount'] ?? null)),
             'update_voucher_branding' => $this->branding->update($actor, Typer::assertString($values['public_name'] ?? null), Typer::parseNullableString($values['message'] ?? null), null, Typer::parseBool($values['remove_logo'] ?? false)),
             default => throw new InvalidArgumentException('Unknown finance operation.'),
         };

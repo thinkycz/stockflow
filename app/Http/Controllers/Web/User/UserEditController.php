@@ -72,9 +72,10 @@ class UserEditController
 
         $validated = $this->validateRequest($request, $rules);
 
-        $assignedStore = $isSelf
-            ? null
-            : Store::query()->where('user_id', $admin->getKey())->whereKey($validated->parseInt('assigned_store_id'))->firstOrFail();
+        $storeQuery = Store::query()->where('user_id', $admin->getKey());
+        Store::scopeActive($storeQuery);
+        Store::scopeRetail($storeQuery);
+        $assignedStore = $isSelf ? null : $storeQuery->whereKey($validated->parseInt('assigned_store_id'))->firstOrFail();
         (new AdministrationManagementService())->updateUser(
             $admin,
             $user,
@@ -114,6 +115,8 @@ class UserEditController
     {
         $query = Store::query();
         Store::scopeForUser($query, $admin);
+        Store::scopeActive($query);
+        Store::scopeRetail($query);
 
         return $query->orderBy('name')
             ->get()

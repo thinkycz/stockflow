@@ -175,6 +175,7 @@
             "restore_checklist_day": "Obnoviť deň checklistu v predajni {store}.",
             "restore_noticeboard_card": "Obnoviť oznámenie v predajni {store}.",
             "restore_statement_version": "Obnoviť vybranú verziu výkazu.",
+            "restore_worker": "Obnoviť brigádnika.",
             "retry_slack_digest": "Znovu odoslať neúspešný súhrn do Slacku.",
             "reverse_gift_voucher_redemption": "Vrátiť uplatnenie darčekového poukazu.",
             "reverse_stock_movement": "Stornovať skladový pohyb v predajni {store}.",
@@ -264,8 +265,8 @@
         },
         "forgot": {
             "title": "Zabudnuté heslo",
-            "subtitle": "Odošleme nové vygenerované heslo prostredníctvom core mail flow.",
-            "submit": "Odoslať heslo"
+            "subtitle": "Zadajte e-mailovú adresu a my vám pošleme bezpečný odkaz na obnovenie hesla.",
+            "submit": "Odoslať odkaz"
         },
         "reset": {
             "title": "Obnoviť heslo",
@@ -1207,7 +1208,10 @@
         },
         "errors": {
             "provider_or_parse_failed": "Poskytovateľ AI výpis nespracoval. Skúste úlohu spustiť znovu.",
-            "duplicate_statement": "Tento výpis už bol pre prevádzku a obdobie importovaný."
+            "duplicate_statement": "Tento výpis už bol pre prevádzku a obdobie importovaný.",
+            "queue_dispatch_failed": "Výpis sa nepodarilo zaradiť do frontu. Skúste to znova.",
+            "processing_timeout": "Spracovanie trvalo príliš dlho. Skúste výpis spracovať znova.",
+            "invalid_parser_payload": "Extrahované údaje výpisu nie sú platné. Skontrolujte dokument a skúste to znova."
         },
         "warnings": {
             "credit_count_mismatch": "Nesedí počet príjmov.",
@@ -1384,6 +1388,13 @@
         "add_worker": "Pridať brigádnika",
         "search_placeholder": "Hľadať brigádnikov...",
         "confirm_delete": "Naozaj chcete zmazať tohto brigádnika?",
+        "restore": "Obnoviť brigádnika",
+        "filters": {
+            "label": "Stav",
+            "active": "Aktívni",
+            "archived": "Archivovaní",
+            "all": "Všetci brigádnici"
+        },
         "attendance_rating_enabled": "Hodnotiť dochádzku",
         "attendance_rating_help": "Vypnutie skryje hodnotenie dochádzky, ale príchody, odchody, výkazy a mzdy zostanú bez zmeny.",
         "calendar_color": {

@@ -20,7 +20,7 @@ class ShiftPresetFactory extends Factory
      */
     public function definition(): array
     {
-        $user = UserFactory::new()->createOne();
+        $user = UserFactory::new()->admin()->createOne();
 
         return [
             'user_id' => $user->getKey(),

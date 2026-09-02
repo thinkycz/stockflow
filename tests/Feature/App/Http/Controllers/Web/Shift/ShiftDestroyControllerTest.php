@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\StoreStatusEnum;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\Worker;
@@ -39,4 +40,23 @@ use App\Models\Worker;
         ->assertNotFound();
 
     \expect(Shift::query()->whereKey($foreign->getKey())->exists())->toBeTrue();
+});
+
+\test('cannot delete historical shifts from an inactive store', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    $shift = Shift::factory()->create([
+        'user_id' => $admin->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => $worker->getKey(),
+        'date' => '2026-01-01',
+    ]);
+    $store->update(['status' => StoreStatusEnum::INACTIVE->value]);
+
+    $this->be($admin, 'users')
+        ->delete("/shifts/{$shift->getKey()}")
+        ->assertNotFound();
+
+    \expect($shift->fresh())->not->toBeNull();
 });

@@ -207,6 +207,14 @@ class Store extends BaseModel
     }
 
     /**
+     * Whether the store can receive prospective operational work.
+     */
+    public function isActive(): bool
+    {
+        return $this->getStatus() === StoreStatusEnum::ACTIVE;
+    }
+
+    /**
      * Whether this store is the user's warehouse.
      */
     public function isWarehouse(): bool

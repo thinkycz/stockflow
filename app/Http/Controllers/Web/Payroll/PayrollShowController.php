@@ -23,7 +23,7 @@ class PayrollShowController
     public function __invoke(Request $request, int $worker): Response
     {
         $admin = User::mustAuth();
-        $store = ActiveStoreResolver::resolve($request, $admin);
+        $store = ActiveStoreResolver::resolveIncludingInactive($request, $admin);
         if (!$store instanceof Store || $store->isWarehouse()) {
             \abort(404);
         }
@@ -45,6 +45,7 @@ class PayrollShowController
                 'id' => $store->getKey(),
                 'name' => $store->getName(),
                 'is_warehouse' => $store->isWarehouse(),
+                'is_active' => $store->isActive(),
             ],
             'filters' => ['year' => $year, 'month' => $month],
             'report' => [

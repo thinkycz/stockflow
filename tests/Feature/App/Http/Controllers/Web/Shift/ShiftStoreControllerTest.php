@@ -168,3 +168,18 @@ use App\Models\Worker;
 
     \expect(Shift::query()->where('worker_id', $worker->getKey())->exists())->toBeFalse();
 });
+
+\test('archived worker cannot receive a new shift', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey(), 'archived_at' => \now()]);
+
+    $this->be($admin, 'users')->post('/shifts', [
+        'worker_id' => $worker->getKey(),
+        'date' => '2026-09-15',
+        'start_time' => '10:00',
+        'end_time' => '15:00',
+    ], $this->inertiaHeaders())->assertRedirect()->assertSessionHasErrors(['worker_id']);
+
+    \expect(Shift::query()->where('worker_id', $worker->getKey())->exists())->toBeFalse();
+});

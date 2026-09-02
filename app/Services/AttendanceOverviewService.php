@@ -170,6 +170,7 @@ class AttendanceOverviewService
     {
         $query = Worker::query();
         Worker::scopeForUser($query, $owner);
+        Worker::scopeActive($query);
         Worker::querySelect($query);
 
         return $query->orderBy('last_name')->orderBy('first_name')->get();

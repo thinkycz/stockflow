@@ -3,7 +3,6 @@ import { Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
-import Checkbox from '@/components/ui/Checkbox.vue';
 import Card from '@/components/ui/Card.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
@@ -132,17 +131,6 @@ function submit(): void {
                             :message="form.errors.notes"
                         />
                     </div>
-
-                    <div class="flex items-center gap-2">
-                        <Checkbox
-                            id="is_warehouse"
-                            v-model="form.is_warehouse"
-                        />
-                        <Label for="is_warehouse">{{
-                            t('stores.columns.is_warehouse')
-                        }}</Label>
-                    </div>
-                    <FieldError :message="form.errors.is_warehouse" />
 
                     <div
                         class="flex items-center justify-end gap-3 border-t border-outline-glass pt-4"

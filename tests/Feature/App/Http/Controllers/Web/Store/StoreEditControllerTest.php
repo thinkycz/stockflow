@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Enums\StoreStatusEnum;
+use App\Models\Item;
 use App\Models\Store;
+use App\Models\StoreItem;
 
 \test('store edit form is reachable', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
@@ -49,4 +51,55 @@ use App\Models\Store;
             'status' => StoreStatusEnum::ACTIVE->value,
         ])
         ->assertNotFound();
+});
+
+\test('required warehouse cannot be deactivated or demoted', function (): void {
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
+
+    $this->be($user, 'users')->put("/stores/{$warehouse->getKey()}", [
+        'name' => $warehouse->getName(),
+        'status' => StoreStatusEnum::INACTIVE->value,
+        'is_warehouse' => true,
+    ], $this->inertiaHeaders())->assertSessionHasErrors('status');
+
+    $this->be($user, 'users')->put("/stores/{$warehouse->getKey()}", [
+        'name' => $warehouse->getName(),
+        'status' => StoreStatusEnum::ACTIVE->value,
+        'is_warehouse' => false,
+    ], $this->inertiaHeaders())->assertSessionHasErrors('is_warehouse');
+
+    \expect($warehouse->refresh()->getStatus())->toBe(StoreStatusEnum::ACTIVE)
+        ->and($warehouse->isWarehouse())->toBeTrue();
+});
+
+\test('retail store cannot be promoted into a second warehouse', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
+
+    $this->be($user, 'users')->put("/stores/{$store->getKey()}", [
+        'name' => $store->getName(),
+        'status' => StoreStatusEnum::ACTIVE->value,
+        'is_warehouse' => true,
+    ], $this->inertiaHeaders())->assertSessionHasErrors('is_warehouse');
+
+    \expect($store->refresh()->isWarehouse())->toBeFalse();
+});
+
+\test('retail store with live work cannot be deactivated through edit', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create([
+        'user_id' => $user->getKey(),
+        'is_warehouse' => false,
+        'status' => StoreStatusEnum::ACTIVE->value,
+    ]);
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
+    StoreItem::query()->create(['store_id' => $store->getKey(), 'item_id' => $item->getKey(), 'quantity' => 1]);
+
+    $this->be($user, 'users')->put("/stores/{$store->getKey()}", [
+        'name' => $store->getName(),
+        'status' => StoreStatusEnum::INACTIVE->value,
+        'is_warehouse' => false,
+    ], $this->inertiaHeaders())->assertSessionHasErrors('status');
+
+    \expect($store->refresh()->getStatus())->toBe(StoreStatusEnum::ACTIVE);
 });

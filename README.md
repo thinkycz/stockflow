@@ -32,10 +32,28 @@ make check
 
 Minimal API-compatible auth endpoints remain under `/api/v1/auth`, `/api/v1/me`, `/api/v1/password`, and `/api/v1/email_verification`.
 
-There is no public registration endpoint. On an empty database `UserSeeder`
-creates `test@test.com / password` and the initial warehouse. These known
-credentials are an explicitly accepted deployment risk; change them through
-account settings after provisioning.
+There is no public registration endpoint. After migrating an empty database,
+provision the single main administrator with a password entered through hidden
+console prompts, then verify the production identity boundary:
+
+```sh
+php artisan stockflow:admin:bootstrap owner@example.com
+php artisan stockflow:identity:diagnose
+```
+
+Demo seeders, including the old `test@test.com / password` account, are restricted
+to `local` and `testing`. Development, staging, and production Make targets never
+run seeders. An existing installation still using the demo credential must rotate
+it before the production target can pass:
+
+```sh
+php artisan stockflow:admin:bootstrap test@test.com --rotate
+```
+
+Cookie-authenticated API clients must first call `GET /api/v1/csrf-cookie` with
+credentials enabled, then copy the readable `XSRF-TOKEN` cookie into the
+`X-XSRF-TOKEN` header on POST, PUT, PATCH, and DELETE requests. Authorization
+bearer clients do not require this CSRF handshake.
 
 Before a single-company migration, back up MySQL and run:
 

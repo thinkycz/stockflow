@@ -36,22 +36,26 @@ class NoticeboardCardService
         $imageData = $this->storeImage($store, $image);
 
         try {
-            return DB::transaction(fn(): NoticeboardCard => NoticeboardCard::query()->create([
-                'user_id' => $actor->resolveScopeUser()->getKey(),
-                'store_id' => $store->getKey(),
-                'created_by_user_id' => $actor->getKey(),
-                'updated_by_user_id' => $actor->getKey(),
-                'title' => $this->title($content['text']),
-                'body_html' => $content['html'],
-                'body_text' => $content['text'],
-                'label' => $label,
-                'color' => $color,
-                'size' => $size,
-                'image_path' => $imageData['path'],
-                'image_mime' => $imageData['mime'],
-                'expires_at' => $this->expiration($expiresOn),
-                'lock_version' => 1,
-            ]));
+            return DB::transaction(function () use ($actor, $store, $content, $label, $color, $size, $expiresOn, $imageData): NoticeboardCard {
+                $store = $this->lockActiveStore($actor->resolveScopeUser()->getKey(), $store->getKey());
+
+                return NoticeboardCard::query()->create([
+                    'user_id' => $actor->resolveScopeUser()->getKey(),
+                    'store_id' => $store->getKey(),
+                    'created_by_user_id' => $actor->getKey(),
+                    'updated_by_user_id' => $actor->getKey(),
+                    'title' => $this->title($content['text']),
+                    'body_html' => $content['html'],
+                    'body_text' => $content['text'],
+                    'label' => $label,
+                    'color' => $color,
+                    'size' => $size,
+                    'image_path' => $imageData['path'],
+                    'image_mime' => $imageData['mime'],
+                    'expires_at' => $this->expiration($expiresOn),
+                    'lock_version' => 1,
+                ]);
+            });
         } catch (Throwable $throwable) {
             $this->deleteImage($imageData['path']);
 
@@ -91,6 +95,7 @@ class NoticeboardCardService
                 $removeImage,
                 $lockVersion,
             ): NoticeboardCard {
+                $this->lockActiveStore($actor->resolveScopeUser()->getKey(), $card->getStoreId());
                 $locked = NoticeboardCard::query()
                     ->whereKey($card->getKey())
                     ->where('store_id', $card->getStoreId())
@@ -143,7 +148,15 @@ class NoticeboardCardService
      */
     public function trash(NoticeboardCard $card): void
     {
-        $card->delete();
+        DB::transaction(function () use ($card): void {
+            $this->lockActiveStore($card->getUserId(), $card->getStoreId());
+            NoticeboardCard::query()
+                ->where('store_id', $card->getStoreId())
+                ->whereKey($card->getKey())
+                ->lockForUpdate()
+                ->firstOrFail()
+                ->delete();
+        });
     }
 
     /**
@@ -151,7 +164,16 @@ class NoticeboardCardService
      */
     public function restore(NoticeboardCard $card): void
     {
-        $card->restore();
+        DB::transaction(function () use ($card): void {
+            $this->lockActiveStore($card->getUserId(), $card->getStoreId());
+            NoticeboardCard::query()
+                ->withTrashed()
+                ->where('store_id', $card->getStoreId())
+                ->whereKey($card->getKey())
+                ->lockForUpdate()
+                ->firstOrFail()
+                ->restore();
+        });
     }
 
     /**
@@ -159,13 +181,39 @@ class NoticeboardCardService
      */
     public function forceDelete(NoticeboardCard $card): bool
     {
-        $path = $card->getImagePath();
+        return DB::transaction(function () use ($card): bool {
+            $this->lockActiveStore($card->getUserId(), $card->getStoreId());
+            $locked = NoticeboardCard::query()
+                ->withTrashed()
+                ->where('store_id', $card->getStoreId())
+                ->whereKey($card->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        if ($path !== null && !$this->deleteImage($path)) {
-            return false;
+            if (!$this->deleteImage($locked->getImagePath())) {
+                return false;
+            }
+
+            return (bool) $locked->forceDelete();
+        });
+    }
+
+    /**
+     * Lock and recheck the owning store before any prospective card mutation.
+     */
+    private function lockActiveStore(int $userId, int $storeId): Store
+    {
+        $store = Store::query()
+            ->where('user_id', $userId)
+            ->whereKey($storeId)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        if (!$store->isActive()) {
+            \abort(404);
         }
 
-        return (bool) $card->forceDelete();
+        return $store;
     }
 
     /**

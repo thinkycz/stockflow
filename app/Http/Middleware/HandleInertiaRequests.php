@@ -159,6 +159,7 @@ class HandleInertiaRequests extends Middleware
 
         $query = Store::query();
         Store::scopeForUser($query, $user);
+        Store::scopeActive($query);
 
         if (!$user->isAdmin()) {
             $assignedId = $user->getAssignedStoreId();

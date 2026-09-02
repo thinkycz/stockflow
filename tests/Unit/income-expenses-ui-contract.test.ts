@@ -23,4 +23,10 @@ describe('income and expenses ui contract', () => {
         expect(page).toContain('section.calculatedTotal');
         expect(page).toContain('section.effectiveTotal');
     });
+
+    test('inactive historical reports are read only and keep exact store context', () => {
+        expect(page).toContain('active_store?.is_active &&');
+        expect(page).toContain('store_id: props.active_store?.id ?? null');
+        expect(page).toContain('store_id: active_store?.id ?? null');
+    });
 });

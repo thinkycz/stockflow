@@ -7,15 +7,20 @@ namespace Database\Seeders;
 use App\Enums\StoreStatusEnum;
 use App\Models\Store;
 use App\Models\User;
+use Database\Seeders\Concerns\OnlyRunsInDemoEnvironment;
 use Illuminate\Database\Seeder;
 
 class StoreSeeder extends Seeder
 {
+    use OnlyRunsInDemoEnvironment;
+
     /**
      * Seed the application's stores.
      */
     public function run(): void
     {
+        $this->ensureDemoEnvironment();
+
         $user = User::query()->first();
 
         if (!$user instanceof User) {

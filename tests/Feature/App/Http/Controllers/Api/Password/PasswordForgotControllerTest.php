@@ -6,71 +6,61 @@ use App\Http\Controllers\Api\Password\PasswordForgotController;
 use App\Models\User;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Facades\Notification;
-use Thinkycz\LaravelCore\Notifications\PasswordNewPasswordSettedNotification;
+use Thinkycz\LaravelCore\Models\DatabaseToken;
 use Thinkycz\LaravelCore\Notifications\PasswordResetNotification;
-use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Typer;
 
-\test('user can request password reset link', function (): void {
-    $user = UserFactory::new()->createOne([
-        'email' => 'forgot@example.com',
-    ]);
-    \expect($user)->toBeInstanceOf(User::class);
-
-    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(PasswordForgotController::class), [
-        'email' => $user->getEmail(),
-    ]);
-
-    $response->assertNoContent();
-});
-
-\test('user can request password reset link reset link flow', function (): void {
+\test('known email sends reset link without changing password or sessions', function (): void {
     Notification::fake();
 
-    Config::inject()->assign('auth.defaults.passwords', 'users');
-    Config::inject()->assign('auth.passwords.users.send_raw_password', false);
-
-    $user = UserFactory::new()->createOne([
+    $user = Typer::assertInstance(UserFactory::new()->createOne([
         'email' => 'forgot@example.com',
-    ]);
-    \expect($user)->toBeInstanceOf(User::class);
+    ]), User::class);
+    $originalHash = $user->getAuthPassword();
+    DatabaseToken::inject()->login($user->getTable(), $user);
 
     $response = $this->postJson(Resolver::resolveUrlGenerator()->action(PasswordForgotController::class), [
         'email' => $user->getEmail(),
     ]);
 
     $response->assertNoContent();
+    $user->refresh();
 
+    \expect($user->getAuthPassword())->toBe($originalHash);
+    $this->assertDatabaseCount('database_tokens', 1);
+    $this->assertDatabaseHas('user_password_resets', ['email' => $user->getEmail()]);
     Notification::assertSentTo($user, PasswordResetNotification::class);
 });
 
-\test('user can request password reset link send raw password flow', function (): void {
+\test('unknown email has the same public response as a known email', function (): void {
     Notification::fake();
 
-    Config::inject()->assign('auth.defaults.passwords', 'users');
-    Config::inject()->assign('auth.passwords.users.send_raw_password', true);
-
-    $user = UserFactory::new()->createOne([
-        'email' => 'forgot@example.com',
+    $known = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+    $knownResponse = $this->postJson(Resolver::resolveUrlGenerator()->action(PasswordForgotController::class), [
+        'email' => $known->getEmail(),
     ]);
-    \expect($user)->toBeInstanceOf(User::class);
+    $unknownResponse = $this->postJson(Resolver::resolveUrlGenerator()->action(PasswordForgotController::class), [
+        'email' => 'nobody@example.com',
+    ]);
+
+    $knownResponse->assertNoContent();
+    $unknownResponse->assertNoContent();
+});
+
+\test('notification dispatch failure removes the reset token without exposing the account', function (): void {
+    $user = Typer::assertInstance(UserFactory::new()->createOne(), User::class);
+
+    Notification::shouldReceive('send')
+        ->once()
+        ->andThrow(new RuntimeException('Notification transport unavailable.'));
 
     $response = $this->postJson(Resolver::resolveUrlGenerator()->action(PasswordForgotController::class), [
         'email' => $user->getEmail(),
     ]);
 
     $response->assertNoContent();
-
-    Notification::assertSentTo($user, PasswordNewPasswordSettedNotification::class);
-});
-
-\test('password reset link request fails with invalid email', function (): void {
-    $response = $this->postJson(Resolver::resolveUrlGenerator()->action(PasswordForgotController::class), [
-        'email' => 'nonexistent@example.com',
-    ]);
-
-    $response->assertUnprocessable();
-    $response->assertJsonValidationErrors('email');
+    $this->assertDatabaseMissing('user_password_resets', ['email' => $user->getEmail()]);
 });
 
 \test('password reset link request requires email', function (): void {

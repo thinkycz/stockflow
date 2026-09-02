@@ -6,7 +6,7 @@ $toolForAction = static function (string $action): string {
     foreach ([
         'write_stores' => ['create_store', 'update_store', 'delete_store', 'switch_active_store'],
         'write_users' => ['create_user', 'update_user', 'delete_user'],
-        'write_workers' => ['create_worker', 'update_worker', 'delete_worker'],
+        'write_workers' => ['create_worker', 'update_worker', 'delete_worker', 'restore_worker'],
         'write_settings' => ['update_profile', 'update_slack_channel', 'test_slack_channel', 'retry_slack_digest'],
         'write_attendance' => ['record_attendance_action', 'create_attendance_correction', 'update_attendance_correction', 'void_attendance_session', 'review_attendance_deviation'],
         'write_shifts' => ['create_shift', 'quick_add_shift', 'update_shift', 'delete_shift', 'create_shift_preset', 'update_shift_preset', 'delete_shift_preset'],
@@ -144,6 +144,7 @@ $matrix = [
         'workers.store' => ['operation' => 'create_worker'],
         'workers.update' => ['operation' => 'update_worker'],
         'workers.destroy' => ['operation' => 'delete_worker'],
+        'workers.restore' => ['operation' => 'restore_worker'],
 
         // The public UI route is intentionally included in the durable matrix even though the contract test targets authenticated routes.
         'public-shift-requests.toggle' => ['operation' => 'toggle_shift_request'],

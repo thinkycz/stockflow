@@ -306,7 +306,10 @@ final class RecipeOperationExecutor implements AssistantOperationExecutor
      */
     private function worker(User $actor, int $id): Worker
     {
-        return Typer::assertInstance(Worker::query()->where('user_id', $actor->getKey())->whereKey($id)->firstOrFail(), Worker::class);
+        $query = Worker::query()->where('user_id', $actor->getKey());
+        Worker::scopeActive($query);
+
+        return Typer::assertInstance($query->whereKey($id)->firstOrFail(), Worker::class);
     }
 
     /**

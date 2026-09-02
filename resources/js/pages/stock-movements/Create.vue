@@ -35,9 +35,10 @@ type ItemOption = {
     title: string;
     sku: string | null;
     unit: string | null;
-    warehouse_quantity: number;
-    quantities_by_store: Record<string, number>;
-    purchase_price: number;
+    available_quantity?: number;
+    warehouse_quantity?: number;
+    quantities_by_store?: Record<string, number>;
+    purchase_price?: number;
 };
 
 type Row = {
@@ -318,7 +319,10 @@ function quantityAtStore(item: ItemOption, storeId: string): number {
     if (!storeId) {
         return 0;
     }
-    return Number(item.quantities_by_store[storeId] ?? 0);
+    if (!props.is_admin) {
+        return Number(item.available_quantity ?? 0);
+    }
+    return Number(item.quantities_by_store?.[storeId] ?? 0);
 }
 
 const activeStockStoreId = computed((): string => {
@@ -696,8 +700,12 @@ watch(
                                     >
                                     {{ t('stock_movements.summary.rows') }}
                                 </span>
-                                <span class="text-outline-glass">·</span>
-                                <span>
+                                <span
+                                    v-if="props.is_admin"
+                                    class="text-outline-glass"
+                                    >·</span
+                                >
+                                <span v-if="props.is_admin">
                                     <span
                                         class="font-semibold text-on-surface"
                                         >{{
@@ -732,7 +740,7 @@ watch(
                                     }}
                                 </th>
                                 <th
-                                    v-if="!isAdjustmentMode"
+                                    v-if="props.is_admin && !isAdjustmentMode"
                                     class="min-w-[7rem]"
                                 >
                                     {{
@@ -855,7 +863,7 @@ watch(
                                     />
                                 </td>
                                 <td
-                                    v-if="!isAdjustmentMode"
+                                    v-if="props.is_admin && !isAdjustmentMode"
                                     class="text-right font-semibold text-on-surface"
                                 >
                                     {{ formatMoney(lineTotal(row)) }}

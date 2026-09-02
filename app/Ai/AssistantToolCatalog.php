@@ -141,7 +141,7 @@ final class AssistantToolCatalog
     public function capabilities(): array
     {
         $capabilities = [
-            'write_workers' => ['create_worker', 'update_worker', 'delete_worker'],
+            'write_workers' => ['create_worker', 'update_worker', 'delete_worker', 'restore_worker'],
             'write_shifts' => ['create_shift', 'quick_add_shift', 'update_shift', 'delete_shift', 'create_shift_preset', 'update_shift_preset', 'delete_shift_preset'],
             'write_stock_movements' => ['create_stock_movement', 'reverse_stock_movement'],
         ];

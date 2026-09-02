@@ -23,7 +23,7 @@ class AttendancePrintController
     public function __invoke(Request $request): Response
     {
         $admin = User::mustAuth();
-        $store = ActiveStoreResolver::resolve($request, $admin);
+        $store = ActiveStoreResolver::resolveIncludingInactive($request, $admin);
         if (!$store instanceof Store || $store->isWarehouse()) { \abort(404); }
         $value = $request->query('month');
         $month = \is_string($value) && \preg_match('/^\\d{4}-\\d{2}$/', $value) === 1

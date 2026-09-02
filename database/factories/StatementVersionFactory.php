@@ -23,7 +23,7 @@ class StatementVersionFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => static fn(): int => UserFactory::new()->createOne()->getKey(),
+            'user_id' => static fn(): int => UserFactory::new()->admin()->createOne()->getKey(),
             'statement_id' => static fn(): int => Statement::factory()->createOne()->getKey(),
             'created_by' => null,
             'snapshot_at' => Carbon::now(),

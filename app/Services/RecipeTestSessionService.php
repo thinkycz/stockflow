@@ -27,20 +27,24 @@ class RecipeTestSessionService
      */
     public function start(User $actor, Worker $worker): RecipeTestSession
     {
-        $owner = $actor->resolveScopeUser();
-        if ($actor->isAdmin() || $worker->getUserId() !== $owner->getKey()) {
-            throw new InvalidArgumentException('Recipe test is not available.');
-        }
+        return DB::transaction(static function () use ($actor, $worker): RecipeTestSession {
+            $worker = Typer::assertInstance(
+                Worker::query()->whereKey($worker->getKey())->lockForUpdate()->firstOrFail(),
+                Worker::class,
+            );
+            $owner = $actor->resolveScopeUser();
+            if ($actor->isAdmin() || $worker->getUserId() !== $owner->getKey() || $worker->isArchived()) {
+                throw new InvalidArgumentException('Recipe test is not available.');
+            }
 
-        $recipes = Recipe::query()->where('user_id', $owner->getKey())->whereNull('archived_at')
-            ->whereHas('variants', static function (Builder $query): void {
-                $query->has('instructions', '>=', 2);
-            })->get()->shuffle()->take(self::RECIPE_COUNT)->values();
-        if ($recipes->count() !== self::RECIPE_COUNT) {
-            throw new InvalidArgumentException('At least three testable recipes are required.');
-        }
+            $recipes = Recipe::query()->where('user_id', $owner->getKey())->whereNull('archived_at')
+                ->whereHas('variants', static function (Builder $query): void {
+                    $query->has('instructions', '>=', 2);
+                })->get()->shuffle()->take(self::RECIPE_COUNT)->values();
+            if ($recipes->count() !== self::RECIPE_COUNT) {
+                throw new InvalidArgumentException('At least three testable recipes are required.');
+            }
 
-        return DB::transaction(static function () use ($actor, $worker, $owner, $recipes): RecipeTestSession {
             $session = Typer::assertInstance(RecipeTestSession::query()->create([
                 'user_id' => $owner->getKey(), 'worker_id' => $worker->getKey(), 'actor_user_id' => $actor->getKey(),
                 'worker_name' => $worker->getFullName(), 'actor_name' => $actor->getEmail(),

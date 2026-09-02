@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Ai\Tools;
 
 use App\Ai\AssistantActionPresenter;
+use App\Enums\RemovalOutcomeEnum;
 use App\Http\Validation\WorkerValidity;
 use App\Models\Worker;
 use App\Services\AdministrationManagementService;
@@ -31,7 +32,7 @@ final class WriteWorkersTool extends AbstractApprovableResourceTool
      */
     public function description(): string
     {
-        return 'Create, update, or delete workers. Only first name, last name, and hourly rate are required when creating or updating; attendance rating and calendar color are optional.';
+        return 'Create, update, remove, or restore workers. Removing preserves historical workers by archiving them and blocks workers with live attendance or future scheduling. Only first name, last name, and hourly rate are required when creating or updating; attendance rating and calendar color are optional.';
     }
 
     /**
@@ -62,6 +63,10 @@ final class WriteWorkersTool extends AbstractApprovableResourceTool
                     'action' => $schema->string()->enum(['delete_worker'])->required(),
                     'target_id' => $schema->integer()->required(),
                 ])->withoutAdditionalProperties(),
+                $schema->object([
+                    'action' => $schema->string()->enum(['restore_worker'])->required(),
+                    'target_id' => $schema->integer()->required(),
+                ])->withoutAdditionalProperties(),
             ])->required(),
         ];
     }
@@ -81,7 +86,7 @@ final class WriteWorkersTool extends AbstractApprovableResourceTool
      */
     public function safeEditablePaths(array $arguments): array
     {
-        return $this->action($arguments) === 'delete_worker' ? [] : [
+        return \in_array($this->action($arguments), ['delete_worker', 'restore_worker'], true) ? [] : [
             'request.values.first_name',
             'request.values.last_name',
             'request.values.hourly_rate',
@@ -117,7 +122,7 @@ final class WriteWorkersTool extends AbstractApprovableResourceTool
         $target = $this->target($arguments);
         $values = $this->values($arguments);
 
-        if ($action !== 'delete_worker') {
+        if (\in_array($action, ['create_worker', 'update_worker'], true)) {
             $this->validate($values);
         }
 
@@ -168,11 +173,18 @@ final class WriteWorkersTool extends AbstractApprovableResourceTool
 
         $worker = Typer::assertInstance($target, Worker::class);
 
-        if (!$service->deleteWorker($this->actor, $worker)) {
-            throw new RuntimeException('Cannot delete a worker with existing shifts.');
+        if ($action === 'restore_worker') {
+            $service->restoreWorker($this->actor, $worker);
+
+            return $this->result($action, $worker->getKey());
         }
 
-        return $this->result($action, $worker->getKey());
+        $outcome = $service->deleteWorker($this->actor, $worker);
+        if ($outcome === RemovalOutcomeEnum::BLOCKED) {
+            throw new RuntimeException('Resolve active attendance and future worker scheduling before removing this worker.');
+        }
+
+        return $this->result($action, $worker->getKey(), $outcome);
     }
 
     /**
@@ -186,7 +198,7 @@ final class WriteWorkersTool extends AbstractApprovableResourceTool
             return null;
         }
 
-        if (!\in_array($action, ['update_worker', 'delete_worker'], true)) {
+        if (!\in_array($action, ['update_worker', 'delete_worker', 'restore_worker'], true)) {
             throw new InvalidArgumentException('Unknown worker action.');
         }
 
@@ -215,7 +227,7 @@ final class WriteWorkersTool extends AbstractApprovableResourceTool
     /**
      * @return array<string, mixed>
      */
-    private function result(string $action, int $recordId): array
+    private function result(string $action, int $recordId, RemovalOutcomeEnum|null $outcome = null): array
     {
         return [
             'operation' => $action,
@@ -225,6 +237,7 @@ final class WriteWorkersTool extends AbstractApprovableResourceTool
                 'id' => $recordId,
                 'store_id' => null,
                 'url' => Resolver::resolveUrlGenerator()->route('workers.index'),
+                ...($outcome instanceof RemovalOutcomeEnum ? ['removal_outcome' => $outcome->value] : []),
             ],
         ];
     }

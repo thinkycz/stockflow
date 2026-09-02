@@ -56,6 +56,7 @@ class StatementHistoryController
                 'id' => $statementModel->getKey(),
                 'store_id' => $store->getKey(),
                 'store_name' => $store->getName(),
+                'store_active' => $store->isActive(),
                 'year' => $statementModel->getYear(),
                 'month' => $statementModel->getMonth(),
             ],

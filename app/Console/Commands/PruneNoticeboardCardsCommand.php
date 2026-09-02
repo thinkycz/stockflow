@@ -36,6 +36,7 @@ class PruneNoticeboardCardsCommand extends Command
 
         NoticeboardCard::query()
             ->onlyTrashed()
+            ->whereHas('store', static fn($query) => $query->where('status', 'active'))
             ->where('deleted_at', '<=', Carbon::now()->subDays(30))
             ->orderBy('id')
             ->chunkById(100, static function ($cards) use ($service, &$deleted, &$failed): void {

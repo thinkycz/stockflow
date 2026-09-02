@@ -10,6 +10,7 @@ use App\Http\Validation\PayrollReportValidity;
 use App\Models\User;
 use App\Models\Worker;
 use App\Services\PayrollReportService;
+use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -30,6 +31,7 @@ class PayrollAdjustmentController
         $payload = $this->adjustmentPayload($request);
         $workerQuery = Worker::query();
         Worker::scopeForUser($workerQuery, $admin);
+        Worker::scopeActive($workerQuery);
         $worker = $workerQuery->whereKey($payload->parseInt('worker_id'))->firstOrFail();
         (new PayrollReportService())->createAdjustment(
             $admin,
@@ -38,7 +40,7 @@ class PayrollAdjustmentController
             $payload->parseInt('month'),
             $worker,
             PayrollAdjustmentTypeEnum::from($payload->assertString('type')),
-            $payload->parseFloat('amount'),
+            Money::input($request->input('amount')),
             $payload->assertString('reason'),
         );
         Inertia::flash('success', \__('Payroll adjustment created.'));
@@ -61,7 +63,7 @@ class PayrollAdjustmentController
             $payload->parseInt('month'),
             $payrollAdjustment,
             PayrollAdjustmentTypeEnum::from($payload->assertString('type')),
-            $payload->parseFloat('amount'),
+            Money::input($request->input('amount')),
             $payload->assertString('reason'),
         );
         Inertia::flash('success', \__('Payroll adjustment saved.'));

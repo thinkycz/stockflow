@@ -8,9 +8,12 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue as ShouldQueueContract;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Thinkycz\LaravelCore\Models\BaseUser;
 use Thinkycz\LaravelCore\Support\Config;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Trans;
 use Thinkycz\LaravelCore\Support\Typer;
+use Throwable;
 
 class PasswordResetNotification extends Notification implements ShouldQueueContract
 {
@@ -68,6 +71,32 @@ class PasswordResetNotification extends Notification implements ShouldQueueContr
     }
 
     /**
+     * Remove the unusable reset token when queued delivery permanently fails.
+     */
+    public function failed(Throwable $exception): void
+    {
+        if ($this->email === null || $this->token === null) {
+            return;
+        }
+
+        $config = Config::inject();
+        $provider = $config->assertNullableString("auth.passwords.{$this->guardName}.provider")
+            ?? $config->assertString('auth.defaults.provider');
+        $user = Typer::assertNullableInstance(
+            Resolver::resolveEloquentUserProvider($provider)->retrieveByCredentials(['email' => $this->email]),
+            BaseUser::class,
+        );
+
+        if ($user instanceof BaseUser) {
+            $broker = Resolver::resolvePasswordBroker($this->guardName);
+
+            if ($broker->tokenExists($user, $this->token)) {
+                $broker->deleteToken($user);
+            }
+        }
+    }
+
+    /**
      * Get url.
      */
     protected function getUrl(mixed $notifiable): string
@@ -85,6 +114,8 @@ class PasswordResetNotification extends Notification implements ShouldQueueContr
             'locale' => $this->locale,
         ]);
 
-        return ($this->spa ?? Trans::inject()->assertString('spa.password_reset_url')) . '?' . $query;
+        $baseUrl = $this->spa ?? Resolver::resolveUrlGenerator()->route('reset-password.show');
+
+        return Resolver::resolveUrlGenerator()->to($baseUrl) . '?' . $query;
     }
 }

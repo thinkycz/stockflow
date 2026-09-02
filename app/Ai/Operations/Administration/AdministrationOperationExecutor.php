@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Ai\Operations\Administration;
 
 use App\Ai\Operations\AssistantOperationExecutor;
+use App\Enums\RemovalOutcomeEnum;
 use App\Http\Validation\ItemValidity;
 use App\Http\Validation\StoreValidity;
 use App\Http\Validation\UserValidity;
@@ -74,7 +75,8 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
         $values = $this->json($arguments, 'values_json');
         $this->validate($identifier, $actor, $store, $targetId, $context, $values);
         $this->resolveTarget($identifier, $actor, $store, $targetId);
-        $recordId = $this->run($identifier, $actor, $store, $targetId, $values);
+        $result = $this->run($identifier, $actor, $store, $targetId, $values);
+        $recordId = \is_int($result) ? $result : $result['id'];
 
         return [
             'operation' => $identifier,
@@ -84,6 +86,7 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
                 'id' => $recordId,
                 'store_id' => $store?->getKey(),
                 'url' => $this->url($identifier, $recordId),
+                ...(\is_array($result) ? ['removal_outcome' => $result['removal_outcome']] : []),
             ],
         ];
     }
@@ -92,8 +95,10 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
      * Execute one fixed administration operation.
      *
      * @param array<string, mixed> $values
+     *
+     * @return array{id: int, removal_outcome: string}|int
      */
-    private function run(string $identifier, User $actor, Store|null $store, int|null $targetId, array $values): int
+    private function run(string $identifier, User $actor, Store|null $store, int|null $targetId, array $values): array|int
     {
         if ($identifier === 'create_item') {
             return $this->administration->createItem(
@@ -152,9 +157,12 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
 
         if ($identifier === 'delete_store') {
             $resolvedStore = Typer::assertInstance($store, Store::class);
-            $this->administration->deleteStore($actor, $resolvedStore);
+            $outcome = $this->administration->deleteStore($actor, $resolvedStore);
+            if ($outcome === RemovalOutcomeEnum::BLOCKED) {
+                throw new RuntimeException('Resolve store assignments, stock, and active operational work before removing this store.');
+            }
 
-            return $resolvedStore->getKey();
+            return ['id' => $resolvedStore->getKey(), 'removal_outcome' => $outcome->value];
         }
 
         if ($identifier === 'switch_active_store') {
@@ -220,11 +228,19 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
         if ($identifier === 'delete_worker') {
             $worker = $this->worker($actor, Typer::assertInt($targetId));
 
-            if (!$this->administration->deleteWorker($actor, $worker)) {
-                throw new RuntimeException('Cannot delete a worker with existing shifts.');
+            $outcome = $this->administration->deleteWorker($actor, $worker);
+            if ($outcome === RemovalOutcomeEnum::BLOCKED) {
+                throw new RuntimeException('Resolve active attendance and future worker scheduling before removing this worker.');
             }
 
-            return $worker->getKey();
+            return ['id' => $worker->getKey(), 'removal_outcome' => $outcome->value];
+        }
+
+        if ($identifier === 'restore_worker') {
+            return $this->administration->restoreWorker(
+                $actor,
+                $this->worker($actor, Typer::assertInt($targetId)),
+            )->getKey();
         }
 
         if ($identifier === 'update_profile') {
@@ -290,7 +306,7 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
                 'purchase_price' => $item->purchasePrice()->required()->toArray(),
                 'description' => $item->description()->nullable()->toArray(),
             ],
-            'delete_item', 'delete_store', 'switch_active_store', 'delete_user', 'delete_worker', 'test_slack_channel', 'retry_slack_digest' => [],
+            'delete_item', 'delete_store', 'switch_active_store', 'delete_user', 'delete_worker', 'restore_worker', 'test_slack_channel', 'retry_slack_digest' => [],
             'create_store', 'update_store' => [
                 'name' => $storeValidity->name()->required()->toArray(),
                 'address' => $storeValidity->address()->nullable()->toArray(),
@@ -334,7 +350,7 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
             'update_item', 'delete_item' => $this->resolvedItem($actor, Typer::assertInt($targetId)),
             'update_store', 'delete_store', 'switch_active_store' => $this->resolvedStoreTarget($store, $targetId),
             'update_user', 'delete_user' => $this->resolvedUser($actor, Typer::assertInt($targetId)),
-            'update_worker', 'delete_worker' => $this->resolvedWorker($actor, Typer::assertInt($targetId)),
+            'update_worker', 'delete_worker', 'restore_worker' => $this->resolvedWorker($actor, Typer::assertInt($targetId)),
             'retry_slack_digest' => $this->resolvedDigest($actor, Typer::assertInt($targetId)),
             'create_item', 'create_store', 'create_user', 'create_worker', 'update_profile', 'update_slack_channel', 'test_slack_channel' => null,
             default => throw new InvalidArgumentException('Unknown administration operation.'),
@@ -472,14 +488,15 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
             'delete_item' => 'Deletes an unreferenced item, its store rows, and draft count rows transactionally.',
             'create_store' => 'Creates the store and initializes checklist records for a retail store.',
             'update_store' => 'Updates the selected store metadata and Slack destination.',
-            'delete_store' => 'Deletes the selected unused and unassigned store.',
+            'delete_store' => 'Deletes a pristine store, deactivates a historical store, and blocks stores with live operational work.',
             'switch_active_store' => 'Persists the selected active store for the current browser session.',
             'create_user' => 'Creates a limited account with a server-generated secret and the selected store assignment.',
             'update_user' => 'Updates the limited account email and assigned store without handling a password.',
             'delete_user' => 'Deletes the selected limited account.',
             'create_worker' => 'Creates a worker used by shifts, attendance, recipes, and payroll.',
             'update_worker' => 'Updates the selected worker profile and wage rate.',
-            'delete_worker' => 'Deletes the selected worker only when no shift history references it.',
+            'delete_worker' => 'Deletes a pristine worker, archives historical workers, and blocks workers with active attendance or future scheduling.',
+            'restore_worker' => 'Restores an archived worker to active scheduling and operational selectors.',
             'update_profile' => 'Updates the main admin email and locale.',
             'update_slack_channel' => 'Updates the company-wide Slack destination.',
             'test_slack_channel' => 'Sends the normal test notification to the configured Slack destination.',

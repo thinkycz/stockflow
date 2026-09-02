@@ -41,6 +41,7 @@ class SharedShiftRequestIndexController
 
         $workerQuery = Worker::query();
         Worker::scopeForUser($workerQuery, $store->getUserId());
+        Worker::scopeActive($workerQuery);
         Worker::querySelect($workerQuery);
         $workers = $workerQuery->orderBy('last_name')->orderBy('first_name')->get();
         $selectedWorkerId = Typer::parseNullableInt($request->query('worker_id'));

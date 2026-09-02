@@ -73,6 +73,32 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect(Statement::query()->count())->toBe(1);
 });
 
+\test('inactive store statements remain readable without creating new mutable periods', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->inactive()->create(['user_id' => $user->getKey()]);
+    $statement = Statement::factory()->forStore($store)->forMonth(2026, 6)->create();
+    $day = StatementDay::factory()->for($statement, 'statement')->create([
+        'date' => '2026-06-01',
+        'cash' => 25,
+        'total' => 25,
+    ]);
+
+    $this->be($user, 'users')->get(
+        '/statements?store_id=' . $store->getKey() . '&year=2026&month=6',
+        $this->inertiaHeaders(),
+    )->assertOk()
+        ->assertJsonPath('props.store.id', $store->getKey())
+        ->assertJsonPath('props.store.is_active', false)
+        ->assertJsonPath('props.editable', false)
+        ->assertJsonPath('props.statement.id', $statement->getKey())
+        ->assertJsonPath('props.days.0.id', $day->getKey())
+        ->assertJsonPath('props.today_statement', null)
+        ->assertJsonPath('props.today_day', null)
+        ->assertJsonPath('props.active_attendances', []);
+
+    \expect(Statement::query()->where('store_id', $store->getKey())->count())->toBe(1);
+});
+
 \test('statements index respects requested month', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $user->getKey()]);
@@ -170,9 +196,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     );
 
     $response->assertOk();
-    // The foreign store id is rejected by the resolver, which falls back
-    // to the requesting user's first owned retail store (the warehouse).
-    \expect($response->json('props.filters.store_id'))->toBe($warehouse->getKey());
+    \expect($response->json('props.filters.store_id'))->toBeNull();
 });
 
 \test('limited user is pinned to their assigned store', function (): void {

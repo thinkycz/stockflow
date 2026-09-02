@@ -6,9 +6,7 @@ namespace App\Services;
 
 use App\Models\Recipe;
 use App\Models\RecipeCategory;
-use App\Models\RecipeIngredient;
 use App\Models\RecipeInstruction;
-use App\Models\RecipeStep;
 use App\Models\RecipeVariant;
 use App\Models\User;
 use App\Support\RecipeDefaultCatalog;
@@ -22,17 +20,11 @@ use Thinkycz\LaravelCore\Support\Typer;
 class RecipeCatalogService
 {
     /**
-     * Create the catalog service with the deterministic source parser.
-     */
-    public function __construct(private readonly RecipeTextParser $parser = new RecipeTextParser()) {}
-
-    /**
-     * Initialize the source PDF catalog exactly once for a company owner.
+     * Initialize the curated canonical catalog exactly once for a company owner.
      */
     public function initialize(User $owner): void
     {
-        $parser = $this->parser;
-        DB::transaction(static function () use ($owner, $parser): void {
+        DB::transaction(static function () use ($owner): void {
             $locked = Typer::assertInstance(User::query()->whereKey($owner->getKey())->lockForUpdate()->firstOrFail(), User::class);
             if ($locked->getRecipesInitializedAt() !== null) {
                 return;
@@ -61,29 +53,11 @@ class RecipeCatalogService
                             'name' => $variantRow['name'],
                             'position' => $variantPosition + 1,
                         ]), RecipeVariant::class);
-                        $stepPosition = 0;
-                        $ingredientPosition = 0;
-                        $parsedSteps = [];
-                        foreach ($variantRow['steps'] as $sourceText) {
-                            $parsed = $parser->parse($sourceText);
-                            foreach ($parsed['ingredients'] as $ingredient) {
-                                RecipeIngredient::query()->create([
-                                    'recipe_variant_id' => $variant->getKey(),
-                                    'position' => ++$ingredientPosition,
-                                    ...$ingredient,
-                                ]);
-                            }
-                            $parsedSteps = [...$parsedSteps, ...$parsed['steps']];
-                        }
-                        $explicitSteps = \array_values(\array_filter($parsedSteps, static fn(array $step): bool => $step['action_key'] !== 'add'));
-                        $stepsToPersist = \count($explicitSteps) >= 2 ? $explicitSteps : $parsedSteps;
-                        foreach ($stepsToPersist as $step) {
-                            RecipeStep::query()->create([
+                        foreach ($variantRow['instructions'] as $instructionPosition => $instruction) {
+                            RecipeInstruction::query()->create([
                                 'recipe_variant_id' => $variant->getKey(),
-                                'text' => $step['text'],
-                                'action_key' => $step['action_key'],
-                                'source_text' => $step['source_text'],
-                                'position' => ++$stepPosition,
+                                'position' => $instructionPosition + 1,
+                                ...$instruction,
                             ]);
                         }
                     }
@@ -91,6 +65,7 @@ class RecipeCatalogService
             }
 
             $locked->setAttribute('recipes_initialized_at', Carbon::now());
+            $locked->setAttribute('recipe_instructions_initialized_at', Carbon::now());
             $locked->save();
         });
 

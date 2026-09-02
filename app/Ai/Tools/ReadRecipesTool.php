@@ -8,6 +8,7 @@ use App\Models\Recipe;
 use App\Models\RecipeCategory;
 use App\Models\RecipeInstruction;
 use App\Models\RecipeVariant;
+use App\Services\RecipeAdjustmentService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\JsonSchema\Types\Type;
@@ -318,6 +319,9 @@ final class ReadRecipesTool extends AbstractReadResourceTool
      */
     private function recipeRecord(Recipe $recipe, bool $includeInstructions): array
     {
+        $isDrink = Str::upper($recipe->getCategory()->getName()) !== 'PREPARATIONS';
+        $adjustmentService = new RecipeAdjustmentService();
+
         return [
             'id' => $recipe->getKey(),
             'category_id' => $recipe->getCategoryId(),
@@ -330,6 +334,7 @@ final class ReadRecipesTool extends AbstractReadResourceTool
                 'id' => $variant->getKey(),
                 'name' => $variant->getName(),
                 'position' => $variant->getPosition(),
+                'topping_adjustments' => $isDrink ? $adjustmentService->forVariant($variant) : null,
                 ...($includeInstructions ? [
                     'instructions' => $variant->getInstructions()->map(static fn(RecipeInstruction $instruction): array => [
                         'id' => $instruction->getKey(),

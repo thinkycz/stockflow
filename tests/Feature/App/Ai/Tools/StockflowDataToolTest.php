@@ -269,10 +269,15 @@ function readToolResult(Tool $tool, array $arguments): array
         RecipeInstruction::query()->create([
             'recipe_variant_id' => $variant->getKey(),
             'position' => $position + 1,
-            'type' => 'action',
+            'type' => $position === 0 ? 'ingredient' : 'action',
             'text' => $text,
-            'action_key' => 'other',
-            'icon_group' => 'neutral',
+            'action_key' => $position === 0 ? 'add' : 'other',
+            'quantity_value' => $position === 0 ? 3 : null,
+            'quantity_text' => null,
+            'unit' => $position === 0 ? 'ml' : null,
+            'ingredient_name' => $position === 0 ? 'liquid sugar' : null,
+            'target' => $position === 0 ? 'shaker' : null,
+            'icon_group' => $position === 0 ? 'syrup_sweetener' : 'neutral',
             'is_inferred' => false,
         ]);
     }
@@ -307,6 +312,16 @@ function readToolResult(Tool $tool, array $arguments): array
         ->and($result['records'][0]['variants'][0]['instructions'])->toHaveCount(3)
         ->and($result['records'][0]['variants'][0]['instructions'][0]['text'])
         ->toBe('2.5l water (90 degrees) + 100g tea (let steep for 10min)')
+        ->and($result['records'][0]['variants'][0]['topping_adjustments'])->toMatchArray([
+            'base_toppings' => '0–1',
+            'components' => [[
+                'ingredient_name' => 'liquid sugar',
+                'unit' => 'ml',
+                'base_quantity' => 3,
+                'two_toppings_quantity' => 0,
+                'three_toppings_quantity' => 0,
+            ]],
+        ])
         ->and(\array_column($result['records'], 'name'))->not->toContain('OOLONG MILK TEA PRIVATE');
 });
 

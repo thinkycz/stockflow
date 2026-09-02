@@ -12,6 +12,7 @@ use App\Models\RecipeVariant;
 use App\Models\User;
 use App\Models\Worker;
 use App\Services\RecipeCatalogService;
+use App\Services\RecipeInstructionService;
 use App\Services\RecipeTestService;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Carbon;
@@ -25,27 +26,35 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     \expect(RecipeCategory::query()->where('user_id', $admin->getKey())->count())->toBe(8)
         ->and(Recipe::query()->where('user_id', $admin->getKey())->count())->toBe(49)
+        ->and(RecipeVariant::query()->count())->toBe(184)
         ->and(Recipe::query()->where('name', 'Classic Matcha Latte')->exists())->toBeTrue()
         ->and(Recipe::query()->where('name', 'Creme Brulee')->exists())->toBeTrue();
 
     $classic = Typer::assertInstance(Recipe::query()->where('name', 'Classic Matcha Latte')->with(['variants.ingredients', 'variants.steps', 'variants.instructions'])->firstOrFail(), Recipe::class);
-    $creamCheese = Typer::assertInstance(Recipe::query()->where('name', 'Cream Cheese')->with(['variants.ingredients', 'variants.steps'])->firstOrFail(), Recipe::class);
-    \expect($classic->getVariants()->map(static fn(RecipeVariant $variant): string|null => $variant->getName())->all())->toBe(['S', 'M'])
-        ->and($classic->getVariants()->first()?->getSteps()->map(static fn(RecipeStep $step): string => $step->getText())->all())->toBe(['stir', 'ice'])
-        ->and($classic->getVariants()->first()?->getIngredients()->map(static fn(RecipeIngredient $ingredient): string => $ingredient->getName())->all())->toBe(['milk', 'sugar', 'ice', 'water', 'matcha'])
+    $creamCheese = Typer::assertInstance(Recipe::query()->where('name', 'Cream Cheese')->with('variants.instructions')->firstOrFail(), Recipe::class);
+    \expect($classic->getVariants()->map(static fn(RecipeVariant $variant): string|null => $variant->getName())->all())->toBe(['S — With ice', 'S — No ice', 'M — With ice', 'M — No ice'])
+        ->and($classic->getVariants()->first()?->getSteps())->toBeEmpty()
+        ->and($classic->getVariants()->first()?->getIngredients())->toBeEmpty()
         ->and($classic->getVariants()->first()?->getInstructions()->map(static fn(RecipeInstruction $instruction): string => $instruction->getText())->all())->toBe([
-            'Add 100 ml milk into cup',
-            'Add 20 g sugar into cup',
-            'Stir',
-            'Add Ice into cup',
-            'Add 50 g water into matcha bowl',
-            'Add 3,5 g matcha into matcha bowl',
-            'Use Matcha Whisk',
-            'Pour into cup',
+            'Add 100 ml milk to serving cup.',
+            'Add 20 ml liquid sugar to serving cup.',
+            'Stir until combined.',
+            'Fill the serving cup with ice.',
+            'Add 50 ml water at 70–80 °C to matcha bowl.',
+            'Add 3.5 g matcha to matcha bowl.',
+            'Whisk until smooth.',
+            'Pour the matcha into the serving cup.',
         ])
-        ->and($creamCheese->getNote())->toBe('use up in 5 days')
+        ->and($classic->getVariants()->first()?->getInstructions()->every(static fn(RecipeInstruction $instruction): bool => !$instruction->isInferred()))->toBeTrue()
+        ->and($creamCheese->getNote())->toBe('Use within 5 days.')
         ->and($creamCheese->getVariants()->map(static fn(RecipeVariant $variant): string|null => $variant->getName())->all())->toBe(['Batch', '1 portion'])
-        ->and($creamCheese->getVariants()->last()?->getSteps()->map(static fn(RecipeStep $step): string => $step->getText())->all())->toBe(['Add 50g smetana + 20g salko + 20g milk + 10g cheese', 'whip up']);
+        ->and($creamCheese->getVariants()->last()?->getInstructions()->map(static fn(RecipeInstruction $instruction): string => $instruction->getText())->all())->toBe([
+            'Add 50 ml whipping cream to mixing bowl.',
+            'Add 20 ml sweetened condensed milk (Salko) to mixing bowl.',
+            'Add 20 ml milk to mixing bowl.',
+            'Add 10 g cream cheese to mixing bowl.',
+            'Whip until thick.',
+        ]);
 
     Recipe::query()->where('name', 'Classic Matcha Latte')->update(['name' => 'Edited recipe']);
     $service->initialize($admin);
@@ -122,25 +131,36 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->and($preserved->getActorName())->toBe($actorName);
 });
 
-\test('instruction conversion uses current legacy values once and infers operational targets', function (): void {
+\test('legacy instruction conversion remains available for existing parsed recipes', function (): void {
     $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
-    $service = new RecipeCatalogService();
-    $service->initialize($admin);
-
-    $classic = Typer::assertInstance(Recipe::query()->where('name', 'Classic Matcha Latte')->with(['variants.ingredients', 'variants.instructions'])->firstOrFail(), Recipe::class);
-    $classicVariant = Typer::assertInstance($classic->getVariants()->first(), RecipeVariant::class);
-    $classicVariant->ingredients()->orderBy('position')->firstOrFail()->update(['name' => 'edited milk']);
-    $classicVariant->instructions()->delete();
+    $category = Typer::assertInstance(RecipeCategory::query()->create([
+        'user_id' => $admin->getKey(), 'name' => 'FRESH FRUIT TEA', 'position' => 1,
+    ]), RecipeCategory::class);
+    $recipe = Typer::assertInstance(Recipe::query()->create([
+        'user_id' => $admin->getKey(), 'recipe_category_id' => $category->getKey(),
+        'name' => 'Legacy Tea', 'note' => null, 'position' => 1, 'archived_at' => null,
+    ]), Recipe::class);
+    $variant = Typer::assertInstance(RecipeVariant::query()->create([
+        'recipe_id' => $recipe->getKey(), 'name' => 'M', 'position' => 1,
+    ]), RecipeVariant::class);
+    RecipeIngredient::query()->create([
+        'recipe_variant_id' => $variant->getKey(), 'position' => 1,
+        'quantity_value' => 250, 'quantity_text' => null, 'unit' => 'ml',
+        'name' => 'jasmine tea', 'icon_group' => 'tea_matcha', 'source_text' => '250ml jasmine tea',
+    ]);
+    RecipeStep::query()->create([
+        'recipe_variant_id' => $variant->getKey(), 'position' => 1,
+        'text' => 'shake', 'action_key' => 'shake', 'source_text' => 'shake',
+    ]);
     $admin->setAttribute('recipe_instructions_initialized_at', null);
     $admin->save();
 
-    $service->initialize($admin);
-    \expect($classicVariant->instructions()->orderBy('position')->firstOrFail()->getAttribute('text'))->toBe('Add 100 ml edited milk into cup');
+    (new RecipeInstructionService())->initialize($admin);
 
-    $strawberryTea = Typer::assertInstance(Recipe::query()->where('name', 'Strawberry Tea')->with('variants.instructions')->firstOrFail(), Recipe::class);
-    $coconutCloud = Typer::assertInstance(Recipe::query()->where('name', 'Coconut Cloud')->with('variants.instructions')->firstOrFail(), Recipe::class);
-    $creamCheese = Typer::assertInstance(Recipe::query()->where('name', 'Cream Cheese')->with('variants.instructions')->firstOrFail(), Recipe::class);
-    \expect($strawberryTea->getVariants()->first()?->getInstructions()->first()?->getTarget())->toBe('shaker')
-        ->and($coconutCloud->getVariants()->first()?->getInstructions()->contains(static fn(RecipeInstruction $instruction): bool => $instruction->getTarget() === 'mixing bowl'))->toBeTrue()
-        ->and($creamCheese->getVariants()->first()?->getInstructions()->first()?->getTarget())->toBeNull();
+    $instructions = $variant->instructions()->orderBy('position')->get();
+    \expect($instructions)->toHaveCount(2)
+        ->and($instructions->first()?->getAttribute('text'))->toBe('Add 250 ml jasmine tea into shaker')
+        ->and($instructions->first()?->getAttribute('target'))->toBe('shaker')
+        ->and($instructions->last()?->getAttribute('text'))->toBe('Shake')
+        ->and($instructions->every(static fn(RecipeInstruction $instruction): bool => $instruction->isInferred()))->toBeTrue();
 });

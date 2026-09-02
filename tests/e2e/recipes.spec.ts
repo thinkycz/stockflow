@@ -18,7 +18,16 @@ function normalized(value: string): string {
 function instructionKey(
     text: string,
     instructionId: string | null,
+    quantityValue: string | null,
+    unitValue: string | null,
 ): { key: string; amount: string | null } {
+    if (
+        instructionId &&
+        quantityValue !== null &&
+        ['g', 'ml'].includes((unitValue ?? '').toLowerCase())
+    ) {
+        return { key: `id|${instructionId}`, amount: quantityValue };
+    }
     const match = normalized(text).match(/^add ([\d.,]+) (g|ml) (.+)$/);
     if (!match)
         return {
@@ -71,9 +80,15 @@ async function completeCurrentRecipe(
                 elements.map((element) => ({
                     text: element.lastElementChild?.textContent ?? '',
                     instructionId: element.getAttribute('data-instruction-id'),
+                    quantityValue: element.getAttribute(
+                        'data-instruction-quantity-value',
+                    ),
+                    unitValue: element.getAttribute('data-instruction-unit'),
                 })),
             )
-    ).map(({ text, instructionId }) => instructionKey(text, instructionId));
+    ).map(({ text, instructionId, quantityValue, unitValue }) =>
+        instructionKey(text, instructionId, quantityValue, unitValue),
+    );
     await reference.close();
 
     const rows = page.getByTestId('session-instruction');
@@ -167,8 +182,9 @@ test('limited account reads a recipe and submits a three-recipe mobile test', as
         .click();
     await expect(page.getByRole('button', { name: 'Edit' })).toHaveCount(0);
     await expect(page.getByTestId('recipe-instruction')).toHaveCount(8);
+    await expect(page.getByTestId('recipe-topping-adjustments')).toBeVisible();
     await expect(page.getByTestId('recipe-instruction').first()).toContainText(
-        'Add 100 ml milk into cup',
+        'Add 100 ml milk to serving cup.',
     );
 
     await expect(page.getByRole('button', { name: 'Start test' })).toHaveCount(

@@ -11,6 +11,9 @@ import Tabs from '@/components/ui/Tabs.vue';
 import RecipeInstructionList, {
     type RecipeInstructionData,
 } from '@/components/recipes/RecipeInstructionList.vue';
+import RecipeToppingAdjustments, {
+    type RecipeToppingAdjustmentData,
+} from '@/components/recipes/RecipeToppingAdjustments.vue';
 import { useRoute } from '@/composables/useRoute';
 
 const props = defineProps<{
@@ -24,6 +27,7 @@ const props = defineProps<{
         variants: Array<{
             id: number;
             name: string | null;
+            topping_adjustments: RecipeToppingAdjustmentData | null;
             instructions: RecipeInstructionData[];
         }>;
     };
@@ -116,6 +120,10 @@ function setArchived(archived: boolean): void {
                     class="mb-3"
                     :items="variantTabs"
                     :label="t('recipes.variant_name')"
+                />
+                <RecipeToppingAdjustments
+                    v-if="selectedVariant.topping_adjustments"
+                    :guidance="selectedVariant.topping_adjustments"
                 />
                 <RecipeInstructionList
                     :instructions="selectedVariant.instructions"

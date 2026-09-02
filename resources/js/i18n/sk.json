@@ -1566,6 +1566,15 @@
         "unit": "Jednotka",
         "unit_placeholder": "g, ml, ks…",
         "ingredient_name": "Názov suroviny",
+        "topping_adjustments": {
+            "title": "Úprava pri viacerých toppingoch",
+            "informational": "Len informačný pokyn — táto karta nie je súčasťou testu receptu.",
+            "rule": "Pre 0–1 topping použite základné množstvo. Pre 2 toppingy odpočítajte 5 ml od tekutého cukru a každého ochuteného sirupu. Pre 3 toppingy odpočítajte 10 ml od každého. Množstvo nikdy neznižujte pod 0 ml a neupravujte pyré ani sladené kondenzované mlieko (Salko).",
+            "base": "0–1 topping",
+            "two": "2 toppingy",
+            "three": "3 toppingy",
+            "none": "Pri tejto variante nie je uložené vypočítateľné množstvo tekutého cukru ani ochuteného sirupu; pravidlo použite na každé odmerané množstvo."
+        },
         "icon_group": "Skupina ikony",
         "source_wording": "Zdrojové znenie",
         "source_optional": "Voliteľné",

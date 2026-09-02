@@ -1566,6 +1566,15 @@
         "unit": "Unit",
         "unit_placeholder": "g, ml, pcs…",
         "ingredient_name": "Ingredient name",
+        "topping_adjustments": {
+            "title": "Topping adjustments",
+            "informational": "Guidance only — this card is not part of the recipe test.",
+            "rule": "Use the base amounts for 0–1 topping. For 2 toppings, subtract 5 ml from liquid sugar and every flavored syrup. For 3 toppings, subtract 10 ml from each. Never go below 0 ml, and never reduce purées or sweetened condensed milk (Salko).",
+            "base": "0–1 topping",
+            "two": "2 toppings",
+            "three": "3 toppings",
+            "none": "No calculable liquid sugar or flavored syrup amount is stored for this variant; apply the rule to any measured amount."
+        },
         "icon_group": "Icon group",
         "source_wording": "Source wording",
         "source_optional": "Optional",

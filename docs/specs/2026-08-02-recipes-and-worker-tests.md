@@ -24,23 +24,31 @@
   pozdější editace nezmění. Starší pokusy zůstávají přesně ve svém původním
   snapshot formátu.
 
-## Deterministický import a převod
+## Deterministický kanonický katalog
 
 - Korektivní datová migrace jednorázově odstraní dosavadní kategorie a recepty
   hlavního admina a vytvoří čistý katalog z PDF už s kanonickými instrukcemi.
   Dřívější adminovy úpravy katalogu se záměrně nepřenášejí.
-- Pravidla rozdělují `+`, známé jednotky a akční suffixy, například
-  `100g milk + 20g sugar - stir` na dvě suroviny a krok `stir`.
-- Číselná množství se ukládají jako číslo; `half`, `a few` a změněné zápisy jako
-  `1,5` zachovávají přesný fallback výraz. Nejasné texty dostanou neutrální ikonu
-  nebo akci a zůstanou dohledatelné ve zdrojovém znění.
+- Zdroj pravdy ukládá každou surovinu a akci přímo jako strukturovanou instrukci;
+  produkční seed již neparsuje složené věty. Starý parser zůstává pouze pro
+  zpětnou kompatibilitu existujících ručně importovaných dat.
+- Katalog obsahuje přesně 8 kategorií, 49 receptů a 184 variant. Každý nápoj má
+  explicitní variantu s ledem a bez ledu; kombinované recepty rozlišují příchuť
+  nebo čajový základ i velikost.
+- Číselná množství používají desetinnou tečku a mezeru před jednotkou. Tekutiny
+  používají `ml` nebo `L`, sypké a pevné suroviny `g` nebo `kg`; neurčitá
+  množství zůstávají explicitně označená například jako `as needed`.
 - Migrace se díky Laravel migration ledgeru spustí pouze jednou. Běžný seeder je
   navíc označen firemním časovým markerem, takže ruční opakování `db:seed` nový
   katalog znovu nemaže a nepřepisuje.
-- Matcha recepty odvozují cup/matcha bowl/whisk/pour, šejkrované čaje shaker a
-  nalití a cloudy oddělené šlehání. Přípravy používají jen rozpoznatelný cíl.
-- Classic Matcha Latte S má osm instrukcí od `Add 100 ml milk into cup` po
-  `Pour into cup`.
+- Všechny matcha a hojicha přípravy s metličkou uvádějí vodu o teplotě
+  `70–80 °C`; čaje, cloudy a dávkové přípravy mají explicitní nádoby, časy a akce.
+- Classic Matcha Latte S s ledem má osm instrukcí od
+  `Add 100 ml milk to serving cup.` po `Pour the matcha into the serving cup.`.
+- Detail nápoje zobrazuje samostatnou informační kartu pro toppingy: 0–1 topping
+  používá základ, 2 toppingy odečtou 5 ml a 3 toppingy 10 ml od tekutého cukru a
+  ochucených sirupů s minimem 0 ml. Pyré a Salko se nikdy nesnižují. Stejná
+  vypočtená data vrací `read_recipes`; karta není součástí testovací sekvence.
 
 ## Bezpečnostní a datové invarianty
 
@@ -48,7 +56,7 @@
 - Vybraný brigádník musí patřit stejné firmě; přihlášený účet zůstává auditním aktérem.
 - Rozpracovaný pokus smí zobrazit a odevzdat jen jeho aktér a hodnotí se výhradně proti uloženému snapshotu.
 - Archivovaný recept není dostupný omezenému účtu ani pro nový test; dříve zahájený test lze dokončit.
-- UI texty jsou synchronní v CS/SK/EN, obsah receptů zůstává v původním společném znění PDF.
+- UI texty jsou synchronní v CS/SK/EN, kanonický obsah receptů je jednotně anglicky.
 - Před smazáním katalogu se historické pokusy odpojí od původních receptů; jejich
   snapshoty zůstávají beze změny a adminský přehled je k novému receptu přiřadí
   podle firemního scope a snapshotu názvu.

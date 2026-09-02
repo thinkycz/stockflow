@@ -10,7 +10,6 @@ use App\Models\RecipeInstruction;
 use App\Models\RecipeStep;
 use App\Models\RecipeVariant;
 use App\Models\User;
-use App\Support\RecipeDefaultCatalog;
 use App\Support\RecipeTextParser;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -65,7 +64,7 @@ class RecipeInstructionService
             return $this->classicSequence($variant);
         }
 
-        $sourceLines = $this->sourceLines($recipe->getName(), $variant->getName());
+        $sourceLines = $this->sourceLines($variant);
         $ingredients = $variant->getIngredients()->values();
         $steps = $variant->getSteps()->values();
         $usedStepIds = [];
@@ -273,21 +272,22 @@ class RecipeInstructionService
     /**
      * @return list<string>
      */
-    private function sourceLines(string $recipeName, string|null $variantName): array
+    private function sourceLines(RecipeVariant $variant): array
     {
-        foreach (RecipeDefaultCatalog::categories() as $category) {
-            foreach ($category['recipes'] as $recipe) {
-                if (\mb_strtolower($recipe['name']) !== \mb_strtolower($recipeName)) {
-                    continue;
-                }
-                foreach ($recipe['variants'] as $variant) {
-                    if ($variant['name'] === $variantName) {
-                        return $variant['steps'];
-                    }
-                }
+        $lines = [];
+        foreach ($variant->getIngredients() as $value) {
+            $source = Typer::assertInstance($value, RecipeIngredient::class)->getSourceText();
+            if (!\in_array($source, $lines, true)) {
+                $lines[] = $source;
+            }
+        }
+        foreach ($variant->getSteps() as $value) {
+            $source = Typer::assertInstance($value, RecipeStep::class)->getSourceText();
+            if ($source !== null && !\in_array($source, $lines, true)) {
+                $lines[] = $source;
             }
         }
 
-        return [];
+        return $lines;
     }
 }

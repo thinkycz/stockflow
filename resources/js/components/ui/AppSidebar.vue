@@ -13,6 +13,7 @@ import {
     HardHat,
     HandCoins,
     LayoutDashboard,
+    Landmark,
     ListChecks,
     LogOut,
     BotMessageSquare,
@@ -119,6 +120,13 @@ const storeNavItemsByKey = computed<Record<StoreSectionNavigationKey, NavItem>>(
             label: t('nav.statements'),
             icon: Receipt,
             active: activeUrl.value.startsWith('/statements'),
+        },
+        bank_statements: {
+            key: 'bank_statements',
+            href: route('bank-statements.index'),
+            label: t('nav.bank_statements'),
+            icon: Landmark,
+            active: activeUrl.value.startsWith('/bank-statements'),
         },
         inventory_counts: {
             key: 'inventory_counts',

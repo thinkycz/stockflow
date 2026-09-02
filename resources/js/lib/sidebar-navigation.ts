@@ -10,6 +10,7 @@ export type StoreSectionNavigationKey =
     | 'incoming'
     | 'consumption'
     | 'statements'
+    | 'bank_statements'
     | 'inventory_counts'
     | 'reports'
     | 'shifts'
@@ -29,6 +30,7 @@ export function storeSectionNavigationKeys(
         return [
             'dashboard',
             'statements',
+            'bank_statements',
             'inventory_counts',
             'reports',
             'shifts',
@@ -66,6 +68,7 @@ export function isStoreSectionUrl(url: string, isAdmin: boolean): boolean {
     if (
         path === '/dashboard' ||
         isRouteOrChild('/statements') ||
+        isRouteOrChild('/bank-statements') ||
         isRouteOrChild('/inventory-counts') ||
         isRouteOrChild('/reports') ||
         isRouteOrChild('/shifts') ||

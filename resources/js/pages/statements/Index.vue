@@ -64,6 +64,16 @@ const props = defineProps<{
         month: number;
     };
     is_admin: boolean;
+    bank_reconciliation: {
+        statement_id: number | null;
+        status: string;
+        counts: {
+            matched: number;
+            mismatch: number;
+            unresolved: number;
+            excluded: number;
+        };
+    } | null;
     active_attendances: ActiveAttendance[];
 }>();
 
@@ -445,6 +455,75 @@ function submitPendingSave(closeAttendances: boolean): void {
                     </div>
                 </template>
             </PageHeader>
+
+            <Card v-if="props.bank_reconciliation" padded>
+                <div
+                    class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2
+                                class="font-heading text-base font-bold text-on-surface"
+                            >
+                                {{ t('statements.bank_control.title') }}
+                            </h2>
+                            <Badge
+                                :variant="
+                                    props.bank_reconciliation.status ===
+                                    'confirmed'
+                                        ? 'success'
+                                        : props.bank_reconciliation.status ===
+                                            'failed'
+                                          ? 'danger'
+                                          : props.bank_reconciliation.status ===
+                                              'review'
+                                            ? 'warning'
+                                            : 'neutral'
+                                "
+                            >
+                                {{
+                                    t(
+                                        `bank_statements.status.${props.bank_reconciliation.status}`,
+                                    )
+                                }}
+                            </Badge>
+                        </div>
+                        <p class="mt-1 text-xs text-on-surface-variant">
+                            <template
+                                v-if="
+                                    props.bank_reconciliation.status ===
+                                    'confirmed'
+                                "
+                            >
+                                {{
+                                    t(
+                                        'statements.bank_control.summary',
+                                        props.bank_reconciliation.counts,
+                                    )
+                                }}
+                            </template>
+                            <template v-else>{{
+                                t('statements.bank_control.description')
+                            }}</template>
+                        </p>
+                    </div>
+                    <Link
+                        :href="
+                            props.bank_reconciliation.statement_id
+                                ? route('bank-statements.show', {
+                                      bankStatement:
+                                          props.bank_reconciliation
+                                              .statement_id,
+                                  })
+                                : route('bank-statements.index')
+                        "
+                    >
+                        <Button variant="secondary" size="compact">
+                            {{ t('statements.bank_control.action') }} →
+                        </Button>
+                    </Link>
+                </div>
+            </Card>
 
             <Card v-if="showTodayPanel && props.today_day" padded>
                 <form class="space-y-5" @submit.prevent="saveToday">

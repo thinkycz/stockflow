@@ -250,5 +250,18 @@
     "The selected worker is invalid.": "The selected worker is invalid.",
     "The selected store is invalid.": "The selected store is invalid.",
     "Shift requests locked.": "Shift requests locked.",
-    "Shift requests reopened.": "Shift requests reopened."
+    "Shift requests reopened.": "Shift requests reopened.",
+    "Select an active store first.": "Select an active store first.",
+    "Bank statement queued.": "Bank statement queued.",
+    "This bank statement was already uploaded.": "This bank statement was already uploaded.",
+    "Bank statement draft saved.": "Bank statement draft saved.",
+    "Bank statement confirmed.": "Bank statement confirmed.",
+    "Bank statement reopened.": "Bank statement returned to review.",
+    "Bank statement queued again.": "Bank statement queued again.",
+    "statement_not_editable": "This bank statement cannot currently be edited.",
+    "statement_not_confirmable": "This bank statement cannot currently be confirmed.",
+    "statement_integrity_failed": "Statement totals do not balance; confirmation is blocked.",
+    "statement_period_missing": "Complete the sales period for every reconciled payment.",
+    "statement_not_reopenable": "This bank statement cannot be returned to review.",
+    "statement_not_retryable": "This bank statement cannot currently be processed again."
 }

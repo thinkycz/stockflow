@@ -19,6 +19,7 @@ use App\Http\Controllers\Web\Auth\LoginController;
 use App\Http\Controllers\Web\Auth\LogoutController;
 use App\Http\Controllers\Web\Auth\ResetPasswordController;
 use App\Http\Controllers\Web\Auth\VerifyEmailController;
+use App\Http\Controllers\Web\BankStatement\BankStatementController;
 use App\Http\Controllers\Web\Checklist\ChecklistDayExcuseController;
 use App\Http\Controllers\Web\Checklist\ChecklistIndexController;
 use App\Http\Controllers\Web\Checklist\ChecklistItemController;
@@ -217,6 +218,16 @@ Resolver::resolveRouteRegistrar()
 Resolver::resolveRouteRegistrar()
     ->middleware([EnsureInertiaUserIsAuthenticated::class, 'admin'])
     ->group(static function (Router $router): void {
+        // Private bank statement imports
+        $router->get('bank-statements', [BankStatementController::class, 'index'])->name('bank-statements.index');
+        $router->post('bank-statements', [BankStatementController::class, 'store'])->name('bank-statements.store');
+        $router->get('bank-statements/{bankStatement}', [BankStatementController::class, 'show'])->whereNumber('bankStatement')->name('bank-statements.show');
+        $router->get('bank-statements/{bankStatement}/original', [BankStatementController::class, 'original'])->whereNumber('bankStatement')->name('bank-statements.original');
+        $router->put('bank-statements/{bankStatement}', [BankStatementController::class, 'update'])->whereNumber('bankStatement')->name('bank-statements.update');
+        $router->post('bank-statements/{bankStatement}/confirm', [BankStatementController::class, 'confirm'])->whereNumber('bankStatement')->name('bank-statements.confirm');
+        $router->post('bank-statements/{bankStatement}/reopen', [BankStatementController::class, 'reopen'])->whereNumber('bankStatement')->name('bank-statements.reopen');
+        $router->post('bank-statements/{bankStatement}/retry', [BankStatementController::class, 'retry'])->whereNumber('bankStatement')->name('bank-statements.retry');
+
         $router->middleware(EnsureAiAssistantIsEnabled::class)->group(static function (Router $router): void {
             $router->get('assistant', [AssistantController::class, 'index'])->name('assistant.index');
             $router->post('assistant/chat', AssistantChatController::class)->name('assistant.chat');

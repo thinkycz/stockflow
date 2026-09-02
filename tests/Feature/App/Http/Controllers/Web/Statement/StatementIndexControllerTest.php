@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Models\AttendanceBreak;
 use App\Models\AttendanceSession;
+use App\Models\BankStatement;
+use App\Models\BankStatementTransaction;
 use App\Models\Statement;
 use App\Models\StatementDay;
 use App\Models\Store;
@@ -84,6 +86,38 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response->assertJsonPath('props.filters.year', 2025);
     $response->assertJsonPath('props.filters.month', 2);
     \expect($response->json('props.days'))->toHaveCount(28);
+});
+
+\test('statements show a live monthly summary for a confirmed bank import', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $user->getKey()]);
+    $statement = Statement::factory()->forStore($store)->forMonth(2026, 8)->create();
+    StatementDay::factory()->for($statement, 'statement')->create([
+        'date' => '2026-08-01',
+        'card' => '1000.00',
+        'total' => '1000.00',
+    ]);
+    $bankStatement = BankStatement::factory()->forStore($store)->create(['status' => 'confirmed']);
+    BankStatementTransaction::factory()->forStatement($bankStatement)->create([
+        'amount' => '990.00',
+        'sales_from' => '2026-08-01',
+        'sales_to' => '2026-08-01',
+    ]);
+
+    $this->be($user, 'users')->get(
+        '/statements?store_id=' . $store->getKey() . '&year=2026&month=8',
+        $this->inertiaHeaders(),
+    )->assertOk()
+        ->assertJsonPath('props.bank_reconciliation.statement_id', $bankStatement->getKey())
+        ->assertJsonPath('props.bank_reconciliation.status', 'confirmed')
+        ->assertJsonPath('props.bank_reconciliation.counts.matched', 1);
+
+    StatementDay::query()->whereDate('date', '2026-08-01')->update(['card' => '900.00']);
+
+    $this->be($user, 'users')->get(
+        '/statements?store_id=' . $store->getKey() . '&year=2026&month=8',
+        $this->inertiaHeaders(),
+    )->assertJsonPath('props.bank_reconciliation.counts.mismatch', 1);
 });
 
 \test('statements expose todays row independently from the selected month', function (): void {

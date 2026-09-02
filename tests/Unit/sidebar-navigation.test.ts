@@ -37,6 +37,8 @@ describe('sidebar navigation', () => {
         );
         expect(limited).not.toContain('payroll');
         expect(limited).not.toContain('income_expenses');
+        expect(admin).toContain('bank_statements');
+        expect(limited).not.toContain('bank_statements');
         expect(limited.indexOf('recipes')).toBe(
             limited.indexOf('attendance') + 1,
         );
@@ -63,6 +65,7 @@ describe('sidebar navigation', () => {
     test('classifies admin store section pages including child routes', () => {
         expect(isStoreSectionUrl('/dashboard?status=active', true)).toBe(true);
         expect(isStoreSectionUrl('/statements/history', true)).toBe(true);
+        expect(isStoreSectionUrl('/bank-statements/42', true)).toBe(true);
         expect(isStoreSectionUrl('/inventory-counts/42', true)).toBe(true);
         expect(isStoreSectionUrl('/reports/statistics', true)).toBe(true);
         expect(isStoreSectionUrl('/shifts?month=7', true)).toBe(true);

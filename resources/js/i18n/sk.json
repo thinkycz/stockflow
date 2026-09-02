@@ -15,6 +15,7 @@
         "consumption": "Výdaj / spotreba",
         "stores": "Predajne",
         "statements": "Výkazy",
+        "bank_statements": "Výpisy z účtu",
         "inventory_counts": "Inventúra",
         "reports": "Reporty",
         "statistics": "Štatistika",
@@ -1119,6 +1120,103 @@
             "saved": "Výkaz bol uložený.",
             "cleared": "Výkaz bol vynulovaný.",
             "restored": "Výkaz bol obnovený z vybranej verzie."
+        },
+        "bank_control": {
+            "title": "Kontrola bankových platieb",
+            "description": "Stav importu výpisu pre vybraný mesiac.",
+            "summary": "Zhody: {matched}, rozdiely: {mismatch}, nevyriešené: {unresolved}",
+            "action": "Otvoriť kontrolu"
+        }
+    },
+    "bank_statements": {
+        "title": "Výpisy z účtu",
+        "subtitle": "Nahrajte bankové PDF, skontrolujte vyťažené pohyby a porovnajte ich s výkazmi.",
+        "processing": "PDF sa spracúva. Táto stránka sa automaticky obnoví.",
+        "integrity_blocked": "Súhrny výpisu nesedia. Koncept možno opraviť, potvrdenie je do vyriešenia blokované.",
+        "upload": {
+            "title": "Nahrať výpis",
+            "description": "Česká spořitelna, CZK, PDF do 10 MB.",
+            "external_ai_notice": "Dokument bude na účely vyťaženia odovzdaný externému poskytovateľovi AI OpenRouter.",
+            "action": "Nahrať a spracovať"
+        },
+        "empty": {
+            "title": "Zatiaľ žiadne výpisy",
+            "description": "Nahrajte prvý PDF výpis pre aktívnu prevádzku."
+        },
+        "detail": { "title": "Kontrola výpisu" },
+        "columns": {
+            "file": "Súbor",
+            "period": "Obdobie",
+            "bank": "Banka",
+            "status": "Stav",
+            "actions": "Akcie",
+            "account": "Účet",
+            "balance": "Zostatok"
+        },
+        "status": {
+            "not_uploaded": "Nenahrané",
+            "queued": "Vo fronte",
+            "processing": "Spracúva sa",
+            "review": "Čaká na kontrolu",
+            "confirmed": "Potvrdené",
+            "failed": "Spracovanie zlyhalo"
+        },
+        "category": {
+            "card": "Karta",
+            "wolt": "Wolt",
+            "bolt": "Bolt",
+            "foodora": "Foodora",
+            "other_incoming": "Ostatný príjem",
+            "outgoing": "Odchádzajúce"
+        },
+        "filter": {
+            "all": "Všetky kategórie",
+            "all_results": "Všetky výsledky"
+        },
+        "result": {
+            "matched": "Zhoda",
+            "mismatch": "Rozdiel",
+            "unresolved": "Nevyriešené",
+            "excluded": "Mimo kontroly"
+        },
+        "transaction": {
+            "date": "Zaúčtované",
+            "description": "Pohyb",
+            "category": "Kategória",
+            "sales_period": "Obdobie tržieb od–do",
+            "actual": "Skutočne",
+            "expected": "Očakávané",
+            "result": "Kontrola"
+        },
+        "actions": {
+            "detail": "Detail",
+            "download": "Stiahnuť originál",
+            "retry": "Skúsiť znovu",
+            "reopen": "Vrátiť na kontrolu",
+            "confirm": "Potvrdiť výpis",
+            "add": "Pridať pohyb",
+            "save": "Uložiť koncept"
+        },
+        "confirm": {
+            "title": "Potvrdiť výpis?",
+            "message": "Bankové dáta sa uzamknú iba na čítanie. Výkazy sa tým nezmenia."
+        },
+        "reopen": {
+            "title": "Vrátiť výpis na kontrolu?",
+            "message": "Pohyby bude možné znovu upravovať."
+        },
+        "errors": {
+            "provider_or_parse_failed": "Poskytovateľ AI výpis nespracoval. Skúste úlohu spustiť znovu.",
+            "duplicate_statement": "Tento výpis už bol pre prevádzku a obdobie importovaný."
+        },
+        "warnings": {
+            "credit_count_mismatch": "Nesedí počet príjmov.",
+            "debit_count_mismatch": "Nesedí počet výdavkov.",
+            "credit_sum_mismatch": "Nesedí súčet príjmov.",
+            "debit_sum_mismatch": "Nesedí súčet výdavkov.",
+            "balance_mismatch": "Nesedí rovnica zostatkov.",
+            "unsupported_bank": "Výpis nie je z podporovanej banky.",
+            "unsupported_currency": "Výpis nie je v CZK."
         }
     },
     "inventory_counts": {

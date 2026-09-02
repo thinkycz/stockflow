@@ -8,6 +8,7 @@ use App\Models\Statement;
 use App\Models\StatementDay;
 use App\Models\User;
 use App\Services\AttendanceService;
+use App\Services\BankStatementReconciliationService;
 use App\Services\StatementService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
@@ -28,7 +29,11 @@ class StatementIndexController
     /**
      * Render the statements editor for the active store and month.
      */
-    public function __invoke(Request $request, StatementService $service): Response
+    public function __invoke(
+        Request $request,
+        StatementService $service,
+        BankStatementReconciliationService $bankReconciliation,
+    ): Response
     {
         $user = User::mustAuth();
 
@@ -82,6 +87,9 @@ class StatementIndexController
                 'month' => $month,
             ],
             'is_admin' => $user->isAdmin(),
+            'bank_reconciliation' => $user->isAdmin()
+                ? $bankReconciliation->monthlyStatus($scopeUser, $store, $year, $month)
+                : null,
             'active_attendances' => $store !== null
                 ? (new AttendanceService())->activeCurrentDayEmployees($user, $store)
                 : [],

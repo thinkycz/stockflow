@@ -250,5 +250,18 @@
     "The selected worker is invalid.": "Vybraný brigádnik nie je platný.",
     "The selected store is invalid.": "Vybraná prevádzka nie je platná.",
     "Shift requests locked.": "Požiadavky na smeny boli uzamknuté.",
-    "Shift requests reopened.": "Požiadavky na smeny boli znovu otvorené."
+    "Shift requests reopened.": "Požiadavky na smeny boli znovu otvorené.",
+    "Select an active store first.": "Najprv vyberte aktívnu prevádzku.",
+    "Bank statement queued.": "Výpis bol zaradený do frontu na spracovanie.",
+    "This bank statement was already uploaded.": "Tento výpis už bol nahraný.",
+    "Bank statement draft saved.": "Koncept výpisu bol uložený.",
+    "Bank statement confirmed.": "Výpis bol potvrdený.",
+    "Bank statement reopened.": "Výpis bol vrátený na kontrolu.",
+    "Bank statement queued again.": "Výpis bol znovu zaradený do frontu.",
+    "statement_not_editable": "Tento výpis teraz nemožno upravovať.",
+    "statement_not_confirmable": "Tento výpis teraz nemožno potvrdiť.",
+    "statement_integrity_failed": "Súhrny výpisu nesedia; potvrdenie je blokované.",
+    "statement_period_missing": "Doplňte obdobie tržieb pri všetkých párovaných platbách.",
+    "statement_not_reopenable": "Tento výpis nemožno vrátiť na kontrolu.",
+    "statement_not_retryable": "Tento výpis teraz nemožno znovu spracovať."
 }

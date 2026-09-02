@@ -119,11 +119,27 @@ class StatementDay extends BaseModel
     }
 
     /**
+     * Card amount as an exact decimal string.
+     */
+    public function getCardDecimal(): string
+    {
+        return Typer::assertString($this->getAttribute('card'));
+    }
+
+    /**
      * Wolt getter.
      */
     public function getWolt(): float
     {
         return (float) Typer::assertString($this->getAttribute('wolt'));
+    }
+
+    /**
+     * Wolt amount as an exact decimal string.
+     */
+    public function getWoltDecimal(): string
+    {
+        return Typer::assertString($this->getAttribute('wolt'));
     }
 
     /**
@@ -135,6 +151,14 @@ class StatementDay extends BaseModel
     }
 
     /**
+     * Bolt amount as an exact decimal string.
+     */
+    public function getBoltDecimal(): string
+    {
+        return Typer::assertString($this->getAttribute('bolt'));
+    }
+
+    /**
      * Bolt cash getter.
      */
     public function getBoltCash(): float
@@ -143,11 +167,27 @@ class StatementDay extends BaseModel
     }
 
     /**
+     * Bolt cash amount as an exact decimal string.
+     */
+    public function getBoltCashDecimal(): string
+    {
+        return Typer::assertString($this->getAttribute('bolt_cash'));
+    }
+
+    /**
      * Foodora getter.
      */
     public function getFoodora(): float
     {
         return (float) Typer::assertString($this->getAttribute('foodora'));
+    }
+
+    /**
+     * Foodora amount as an exact decimal string.
+     */
+    public function getFoodoraDecimal(): string
+    {
+        return Typer::assertString($this->getAttribute('foodora'));
     }
 
     /**

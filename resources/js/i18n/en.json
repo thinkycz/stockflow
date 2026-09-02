@@ -15,6 +15,7 @@
         "consumption": "Issue / consumption",
         "stores": "Stores",
         "statements": "Statements",
+        "bank_statements": "Bank statements",
         "inventory_counts": "Inventory counts",
         "reports": "Reports",
         "statistics": "Statistics",
@@ -1119,6 +1120,103 @@
             "saved": "Statement saved.",
             "cleared": "Statement cleared.",
             "restored": "Statement restored from the selected version."
+        },
+        "bank_control": {
+            "title": "Bank payment check",
+            "description": "Import status for the selected month.",
+            "summary": "Matches: {matched}, differences: {mismatch}, unresolved: {unresolved}",
+            "action": "Open check"
+        }
+    },
+    "bank_statements": {
+        "title": "Bank statements",
+        "subtitle": "Upload a bank PDF, review extracted movements, and compare them with statements.",
+        "processing": "The PDF is being processed. This page refreshes automatically.",
+        "integrity_blocked": "Statement totals do not balance. You may edit the draft, but confirmation is blocked until resolved.",
+        "upload": {
+            "title": "Upload statement",
+            "description": "Česká spořitelna, CZK, PDF up to 10 MB.",
+            "external_ai_notice": "The document will be sent to the external AI provider OpenRouter for extraction.",
+            "action": "Upload and process"
+        },
+        "empty": {
+            "title": "No statements yet",
+            "description": "Upload the first PDF for the active store."
+        },
+        "detail": { "title": "Statement review" },
+        "columns": {
+            "file": "File",
+            "period": "Period",
+            "bank": "Bank",
+            "status": "Status",
+            "actions": "Actions",
+            "account": "Account",
+            "balance": "Balance"
+        },
+        "status": {
+            "not_uploaded": "Not uploaded",
+            "queued": "Queued",
+            "processing": "Processing",
+            "review": "Awaiting review",
+            "confirmed": "Confirmed",
+            "failed": "Processing failed"
+        },
+        "category": {
+            "card": "Card",
+            "wolt": "Wolt",
+            "bolt": "Bolt",
+            "foodora": "Foodora",
+            "other_incoming": "Other incoming",
+            "outgoing": "Outgoing"
+        },
+        "filter": {
+            "all": "All categories",
+            "all_results": "All results"
+        },
+        "result": {
+            "matched": "Matched",
+            "mismatch": "Mismatch",
+            "unresolved": "Unresolved",
+            "excluded": "Excluded"
+        },
+        "transaction": {
+            "date": "Booked",
+            "description": "Movement",
+            "category": "Category",
+            "sales_period": "Sales period from–to",
+            "actual": "Actual",
+            "expected": "Expected",
+            "result": "Check"
+        },
+        "actions": {
+            "detail": "Detail",
+            "download": "Download original",
+            "retry": "Retry",
+            "reopen": "Return to review",
+            "confirm": "Confirm statement",
+            "add": "Add movement",
+            "save": "Save draft"
+        },
+        "confirm": {
+            "title": "Confirm statement?",
+            "message": "Bank data will become read-only. This does not modify reports."
+        },
+        "reopen": {
+            "title": "Return statement to review?",
+            "message": "Movements will become editable again."
+        },
+        "errors": {
+            "provider_or_parse_failed": "The AI provider could not process this statement. Try again.",
+            "duplicate_statement": "This statement has already been imported for this store and period."
+        },
+        "warnings": {
+            "credit_count_mismatch": "Incoming count does not match.",
+            "debit_count_mismatch": "Outgoing count does not match.",
+            "credit_sum_mismatch": "Incoming total does not match.",
+            "debit_sum_mismatch": "Outgoing total does not match.",
+            "balance_mismatch": "The balance equation does not match.",
+            "unsupported_bank": "This bank is not supported.",
+            "unsupported_currency": "The statement is not in CZK."
         }
     },
     "inventory_counts": {

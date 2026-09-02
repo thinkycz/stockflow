@@ -11,7 +11,7 @@ import {
     Trash2,
     UnlockKeyhole,
 } from '@lucide/vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Badge from '@/components/ui/Badge.vue';
@@ -67,6 +67,13 @@ type FinancialReport = {
     };
 };
 
+type FinancialSection = {
+    key: 'income' | 'expense';
+    rows: FinancialRow[];
+    calculatedTotal: number;
+    effectiveTotal: number;
+};
+
 const props = defineProps<{
     active_store: { id: number; name: string; is_warehouse: boolean } | null;
     filters: { year: number; month: number };
@@ -82,6 +89,24 @@ const editingManualRow = ref<FinancialRow | null>(null);
 const overrideModalOpen = ref(false);
 const overridingRow = ref<FinancialRow | null>(null);
 const lifecycleProcessing = ref(false);
+const financialSections = computed<FinancialSection[]>(() => {
+    if (props.financial_report === null) return [];
+
+    return [
+        { key: 'income' as const, rows: props.financial_report.income_rows },
+        { key: 'expense' as const, rows: props.financial_report.expense_rows },
+    ].map((section) => ({
+        ...section,
+        calculatedTotal: section.rows.reduce(
+            (total, row) => total + row.calculated_amount,
+            0,
+        ),
+        effectiveTotal: section.rows.reduce(
+            (total, row) => total + row.effective_amount,
+            0,
+        ),
+    }));
+});
 
 const manualForm = useForm({
     year: props.filters.year,
@@ -440,10 +465,7 @@ function rowHref(row: FinancialRow): string | null {
                 </div>
 
                 <section
-                    v-for="section in [
-                        { key: 'income', rows: financial_report.income_rows },
-                        { key: 'expense', rows: financial_report.expense_rows },
-                    ]"
+                    v-for="section in financialSections"
                     :key="section.key"
                     class="space-y-4"
                 >
@@ -623,6 +645,31 @@ function rowHref(row: FinancialRow): string | null {
                                 </td>
                             </tr>
                         </tbody>
+                        <tfoot>
+                            <tr
+                                :data-testid="`financial-totals-${section.key}`"
+                            >
+                                <th
+                                    colspan="3"
+                                    data-label=""
+                                    data-mobile-hidden
+                                    class="text-left text-xs font-semibold text-on-surface-variant"
+                                >
+                                    Σ
+                                </th>
+                                <td
+                                    class="text-right text-xs font-semibold text-on-surface-variant"
+                                >
+                                    {{ money(section.calculatedTotal) }}
+                                </td>
+                                <td
+                                    class="text-right text-xs font-semibold text-on-surface"
+                                >
+                                    {{ money(section.effectiveTotal) }}
+                                </td>
+                                <td data-label="" data-mobile-hidden></td>
+                            </tr>
+                        </tfoot>
                     </DataTable>
                 </section>
             </template>

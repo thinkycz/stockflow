@@ -9,6 +9,41 @@ async function confirmDialog(
     await dialog.getByRole('button', { name: label, exact: true }).click();
 }
 
+function currencyValue(value: string): number {
+    return Number(value.replace(/[^\d.-]/g, ''));
+}
+
+async function expectFinancialTotals(
+    totalRow: import('@playwright/test').Locator,
+): Promise<void> {
+    const section = totalRow.locator('xpath=ancestor::section');
+    const calculatedAmounts = await section
+        .locator('tbody [data-testid^="financial-row-"] td:nth-child(4)')
+        .allTextContents();
+    const effectiveAmounts = await section
+        .locator('tbody [data-testid^="financial-row-"] td:nth-child(5)')
+        .allTextContents();
+    const calculatedTotal = currencyValue(
+        (await totalRow.locator('td').nth(0).textContent()) ?? '',
+    );
+    const effectiveTotal = currencyValue(
+        (await totalRow.locator('td').nth(1).textContent()) ?? '',
+    );
+
+    expect(calculatedTotal).toBe(
+        calculatedAmounts.reduce(
+            (total, amount) => total + currencyValue(amount),
+            0,
+        ),
+    );
+    expect(effectiveTotal).toBe(
+        effectiveAmounts.reduce(
+            (total, amount) => total + currencyValue(amount),
+            0,
+        ),
+    );
+}
+
 test('admin manages and closes a monthly financial report while limited users are denied', async ({
     page,
 }) => {
@@ -44,6 +79,31 @@ test('admin manages and closes a monthly financial report while limited users ar
     });
     await expect(incomingMovementRow).toContainText('Incoming → Brno pobočka');
     await expect(transferMovementRow).toContainText('Warehouse → Brno pobočka');
+
+    const incomeTotals = page.getByTestId('financial-totals-income');
+    const expenseTotals = page.getByTestId('financial-totals-expense');
+    await expect(incomeTotals).toBeVisible();
+    await expect(expenseTotals).toBeVisible();
+    await expect(incomeTotals.locator('th').first()).toContainText('Σ');
+    await expect(expenseTotals.locator('th').first()).toContainText('Σ');
+    await expect(incomeTotals.locator('td').nth(0)).toHaveAttribute(
+        'data-label',
+        'Calculated',
+    );
+    await expect(incomeTotals.locator('td').nth(1)).toHaveAttribute(
+        'data-label',
+        'Used',
+    );
+    await expect(expenseTotals.locator('td').nth(0)).toHaveAttribute(
+        'data-label',
+        'Calculated',
+    );
+    await expect(expenseTotals.locator('td').nth(1)).toHaveAttribute(
+        'data-label',
+        'Used',
+    );
+    await expectFinancialTotals(incomeTotals);
+    await expectFinancialTotals(expenseTotals);
 
     await page.getByRole('button', { name: 'Recurring expenses' }).click();
     await page.waitForURL(

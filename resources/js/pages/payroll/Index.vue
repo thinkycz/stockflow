@@ -59,6 +59,25 @@ const tipEligibleHours = computed(() =>
         0,
     ),
 );
+const payrollTotals = computed(() =>
+    (props.payroll_report?.payslips ?? []).reduce(
+        (totals, payslip) => ({
+            payable_hours: totals.payable_hours + payslip.payable_hours,
+            base_amount: totals.base_amount + payslip.base_amount,
+            tip_amount: totals.tip_amount + payslip.tip_amount,
+            deduction_amount:
+                totals.deduction_amount + payslip.deduction_amount,
+            final_amount: totals.final_amount + payslip.final_amount,
+        }),
+        {
+            payable_hours: 0,
+            base_amount: 0,
+            tip_amount: 0,
+            deduction_amount: 0,
+            final_amount: 0,
+        },
+    ),
+);
 
 function openWorkerModal(): void {
     workerForm.clearErrors();
@@ -344,6 +363,42 @@ async function lifecycle(action: 'close' | 'reopen'): Promise<void> {
                         </td>
                     </tr>
                 </tbody>
+                <tfoot>
+                    <tr data-testid="payroll-totals">
+                        <th
+                            data-label=""
+                            class="text-left text-xs font-semibold text-on-surface-variant"
+                        >
+                            Σ
+                        </th>
+                        <td
+                            class="text-right text-xs font-semibold text-on-surface-variant"
+                        >
+                            {{ hours(payrollTotals.payable_hours) }}
+                        </td>
+                        <td
+                            class="text-right text-xs font-semibold text-on-surface-variant"
+                        >
+                            {{ formatMoney(payrollTotals.base_amount) }}
+                        </td>
+                        <td
+                            class="text-right text-xs font-semibold text-emerald-700"
+                        >
+                            {{ formatMoney(payrollTotals.tip_amount) }}
+                        </td>
+                        <td
+                            class="text-right text-xs font-semibold text-rose-700"
+                        >
+                            {{ formatMoney(payrollTotals.deduction_amount) }}
+                        </td>
+                        <td
+                            class="text-right text-xs font-semibold text-on-surface"
+                        >
+                            {{ formatMoney(payrollTotals.final_amount) }}
+                        </td>
+                        <td data-label="" data-mobile-hidden></td>
+                    </tr>
+                </tfoot>
             </DataTable>
         </div>
 

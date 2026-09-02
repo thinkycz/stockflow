@@ -20,6 +20,21 @@ describe('payroll ui contract', () => {
         expect(source).toContain('<Combobox');
     });
 
+    test('the overview totals every displayed payroll amount', () => {
+        const source = readFileSync(
+            resolve(resourcesRoot, 'pages/payroll/Index.vue'),
+            'utf8',
+        );
+
+        expect(source).toContain('const payrollTotals = computed');
+        expect(source).toContain('data-testid="payroll-totals"');
+        expect(source).toContain('payrollTotals.payable_hours');
+        expect(source).toContain('payrollTotals.base_amount');
+        expect(source).toContain('payrollTotals.tip_amount');
+        expect(source).toContain('payrollTotals.deduction_amount');
+        expect(source).toContain('payrollTotals.final_amount');
+    });
+
     test('the detail owns payroll editing and both print variants', () => {
         const source = readFileSync(
             resolve(resourcesRoot, 'pages/payroll/Show.vue'),

@@ -44,6 +44,13 @@ test('admin adjusts closes and prints payroll while limited users are denied', a
     await expect(activeEmployeeRow.locator('td').nth(3)).toContainText(
         '200.00',
     );
+    const payrollTotals = page.getByTestId('payroll-totals');
+    await expect(payrollTotals.locator('th').first()).toContainText('Σ');
+    await expect(payrollTotals.locator('td').nth(0)).toContainText('3 h');
+    await expect(payrollTotals.locator('td').nth(1)).toContainText('600.00');
+    await expect(payrollTotals.locator('td').nth(2)).toContainText('600.00');
+    await expect(payrollTotals.locator('td').nth(3)).toContainText('0.00');
+    await expect(payrollTotals.locator('td').nth(4)).toContainText('1,200.00');
 
     await page.getByRole('button', { name: 'Add worker' }).click();
     await page.getByRole('combobox', { name: 'Worker' }).fill('Payroll Only');

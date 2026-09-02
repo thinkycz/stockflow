@@ -14,4 +14,13 @@ describe('income and expenses ui contract', () => {
         expect(page).toContain('row.details.destination_store_name');
         expect(page).toContain("t('stock_movements.types.incoming')");
     });
+
+    test('each financial section totals calculated and used amounts', () => {
+        expect(page).toContain('const financialSections = computed');
+        expect(page).toContain(
+            ':data-testid="`financial-totals-${section.key}`"',
+        );
+        expect(page).toContain('section.calculatedTotal');
+        expect(page).toContain('section.effectiveTotal');
+    });
 });

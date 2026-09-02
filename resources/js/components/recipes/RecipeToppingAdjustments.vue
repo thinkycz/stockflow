@@ -2,7 +2,6 @@
 import { Info } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
 import Card from '@/components/ui/Card.vue';
-import DataTable from '@/components/ui/DataTable.vue';
 
 export type RecipeToppingAdjustmentData = {
     base_toppings: '0–1';
@@ -46,41 +45,54 @@ const { t } = useI18n();
             </div>
         </div>
 
-        <DataTable
-            v-if="guidance.components.length > 0"
-            class="mt-4"
-            density="compact"
-            variant="nested"
-            table-class="min-w-[32rem]"
-        >
-            <thead>
-                <tr>
-                    <th>{{ t('recipes.ingredient_name') }}</th>
-                    <th>{{ t('recipes.topping_adjustments.base') }}</th>
-                    <th>{{ t('recipes.topping_adjustments.two') }}</th>
-                    <th>{{ t('recipes.topping_adjustments.three') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr
-                    v-for="component in guidance.components"
-                    :key="component.ingredient_name"
+        <div v-if="guidance.components.length > 0" class="mt-4 space-y-3">
+            <section
+                v-for="component in guidance.components"
+                :key="component.ingredient_name"
+                class="overflow-hidden rounded-xl border border-amber-200 bg-white/80"
+                data-testid="recipe-topping-component"
+            >
+                <h3
+                    class="border-b border-amber-200 px-3 py-2 text-sm font-semibold text-amber-950"
                 >
-                    <th class="font-medium">
-                        {{ component.ingredient_name }}
-                    </th>
-                    <td>{{ component.base_quantity }} {{ component.unit }}</td>
-                    <td>
-                        {{ component.two_toppings_quantity }}
-                        {{ component.unit }}
-                    </td>
-                    <td>
-                        {{ component.three_toppings_quantity }}
-                        {{ component.unit }}
-                    </td>
-                </tr>
-            </tbody>
-        </DataTable>
+                    {{ component.ingredient_name }}
+                </h3>
+                <div class="grid grid-cols-3 divide-x divide-amber-200">
+                    <div class="px-2 py-3 text-center sm:px-3">
+                        <span class="block text-xs font-medium text-amber-800">
+                            {{ t('recipes.topping_adjustments.base') }}
+                        </span>
+                        <strong
+                            class="mt-1 block text-base font-bold text-amber-950"
+                        >
+                            {{ component.base_quantity }} {{ component.unit }}
+                        </strong>
+                    </div>
+                    <div class="px-2 py-3 text-center sm:px-3">
+                        <span class="block text-xs font-medium text-amber-800">
+                            {{ t('recipes.topping_adjustments.two') }}
+                        </span>
+                        <strong
+                            class="mt-1 block text-base font-bold text-amber-950"
+                        >
+                            {{ component.two_toppings_quantity }}
+                            {{ component.unit }}
+                        </strong>
+                    </div>
+                    <div class="px-2 py-3 text-center sm:px-3">
+                        <span class="block text-xs font-medium text-amber-800">
+                            {{ t('recipes.topping_adjustments.three') }}
+                        </span>
+                        <strong
+                            class="mt-1 block text-base font-bold text-amber-950"
+                        >
+                            {{ component.three_toppings_quantity }}
+                            {{ component.unit }}
+                        </strong>
+                    </div>
+                </div>
+            </section>
+        </div>
         <p v-else class="mt-4 text-sm font-medium text-amber-950">
             {{ t('recipes.topping_adjustments.none') }}
         </p>

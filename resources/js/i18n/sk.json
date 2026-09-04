@@ -1920,6 +1920,7 @@
         }
     },
     "gift_vouchers": {
+        "back_to_overview": "Späť na prehľad",
         "title": "Darčekové poukazy",
         "subtitle": "Vydávanie, tlač a bezpečné jednorazové uplatnenie poukazov.",
         "code": "Kód poukazu",

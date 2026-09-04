@@ -64,6 +64,6 @@ class GiftVoucherRedeemController
         (new GiftVoucherService())->redeem($actor, $store, $voucher);
         Inertia::flash('success', \__('Gift voucher redeemed.'));
 
-        return Resolver::resolveRedirector()->route('gift-vouchers.index');
+        return Resolver::resolveRedirector()->route('gift-vouchers.redeem-page');
     }
 }

@@ -15,9 +15,11 @@ use App\Services\GiftVoucherBrandingService;
 use App\Services\GiftVoucherService;
 use App\Support\ActiveStoreResolver;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class GiftVoucherIndexController
@@ -30,25 +32,72 @@ class GiftVoucherIndexController
     /**
      * Render the role-aware voucher section.
      */
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): RedirectResponse|Response
+    {
+        if (!User::mustAuth()->isAdmin()) {
+            return Resolver::resolveRedirector()->route('gift-vouchers.redeem-page');
+        }
+        $legacy = Typer::parseNullableString($request->query('tab'));
+        $destination = match ($legacy) {
+            'issue' => 'gift-voucher-batches.create',
+            'settings' => 'gift-voucher-settings.edit',
+            'redeem' => 'gift-vouchers.redeem-page',
+            'overview' => 'gift-vouchers.index',
+            default => null,
+        };
+        if ($destination !== null) {
+            return Resolver::resolveRedirector()->route($destination, $request->except('tab'));
+        }
+
+        return $this->render($request, 'Index');
+    }
+
+    /**
+     * Render the batch issuance form.
+     */
+    public function create(Request $request): Response
+    {
+        return $this->render($request, 'Create');
+    }
+
+    /**
+     * Render voucher branding settings.
+     */
+    public function settings(Request $request): Response
+    {
+        return $this->render($request, 'Settings');
+    }
+
+    /**
+     * Render voucher lookup and redemption.
+     */
+    public function redeem(Request $request): Response
+    {
+        return $this->render($request, 'Redeem');
+    }
+
+    /**
+     * Render only the data needed by the requested voucher page.
+     */
+    private function render(Request $request, string $page): Response
     {
         $actor = User::mustAuth();
         $owner = $actor->resolveScopeUser();
         $store = ActiveStoreResolver::resolve($request, $actor);
-        $setting = $actor->isAdmin()
+        $setting = $actor->isAdmin() && \in_array($page, ['Create', 'Settings'], true)
             ? GiftVoucherSetting::query()->where('user_id', $owner->getKey())->first()
             : null;
 
-        return Inertia::render('gift-vouchers/Index', [
+        return Inertia::render('gift-vouchers/' . $page, [
             'is_admin' => $actor->isAdmin(),
             'can_redeem' => $store instanceof Store && !$store->isWarehouse(),
-            'lookup' => $this->lookup($request, $owner),
+            'lookup' => $page === 'Redeem' ? $this->lookup($request, $owner) : null,
             'setting' => $setting instanceof GiftVoucherSetting ? [
                 'public_name' => $setting->getPublicName(),
                 'message' => $setting->getMessage(),
                 'logo' => (new GiftVoucherBrandingService())->dataUri($setting->getLogoPath(), $setting->getLogoMime()),
             ] : null,
-            'batches' => $actor->isAdmin() ? $this->batches($request, $owner) : [],
+            'batches' => $actor->isAdmin() && $page === 'Index' ? $this->batches($request, $owner) : [],
             'filters' => [
                 'status' => Typer::parseNullableString($request->query('status')),
                 'search' => Typer::parseNullableString($request->query('search')),

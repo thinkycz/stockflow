@@ -1920,6 +1920,7 @@
         }
     },
     "gift_vouchers": {
+        "back_to_overview": "Back to overview",
         "title": "Gift vouchers",
         "subtitle": "Issue, print, and securely redeem single-use vouchers.",
         "code": "Voucher code",

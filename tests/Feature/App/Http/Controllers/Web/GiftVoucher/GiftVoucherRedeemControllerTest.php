@@ -21,12 +21,12 @@ use Thinkycz\LaravelCore\Support\Typer;
     );
 
     $this->be($limited, 'users')->post('/gift-vouchers/lookup', ['code' => $voucher->getCode()]);
-    $page = $this->be($limited, 'users')->get('/gift-vouchers', $this->inertiaHeaders())->assertOk();
+    $page = $this->be($limited, 'users')->get('/gift-vouchers/redeem', $this->inertiaHeaders())->assertOk();
     $ticket = $page->json('props.lookup.ticket');
 
     $this->be($limited, 'users')->post('/gift-vouchers/' . $voucher->getKey() . '/redeem', [
         'ticket' => $ticket,
-    ])->assertRedirect('/gift-vouchers');
+    ])->assertRedirect('/gift-vouchers/redeem');
 
     \expect($voucher->refresh()->getStoredStatus())->toBe(GiftVoucherStatusEnum::Redeemed)
         ->and($voucher->getRedeemedStoreId())->toBe($store->getKey());

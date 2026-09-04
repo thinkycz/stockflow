@@ -195,6 +195,7 @@ Resolver::resolveRouteRegistrar()
         $router->post('attendance/actions', AttendanceActionController::class)->middleware('limited-section:attendance')->name('attendance.actions.store');
 
         // Gift vouchers (admin + limited redemption)
+        $router->get('gift-vouchers/redeem', [GiftVoucherIndexController::class, 'redeem'])->middleware('limited-section:gift_vouchers')->name('gift-vouchers.redeem-page');
         $router->get('gift-vouchers', GiftVoucherIndexController::class)->middleware('limited-section:gift_vouchers')->name('gift-vouchers.index');
         $router->post('gift-vouchers/lookup', GiftVoucherLookupController::class)->middleware('limited-section:gift_vouchers')->name('gift-vouchers.lookup');
         $router->post('gift-vouchers/{voucher}/redeem', GiftVoucherRedeemController::class)->whereNumber('voucher')->middleware('limited-section:gift_vouchers')->name('gift-vouchers.redeem');
@@ -250,6 +251,8 @@ Resolver::resolveRouteRegistrar()
         $router->post('settings/slack-digests/{digest}/retry', SlackDigestRetryController::class)->whereNumber('digest')->name('settings.slack-digests.retry');
 
         // Gift voucher administration
+        $router->get('gift-voucher-batches/create', [GiftVoucherIndexController::class, 'create'])->name('gift-voucher-batches.create');
+        $router->get('gift-voucher-settings', [GiftVoucherIndexController::class, 'settings'])->name('gift-voucher-settings.edit');
         $router->post('gift-voucher-batches', [GiftVoucherBatchController::class, 'store'])->name('gift-voucher-batches.store');
         $router->get('gift-voucher-batches/{batch}/print', [GiftVoucherPrintController::class, 'batch'])->whereNumber('batch')->name('gift-voucher-batches.print');
         $router->get('gift-vouchers/{voucher}/print', [GiftVoucherPrintController::class, 'voucher'])->whereNumber('voucher')->name('gift-vouchers.print');

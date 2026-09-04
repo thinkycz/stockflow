@@ -51,7 +51,6 @@ class GiftVoucherBatchController
         Inertia::flash('success', \__('Gift voucher batch issued.'));
 
         return Resolver::resolveRedirector()->route('gift-vouchers.index', [
-            'tab' => 'overview',
             'batch' => $batch->getKey(),
         ]);
     }

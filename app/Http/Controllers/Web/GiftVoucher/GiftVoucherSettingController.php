@@ -38,6 +38,6 @@ class GiftVoucherSettingController
         );
         Inertia::flash('success', \__('Gift voucher branding saved.'));
 
-        return Resolver::resolveRedirector()->route('gift-vouchers.index', ['tab' => 'settings']);
+        return Resolver::resolveRedirector()->route('gift-voucher-settings.edit');
     }
 }

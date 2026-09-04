@@ -22,9 +22,9 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     $this->be($admin, 'users')->post('/gift-vouchers/lookup', [
         'code' => \mb_strtolower(\str_replace('-', ' ', $voucher->getCode())),
-    ])->assertRedirect('/gift-vouchers');
+    ])->assertRedirect('/gift-vouchers/redeem');
 
-    $this->be($admin, 'users')->get('/gift-vouchers', $this->inertiaHeaders())
+    $this->be($admin, 'users')->get('/gift-vouchers/redeem', $this->inertiaHeaders())
         ->assertOk()
         ->assertJsonPath('props.lookup.voucher_id', $voucher->getKey());
 });

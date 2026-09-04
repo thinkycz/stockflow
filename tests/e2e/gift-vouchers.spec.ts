@@ -24,17 +24,20 @@ test('admin issues and prints three-up vouchers and limited account redeems one'
     await login(page, 'test@test.com');
     await expect(page.getByTestId('nav-item-gift_vouchers')).toBeVisible();
 
-    await page.goto('/gift-vouchers?tab=settings');
+    await page.goto('/gift-voucher-settings');
     await page.getByLabel('Public business name').fill('StockFlow Coffee');
     await page.getByLabel('Short message').fill('A small gift, a great cup.');
     await page.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(page.getByText('Gift voucher branding saved.')).toBeVisible();
 
-    await page.getByRole('tab', { name: 'Issue', exact: true }).click();
+    await page.goto('/gift-vouchers');
+    await page
+        .getByRole('button', { name: 'Issue a new batch', exact: true })
+        .click();
     await page.getByLabel('Voucher count').fill('4');
     await page.getByLabel('Value of one voucher').fill('450');
     await page.getByRole('button', { name: 'Issue vouchers' }).click();
-    await page.waitForURL(/tab=overview/);
+    await page.waitForURL(/\/gift-vouchers\?batch=/);
     await expect(page.getByText('Gift voucher batch issued.')).toBeVisible();
 
     const firstVoucher = page.locator('tbody tr').first();
@@ -84,7 +87,7 @@ test('admin issues and prints three-up vouchers and limited account redeems one'
 
     await logout(page);
     await login(page, 'test@test.com');
-    await page.goto('/gift-vouchers?tab=overview&search=' + code);
+    await page.goto('/gift-vouchers?search=' + code);
     await page.getByRole('button', { name: 'Reverse redemption' }).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByLabel('Reason for change').fill('E2E correction');
@@ -100,7 +103,7 @@ test('print media preserves three-up sheets for representative batch sizes', asy
     page,
 }) => {
     await login(page, 'test@test.com');
-    await page.goto('/gift-vouchers?tab=settings');
+    await page.goto('/gift-voucher-settings');
     await page.getByLabel('Public business name').fill('StockFlow Coffee');
     await page.getByRole('button', { name: 'Save', exact: true }).click();
 
@@ -113,7 +116,10 @@ test('print media preserves three-up sheets for representative batch sizes', asy
     ];
 
     for (const batch of cases) {
-        await page.getByRole('tab', { name: 'Issue', exact: true }).click();
+        await page.goto('/gift-vouchers');
+        await page
+            .getByRole('button', { name: 'Issue a new batch', exact: true })
+            .click();
         await page.getByLabel('Voucher count').fill(String(batch.quantity));
         await page.getByLabel('Value of one voucher').fill('100');
         await page.getByRole('button', { name: 'Issue vouchers' }).click();
@@ -138,4 +144,37 @@ test('print media preserves three-up sheets for representative batch sizes', asy
 
         await printPage.close();
     }
+});
+
+test('voucher header navigation and forms work on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await login(page, 'test@test.com');
+    await page.goto('/gift-vouchers');
+    await expect(page.getByRole('tab')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    await expect(page).toHaveURL(/\/gift-voucher-settings$/);
+    await expect(page.getByLabel('Public business name')).toBeVisible();
+    await page.getByRole('link', { name: 'Back to overview' }).click();
+    await page
+        .getByRole('button', { name: 'Issue a new batch', exact: true })
+        .click();
+    await expect(page).toHaveURL(/\/gift-voucher-batches\/create$/);
+    await page.getByLabel('Voucher count').fill('0');
+    await page.getByLabel('Value of one voucher').fill('100');
+    await page
+        .getByRole('button', { name: 'Issue vouchers', exact: true })
+        .click();
+    await expect(page).toHaveURL(/\/gift-voucher-batches\/create$/);
+    expect(
+        await page
+            .getByLabel('Voucher count')
+            .evaluate(
+                (input: HTMLInputElement) => input.validity.rangeUnderflow,
+            ),
+    ).toBe(true);
+    await page.getByRole('link', { name: 'Back to overview' }).click();
+    await page.getByRole('button', { name: 'Redeem', exact: true }).click();
+    await expect(page).toHaveURL(/\/gift-vouchers\/redeem$/);
+    await expect(page.getByLabel('Voucher code')).toBeVisible();
+    await expect(page.locator('body')).toHaveJSProperty('scrollWidth', 390);
 });

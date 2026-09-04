@@ -48,6 +48,6 @@ class GiftVoucherLookupController
             'expires_at' => CarbonImmutable::now()->addMinutes(5)->timestamp,
         ]);
 
-        return Resolver::resolveRedirector()->route('gift-vouchers.index');
+        return Resolver::resolveRedirector()->route('gift-vouchers.redeem-page');
     }
 }

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Domain\OperationalActivity\DailyOperationalDigestService;
 use App\Jobs\CreateDailyOperationalDigestJob;
 use App\Jobs\PruneOperationalDigestHistoryJob;
 use App\Models\OperationalActivity;
 use App\Models\OperationalDailyDigest;
-use App\Services\DailyOperationalDigestService;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Notification;

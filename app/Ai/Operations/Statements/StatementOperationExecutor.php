@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Ai\Operations\Statements;
 
 use App\Ai\Operations\AssistantOperationExecutor;
+use App\Domain\Statements\ManageStatements;
 use App\Models\Statement;
 use App\Models\User;
-use App\Operations\Statements\ManageStatements;
 use InvalidArgumentException;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;

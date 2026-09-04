@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Domain\Recipes\RecipeCatalogService;
+use App\Domain\Recipes\RecipeTestService;
+use App\Domain\Recipes\RecipeTestSessionService;
 use App\Models\Recipe;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\RecipeCatalogService;
-use App\Services\RecipeTestService;
 use Database\Factories\UserFactory;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -42,4 +43,19 @@ use Thinkycz\LaravelCore\Support\Typer;
     $attempt = (new RecipeTestService())->start($limited, Typer::assertInstance($worker, Worker::class), $recipe);
     $foreign = UserFactory::new()->admin()->createOne();
     $this->be($foreign, 'users')->get('/recipe-tests/' . $attempt->getKey())->assertNotFound();
+});
+
+\test('session children cannot be read or submitted through legacy routes', function (): void {
+    $admin = UserFactory::new()->admin()->createOne();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $limited = UserFactory::new()->limited($store)->createOne();
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
+    (new RecipeCatalogService())->initialize($admin);
+    $session = (new RecipeTestSessionService())->start($limited, $worker);
+    $attempt = $session->getAttempts()->firstOrFail();
+    $tokens = \array_column($attempt->getCorrectStepsSnapshot(), 'token');
+    $this->be($limited, 'users')->get('/recipe-tests/' . $attempt->getKey())->assertNotFound();
+    $this->put('/recipe-tests/' . $attempt->getKey(), ['tokens' => $tokens])->assertNotFound();
+    \expect($attempt->fresh()->getSubmittedAt())->toBeNull();
+    \expect(fn() => (new RecipeTestService())->submit($limited, $attempt, $tokens))->toThrow(InvalidArgumentException::class);
 });

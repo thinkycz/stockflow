@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Checklists\ChecklistService;
 use App\Enums\ChecklistShiftEnum;
 use App\Enums\ChecklistTemplateScopeEnum;
 use App\Models\ChecklistDay;
@@ -10,11 +11,11 @@ use App\Models\ChecklistTemplateTask;
 use App\Models\Store;
 use App\Models\Worker;
 use App\Notifications\OperationalActivitySlackNotification;
-use App\Services\ChecklistService;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Notification;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Thinkycz\LaravelCore\Support\Config;
 
 \test('default checklist catalog creates exact daily and weekly task groups for retail store', function (): void {
@@ -127,3 +128,20 @@ use Thinkycz\LaravelCore\Support\Config;
         },
     );
 });
+
+\test('checklist template replacement rejects foreign administrators and assigned limited actors before deleting tasks', function (bool $limited): void {
+    [$owner] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $owner->getKey(), 'is_warehouse' => false]);
+    $actor = $limited ? UserFactory::new()->limited($store)->createOne() : UserFactory::new()->admin()->createOne();
+    $task = ChecklistTemplateTask::factory()->create([
+        'user_id' => $owner->getKey(), 'store_id' => $store->getKey(),
+        'scope' => ChecklistTemplateScopeEnum::Daily->value, 'weekday' => null,
+        'shift' => ChecklistShiftEnum::Morning->value, 'text' => 'Preserve this task',
+    ]);
+    $service = new ChecklistService();
+
+    \expect(fn() => $service->replaceTemplateGroup($actor, $store, ChecklistTemplateScopeEnum::Daily, null, ChecklistShiftEnum::Morning, ['Forbidden replacement']))
+        ->toThrow(HttpException::class);
+    \expect(ChecklistTemplateTask::query()->whereKey($task->getKey())->value('text'))->toBe('Preserve this task')
+        ->and(ChecklistTemplateTask::query()->where('store_id', $store->getKey())->count())->toBe(1);
+})->with([false, true]);

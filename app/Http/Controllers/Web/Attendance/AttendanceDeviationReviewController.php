@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Attendance;
 
+use App\Domain\Workforce\AttendanceDeviationReviewService;
 use App\Enums\AttendanceDeviationReviewDecisionEnum;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\AttendanceValidity;
@@ -11,7 +12,6 @@ use App\Http\Validation\ShiftValidity;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\AttendanceDeviationReviewService;
 use App\Support\ActiveStoreResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;

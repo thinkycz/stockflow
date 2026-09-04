@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Attendance;
 
+use App\Domain\Workforce\AttendanceCorrectionService;
+use App\Domain\Workforce\AttendanceService;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\AttendanceValidity;
 use App\Models\AttendanceSession;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\AttendanceCorrectionService;
-use App\Services\AttendanceService;
 use App\Support\ActiveStoreResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;

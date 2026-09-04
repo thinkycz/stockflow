@@ -1,0 +1,428 @@
+<script setup lang="ts">
+import { ArchiveRestore, ImagePlus, Pencil, Plus, Trash2 } from '@lucide/vue';
+import Button from '@/components/ui/Button.vue';
+import Alert from '@/components/ui/Alert.vue';
+import Badge from '@/components/ui/Badge.vue';
+import EmptyState from '@/components/ui/EmptyState.vue';
+import FieldError from '@/components/ui/FieldError.vue';
+import Input from '@/components/ui/Input.vue';
+import Label from '@/components/ui/Label.vue';
+import Modal from '@/components/ui/Modal.vue';
+import Pagination from '@/components/ui/Pagination.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
+import SearchFilter from '@/components/ui/SearchFilter.vue';
+import Select from '@/components/ui/Select.vue';
+import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
+import Tabs from '@/components/ui/Tabs.vue';
+import RichTextEditor from '@/features/noticeboard/components/RichTextEditor.vue';
+import {
+    useNoticeboard,
+    type NoticeboardProps,
+} from '@/features/noticeboard/useNoticeboard';
+
+const props = defineProps<NoticeboardProps>();
+const {
+    t,
+    route,
+    formOpen,
+    editingCard,
+    search,
+    label,
+    selectedImageUrl,
+    form,
+    labelOptions,
+    statusTabs,
+    query,
+    changeStatus,
+    openCreate,
+    openEdit,
+    closeForm,
+    selectImage,
+    removeImage,
+    submit,
+    trash,
+    restore,
+    forceDestroy,
+    labelIcon,
+    colorSwatchClass,
+    cardClass,
+} = useNoticeboard(props);
+</script>
+
+<template>
+    <section>
+        <PageHeader
+            class="mb-5"
+            :title="t('noticeboard.title')"
+            :subtitle="
+                activeStore
+                    ? t('noticeboard.subtitle')
+                    : t('noticeboard.no_store')
+            "
+        >
+            <template #context>
+                <StoreContextIndicator />
+            </template>
+            <template #actions>
+                <Button :disabled="!activeStore" @click="openCreate">
+                    <Plus :size="16" />
+                    {{ t('noticeboard.add') }}
+                </Button>
+            </template>
+        </PageHeader>
+
+        <template v-if="activeStore">
+            <div
+                class="mb-5 grid items-end gap-3 md:grid-cols-[minmax(14rem,1fr)_13rem_auto]"
+            >
+                <SearchFilter
+                    id="noticeboard-search"
+                    v-model="search"
+                    :label="t('noticeboard.filters.search')"
+                    :placeholder="t('noticeboard.filters.search')"
+                />
+                <Select v-model="label" :options="labelOptions" />
+                <Tabs
+                    :model-value="noticeboard.filters.status"
+                    :items="statusTabs"
+                    :label="t('noticeboard.status.label')"
+                    @update:model-value="
+                        changeStatus($event as 'active' | 'expired' | 'trash')
+                    "
+                />
+            </div>
+
+            <EmptyState
+                v-if="noticeboard.cards.length === 0"
+                :title="t('noticeboard.empty.title')"
+                :description="t('noticeboard.empty.description')"
+            >
+                <template
+                    v-if="noticeboard.filters.status === 'active'"
+                    #action
+                >
+                    <Button @click="openCreate">
+                        <Plus :size="14" />
+                        {{ t('noticeboard.add') }}
+                    </Button>
+                </template>
+            </EmptyState>
+
+            <div
+                v-else
+                class="grid items-start gap-5 sm:grid-cols-2 xl:grid-cols-4"
+            >
+                <article
+                    v-for="card in noticeboard.cards"
+                    :key="card.id"
+                    :class="cardClass(card.color, card.size)"
+                    :data-card-color="card.color"
+                    :data-card-size="card.size"
+                >
+                    <div class="flex items-start justify-between gap-3">
+                        <Badge
+                            class="bg-white/60 py-1.5 text-slate-700 shadow-sm"
+                            :title="t(`noticeboard.labels.${card.label}`)"
+                        >
+                            <component
+                                :is="labelIcon(card.label)"
+                                :size="15"
+                                aria-hidden="true"
+                            />
+                            {{ t(`noticeboard.labels.${card.label}`) }}
+                        </Badge>
+                        <div
+                            class="flex opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                            @click.stop
+                        >
+                            <template
+                                v-if="noticeboard.filters.status === 'trash'"
+                            >
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    :aria-label="t('noticeboard.restore')"
+                                    @click="restore(card)"
+                                >
+                                    <ArchiveRestore :size="15" />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="danger"
+                                    size="icon-sm"
+                                    :aria-label="t('noticeboard.force_delete')"
+                                    @click="forceDestroy(card)"
+                                >
+                                    <Trash2 :size="15" />
+                                </Button>
+                            </template>
+                            <template v-else>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    :aria-label="t('common.edit')"
+                                    @click="openEdit(card)"
+                                >
+                                    <Pencil :size="15" />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    class="text-error-red hover:text-error-red"
+                                    :aria-label="t('common.delete')"
+                                    @click="trash(card)"
+                                >
+                                    <Trash2 :size="15" />
+                                </Button>
+                            </template>
+                        </div>
+                    </div>
+                    <img
+                        v-if="card.image_url"
+                        :src="card.image_url"
+                        :alt="t(`noticeboard.labels.${card.label}`)"
+                        class="mt-4 h-32 w-full rounded-xl object-cover"
+                    />
+                    <div
+                        class="noticeboard-rich-text mt-4 max-h-48 overflow-y-auto pr-1 text-sm leading-relaxed text-slate-700"
+                        v-html="card.body_html"
+                    />
+                </article>
+            </div>
+
+            <Pagination
+                class="mt-6"
+                :current-page="noticeboard.pagination.current_page"
+                :last-page="noticeboard.pagination.last_page"
+                :per-page="noticeboard.pagination.per_page"
+                :total="noticeboard.pagination.total"
+                :base-url="route('dashboard')"
+                :query-params="query()"
+            />
+        </template>
+    </section>
+
+    <Modal
+        :open="formOpen"
+        :title="
+            editingCard
+                ? t('noticeboard.form.edit_title')
+                : t('noticeboard.form.create_title')
+        "
+        size="lg"
+        class="max-h-[92vh] overflow-y-auto"
+        @close="closeForm"
+    >
+        <form class="space-y-5" @submit.prevent="submit">
+            <div>
+                <Label class="mb-1.5 block">
+                    {{ t('noticeboard.form.content') }}
+                </Label>
+                <RichTextEditor
+                    v-model="form.body_html"
+                    :invalid="Boolean(form.errors.body_html)"
+                />
+                <FieldError class="mt-1" :message="form.errors.body_html" />
+            </div>
+
+            <div class="grid gap-5 sm:grid-cols-2">
+                <fieldset>
+                    <legend class="mb-2 block text-xs font-semibold">
+                        {{ t('noticeboard.form.label') }}
+                    </legend>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="labelValue in noticeboard.labels"
+                            :key="labelValue"
+                            type="button"
+                            :aria-label="t(`noticeboard.labels.${labelValue}`)"
+                            :title="t(`noticeboard.labels.${labelValue}`)"
+                            :aria-pressed="form.label === labelValue"
+                            :class="[
+                                'flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition',
+                                form.label === labelValue
+                                    ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary/15'
+                                    : 'border-outline-glass bg-white text-on-surface-variant hover:border-primary/40 hover:text-primary',
+                            ]"
+                            @click="form.label = labelValue"
+                        >
+                            <component
+                                :is="labelIcon(labelValue)"
+                                :size="17"
+                                aria-hidden="true"
+                            />
+                            {{ t(`noticeboard.labels.${labelValue}`) }}
+                        </button>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend class="mb-2 block text-xs font-semibold">
+                        {{ t('noticeboard.form.color') }}
+                    </legend>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="color in noticeboard.colors"
+                            :key="color"
+                            type="button"
+                            :aria-label="t(`noticeboard.colors.${color}`)"
+                            :title="t(`noticeboard.colors.${color}`)"
+                            :aria-pressed="form.color === color"
+                            class="flex size-10 items-center justify-center rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            @click="form.color = color"
+                        >
+                            <span
+                                :class="[
+                                    'size-7 rounded-full border-2 border-white shadow-sm transition',
+                                    colorSwatchClass(color),
+                                    form.color === color
+                                        ? 'scale-110 ring-2 ring-primary ring-offset-2'
+                                        : 'hover:scale-105',
+                                ]"
+                            />
+                        </button>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend class="mb-2 block text-xs font-semibold">
+                        {{ t('noticeboard.form.size') }}
+                    </legend>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="size in noticeboard.sizes"
+                            :key="size"
+                            type="button"
+                            :aria-pressed="form.size === size"
+                            :class="[
+                                'flex min-w-20 flex-col items-center gap-1.5 rounded-xl border px-3 py-2 text-[11px] font-semibold transition',
+                                form.size === size
+                                    ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary/15'
+                                    : 'border-outline-glass bg-white text-on-surface-variant hover:border-primary/40',
+                            ]"
+                            @click="form.size = size"
+                        >
+                            <span
+                                :class="[
+                                    'rounded-sm bg-current opacity-70',
+                                    {
+                                        small: 'h-2.5 w-4',
+                                        medium: 'h-3 w-6',
+                                        large: 'h-3.5 w-8',
+                                    }[size],
+                                ]"
+                            />
+                            {{ t(`noticeboard.sizes.${size}`) }}
+                        </button>
+                    </div>
+                </fieldset>
+
+                <div>
+                    <Label for="noticeboard-expiration" class="mb-1.5 block">
+                        {{ t('noticeboard.form.expires_on') }}
+                    </Label>
+                    <Input
+                        id="noticeboard-expiration"
+                        v-model="form.expires_on"
+                        type="date"
+                    />
+                </div>
+            </div>
+
+            <div>
+                <Label class="mb-1.5 block">
+                    {{ t('noticeboard.form.image') }}
+                </Label>
+                <div
+                    class="flex flex-col gap-3 rounded-xl border border-dashed border-outline-glass p-4 sm:flex-row sm:items-center"
+                >
+                    <img
+                        v-if="
+                            selectedImageUrl ||
+                            (editingCard?.image_url && !form.remove_image)
+                        "
+                        :src="selectedImageUrl ?? editingCard?.image_url ?? ''"
+                        alt=""
+                        class="h-24 w-32 rounded-lg object-cover"
+                    />
+                    <div class="flex flex-wrap gap-2">
+                        <label
+                            class="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-outline-glass bg-white px-4 text-xs font-semibold"
+                        >
+                            <ImagePlus :size="15" />
+                            {{ t('noticeboard.form.choose_image') }}
+                            <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                class="sr-only"
+                                @change="selectImage"
+                            />
+                        </label>
+                        <Button
+                            v-if="
+                                selectedImageUrl ||
+                                (editingCard?.image_url && !form.remove_image)
+                            "
+                            variant="ghost"
+                            @click="removeImage"
+                        >
+                            {{ t('noticeboard.form.remove_image') }}
+                        </Button>
+                    </div>
+                </div>
+                <FieldError class="mt-1" :message="form.errors.image" />
+            </div>
+
+            <Alert v-if="form.errors.lock_version" variant="error">
+                {{ form.errors.lock_version }}
+            </Alert>
+
+            <div class="flex justify-end gap-2">
+                <Button variant="secondary" @click="closeForm">
+                    {{ t('common.cancel') }}
+                </Button>
+                <Button
+                    type="submit"
+                    :loading="form.processing"
+                    :loading-label="t('common.saving')"
+                >
+                    {{ t('common.save') }}
+                </Button>
+            </div>
+        </form>
+    </Modal>
+</template>
+
+<style>
+.noticeboard-rich-text p + p,
+.noticeboard-rich-text ul + p,
+.noticeboard-rich-text ol + p {
+    margin-top: 0.65rem;
+}
+
+.noticeboard-rich-text ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+}
+
+.noticeboard-rich-text ol {
+    list-style: decimal;
+    padding-left: 1.25rem;
+}
+
+.noticeboard-rich-text a {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+.noticeboard-rich-text [data-text-size='small'] {
+    font-size: 0.75rem;
+}
+
+.noticeboard-rich-text [data-text-size='large'] {
+    font-size: 1.25rem;
+}
+</style>

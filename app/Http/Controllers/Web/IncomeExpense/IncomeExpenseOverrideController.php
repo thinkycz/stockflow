@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\IncomeExpense;
 
+use App\Domain\Finance\FinancialReportService;
 use App\Enums\FinancialSourceTypeEnum;
 use App\Http\Controllers\Web\Concerns\ResolvesFinancialReportContext;
 use App\Http\Validation\FinancialReportValidity;
 use App\Models\User;
-use App\Services\FinancialReportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

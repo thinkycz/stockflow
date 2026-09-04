@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Domain\Recipes\RecipeAdjustmentService;
 use App\Models\RecipeInstruction;
 use App\Models\RecipeVariant;
-use App\Services\RecipeAdjustmentService;
 
 \test('calculates topping reductions for liquid sugar and flavored syrups with a zero floor', function (): void {
     $variant = RecipeVariant::factory()->createOne();

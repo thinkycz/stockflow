@@ -1,10 +1,10 @@
-import { readFileSync } from 'node:fs';
+import { workflowSource } from './helpers/workflow-source';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
 describe('inactive statement lifecycle contract', () => {
     test('the statement editor carries exact store context and hides mutations when read only', () => {
-        const source = readFileSync(
+        const source = workflowSource(
             resolve(process.cwd(), 'resources/js/pages/statements/Index.vue'),
             'utf8',
         );
@@ -19,7 +19,7 @@ describe('inactive statement lifecycle contract', () => {
     });
 
     test('version restore is unavailable for an inactive historical store', () => {
-        const source = readFileSync(
+        const source = workflowSource(
             resolve(process.cwd(), 'resources/js/pages/statements/Version.vue'),
             'utf8',
         );

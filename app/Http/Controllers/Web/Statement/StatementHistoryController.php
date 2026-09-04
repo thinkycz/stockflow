@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Statement;
 
+use App\Domain\Statements\StatementService;
 use App\Models\Statement;
 use App\Models\User;
-use App\Services\StatementService;
 use Inertia\Inertia;
 use Inertia\Response;
 

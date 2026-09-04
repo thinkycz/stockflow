@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Domain\Inventory\StockMovementService;
 use App\Enums\AdjustmentReasonEnum;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\StoreItem;
-use App\Services\StockMovementService;
 
 \test('reversing an incoming movement preserves both ledger entries and restores stock', function (): void {
     [$user, $warehouse] = \createIsolatedUserWithWarehouse();

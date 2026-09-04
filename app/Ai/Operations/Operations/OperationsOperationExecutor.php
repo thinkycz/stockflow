@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Ai\Operations\Operations;
 
 use App\Ai\Operations\AssistantOperationExecutor;
+use App\Domain\Checklists\ChecklistService;
+use App\Domain\Noticeboard\NoticeboardCardService;
 use App\Enums\ChecklistShiftEnum;
 use App\Enums\ChecklistTemplateScopeEnum;
 use App\Enums\NoticeboardCardSizeEnum;
@@ -16,8 +18,6 @@ use App\Models\NoticeboardCard;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\ChecklistService;
-use App\Services\NoticeboardCardService;
 use InvalidArgumentException;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Thrower;
@@ -128,6 +128,7 @@ final class OperationsOperationExecutor implements AssistantOperationExecutor
             }
 
             $this->checklists->replaceTemplateGroup(
+                $actor,
                 $store,
                 ChecklistTemplateScopeEnum::from(Typer::assertString($values['scope'] ?? null)),
                 Typer::parseNullableInt($values['weekday'] ?? null),
@@ -181,11 +182,13 @@ final class OperationsOperationExecutor implements AssistantOperationExecutor
                 Thrower::default()->message('body_html', \__('The card content must contain visible text.'))->throw();
             }
         } elseif ($identifier === 'trash_noticeboard_card') {
-            $this->noticeboard->trash($card);
+            $this->noticeboard->trash($card, $actor);
         } elseif ($identifier === 'restore_noticeboard_card') {
-            $this->noticeboard->restore($card);
-        } elseif ($identifier === 'delete_noticeboard_card_permanently' && !$this->noticeboard->forceDelete($card)) {
-            Thrower::default()->message('card', \__('The card image could not be deleted.'))->throw();
+            $this->noticeboard->restore($card, $actor);
+        } elseif ($identifier === 'delete_noticeboard_card_permanently') {
+            if (!$this->noticeboard->forceDelete($card, $actor)) {
+                Thrower::default()->message('card', \__('The card image could not be deleted.'))->throw();
+            }
         } else {
             throw new InvalidArgumentException('Unknown daily-operations action.');
         }

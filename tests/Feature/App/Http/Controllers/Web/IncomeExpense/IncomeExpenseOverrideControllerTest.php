@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Domain\Finance\FinancialReportService;
+use App\Domain\Payroll\PayrollReportService;
 use App\Models\FinancialReportOverride;
 use App\Models\Store;
-use App\Services\FinancialReportService;
-use App\Services\PayrollReportService;
 use Database\Factories\UserFactory;
 
 \test('admin can store and remove a calculated row override', function (): void {

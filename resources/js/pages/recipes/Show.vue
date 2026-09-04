@@ -10,10 +10,10 @@ import Button from '@/components/ui/Button.vue';
 import Tabs from '@/components/ui/Tabs.vue';
 import RecipeInstructionList, {
     type RecipeInstructionData,
-} from '@/components/recipes/RecipeInstructionList.vue';
+} from '@/features/recipes/components/RecipeInstructionList.vue';
 import RecipeToppingAdjustments, {
     type RecipeToppingAdjustmentData,
-} from '@/components/recipes/RecipeToppingAdjustments.vue';
+} from '@/features/recipes/components/RecipeToppingAdjustments.vue';
 import { useRoute } from '@/composables/useRoute';
 
 const props = defineProps<{

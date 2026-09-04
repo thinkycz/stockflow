@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Report;
 
+use App\Domain\Inventory\InventoryReportService;
+use App\Domain\Statements\StatementService;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\InventoryReportService;
-use App\Services\StatementService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;

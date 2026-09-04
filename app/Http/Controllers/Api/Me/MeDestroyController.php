@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\Me;
 
+use App\Domain\Identity\AccountLifecycleService;
 use App\Enums\GuardEnum;
+use App\Models\User;
 use Illuminate\Auth\AuthenticationException;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Thinkycz\LaravelCore\Http\ApiFormRequest;
@@ -13,6 +15,7 @@ use Thinkycz\LaravelCore\Routing\AutomaticController;
 use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Parser;
 use Thinkycz\LaravelCore\Support\Resolver;
+use Thinkycz\LaravelCore\Support\Typer;
 
 class MeDestroyController extends AutomaticController
 {
@@ -33,9 +36,9 @@ class MeDestroyController extends AutomaticController
             throw new AuthenticationException();
         }
 
-        Resolver::resolveDatabaseTokenGuard($guard)->logout();
+        (new AccountLifecycleService())->deleteSelf(Typer::assertInstance($user, User::class));
 
-        $user->delete();
+        Resolver::resolveDatabaseTokenGuard($guard)->logout();
 
         return Resolver::resolveResponseFactory()->noContent();
     }

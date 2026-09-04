@@ -9,7 +9,7 @@ import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
-import WorkerColorField from '@/components/workers/WorkerColorField.vue';
+import WorkerColorField from '@/features/workers/components/WorkerColorField.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 

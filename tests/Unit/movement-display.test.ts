@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { movementDisplayLabelKey } from '@/lib/movement-display';
+import { movementDisplayLabelKey } from '@/features/stock-movements/movement-display';
 
 describe('movement display labels', () => {
     test('labels only warehouse-to-retail transfers as outgoing', () => {

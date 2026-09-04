@@ -1,16 +1,16 @@
-import { readFileSync } from 'node:fs';
+import { workflowSource } from './helpers/workflow-source';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
-const source = readFileSync(
+const source = workflowSource(
     resolve(process.cwd(), 'resources/js/pages/attendance/Index.vue'),
     'utf8',
 );
-const reportSource = readFileSync(
+const reportSource = workflowSource(
     resolve(process.cwd(), 'resources/js/pages/attendance/Report.vue'),
     'utf8',
 );
-const checklistSource = readFileSync(
+const checklistSource = workflowSource(
     resolve(process.cwd(), 'resources/js/pages/checklists/Index.vue'),
     'utf8',
 );

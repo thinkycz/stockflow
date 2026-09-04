@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Domain\Workforce\AttendanceCorrectionService;
 use App\Models\AttendanceSession;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\Worker;
 use App\Notifications\OperationalActivitySlackNotification;
-use App\Services\AttendanceCorrectionService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Notification;
 use Thinkycz\LaravelCore\Support\Config;

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Domain\Workforce\ShiftAssignmentService;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\Worker;
-use App\Services\ShiftAssignmentService;
 
 \test('assignment service finds exact and overlapping shifts', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools;
 
+use App\Domain\Workforce\ShiftCoverageReadService;
+use App\Domain\Workforce\ShiftOverviewService;
 use App\Models\Shift;
 use App\Models\Worker;
-use App\Services\ShiftCoverageReadService;
-use App\Services\ShiftOverviewService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\JsonSchema\Types\Type;

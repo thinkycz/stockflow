@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\Inventory\StockMovementTypeResolver;
 use App\Enums\StockMovementTypeEnum;
-use App\Services\StockMovementTypeResolver;
 
 \test('adjustment mode wins over store pair', function (): void {
     \expect((new StockMovementTypeResolver())->resolve('adjustment', 1, 2))->toBe(StockMovementTypeEnum::ADJUSTMENT);

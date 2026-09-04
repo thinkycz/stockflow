@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Domain\Finance\FinancialReportReadService;
+use App\Domain\Finance\FinancialReportService;
+use App\Domain\Payroll\PayrollReportService;
 use App\Enums\FinancialDirectionEnum;
 use App\Enums\FinancialSourceTypeEnum;
 use App\Enums\PayrollAdjustmentTypeEnum;
@@ -15,8 +18,6 @@ use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\Worker;
 use App\Notifications\OperationalActivitySlackNotification;
-use App\Services\FinancialReportService;
-use App\Services\PayrollReportService;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 use Thinkycz\LaravelCore\Support\Config;
@@ -63,7 +64,7 @@ use Thinkycz\LaravelCore\Support\Config;
     ]);
 
     $service = new FinancialReportService();
-    $report = $service->build($admin, $store, 2026, 7);
+    $report = (new FinancialReportReadService())->build($admin, $store, 2026, 7);
     $stockRows = \collect($report['expense_rows'])->where('source_type', FinancialSourceTypeEnum::STOCK_MOVEMENT->value);
     $incomingRow = $stockRows->firstWhere('source_key', (string) $incoming->getKey());
     $transferRow = $stockRows->firstWhere('source_key', (string) $transfer->getKey());
@@ -85,7 +86,7 @@ use Thinkycz\LaravelCore\Support\Config;
 
     (new PayrollReportService())->close($admin, $store, 2026, 7);
     $service->close($admin, $store, 2026, 7);
-    $closedTransfer = \collect($service->build($admin, $store, 2026, 7)['expense_rows'])
+    $closedTransfer = \collect((new FinancialReportReadService())->build($admin, $store, 2026, 7)['expense_rows'])
         ->where('source_type', FinancialSourceTypeEnum::STOCK_MOVEMENT->value)
         ->firstWhere('source_key', (string) $transfer->getKey());
 
@@ -120,7 +121,7 @@ use Thinkycz\LaravelCore\Support\Config;
     );
     $finance = new FinancialReportService();
 
-    $wage = \collect($finance->build($admin, $store, 2026, 7)['expense_rows'])
+    $wage = \collect((new FinancialReportReadService())->build($admin, $store, 2026, 7)['expense_rows'])
         ->firstWhere('source_type', FinancialSourceTypeEnum::WAGE->value);
 
     \expect($wage['calculated_amount'])->toBe(445.0)
@@ -132,7 +133,7 @@ use Thinkycz\LaravelCore\Support\Config;
     $payroll->close($admin, $store, 2026, 7);
     $finance->close($admin, $store, 2026, 7);
 
-    \expect($finance->build($admin, $store, 2026, 7)['report']['status'])->toBe('closed');
+    \expect((new FinancialReportReadService())->build($admin, $store, 2026, 7)['report']['status'])->toBe('closed');
 });
 
 \test('revenue commission is rounded once from the monthly gross amount', function (): void {
@@ -142,7 +143,7 @@ use Thinkycz\LaravelCore\Support\Config;
     StatementDay::factory()->create(['statement_id' => $statement->getKey(), 'date' => '2026-07-01', 'card' => 0.50, 'total' => 0.50]);
     StatementDay::factory()->create(['statement_id' => $statement->getKey(), 'date' => '2026-07-02', 'card' => 0.50, 'total' => 0.50]);
 
-    $card = (new FinancialReportService())->build($admin, $store, 2026, 7)['income_rows'][1];
+    $card = (new FinancialReportReadService())->build($admin, $store, 2026, 7)['income_rows'][1];
 
     \expect($card['details']['gross_amount'])->toBe(1.0)
         ->and($card['details']['commission_amount'])->toBe(0.01)
@@ -160,18 +161,18 @@ use Thinkycz\LaravelCore\Support\Config;
 
     $service->setOverride($admin, $store, 2026, 7, FinancialSourceTypeEnum::REVENUE, 'cash', 80);
     $day->update(['cash' => 200, 'total' => 200]);
-    \expect($service->build($admin, $store, 2026, 7)['income_rows'][0]['effective_amount'])->toBe(80.0);
+    \expect((new FinancialReportReadService())->build($admin, $store, 2026, 7)['income_rows'][0]['effective_amount'])->toBe(80.0);
 
     (new PayrollReportService())->close($admin, $store, 2026, 7);
     $store->update(['slack_channel' => '#praha']);
     $service->close($admin, $store, 2026, 7);
     Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 1);
     $day->update(['cash' => 300, 'total' => 300]);
-    \expect($service->build($admin, $store, 2026, 7)['income_rows'][0]['calculated_amount'])->toEqual(200.0);
+    \expect((new FinancialReportReadService())->build($admin, $store, 2026, 7)['income_rows'][0]['calculated_amount'])->toEqual(200.0);
 
     $service->reopen($admin, $store, 2026, 7);
     Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 2);
-    $reopened = $service->build($admin, $store, 2026, 7);
+    $reopened = (new FinancialReportReadService())->build($admin, $store, 2026, 7);
     \expect($reopened['income_rows'][0]['calculated_amount'])->toBe(300.0)
         ->and($reopened['income_rows'][0]['effective_amount'])->toBe(80.0);
 });
@@ -197,10 +198,10 @@ use Thinkycz\LaravelCore\Support\Config;
     $service = new FinancialReportService();
     $service->createRecurringExpense($admin, $store, 2026, 1, 'Rent', 15000, 31, 'Lease');
 
-    $before = $service->build($admin, $store, 2025, 12)['expense_rows'];
-    $february = \collect($service->build($admin, $store, 2026, 2)['expense_rows'])
+    $before = (new FinancialReportReadService())->build($admin, $store, 2025, 12)['expense_rows'];
+    $february = \collect((new FinancialReportReadService())->build($admin, $store, 2026, 2)['expense_rows'])
         ->firstWhere('source_type', FinancialSourceTypeEnum::RECURRING_EXPENSE->value);
-    $other = \collect($service->build($admin, $otherStore, 2026, 2)['expense_rows'])
+    $other = \collect((new FinancialReportReadService())->build($admin, $otherStore, 2026, 2)['expense_rows'])
         ->firstWhere('source_type', FinancialSourceTypeEnum::RECURRING_EXPENSE->value);
 
     \expect($before)->toBeEmpty()
@@ -221,7 +222,7 @@ use Thinkycz\LaravelCore\Support\Config;
     $service->changeRecurringExpense($admin, $store, $expense->getKey(), 2026, 4, 'Rent', 130, 10, 'April');
     $service->terminateRecurringExpense($admin, $store, $expense->getKey(), 2026, 6);
 
-    $row = static fn(int $month): mixed => \collect($service->build($admin, $store, 2026, $month)['expense_rows'])
+    $row = static fn(int $month): mixed => \collect((new FinancialReportReadService())->build($admin, $store, 2026, $month)['expense_rows'])
         ->firstWhere('source_type', FinancialSourceTypeEnum::RECURRING_EXPENSE->value);
 
     \expect($row(2)['calculated_amount'])->toBe(100.0)
@@ -276,7 +277,7 @@ use Thinkycz\LaravelCore\Support\Config;
         null,
     ))->toThrow(ValidationException::class);
 
-    $closed = \collect($service->build($admin, $store, 2026, 7)['expense_rows'])
+    $closed = \collect((new FinancialReportReadService())->build($admin, $store, 2026, 7)['expense_rows'])
         ->firstWhere('source_type', FinancialSourceTypeEnum::RECURRING_EXPENSE->value);
     $service->reopen($admin, $store, 2026, 7);
     $service->changeRecurringExpense($admin, $store, $expense->getKey(), 2026, 7, 'Internet', 200, 10, null);
@@ -288,7 +289,7 @@ use Thinkycz\LaravelCore\Support\Config;
         FinancialSourceTypeEnum::RECURRING_EXPENSE,
         (string) $expense->getKey(),
     );
-    $reopened = \collect($service->build($admin, $store, 2026, 7)['expense_rows'])
+    $reopened = \collect((new FinancialReportReadService())->build($admin, $store, 2026, 7)['expense_rows'])
         ->firstWhere('source_type', FinancialSourceTypeEnum::RECURRING_EXPENSE->value);
 
     \expect($closed['calculated_amount'])->toEqual(100.0)

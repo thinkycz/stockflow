@@ -99,6 +99,33 @@ class InventorySessionItem extends BaseModel
     }
 
     /**
+     * Server-owned revision, stored in the original version column.
+     */
+    public function getRevision(): int
+    {
+        return Typer::parseInt($this->getAttribute('client_version'));
+    }
+
+    /**
+     * Authoritative editable draft values and revision.
+     *
+     * @return array<string, float|int|string|null>
+     */
+    public function draftValues(): array
+    {
+        return [
+            'item_id' => $this->getItemId(),
+            'quantity' => $this->getQuantity(),
+            'classification' => $this->getClassification()?->value,
+            'note' => $this->getNote(),
+            'revision' => $this->getRevision(),
+            'counted_at' => $this->getCountedAt()?->toJSON(),
+            'expected_quantity' => $this->getExpectedQuantity(),
+            'difference' => $this->getQuantityDifference(),
+        ];
+    }
+
+    /**
      * Quantity getter.
      */
     public function getQuantity(): float|int

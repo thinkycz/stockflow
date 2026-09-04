@@ -217,6 +217,7 @@
             "void_gift_voucher": "Void the gift voucher."
         },
         "approval": {
+            "uncertain": "Outcome uncertain — check the result before taking further action.",
             "title": "Confirm action",
             "group_title": "Confirm proposed changes",
             "group_count": "Review all {count} changes and confirm them together.",
@@ -1144,7 +1145,9 @@
             "title": "No statements yet",
             "description": "Upload the first PDF for the active store."
         },
-        "detail": { "title": "Statement review" },
+        "detail": {
+            "title": "Statement review"
+        },
         "columns": {
             "file": "File",
             "period": "Period",
@@ -1260,7 +1263,12 @@
             "idle": "Not saved",
             "saving": "Saving…",
             "saved": "Saved",
-            "error": "Save failed"
+            "error": "Save failed",
+            "conflict": "Conflicting changes",
+            "local_value": "Your value",
+            "saved_value": "Saved value",
+            "use_saved": "Use saved value",
+            "reapply": "Reapply my value"
         },
         "status": {
             "ok": "OK",

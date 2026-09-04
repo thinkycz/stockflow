@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\Payroll\PayrollReportReadService;
+use App\Domain\Payroll\PayrollReportService;
 use App\Enums\PayrollAdjustmentTypeEnum;
 use App\Models\AttendanceSession;
 use App\Models\FinancialReport;
@@ -10,7 +12,6 @@ use App\Models\Shift;
 use App\Models\Store;
 use App\Models\Worker;
 use App\Notifications\OperationalActivitySlackNotification;
-use App\Services\PayrollReportService;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 use Thinkycz\LaravelCore\Support\Config;
@@ -42,7 +43,7 @@ use Thinkycz\LaravelCore\Support\Config;
         'hourly_rate' => 100,
     ]);
 
-    $report = (new PayrollReportService())->build($admin, $store, 2026, 7);
+    $report = (new PayrollReportReadService())->build($admin, $store, 2026, 7);
 
     \expect($report['status'])->toBe('open')
         ->and($report['payslips'])->toHaveCount(1)
@@ -74,7 +75,7 @@ use Thinkycz\LaravelCore\Support\Config;
     Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 1);
     $shift->update(['end_time' => '10:00']);
 
-    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['base_amount'])->toEqual(100.0)
+    \expect((new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0]['base_amount'])->toEqual(100.0)
         ->and(fn() => $service->createAdjustment(
             $admin,
             $store,
@@ -98,7 +99,7 @@ use Thinkycz\LaravelCore\Support\Config;
 
     FinancialReport::query()->update(['status' => 'open']);
     $service->reopen($admin, $store, 2026, 7);
-    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['base_amount'])->toBe(200.0);
+    \expect((new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0]['base_amount'])->toBe(200.0);
     Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 2);
 });
 
@@ -137,7 +138,7 @@ use Thinkycz\LaravelCore\Support\Config;
         'ended_at' => null,
     ]);
 
-    $payslip = (new PayrollReportService())->build($admin, $store, 2026, 7)['payslips'][0];
+    $payslip = (new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0];
 
     \expect($payslip['base_amount'])->toBe(200.0)
         ->and($payslip['final_amount'])->toBe(200.0)
@@ -166,7 +167,7 @@ use Thinkycz\LaravelCore\Support\Config;
 
     $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::TIP, 25, 'Shared tips');
     $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::DEDUCTION, 20, 'Till difference');
-    $payslip = $service->build($admin, $store, 2026, 7)['payslips'][0];
+    $payslip = (new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0];
 
     \expect($payslip['tip_amount'])->toBe(25.0)
         ->and($payslip['deduction_amount'])->toBe(20.0)
@@ -207,7 +208,7 @@ use Thinkycz\LaravelCore\Support\Config;
     $service->addWorker($admin, $store, 2026, 7, $zeroHourWorker);
 
     $service->distributeTips($admin, $store, 2026, 7, 600);
-    $payslips = \collect($service->build($admin, $store, 2026, 7)['payslips'])
+    $payslips = \collect((new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'])
         ->keyBy('worker_id');
 
     \expect($payslips[$workers[0]->getKey()]['tip_amount'])->toBe(100.0)
@@ -279,7 +280,7 @@ use Thinkycz\LaravelCore\Support\Config;
     $service = new PayrollReportService();
 
     $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 3.5, 120);
-    $payslip = $service->build($admin, $store, 2026, 7)['payslips'][0];
+    $payslip = (new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0];
 
     \expect($payslip['wage_overridden'])->toBeTrue()
         ->and($payslip['payable_hours'])->toBe(3.5)
@@ -288,7 +289,7 @@ use Thinkycz\LaravelCore\Support\Config;
         ->and($payslip['final_amount'])->toBe(420.0);
 
     $service->deleteWageOverride($admin, $store, 2026, 7, $worker->getKey());
-    $resetPayslip = $service->build($admin, $store, 2026, 7)['payslips'][0];
+    $resetPayslip = (new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0];
 
     \expect($resetPayslip['wage_overridden'])->toBeFalse()
         ->and($resetPayslip['base_amount'])->toBe(200.0);
@@ -308,7 +309,7 @@ use Thinkycz\LaravelCore\Support\Config;
 
     $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 3.5, 120);
     $service->close($admin, $store, 2026, 7);
-    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['base_amount'])->toEqual(420.0)
+    \expect((new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0]['base_amount'])->toEqual(420.0)
         ->and(fn() => $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 4, 120))
         ->toThrow(ValidationException::class);
 });
@@ -323,7 +324,7 @@ use Thinkycz\LaravelCore\Support\Config;
     $service = new PayrollReportService();
 
     $service->addWorker($admin, $store, 2026, 7, $worker);
-    $payslip = $service->build($admin, $store, 2026, 7)['payslips'][0];
+    $payslip = (new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0];
 
     \expect($payslip['payable_hours'])->toBe(0.0)
         ->and($payslip['payable_hourly_rate'])->toBe(175.0)
@@ -336,7 +337,7 @@ use Thinkycz\LaravelCore\Support\Config;
 
     $service->removeWorker($admin, $store, 2026, 7, $worker->getKey());
 
-    \expect($service->build($admin, $store, 2026, 7)['payslips'])->toBe([]);
+    \expect((new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'])->toBe([]);
 });
 
 \test('manually added workers persist through close and reopen', function (): void {
@@ -347,10 +348,10 @@ use Thinkycz\LaravelCore\Support\Config;
 
     $service->addWorker($admin, $store, 2026, 7, $worker);
     $service->close($admin, $store, 2026, 7);
-    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['manually_added'])->toBeTrue();
+    \expect((new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0]['manually_added'])->toBeTrue();
 
     $service->reopen($admin, $store, 2026, 7);
-    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['manually_added'])->toBeTrue();
+    \expect((new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0]['manually_added'])->toBeTrue();
 });
 
 \test('worker entries with payroll activity cannot be removed', function (): void {
@@ -425,7 +426,7 @@ use Thinkycz\LaravelCore\Support\Config;
 
     $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 1, 0.06);
 
-    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['final_amount'])->toBe(0.0)
+    \expect((new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0]['final_amount'])->toBe(0.0)
         ->and(fn() => $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 1, 0.05))
         ->toThrow(ValidationException::class);
 });
@@ -449,7 +450,7 @@ use Thinkycz\LaravelCore\Support\Config;
     $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::DEDUCTION, 0.07, 'Cent deduction');
 
     $service->deleteWageOverride($admin, $store, 2026, 7, $worker->getKey());
-    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['final_amount'])->toBe(0.0);
+    \expect((new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0]['final_amount'])->toBe(0.0);
 
     $service->upsertWageOverride($admin, $store, 2026, 7, $worker, 1, 1);
     $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::DEDUCTION, 0.01, 'Extra cent');
@@ -467,7 +468,7 @@ use Thinkycz\LaravelCore\Support\Config;
     $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::TIP, 0.01, 'Cent tip');
 
     $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::DEDUCTION, 0.07, 'Cent deduction');
-    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['final_amount'])->toBe(0.0)
+    \expect((new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0]['final_amount'])->toBe(0.0)
         ->and(fn() => $service->createAdjustment(
             $admin,
             $store,
@@ -489,7 +490,7 @@ use Thinkycz\LaravelCore\Support\Config;
 
     $service->upsertWageOverride($admin, $store, 2026, 7, $overrideWorker, 2, 125);
 
-    $payslip = $service->buildDetail($admin, $store, 2026, 7, $overrideWorker->getKey());
+    $payslip = (new PayrollReportReadService())->buildDetail($admin, $store, 2026, 7, $overrideWorker->getKey());
     \expect($payslip)->not->toBeNull()
         ->and($payslip['payslip']['base_amount'])->toBe(250.0)
         ->and($payslip['payslip']['final_amount'])->toBe(250.0)
@@ -527,7 +528,7 @@ use Thinkycz\LaravelCore\Support\Config;
     );
 
     $service->updateAdjustment($admin, $store, 2026, 7, $adjustment->getKey(), PayrollAdjustmentTypeEnum::DEDUCTION, 0.07, 'Exact zero');
-    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['final_amount'])->toBe(0.0)
+    \expect((new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0]['final_amount'])->toBe(0.0)
         ->and(fn() => $service->updateAdjustment(
             $admin,
             $store,
@@ -551,7 +552,7 @@ use Thinkycz\LaravelCore\Support\Config;
     $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::DEDUCTION, 0.06, 'Cent deduction');
 
     $service->deleteAdjustment($admin, $store, 2026, 7, $tip->getKey());
-    \expect($service->build($admin, $store, 2026, 7)['payslips'][0]['final_amount'])->toBe(0.0);
+    \expect((new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0]['final_amount'])->toBe(0.0);
 
     $tip = $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::TIP, 0.01, 'Cent tip');
     $service->createAdjustment($admin, $store, 2026, 7, $worker, PayrollAdjustmentTypeEnum::DEDUCTION, 0.01, 'Extra cent');

@@ -2,6 +2,16 @@
 
 declare(strict_types=1);
 
+use App\Domain\Checklists\ChecklistService;
+use App\Domain\Payroll\PayrollReportService;
+use App\Domain\Recipes\RecipeCatalogService;
+use App\Domain\Recipes\RecipeTestService;
+use App\Domain\Recipes\RecipeTestSessionService;
+use App\Domain\Workforce\AttendanceCorrectionService;
+use App\Domain\Workforce\AttendanceService;
+use App\Domain\Workforce\ShiftAssignmentService;
+use App\Domain\Workforce\ShiftRequestService;
+use App\Domain\Workforce\WorkforceManagementService;
 use App\Enums\AttendanceActionEnum;
 use App\Enums\PayrollAdjustmentTypeEnum;
 use App\Models\AttendanceSession;
@@ -10,16 +20,6 @@ use App\Models\Recipe;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\Worker;
-use App\Services\AttendanceCorrectionService;
-use App\Services\AttendanceService;
-use App\Services\ChecklistService;
-use App\Services\PayrollReportService;
-use App\Services\RecipeCatalogService;
-use App\Services\RecipeTestService;
-use App\Services\RecipeTestSessionService;
-use App\Services\ShiftAssignmentService;
-use App\Services\ShiftRequestService;
-use App\Services\WorkforceManagementService;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Validation\ValidationException;

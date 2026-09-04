@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\Password;
 
+use App\Domain\Identity\PasswordResetService;
 use App\Enums\GuardEnum;
-use App\Services\PasswordResetService;
 use Illuminate\Contracts\Auth\PasswordBroker;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Thinkycz\LaravelCore\Http\ApiFormRequest;

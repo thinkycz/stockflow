@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Domain\GiftVouchers\GiftVoucherService;
 use App\Models\GiftVoucher;
 use App\Models\GiftVoucherSetting;
-use App\Services\GiftVoucherService;
 use Thinkycz\LaravelCore\Support\Typer;
 
 \test('voucher lookup is exact and isolated by company', function (): void {

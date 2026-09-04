@@ -52,6 +52,7 @@ class BankStatementFactory extends Factory
             'raw_ai_response' => [],
             'last_error' => null,
             'attempt_count' => 1,
+            'parse_generation' => 1,
             'queued_at' => \now(),
             'started_at' => \now(),
             'parsed_at' => \now(),

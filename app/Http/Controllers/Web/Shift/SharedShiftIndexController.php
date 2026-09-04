@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Shift;
 
+use App\Domain\Workforce\ShiftOverviewService;
 use App\Models\Shift;
 use App\Models\ShiftShareLink;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\ShiftOverviewService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;

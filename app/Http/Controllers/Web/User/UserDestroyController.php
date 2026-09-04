@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\User;
 
+use App\Domain\Identity\UserManagementService;
 use App\Models\User;
-use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -19,7 +19,7 @@ class UserDestroyController
     {
         $admin = User::mustAuth();
 
-        if (!(new AdministrationManagementService())->deleteUser($admin, $user)) {
+        if (!(new UserManagementService())->deleteUser($admin, $user)) {
             Inertia::flash('error', \__('You cannot delete the main admin.'));
 
             return Resolver::resolveRedirector()->route('users.index');

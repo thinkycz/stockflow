@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { workflowSource } from './helpers/workflow-source';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
@@ -6,7 +6,7 @@ const resourcesRoot = resolve(process.cwd(), 'resources/js');
 
 describe('payroll ui contract', () => {
     test('the overview stays summary-only with one detail action', () => {
-        const source = readFileSync(
+        const source = workflowSource(
             resolve(resourcesRoot, 'pages/payroll/Index.vue'),
             'utf8',
         );
@@ -21,7 +21,7 @@ describe('payroll ui contract', () => {
     });
 
     test('the overview totals every displayed payroll amount', () => {
-        const source = readFileSync(
+        const source = workflowSource(
             resolve(resourcesRoot, 'pages/payroll/Index.vue'),
             'utf8',
         );
@@ -36,7 +36,7 @@ describe('payroll ui contract', () => {
     });
 
     test('the detail owns payroll editing and both print variants', () => {
-        const source = readFileSync(
+        const source = workflowSource(
             resolve(resourcesRoot, 'pages/payroll/Show.vue'),
             'utf8',
         );
@@ -55,7 +55,7 @@ describe('payroll ui contract', () => {
     });
 
     test('inactive overview reports are read only and keep exact store context', () => {
-        const source = readFileSync(
+        const source = workflowSource(
             resolve(resourcesRoot, 'pages/payroll/Index.vue'),
             'utf8',
         );
@@ -65,8 +65,11 @@ describe('payroll ui contract', () => {
     });
 
     test('the print menu exposes one accessible trigger and two menu items', () => {
-        const source = readFileSync(
-            resolve(resourcesRoot, 'components/payroll/PayrollPrintMenu.vue'),
+        const source = workflowSource(
+            resolve(
+                resourcesRoot,
+                'features/payroll/components/PayrollPrintMenu.vue',
+            ),
             'utf8',
         );
 

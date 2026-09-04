@@ -53,7 +53,7 @@ class BankStatement extends BaseModel
         return $query->select([
             'id', 'user_id', 'store_id', 'uploaded_by_user_id', 'status', 'bank_name', 'currency',
             'statement_number', 'period_from', 'period_to', 'original_name', 'last_error', 'attempt_count',
-            'queued_at', 'started_at', 'parsed_at', 'confirmed_at', 'created_at', 'updated_at',
+            'parse_generation', 'queued_at', 'started_at', 'parsed_at', 'confirmed_at', 'created_at', 'updated_at',
         ]);
     }
 
@@ -260,6 +260,14 @@ class BankStatement extends BaseModel
     public function getAttemptCount(): int
     {
         return $this->assertInt('attempt_count');
+    }
+
+    /**
+     * Monotonically increasing generation assigned when parsing is queued.
+     */
+    public function getParseGeneration(): int
+    {
+        return $this->assertInt('parse_generation');
     }
 
     /**

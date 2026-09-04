@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Statement;
 
+use App\Domain\Statements\ManageStatements;
 use App\Models\User;
-use App\Operations\Statements\ManageStatements;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;

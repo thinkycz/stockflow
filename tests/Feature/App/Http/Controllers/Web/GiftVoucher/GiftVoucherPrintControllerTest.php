@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Domain\GiftVouchers\GiftVoucherService;
 use App\Models\GiftVoucher;
 use App\Models\GiftVoucherSetting;
-use App\Services\GiftVoucherService;
 use Thinkycz\LaravelCore\Support\Typer;
 
 \test('administrator prints active vouchers in explicit three-up sheets', function (): void {

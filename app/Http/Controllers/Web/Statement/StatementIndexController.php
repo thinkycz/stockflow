@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Statement;
 
+use App\Domain\BankStatements\BankStatementReconciliationService;
+use App\Domain\Statements\StatementService;
+use App\Domain\Workforce\AttendanceService;
 use App\Models\Statement;
 use App\Models\StatementDay;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\AttendanceService;
-use App\Services\BankStatementReconciliationService;
-use App\Services\StatementService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;

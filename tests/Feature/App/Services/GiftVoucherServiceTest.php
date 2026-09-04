@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Domain\GiftVouchers\GiftVoucherService;
 use App\Enums\GiftVoucherEventTypeEnum;
 use App\Enums\GiftVoucherStatusEnum;
 use App\Models\GiftVoucher;
 use App\Models\GiftVoucherSetting;
 use App\Models\Store;
 use App\Notifications\OperationalActivitySlackNotification;
-use App\Services\GiftVoucherService;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Notifications\AnonymousNotifiable;

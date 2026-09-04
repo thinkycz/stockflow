@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Workforce\AttendanceService;
 use App\Enums\AttendanceActionEnum;
 use App\Models\AttendanceAudit;
 use App\Models\AttendanceSession;
@@ -9,7 +10,6 @@ use App\Models\Shift;
 use App\Models\Store;
 use App\Models\Worker;
 use App\Notifications\OperationalActivitySlackNotification;
-use App\Services\AttendanceService;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Carbon;

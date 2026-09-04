@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Payroll;
 
+use App\Domain\Payroll\PayrollReportReadService;
+use App\Domain\Workforce\AttendanceService;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\AttendanceService;
-use App\Services\PayrollReportService;
 use App\Support\ActiveStoreResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -34,7 +34,7 @@ class PayrollShowController
             $year = $now->year;
             $month = $now->month;
         }
-        $detail = (new PayrollReportService())->buildDetail($admin, $store, $year, $month, $worker);
+        $detail = (new PayrollReportReadService())->buildDetail($admin, $store, $year, $month, $worker);
         if ($detail === null) {
             \abort(404);
         }

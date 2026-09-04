@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Inventory\StockMovementService;
 use App\Enums\StockMovementOriginEnum;
 use App\Models\InventorySession;
 use App\Models\InventorySessionItem;
@@ -9,7 +10,6 @@ use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\StoreItem;
-use App\Services\StockMovementService;
 use Illuminate\Support\Carbon;
 
 \afterEach(function (): void {

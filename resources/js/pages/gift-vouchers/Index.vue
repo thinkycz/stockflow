@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, router } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import {
     Ban,
     Plus,
@@ -9,8 +9,6 @@ import {
     Settings,
     TicketCheck,
 } from '@lucide/vue';
-import { computed, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Card from '@/components/ui/Card.vue';
@@ -20,107 +18,28 @@ import PageHeader from '@/components/ui/PageHeader.vue';
 import Select from '@/components/ui/Select.vue';
 import FilterField from '@/components/ui/FilterField.vue';
 import SearchFilter from '@/components/ui/SearchFilter.vue';
-import { useBoundLocale } from '@/composables/useBoundLocale';
-import { useDialog } from '@/composables/useDialog';
-import { useRoute } from '@/composables/useRoute';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatDateTime, formatMoney } from '@/lib/format';
-import type {
-    GiftVoucherBatch,
-    GiftVoucherRow,
-    GiftVoucherStatus,
-} from '@/types/gift-vouchers';
+import type { GiftVoucherStatus } from '@/features/gift-vouchers/types';
+import {
+    useVoucherList,
+    type VoucherListProps,
+} from '@/features/gift-vouchers/useVoucherList';
 
-const props = defineProps<{
-    batches: GiftVoucherBatch[];
-    filters: { status: string | null; search: string | null };
-}>();
-
-const { t } = useI18n();
-useBoundLocale();
-const route = useRoute();
-const dialog = useDialog();
-
-const filtering = ref(false);
-const filterStatus = ref(props.filters.status ?? '');
-const filterSearch = ref(props.filters.search ?? '');
-
-const statusOptions = computed(() => [
-    { value: '', label: t('gift_vouchers.filters.all') },
-    { value: 'active', label: t('gift_vouchers.status.active') },
-    { value: 'expired', label: t('gift_vouchers.status.expired') },
-    { value: 'redeemed', label: t('gift_vouchers.status.redeemed') },
-    { value: 'voided', label: t('gift_vouchers.status.voided') },
-]);
-
-function applyFilters(): void {
-    router.get(
-        route('gift-vouchers.index'),
-        {
-            status: filterStatus.value || undefined,
-            search: filterSearch.value || undefined,
-        },
-        {
-            preserveState: true,
-            preserveScroll: true,
-            onStart: () => {
-                filtering.value = true;
-            },
-            onFinish: () => {
-                filtering.value = false;
-            },
-        },
-    );
-}
-
-function openPrint(url: string): void {
-    const printWindow = window.open(url, '_blank');
-
-    if (printWindow !== null) printWindow.opener = null;
-}
-
-async function voidVoucher(voucher: GiftVoucherRow): Promise<void> {
-    const reason = await dialog.prompt({
-        title: t('gift_vouchers.actions.void'),
-        message: t('gift_vouchers.actions.void_help'),
-        label: t('gift_vouchers.reason'),
-        confirmLabel: t('gift_vouchers.actions.void'),
-        required: true,
-        maxLength: 500,
-        variant: 'danger',
-    });
-    if (reason === null) return;
-    router.post(route('gift-vouchers.void', voucher.id), { reason });
-}
-
-async function reverseVoucher(voucher: GiftVoucherRow): Promise<void> {
-    const reason = await dialog.prompt({
-        title: t('gift_vouchers.actions.reverse'),
-        message: t('gift_vouchers.actions.reverse_help'),
-        label: t('gift_vouchers.reason'),
-        confirmLabel: t('gift_vouchers.actions.reverse'),
-        required: true,
-        maxLength: 500,
-        variant: 'warning',
-    });
-    if (reason === null) return;
-    router.post(route('gift-vouchers.reverse-redemption', voucher.id), {
-        reason,
-    });
-}
-
-function statusVariant(
-    status: GiftVoucherStatus,
-): 'success' | 'neutral' | 'incoming' | 'danger' {
-    return (
-        {
-            active: 'success',
-            expired: 'neutral',
-            redeemed: 'incoming',
-            voided: 'danger',
-        } as const
-    )[status];
-}
+const props = defineProps<VoucherListProps>();
+const {
+    t,
+    route,
+    filtering,
+    filterStatus,
+    filterSearch,
+    statusOptions,
+    applyFilters,
+    openPrint,
+    voidVoucher,
+    reverseVoucher,
+    statusVariant,
+} = useVoucherList(props);
 </script>
 <template>
     <AppLayout :title="t('gift_vouchers.title')">

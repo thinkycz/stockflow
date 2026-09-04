@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools;
 
+use App\Domain\Workforce\AttendanceReportService;
 use App\Models\AttendanceSession;
-use App\Services\AttendanceReportService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use InvalidArgumentException;

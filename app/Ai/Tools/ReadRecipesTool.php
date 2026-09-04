@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools;
 
+use App\Domain\Recipes\RecipeAdjustmentService;
 use App\Models\Recipe;
 use App\Models\RecipeCategory;
 use App\Models\RecipeInstruction;
 use App\Models\RecipeVariant;
-use App\Services\RecipeAdjustmentService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\JsonSchema\Types\Type;

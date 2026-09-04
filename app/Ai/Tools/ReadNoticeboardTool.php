@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools;
 
+use App\Domain\Noticeboard\NoticeboardContentSanitizer;
 use App\Models\NoticeboardCard;
-use App\Services\NoticeboardContentSanitizer;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Illuminate\Support\Carbon;

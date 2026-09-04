@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Worker;
 
+use App\Domain\Workforce\WorkerManagementService;
 use App\Enums\RemovalOutcomeEnum;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -23,7 +23,7 @@ class WorkerDestroyController
      */
     public function __invoke(Worker $worker): RedirectResponse
     {
-        $outcome = (new AdministrationManagementService())->deleteWorker(User::mustAuth(), $worker);
+        $outcome = (new WorkerManagementService())->deleteWorker(User::mustAuth(), $worker);
 
         if ($outcome === RemovalOutcomeEnum::BLOCKED) {
             Inertia::flash('error', \__('Resolve active attendance and future worker scheduling before removing this worker.'));

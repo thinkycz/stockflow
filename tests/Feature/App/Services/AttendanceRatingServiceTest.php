@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Domain\Workforce\AttendanceRatingService;
 use App\Models\AttendanceBreak;
 use App\Models\AttendanceSession;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\Worker;
-use App\Services\AttendanceRatingService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 

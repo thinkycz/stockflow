@@ -217,6 +217,7 @@
             "void_gift_voucher": "Zneplatniť darčekový poukaz."
         },
         "approval": {
+            "uncertain": "Výsledok nie je istý — pred ďalšou akciou overte skutočný stav.",
             "title": "Potvrdiť akciu",
             "group_title": "Potvrdiť navrhnuté zmeny",
             "group_count": "Skontrolujte navrhnuté zmeny ({count}) a potvrďte ich spoločne.",
@@ -1144,7 +1145,9 @@
             "title": "Zatiaľ žiadne výpisy",
             "description": "Nahrajte prvý PDF výpis pre aktívnu prevádzku."
         },
-        "detail": { "title": "Kontrola výpisu" },
+        "detail": {
+            "title": "Kontrola výpisu"
+        },
         "columns": {
             "file": "Súbor",
             "period": "Obdobie",
@@ -1260,7 +1263,12 @@
             "idle": "Neuložené",
             "saving": "Ukladám…",
             "saved": "Uložené",
-            "error": "Chyba ukladania"
+            "error": "Chyba ukladania",
+            "conflict": "Konfliktné zmeny",
+            "local_value": "Vaša hodnota",
+            "saved_value": "Uložená hodnota",
+            "use_saved": "Použiť uloženú hodnotu",
+            "reapply": "Znovu použiť moju hodnotu"
         },
         "status": {
             "ok": "OK",

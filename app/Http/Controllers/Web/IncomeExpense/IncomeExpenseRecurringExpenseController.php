@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\IncomeExpense;
 
+use App\Domain\Finance\FinancialReportReadService;
+use App\Domain\Finance\FinancialReportService;
 use App\Http\Controllers\Web\Concerns\ResolvesFinancialReportContext;
 use App\Http\Validation\FinancialReportValidity;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\FinancialReportService;
 use App\Support\ActiveStoreResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -47,7 +48,7 @@ class IncomeExpenseRecurringExpenseController
             ] : null,
             'filters' => ['year' => $year, 'month' => $month],
             'recurring_expenses' => $store instanceof Store && !$store->isWarehouse()
-                ? (new FinancialReportService())->recurringExpenses($admin, $store, $year, $month)
+                ? (new FinancialReportReadService())->recurringExpenses($admin, $store, $year, $month)
                 : [],
         ]);
     }

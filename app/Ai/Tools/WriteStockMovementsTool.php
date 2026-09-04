@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Ai\Tools;
 
 use App\Ai\AssistantActionPresenter;
+use App\Domain\Inventory\CreateStockMovement;
+use App\Domain\Inventory\ManageInventory;
 use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\Store;
-use App\Operations\Inventory\CreateStockMovement;
-use App\Operations\Inventory\ManageInventory;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\ObjectType;
 use Illuminate\JsonSchema\Types\Type;

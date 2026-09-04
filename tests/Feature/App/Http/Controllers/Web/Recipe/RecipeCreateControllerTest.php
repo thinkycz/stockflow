@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Domain\Recipes\RecipeCatalogService;
 use App\Models\RecipeCategory;
 use App\Models\RecipeInstruction;
 use App\Models\RecipeVariant;
 use App\Models\User;
-use App\Services\RecipeCatalogService;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Facades\Notification;
 use Thinkycz\LaravelCore\Support\Config;

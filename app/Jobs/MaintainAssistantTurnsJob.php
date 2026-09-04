@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\AssistantActionClassificationEnum;
+use App\Enums\AssistantActionStatusEnum;
 use App\Enums\AssistantTurnStatusEnum;
+use App\Models\AssistantActionAudit;
 use App\Models\AssistantTurn;
 use App\Models\AssistantTurnEvent;
 use Illuminate\Bus\Queueable;
@@ -30,6 +33,11 @@ final class MaintainAssistantTurnsJob implements ShouldQueue
             ->delete();
 
         $abandonedBefore = \now()->subSeconds(Config::inject()->assertInt('ai.assistant.timeout_seconds') + 60);
+
+        AssistantActionAudit::query()->where('status', AssistantActionStatusEnum::RUNNING->value)
+            ->where('classification', AssistantActionClassificationEnum::EXTERNAL_SIDE_EFFECT->value)
+            ->where('updated_at', '<', $abandonedBefore)
+            ->update(['status' => AssistantActionStatusEnum::UNCERTAIN->value, 'error_summary' => 'External outcome is uncertain; verify it before any new action.', 'completed_at' => \now()]);
 
         AssistantTurn::query()
             ->whereIn('status', [

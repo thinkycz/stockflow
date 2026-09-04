@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools;
 
+use App\Domain\Finance\FinancialReportReadService;
 use App\Models\FinancialReport;
 use App\Models\Store;
-use App\Services\FinancialReportService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use InvalidArgumentException;
@@ -75,7 +75,7 @@ final class ReadFinancialReportsTool extends AbstractReadResourceTool
 
         if ($operation === 'summary') {
             [$store, $year, $month] = $this->period($request);
-            $report = Resolver::resolve(FinancialReportService::class)->build($this->actor->resolveScopeUser(), $store, $year, $month);
+            $report = Resolver::resolve(FinancialReportReadService::class)->build($this->actor->resolveScopeUser(), $store, $year, $month);
 
             return $this->summaryResult($request, 'reports', $report, $this->emptyReason($report));
         }
@@ -86,7 +86,7 @@ final class ReadFinancialReportsTool extends AbstractReadResourceTool
 
             return $this->detailResult($request, 'reports', [
                 ...$this->reportRecord($reportModel, $store),
-                'data' => Resolver::resolve(FinancialReportService::class)->build(
+                'data' => Resolver::resolve(FinancialReportReadService::class)->build(
                     $this->actor->resolveScopeUser(),
                     $store,
                     $reportModel->getYear(),
@@ -202,7 +202,7 @@ final class ReadFinancialReportsTool extends AbstractReadResourceTool
     private function rows(array $request): array
     {
         [$store, $year, $month] = $this->period($request);
-        $report = Resolver::resolve(FinancialReportService::class)->build($this->actor->resolveScopeUser(), $store, $year, $month);
+        $report = Resolver::resolve(FinancialReportReadService::class)->build($this->actor->resolveScopeUser(), $store, $year, $month);
         $direction = Typer::parseNullableString($request['direction'] ?? null);
         $rows = match ($direction) {
             'income' => Typer::assertArray($report['income_rows'] ?? []),

@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Domain\Noticeboard\NoticeboardCardService;
 use App\Models\NoticeboardCard;
-use App\Services\NoticeboardCardService;
+use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 
@@ -41,7 +42,7 @@ class PruneNoticeboardCardsCommand extends Command
             ->orderBy('id')
             ->chunkById(100, static function ($cards) use ($service, &$deleted, &$failed): void {
                 foreach ($cards as $card) {
-                    if ($service->forceDelete($card)) {
+                    if ($service->forceDelete($card, User::query()->whereKey($card->getUserId())->firstOrFail())) {
                         ++$deleted;
                     } else {
                         ++$failed;

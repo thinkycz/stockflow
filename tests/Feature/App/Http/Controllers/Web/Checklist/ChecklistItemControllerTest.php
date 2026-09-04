@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Domain\Checklists\ChecklistService;
 use App\Models\ChecklistEvent;
 use App\Models\ChecklistItem;
 use App\Models\Store;
 use App\Models\Worker;
-use App\Services\ChecklistService;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Thinkycz\LaravelCore\Support\Typer;

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Domain\OperationalActivity\DailyOperationalDigestBuilder;
+use App\Domain\OperationalActivity\DailyOperationalDigestService;
 use App\Models\User;
-use App\Services\DailyOperationalDigestBuilder;
-use App\Services\DailyOperationalDigestService;
 use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

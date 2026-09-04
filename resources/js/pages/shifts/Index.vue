@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { router, useForm } from '@inertiajs/vue3';
+import { useShiftSharing } from '@/features/shifts/useShiftSharing';
+import { useShiftPresets } from '@/features/shifts/useShiftPresets';
+import { useShiftEditor } from '@/features/shifts/useShiftEditor';
+import { useShiftQuickAdd } from '@/features/shifts/useShiftQuickAdd';
+import { router } from '@inertiajs/vue3';
 import {
     CalendarDays,
     ChevronLeft,
@@ -18,7 +22,6 @@ import {
     X,
     Zap,
 } from '@lucide/vue';
-import { isAxiosError } from 'axios';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -32,84 +35,25 @@ import Modal from '@/components/ui/Modal.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
-import ShiftMonthCalendar from '@/components/ShiftMonthCalendar.vue';
-import ShiftMonthlySummaryTable from '@/components/ShiftMonthlySummaryTable.vue';
+import ShiftMonthCalendar from '@/features/shifts/components/ShiftMonthCalendar.vue';
+import ShiftMonthlySummaryTable from '@/features/shifts/components/ShiftMonthlySummaryTable.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
-import { showErrorToast, showSuccessToast } from '@/composables/useClientToast';
-import { useDialog } from '@/composables/useDialog';
 import { useRoute } from '@/composables/useRoute';
 import { withActionErrorToast } from '@/lib/action-errors';
 import { formatDateTime } from '@/lib/format';
-import { sortShiftsByTime } from '@/lib/shift-calendar';
-import type { MonthlyShiftSummary } from '@/types/shifts';
+import { buildCalendarDays } from '@/features/shifts/shift-calendar';
+import type { MonthlyShiftSummary } from '@/features/shifts/types';
 
-type Worker = {
-    id: number;
-    first_name: string;
-    last_name: string;
-    color: string;
-    attendance_rating_enabled: boolean;
-    archived: boolean;
-};
-
-type Shift = {
-    id: number;
-    worker_id: number;
-    date: string;
-    start_time: string;
-    end_time: string;
-    attendance_rating?: AttendanceRating;
-};
-
-type AttendanceRatingReason =
-    | 'late_arrival'
-    | 'early_departure'
-    | 'excessive_break_duration'
-    | 'excessive_break_count'
-    | 'absence';
-
-type AttendanceRating = {
-    state: 'future' | 'pending' | 'scored' | 'disabled';
-    score: number | null;
-    band: 'good' | 'warning' | 'poor' | null;
-    reason_codes: AttendanceRatingReason[];
-    arrival_offset_minutes: number | null;
-    departure_offset_minutes: number | null;
-    break_minutes: number | null;
-    break_count: number | null;
-};
-
-type CalendarShift = Shift & {
-    worker_name: string;
-    worker_color: string;
-};
-
-type ShiftRequest = {
-    id: number;
-    worker_id: number;
-    date: string;
-    start_time: string;
-    end_time: string;
-};
-
-type CalendarRequest = ShiftRequest & {
-    worker_name: string;
-    worker_color: string;
-};
-
-type ShiftPreset = {
-    id: number;
-    name: string;
-    start_time: string;
-    end_time: string;
-};
-
-type ShiftShareLink = {
-    id: number;
-    name: string;
-    url: string;
-    created_at: string;
-};
+import type {
+    Worker,
+    Shift,
+    AttendanceRating,
+    AttendanceRatingReason,
+    ShiftRequest,
+    ShiftPreset,
+    ShiftShareLink,
+    CalendarDay,
+} from '@/features/shifts/scheduling-types';
 
 const props = defineProps<{
     store: { id: number; name: string } | null;
@@ -128,8 +72,6 @@ const props = defineProps<{
     request_month_locked?: boolean;
     request_month_is_future?: boolean;
 }>();
-
-const dialog = useDialog();
 
 const { t, locale } = useI18n();
 
@@ -218,133 +160,21 @@ const weekdayLabels = computed<string[]>(() => {
     return labels[locale.value] ?? labels.cs;
 });
 
-type CalendarDay = {
-    date: string;
-    day: number;
-    isCurrentMonth: boolean;
-    shifts: CalendarShift[];
-    requests: CalendarRequest[];
-};
-
-const calendarDays = computed<CalendarDay[]>(() => {
-    const firstOfMonth = new Date(year.value, month.value - 1, 1);
-    const lastOfMonth = new Date(year.value, month.value, 0);
-    const daysInMonth = lastOfMonth.getDate();
-
-    // Monday = 0
-    let startWeekday = firstOfMonth.getDay() - 1;
-    if (startWeekday < 0) startWeekday = 6;
-
-    const workerMap = new Map<number, Worker>();
-    for (const w of props.workers) {
-        workerMap.set(w.id, w);
-    }
-
-    const shiftsByDate = new Map<string, CalendarShift[]>();
-    for (const shift of localShifts.value) {
-        const worker = workerMap.get(shift.worker_id);
-        const enriched: CalendarShift = {
-            ...shift,
-            worker_name: worker
-                ? `${worker.first_name} ${worker.last_name}`
-                : '?',
-            worker_color: worker?.color ?? '#64748B',
-        };
-        const list = shiftsByDate.get(shift.date) ?? [];
-        list.push(enriched);
-        shiftsByDate.set(shift.date, list);
-    }
-
-    for (const [date, shifts] of shiftsByDate) {
-        shiftsByDate.set(date, sortShiftsByTime(shifts));
-    }
-
-    const requestsByDate = new Map<string, CalendarRequest[]>();
-    for (const shiftRequest of props.shift_requests ?? []) {
-        const worker = workerMap.get(shiftRequest.worker_id);
-        const enriched: CalendarRequest = {
-            ...shiftRequest,
-            worker_name: worker
-                ? `${worker.first_name} ${worker.last_name}`
-                : '?',
-            worker_color: worker?.color ?? '#64748B',
-        };
-        const list = requestsByDate.get(shiftRequest.date) ?? [];
-        list.push(enriched);
-        requestsByDate.set(shiftRequest.date, list);
-    }
-
-    for (const [date, requests] of requestsByDate) {
-        requestsByDate.set(date, sortShiftsByTime(requests));
-    }
-
-    const days: CalendarDay[] = [];
-
-    // Leading days from previous month
-    for (let i = 0; i < startWeekday; i++) {
-        const d = new Date(
-            year.value,
-            month.value - 1,
-            -(startWeekday - 1 - i),
-        );
-        const dateStr = formatDateKey(d);
-        days.push({
-            date: dateStr,
-            day: d.getDate(),
-            isCurrentMonth: false,
-            shifts: (shiftsByDate.get(dateStr) ?? []).map((s) => ({ ...s })),
-            requests: (requestsByDate.get(dateStr) ?? []).map((request) => ({
-                ...request,
-            })),
-        });
-    }
-
-    // Current month days
-    for (let d = 1; d <= daysInMonth; d++) {
-        const date = new Date(year.value, month.value - 1, d);
-        const dateStr = formatDateKey(date);
-        days.push({
-            date: dateStr,
-            day: d,
-            isCurrentMonth: true,
-            shifts: (shiftsByDate.get(dateStr) ?? []).map((s) => ({ ...s })),
-            requests: (requestsByDate.get(dateStr) ?? []).map((request) => ({
-                ...request,
-            })),
-        });
-    }
-
-    // Trailing days to fill the grid (6 rows × 7 = 42)
-    while (days.length < 42) {
-        const lastDate = new Date(days[days.length - 1].date);
-        lastDate.setDate(lastDate.getDate() + 1);
-        const dateStr = formatDateKey(lastDate);
-        days.push({
-            date: dateStr,
-            day: lastDate.getDate(),
-            isCurrentMonth: false,
-            shifts: (shiftsByDate.get(dateStr) ?? []).map((s) => ({ ...s })),
-            requests: (requestsByDate.get(dateStr) ?? []).map((request) => ({
-                ...request,
-            })),
-        });
-    }
-
-    return days;
-});
+const calendarDays = computed(() =>
+    buildCalendarDays(
+        year.value,
+        month.value,
+        props.workers,
+        localShifts.value,
+        props.shift_requests ?? [],
+    ),
+);
 
 const visibleCalendarDays = computed<CalendarDay[]>(() =>
     showRequests.value
         ? calendarDays.value
         : calendarDays.value.map((day) => ({ ...day, requests: [] })),
 );
-
-function formatDateKey(d: Date): string {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-}
 
 function navigateMonth(delta: number): void {
     let newMonth = month.value + delta;
@@ -408,702 +238,72 @@ function formatOffset(value: number): string {
     return '0 min';
 }
 
-// --- Modal / shift form ---
+const {
+    modalOpen,
+    modalDate,
+    editingShiftId,
+    editingRequestId,
+    approvingRequestId,
+    form,
+    requestApprovalForm,
+    overlapError,
+    requestOverlapError,
+    workerOptions,
+    presetOptions,
+    timeSelectOptions,
+    modalShifts,
+    modalRequests,
+    editingRequest,
+    openDayModal,
+    editShift,
+    editRequest,
+    cancelEdit,
+    closeModal,
+    approveRequest,
+    submitRequestApproval,
+    submitShift,
+    deleteShift,
+} = useShiftEditor(props, month, year, calendarDays);
 
-const modalOpen = ref<boolean>(false);
-const modalDate = ref<string>('');
-const editingShiftId = ref<number | null>(null);
-const editingRequestId = ref<number | null>(null);
-const approvingRequestId = ref<number | null>(null);
+const {
+    shareLinksModalOpen,
+    copyingShareLinkId,
+    copiedShareLinkId,
+    shareLinkError,
+    shareLinkForm,
+    openShareLinksModal,
+    closeShareLinksModal,
+    submitShareLink,
+    copyShareLink,
+    deleteShareLink,
+} = useShiftSharing(props, month, year);
 
-type ShiftForm = {
-    worker_id: string;
-    date: string;
-    start_time: string;
-    end_time: string;
-    allow_overlap: boolean;
-};
-
-const form = useForm<ShiftForm>({
-    worker_id: '',
-    date: '',
-    start_time: '',
-    end_time: '',
-    allow_overlap: false,
-});
-
-type RequestApprovalForm = {
-    start_time: string;
-    end_time: string;
-    allow_overlap: boolean;
-};
-
-const requestApprovalForm = useForm<RequestApprovalForm>({
-    start_time: '',
-    end_time: '',
-    allow_overlap: false,
-});
-
-const overlapError = computed<string | undefined>(
-    () => (form.errors as Record<string, string>).overlap,
-);
-const requestOverlapError = computed<string | undefined>(
-    () => (requestApprovalForm.errors as Record<string, string>).overlap,
-);
-
-const timeOptions: string[] = [];
-for (let h = 0; h < 24; h++) {
-    for (const m of [0, 15, 30, 45]) {
-        timeOptions.push(
-            `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
-        );
-    }
-}
-
-const workerOptions = computed(() =>
-    props.workers
-        .filter((worker) => !worker.archived)
-        .map((worker) => ({
-            value: String(worker.id),
-            label: `${worker.first_name} ${worker.last_name}`,
-        })),
-);
-const presetOptions = computed(() =>
-    (props.shift_presets ?? []).map((preset) => ({
-        value: String(preset.id),
-        label: `${preset.name} (${preset.start_time}–${preset.end_time})`,
-    })),
-);
-const timeSelectOptions = timeOptions.map((time) => ({
-    value: time,
-    label: time,
-}));
-
-const modalShifts = computed<CalendarShift[]>(() => {
-    const day = calendarDays.value.find((d) => d.date === modalDate.value);
-    return day?.shifts ?? [];
-});
-
-const modalRequests = computed<CalendarRequest[]>(() => {
-    const day = calendarDays.value.find((d) => d.date === modalDate.value);
-    return day?.requests ?? [];
-});
-
-const editingRequest = computed<CalendarRequest | undefined>(() =>
-    modalRequests.value.find(
-        (shiftRequest) => shiftRequest.id === editingRequestId.value,
-    ),
-);
-
-function openDayModal(date: string): void {
-    modalDate.value = date;
-    editingShiftId.value = null;
-    editingRequestId.value = null;
-    form.reset();
-    requestApprovalForm.reset();
-    form.date = date;
-    form.start_time = '09:00';
-    form.end_time = '16:00';
-    form.allow_overlap = false;
-    form.worker_id = workerOptions.value[0]?.value ?? '';
-    modalOpen.value = true;
-}
-
-function editShift(shift: Shift): void {
-    editingShiftId.value = shift.id;
-    editingRequestId.value = null;
-    requestApprovalForm.reset();
-    form.worker_id = String(shift.worker_id);
-    form.date = shift.date;
-    form.start_time = shift.start_time;
-    form.end_time = shift.end_time;
-    form.allow_overlap = false;
-}
-
-function editRequest(shiftRequest: CalendarRequest): void {
-    editingShiftId.value = null;
-    editingRequestId.value = shiftRequest.id;
-    form.reset();
-    requestApprovalForm.clearErrors();
-    requestApprovalForm.start_time = shiftRequest.start_time;
-    requestApprovalForm.end_time = shiftRequest.end_time;
-    requestApprovalForm.allow_overlap = false;
-}
-
-function cancelEdit(): void {
-    editingShiftId.value = null;
-    editingRequestId.value = null;
-    requestApprovalForm.reset();
-    form.worker_id = workerOptions.value[0]?.value ?? '';
-    form.date = modalDate.value;
-    form.start_time = '09:00';
-    form.end_time = '16:00';
-    form.allow_overlap = false;
-}
-
-function closeModal(): void {
-    modalOpen.value = false;
-    editingShiftId.value = null;
-    editingRequestId.value = null;
-    form.reset();
-    requestApprovalForm.reset();
-}
-
-async function confirmRequestOverlap(
-    errors: Record<string, string>,
-    retry: () => void,
-    allowOverlap: boolean,
-): Promise<void> {
-    if (
-        errors.overlap !== undefined &&
-        !allowOverlap &&
-        (await dialog.confirm({
-            title: t('common.confirm'),
-            message: t('shifts.overlap_confirm'),
-            confirmLabel: t('common.continue'),
-            variant: 'warning',
-        }))
-    ) {
-        retry();
-    }
-}
-
-function approveRequest(
-    shiftRequest: CalendarRequest,
-    allowOverlap = false,
-): void {
-    approvingRequestId.value = shiftRequest.id;
-    router.post(
-        route('shift-requests.approve', {
-            shiftRequest: shiftRequest.id,
-            month: month.value,
-            year: year.value,
-        }),
-        {
-            start_time: shiftRequest.start_time,
-            end_time: shiftRequest.end_time,
-            allow_overlap: allowOverlap,
-        },
-        {
-            preserveState: true,
-            onError: (errors) =>
-                void confirmRequestOverlap(
-                    errors,
-                    () => approveRequest(shiftRequest, true),
-                    allowOverlap,
-                ),
-            onFinish: () => {
-                if (approvingRequestId.value === shiftRequest.id) {
-                    approvingRequestId.value = null;
-                }
-            },
-        },
-    );
-}
-
-function submitRequestApproval(): void {
-    if (editingRequestId.value === null) return;
-
-    requestApprovalForm.post(
-        route('shift-requests.approve', {
-            shiftRequest: editingRequestId.value,
-            month: month.value,
-            year: year.value,
-        }),
-        {
-            preserveState: true,
-            onError: (errors) =>
-                void confirmRequestOverlap(
-                    errors,
-                    () => {
-                        requestApprovalForm.allow_overlap = true;
-                        submitRequestApproval();
-                    },
-                    requestApprovalForm.allow_overlap,
-                ),
-            onSuccess: () => {
-                editingRequestId.value = null;
-                requestApprovalForm.reset();
-            },
-        },
-    );
-}
-
-function submitShift(): void {
-    const confirmOverlap = async (
-        errors: Record<string, string>,
-    ): Promise<void> => {
-        if (
-            errors.overlap !== undefined &&
-            !form.allow_overlap &&
-            (await dialog.confirm({
-                title: t('common.confirm'),
-                message: t('shifts.overlap_confirm'),
-                confirmLabel: t('common.continue'),
-                variant: 'warning',
-            }))
-        ) {
-            form.allow_overlap = true;
-            submitShift();
-        }
-    };
-
-    if (editingShiftId.value !== null) {
-        form.put(
-            route('shifts.update', {
-                shift: editingShiftId.value,
-                month: month.value,
-                year: year.value,
-            }),
-            {
-                preserveState: true,
-                onError: (errors) => void confirmOverlap(errors),
-                onSuccess: () => {
-                    editingShiftId.value = null;
-                    form.reset();
-                    form.date = modalDate.value;
-                    form.start_time = '09:00';
-                    form.end_time = '16:00';
-                    form.allow_overlap = false;
-                    form.worker_id = workerOptions.value[0]?.value ?? '';
-                },
-            },
-        );
-    } else {
-        const nextShiftStart = form.end_time;
-
-        form.post(
-            route('shifts.store', {
-                month: month.value,
-                year: year.value,
-            }),
-            {
-                preserveState: true,
-                onError: (errors) => void confirmOverlap(errors),
-                onSuccess: () => {
-                    form.reset();
-                    form.date = modalDate.value;
-                    form.start_time = nextShiftStart;
-                    form.end_time = '21:00';
-                    form.allow_overlap = false;
-                    form.worker_id = workerOptions.value[0]?.value ?? '';
-                },
-            },
-        );
-    }
-}
-
-async function deleteShift(id: number): Promise<void> {
-    if (
-        !(await dialog.confirm({
-            title: t('common.delete'),
-            message: t('shifts.confirm_delete'),
-            confirmLabel: t('common.delete'),
-            variant: 'danger',
-        }))
-    ) {
-        return;
-    }
-    router.delete(
-        route('shifts.destroy', {
-            shift: id,
-            month: month.value,
-            year: year.value,
-        }),
-        withActionErrorToast({ preserveState: true }),
-    );
-}
-
-// --- Public shift links ---
-
-const shareLinksModalOpen = ref<boolean>(false);
-const copyingShareLinkId = ref<number | null>(null);
-const copiedShareLinkId = ref<number | null>(null);
-const shareLinkError = ref<string>('');
-
-type ShareLinkForm = {
-    name: string;
-};
-
-const shareLinkForm = useForm<ShareLinkForm>({ name: '' });
-
-function openShareLinksModal(): void {
-    shareLinkError.value = '';
-    copiedShareLinkId.value = null;
-    shareLinksModalOpen.value = true;
-}
-
-function closeShareLinksModal(): void {
-    shareLinksModalOpen.value = false;
-    shareLinkForm.reset();
-    shareLinkForm.clearErrors();
-    shareLinkError.value = '';
-    copiedShareLinkId.value = null;
-}
-
-function submitShareLink(): void {
-    if (props.store === null) return;
-
-    shareLinkForm.post(
-        route('shift-share-links.store', {
-            store_id: props.store.id,
-            month: month.value,
-            year: year.value,
-        }),
-        {
-            preserveState: true,
-            preserveScroll: true,
-            onSuccess: () => shareLinkForm.reset(),
-        },
-    );
-}
-
-async function copyShareLink(link: ShiftShareLink): Promise<void> {
-    copyingShareLinkId.value = link.id;
-    copiedShareLinkId.value = null;
-    shareLinkError.value = '';
-
-    try {
-        await copyText(link.url);
-        copiedShareLinkId.value = link.id;
-    } catch {
-        shareLinkError.value = t('shifts.public_links.copy_error');
-    } finally {
-        copyingShareLinkId.value = null;
-    }
-}
-
-async function deleteShareLink(link: ShiftShareLink): Promise<void> {
-    if (props.store === null) return;
-
-    if (
-        !(await dialog.confirm({
-            title: `${t('common.delete')}: ${link.name}`,
-            message: t('shifts.public_links.confirm_delete'),
-            confirmLabel: t('common.delete'),
-            variant: 'danger',
-        }))
-    ) {
-        return;
-    }
-
-    router.delete(
-        route('shift-share-links.destroy', {
-            shiftShareLink: link.id,
-            store_id: props.store.id,
-            month: month.value,
-            year: year.value,
-        }),
-        withActionErrorToast({
-            preserveState: true,
-            preserveScroll: true,
-        }),
-    );
-}
-
-// --- Shift presets ---
-
-const presetModalOpen = ref<boolean>(false);
-const editingPresetId = ref<number | null>(null);
-
-type PresetForm = {
-    name: string;
-    start_time: string;
-    end_time: string;
-};
-
-const presetForm = useForm<PresetForm>({
-    name: '',
-    start_time: '09:00',
-    end_time: '17:00',
-});
-
-function openPresetModal(): void {
-    editingPresetId.value = null;
-    presetForm.reset();
-    presetForm.start_time = '09:00';
-    presetForm.end_time = '17:00';
-    presetModalOpen.value = true;
-}
-
-function closePresetModal(): void {
-    presetModalOpen.value = false;
-    editingPresetId.value = null;
-    presetForm.reset();
-}
-
-function editPreset(preset: ShiftPreset): void {
-    editingPresetId.value = preset.id;
-    presetForm.name = preset.name;
-    presetForm.start_time = preset.start_time;
-    presetForm.end_time = preset.end_time;
-    presetForm.clearErrors();
-}
-
-function cancelPresetEdit(): void {
-    editingPresetId.value = null;
-    presetForm.reset();
-    presetForm.start_time = '09:00';
-    presetForm.end_time = '17:00';
-}
-
-function submitPreset(): void {
-    const options = {
-        preserveState: true,
-        preserveScroll: true,
-        onSuccess: cancelPresetEdit,
-    };
-
-    if (editingPresetId.value !== null) {
-        presetForm.put(
-            route('shift-presets.update', {
-                shiftPreset: editingPresetId.value,
-                month: month.value,
-                year: year.value,
-            }),
-            options,
-        );
-        return;
-    }
-
-    presetForm.post(
-        route('shift-presets.store', {
-            month: month.value,
-            year: year.value,
-        }),
-        options,
-    );
-}
-
-async function deletePreset(preset: ShiftPreset): Promise<void> {
-    if (
-        !(await dialog.confirm({
-            title: t('common.delete'),
-            message: `${preset.name}: ${t('shifts.presets.confirm_delete')}`,
-            confirmLabel: t('common.delete'),
-            variant: 'danger',
-        }))
-    ) {
-        return;
-    }
-
-    if (selectedPresetId.value === String(preset.id)) {
+const {
+    presetModalOpen,
+    editingPresetId,
+    presetForm,
+    openPresetModal,
+    closePresetModal,
+    editPreset,
+    cancelPresetEdit,
+    submitPreset,
+    deletePreset,
+} = useShiftPresets(month, year, (id) => {
+    if (selectedPresetId.value === String(id)) {
         stopQuickAdd();
         selectedPresetId.value = '';
     }
+});
 
-    router.delete(
-        route('shift-presets.destroy', {
-            shiftPreset: preset.id,
-            month: month.value,
-            year: year.value,
-        }),
-        withActionErrorToast({
-            preserveState: true,
-            preserveScroll: true,
-        }),
-    );
-}
-
-// --- Quick add ---
-
-type QuickAddSuccess = {
-    status: 'created' | 'exists';
-    shift: Shift;
-    contribution?: {
-        minutes: number;
-        salary: number;
-    };
-};
-
-type QuickAddConflict = {
-    status: 'overlap';
-    conflicts: Array<{
-        id: number;
-        start_time: string;
-        end_time: string;
-    }>;
-};
-
-const selectedWorkerId = ref<string>('');
-const selectedPresetId = ref<string>('');
-const quickAddActive = ref<boolean>(false);
-const pendingDates = ref<Set<string>>(new Set());
-
-watch(
-    () => props.store?.id,
-    () => {
-        stopQuickAdd();
-        selectedPresetId.value = '';
-    },
-);
-
-function startQuickAdd(): void {
-    if (selectedWorkerId.value === '' || selectedPresetId.value === '') return;
-    quickAddActive.value = true;
-}
-
-function stopQuickAdd(): void {
-    quickAddActive.value = false;
-    pendingDates.value = new Set();
-}
-
-function handleDayClick(
-    day: Pick<CalendarDay, 'date' | 'isCurrentMonth'>,
-): void {
-    if (!day.isCurrentMonth) return;
-
-    if (quickAddActive.value && props.is_admin) {
-        void quickAddShift(day.date);
-        return;
-    }
-
-    openDayModal(day.date);
-}
-
-async function quickAddShift(
-    date: string,
-    allowOverlap = false,
-): Promise<void> {
-    if (
-        pendingDates.value.has(date) ||
-        selectedWorkerId.value === '' ||
-        selectedPresetId.value === ''
-    ) {
-        return;
-    }
-
-    pendingDates.value = new Set(pendingDates.value).add(date);
-    let retryWithOverlap = false;
-
-    try {
-        const response = await window.axios.post<QuickAddSuccess>(
-            route('shifts.quick-add'),
-            {
-                worker_id: Number(selectedWorkerId.value),
-                shift_preset_id: Number(selectedPresetId.value),
-                date,
-                allow_overlap: allowOverlap,
-            },
-        );
-
-        if (response.data.status === 'exists') {
-            showSuccessToast(t('shifts.quick_add.exists'));
-            return;
-        }
-
-        localShifts.value = [...localShifts.value, response.data.shift];
-        const contribution = response.data.contribution;
-        const summary = localMonthlySummary.value.find(
-            (row) => row.worker_id === response.data.shift.worker_id,
-        );
-
-        if (summary !== undefined && contribution !== undefined) {
-            localMonthlySummary.value = localMonthlySummary.value.map((row) =>
-                row.worker_id === summary.worker_id
-                    ? {
-                          ...row,
-                          hours: row.hours + contribution.minutes / 60,
-                          salary: (row.salary ?? 0) + contribution.salary,
-                      }
-                    : row,
-            );
-        } else if (contribution !== undefined) {
-            const worker = props.workers.find(
-                (row) => row.id === response.data.shift.worker_id,
-            );
-
-            if (worker !== undefined) {
-                localMonthlySummary.value = [
-                    ...localMonthlySummary.value,
-                    {
-                        worker_id: worker.id,
-                        worker_name: `${worker.first_name} ${worker.last_name}`,
-                        color: worker.color,
-                        hours: contribution.minutes / 60,
-                        salary: contribution.salary,
-                        attendance_rating_enabled:
-                            worker.attendance_rating_enabled,
-                        average_score: null,
-                        evaluated_shifts: worker.attendance_rating_enabled
-                            ? 0
-                            : null,
-                        good_shifts: worker.attendance_rating_enabled
-                            ? 0
-                            : null,
-                        late_arrivals: worker.attendance_rating_enabled
-                            ? 0
-                            : null,
-                        early_departures: worker.attendance_rating_enabled
-                            ? 0
-                            : null,
-                        break_issues: worker.attendance_rating_enabled
-                            ? 0
-                            : null,
-                        absences: worker.attendance_rating_enabled ? 0 : null,
-                    },
-                ];
-            }
-        }
-
-        showSuccessToast(t('shifts.quick_add.created'));
-    } catch (error: unknown) {
-        if (
-            isAxiosError<QuickAddConflict>(error) &&
-            error.response?.status === 409
-        ) {
-            const conflicts = error.response.data.conflicts
-                .map(
-                    (conflict) => `${conflict.start_time}–${conflict.end_time}`,
-                )
-                .join(', ');
-            retryWithOverlap = await dialog.confirm({
-                title: t('shifts.quick_add.conflict'),
-                message: t('shifts.quick_add.overlap_confirm', { conflicts }),
-                confirmLabel: t('common.continue'),
-                variant: 'warning',
-            });
-            if (!retryWithOverlap) {
-                showErrorToast(t('shifts.quick_add.conflict'));
-            }
-        } else {
-            showErrorToast(t('shifts.quick_add.failed'));
-        }
-    } finally {
-        const nextPending = new Set(pendingDates.value);
-        nextPending.delete(date);
-        pendingDates.value = nextPending;
-    }
-
-    if (retryWithOverlap) {
-        await quickAddShift(date, true);
-    }
-}
-
-async function copyText(value: string): Promise<void> {
-    if (navigator.clipboard !== undefined) {
-        try {
-            await navigator.clipboard.writeText(value);
-            return;
-        } catch {
-            // Fall back for browsers that expose Clipboard API but deny it.
-        }
-    }
-
-    const input = document.createElement('textarea');
-    input.value = value;
-    input.style.position = 'fixed';
-    input.style.opacity = '0';
-    document.body.appendChild(input);
-    input.select();
-
-    const copied = document.execCommand('copy');
-    input.remove();
-
-    if (!copied) {
-        throw new Error('Clipboard copy failed.');
-    }
-}
+const {
+    selectedWorkerId,
+    selectedPresetId,
+    quickAddActive,
+    pendingDates,
+    startQuickAdd,
+    stopQuickAdd,
+    handleDayClick,
+} = useShiftQuickAdd(props, localShifts, localMonthlySummary, openDayModal);
 </script>
 
 <template>

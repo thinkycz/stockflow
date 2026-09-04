@@ -16,7 +16,7 @@ import { useRoute } from '@/composables/useRoute';
 import type {
     OperationalDigestStatus,
     OperationalDigestSummary,
-} from '@/types/operational-digest';
+} from '@/features/operational-activity/types';
 
 defineProps<{ digests: OperationalDigestSummary[] }>();
 

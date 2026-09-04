@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Item;
 
+use App\Domain\Catalog\CatalogManagementService;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\ItemValidity;
 use App\Models\Item;
 use App\Models\User;
-use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -45,7 +45,7 @@ class ItemCreateController
             'description' => $itemValidity->description()->nullable()->toArray(),
         ]);
 
-        $item = (new AdministrationManagementService())->createItem(
+        $item = (new CatalogManagementService())->createItem(
             $user,
             $validated->assertString('title'),
             $validated->assertNullableString('sku'),

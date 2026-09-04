@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Domain\Workforce\AttendanceReportService;
 use App\Models\AttendanceBreak;
 use App\Models\AttendanceSession;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\Worker;
-use App\Services\AttendanceReportService;
 use Illuminate\Support\Carbon;
 
 \test('report subtracts breaks and calculates plan difference and wage', function (): void {

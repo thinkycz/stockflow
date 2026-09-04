@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Domain\Payroll\PayrollReportReadService;
+use App\Domain\Workforce\AttendanceDeviationReviewService;
+use App\Domain\Workforce\AttendanceReportService;
 use App\Enums\AttendanceDeviationReviewDecisionEnum;
 use App\Models\AttendanceSession;
 use App\Models\PayrollReport;
@@ -9,8 +12,6 @@ use App\Models\Shift;
 use App\Models\Store;
 use App\Models\Worker;
 use App\Notifications\OperationalActivitySlackNotification;
-use App\Services\AttendanceDeviationReviewService;
-use App\Services\AttendanceReportService;
 use Carbon\CarbonImmutable;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Notification;
@@ -67,7 +68,7 @@ use Thinkycz\LaravelCore\Support\Config;
     $deviations = (new AttendanceReportService())->build($admin, $store, '2026-07', null)['deviations'];
     \expect($deviations)->toHaveCount(1)
         ->and($deviations[0]['status'])->toBe('approved')
-        ->and((new App\Services\PayrollReportService())->build($admin, $store, 2026, 7)['payslips'][0]['base_amount'])->toBe(825.0);
+        ->and((new PayrollReportReadService())->build($admin, $store, 2026, 7)['payslips'][0]['base_amount'])->toBe(825.0);
 
     Notification::assertSentOnDemand(
         OperationalActivitySlackNotification::class,

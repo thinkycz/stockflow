@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Shift;
 
+use App\Domain\Workforce\ShiftRequestService;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\ShiftRequestValidity;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\ShiftRequestService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

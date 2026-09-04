@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Ai\Agents\BankStatementParser;
+use App\Domain\BankStatements\BankStatementService;
 use App\Enums\BankStatementStatusEnum;
 use App\Exceptions\InvalidBankStatementPayloadException;
 use App\Models\BankStatement;
-use App\Services\BankStatementService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -40,7 +40,7 @@ final class ParseBankStatementJob implements ShouldBeEncrypted, ShouldQueue
     /**
      * Create a parser job for one private statement.
      */
-    public function __construct(public readonly int $bankStatementId)
+    public function __construct(public readonly int $bankStatementId, public readonly int|null $generation = null)
     {
         $this->onConnection('assistant');
         $this->onQueue('assistant');
@@ -51,10 +51,14 @@ final class ParseBankStatementJob implements ShouldBeEncrypted, ShouldQueue
      */
     public function handle(BankStatementService $service): void
     {
+        if (!isset($this->generation)) {
+            return;
+        }
+
         $statement = DB::transaction(function (): BankStatement|null {
             $statement = BankStatement::query()->whereKey($this->bankStatementId)->lockForUpdate()->firstOrFail();
             $statement = Typer::assertInstance($statement, BankStatement::class);
-            if ($statement->getStatus() !== BankStatementStatusEnum::QUEUED) {
+            if ($this->generation !== $statement->getParseGeneration() || $statement->getStatus() !== BankStatementStatusEnum::QUEUED) {
                 return null;
             }
 
@@ -79,11 +83,11 @@ final class ParseBankStatementJob implements ShouldBeEncrypted, ShouldQueue
                 attachments: [$document],
             );
             $structured = Typer::assertInstance($response, StructuredAgentResponse::class);
-            $service->applyParsed($statement, Typer::assertStringKeyArray($structured->toArray()));
+            $service->applyParsed($statement, Typer::assertStringKeyArray($structured->toArray()), $this->generation);
         } catch (InvalidBankStatementPayloadException) {
-            $service->fail($statement, 'invalid_parser_payload');
+            $service->fail($statement, 'invalid_parser_payload', $this->generation);
         } catch (Throwable) {
-            $service->fail($statement, 'provider_or_parse_failed');
+            $service->fail($statement, 'provider_or_parse_failed', $this->generation);
         }
     }
 
@@ -92,9 +96,13 @@ final class ParseBankStatementJob implements ShouldBeEncrypted, ShouldQueue
      */
     public function failed(Throwable|null $throwable): void
     {
+        if (!isset($this->generation)) {
+            return;
+        }
+
         $statement = BankStatement::query()->find($this->bankStatementId);
         if ($statement instanceof BankStatement) {
-            (new BankStatementService())->fail($statement, 'processing_timeout');
+            (new BankStatementService())->fail($statement, 'processing_timeout', $this->generation);
         }
     }
 }

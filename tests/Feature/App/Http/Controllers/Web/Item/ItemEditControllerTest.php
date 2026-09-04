@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Domain\Inventory\StockMovementService;
 use App\Models\Item;
 use App\Models\StockMovementItem;
 use App\Models\StoreItem;
-use App\Services\StockMovementService;
 use Illuminate\Support\Facades\DB;
 
 \test('item edit does not change warehouse quantity', function (): void {

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools;
 
+use App\Domain\Payroll\PayrollReportReadService;
 use App\Models\PayrollReport;
 use App\Models\Store;
-use App\Services\PayrollReportService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use InvalidArgumentException;
@@ -88,9 +88,9 @@ final class ReadPayrollTool extends AbstractReadResourceTool
     protected function execute(array $request): array { $operation = Typer::parseNullableString($request['operation'] ?? null) ?? 'list';
         $dataset = $this->dataset($request);
         if ($operation === 'summary') { [$store, $year, $month] = $this->period($request);
-            $report = Resolver::resolve(PayrollReportService::class)->build($this->actor->resolveScopeUser(), $store, $year, $month);
+            $report = Resolver::resolve(PayrollReportReadService::class)->build($this->actor->resolveScopeUser(), $store, $year, $month);
             $workerId = Typer::parseNullableInt($request['worker_id'] ?? null);
-            if ($dataset === 'payslips' && $workerId !== null) { $detail = Resolver::resolve(PayrollReportService::class)->buildDetail($this->actor->resolveScopeUser(), $store, $year, $month, $workerId);
+            if ($dataset === 'payslips' && $workerId !== null) { $detail = Resolver::resolve(PayrollReportReadService::class)->buildDetail($this->actor->resolveScopeUser(), $store, $year, $month, $workerId);
 
                 return $this->summaryResult($request, 'payslips', $detail ?? [], $detail === null ? 'NO_PAYSLIP' : null); } $payslips = $this->rows($report['payslips'] ?? []);
             $totals = ['worker_count' => \count($payslips), 'planned_minutes' => \array_sum(\array_map(static fn(array $row): int => Typer::parseInt($row['planned_minutes'] ?? null), $payslips)), 'actual_seconds' => \array_sum(\array_map(static fn(array $row): int => Typer::parseInt($row['actual_seconds'] ?? null), $payslips)), 'final_amount' => \round(\array_sum(\array_map(static fn(array $row): float => Typer::parseFloat($row['final_amount'] ?? null), $payslips)), 2), 'incomplete_count' => \array_sum(\array_map(static fn(array $row): int => Typer::parseInt($row['incomplete_count'] ?? null), $payslips))];
@@ -101,13 +101,13 @@ final class ReadPayrollTool extends AbstractReadResourceTool
             return $this->summaryResult($request, 'reports', $report, $payslips === [] ? 'NO_PAYROLL_ACTIVITY' : null); } if ($operation === 'detail' && $dataset === 'payslips') { [$store, $year, $month] = $this->period($request);
                 $workerId = Typer::parseNullableInt($request['worker_id'] ?? null);
                 if ($workerId === null) { throw new InvalidArgumentException('A worker is required for payslip detail.'); }
-                $detail = Resolver::resolve(PayrollReportService::class)->buildDetail($this->actor->resolveScopeUser(), $store, $year, $month, $workerId);
+                $detail = Resolver::resolve(PayrollReportReadService::class)->buildDetail($this->actor->resolveScopeUser(), $store, $year, $month, $workerId);
 
                 return $this->detailResult($request, 'payslips', $detail ?? ['worker_id' => $workerId, 'available' => false]); } if ($operation === 'detail') { $reportModel = $this->report(Typer::parseNullableInt($request['id'] ?? null));
                     $store = $this->ownedStore($reportModel->getStoreId(), true);
 
-                    return $this->detailResult($request, 'reports', [...$this->record($reportModel, $store), 'data' => Resolver::resolve(PayrollReportService::class)->build($this->actor->resolveScopeUser(), $store, $reportModel->getYear(), $reportModel->getMonth())]); } if ($operation !== 'list') { throw new InvalidArgumentException('Unknown payroll read operation.'); } if ($dataset === 'payslips') { [$store, $year, $month] = $this->period($request);
-                        $rows = $this->rows(Resolver::resolve(PayrollReportService::class)->build($this->actor->resolveScopeUser(), $store, $year, $month)['payslips'] ?? []);
+                    return $this->detailResult($request, 'reports', [...$this->record($reportModel, $store), 'data' => Resolver::resolve(PayrollReportReadService::class)->build($this->actor->resolveScopeUser(), $store, $reportModel->getYear(), $reportModel->getMonth())]); } if ($operation !== 'list') { throw new InvalidArgumentException('Unknown payroll read operation.'); } if ($dataset === 'payslips') { [$store, $year, $month] = $this->period($request);
+                        $rows = $this->rows(Resolver::resolve(PayrollReportReadService::class)->build($this->actor->resolveScopeUser(), $store, $year, $month)['payslips'] ?? []);
                         $workerId = Typer::parseNullableInt($request['worker_id'] ?? null);
                         if ($workerId !== null) { $rows = \array_values(\array_filter($rows, static fn(array $row): bool => $workerId === Typer::parseInt($row['worker_id'] ?? null))); } $state = $this->cursorState($request, 'payslips', $request);
                         $snapshot = $this->rowsSnapshot($rows);

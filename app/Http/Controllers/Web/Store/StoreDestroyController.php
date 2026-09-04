@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Store;
 
+use App\Domain\Stores\StoreManagementService;
 use App\Enums\RemovalOutcomeEnum;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Thinkycz\LaravelCore\Support\Resolver;
@@ -20,7 +20,7 @@ class StoreDestroyController
      */
     public function __invoke(Store $store): RedirectResponse
     {
-        $outcome = (new AdministrationManagementService())->deleteStore(User::mustAuth(), $store);
+        $outcome = (new StoreManagementService())->deleteStore(User::mustAuth(), $store);
 
         if ($outcome === RemovalOutcomeEnum::BLOCKED) {
             Thrower::default()->message('store', \__('Resolve store assignments, stock, and active operational work before removing this store.'))->throw();

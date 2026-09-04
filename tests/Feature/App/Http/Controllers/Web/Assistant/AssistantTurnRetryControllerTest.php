@@ -76,7 +76,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->assertJsonPath('props.conversation.active_turn', null);
 });
 
-\test('retry after a completed mutation creates continuation only recovery', function (): void {
+\test('retry after a completed action creates continuation only recovery', function (AssistantActionClassificationEnum $classification): void {
     StockflowAssistant::fake(static function (): never {
         throw new RuntimeException('Post-action generation failure');
     });
@@ -92,7 +92,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'actor_user_id' => $admin->getKey(),
         'conversation_id' => $conversationId,
         'turn_id' => $failedTurnId,
-        'classification' => AssistantActionClassificationEnum::MUTATION->value,
+        'classification' => $classification->value,
         'status' => AssistantActionStatusEnum::SUCCEEDED->value,
         'result_summary' => ['message' => 'Action completed'],
     ]);
@@ -110,4 +110,29 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($retry->getParentTurnId())->toBe($failedTurnId)
         ->and($retry->getRecoveryMode())->toBe('continuation_after_action')
         ->and($retry->getStatus())->toBe(AssistantTurnStatusEnum::COMPLETED);
+})->with([AssistantActionClassificationEnum::MUTATION, AssistantActionClassificationEnum::EXTERNAL_SIDE_EFFECT]);
+
+\test('uncertain external outcomes explain verification and reject turn retries', function (): void {
+    StockflowAssistant::fake(static function (): never {
+        throw new RuntimeException('Uncertain external outcome');
+    });
+    $admin = UserFactory::new()->admin()->createOne();
+    $turnId = Str::uuid()->toString();
+    $response = $this->be($admin, 'users')->postJson('/assistant/chat', [
+        'message' => 'Send the Slack test', 'turn_id' => $turnId,
+    ]);
+    $response->streamedContent();
+    $conversationId = Typer::assertString($response->headers->get('x-conversation-id'));
+    AssistantActionAudit::factory()->createOne([
+        'actor_user_id' => $admin->getKey(), 'conversation_id' => $conversationId, 'turn_id' => $turnId,
+        'classification' => AssistantActionClassificationEnum::EXTERNAL_SIDE_EFFECT->value,
+        'status' => AssistantActionStatusEnum::UNCERTAIN->value,
+    ]);
+    $this->get('/assistant/conversations/' . $conversationId, $this->inertiaHeaders())
+        ->assertOk()->assertJsonPath('props.conversation.active_turn.can_retry', false)
+        ->assertJsonPath('props.conversation.active_turn.failure.code', 'ACTION_OUTCOME_UNCERTAIN')
+        ->assertJsonPath('props.conversation.active_turn.failure.message', 'The external outcome is uncertain. Verify the result before taking further action; this turn cannot be retried.');
+    $retryId = Str::uuid()->toString();
+    $this->postJson('/assistant/turns/' . $turnId . '/retry', ['turn_id' => $retryId])->assertConflict();
+    \expect(AssistantTurn::query()->whereKey($retryId)->exists())->toBeFalse();
 });

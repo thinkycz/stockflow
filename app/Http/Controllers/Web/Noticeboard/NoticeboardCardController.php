@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Noticeboard;
 
+use App\Domain\Noticeboard\NoticeboardCardService;
 use App\Enums\FilesystemDiskEnum;
 use App\Enums\NoticeboardCardSizeEnum;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
@@ -11,7 +12,6 @@ use App\Http\Validation\NoticeboardCardValidity;
 use App\Models\NoticeboardCard;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\NoticeboardCardService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -112,7 +112,7 @@ class NoticeboardCardController
     {
         $actor = User::mustAuth();
         $store = $this->resolveStore($request, $actor);
-        (new NoticeboardCardService())->trash($this->resolveCard($request, $actor, $store));
+        (new NoticeboardCardService())->trash($this->resolveCard($request, $actor, $store), $actor);
         Inertia::flash('success', \__('Card moved to trash.'));
 
         return Resolver::resolveRedirector()->route('dashboard');
@@ -147,7 +147,7 @@ class NoticeboardCardController
     {
         $actor = User::mustAuth();
         $store = $this->resolveStore($request, $actor);
-        (new NoticeboardCardService())->restore($this->resolveCard($request, $actor, $store, true, true));
+        (new NoticeboardCardService())->restore($this->resolveCard($request, $actor, $store, true, true), $actor);
         Inertia::flash('success', \__('Card restored.'));
 
         return Resolver::resolveRedirector()->route('dashboard', ['status' => 'trash']);
@@ -162,6 +162,7 @@ class NoticeboardCardController
         $store = $this->resolveStore($request, $actor);
         $deleted = (new NoticeboardCardService())->forceDelete(
             $this->resolveCard($request, $actor, $store, true, true),
+            $actor,
         );
 
         if (!$deleted) {

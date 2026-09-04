@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Ai\Tools;
 
 use App\Ai\AssistantActionPresenter;
+use App\Domain\Workforce\WorkerManagementService;
 use App\Enums\RemovalOutcomeEnum;
 use App\Http\Validation\WorkerValidity;
 use App\Models\Worker;
-use App\Services\AdministrationManagementService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\ObjectType;
 use Illuminate\JsonSchema\Types\Type;
@@ -145,12 +145,11 @@ final class WriteWorkersTool extends AbstractApprovableResourceTool
         $action = $this->action($arguments);
         $target = $this->target($arguments);
         $values = $this->values($arguments);
-        $service = Resolver::resolve(AdministrationManagementService::class);
 
         if ($action === 'create_worker' || $action === 'update_worker') {
             $this->validate($values);
             $worker = $action === 'create_worker'
-                ? $service->createWorker(
+                ? (new WorkerManagementService())->createWorker(
                     $this->actor,
                     Typer::assertString($values['first_name'] ?? null),
                     Typer::assertString($values['last_name'] ?? null),
@@ -158,7 +157,7 @@ final class WriteWorkersTool extends AbstractApprovableResourceTool
                     Typer::parseNullableString($values['calendar_color'] ?? null),
                     Typer::parseBool($values['attendance_rating_enabled'] ?? true),
                 )
-                : $service->updateWorker(
+                : (new WorkerManagementService())->updateWorker(
                     $this->actor,
                     Typer::assertInstance($target, Worker::class),
                     Typer::assertString($values['first_name'] ?? null),
@@ -174,12 +173,12 @@ final class WriteWorkersTool extends AbstractApprovableResourceTool
         $worker = Typer::assertInstance($target, Worker::class);
 
         if ($action === 'restore_worker') {
-            $service->restoreWorker($this->actor, $worker);
+            (new WorkerManagementService())->restoreWorker($this->actor, $worker);
 
             return $this->result($action, $worker->getKey());
         }
 
-        $outcome = $service->deleteWorker($this->actor, $worker);
+        $outcome = (new WorkerManagementService())->deleteWorker($this->actor, $worker);
         if ($outcome === RemovalOutcomeEnum::BLOCKED) {
             throw new RuntimeException('Resolve active attendance and future worker scheduling before removing this worker.');
         }

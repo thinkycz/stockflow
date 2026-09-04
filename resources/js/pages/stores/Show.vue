@@ -16,8 +16,9 @@ import CardDescription from '@/components/ui/CardDescription.vue';
 import CardHeader from '@/components/ui/CardHeader.vue';
 import CardTitle from '@/components/ui/CardTitle.vue';
 import DataTable from '@/components/ui/DataTable.vue';
+import Pagination from '@/components/ui/Pagination.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
-import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
+import MovementTypeBadge from '@/features/stock-movements/components/MovementTypeBadge.vue';
 import MetricCard from '@/components/ui/MetricCard.vue';
 import Sparkline from '@/components/ui/Sparkline.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
@@ -111,6 +112,12 @@ const props = defineProps<{
         total_received_value: number;
     };
     movements: MovementRow[];
+    movements_pagination: {
+        current_page: number;
+        last_page: number;
+        total: number;
+        per_page: number;
+    };
     items_received: ItemSummary[];
     now: string;
 }>();
@@ -440,6 +447,13 @@ async function destroyStore(): Promise<void> {
                         </tr>
                     </tbody>
                 </DataTable>
+                <Pagination
+                    :current-page="movements_pagination.current_page"
+                    :last-page="movements_pagination.last_page"
+                    :total="movements_pagination.total"
+                    :per-page="movements_pagination.per_page"
+                    :base-url="route('stores.show', store.id)"
+                />
             </section>
         </div>
     </AppLayout>

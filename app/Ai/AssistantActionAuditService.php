@@ -64,7 +64,7 @@ final class AssistantActionAuditService
     public function toolInvoked(ToolInvoked $event): void
     {
         AssistantActionAudit::query()->where('tool_invocation_id', $event->toolInvocationId)
-            ->whereNotIn('status', [AssistantActionStatusEnum::SUCCEEDED->value, AssistantActionStatusEnum::FAILED->value, AssistantActionStatusEnum::REJECTED->value])
+            ->whereNotIn('status', [AssistantActionStatusEnum::SUCCEEDED->value, AssistantActionStatusEnum::FAILED->value, AssistantActionStatusEnum::UNCERTAIN->value, AssistantActionStatusEnum::REJECTED->value])
             ->update([
                 'status' => AssistantActionStatusEnum::SUCCEEDED->value,
                 'result_summary' => $this->readSummary($event->result),
@@ -79,7 +79,7 @@ final class AssistantActionAuditService
     public function toolFailed(ToolFailed $event): void
     {
         AssistantActionAudit::query()->where('tool_invocation_id', $event->toolInvocationId)
-            ->whereNotIn('status', [AssistantActionStatusEnum::SUCCEEDED->value, AssistantActionStatusEnum::FAILED->value, AssistantActionStatusEnum::REJECTED->value])
+            ->whereNotIn('status', [AssistantActionStatusEnum::SUCCEEDED->value, AssistantActionStatusEnum::FAILED->value, AssistantActionStatusEnum::UNCERTAIN->value, AssistantActionStatusEnum::REJECTED->value])
             ->update([
                 'status' => AssistantActionStatusEnum::FAILED->value,
                 'error_summary' => $this->truncate($event->exception->getMessage()),
@@ -111,6 +111,7 @@ final class AssistantActionAuditService
                 AssistantActionStatusEnum::RUNNING,
                 AssistantActionStatusEnum::SUCCEEDED,
                 AssistantActionStatusEnum::FAILED,
+                AssistantActionStatusEnum::UNCERTAIN,
                 AssistantActionStatusEnum::REJECTED,
             ], true)) {
                 continue;
@@ -156,6 +157,7 @@ final class AssistantActionAuditService
                 AssistantActionStatusEnum::RUNNING,
                 AssistantActionStatusEnum::SUCCEEDED,
                 AssistantActionStatusEnum::FAILED,
+                AssistantActionStatusEnum::UNCERTAIN,
                 AssistantActionStatusEnum::REJECTED,
             ], true)) {
                 continue;
@@ -246,6 +248,7 @@ final class AssistantActionAuditService
         if ($audit instanceof AssistantActionAudit && \in_array($audit->getStatus(), [
             AssistantActionStatusEnum::RUNNING,
             AssistantActionStatusEnum::FAILED,
+            AssistantActionStatusEnum::UNCERTAIN,
             AssistantActionStatusEnum::REJECTED,
         ], true)) {
             throw new RuntimeException('This assistant tool call was already resolved and will not be executed again.');
@@ -284,6 +287,18 @@ final class AssistantActionAuditService
     }
 
     /**
+     * Preserve an external outcome that cannot be safely retried.
+     */
+    public function uncertain(string $conversationId, string $toolCallId): void
+    {
+        $this->find($conversationId, $toolCallId)?->update([
+            'status' => AssistantActionStatusEnum::UNCERTAIN->value,
+            'error_summary' => 'External outcome is uncertain; verify it before any new action.',
+            'completed_at' => Carbon::now(),
+        ]);
+    }
+
+    /**
      * Mark one invocation successful and retain only its bounded safe result.
      *
      * @param array<string, mixed> $result
@@ -303,7 +318,13 @@ final class AssistantActionAuditService
      */
     public function failed(string $conversationId, string $toolCallId, Throwable $exception, float $startedAt): void
     {
-        $this->find($conversationId, $toolCallId)?->update([
+        $audit = $this->find($conversationId, $toolCallId);
+        // An after-commit callback can fail after both mutation and outcome persisted.
+        if ($audit?->getStatus() === AssistantActionStatusEnum::SUCCEEDED) {
+            return;
+        }
+
+        $audit?->update([
             'status' => AssistantActionStatusEnum::FAILED->value,
             'error_summary' => $this->truncate($exception->getMessage()),
             'completed_at' => Carbon::now(),

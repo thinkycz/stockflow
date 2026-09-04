@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Enums\OperationalActivityTypeEnum;
 use App\Models\OperationalActivity;
 use App\Models\Store;
-use App\Services\OperationalActivityService;
+use App\Support\OperationalActivityService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Thinkycz\LaravelCore\Support\Config;

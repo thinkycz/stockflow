@@ -18,7 +18,7 @@ import CardHeader from '@/components/ui/CardHeader.vue';
 import CardTitle from '@/components/ui/CardTitle.vue';
 import DataTable from '@/components/ui/DataTable.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
-import MovementTypeBadge from '@/components/ui/MovementTypeBadge.vue';
+import MovementTypeBadge from '@/features/stock-movements/components/MovementTypeBadge.vue';
 import MetricCard from '@/components/ui/MetricCard.vue';
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { formatDateTime, formatMoney, formatNumber } from '@/lib/format';

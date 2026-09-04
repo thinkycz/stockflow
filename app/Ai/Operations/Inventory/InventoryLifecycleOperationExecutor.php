@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Ai\Operations\Inventory;
 
 use App\Ai\Operations\AssistantOperationExecutor;
+use App\Domain\Inventory\InventoryDraftRowInput;
+use App\Domain\Inventory\ManageInventory;
 use App\Models\InventorySession;
 use App\Models\InventorySessionItem;
 use App\Models\StockMovement;
 use App\Models\User;
-use App\Operations\Inventory\ManageInventory;
 use InvalidArgumentException;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -73,7 +74,7 @@ final class InventoryLifecycleOperationExecutor implements AssistantOperationExe
         $result = match ($identifier) {
             'reverse_stock_movement' => $this->command->reverseMovement($actor, Typer::assertInt($targetId), $values),
             'start_inventory_draft' => $this->command->startDraft($actor, Typer::assertInt($storeId)),
-            'save_inventory_draft_row' => $this->command->saveDraftRow($actor, Typer::assertInt($targetId), $values),
+            'save_inventory_draft_row' => $this->command->saveDraftRow($actor, Typer::assertInt($targetId), InventoryDraftRowInput::fromPayload($values)),
             'close_inventory_draft' => $this->command->closeDraft($actor, Typer::assertInt($targetId), $values),
             'cancel_inventory_draft' => $this->cancelDraft($actor, Typer::assertInt($targetId)),
             'create_inventory_count' => $this->command->createCount($actor, ['store_id' => $storeId, ...$values]),
@@ -127,7 +128,7 @@ final class InventoryLifecycleOperationExecutor implements AssistantOperationExe
                 'quantity' => ['required', 'numeric', 'min:0'],
                 'classification' => ['nullable', 'string'],
                 'note' => ['nullable', 'string'],
-                'client_version' => ['required', 'integer', 'min:1'],
+                'expected_revision' => ['required', 'integer', 'min:0'],
             ])->validate(),
             'close_inventory_draft' => Resolver::resolveValidatorFactory()->make($values, ['counted_on' => ['required', 'date_format:Y-m-d', 'before_or_equal:today']])->validate(),
             'cancel_inventory_draft' => $this->command->draft($actor, Typer::assertInt($targetId)),
@@ -190,6 +191,7 @@ final class InventoryLifecycleOperationExecutor implements AssistantOperationExe
                 default => 'inventory_session',
             },
             'id' => $model->getKey(),
+            ...($model instanceof InventorySessionItem ? ['row' => $model->draftValues()] : []),
             'url' => $model instanceof InventorySession
                 ? Resolver::resolveUrlGenerator()->route('inventory-counts.show', $model->getKey())
                 : ($model instanceof StockMovement

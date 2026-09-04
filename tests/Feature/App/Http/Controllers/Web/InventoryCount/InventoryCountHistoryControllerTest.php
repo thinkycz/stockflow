@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Domain\Inventory\InventorySessionService;
 use App\Models\InventorySession;
 use App\Models\InventorySessionItem;
 use App\Models\Item;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\InventorySessionService;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Support\Typer;

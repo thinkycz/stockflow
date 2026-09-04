@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\IncomeExpense;
 
+use App\Domain\Finance\FinancialReportReadService;
 use App\Http\Controllers\Web\Concerns\ResolvesFinancialReportContext;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\FinancialReportService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -38,7 +38,7 @@ class IncomeExpenseIndexController
             $month = $now->month;
         }
         $store = ActiveStoreResolver::resolveIncludingInactive($request, $admin);
-        $service = new FinancialReportService();
+        $service = new FinancialReportReadService();
 
         return Inertia::render('income-expenses/Index', [
             'active_store' => $store instanceof Store ? [

@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\InventoryCount;
 
+use App\Domain\Inventory\InventoryReadService;
+use App\Domain\Inventory\InventorySessionService;
 use App\Enums\StockMovementClassificationEnum;
 use App\Models\InventorySession;
 use App\Models\InventorySessionItem;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\InventorySessionService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
-use Thinkycz\LaravelCore\Support\Typer;
 
 class InventoryCountIndexController
 {
@@ -30,7 +30,7 @@ class InventoryCountIndexController
     /**
      * Render the inventory editor for the active store.
      */
-    public function __invoke(Request $request, InventorySessionService $service): Response
+    public function __invoke(Request $request, InventorySessionService $service, InventoryReadService $readService): Response
     {
         $user = User::mustAuth();
 
@@ -44,7 +44,7 @@ class InventoryCountIndexController
         $rows = [];
 
         if ($store instanceof Store) {
-            $rows = $service->buildStoreView($scopeUser, $store);
+            $rows = $readService->buildStoreView($scopeUser, $store);
         }
 
         $draft = $store instanceof Store ? $service->activeDraft($user, $store) : null;
@@ -68,7 +68,7 @@ class InventoryCountIndexController
                     'quantity' => $row->getQuantity(),
                     'classification' => $row->getClassification()?->value,
                     'note' => $row->getNote(),
-                    'client_version' => Typer::parseInt($row->getAttribute('client_version')),
+                    'revision' => $row->getRevision(),
                 ])->values()->all(),
             ] : null,
             'classifications' => \array_map(

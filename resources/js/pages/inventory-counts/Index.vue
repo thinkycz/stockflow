@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useInventoryAutosave } from '@/features/inventory/useInventoryAutosave';
 import { Link, router } from '@inertiajs/vue3';
 import { CalendarDays, Minus, Plus, Save, XCircle } from '@lucide/vue';
 import { computed, reactive, ref } from 'vue';
@@ -38,7 +39,6 @@ type EditableRow = {
     classification: string;
     classificationTouched: boolean;
     note: string;
-    clientVersion: number;
 };
 
 type Draft = {
@@ -49,7 +49,7 @@ type Draft = {
         quantity: number;
         classification: string | null;
         note: string | null;
-        client_version: number;
+        revision: number;
     }>;
 };
 
@@ -81,9 +81,9 @@ const editing = reactive<Record<number, EditableRow>>(
                     item_id: row.item_id,
                     quantity: saved ? String(saved.quantity) : '',
                     classification: saved?.classification ?? 'consumption',
-                    classificationTouched: saved?.classification !== null,
+                    classificationTouched:
+                        saved !== undefined && saved.classification !== null,
                     note: saved?.note ?? '',
-                    clientVersion: saved?.client_version ?? 0,
                 },
             ];
         }),
@@ -94,10 +94,20 @@ const submitting = ref(false);
 const cancelling = ref(false);
 const cancelModalOpen = ref(false);
 const inventoryDate = ref(props.default_counted_on);
-const saveState = reactive<
-    Record<number, 'idle' | 'saving' | 'saved' | 'error'>
->({});
-const pending = new Set<Promise<unknown>>();
+const autosaver = useInventoryAutosave(
+    Object.fromEntries(
+        props.draft?.rows.map((row) => [row.item_id, row.revision]) ?? [],
+    ),
+    async (itemId, values, revision) => {
+        const response = await window.axios.put(
+            route('inventory-counts.drafts.rows.update', props.draft!.id),
+            { item_id: itemId, ...values, expected_revision: revision },
+        );
+        return response.data;
+    },
+);
+const saveState = autosaver.state;
+const conflicts = autosaver.conflicts;
 
 const hasNoItems = computed(() => props.rows.length === 0);
 
@@ -107,11 +117,12 @@ const hasAnyValue = computed(() =>
 
 function setQuantity(itemId: number, value: string | number | undefined): void {
     const row = editing[itemId];
-    if (!row) {
+    if (!row || submitting.value || cancelling.value) {
         return;
     }
     const next = value === null || value === undefined ? '' : String(value);
     if (next === '') {
+        autosaver.dirty(itemId);
         row.quantity = '';
         return;
     }
@@ -119,6 +130,7 @@ function setQuantity(itemId: number, value: string | number | undefined): void {
     if (!Number.isFinite(numeric) || numeric < 0) {
         return;
     }
+    autosaver.dirty(itemId);
     row.quantity = next;
     if (!row.classificationTouched) {
         const source = props.rows.find((item) => item.item_id === itemId);
@@ -156,9 +168,16 @@ function setClassification(
     value: string | number | null | undefined,
 ): void {
     const row = editing[itemId];
-    if (!row || value === null || value === undefined) {
+    if (
+        submitting.value ||
+        cancelling.value ||
+        !row ||
+        value === null ||
+        value === undefined
+    ) {
         return;
     }
+    autosaver.dirty(itemId);
     row.classification = String(value);
     row.classificationTouched = true;
 }
@@ -166,7 +185,7 @@ function setClassification(
 function adjustQuantity(itemId: number, delta: number): void {
     const row = editing[itemId];
     const source = props.rows.find((item) => item.item_id === itemId);
-    if (!row || !source) {
+    if (!row || !source || submitting.value || cancelling.value) {
         return;
     }
     const current = row.quantity === '' ? source.current : Number(row.quantity);
@@ -197,9 +216,10 @@ function focusAdjacentQuantity(event: KeyboardEvent, itemId: number): void {
 
 function setNote(itemId: number, value: string | number | undefined): void {
     const row = editing[itemId];
-    if (!row) {
+    if (!row || submitting.value || cancelling.value) {
         return;
     }
+    autosaver.dirty(itemId);
     row.note = value === null || value === undefined ? '' : String(value);
 }
 
@@ -225,35 +245,38 @@ function autosave(itemId: number): void {
         return;
     }
 
-    row.clientVersion += 1;
-    saveState[itemId] = 'saving';
-    const request = window.axios
-        .put(route('inventory-counts.drafts.rows.update', props.draft.id), {
-            item_id: row.item_id,
-            quantity: row.quantity,
-            classification:
-                difference(itemId) === 0 ? null : row.classification,
-            note: row.note,
-            client_version: row.clientVersion,
-        })
-        .then(() => {
-            saveState[itemId] = 'saved';
-        })
-        .catch(() => {
-            saveState[itemId] = 'error';
-        })
-        .finally(() => pending.delete(request));
-    pending.add(request);
+    autosaver.save(itemId, {
+        quantity: row.quantity,
+        classification: difference(itemId) === 0 ? null : row.classification,
+        note: row.note,
+    });
+}
+
+function resolveConflict(itemId: number, reapply: boolean): void {
+    const saved = autosaver.resolve(itemId);
+    const row = editing[itemId];
+    if (!row) return;
+    if (!reapply) {
+        row.quantity = saved ? String(saved.quantity) : '';
+        row.classification = saved?.classification ?? 'consumption';
+        row.classificationTouched =
+            saved !== null && saved.classification !== null;
+        row.note = saved?.note ?? '';
+        saveState[itemId] = 'saved';
+    } else {
+        autosave(itemId);
+    }
 }
 
 async function save(): Promise<void> {
     if (!props.draft || !hasAnyValue.value || inventoryDate.value === '') {
         return;
     }
+    if (submitting.value || cancelling.value) return;
     submitting.value = true;
     Object.values(editing).forEach((row) => autosave(row.item_id));
-    await Promise.all([...pending]);
-    if (Object.values(saveState).includes('error')) {
+    await autosaver.settled();
+    if (Object.values(saveState).some((state) => state !== 'saved')) {
         submitting.value = false;
         return;
     }
@@ -282,7 +305,7 @@ async function cancelDraft(): Promise<void> {
     }
 
     cancelling.value = true;
-    await Promise.allSettled([...pending]);
+    await autosaver.settled();
     router.post(
         route('inventory-counts.drafts.cancel', props.draft.id),
         {},
@@ -360,7 +383,11 @@ async function cancelDraft(): Promise<void> {
                         {{ t('inventory_counts.actions.start') }}
                     </Button>
                 </div>
-                <DataTable v-if="draft" density="compact">
+                <DataTable
+                    v-if="draft"
+                    density="compact"
+                    :inert="submitting || cancelling"
+                >
                     <thead>
                         <tr>
                             <th class="min-w-[14rem] text-left">
@@ -521,6 +548,69 @@ async function cancelDraft(): Promise<void> {
                                 >
                             </td>
                             <td>
+                                <div
+                                    v-if="conflicts[row.item_id]"
+                                    class="mb-2 space-y-2 text-xs"
+                                    role="alert"
+                                >
+                                    <p>
+                                        {{
+                                            t(
+                                                'inventory_counts.autosave.local_value',
+                                            )
+                                        }}:
+                                        {{ editing[row.item_id]?.quantity }} /
+                                        {{
+                                            editing[row.item_id]?.classification
+                                        }}
+                                        / {{ editing[row.item_id]?.note }}
+                                    </p>
+                                    <p>
+                                        {{
+                                            t(
+                                                'inventory_counts.autosave.saved_value',
+                                            )
+                                        }}:
+                                        {{
+                                            conflicts[row.item_id]?.row
+                                                ?.quantity ?? '—'
+                                        }}
+                                        /
+                                        {{
+                                            conflicts[row.item_id]?.row
+                                                ?.classification ?? '—'
+                                        }}
+                                        /
+                                        {{
+                                            conflicts[row.item_id]?.row?.note ??
+                                            '—'
+                                        }}
+                                    </p>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        @click="
+                                            resolveConflict(row.item_id, false)
+                                        "
+                                        >{{
+                                            t(
+                                                'inventory_counts.autosave.use_saved',
+                                            )
+                                        }}</Button
+                                    >
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        @click="
+                                            resolveConflict(row.item_id, true)
+                                        "
+                                        >{{
+                                            t(
+                                                'inventory_counts.autosave.reapply',
+                                            )
+                                        }}</Button
+                                    >
+                                </div>
                                 <Input
                                     :model-value="
                                         editing[row.item_id]?.note ?? ''

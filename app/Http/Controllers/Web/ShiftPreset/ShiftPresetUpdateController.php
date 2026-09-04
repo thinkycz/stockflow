@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\ShiftPreset;
 
+use App\Domain\Workforce\WorkforceManagementService;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\ShiftPresetValidity;
 use App\Models\ShiftPreset;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\WorkforceManagementService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

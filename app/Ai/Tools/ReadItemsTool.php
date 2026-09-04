@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools;
 
+use App\Domain\Inventory\InventoryReportService;
 use App\Models\Item;
-use App\Services\InventoryReportService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Illuminate\Support\Carbon;

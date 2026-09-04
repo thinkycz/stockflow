@@ -3,12 +3,13 @@
 declare(strict_types=1);
 
 use App\Ai\Agents\BankStatementParser;
+use App\Domain\BankStatements\BankStatementService;
 use App\Enums\BankStatementStatusEnum;
 use App\Enums\FilesystemDiskEnum;
 use App\Jobs\ParseBankStatementJob;
 use App\Models\BankStatement;
 use App\Models\Store;
-use App\Services\BankStatementService;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -36,7 +37,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     ]);
     BankStatementParser::fake([\parsedBankStatementPayload()]);
 
-    $job = new ParseBankStatementJob($statement->getKey());
+    $job = new ParseBankStatementJob($statement->getKey(), $statement->getParseGeneration());
     $job->handle(new BankStatementService());
     $job->handle(new BankStatementService());
 
@@ -65,7 +66,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         throw new RuntimeException('secret provider response');
     });
 
-    (new ParseBankStatementJob($statement->getKey()))->handle(new BankStatementService());
+    (new ParseBankStatementJob($statement->getKey(), $statement->getParseGeneration()))->handle(new BankStatementService());
 
     $fresh = Typer::assertInstance($statement->fresh(), BankStatement::class);
     \expect($fresh->getStatus())->toBe(BankStatementStatusEnum::FAILED)
@@ -87,7 +88,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $payload['transactions'][0]['amount'] = '1000.001';
     BankStatementParser::fake([$payload]);
 
-    (new ParseBankStatementJob($statement->getKey()))->handle(new BankStatementService());
+    (new ParseBankStatementJob($statement->getKey(), $statement->getParseGeneration()))->handle(new BankStatementService());
 
     \expect($statement->fresh()?->getStatus())->toBe(BankStatementStatusEnum::FAILED)
         ->and($statement->fresh()?->getLastError())->toBe('invalid_parser_payload');
@@ -108,7 +109,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     \data_set($payload, $path, $value);
     BankStatementParser::fake([$payload]);
 
-    (new ParseBankStatementJob($statement->getKey()))->handle(new BankStatementService());
+    (new ParseBankStatementJob($statement->getKey(), $statement->getParseGeneration()))->handle(new BankStatementService());
 
     \expect($statement->fresh()?->getStatus())->toBe(BankStatementStatusEnum::FAILED)
         ->and($statement->fresh()?->getLastError())->toBe('invalid_parser_payload');
@@ -138,8 +139,8 @@ use Thinkycz\LaravelCore\Support\Typer;
     $second = BankStatement::factory()->forStore($store)->create($attributes);
     $service = new BankStatementService();
 
-    $service->applyParsed($first, \parsedBankStatementPayload());
-    $service->applyParsed($second, \parsedBankStatementPayload());
+    $service->applyParsed($first, \parsedBankStatementPayload(), $first->getParseGeneration());
+    $service->applyParsed($second, \parsedBankStatementPayload(), $second->getParseGeneration());
 
     \expect($first->fresh()?->getStatus())->toBe(BankStatementStatusEnum::REVIEW)
         ->and($second->fresh()?->getStatus())->toBe(BankStatementStatusEnum::FAILED)
@@ -152,8 +153,45 @@ use Thinkycz\LaravelCore\Support\Typer;
         'status' => BankStatementStatusEnum::PROCESSING->value,
     ]);
 
-    (new ParseBankStatementJob($statement->getKey()))->failed(null);
+    (new ParseBankStatementJob($statement->getKey(), $statement->getParseGeneration()))->failed(null);
 
     \expect($statement->fresh()?->getStatus())->toBe(BankStatementStatusEnum::FAILED)
         ->and($statement->fresh()?->getLastError())->toBe('processing_timeout');
+});
+
+\test('stale parser results failures and duplicate jobs cannot modify a retried generation', function (): void {
+    Queue::fake();
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $statement = BankStatement::factory()->forStore($store)->create(['status' => BankStatementStatusEnum::PROCESSING->value]);
+    $statement->transactions()->create([
+        'position' => 1, 'booked_on' => '2026-08-01', 'item_type' => 'Reviewed row',
+        'amount' => '1.00', 'currency' => 'CZK', 'category' => 'other_incoming', 'manually_edited' => true,
+    ]);
+    $service = new BankStatementService();
+    $generation = $statement->getParseGeneration();
+    $job = new ParseBankStatementJob($statement->getKey(), $generation);
+    $service->fail($statement, 'processing_timeout', $generation);
+    $service->retry($statement, $admin);
+    $fresh = Typer::assertInstance($statement->fresh(), BankStatement::class);
+    \expect($fresh->getParseGeneration())->toBe($generation + 1);
+
+    $service->applyParsed($statement, \parsedBankStatementPayload(), $generation);
+    $service->fail($statement, 'provider_or_parse_failed', $generation);
+    $job->failed(null);
+    $job->handle($service);
+
+    \expect($statement->fresh()?->getStatus())->toBe(BankStatementStatusEnum::QUEUED)
+        ->and($statement->fresh()?->getLastError())->toBeNull()
+        ->and($statement->transactions()->sole()->getAttribute('item_type'))->toBe('Reviewed row');
+    Queue::assertPushed(ParseBankStatementJob::class, static fn(ParseBankStatementJob $queued): bool => $queued->generation === $generation + 1);
+});
+
+\test('legacy jobs without a generation cannot claim or fail an import', function (): void {
+    [, $store] = \createIsolatedUserWithWarehouse();
+    $statement = BankStatement::factory()->forStore($store)->create(['status' => BankStatementStatusEnum::QUEUED->value]);
+    $job = new ParseBankStatementJob($statement->getKey());
+    $job->handle(new BankStatementService());
+    $job->failed(null);
+    \expect($statement->fresh()?->getStatus())->toBe(BankStatementStatusEnum::QUEUED);
 });

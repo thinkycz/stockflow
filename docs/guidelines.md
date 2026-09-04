@@ -7,7 +7,7 @@ both. Items that apply only to one surface are tagged **[Web]** or **[API]**.
 ## Stack and Tooling
 
 - Makefile is the primary entry point for provisioning, formatting, and
-  validation: `make local|testing|development|staging|production`, `make fix`,
+  validation: `make local|development|staging|production`, `make fix`,
   `make check`.
 - Before each commit, run `make fix` then `make check`.
 - PHPStan is the source of truth for type errors. It must stay at
@@ -216,8 +216,10 @@ $message)` helper asserts Inertia flash messages for both
 
 ## Controllers, Authorization, Validation
 
-- Authorization and validation in the controller, not in request
-  classes.
+- Controllers own HTTP validation and responses. Domain mutations enforce
+  authorization, lifecycle constraints, and transactions for every caller,
+  including assistant adapters. Shared validity classes retain transport
+  field rules; domain commands may reuse these rules for adapter parity.
 - **[Web]** Validation rules live in `App\Http\Validation\*Validity`
   classes; inject with `*Validity::inject($user->getKey())` (or
   `$model->getUserId()` for edit flows) and use
@@ -229,7 +231,7 @@ $message)` helper asserts Inertia flash messages for both
 - Multi-step writes (`create + related`, `update + tokens`,
   `password + revoke`) must run in `DB::transaction(...)`.
 - All queries must be scoped to the logged-in user via the
-  `BelongsToUser` trait's `->forUser($user)` scope (or a relation
+  `BelongsToUser` trait with `Item::scopeForUser($query, $user)` (or a relation
   through an already-scoped parent).
 - Forbids `ValidationException::withMessages(...)`. Use
   `Thrower::default()->message($key, $message)->throw()`.
@@ -300,3 +302,17 @@ $message)` helper asserts Inertia flash messages for both
 
 - Generate boilerplate code exclusively with CRUD scaffolding commands
   shipped by the `thinkycz/laravel-core` package.
+
+## Domain and feature ownership
+
+Business services and shared mutations live in `app/Domain/<Module>`. Models,
+controllers, jobs and notifications keep Laravel locations and stable namespaces.
+Do not add forwarding services to `app/Services` or `app/Operations`. See
+[ADR 0009](adr/0009-domain-and-feature-boundaries.md) for allowed dependencies.
+
+Pages remain in `resources/js/pages` and compose routing/page props. Feature
+workflow state, calculations, types and components belong in
+`resources/js/features/<feature>`; shared UI, localization and dialogs remain
+central. Scaffolding must preserve these boundaries: core CRUD generators
+remain framework-only, and generated controllers are transport entrypoints,
+not the home for new domain workflows. Run architecture tests after generation.

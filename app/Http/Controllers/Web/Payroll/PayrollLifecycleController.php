@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Payroll;
 
+use App\Domain\Payroll\PayrollReportService;
 use App\Http\Controllers\Web\Concerns\ResolvesPayrollReportContext;
 use App\Models\User;
-use App\Services\PayrollReportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

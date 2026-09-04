@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Recipe;
 
+use App\Domain\Recipes\RecipeAdjustmentService;
 use App\Models\Recipe;
 use App\Models\RecipeInstruction;
 use App\Models\RecipeVariant;
 use App\Models\User;
-use App\Services\RecipeAdjustmentService;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;

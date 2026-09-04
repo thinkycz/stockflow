@@ -4,7 +4,7 @@ import { nextTick, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DataTable from '@/components/ui/DataTable.vue';
 import { formatMoney } from '@/lib/format';
-import type { PayrollReport } from '@/types/payroll';
+import type { PayrollReport } from '@/features/payroll/types';
 
 defineProps<{
     active_store: { id: number; name: string };

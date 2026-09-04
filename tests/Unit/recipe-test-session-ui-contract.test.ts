@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { workflowSource } from './helpers/workflow-source';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
@@ -6,15 +6,15 @@ const jsRoot = resolve(process.cwd(), 'resources/js');
 
 describe('recipe test session UI contract', () => {
     test('catalog uses the shared accessible menu and owns the test start action', () => {
-        const index = readFileSync(
+        const index = workflowSource(
             resolve(jsRoot, 'pages/recipes/Index.vue'),
             'utf8',
         );
-        const show = readFileSync(
+        const show = workflowSource(
             resolve(jsRoot, 'pages/recipes/Show.vue'),
             'utf8',
         );
-        const menu = readFileSync(
+        const menu = workflowSource(
             resolve(jsRoot, 'components/ui/DropdownMenu.vue'),
             'utf8',
         );
@@ -28,7 +28,7 @@ describe('recipe test session UI contract', () => {
     });
 
     test('wizard keeps all three answers local and submits once', () => {
-        const source = readFileSync(
+        const source = workflowSource(
             resolve(jsRoot, 'pages/recipes/TestSession.vue'),
             'utf8',
         );

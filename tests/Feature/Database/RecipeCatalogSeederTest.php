@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Domain\Recipes\RecipeCatalogService;
 use App\Models\Recipe;
 use App\Models\RecipeCategory;
 use App\Models\RecipeInstruction;
 use App\Models\RecipeTestAttempt;
 use App\Models\RecipeVariant;
 use App\Models\User;
-use App\Services\RecipeCatalogService;
 use Database\Factories\UserFactory;
 use Database\Seeders\RecipeCatalogSeeder;
 use Illuminate\Database\Migrations\Migration;

@@ -73,3 +73,47 @@ test('inventory reconciliation shows explicit increase and decrease signs', asyn
     ).toBeVisible();
     await expect(page.getByText(/\+CZK\s*[\d,.]+/).first()).toBeVisible();
 });
+
+test('inventory conflicts preserve both editors values and require explicit resolution', async ({
+    page,
+    context,
+}) => {
+    await page.goto('/login');
+    await page.getByLabel('Email').fill('test@test.com');
+    await page.getByLabel('Password', { exact: true }).fill('password');
+    await page.getByRole('button', { name: 'Log in' }).click();
+    await page.waitForURL(/\/dashboard$/);
+    await page.goto('/inventory-counts');
+    await page.getByRole('button', { name: 'Start inventory count' }).click();
+    await expect(page.locator('[data-testid^="qty-"]').first()).toBeVisible();
+    const second = await context.newPage();
+    await second.goto('/inventory-counts');
+    const firstInput = page.locator('[data-testid^="qty-"]').first();
+    const secondInput = second.locator('[data-testid^="qty-"]').first();
+    await firstInput.fill('5');
+    await firstInput.blur();
+    await expect(
+        page.getByText('Saved', { exact: true }).first(),
+    ).toBeVisible();
+    await secondInput.fill('9');
+    await secondInput.blur();
+    await expect(second.getByRole('alert')).toContainText('9');
+    await expect(second.getByRole('alert')).toContainText('5');
+    await second.getByRole('button', { name: 'Save stock count' }).click();
+    await expect(
+        second.getByRole('button', { name: 'Reapply my value' }),
+    ).toBeVisible();
+    await second.getByRole('button', { name: 'Reapply my value' }).click();
+    await expect(
+        second.getByText('Saved', { exact: true }).first(),
+    ).toBeVisible();
+    await second.reload();
+    await expect(secondInput).toHaveValue('9');
+    await firstInput.fill('7');
+    await firstInput.blur();
+    await page.getByRole('button', { name: 'Use saved value' }).click();
+    await expect(firstInput).toHaveValue('9');
+    await page.getByRole('button', { name: 'Save stock count' }).click();
+    await page.waitForURL(/\/inventory-counts\/\d+$/);
+    await second.close();
+});

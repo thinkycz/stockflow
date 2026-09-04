@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\Stores\StoreManagementService;
+use App\Domain\Workforce\WorkerManagementService;
 use App\Enums\RemovalOutcomeEnum;
 use App\Enums\StoreStatusEnum;
 use App\Models\AssistantActionAudit;
@@ -27,7 +29,6 @@ use App\Models\Statement;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\Worker;
-use App\Services\AdministrationManagementService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -199,12 +200,11 @@ use Illuminate\Support\Facades\DB;
         },
     ];
 
-    $service = new AdministrationManagementService();
     foreach ($references as $family => $createReference) {
         $worker = Worker::factory()->create(['user_id' => $admin->getKey()]);
         $reference = $createReference($worker);
 
-        \expect($service->deleteWorker($admin, $worker))->toBe(RemovalOutcomeEnum::ARCHIVED, $family)
+        \expect((new WorkerManagementService())->deleteWorker($admin, $worker))->toBe(RemovalOutcomeEnum::ARCHIVED, $family)
             ->and($worker->refresh()->isArchived())->toBeTrue($family)
             ->and(DB::table($reference['table'])->where('id', $reference['id'])->exists())->toBeTrue($family);
     }
@@ -414,7 +414,6 @@ use Illuminate\Support\Facades\DB;
         },
     ];
 
-    $service = new AdministrationManagementService();
     foreach ($references as $family => $createReference) {
         $store = Store::factory()->create([
             'user_id' => $admin->getKey(),
@@ -423,7 +422,7 @@ use Illuminate\Support\Facades\DB;
         ]);
         $reference = $createReference($store);
 
-        \expect($service->deleteStore($admin, $store))->toBe(RemovalOutcomeEnum::ARCHIVED, $family)
+        \expect((new StoreManagementService())->deleteStore($admin, $store))->toBe(RemovalOutcomeEnum::ARCHIVED, $family)
             ->and($store->refresh()->getStatus())->toBe(StoreStatusEnum::INACTIVE, $family)
             ->and(DB::table($reference['table'])->where('id', $reference['id'])->exists())->toBeTrue($family);
     }
@@ -431,8 +430,7 @@ use Illuminate\Support\Facades\DB;
 
 \test('a pristine store created through the application is hard deleted with untouched checklist scaffolding', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
-    $service = new AdministrationManagementService();
-    $store = $service->createStore(
+    $store = (new StoreManagementService())->createStore(
         $admin,
         'Pristine retail',
         null,
@@ -444,7 +442,7 @@ use Illuminate\Support\Facades\DB;
 
     \expect(ChecklistTemplateTask::query()->where('store_id', $store->getKey())->exists())->toBeTrue()
         ->and(ChecklistDay::query()->where('store_id', $store->getKey())->exists())->toBeTrue()
-        ->and($service->deleteStore($admin, $store))->toBe(RemovalOutcomeEnum::DELETED)
+        ->and((new StoreManagementService())->deleteStore($admin, $store))->toBe(RemovalOutcomeEnum::DELETED)
         ->and(Store::query()->whereKey($store->getKey())->exists())->toBeFalse()
         ->and(ChecklistTemplateTask::query()->where('store_id', $store->getKey())->exists())->toBeFalse()
         ->and(ChecklistDay::query()->where('store_id', $store->getKey())->exists())->toBeFalse();
@@ -452,8 +450,7 @@ use Illuminate\Support\Facades\DB;
 
 \test('an inactive store initializes prospective checklist data only when activated', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
-    $service = new AdministrationManagementService();
-    $store = $service->createStore(
+    $store = (new StoreManagementService())->createStore(
         $admin,
         'Future retail',
         null,
@@ -466,7 +463,7 @@ use Illuminate\Support\Facades\DB;
     \expect(ChecklistTemplateTask::query()->where('store_id', $store->getKey())->exists())->toBeFalse()
         ->and(ChecklistDay::query()->where('store_id', $store->getKey())->exists())->toBeFalse();
 
-    $service->updateStore(
+    (new StoreManagementService())->updateStore(
         $admin,
         $store,
         $store->getName(),

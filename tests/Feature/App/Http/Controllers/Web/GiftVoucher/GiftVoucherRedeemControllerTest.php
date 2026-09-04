@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Domain\GiftVouchers\GiftVoucherService;
 use App\Enums\GiftVoucherStatusEnum;
 use App\Models\GiftVoucher;
 use App\Models\GiftVoucherSetting;
 use App\Models\Store;
-use App\Services\GiftVoucherService;
 use Database\Factories\UserFactory;
 use Thinkycz\LaravelCore\Support\Typer;
 

@@ -141,7 +141,7 @@ final class AssistantResourceToolDefinitions
                     'quantity' => self::number(true, 'Quantity', 0),
                     'classification' => self::text(false, 'Classification'),
                     'note' => self::textarea(false, 'Note'),
-                    'client_version' => self::integer(true, 'Client version', 1),
+                    'expected_revision' => self::integer(true, 'Expected saved row revision (zero for a new row)', 0),
                 ]),
                 'close_inventory_draft' => self::action(false, true, [], ['counted_on' => self::date(true, 'Counted on')]),
                 'cancel_inventory_draft' => self::action(false, true),

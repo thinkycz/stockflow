@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Services\RecipeCatalogMigrationService;
+use App\Domain\Recipes\RecipeCatalogMigrationService;
 use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration {

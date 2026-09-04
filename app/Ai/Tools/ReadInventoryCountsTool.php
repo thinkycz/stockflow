@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools;
 
+use App\Domain\Inventory\InventoryReadService;
 use App\Models\InventorySession;
-use App\Services\InventorySessionService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use InvalidArgumentException;
@@ -47,7 +47,7 @@ final class ReadInventoryCountsTool extends AbstractReadResourceTool
         if ($to !== null) { $query->where('counted_at', '<=', $to . ' 23:59:59'); } if ($operation === 'detail') { $id = Typer::parseNullableInt($request['id'] ?? null);
             if ($id === null) { throw new InvalidArgumentException('An inventory session identifier is required.'); } $session = $query->findOrFail($id);
 
-            return $this->detailResult($request, 'sessions', [...$this->record($session), 'rows' => Resolver::resolve(InventorySessionService::class)->buildSessionView($this->actor->resolveScopeUser(), $session)]); } if ($operation === 'summary') { $sessions = $query->get();
+            return $this->detailResult($request, 'sessions', [...$this->record($session), 'rows' => Resolver::resolve(InventoryReadService::class)->buildSessionView($this->actor->resolveScopeUser(), $session)]); } if ($operation === 'summary') { $sessions = $query->get();
 
                 return $this->summaryResult($request, 'sessions', ['session_count' => $sessions->count(), 'draft_count' => $sessions->filter(static fn(InventorySession $session): bool => $session->getStatus() === 'draft')->count(), 'closed_count' => $sessions->filter(static fn(InventorySession $session): bool => $session->getStatus() === 'closed')->count(), 'counted_row_count' => $sessions->sum(static fn(InventorySession $session): int => $session->getItems()->count())], $sessions->isEmpty() ? 'NO_MATCHING_DATA' : null); } if ($operation !== 'list') { throw new InvalidArgumentException('Unknown inventory count read operation.'); }
 

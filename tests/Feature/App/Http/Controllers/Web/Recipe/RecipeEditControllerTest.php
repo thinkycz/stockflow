@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Domain\Recipes\RecipeCatalogService;
 use App\Models\Recipe;
 use App\Models\User;
-use App\Services\RecipeCatalogService;
 use Database\Factories\UserFactory;
 use Thinkycz\LaravelCore\Support\Typer;
 

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Payroll;
 
+use App\Domain\Payroll\PayrollReportService;
 use App\Http\Controllers\Web\Concerns\ResolvesPayrollReportContext;
 use App\Http\Validation\PayrollReportValidity;
 use App\Models\User;
-use App\Services\PayrollReportService;
 use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

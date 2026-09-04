@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Domain\Payroll\PayrollReportService;
 use App\Models\FinancialReport;
 use App\Models\Store;
-use App\Services\PayrollReportService;
 
 \test('admin can close and reopen a report', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();

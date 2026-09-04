@@ -1,3 +1,4 @@
+import { workflowSource } from './helpers/workflow-source';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -6,7 +7,7 @@ import { describe, expect, test } from 'vitest';
 const projectRoot = process.cwd();
 
 function source(path: string): string {
-    return readFileSync(resolve(projectRoot, path), 'utf8');
+    return workflowSource(resolve(projectRoot, path));
 }
 
 function sha256(path: string): string {

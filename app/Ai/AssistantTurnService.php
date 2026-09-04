@@ -213,18 +213,23 @@ final class AssistantTurnService
             $message = null;
         }
 
+        $uncertain = $this->hasUnresolvedExternalActions($turn);
+        $completedActions = $this->completedActions($turn);
+
         return [
             'id' => $turn->getTurnId(),
             'status' => $turn->getStatus()->value,
             'kind' => $turn->getKind(),
             'recovery_mode' => $turn->getRecoveryMode(),
-            'can_retry' => $turn->getStatus() === AssistantTurnStatusEnum::FAILED,
-            'completed_actions' => $this->completedActions($turn),
+            'can_retry' => $turn->getStatus() === AssistantTurnStatusEnum::FAILED && !$uncertain,
+            'completed_actions' => $completedActions,
             'failure' => $turn->getStatus() === AssistantTurnStatusEnum::FAILED ? [
-                'code' => $this->completedActions($turn) === [] ? 'TURN_FAILED' : 'POST_ACTION_GENERATION_FAILED',
-                'message' => $this->completedActions($turn) === []
-                    ? 'The assistant response was interrupted. You can safely retry this turn.'
-                    : 'The action completed, but the assistant response was interrupted. Continue without repeating the action.',
+                'code' => $uncertain ? 'ACTION_OUTCOME_UNCERTAIN' : ($completedActions === [] ? 'TURN_FAILED' : 'POST_ACTION_GENERATION_FAILED'),
+                'message' => $uncertain
+                    ? 'The external outcome is uncertain. Verify the result before taking further action; this turn cannot be retried.'
+                    : ($completedActions === []
+                        ? 'The assistant response was interrupted. You can safely retry this turn.'
+                        : 'The action completed, but the assistant response was interrupted. Continue without repeating the action.'),
             ] : null,
             'message' => $message,
             'queued_at' => ($logical['queued_at'] ?? $turn->getQueuedAt())->toJSON(),
@@ -313,6 +318,9 @@ final class AssistantTurnService
      */
     public function retry(User $actor, Conversation $conversation, AssistantTurn $failed, string $newTurnId): array
     {
+        if ($this->hasUnresolvedExternalActions($failed)) {
+            \abort(409, 'Verify the uncertain external outcome before starting a new action.');
+        }
         if ($failed->getActorUserId() !== $actor->getKey() || $failed->getConversationId() !== Typer::assertString($conversation->getKey()) || $failed->getStatus() !== AssistantTurnStatusEnum::FAILED) {
             throw new InvalidArgumentException('Only an owned failed assistant turn can be retried.');
         }
@@ -328,13 +336,23 @@ final class AssistantTurnService
     }
 
     /**
+     * Block replay while an external effect is still running or its outcome is uncertain.
+     */
+    private function hasUnresolvedExternalActions(AssistantTurn $turn): bool
+    {
+        return AssistantActionAudit::query()->where('turn_id', $turn->getTurnId())
+            ->where('classification', AssistantActionClassificationEnum::EXTERNAL_SIDE_EFFECT->value)
+            ->whereIn('status', [AssistantActionStatusEnum::RUNNING->value, AssistantActionStatusEnum::UNCERTAIN->value])->exists();
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     private function completedActions(AssistantTurn $turn): array
     {
         return \array_values(AssistantActionAudit::query()
             ->where('turn_id', $turn->getTurnId())
-            ->where('classification', AssistantActionClassificationEnum::MUTATION->value)
+            ->whereIn('classification', [AssistantActionClassificationEnum::MUTATION->value, AssistantActionClassificationEnum::EXTERNAL_SIDE_EFFECT->value])
             ->where('status', AssistantActionStatusEnum::SUCCEEDED->value)
             ->orderBy('id')
             ->get()

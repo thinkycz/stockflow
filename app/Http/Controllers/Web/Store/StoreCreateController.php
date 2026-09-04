@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Store;
 
+use App\Domain\Stores\StoreManagementService;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\StoreValidity;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -46,7 +46,7 @@ class StoreCreateController
 
         $slackChannel = \mb_trim($validated->assertNullableString('slack_channel') ?? '');
 
-        $store = (new AdministrationManagementService())->createStore(
+        $store = (new StoreManagementService())->createStore(
             $user,
             $validated->assertString('name'),
             $validated->assertNullableString('address'),

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Domain\Inventory\StockMovementService;
 use App\Enums\StockMovementClassificationEnum;
 use App\Enums\StockMovementOriginEnum;
 use App\Enums\StockMovementTypeEnum;
@@ -13,7 +14,6 @@ use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\StockMovementService;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Console\Command;

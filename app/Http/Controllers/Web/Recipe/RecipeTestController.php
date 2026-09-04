@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Recipe;
 
+use App\Domain\Recipes\RecipeTestService;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\RecipeValidity;
 use App\Models\RecipeTestAttempt;
 use App\Models\User;
-use App\Services\RecipeTestService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -62,6 +62,7 @@ class RecipeTestController
         return Typer::assertInstance(RecipeTestAttempt::query()
             ->where('user_id', $actor->resolveScopeUser()->getKey())
             ->where('actor_user_id', $actor->getKey())
+            ->whereNull('recipe_test_session_id')
             ->whereKey($attempt->getKey())->firstOrFail(), RecipeTestAttempt::class);
     }
 

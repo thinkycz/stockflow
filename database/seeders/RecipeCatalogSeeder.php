@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Services\RecipeCatalogMigrationService;
+use App\Domain\Recipes\RecipeCatalogMigrationService;
 use Database\Seeders\Concerns\OnlyRunsInDemoEnvironment;
 use Illuminate\Database\Seeder;
 

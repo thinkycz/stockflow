@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Recipe;
 
+use App\Domain\Recipes\RecipeCatalogService;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\RecipeValidity;
 use App\Models\Recipe;
@@ -11,7 +12,6 @@ use App\Models\RecipeCategory;
 use App\Models\RecipeInstruction;
 use App\Models\RecipeVariant;
 use App\Models\User;
-use App\Services\RecipeCatalogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3';
 import { Ban, CheckCircle2, Search, TicketCheck } from '@lucide/vue';
-import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Card from '@/components/ui/Card.vue';
@@ -10,54 +8,23 @@ import Input from '@/components/ui/Input.vue';
 import Label from '@/components/ui/Label.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import BackLink from '@/components/ui/BackLink.vue';
-import { useBoundLocale } from '@/composables/useBoundLocale';
-import { useRoute } from '@/composables/useRoute';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney } from '@/lib/format';
-import type {
-    GiftVoucherLookup,
-    GiftVoucherStatus,
-} from '@/types/gift-vouchers';
+import {
+    useVoucherRedemption,
+    type VoucherRedemptionProps,
+} from '@/features/gift-vouchers/useVoucherRedemption';
 
-const props = defineProps<{
-    is_admin: boolean;
-    can_redeem: boolean;
-    lookup: GiftVoucherLookup | null;
-}>();
-
-const { t } = useI18n();
-useBoundLocale();
-const route = useRoute();
-
-const lookupForm = useForm({ code: '' });
-const redeemForm = useForm({ ticket: '' });
-function submitLookup(): void {
-    lookupForm.post(route('gift-vouchers.lookup'), {
-        preserveScroll: true,
-        onSuccess: () => lookupForm.reset(),
-    });
-}
-
-function redeem(): void {
-    if (props.lookup === null) return;
-    redeemForm.ticket = props.lookup.ticket;
-    redeemForm.post(route('gift-vouchers.redeem', props.lookup.voucher_id), {
-        preserveScroll: true,
-    });
-}
-
-function statusVariant(
-    status: GiftVoucherStatus,
-): 'success' | 'neutral' | 'incoming' | 'danger' {
-    return (
-        {
-            active: 'success',
-            expired: 'neutral',
-            redeemed: 'incoming',
-            voided: 'danger',
-        } as const
-    )[status];
-}
+const props = defineProps<VoucherRedemptionProps>();
+const {
+    t,
+    route,
+    lookupForm,
+    redeemForm,
+    submitLookup,
+    redeem,
+    statusVariant,
+} = useVoucherRedemption(props);
 </script>
 <template>
     <AppLayout :title="t('gift_vouchers.redeem.title')">

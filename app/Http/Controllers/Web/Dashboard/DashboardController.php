@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Dashboard;
 
+use App\Domain\Checklists\ChecklistService;
+use App\Domain\Inventory\InventoryReadService;
+use App\Domain\Workforce\AttendanceService;
 use App\Enums\LimitedUserSectionEnum;
 use App\Enums\NoticeboardCardColorEnum;
 use App\Enums\NoticeboardCardLabelEnum;
@@ -20,9 +23,6 @@ use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\AttendanceService;
-use App\Services\ChecklistService;
-use App\Services\InventorySessionService;
 use App\Support\ActiveStoreResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -45,7 +45,7 @@ class DashboardController
      * `ActiveStoreResolver`. Limited users receive only their store context;
      * the frontend renders the available action shortcuts without statistics.
      */
-    public function __invoke(Request $request, InventorySessionService $inventoryService): Response
+    public function __invoke(Request $request, InventoryReadService $inventoryService): Response
     {
         $user = User::mustAuth();
         $activeStore = ActiveStoreResolver::resolve($request, $user);
@@ -103,7 +103,7 @@ class DashboardController
         foreach ($itemsInStore as $row) {
             $prediction = $predictions[$row->getItemId()];
 
-            if ($prediction['status'] === InventorySessionService::STATUS_SOON) {
+            if ($prediction['status'] === InventoryReadService::STATUS_SOON) {
                 ++$lowStockCount;
             }
         }

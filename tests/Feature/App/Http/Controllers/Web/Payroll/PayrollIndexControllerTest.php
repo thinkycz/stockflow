@@ -57,7 +57,7 @@ use Illuminate\Support\Facades\DB;
     $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $included = Worker::factory()->create(['user_id' => $admin->getKey(), 'first_name' => 'Included']);
     $available = Worker::factory()->create(['user_id' => $admin->getKey(), 'first_name' => 'Available']);
-    (new App\Services\PayrollReportService())->addWorker($admin, $store, 2026, 7, $included);
+    (new App\Domain\Payroll\PayrollReportService())->addWorker($admin, $store, 2026, 7, $included);
 
     $this->be($admin, 'users')
         ->get('/payroll?store_id=' . $store->getKey() . '&year=2026&month=7', $this->inertiaHeaders())

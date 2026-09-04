@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Checklist;
 
+use App\Domain\Checklists\ChecklistService;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\ChecklistValidity;
 use App\Models\ChecklistDay;
@@ -11,7 +12,6 @@ use App\Models\ChecklistItem;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\ChecklistService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Statements\StatementService;
 use App\Models\AttendanceAudit;
 use App\Models\AttendanceBreak;
 use App\Models\AttendanceSession;
@@ -10,7 +11,6 @@ use App\Models\StatementDay;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\StatementService;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Support\Typer;

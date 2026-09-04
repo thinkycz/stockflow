@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Domain\Checklists\ChecklistService;
 use App\Models\Store;
-use App\Services\ChecklistService;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 

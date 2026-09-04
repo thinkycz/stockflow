@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\StockMovement;
 
+use App\Domain\Inventory\CreateStockMovement;
 use App\Enums\AdjustmentReasonEnum;
 use App\Enums\StockMovementClassificationEnum;
 use App\Models\Item;
 use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
-use App\Operations\Inventory\CreateStockMovement;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

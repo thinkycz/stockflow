@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Inventory\StockMovementService;
 use App\Enums\AdjustmentReasonEnum;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\InventorySession;
@@ -12,7 +13,6 @@ use App\Models\StockMovementSequence;
 use App\Models\Store;
 use App\Models\StoreItem;
 use App\Notifications\OperationalActivitySlackNotification;
-use App\Services\StockMovementService;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;

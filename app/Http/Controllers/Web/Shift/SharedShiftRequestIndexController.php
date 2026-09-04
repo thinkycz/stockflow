@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Shift;
 
+use App\Domain\Workforce\ShiftRequestService;
 use App\Models\ShiftRequest;
 use App\Models\ShiftShareLink;
 use App\Models\Store;
 use App\Models\Worker;
-use App\Services\ShiftRequestService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

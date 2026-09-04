@@ -6,7 +6,7 @@ import {
     assistantMessageText,
     assistantResponseError,
     hasPendingAssistantApprovals,
-} from '@/lib/assistant-chat';
+} from '@/features/assistant/assistant-chat';
 
 const pendingMessage: UIMessage = {
     id: 'assistant-1',

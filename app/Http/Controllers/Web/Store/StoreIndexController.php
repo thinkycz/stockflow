@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Store;
 
+use App\Domain\Inventory\InventoryReadService;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\StoreValidity;
 use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
-use App\Services\InventorySessionService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +29,7 @@ class StoreIndexController
     /**
      * Show the stores list with per-store totals.
      */
-    public function __invoke(Request $request, InventorySessionService $inventoryService): Response
+    public function __invoke(Request $request, InventoryReadService $inventoryService): Response
     {
         $user = User::mustAuth();
         $storeValidity = StoreValidity::inject($user->getKey());
@@ -73,7 +73,7 @@ class StoreIndexController
                 if ($storeItem->getQuantity() <= 0) {
                     ++$out;
                 }
-                if ($predictions[$storeItem->getItemId()]['status'] === InventorySessionService::STATUS_SOON) {
+                if ($predictions[$storeItem->getItemId()]['status'] === InventoryReadService::STATUS_SOON) {
                     ++$risk;
                 }
             }

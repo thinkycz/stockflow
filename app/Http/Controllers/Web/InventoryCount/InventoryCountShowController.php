@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\InventoryCount;
 
+use App\Domain\Inventory\InventoryReadService;
 use App\Models\InventorySession;
 use App\Models\User;
-use App\Services\InventorySessionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,7 +21,7 @@ class InventoryCountShowController
      * so limited users can view sessions owned by their admin. A limited
      * user is pinned to their assigned store to prevent store hopping.
      */
-    public function __invoke(Request $request, InventorySessionService $service): Response
+    public function __invoke(Request $request, InventoryReadService $service): Response
     {
         $user = User::mustAuth();
         $scopeUser = $user->resolveScopeUser();

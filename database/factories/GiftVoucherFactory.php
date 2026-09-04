@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Domain\GiftVouchers\GiftVoucherService;
 use App\Enums\GiftVoucherStatusEnum;
 use App\Models\GiftVoucher;
-use App\Services\GiftVoucherService;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

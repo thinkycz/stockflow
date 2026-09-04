@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\User;
 
+use App\Domain\Identity\UserManagementService;
 use App\Enums\LimitedUserSectionEnum;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\UserValidity;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -76,7 +76,7 @@ class UserEditController
         Store::scopeActive($storeQuery);
         Store::scopeRetail($storeQuery);
         $assignedStore = $isSelf ? null : $storeQuery->whereKey($validated->parseInt('assigned_store_id'))->firstOrFail();
-        (new AdministrationManagementService())->updateUser(
+        (new UserManagementService())->updateUser(
             $admin,
             $user,
             $validated->assertString('email'),

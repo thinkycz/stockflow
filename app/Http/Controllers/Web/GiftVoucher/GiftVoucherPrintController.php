@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\GiftVoucher;
 
+use App\Domain\GiftVouchers\GiftVoucherBrandingService;
 use App\Enums\GiftVoucherStatusEnum;
 use App\Models\GiftVoucher;
 use App\Models\GiftVoucherBatch;
 use App\Models\User;
-use App\Services\GiftVoucherBrandingService;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;

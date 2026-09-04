@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Inventory\InventorySessionService;
 use App\Enums\LimitedUserSectionEnum;
 use App\Models\AttendanceBreak;
 use App\Models\AttendanceSession;
@@ -13,7 +14,6 @@ use App\Models\Store;
 use App\Models\StoreItem;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\InventorySessionService;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Thinkycz\LaravelCore\Support\Typer;

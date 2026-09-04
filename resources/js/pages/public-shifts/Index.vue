@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import {
     CalendarDays,
     ChevronLeft,
@@ -9,177 +9,28 @@ import {
     Gauge,
     Share,
 } from '@lucide/vue';
-import { computed } from 'vue';
-import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
 import Modal from '@/components/ui/Modal.vue';
-import ShiftMonthCalendar from '@/components/ShiftMonthCalendar.vue';
-import ShiftMonthlySummaryTable from '@/components/ShiftMonthlySummaryTable.vue';
-import { useBoundLocale } from '@/composables/useBoundLocale';
-import { usePwaInstall } from '@/composables/usePwaInstall';
-import { useRoute } from '@/composables/useRoute';
-import { sortShiftsByTime } from '@/lib/shift-calendar';
-import type { MonthlyShiftSummary } from '@/types/shifts';
+import ShiftMonthCalendar from '@/features/shifts/components/ShiftMonthCalendar.vue';
+import ShiftMonthlySummaryTable from '@/features/shifts/components/ShiftMonthlySummaryTable.vue';
+import {
+    usePublicShifts,
+    type PublicShiftsProps,
+} from '@/features/shifts/usePublicShifts';
 
-type Shift = {
-    id: number;
-    worker_name: string;
-    worker_color: string;
-    date: string;
-    start_time: string;
-    end_time: string;
-    attendance_rating: {
-        state: 'future' | 'pending' | 'scored' | 'disabled';
-        score: number | null;
-        band: 'good' | 'warning' | 'poor' | null;
-    };
-};
-
-type CalendarDay = {
-    date: string;
-    day: number;
-    isCurrentMonth: boolean;
-    shifts: Shift[];
-    requests: [];
-};
-
-const props = defineProps<{
-    store: { name: string };
-    shifts: Shift[];
-    monthly_summary: MonthlyShiftSummary[];
-    filters: {
-        year: number;
-        month: number;
-    };
-    share_token: string;
-}>();
-
-const { t, locale } = useI18n();
-
-useBoundLocale();
-
-const route = useRoute();
-const { canInstall, iosBrowser, instructionsOpen, install } = usePwaInstall();
-
-const dateLocale = computed<string>(() => {
-    if (locale.value === 'en') return 'en-US';
-    if (locale.value === 'sk') return 'sk-SK';
-    return 'cs-CZ';
-});
-
-const currentMonthLabel = computed<string>(() =>
-    new Intl.DateTimeFormat(dateLocale.value, {
-        month: 'long',
-        year: 'numeric',
-    }).format(new Date(props.filters.year, props.filters.month - 1, 1)),
-);
-
-const weekdayLabels = computed<string[]>(() => {
-    const formatter = new Intl.DateTimeFormat(dateLocale.value, {
-        weekday: 'short',
-    });
-
-    return Array.from({ length: 7 }, (_, index) =>
-        formatter.format(new Date(2026, 0, 5 + index)),
-    );
-});
-
-const calendarDays = computed<CalendarDay[]>(() => {
-    const firstOfMonth = new Date(
-        props.filters.year,
-        props.filters.month - 1,
-        1,
-    );
-    const daysInMonth = new Date(
-        props.filters.year,
-        props.filters.month,
-        0,
-    ).getDate();
-    const shiftsByDate = new Map<string, Shift[]>();
-
-    for (const shift of props.shifts) {
-        const shifts = shiftsByDate.get(shift.date) ?? [];
-        shifts.push(shift);
-        shiftsByDate.set(shift.date, shifts);
-    }
-
-    for (const [date, shifts] of shiftsByDate) {
-        shiftsByDate.set(date, sortShiftsByTime(shifts));
-    }
-
-    let startWeekday = firstOfMonth.getDay() - 1;
-    if (startWeekday < 0) startWeekday = 6;
-
-    const days: CalendarDay[] = [];
-
-    for (let index = 0; index < startWeekday; index++) {
-        const date = new Date(
-            props.filters.year,
-            props.filters.month - 1,
-            -(startWeekday - 1 - index),
-        );
-        const dateKey = formatDateKey(date);
-        days.push({
-            date: dateKey,
-            day: date.getDate(),
-            isCurrentMonth: false,
-            shifts: shiftsByDate.get(dateKey) ?? [],
-            requests: [],
-        });
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(props.filters.year, props.filters.month - 1, day);
-        const dateKey = formatDateKey(date);
-        days.push({
-            date: dateKey,
-            day,
-            isCurrentMonth: true,
-            shifts: shiftsByDate.get(dateKey) ?? [],
-            requests: [],
-        });
-    }
-
-    while (days.length < 42) {
-        const previous = days[days.length - 1];
-        const date = new Date(
-            Number(previous.date.slice(0, 4)),
-            Number(previous.date.slice(5, 7)) - 1,
-            Number(previous.date.slice(8, 10)) + 1,
-        );
-        const dateKey = formatDateKey(date);
-        days.push({
-            date: dateKey,
-            day: date.getDate(),
-            isCurrentMonth: false,
-            shifts: shiftsByDate.get(dateKey) ?? [],
-            requests: [],
-        });
-    }
-
-    return days;
-});
-
-function formatDateKey(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-function navigateMonth(delta: number): void {
-    const date = new Date(
-        props.filters.year,
-        props.filters.month - 1 + delta,
-        1,
-    );
-
-    router.get(
-        route('public-shifts.index', { token: props.share_token }),
-        { year: date.getFullYear(), month: date.getMonth() + 1 },
-        { preserveState: true, preserveScroll: true },
-    );
-}
+const props = defineProps<PublicShiftsProps>();
+const {
+    t,
+    route,
+    canInstall,
+    iosBrowser,
+    instructionsOpen,
+    install,
+    currentMonthLabel,
+    weekdayLabels,
+    calendarDays,
+    navigateMonth,
+} = usePublicShifts(props);
 </script>
 
 <template>

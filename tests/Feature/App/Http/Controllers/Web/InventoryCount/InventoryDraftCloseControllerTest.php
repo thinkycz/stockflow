@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Domain\Inventory\InventoryDraftRowInput;
+use App\Domain\Inventory\InventorySessionService;
 use App\Models\Item;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\InventorySessionService;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -16,12 +17,12 @@ use Thinkycz\LaravelCore\Support\Typer;
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
     $service = \app(InventorySessionService::class);
     $session = $service->startDraft($user, $store);
-    $service->saveDraftRow($user, $session, [
+    $service->saveDraftRow($user, $session, InventoryDraftRowInput::fromPayload([
         'item_id' => $item->getKey(),
         'quantity' => '0.001',
         'classification' => 'inventory_correction',
-        'client_version' => 1,
-    ]);
+        'expected_revision' => 0,
+    ]));
 
     $this->be($user, 'users')->post(\route('inventory-counts.drafts.close', $session), [
         'counted_on' => Carbon::now()->toDateString(),
@@ -41,12 +42,12 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     \expect($session->getAttribute('counted_at'))->toBeNull();
 
-    $service->saveDraftRow($user, $session, [
+    $service->saveDraftRow($user, $session, InventoryDraftRowInput::fromPayload([
         'item_id' => $item->getKey(),
         'quantity' => '2.000',
         'classification' => 'inventory_correction',
-        'client_version' => 1,
-    ]);
+        'expected_revision' => 0,
+    ]));
 
     $this->be($user, 'users')->post(\route('inventory-counts.drafts.close', $session), [
         'counted_on' => '2026-07-20',
@@ -86,7 +87,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'item_id' => $item->getKey(),
         'quantity' => '2.500',
         'classification' => 'inventory_correction',
-        'client_version' => 1,
+        'expected_revision' => 0,
     ])->assertOk();
 
     $this->be($limited, 'users')->post(\route('inventory-counts.drafts.close', $session), [
@@ -109,7 +110,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'item_id' => $item->getKey(),
         'quantity' => '2.500',
         'classification' => 'inventory_correction',
-        'client_version' => 1,
+        'expected_revision' => 0,
     ])->assertForbidden();
 
     $this->be($limited, 'users')->post(\route('inventory-counts.drafts.close', $session), [

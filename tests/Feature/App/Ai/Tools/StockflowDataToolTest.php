@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Ai\AssistantToolCatalog;
+use App\Domain\Finance\FinancialReportService;
 use App\Enums\FinancialDirectionEnum;
 use App\Models\ChecklistDay;
 use App\Models\ChecklistItem;
@@ -21,7 +22,6 @@ use App\Models\Statement;
 use App\Models\StatementDay;
 use App\Models\Store;
 use App\Models\Worker;
-use App\Services\FinancialReportService;
 use Illuminate\Support\Carbon;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;

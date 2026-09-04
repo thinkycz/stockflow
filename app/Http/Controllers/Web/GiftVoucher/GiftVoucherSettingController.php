@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\GiftVoucher;
 
+use App\Domain\GiftVouchers\GiftVoucherBrandingService;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\GiftVoucherValidity;
 use App\Models\User;
-use App\Services\GiftVoucherBrandingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

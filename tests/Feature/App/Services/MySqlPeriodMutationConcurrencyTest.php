@@ -2,6 +2,17 @@
 
 declare(strict_types=1);
 
+use App\Domain\BankStatements\BankStatementService;
+use App\Domain\Finance\FinancialReportService;
+use App\Domain\Identity\PasswordResetService;
+use App\Domain\Inventory\InventoryDraftRowInput;
+use App\Domain\Inventory\InventorySessionService;
+use App\Domain\Inventory\StockMovementService;
+use App\Domain\Noticeboard\NoticeboardCardService;
+use App\Domain\Payroll\PayrollReportService;
+use App\Domain\Statements\StatementService;
+use App\Domain\Workforce\ShiftAssignmentService;
+use App\Domain\Workforce\WorkforceManagementService;
 use App\Enums\BankStatementStatusEnum;
 use App\Enums\FinancialDirectionEnum;
 use App\Enums\PayrollAdjustmentTypeEnum;
@@ -19,16 +30,6 @@ use App\Models\Statement;
 use App\Models\StatementDay;
 use App\Models\Store;
 use App\Models\Worker;
-use App\Services\BankStatementService;
-use App\Services\FinancialReportService;
-use App\Services\InventorySessionService;
-use App\Services\NoticeboardCardService;
-use App\Services\PasswordResetService;
-use App\Services\PayrollReportService;
-use App\Services\ShiftAssignmentService;
-use App\Services\StatementService;
-use App\Services\StockMovementService;
-use App\Services\WorkforceManagementService;
 use Database\Factories\UserFactory;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Events\QueryExecuted;
@@ -194,14 +195,14 @@ function require_mysql_fork_support(): void
     DB::connection()->commit();
 
     \assert_mysql_delayed_mutation_is_blocked(
-        static function () use ($statement, $operation): void {
+        static function () use ($statement, $operation, $admin): void {
             $service = new BankStatementService();
             if ($operation === 'edit') {
-                $service->updateDraft($statement, []);
+                $service->updateDraft($statement, [], $admin);
 
                 return;
             }
-            $service->retry($statement);
+            $service->retry($statement, $admin);
         },
         static function (ConnectionInterface $connection) use ($statement, $admin): void {
             (new BankStatementService())->confirm($statement, $admin);
@@ -432,3 +433,36 @@ function require_mysql_fork_support(): void
 
     \expect($target->fresh())->not->toBeNull();
 })->with(['shift', 'preset', 'share_link']);
+
+\test('inventory terminal transitions serialize close and cancel', function (string $first): void {
+    \require_mysql_fork_support();
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
+    $service = \app(InventorySessionService::class);
+    $draft = $service->startDraft($user, $store);
+    $service->saveDraftRow($user, $draft, InventoryDraftRowInput::fromPayload(['item_id' => $item->getKey(), 'quantity' => 5, 'expected_revision' => 0]));
+    DB::connection()->commit();
+
+    \assert_mysql_delayed_mutation_is_blocked(
+        static function () use ($service, $user, $draft, $first): void {
+            if ($first === 'close') {
+                $service->cancelDraft($user, $draft);
+            } else {
+                $service->closeDraft($user, $draft);
+            }
+        },
+        static function (ConnectionInterface $connection) use ($service, $user, $draft, $first): void {
+            if ($first === 'close') {
+                $service->closeDraft($user, $draft);
+            } else {
+                $service->cancelDraft($user, $draft);
+            }
+        },
+        'inventory_sessions',
+    );
+    \expect($draft->fresh()?->getStatus())->toBe($first === 'close' ? 'closed' : 'cancelled')
+        ->and(DB::table('stock_movements')->where('inventory_session_id', $draft->getKey())->count())->toBe($first === 'close' ? 1 : 0);
+    if ($first === 'close') {
+        \expect((int) DB::table('store_items')->where('store_id', $store->getKey())->where('item_id', $item->getKey())->value('quantity'))->toBe(5);
+    }
+})->with(['close', 'cancel']);

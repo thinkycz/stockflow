@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\BankStatements\BankStatementIntegrityService;
 use App\Exceptions\InvalidBankStatementPayloadException;
-use App\Services\BankStatementIntegrityService;
 
 \test('parsed bank statement totals and balance equation are verified exactly', function (): void {
     $service = new BankStatementIntegrityService();

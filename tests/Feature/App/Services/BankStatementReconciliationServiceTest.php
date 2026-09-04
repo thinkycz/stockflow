@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\BankStatements\BankStatementReconciliationService;
 use App\Enums\BankStatementStatusEnum;
 use App\Enums\BankStatementTransactionCategoryEnum;
 use App\Models\BankStatement;
@@ -9,7 +10,7 @@ use App\Models\BankStatementTransaction;
 use App\Models\Statement;
 use App\Models\StatementDay;
 use App\Models\Store;
-use App\Services\BankStatementReconciliationService;
+use Illuminate\Support\Facades\DB;
 
 \test('card payouts reconcile against current net statement revenue with a five crown tolerance', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
@@ -124,3 +125,28 @@ use App\Services\BankStatementReconciliationService;
         'reason' => 'missing_statement_days',
     ]);
 });
+
+\test('import reconciliation queries remain bounded with overlapping and missing periods', function (int $count): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $user->getKey()]);
+    $dailyStatement = Statement::factory()->forStore($store)->forMonth(2026, 8)->create();
+    StatementDay::factory()->for($dailyStatement, 'statement')->create(['date' => '2026-08-01', 'card' => '1000.00', 'total' => '1000.00']);
+    $bank = BankStatement::factory()->forStore($store)->create();
+    BankStatementTransaction::factory()->count($count)->forStatement($bank)->create([
+        'amount' => '990.00', 'category' => 'card', 'sales_from' => '2026-08-01', 'sales_to' => '2026-08-01',
+    ]);
+    BankStatementTransaction::factory()->forStatement($bank)->create([
+        'amount' => '990.00', 'category' => 'card', 'sales_from' => '2026-08-01', 'sales_to' => '2026-08-02',
+    ]);
+    DB::enableQueryLog();
+    DB::flushQueryLog();
+    try {
+        $result = (new BankStatementReconciliationService())->forStatement($bank);
+        $queries = \count(DB::getQueryLog());
+    } finally {
+        DB::disableQueryLog();
+        DB::flushQueryLog();
+    }
+    \expect($queries)->toBe(2)
+        ->and($result['counts'])->toBe(['matched' => $count, 'mismatch' => 0, 'unresolved' => 1, 'excluded' => 0]);
+})->with([10, 100]);

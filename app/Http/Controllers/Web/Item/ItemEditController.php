@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Item;
 
+use App\Domain\Catalog\CatalogManagementService;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\ItemValidity;
 use App\Models\Item;
 use App\Models\User;
-use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -52,7 +52,7 @@ class ItemEditController
             'description' => $itemValidity->description()->nullable()->toArray(),
         ]);
 
-        (new AdministrationManagementService())->updateItem(
+        (new CatalogManagementService())->updateItem(
             User::mustAuth(),
             $item,
             $validated->assertString('title'),

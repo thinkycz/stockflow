@@ -8,7 +8,7 @@ use App\Listeners\SendOperationalActivitySlackNotificationListener;
 use App\Models\Store;
 use App\Models\User;
 use App\Notifications\OperationalActivitySlackNotification;
-use App\Services\OperationalActivityService;
+use App\Support\OperationalActivityService;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Notifications\Factory as NotificationFactoryContract;
 use Illuminate\Notifications\AnonymousNotifiable;

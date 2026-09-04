@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\OperationalActivity\DailyOperationalDigestBuilder;
 use App\Enums\OperationalActivityTypeEnum;
 use App\Models\FinancialReport;
 use App\Models\FinancialReportManualRow;
@@ -9,7 +10,6 @@ use App\Models\OperationalActivity;
 use App\Models\Statement;
 use App\Models\StatementDay;
 use App\Models\Store;
-use App\Services\DailyOperationalDigestBuilder;
 use Carbon\CarbonImmutable;
 
 \test('builder uses Prague calendar boundaries and includes active and snapshotted locations', function (): void {

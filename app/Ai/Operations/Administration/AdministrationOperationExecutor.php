@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace App\Ai\Operations\Administration;
 
 use App\Ai\Operations\AssistantOperationExecutor;
+use App\Domain\Catalog\CatalogManagementService;
+use App\Domain\Identity\UserManagementService;
+use App\Domain\OperationalActivity\CompanyNotificationService;
+use App\Domain\Stores\StoreManagementService;
+use App\Domain\Workforce\WorkerManagementService;
 use App\Enums\RemovalOutcomeEnum;
 use App\Http\Validation\ItemValidity;
 use App\Http\Validation\StoreValidity;
@@ -15,7 +20,6 @@ use App\Models\OperationalDailyDigest;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\AdministrationManagementService;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use RuntimeException;
@@ -25,11 +29,6 @@ use Thinkycz\LaravelCore\Validation\AuthValidity;
 
 final class AdministrationOperationExecutor implements AssistantOperationExecutor
 {
-    /**
-     * Create the shared administration executor.
-     */
-    public function __construct(private readonly AdministrationManagementService $administration) {}
-
     /**
      * Validate a proposal and resolve all locked ownership context.
      *
@@ -101,7 +100,7 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
     private function run(string $identifier, User $actor, Store|null $store, int|null $targetId, array $values): array|int
     {
         if ($identifier === 'create_item') {
-            return $this->administration->createItem(
+            return (new CatalogManagementService())->createItem(
                 $actor,
                 Typer::assertString($values['title'] ?? null),
                 Typer::parseNullableString($values['sku'] ?? null),
@@ -112,7 +111,7 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
         }
 
         if ($identifier === 'update_item') {
-            return $this->administration->updateItem(
+            return (new CatalogManagementService())->updateItem(
                 $actor,
                 $this->item($actor, Typer::assertInt($targetId)),
                 Typer::assertString($values['title'] ?? null),
@@ -125,13 +124,13 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
 
         if ($identifier === 'delete_item') {
             $item = $this->item($actor, Typer::assertInt($targetId));
-            $this->administration->deleteItem($actor, $item);
+            (new CatalogManagementService())->deleteItem($actor, $item);
 
             return $item->getKey();
         }
 
         if ($identifier === 'create_store') {
-            return $this->administration->createStore(
+            return (new StoreManagementService())->createStore(
                 $actor,
                 Typer::assertString($values['name'] ?? null),
                 Typer::parseNullableString($values['address'] ?? null),
@@ -143,7 +142,7 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
         }
 
         if ($identifier === 'update_store') {
-            return $this->administration->updateStore(
+            return (new StoreManagementService())->updateStore(
                 $actor,
                 Typer::assertInstance($store, Store::class),
                 Typer::assertString($values['name'] ?? null),
@@ -157,7 +156,7 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
 
         if ($identifier === 'delete_store') {
             $resolvedStore = Typer::assertInstance($store, Store::class);
-            $outcome = $this->administration->deleteStore($actor, $resolvedStore);
+            $outcome = (new StoreManagementService())->deleteStore($actor, $resolvedStore);
             if ($outcome === RemovalOutcomeEnum::BLOCKED) {
                 throw new RuntimeException('Resolve store assignments, stock, and active operational work before removing this store.');
             }
@@ -167,13 +166,13 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
 
         if ($identifier === 'switch_active_store') {
             $resolvedStore = Typer::assertInstance($store, Store::class);
-            $this->administration->switchStore($actor, $resolvedStore);
+            (new StoreManagementService())->switchStore($actor, $resolvedStore);
 
             return $resolvedStore->getKey();
         }
 
         if ($identifier === 'create_user') {
-            return $this->administration->createUser(
+            return (new UserManagementService())->createUser(
                 $actor,
                 Typer::assertString($values['email'] ?? null),
                 Str::random(64),
@@ -182,7 +181,7 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
         }
 
         if ($identifier === 'update_user') {
-            return $this->administration->updateUser(
+            return (new UserManagementService())->updateUser(
                 $actor,
                 $this->limitedUser($actor, Typer::assertInt($targetId)),
                 Typer::assertString($values['email'] ?? null),
@@ -195,7 +194,7 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
         if ($identifier === 'delete_user') {
             $user = $this->limitedUser($actor, Typer::assertInt($targetId));
 
-            if (!$this->administration->deleteUser($actor, $user)) {
+            if (!(new UserManagementService())->deleteUser($actor, $user)) {
                 throw new RuntimeException('The selected main administrator cannot be deleted.');
             }
 
@@ -203,7 +202,7 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
         }
 
         if ($identifier === 'create_worker') {
-            return $this->administration->createWorker(
+            return (new WorkerManagementService())->createWorker(
                 $actor,
                 Typer::assertString($values['first_name'] ?? null),
                 Typer::assertString($values['last_name'] ?? null),
@@ -214,7 +213,7 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
         }
 
         if ($identifier === 'update_worker') {
-            return $this->administration->updateWorker(
+            return (new WorkerManagementService())->updateWorker(
                 $actor,
                 $this->worker($actor, Typer::assertInt($targetId)),
                 Typer::assertString($values['first_name'] ?? null),
@@ -228,7 +227,7 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
         if ($identifier === 'delete_worker') {
             $worker = $this->worker($actor, Typer::assertInt($targetId));
 
-            $outcome = $this->administration->deleteWorker($actor, $worker);
+            $outcome = (new WorkerManagementService())->deleteWorker($actor, $worker);
             if ($outcome === RemovalOutcomeEnum::BLOCKED) {
                 throw new RuntimeException('Resolve active attendance and future worker scheduling before removing this worker.');
             }
@@ -237,14 +236,14 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
         }
 
         if ($identifier === 'restore_worker') {
-            return $this->administration->restoreWorker(
+            return (new WorkerManagementService())->restoreWorker(
                 $actor,
                 $this->worker($actor, Typer::assertInt($targetId)),
             )->getKey();
         }
 
         if ($identifier === 'update_profile') {
-            return $this->administration->updateProfile(
+            return (new UserManagementService())->updateProfile(
                 $actor,
                 Typer::assertString($values['email'] ?? null),
                 Typer::assertString($values['locale'] ?? null),
@@ -252,11 +251,11 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
         }
 
         if ($identifier === 'update_slack_channel') {
-            return $this->administration->updateSlackChannel($actor, $this->channel($values['company_slack_channel'] ?? null))->getKey();
+            return (new CompanyNotificationService())->updateSlackChannel($actor, $this->channel($values['company_slack_channel'] ?? null))->getKey();
         }
 
         if ($identifier === 'test_slack_channel') {
-            if (!$this->administration->testSlackChannel($actor)) {
+            if (!(new CompanyNotificationService())->testSlackChannel($actor)) {
                 throw new RuntimeException('Configure a Slack channel before sending a test notification.');
             }
 
@@ -265,7 +264,7 @@ final class AdministrationOperationExecutor implements AssistantOperationExecuto
 
         if ($identifier === 'retry_slack_digest') {
             $digest = $this->digest($actor, Typer::assertInt($targetId));
-            $this->administration->retrySlackDigest($actor, $digest);
+            (new CompanyNotificationService())->retrySlackDigest($actor, $digest);
 
             return $digest->getKey();
         }

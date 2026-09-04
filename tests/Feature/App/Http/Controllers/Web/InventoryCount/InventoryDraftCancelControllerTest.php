@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Domain\Inventory\InventorySessionService;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\InventorySessionService;
 use Database\Factories\UserFactory;
 use Thinkycz\LaravelCore\Support\Typer;
 

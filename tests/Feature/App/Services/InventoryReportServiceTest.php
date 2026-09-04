@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Inventory\InventoryReportService;
 use App\Enums\StockMovementClassificationEnum;
 use App\Enums\StockMovementTypeEnum;
 use App\Models\InventorySession;
@@ -11,7 +12,6 @@ use App\Models\StockMovement;
 use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Models\StoreItem;
-use App\Services\InventoryReportService;
 use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Support\Resolver;
 

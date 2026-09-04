@@ -13,7 +13,7 @@ import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
-import RecipeInstructionIcon from '@/components/recipes/RecipeInstructionIcon.vue';
+import RecipeInstructionIcon from '@/features/recipes/components/RecipeInstructionIcon.vue';
 import { useRoute } from '@/composables/useRoute';
 
 type Instruction = {

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Worker;
 
+use App\Domain\Workforce\WorkerManagementService;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\WorkerValidity;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\AdministrationManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -45,7 +45,7 @@ class WorkerCreateController
             'calendar_color' => $validity->calendarColor()->nullable()->toArray(),
         ]);
 
-        (new AdministrationManagementService())->createWorker(
+        (new WorkerManagementService())->createWorker(
             $admin,
             $validated->assertString('first_name'),
             $validated->assertString('last_name'),

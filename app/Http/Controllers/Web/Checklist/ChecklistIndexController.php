@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Checklist;
 
+use App\Domain\Checklists\ChecklistService;
 use App\Enums\ChecklistShiftEnum;
 use App\Enums\ChecklistTemplateScopeEnum;
 use App\Models\ChecklistDay;
@@ -12,7 +13,6 @@ use App\Models\ChecklistTemplateTask;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\ChecklistService;
 use App\Support\ActiveStoreResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;

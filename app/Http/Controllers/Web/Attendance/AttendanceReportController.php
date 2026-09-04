@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Attendance;
 
+use App\Domain\Workforce\AttendanceReportService;
+use App\Domain\Workforce\AttendanceService;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\AttendanceReportService;
-use App\Services\AttendanceService;
 use App\Support\ActiveStoreResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;

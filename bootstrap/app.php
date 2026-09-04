@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Console\Commands\AdminBootstrapCommand;
+use App\Console\Commands\AuditIntegrityCommand;
 use App\Console\Commands\BackfillInventoryConsumptionCommand;
 use App\Console\Commands\DiagnoseAssistantCommand;
 use App\Console\Commands\GenerateDailyChecklistsCommand;
@@ -82,6 +83,7 @@ return Application::configure(basePath: \dirname(__DIR__))
     ->withCommands([
         BackfillInventoryConsumptionCommand::class,
         AdminBootstrapCommand::class,
+        AuditIntegrityCommand::class,
         DiagnoseAssistantCommand::class,
         GenerateDailyChecklistsCommand::class,
         IdentityReadinessCommand::class,

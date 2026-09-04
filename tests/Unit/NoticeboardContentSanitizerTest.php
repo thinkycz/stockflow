@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Services\NoticeboardContentSanitizer;
+use App\Domain\Noticeboard\NoticeboardContentSanitizer;
 
 \test('noticeboard content sanitizer preserves supported formatting and removes executable markup', function (): void {
     $content = (new NoticeboardContentSanitizer())->sanitize(

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Domain\Inventory\StockMovementService;
 use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\StoreItem;
-use App\Services\StockMovementService;
 use Database\Factories\UserFactory;
 
 \test('user can create an incoming stock movement to warehouse', function (): void {

@@ -107,16 +107,17 @@ sequenceDiagram
 
     FE->>L: POST /login (X-Inertia: true)
     L->>H: throws ValidationException
-    H->>L: Inertia::render(prev component, {errors})<br/>status 422
-    L-->>FE: 422 + page JSON (errors in props)
-    FE->>FE: useForm onError() → form.setError(errors)
+    H->>L: redirect back with input and session errors
+    L-->>FE: redirect followed by Inertia page props
+    FE->>FE: useForm onError(errors)
     FE-->>User: FieldError renders
 ```
 
-Inertia v3 does **not** auto-follow a bare 302 redirect on POST. The handler
-in `bootstrap/app.php` therefore re-renders the previous Inertia component
-with status 422 and the `errors` prop, so the Vue client merges errors into
-the page and populates `useForm().errors`.
+`bootstrap/app.php` redirects failed Inertia form requests back with input and
+session errors. Inertia middleware shares errors on the following page visit;
+`useForm` receives them through `onError`. JSON/API validation retains HTTP 422.
+Direct action buttons use `withActionErrorToast`; forms retain field errors.
+See the login validation controller tests and shared action-feedback tests.
 
 ## Authentication
 
@@ -159,8 +160,8 @@ resources/js/
 
 Pages import shared props via `useSharedProps()` and render them with the
 `ui/` primitives. Forms use `@inertiajs/vue3`'s `useForm()` for typed
-client-side state; validation errors arrive via page props after the 422
-handshake above.
+client-side state; validation errors arrive via page props after the redirect
+flow above.
 
 ## Local packages
 
@@ -374,3 +375,22 @@ All UI dates use the `useCzechDate()` composable
 active UI locale. The backend always returns ISO 8601 strings; the
 frontend formats on the client. `resources/js/lib/format.ts` also uses
 `Intl.DateTimeFormat` with `cs-CZ`, `sk-SK`, or `en-GB` according to the active UI locale; application timestamps use `Europe/Prague`.
+
+## Current module and permission boundaries
+
+Business code is organized under `App\Domain` and frontend workflows under
+`resources/js/features`. [ADR 0009](adr/0009-domain-and-feature-boundaries.md)
+records ownership and the dependency graph. Existing model/table names, Inertia
+page paths, routes, jobs and notifications remain stable.
+
+Limited-user section visibility is configurable. Routes enforce it through
+`EnsureLimitedUserCanAccessSection` and
+`EnsureLimitedUserCanAccessStockMovementSection`; navigation mirrors these
+permissions. Domain operations additionally scope ownership and assigned-store
+access. A visible navigation link is never the authorization boundary.
+Voucher management and redemption remain separate destinations; legacy URLs
+redirect and limited-user entry routing selects permitted destinations.
+
+Inventory draft saves follow [ADR 0010](adr/0010-inventory-row-revisions.md).
+Bank parser jobs carry a generation; legacy jobs without one cannot mutate a
+new attempt. Deployment must follow the remediation maintenance runbook.

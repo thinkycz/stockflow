@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Shift;
 
+use App\Domain\Workforce\ShiftOverviewService;
+use App\Domain\Workforce\ShiftRequestService;
 use App\Models\Shift;
 use App\Models\ShiftPreset;
 use App\Models\ShiftRequest;
@@ -11,8 +13,6 @@ use App\Models\ShiftShareLink;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\ShiftOverviewService;
-use App\Services\ShiftRequestService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;

@@ -1,16 +1,16 @@
-import { readFileSync } from 'node:fs';
+import { workflowSource } from './helpers/workflow-source';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
-const indexPage = readFileSync(
+const indexPage = workflowSource(
     resolve(process.cwd(), 'resources/js/pages/bank-statements/Index.vue'),
     'utf8',
 );
-const detailPage = readFileSync(
+const detailPage = workflowSource(
     resolve(process.cwd(), 'resources/js/pages/bank-statements/Show.vue'),
     'utf8',
 );
-const statementsPage = readFileSync(
+const statementsPage = workflowSource(
     resolve(process.cwd(), 'resources/js/pages/statements/Index.vue'),
     'utf8',
 );

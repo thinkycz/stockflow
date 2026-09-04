@@ -5,11 +5,11 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import BackLink from '@/components/ui/BackLink.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Card from '@/components/ui/Card.vue';
-import RecipeActionIcon from '@/components/recipes/RecipeActionIcon.vue';
-import RecipeInstructionIcon from '@/components/recipes/RecipeInstructionIcon.vue';
+import RecipeActionIcon from '@/features/recipes/components/RecipeActionIcon.vue';
+import RecipeInstructionIcon from '@/features/recipes/components/RecipeInstructionIcon.vue';
 import RecipeVariantBlock, {
     type RecipeIngredientData,
-} from '@/components/recipes/RecipeVariantBlock.vue';
+} from '@/features/recipes/components/RecipeVariantBlock.vue';
 import { useCzechDate } from '@/composables/useCzechDate';
 import { useRoute } from '@/composables/useRoute';
 

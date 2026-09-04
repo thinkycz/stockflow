@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\BankStatement;
 
+use App\Domain\BankStatements\BankStatementReconciliationService;
+use App\Domain\BankStatements\BankStatementService;
 use App\Enums\BankStatementStatusEnum;
 use App\Http\Validation\BankStatementValidity;
 use App\Models\BankStatement;
 use App\Models\BankStatementTransaction;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\BankStatementReconciliationService;
-use App\Services\BankStatementService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -151,7 +151,7 @@ final class BankStatementController
             Typer::assertArray($data['transactions']),
         );
         try {
-            $service->updateDraft($this->activeStatement($request, $service), \array_values($rows));
+            $service->updateDraft($this->activeStatement($request, $service), \array_values($rows), User::mustAuth());
         } catch (InvalidArgumentException $exception) {
             Thrower::default()->message('statement', \__($exception->getMessage()))->throw();
         }
@@ -202,7 +202,7 @@ final class BankStatementController
         $statement = $this->activeStatement($request, $service);
 
         try {
-            $queued = $service->retry($statement);
+            $queued = $service->retry($statement, User::mustAuth());
         } catch (InvalidArgumentException $exception) {
             Thrower::default()->message('statement', \__($exception->getMessage()))->throw();
         }

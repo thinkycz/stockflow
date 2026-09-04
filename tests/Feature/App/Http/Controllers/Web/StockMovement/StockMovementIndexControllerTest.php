@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Domain\Inventory\InventorySessionService;
 use App\Models\Item;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\StoreItem;
-use App\Services\InventorySessionService;
 
 \test('guest is redirected from stock-movements to login', function (): void {
     $this->get('/stock-movements')->assertRedirect('/login');

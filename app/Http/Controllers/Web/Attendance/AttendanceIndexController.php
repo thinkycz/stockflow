@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Attendance;
 
+use App\Domain\Workforce\AttendanceOverviewService;
+use App\Domain\Workforce\AttendanceReportService;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\AttendanceOverviewService;
-use App\Services\AttendanceReportService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

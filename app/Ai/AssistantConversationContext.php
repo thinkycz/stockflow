@@ -122,6 +122,7 @@ final class AssistantConversationContext
                 $lines[] = match ($audit->getStatus()) {
                     AssistantActionStatusEnum::SUCCEEDED => 'Completed action: ' . $call['name'],
                     AssistantActionStatusEnum::REJECTED => 'Rejected action: ' . $call['name'],
+                    AssistantActionStatusEnum::UNCERTAIN => 'Uncertain external outcome; do not replay without verification: ' . $call['name'],
                     AssistantActionStatusEnum::FAILED => 'Failed action: ' . $call['name'],
                     AssistantActionStatusEnum::PENDING_APPROVAL => 'Pending approval: ' . $call['name'],
                     AssistantActionStatusEnum::APPROVED,

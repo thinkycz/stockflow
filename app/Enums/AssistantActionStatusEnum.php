@@ -20,6 +20,8 @@ enum AssistantActionStatusEnum: string
 
     case FAILED = 'failed';
 
+    case UNCERTAIN = 'uncertain';
+
     /**
      * Get possible values.
      *

@@ -13,7 +13,7 @@ import { useRoute } from '@/composables/useRoute';
 import type {
     OperationalDigest,
     OperationalDigestStatus,
-} from '@/types/operational-digest';
+} from '@/features/operational-activity/types';
 
 const props = defineProps<{ digest: OperationalDigest }>();
 

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Payroll;
 
+use App\Domain\Payroll\PayrollReportReadService;
+use App\Domain\Workforce\AttendanceService;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\AttendanceService;
-use App\Services\PayrollReportService;
 use App\Support\ActiveStoreResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -38,7 +38,7 @@ class PayrollIndexController
         }
         $store = ActiveStoreResolver::resolveIncludingInactive($request, $admin);
         $payrollReport = $store instanceof Store && !$store->isWarehouse()
-            ? (new PayrollReportService())->build($admin, $store, $year, $month)
+            ? (new PayrollReportReadService())->build($admin, $store, $year, $month)
             : null;
         $availableWorkers = [];
         if ($store?->isActive() === true && $payrollReport !== null && ($payrollReport['status'] ?? null) === 'open') {

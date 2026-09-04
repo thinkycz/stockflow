@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools;
 
+use App\Domain\Statements\StatementService;
 use App\Models\Statement;
 use App\Models\StatementDay;
-use App\Services\StatementService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\JsonSchema\Types\Type;

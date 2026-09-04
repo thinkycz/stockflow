@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\GiftVoucher;
 
+use App\Domain\GiftVouchers\GiftVoucherBrandingService;
+use App\Domain\GiftVouchers\GiftVoucherService;
 use App\Enums\GiftVoucherStatusEnum;
 use App\Models\GiftVoucher;
 use App\Models\GiftVoucherBatch;
@@ -11,8 +13,6 @@ use App\Models\GiftVoucherEvent;
 use App\Models\GiftVoucherSetting;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\GiftVoucherBrandingService;
-use App\Services\GiftVoucherService;
 use App\Support\ActiveStoreResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;

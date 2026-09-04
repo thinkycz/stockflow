@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Domain\Inventory\InventoryDraftRowInput;
+use App\Domain\Inventory\InventoryReadService;
+use App\Domain\Inventory\InventorySessionService;
+use App\Domain\Inventory\StockMovementService;
+use App\Exceptions\InventoryRevisionConflictException;
 use App\Models\InventorySession;
 use App\Models\InventorySessionItem;
 use App\Models\Item;
@@ -10,10 +15,9 @@ use App\Models\StockMovementItem;
 use App\Models\Store;
 use App\Models\StoreItem;
 use App\Notifications\OperationalActivitySlackNotification;
-use App\Services\InventorySessionService;
-use App\Services\StockMovementService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
+use Thinkycz\LaravelCore\Exceptions\ValidationException;
 use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -37,11 +41,11 @@ use Thinkycz\LaravelCore\Support\Typer;
     ]]);
 
     $cancelled = $service->startDraft($user, $store);
-    $service->saveDraftRow($user, $cancelled, ['item_id' => $item->getKey(), 'quantity' => 6, 'client_version' => 1]);
+    $service->saveDraftRow($user, $cancelled, InventoryDraftRowInput::fromPayload(['item_id' => $item->getKey(), 'quantity' => 6, 'expected_revision' => 0]));
     $service->cancelDraft($user, $cancelled);
 
     $closed = $service->startDraft($user, $store);
-    $service->saveDraftRow($user, $closed, ['item_id' => $item->getKey(), 'quantity' => 7, 'client_version' => 1, 'classification' => 'inventory_correction']);
+    $service->saveDraftRow($user, $closed, InventoryDraftRowInput::fromPayload(['item_id' => $item->getKey(), 'quantity' => 7, 'expected_revision' => 0, 'classification' => 'inventory_correction']));
     $service->closeDraft($user, $closed);
 
     Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 2);
@@ -125,8 +129,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $store = Store::factory()->create(['user_id' => $user->getKey()]);
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
 
-    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
-    \expect($service->previousQuantity($store, $item))->toBeNull();
+    \expect(\app(InventoryReadService::class)->previousQuantity($store, $item))->toBeNull();
 });
 
 \test('previousQuantity returns the most recent count and respects a $before cutoff', function (): void {
@@ -151,9 +154,8 @@ use Thinkycz\LaravelCore\Support\Typer;
         'quantity' => 12,
     ]);
 
-    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
-    \expect($service->previousQuantity($store, $item))->toBe(12);
-    \expect($service->previousQuantity($store, $item, Carbon::now()->subDays(2)))->toBe(7);
+    \expect(\app(InventoryReadService::class)->previousQuantity($store, $item))->toBe(12);
+    \expect(\app(InventoryReadService::class)->previousQuantity($store, $item, Carbon::now()->subDays(2)))->toBe(7);
 });
 
 \test('buildStoreView sorts items alphabetically by title without previous inventory quantity', function (): void {
@@ -178,8 +180,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'quantity' => 9,
     ]);
 
-    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
-    $view = $service->buildStoreView($user, $store);
+    $view = \app(InventoryReadService::class)->buildStoreView($user, $store);
 
     \expect($view)->toHaveCount(3);
     \expect($view[0]['title'])->toBe('Alpha Item');
@@ -215,8 +216,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'quantity' => 5,
     ]);
 
-    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
-    $rows = $service->historyForUser(
+    $rows = \app(InventoryReadService::class)->historyForUser(
         $user,
         $store,
         null,
@@ -253,8 +253,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'quantity' => 3,
     ]);
 
-    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
-    $rows = $service->historyForUser(
+    $rows = \app(InventoryReadService::class)->historyForUser(
         $user,
         $store,
         null,
@@ -284,8 +283,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'item_id' => $b->getKey(),
     ]);
 
-    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
-    $rows = $service->historyForUser(
+    $rows = \app(InventoryReadService::class)->historyForUser(
         $user,
         $store,
         $a,
@@ -327,8 +325,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'quantity' => 4,
     ]);
 
-    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
-    $rows = $service->buildSessionView($user, $current);
+    $rows = \app(InventoryReadService::class)->buildSessionView($user, $current);
 
     \expect($rows)->toHaveCount(2);
     \expect($rows[0]['title'])->toBe('Alpha Item');
@@ -369,7 +366,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
     Carbon::setTestNow('2026-06-24 10:00:00');
     $service->createSession($user, $retail, [['item_id' => $item->getKey(), 'quantity' => 14]]);
-    $consumption = $service->consumptionLastDays($retail, $item, 30);
+    $consumption = \app(InventoryReadService::class)->consumptionLastDays($retail, $item, 30);
 
     // 2 manual consumption + 1 unexplained inventory decrease. The transfer of 3 is excluded.
     \expect($consumption['quantity'])->toBe(3);
@@ -390,7 +387,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $service->createSession($user, $retail, [['item_id' => $item->getKey(), 'quantity' => 30]]);
     Carbon::setTestNow('2026-06-24 10:00:00');
     $service->createSession($user, $retail, [['item_id' => $item->getKey(), 'quantity' => 16]]);
-    $prediction = $service->predictedRunOut($retail, $item, 30);
+    $prediction = \app(InventoryReadService::class)->predictedRunOut($retail, $item, 30);
 
     \expect($prediction['current'])->toBe(16);
     \expect($prediction['status'])->toBe('ok');
@@ -406,8 +403,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     ]);
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
 
-    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
-    $prediction = $service->predictedRunOut($retail, $item, 30);
+    $prediction = \app(InventoryReadService::class)->predictedRunOut($retail, $item, 30);
 
     \expect($prediction['current'])->toBe(0);
     \expect($prediction['status'])->toBe('out');
@@ -427,8 +423,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'quantity' => 20,
     ]);
 
-    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
-    $prediction = $service->predictedRunOut($retail, $item, 30);
+    $prediction = \app(InventoryReadService::class)->predictedRunOut($retail, $item, 30);
 
     \expect($prediction['status'])->toBe('no_data');
     \expect($prediction['days_left'])->toBeNull();
@@ -456,8 +451,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'quantity' => 7,
     ]);
 
-    $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
-    $sparkline = $service->sparklineForItem($user, $store, $item, 10);
+    $sparkline = \app(InventoryReadService::class)->sparklineForItem($user, $store, $item, 10);
 
     \expect($sparkline)->toHaveCount(10);
     \expect($sparkline[0]['value'])->toBeNull();
@@ -474,9 +468,9 @@ use Thinkycz\LaravelCore\Support\Typer;
     StoreItem::query()->create(['store_id' => $store->getKey(), 'item_id' => $item->getKey(), 'quantity' => 10]);
     $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
     $draft = $service->startDraft($user, $store);
-    $service->saveDraftRow($user, $draft, [
-        'item_id' => $item->getKey(), 'quantity' => 7, 'classification' => 'consumption', 'client_version' => 1,
-    ]);
+    $service->saveDraftRow($user, $draft, InventoryDraftRowInput::fromPayload([
+        'item_id' => $item->getKey(), 'quantity' => 7, 'classification' => 'consumption', 'expected_revision' => 0,
+    ]));
 
     Typer::assertInstance(\app(StockMovementService::class), StockMovementService::class)->createMovement([
         'mode' => 'incoming', 'store_id' => $store->getKey(),
@@ -495,10 +489,10 @@ use Thinkycz\LaravelCore\Support\Typer;
     $draft = $service->startDraft($user, $store);
 
     \expect($service->startDraft($user, $store)->getKey())->toBe($draft->getKey());
-    $service->saveDraftRow($user, $draft, ['item_id' => $item->getKey(), 'quantity' => 8, 'client_version' => 2]);
-    $row = $service->saveDraftRow($user, $draft, ['item_id' => $item->getKey(), 'quantity' => 3, 'client_version' => 1]);
+    $service->saveDraftRow($user, $draft, InventoryDraftRowInput::fromPayload(['item_id' => $item->getKey(), 'quantity' => 8, 'expected_revision' => 0]));
+    \expect(fn() => $service->saveDraftRow($user, $draft, InventoryDraftRowInput::fromPayload(['item_id' => $item->getKey(), 'quantity' => 3, 'expected_revision' => 0])))->toThrow(InventoryRevisionConflictException::class);
 
-    \expect($row->getQuantity())->toBe(8)
+    \expect($draft->items()->firstOrFail()->getQuantity())->toBe(8)
         ->and(InventorySession::query()->where('active_store_key', $store->getKey())->count())->toBe(1);
 });
 
@@ -510,8 +504,32 @@ use Thinkycz\LaravelCore\Support\Typer;
     StoreItem::query()->create(['store_id' => $store->getKey(), 'item_id' => $untouched->getKey(), 'quantity' => 9]);
     $service = Typer::assertInstance(\app(InventorySessionService::class), InventorySessionService::class);
     $draft = $service->startDraft($user, $store);
-    $service->saveDraftRow($user, $draft, ['item_id' => $counted->getKey(), 'quantity' => 7, 'client_version' => 1]);
+    $service->saveDraftRow($user, $draft, InventoryDraftRowInput::fromPayload(['item_id' => $counted->getKey(), 'quantity' => 7, 'expected_revision' => 0]));
     $service->closeDraft($user, $draft);
 
     \expect((int) StoreItem::query()->where('store_id', $store->getKey())->where('item_id', $untouched->getKey())->value('quantity'))->toBe(9);
+});
+
+\test('cancel reloads stale draft state and cannot cancel a posted inventory', function (): void {
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+    $item = Item::factory()->create(['user_id' => $user->getKey()]);
+    $service = \app(InventorySessionService::class);
+    $draft = $service->startDraft($user, $store);
+    $service->saveDraftRow($user, $draft, InventoryDraftRowInput::fromPayload(['item_id' => $item->getKey(), 'quantity' => 5, 'expected_revision' => 0]));
+    $service->closeDraft($user, $draft);
+    \expect(fn() => $service->cancelDraft($user, $draft))->toThrow(ValidationException::class);
+    \expect($draft->fresh()?->getStatus())->toBe('closed')
+        ->and(StoreItem::query()->where('store_id', $store->getKey())->where('item_id', $item->getKey())->firstOrFail()->getQuantity())->toBe(5)
+        ->and(StockMovement::query()->where('inventory_session_id', $draft->getKey())->count())->toBe(1);
+});
+
+\test('cancellation is idempotent and a cancelled draft cannot post', function (): void {
+    [$user, $store] = \createIsolatedUserWithWarehouse();
+    $service = \app(InventorySessionService::class);
+    $draft = $service->startDraft($user, $store);
+    $service->cancelDraft($user, $draft);
+    $service->cancelDraft($user, $draft);
+    \expect(fn() => $service->closeDraft($user, $draft))->toThrow(ValidationException::class);
+    \expect($draft->fresh()?->getStatus())->toBe('cancelled')
+        ->and(StockMovement::query()->where('inventory_session_id', $draft->getKey())->count())->toBe(0);
 });

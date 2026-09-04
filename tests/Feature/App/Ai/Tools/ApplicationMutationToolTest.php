@@ -7,6 +7,7 @@ use App\Ai\AssistantToolCatalog;
 use App\Ai\Tools\AbstractApprovableResourceTool;
 use App\Ai\Tools\WriteWorkersTool;
 use App\Enums\AssistantActionStatusEnum;
+use App\Enums\FilesystemDiskEnum;
 use App\Models\AssistantActionAudit;
 use App\Models\FinancialReportManualRow;
 use App\Models\InventorySession;
@@ -18,6 +19,9 @@ use App\Models\Shift;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Ai\Approvals\Approval;
 use Laravel\Ai\Tools\Request;
@@ -395,3 +399,120 @@ function nativeResourceArguments(array $legacy): array
         'values' => $values,
     ], static fn(mixed $value): bool => $value !== null && $value !== [])];
 }
+
+\test('database mutation rolls back when successful outcome persistence fails', function (): void {
+    [$admin, $warehouse] = \createIsolatedUserWithWarehouse();
+    $tool = \nativeResourceTool($admin, 'atomic-audit', 'write_inventory_counts');
+    $arguments = \nativeResourceArguments(['operation' => 'start_inventory_draft', 'store_id' => $warehouse->getKey(), 'target_id' => null, 'context_json' => null, 'values_json' => '{}']);
+    AssistantActionAudit::updating(static function (AssistantActionAudit $audit): void {
+        if ($audit->getStatus() === AssistantActionStatusEnum::SUCCEEDED) {
+            throw new RuntimeException('Injected audit failure');
+        }
+    });
+    try {
+        \expect(fn(): string => $tool->handle(new Request($arguments, 'atomic-call', 'atomic-invocation')))->toThrow(RuntimeException::class, 'Injected audit failure');
+        \expect(InventorySession::query()->count())->toBe(0)
+            ->and(AssistantActionAudit::query()->sole()->getStatus())->toBe(AssistantActionStatusEnum::FAILED);
+    } finally {
+        AssistantActionAudit::flushEventListeners();
+    }
+});
+
+\test('uncertain external outcomes are persisted and never replayed', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    Notification::fake();
+    $admin->update(['company_slack_channel' => '#test']);
+    $tool = \nativeResourceTool($admin, 'uncertain-audit', 'write_settings');
+    $arguments = \nativeResourceArguments(['operation' => 'test_slack_channel', 'store_id' => null, 'target_id' => null, 'context_json' => null, 'values_json' => '{}']);
+    AssistantActionAudit::updating(static function (AssistantActionAudit $audit): void {
+        if ($audit->getStatus() === AssistantActionStatusEnum::SUCCEEDED) {
+            throw new RuntimeException('Injected outcome persistence failure');
+        }
+    });
+    try {
+        \expect(fn(): string => $tool->handle(new Request($arguments, 'external-call', 'external-invocation')))->toThrow(RuntimeException::class, 'action_outcome_uncertain');
+        \expect(AssistantActionAudit::query()->sole()->getStatus())->toBe(AssistantActionStatusEnum::UNCERTAIN);
+        \expect(fn(): string => $tool->handle(new Request($arguments, 'external-call', 'external-replay')))->toThrow(RuntimeException::class, 'already resolved');
+    } finally {
+        AssistantActionAudit::flushEventListeners();
+    }
+});
+
+\test('after-commit failure preserves the successful mutation outcome and replay result', function (): void {
+    [$admin, $warehouse] = \createIsolatedUserWithWarehouse();
+    $tool = \nativeResourceTool($admin, 'after-commit-audit', 'write_inventory_counts');
+    $arguments = \nativeResourceArguments(['operation' => 'start_inventory_draft', 'store_id' => $warehouse->getKey(), 'target_id' => null, 'context_json' => null, 'values_json' => '{}']);
+    InventorySession::created(static function (): void {
+        DB::afterCommit(static function (): never {
+            throw new RuntimeException('Injected after-commit failure');
+        });
+    });
+    try {
+        \expect(fn(): string => $tool->handle(new Request($arguments, 'committed-call', 'committed-invocation')))->toThrow(RuntimeException::class, 'Injected after-commit failure');
+        \expect(InventorySession::query()->count())->toBe(1)
+            ->and(AssistantActionAudit::query()->sole()->getStatus())->toBe(AssistantActionStatusEnum::SUCCEEDED);
+        $result = $tool->handle(new Request($arguments, 'committed-call', 'committed-replay'));
+        \expect($result)->toContain('succeeded')
+            ->and(InventorySession::query()->count())->toBe(1)
+            ->and(AssistantActionAudit::query()->sole()->getStatus())->toBe(AssistantActionStatusEnum::SUCCEEDED);
+    } finally {
+        InventorySession::flushEventListeners();
+    }
+});
+
+\test('assistant permanently deletes a trashed noticeboard card and its image with a successful reusable audit', function (): void {
+    Storage::fake(FilesystemDiskEnum::Private->value);
+    [$admin, $store] = \createIsolatedUserWithWarehouse();
+    $path = 'noticeboard/' . $store->getKey() . '/existing.png';
+    Storage::disk(FilesystemDiskEnum::Private->value)->put($path, 'existing image');
+    $card = NoticeboardCard::factory()->create(['user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'image_path' => $path, 'image_mime' => 'image/png']);
+    $card->delete();
+    $tool = \nativeResourceTool($admin, 'noticeboard-delete', 'write_noticeboard');
+    $arguments = ['request' => ['action' => 'delete_noticeboard_card_permanently', 'store_id' => $store->getKey(), 'target_id' => $card->getKey()]];
+
+    $result = $tool->handle(new Request($arguments, 'delete-card', 'delete-card-invocation'));
+    \expect($result)->toContain('succeeded')
+        ->and(NoticeboardCard::withTrashed()->whereKey($card->getKey())->exists())->toBeFalse()
+        ->and(AssistantActionAudit::query()->sole()->getStatus())->toBe(AssistantActionStatusEnum::SUCCEEDED);
+    Storage::disk(FilesystemDiskEnum::Private->value)->assertMissing($path);
+    \expect($tool->handle(new Request($arguments, 'delete-card', 'delete-card-replay')))->toBe($result);
+});
+
+\test('noticeboard image deletion is deferred until the assistant mutation and audit both commit', function (string $operation): void {
+    Storage::fake(FilesystemDiskEnum::Private->value);
+    [$admin, $store] = \createIsolatedUserWithWarehouse();
+    $path = 'noticeboard/' . $store->getKey() . '/existing.png';
+    Storage::disk(FilesystemDiskEnum::Private->value)->put($path, 'existing image');
+    $card = NoticeboardCard::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'image_path' => $path,
+        'image_mime' => 'image/png', 'title' => 'Original card', 'body_html' => '<p>Original card</p>', 'body_text' => 'Original card',
+    ]);
+    $request = ['action' => $operation, 'store_id' => $store->getKey(), 'target_id' => $card->getKey()];
+    if ($operation === 'delete_noticeboard_card_permanently') {
+        $card->delete();
+    } else {
+        $request['context'] = ['lock_version' => 1];
+        $request['values'] = ['body_html' => '<p>Changed</p>', 'label' => 'information', 'color' => 'yellow', 'size' => 'medium', 'remove_image' => true];
+    }
+    $tool = \nativeResourceTool($admin, 'noticeboard-audit-rollback', 'write_noticeboard');
+    AssistantActionAudit::updating(static function (AssistantActionAudit $audit): void {
+        if ($audit->getStatus() === AssistantActionStatusEnum::SUCCEEDED) {
+            throw new RuntimeException('Injected noticeboard audit failure');
+        }
+    });
+    try {
+        \expect(fn(): string => $tool->handle(new Request(['request' => $request], 'noticeboard-rollback', 'noticeboard-rollback-invocation')))
+            ->toThrow(RuntimeException::class, 'Injected noticeboard audit failure');
+        $persisted = NoticeboardCard::withTrashed()->whereKey($card->getKey())->firstOrFail();
+        \expect($persisted->getImagePath())->toBe($path)
+            ->and($persisted->getTitle())->toBe('Original card')
+            ->and($persisted->getLockVersion())->toBe(1)
+            ->and($persisted->getDeletedAt() !== null)->toBe($operation === 'delete_noticeboard_card_permanently')
+            ->and(AssistantActionAudit::query()->sole()->getStatus())->toBe(AssistantActionStatusEnum::FAILED);
+        Storage::disk(FilesystemDiskEnum::Private->value)->assertExists($path);
+        DB::transaction(static fn(): bool => true);
+        Storage::disk(FilesystemDiskEnum::Private->value)->assertExists($path);
+    } finally {
+        AssistantActionAudit::flushEventListeners();
+    }
+})->with(['delete_noticeboard_card_permanently', 'update_noticeboard_card']);

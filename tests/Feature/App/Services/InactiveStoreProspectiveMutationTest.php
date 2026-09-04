@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Domain\Checklists\ChecklistService;
+use App\Domain\Inventory\InventorySessionService;
+use App\Domain\Inventory\StockMovementService;
+use App\Domain\Noticeboard\NoticeboardCardService;
+use App\Domain\Statements\StatementService;
+use App\Domain\Workforce\WorkforceManagementService;
 use App\Enums\ChecklistShiftEnum;
 use App\Enums\ChecklistTemplateScopeEnum;
 use App\Models\ChecklistDay;
@@ -11,12 +17,6 @@ use App\Models\Statement;
 use App\Models\StatementDay;
 use App\Models\StatementVersion;
 use App\Models\Store;
-use App\Services\ChecklistService;
-use App\Services\InventorySessionService;
-use App\Services\NoticeboardCardService;
-use App\Services\StatementService;
-use App\Services\StockMovementService;
-use App\Services\WorkforceManagementService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -88,6 +88,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
     \expect(fn() => $checklists->initializeStore($store))
         ->toThrow(InvalidArgumentException::class)
         ->and(fn() => $checklists->replaceTemplateGroup(
+            $admin,
             $store,
             ChecklistTemplateScopeEnum::Daily,
             null,
@@ -126,9 +127,9 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
     };
     $assertBlocked(fn() => $noticeboard->create($admin, $store, '<p>Late card</p>', 'information', 'yellow', 'medium', null, null));
     $assertBlocked(fn() => $noticeboard->update($card, $admin, '<p>Late update</p>', 'information', 'yellow', 'medium', null, null, false, 1));
-    $assertBlocked(fn() => $noticeboard->trash($card));
-    $assertBlocked(fn() => $noticeboard->restore($trashedCard));
-    $assertBlocked(fn() => $noticeboard->forceDelete($trashedCard));
+    $assertBlocked(fn() => $noticeboard->trash($card, $admin));
+    $assertBlocked(fn() => $noticeboard->restore($trashedCard, $admin));
+    $assertBlocked(fn() => $noticeboard->forceDelete($trashedCard, $admin));
 
     \expect(DB::table('shift_presets')->where('store_id', $store->getKey())->count())->toBe(0)
         ->and(DB::table('shift_share_links')->where('store_id', $store->getKey())->count())->toBe(0)

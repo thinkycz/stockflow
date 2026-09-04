@@ -46,9 +46,8 @@ describe('UI consistency contract', () => {
         for (const page of [
             'pages/reports/Index.vue',
             'pages/recipes/Show.vue',
-            'pages/gift-vouchers/Index.vue',
             'pages/checklists/Index.vue',
-            'components/noticeboard/NoticeboardSection.vue',
+            'features/noticeboard/components/NoticeboardSection.vue',
         ]) {
             expect(readFileSync(resolve(jsRoot, page), 'utf8'), page).toContain(
                 '<Tabs',

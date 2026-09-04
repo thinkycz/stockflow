@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Checklist;
 
+use App\Domain\Checklists\ChecklistService;
 use App\Enums\ChecklistShiftEnum;
 use App\Enums\ChecklistTemplateScopeEnum;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Http\Validation\ChecklistValidity;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\ChecklistService;
 use App\Support\ActiveStoreResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -44,7 +44,7 @@ class ChecklistTemplateController
         foreach ($validated->assertArray('tasks') as $row) {
             $texts[] = \mb_trim(Typer::assertString(Typer::assertStringKeyArray(Typer::assertArray($row))['text'] ?? null));
         }
-        (new ChecklistService())->replaceTemplateGroup($store, $scope, $weekday, ChecklistShiftEnum::from($validated->assertString('shift')), $texts);
+        (new ChecklistService())->replaceTemplateGroup(User::mustAuth(), $store, $scope, $weekday, ChecklistShiftEnum::from($validated->assertString('shift')), $texts);
         Inertia::flash('success', \__('Checklist template saved.'));
 
         return Resolver::resolveRedirector()->route('checklists.index', ['scope' => $scope->value, 'weekday' => $weekday]);

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Recipe;
 
+use App\Domain\Recipes\RecipeCatalogService;
 use App\Models\Recipe;
 use App\Models\RecipeCategory;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\RecipeCatalogService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

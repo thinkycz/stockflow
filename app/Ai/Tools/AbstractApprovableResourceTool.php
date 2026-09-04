@@ -10,6 +10,7 @@ use App\Ai\AssistantTurnCancellation;
 use App\Enums\AssistantActionClassificationEnum;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Laravel\Ai\Approvals\Approval;
@@ -17,6 +18,7 @@ use Laravel\Ai\Concerns\InteractsWithApprovals;
 use Laravel\Ai\Contracts\Approvable;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
+use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -67,10 +69,20 @@ abstract class AbstractApprovableResourceTool implements Approvable, AuditableAs
 
         $startedAt = \microtime(true);
 
+        $external = $this->auditClassification($arguments) === AssistantActionClassificationEnum::EXTERNAL_SIDE_EFFECT;
         try {
-            $result = $this->execute($arguments);
-            $audit->succeeded($this->conversationId, $toolCallId, $result, $startedAt);
+            $execute = function () use ($arguments, $audit, $toolCallId, $startedAt): array {
+                $result = $this->execute($arguments);
+                $audit->succeeded($this->conversationId, $toolCallId, $result, $startedAt);
+
+                return $result;
+            };
+            $result = DB::transaction($execute);
         } catch (Throwable $exception) {
+            if ($external) {
+                $audit->uncertain($this->conversationId, $toolCallId);
+                throw new RuntimeException('action_outcome_uncertain', 0, $exception);
+            }
             $audit->failed($this->conversationId, $toolCallId, $exception, $startedAt);
 
             throw $exception;

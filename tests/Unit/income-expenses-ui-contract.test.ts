@@ -1,8 +1,8 @@
-import { readFileSync } from 'node:fs';
+import { workflowSource } from './helpers/workflow-source';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
-const page = readFileSync(
+const page = workflowSource(
     resolve(process.cwd(), 'resources/js/pages/income-expenses/Index.vue'),
     'utf8',
 );

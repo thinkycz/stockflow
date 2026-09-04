@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Domain\Recipes\RecipeCatalogService;
+use App\Domain\Recipes\RecipeInstructionService;
+use App\Domain\Recipes\RecipeTestService;
 use App\Models\Recipe;
 use App\Models\RecipeCategory;
 use App\Models\RecipeIngredient;
@@ -11,9 +14,6 @@ use App\Models\RecipeTestAttempt;
 use App\Models\RecipeVariant;
 use App\Models\User;
 use App\Models\Worker;
-use App\Services\RecipeCatalogService;
-use App\Services\RecipeInstructionService;
-use App\Services\RecipeTestService;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Carbon;
 use Thinkycz\LaravelCore\Support\Typer;

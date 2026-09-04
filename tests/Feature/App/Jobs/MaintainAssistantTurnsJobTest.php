@@ -2,14 +2,20 @@
 
 declare(strict_types=1);
 
+use App\Ai\AssistantTurnService;
+use App\Enums\AssistantActionClassificationEnum;
+use App\Enums\AssistantActionStatusEnum;
 use App\Enums\AssistantTurnStatusEnum;
 use App\Jobs\MaintainAssistantTurnsJob;
+use App\Models\AssistantActionAudit;
 use App\Models\AssistantTurn;
 use App\Models\AssistantTurnEvent;
 use App\Models\User;
 use Database\Factories\UserFactory;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Typer;
 
 \test('assistant maintenance prunes expired chunks and fails abandoned active turns', function (): void {
@@ -54,3 +60,58 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->and(AssistantTurnEvent::query()->whereKey($recent->getKey())->exists())->toBeTrue()
         ->and($turn->getInputPayload())->toBe(['message' => 'Recover me']);
 });
+
+\test('abandoned turns cannot retry while their external audit is newer than the turn', function (int $auditAgeSeconds, AssistantActionStatusEnum $expectedStatus): void {
+    Carbon::setTestNow('2026-08-29 12:00:00');
+    Config::inject()->assign('ai.assistant.timeout_seconds', 60);
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $conversation = $admin->conversations()->create([
+        'id' => Str::uuid()->toString(), 'title' => 'External recovery',
+    ]);
+    $turn = AssistantTurn::query()->forceCreate([
+        'id' => Str::uuid()->toString(),
+        'actor_user_id' => $admin->getKey(),
+        'conversation_id' => $conversation->getKey(),
+        'kind' => 'message', 'status' => AssistantTurnStatusEnum::RUNNING->value,
+        'input_hash' => Str::random(64), 'input_payload' => ['message' => 'Send Slack test'],
+        'queued_at' => \now()->subMinutes(20),
+        'created_at' => \now()->subMinutes(20), 'updated_at' => \now()->subMinutes(20),
+    ]);
+    $audit = AssistantActionAudit::factory()->createOne([
+        'actor_user_id' => $admin->getKey(), 'conversation_id' => $conversation->getKey(),
+        'turn_id' => $turn->getTurnId(),
+        'classification' => AssistantActionClassificationEnum::EXTERNAL_SIDE_EFFECT->value,
+        'status' => AssistantActionStatusEnum::RUNNING->value,
+        'created_at' => \now()->subSeconds($auditAgeSeconds),
+        'updated_at' => \now()->subSeconds($auditAgeSeconds), 'completed_at' => null,
+    ]);
+    try {
+        (new MaintainAssistantTurnsJob())->handle();
+        $turn->refresh();
+        $service = \app(AssistantTurnService::class);
+        $payload = $service->payload($turn);
+        \expect($turn->getStatus())->toBe(AssistantTurnStatusEnum::FAILED)
+            ->and($audit->refresh()->getStatus())->toBe($expectedStatus)
+            ->and($payload['can_retry'])->toBeFalse()
+            ->and($payload['failure']['code'])->toBe('ACTION_OUTCOME_UNCERTAIN');
+        $retryId = Str::uuid()->toString();
+        try {
+            $service->retry($admin, $conversation, $turn, $retryId);
+            \test()->fail('An unresolved external effect must block retry.');
+        } catch (HttpException $exception) {
+            \expect($exception->getStatusCode())->toBe(409);
+        }
+        \expect(AssistantTurn::query()->whereKey($retryId)->exists())->toBeFalse();
+        if ($expectedStatus === AssistantActionStatusEnum::RUNNING) {
+            $audit->update(['status' => AssistantActionStatusEnum::SUCCEEDED->value, 'result_summary' => ['message' => 'Sent']]);
+            \expect($service->payload($turn)['can_retry'])->toBeTrue();
+            $recovery = $service->retry($admin, $conversation, $turn, $retryId);
+            \expect($recovery['turn']->getRecoveryMode())->toBe('continuation_after_action');
+        }
+    } finally {
+        Carbon::setTestNow();
+    }
+})->with([
+    'recent running external audit' => [10, AssistantActionStatusEnum::RUNNING],
+    'stale external audit becomes uncertain' => [600, AssistantActionStatusEnum::UNCERTAIN],
+]);

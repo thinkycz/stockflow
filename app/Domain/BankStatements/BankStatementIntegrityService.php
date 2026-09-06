@@ -25,10 +25,10 @@ final class BankStatementIntegrityService
     public function validateParsedPayload(array $payload): void
     {
         try {
-            $this->boundedString($payload['bank_code'] ?? null, 16);
+            $this->boundedNullableString($payload['bank_code'] ?? null, 16);
             $this->boundedString($payload['bank_name'] ?? null, 120);
             $this->boundedString($payload['currency'] ?? null, 3);
-            $this->boundedString($payload['statement_number'] ?? null, 32);
+            $this->boundedNullableString($payload['statement_number'] ?? null, 32);
             $this->boundedNullableString($payload['bic'] ?? null, 32);
 
             foreach (['account_name', 'account_number', 'iban'] as $key) {
@@ -43,8 +43,15 @@ final class BankStatementIntegrityService
                 throw new InvalidBankStatementPayloadException('Bank statement period is invalid.');
             }
 
-            foreach (['opening_balance', 'total_credits', 'total_debits', 'closing_balance'] as $key) {
+            foreach (['opening_balance', 'closing_balance'] as $key) {
                 $this->money(Typer::assertString($payload[$key] ?? null));
+            }
+
+            foreach (['total_credits', 'total_debits'] as $key) {
+                $total = Typer::assertNullableString($payload[$key] ?? null);
+                if ($total !== null && $this->money($total)->isNegative()) {
+                    throw new InvalidBankStatementPayloadException('Statement summary totals must be nonnegative.');
+                }
             }
 
             $availableBalance = Typer::assertNullableString($payload['available_balance'] ?? null);
@@ -53,8 +60,8 @@ final class BankStatementIntegrityService
             }
 
             foreach (['credit_count', 'debit_count'] as $key) {
-                $count = Typer::assertInt($payload[$key] ?? null);
-                if ($count < 0 || $count > 4294967295) {
+                $count = Typer::assertNullableInt($payload[$key] ?? null);
+                if ($count !== null && ($count < 0 || $count > 4294967295)) {
                     throw new InvalidBankStatementPayloadException('Bank statement counts cannot be negative.');
                 }
             }
@@ -80,6 +87,33 @@ final class BankStatementIntegrityService
         } catch (Throwable $exception) {
             throw new InvalidBankStatementPayloadException('Bank statement parser payload is invalid.', previous: $exception);
         }
+    }
+
+    /**
+     * Derive card sales dates from valid printed YYYYMMDD symbols, without AI arithmetic.
+     *
+     * @param array<string, mixed> $payload
+     *
+     * @return array<string, mixed>
+     */
+    public function normalizeParsedPayload(array $payload): array
+    {
+        $this->validateParsedPayload($payload);
+        $payload['transactions'] = \array_map(static function (mixed $transaction): array {
+            $row = Typer::assertStringKeyArray(Typer::assertArray($transaction));
+            $symbol = Typer::assertNullableString($row['specific_symbol'] ?? null);
+            if ($row['category'] === 'card' && $symbol !== null && \preg_match('/^[0-9]{8}$/D', $symbol) === 1) {
+                $date = DateTimeImmutable::createFromFormat('!Ymd', $symbol);
+                if ($date instanceof DateTimeImmutable && $symbol === $date->format('Ymd')) {
+                    $row['sales_from'] = $date->format('Y-m-d');
+                    $row['sales_to'] = $date->format('Y-m-d');
+                }
+            }
+
+            return $row;
+        }, Typer::assertArray($payload['transactions']));
+
+        return $payload;
     }
 
     /**
@@ -112,19 +146,19 @@ final class BankStatementIntegrityService
 
         $warnings = [];
 
-        if ($creditCount !== Typer::assertInt($payload['credit_count'] ?? null)) {
+        if (isset($payload['credit_count']) && $creditCount !== Typer::assertInt($payload['credit_count'])) {
             $warnings[] = 'credit_count_mismatch';
         }
 
-        if ($debitCount !== Typer::assertInt($payload['debit_count'] ?? null)) {
+        if (isset($payload['debit_count']) && $debitCount !== Typer::assertInt($payload['debit_count'])) {
             $warnings[] = 'debit_count_mismatch';
         }
 
-        if (!$credits->isEqualTo($this->money(Typer::assertString($payload['total_credits'] ?? null)))) {
+        if (isset($payload['total_credits']) && !$credits->isEqualTo($this->money(Typer::assertString($payload['total_credits'])))) {
             $warnings[] = 'credit_sum_mismatch';
         }
 
-        if (!$debits->isEqualTo($this->money(Typer::assertString($payload['total_debits'] ?? null)))) {
+        if (isset($payload['total_debits']) && !$debits->isEqualTo($this->money(Typer::assertString($payload['total_debits'])))) {
             $warnings[] = 'debit_sum_mismatch';
         }
 
@@ -139,6 +173,14 @@ final class BankStatementIntegrityService
         $availableBalance = Typer::assertNullableString($payload['available_balance'] ?? null);
         if ($availableBalance !== null) {
             $this->money($availableBalance);
+        }
+
+        foreach ($transactions as $transaction) {
+            $row = Typer::assertStringKeyArray(Typer::assertArray($transaction));
+            if (Typer::assertString($row['currency'] ?? null) !== 'CZK') {
+                $warnings[] = 'unsupported_currency';
+                break;
+            }
         }
 
         return $warnings;
@@ -198,7 +240,7 @@ final class BankStatementIntegrityService
     private function money(string $value): BigDecimal
     {
         try {
-            $amount = BigDecimal::of(\trim($value))->toScale(2, RoundingMode::Unnecessary);
+            $amount = BigDecimal::of(\mb_trim($value))->toScale(2, RoundingMode::Unnecessary);
             if ($amount->abs()->isGreaterThan(BigDecimal::of('9999999999999.99'))) {
                 throw new InvalidBankStatementPayloadException('Bank statement money exceeds its allowed range.');
             }

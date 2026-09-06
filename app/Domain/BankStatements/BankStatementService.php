@@ -161,94 +161,86 @@ final class BankStatementService
     public function applyParsed(BankStatement $statement, array $payload, int $generation): void
     {
         $integrity = new BankStatementIntegrityService();
-        $integrity->validateParsedPayload($payload);
+        $sourcePayload = $payload;
+        $payload = $integrity->normalizeParsedPayload($payload);
 
-        try {
-            DB::transaction(function () use ($statement, $payload, $integrity, $generation): void {
-                $this->lockActiveStore($statement->getStoreId());
-                $statement = $this->lockedStatement($statement);
-                if ($generation !== $statement->getParseGeneration() ||
-                    !\in_array($statement->getStatus(), [BankStatementStatusEnum::QUEUED, BankStatementStatusEnum::PROCESSING], true)) {
-                    return;
-                }
-
-                $warnings = $integrity->warnings($payload);
-
-                if (Typer::assertString($payload['bank_code'] ?? null) !== '0800') {
-                    $warnings[] = 'unsupported_bank';
-                }
-
-                if (Typer::assertString($payload['currency'] ?? null) !== 'CZK') {
-                    $warnings[] = 'unsupported_currency';
-                }
-
-                $logicalDuplicate = BankStatement::query()
-                    ->where('user_id', $statement->getUserId())
-                    ->where('store_id', $statement->getStoreId())
-                    ->where('bank_code', Typer::assertString($payload['bank_code'] ?? null))
-                    ->where('statement_number', Typer::assertString($payload['statement_number'] ?? null))
-                    ->whereDate('period_from', Typer::assertString($payload['period_from'] ?? null))
-                    ->whereDate('period_to', Typer::assertString($payload['period_to'] ?? null))
-                    ->whereKeyNot($statement->getKey())
-                    ->exists();
-
-                if ($logicalDuplicate) {
-                    $statement->update([
-                        'status' => BankStatementStatusEnum::FAILED->value,
-                        'last_error' => 'duplicate_statement',
-                        'parsed_at' => \now(),
-                    ]);
-
-                    return;
-                }
-
-                $statement->transactions()->delete();
-
-                $position = 0;
-
-                foreach (Typer::assertArray($payload['transactions'] ?? []) as $transaction) {
-                    $row = Typer::assertStringKeyArray(Typer::assertArray($transaction));
-                    ++$position;
-                    $statement->transactions()->create([
-                        ...$this->transactionAttributes($row),
-                        'position' => $position,
-                        'source_payload' => $row,
-                        'manually_edited' => false,
-                    ]);
-                }
-
-                $statement->update([
-                    'status' => BankStatementStatusEnum::REVIEW->value,
-                    'bank_code' => Typer::assertString($payload['bank_code'] ?? null),
-                    'bank_name' => Typer::assertString($payload['bank_name'] ?? null),
-                    'account_name' => Typer::parseNullableString($payload['account_name'] ?? null),
-                    'account_number' => Typer::parseNullableString($payload['account_number'] ?? null),
-                    'iban' => Typer::parseNullableString($payload['iban'] ?? null),
-                    'bic' => Typer::parseNullableString($payload['bic'] ?? null),
-                    'currency' => Typer::assertString($payload['currency'] ?? null),
-                    'statement_number' => Typer::assertString($payload['statement_number'] ?? null),
-                    'period_from' => Typer::assertString($payload['period_from'] ?? null),
-                    'period_to' => Typer::assertString($payload['period_to'] ?? null),
-                    'opening_balance' => \trim(Typer::assertString($payload['opening_balance'] ?? null)),
-                    'total_credits' => \trim(Typer::assertString($payload['total_credits'] ?? null)),
-                    'total_debits' => \trim(Typer::assertString($payload['total_debits'] ?? null)),
-                    'closing_balance' => \trim(Typer::assertString($payload['closing_balance'] ?? null)),
-                    'available_balance' => $this->nullableTrimmedString($payload['available_balance'] ?? null),
-                    'credit_count' => Typer::parseInt($payload['credit_count'] ?? null),
-                    'debit_count' => Typer::parseInt($payload['debit_count'] ?? null),
-                    'parse_warnings' => \array_values(\array_unique($warnings)),
-                    'raw_ai_response' => $payload,
-                    'last_error' => null,
-                    'parsed_at' => \now(),
-                ]);
-            });
-        } catch (QueryException $exception) {
-            if (!$this->isLogicalStatementUniquenessViolation($exception)) {
-                throw $exception;
+        DB::transaction(function () use ($statement, $payload, $sourcePayload, $integrity, $generation): void {
+            $this->lockActiveStore($statement->getStoreId());
+            $statement = $this->lockedStatement($statement);
+            if ($generation !== $statement->getParseGeneration() ||
+                !\in_array($statement->getStatus(), [BankStatementStatusEnum::QUEUED, BankStatementStatusEnum::PROCESSING], true)) {
+                return;
             }
 
-            $this->fail($statement, 'duplicate_statement', $generation);
-        }
+            $warnings = $integrity->warnings($payload);
+
+            if (Typer::assertString($payload['currency'] ?? null) !== 'CZK') {
+                $warnings[] = 'unsupported_currency';
+            }
+
+            $logicalDuplicate = BankStatement::query()
+                ->where('user_id', $statement->getUserId())
+                ->where('store_id', $statement->getStoreId())
+                ->whereDate('period_from', Typer::assertString($payload['period_from'] ?? null))
+                ->whereDate('period_to', Typer::assertString($payload['period_to'] ?? null))
+                ->whereKeyNot($statement->getKey())
+                ->get()
+                ->contains(static fn(BankStatement $candidate): bool => $candidate->matchesAccount(
+                    Typer::assertNullableString($payload['iban'] ?? null),
+                    Typer::assertNullableString($payload['account_number'] ?? null),
+                    Typer::assertNullableString($payload['bank_code'] ?? null),
+                ));
+
+            if ($logicalDuplicate) {
+                $statement->update([
+                    'status' => BankStatementStatusEnum::FAILED->value,
+                    'last_error' => 'duplicate_statement',
+                    'parsed_at' => \now(),
+                ]);
+
+                return;
+            }
+
+            $statement->transactions()->delete();
+
+            $position = 0;
+
+            foreach (Typer::assertArray($payload['transactions'] ?? []) as $transaction) {
+                $row = Typer::assertStringKeyArray(Typer::assertArray($transaction));
+                ++$position;
+                $statement->transactions()->create([
+                    ...$this->transactionAttributes($row),
+                    'position' => $position,
+                    'source_payload' => $row,
+                    'manually_edited' => false,
+                ]);
+            }
+
+            $statement->update([
+                'status' => BankStatementStatusEnum::REVIEW->value,
+                'bank_code' => Typer::assertNullableString($payload['bank_code'] ?? null),
+                'bank_name' => Typer::assertString($payload['bank_name'] ?? null),
+                'account_name' => Typer::parseNullableString($payload['account_name'] ?? null),
+                'account_number' => Typer::parseNullableString($payload['account_number'] ?? null),
+                'iban' => Typer::parseNullableString($payload['iban'] ?? null),
+                'bic' => Typer::parseNullableString($payload['bic'] ?? null),
+                'currency' => Typer::assertString($payload['currency'] ?? null),
+                'statement_number' => Typer::assertNullableString($payload['statement_number'] ?? null),
+                'period_from' => Typer::assertString($payload['period_from'] ?? null),
+                'period_to' => Typer::assertString($payload['period_to'] ?? null),
+                'opening_balance' => \mb_trim(Typer::assertString($payload['opening_balance'] ?? null)),
+                'total_credits' => $this->nullableTrimmedString($payload['total_credits'] ?? null),
+                'total_debits' => $this->nullableTrimmedString($payload['total_debits'] ?? null),
+                'closing_balance' => \mb_trim(Typer::assertString($payload['closing_balance'] ?? null)),
+                'available_balance' => $this->nullableTrimmedString($payload['available_balance'] ?? null),
+                'credit_count' => Typer::assertNullableInt($payload['credit_count'] ?? null),
+                'debit_count' => Typer::assertNullableInt($payload['debit_count'] ?? null),
+                'parse_warnings' => \array_values(\array_unique($warnings)),
+                'raw_ai_response' => $sourcePayload,
+                'last_error' => null,
+                'parsed_at' => \now(),
+            ]);
+        });
     }
 
     /**
@@ -294,10 +286,6 @@ final class BankStatementService
                 'debit_count' => $statement->getDebitCount(),
                 'transactions' => $rows,
             ]);
-
-            if ($statement->getBankCode() !== '0800') {
-                $warnings[] = 'unsupported_bank';
-            }
 
             if ($statement->getCurrency() !== 'CZK') {
                 $warnings[] = 'unsupported_currency';
@@ -479,7 +467,7 @@ final class BankStatementService
             'booked_on' => Typer::assertString($row['booked_on'] ?? null),
             'executed_on' => Typer::parseNullableString($row['executed_on'] ?? null),
             'item_type' => Typer::assertString($row['item_type'] ?? null),
-            'amount' => \trim(Typer::assertString($row['amount'] ?? null)),
+            'amount' => \mb_trim(Typer::assertString($row['amount'] ?? null)),
             'currency' => Typer::assertString($row['currency'] ?? null),
             'counterparty_name' => Typer::parseNullableString($row['counterparty_name'] ?? null),
             'counterparty_account' => $existing instanceof BankStatementTransaction
@@ -534,23 +522,6 @@ final class BankStatementService
     }
 
     /**
-     * Match only the statement identity index used by parser finalization.
-     */
-    private function isLogicalStatementUniquenessViolation(QueryException $exception): bool
-    {
-        if (!$this->isUniqueConstraintViolation($exception)) {
-            return false;
-        }
-
-        $message = $exception->getMessage();
-
-        return \str_contains($message, 'bank_statements_logical_unique') ||
-            (\str_contains($message, 'bank_statements.user_id') &&
-                \str_contains($message, 'bank_statements.store_id') &&
-                \str_contains($message, 'bank_statements.statement_number'));
-    }
-
-    /**
      * Queue parsing while preserving a recoverable failed row on transport errors.
      */
     private function dispatchParsing(BankStatement $statement): bool
@@ -573,6 +544,6 @@ final class BankStatementService
     {
         $value = Typer::parseNullableString($value);
 
-        return $value === null ? null : \trim($value);
+        return $value === null ? null : \mb_trim($value);
     }
 }

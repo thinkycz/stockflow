@@ -4,6 +4,7 @@
         "tagline": "Management System"
     },
     "nav": {
+        "beta": "BETA",
         "section": {
             "store": "Store",
             "management": "Management"
@@ -1137,7 +1138,7 @@
         "integrity_blocked": "Statement totals do not balance. You may edit the draft, but confirmation is blocked until resolved.",
         "upload": {
             "title": "Upload statement",
-            "description": "Česká spořitelna, CZK, PDF up to 10 MB.",
+            "description": "CZK statements from any bank. Text or scanned PDF up to 10 MB.",
             "external_ai_notice": "The document will be sent to the external AI provider OpenRouter for extraction.",
             "action": "Upload and process"
         },
@@ -1210,11 +1211,12 @@
             "message": "Movements will become editable again."
         },
         "errors": {
+            "provider_rate_limited": "The free AI provider is busy or its quota is exhausted. Retry later.",
             "provider_or_parse_failed": "The AI provider could not process this statement. Try again.",
             "duplicate_statement": "This statement has already been imported for this store and period.",
             "queue_dispatch_failed": "The statement could not be queued. Try again.",
             "processing_timeout": "Processing took too long. Retry the statement.",
-            "invalid_parser_payload": "The extracted statement data is invalid. Check the document and try again."
+            "invalid_parser_payload": "The PDF could not be extracted reliably. Try a clearer scan or download a text PDF from your bank, then retry."
         },
         "warnings": {
             "credit_count_mismatch": "Incoming count does not match.",

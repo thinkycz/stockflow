@@ -27,6 +27,7 @@ import {
 } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import Badge from '@/components/ui/Badge.vue';
 import Brand from '@/components/ui/Brand.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
@@ -60,6 +61,7 @@ const activeUrl = computed(() => usePage().url);
 const isAdmin = computed(() => auth.value.user?.is_admin === true);
 
 type NavItem = {
+    beta?: boolean;
     key: string;
     href: string;
     label: string;
@@ -123,6 +125,7 @@ const storeNavItemsByKey = computed<Record<StoreSectionNavigationKey, NavItem>>(
         },
         bank_statements: {
             key: 'bank_statements',
+            beta: true,
             href: route('bank-statements.index'),
             label: t('nav.bank_statements'),
             icon: Landmark,
@@ -237,6 +240,7 @@ const adminManagementNavItems = computed<NavItem[]>(() => [
         ? [
               {
                   key: 'assistant',
+                  beta: true,
                   href: route('assistant.index'),
                   label: t('nav.assistant'),
                   icon: BotMessageSquare,
@@ -339,7 +343,12 @@ function logout(): void {
                     ]"
                 >
                     <component :is="item.icon" :size="16" />
-                    {{ item.label }}
+                    <span class="min-w-0">{{ item.label }}</span>
+                    <Badge
+                        v-if="item.beta"
+                        class="ml-auto shrink-0 px-1.5 py-0.5 text-[9px]"
+                        >{{ t('nav.beta') }}</Badge
+                    >
                 </Link>
             </div>
         </nav>

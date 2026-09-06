@@ -69,3 +69,35 @@ use App\Exceptions\InvalidBankStatementPayloadException;
     \expect(fn() => (new BankStatementIntegrityService())->validateParsedPayload($payload))
         ->toThrow(InvalidBankStatementPayloadException::class);
 });
+
+\test('missing bank metadata and printed summaries remain optional', function (): void {
+    $payload = \parsedBankStatementPayload();
+    foreach (['bank_code', 'statement_number', 'total_credits', 'total_debits', 'credit_count', 'debit_count'] as $key) {
+        $payload[$key] = null;
+    }
+    $service = new BankStatementIntegrityService();
+    $service->validateParsedPayload($payload);
+    \expect($service->warnings($payload))->toBe([]);
+    $payload['closing_balance'] = '850.01';
+    \expect($service->warnings($payload))->toContain('balance_mismatch');
+});
+
+\test('transaction currencies cannot bypass CZK confirmation checks', function (): void {
+    $payload = \parsedBankStatementPayload();
+    $payload['transactions'][0]['currency'] = 'EUR';
+    \expect((new BankStatementIntegrityService())->warnings($payload))->toContain('unsupported_currency');
+});
+
+\test('card sales dates are derived from valid symbols independently of AI date fields', function (string $symbol, string|null $expected): void {
+    $payload = \parsedBankStatementPayload();
+    $payload['transactions'][0]['specific_symbol'] = $symbol;
+    $payload['transactions'][0]['sales_from'] = null;
+    $payload['transactions'][0]['sales_to'] = null;
+    $normalized = (new BankStatementIntegrityService())->normalizeParsedPayload($payload);
+    \expect($normalized['transactions'][0]['sales_from'])->toBe($expected)
+        ->and($normalized['transactions'][0]['sales_to'])->toBe($expected);
+})->with([
+    ['20260731', '2026-07-31'],
+    ['20260230', null],
+    ['0903660002', null],
+]);

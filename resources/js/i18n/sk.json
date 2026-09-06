@@ -4,6 +4,7 @@
         "tagline": "Management System"
     },
     "nav": {
+        "beta": "BETA",
         "section": {
             "store": "Predajňa",
             "management": "Správa"
@@ -1137,7 +1138,7 @@
         "integrity_blocked": "Súhrny výpisu nesedia. Koncept možno opraviť, potvrdenie je do vyriešenia blokované.",
         "upload": {
             "title": "Nahrať výpis",
-            "description": "Česká spořitelna, CZK, PDF do 10 MB.",
+            "description": "Výpisy v CZK z ľubovoľnej banky. Textové alebo naskenované PDF do 10 MB.",
             "external_ai_notice": "Dokument bude na účely vyťaženia odovzdaný externému poskytovateľovi AI OpenRouter.",
             "action": "Nahrať a spracovať"
         },
@@ -1210,11 +1211,12 @@
             "message": "Pohyby bude možné znovu upravovať."
         },
         "errors": {
+            "provider_rate_limited": "Bezplatný poskytovateľ AI je vyťažený alebo bol vyčerpaný limit. Skúste to neskôr.",
             "provider_or_parse_failed": "Poskytovateľ AI výpis nespracoval. Skúste úlohu spustiť znovu.",
             "duplicate_statement": "Tento výpis už bol pre prevádzku a obdobie importovaný.",
             "queue_dispatch_failed": "Výpis sa nepodarilo zaradiť do frontu. Skúste to znova.",
             "processing_timeout": "Spracovanie trvalo príliš dlho. Skúste výpis spracovať znova.",
-            "invalid_parser_payload": "Extrahované údaje výpisu nie sú platné. Skontrolujte dokument a skúste to znova."
+            "invalid_parser_payload": "PDF sa nepodarilo spoľahlivo prečítať. Použite čitateľnejší sken alebo si z banky stiahnite textové PDF a skúste to znova."
         },
         "warnings": {
             "credit_count_mismatch": "Nesedí počet príjmov.",

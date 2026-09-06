@@ -239,6 +239,33 @@ class BankStatement extends BaseModel
     }
 
     /**
+     * Compare decrypted account identifiers without exposing them to the UI or indexes.
+     */
+    public function matchesAccount(string|null $iban, string|null $accountNumber, string|null $bankCode): bool
+    {
+        $storedIban = $this->normalizeAccount($this->assertNullableString('iban'));
+        $incomingIban = $this->normalizeAccount($iban);
+        if ($storedIban !== null && $incomingIban !== null) {
+            return $storedIban === $incomingIban;
+        }
+
+        $storedAccount = $this->normalizeAccount($this->assertNullableString('account_number'));
+        $incomingAccount = $this->normalizeAccount($accountNumber);
+        if ($storedAccount === null || $incomingAccount === null) {
+            return false;
+        }
+
+        if (!\str_contains($storedAccount, '/') && $this->getBankCode() !== null) {
+            $storedAccount .= '/' . $this->getBankCode();
+        }
+        if (!\str_contains($incomingAccount, '/') && $bankCode !== null) {
+            $incomingAccount .= '/' . $bankCode;
+        }
+
+        return \str_contains($storedAccount, '/') && $storedAccount === $incomingAccount;
+    }
+
+    /**
      * Masked account number safe for presentation.
      */
     public function getMaskedAccountNumber(): string|null
@@ -303,7 +330,10 @@ class BankStatement extends BaseModel
     {
         $warnings = Typer::assertArray($this->getAttribute('parse_warnings') ?? []);
 
-        return \array_values(\array_map(static fn(mixed $warning): string => Typer::assertString($warning), $warnings));
+        return \array_values(\array_filter(
+            \array_map(static fn(mixed $warning): string => Typer::assertString($warning), $warnings),
+            static fn(string $warning): bool => $warning !== 'unsupported_bank',
+        ));
     }
 
     /**
@@ -380,6 +410,19 @@ class BankStatement extends BaseModel
             'confirmed_at' => 'datetime',
             'reopened_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Normalize account identifier whitespace and letter case.
+     */
+    private function normalizeAccount(string|null $value): string|null
+    {
+        if ($value === null) {
+            return null;
+        }
+        $normalized = \mb_strtoupper(Typer::assertString(\preg_replace('/\\s+/u', '', $value)));
+
+        return $normalized === '' ? null : $normalized;
     }
 
     /**

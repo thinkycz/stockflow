@@ -11,6 +11,7 @@ use App\Models\BankStatement;
 use App\Models\Store;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Ai\Exceptions\RateLimitedException;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -194,4 +195,97 @@ use Thinkycz\LaravelCore\Support\Typer;
     $job->handle(new BankStatementService());
     $job->failed(null);
     \expect($statement->fresh()?->getStatus())->toBe(BankStatementStatusEnum::QUEUED);
+});
+
+\test('another bank with missing optional metadata can be reviewed and confirmed', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $statement = BankStatement::factory()->forStore($store)->create(['status' => BankStatementStatusEnum::QUEUED->value]);
+    $payload = \parsedBankStatementPayload();
+    $payload['bank_name'] = 'Another bank';
+    foreach (['bank_code', 'statement_number', 'total_credits', 'total_debits', 'credit_count', 'debit_count'] as $key) {
+        $payload[$key] = null;
+    }
+    $service = new BankStatementService();
+    $service->applyParsed($statement, $payload, $statement->getParseGeneration());
+    $fresh = Typer::assertInstance($statement->fresh(), BankStatement::class);
+    \expect($fresh->getParseWarnings())->toBe([])
+        ->and($fresh->getBankCode())->toBeNull()
+        ->and($fresh->getTotalCredits())->toBeNull()
+        ->and($fresh->getCreditCount())->toBeNull();
+    $service->confirm($fresh, $admin);
+    \expect($statement->fresh()?->getStatus())->toBe(BankStatementStatusEnum::CONFIRMED);
+});
+
+\test('different accounts with the same statement number and bank are not duplicates', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new BankStatementService();
+    foreach (['1111111111', '2222222222'] as $account) {
+        $statement = BankStatement::factory()->forStore($store)->create([
+            'status' => BankStatementStatusEnum::QUEUED->value,
+            'bank_code' => null, 'statement_number' => null,
+        ]);
+        $payload = \parsedBankStatementPayload();
+        $payload['account_number'] = $account;
+        $payload['iban'] = null;
+        $service->applyParsed($statement, $payload, $statement->getParseGeneration());
+        \expect($statement->fresh()?->getStatus())->toBe(BankStatementStatusEnum::REVIEW);
+    }
+});
+
+\test('rate limits preserve existing draft rows and expose retry guidance', function (): void {
+    Storage::fake(FilesystemDiskEnum::Private->value);
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    Storage::disk(FilesystemDiskEnum::Private->value)->put('bank-statements/test.pdf', Resolver::resolveEncrypter()->encryptString('%PDF-1.7 test'));
+    $statement = BankStatement::factory()->forStore($store)->create([
+        'status' => BankStatementStatusEnum::QUEUED->value, 'original_path' => 'bank-statements/test.pdf',
+    ]);
+    $statement->transactions()->create([
+        'position' => 1, 'booked_on' => '2026-08-01', 'item_type' => 'Reviewed row',
+        'amount' => '1.00', 'currency' => 'CZK', 'category' => 'other_incoming',
+    ]);
+    BankStatementParser::fake(static function (): never {
+        throw RateLimitedException::forProvider('openrouter');
+    });
+    (new ParseBankStatementJob($statement->getKey(), $statement->getParseGeneration()))->handle(new BankStatementService());
+    \expect($statement->fresh()?->getLastError())->toBe('provider_rate_limited')
+        ->and($statement->transactions()->sole()->getItemType())->toBe('Reviewed row');
+});
+
+\test('IBAN identifies duplicates even without bank code or statement number', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $service = new BankStatementService();
+    $payload = \parsedBankStatementPayload();
+    $payload['bank_code'] = null;
+    $payload['statement_number'] = null;
+    foreach ([false, true] as $duplicate) {
+        $statement = BankStatement::factory()->forStore($store)->create([
+            'status' => BankStatementStatusEnum::QUEUED->value, 'bank_code' => null, 'statement_number' => null,
+        ]);
+        $service->applyParsed($statement, $payload, $statement->getParseGeneration());
+        \expect($statement->fresh()?->getLastError())->toBe($duplicate ? 'duplicate_statement' : null);
+        $payload['iban'] = 'cz00 0800 0000 0001 2345 6789';
+    }
+});
+
+\test('foreign currencies still prevent statement confirmation', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $statement = BankStatement::factory()->forStore($store)->create(['status' => BankStatementStatusEnum::QUEUED->value]);
+    $payload = \parsedBankStatementPayload();
+    $payload['currency'] = 'EUR';
+    $service = new BankStatementService();
+    $service->applyParsed($statement, $payload, $statement->getParseGeneration());
+    $fresh = Typer::assertInstance($statement->fresh(), BankStatement::class);
+    \expect($fresh->getParseWarnings())->toContain('unsupported_currency');
+    \expect(fn() => $service->confirm($fresh, $admin))->toThrow(InvalidArgumentException::class, 'statement_integrity_failed');
+});
+
+\test('legacy unsupported-bank warnings no longer block review but real warnings remain', function (): void {
+    $statement = new BankStatement();
+    $statement->setAttribute('parse_warnings', ['unsupported_bank', 'balance_mismatch']);
+    \expect($statement->getParseWarnings())->toBe(['balance_mismatch']);
 });

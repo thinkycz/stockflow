@@ -13,6 +13,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Laravel\Ai\Exceptions\RateLimitedException;
 use Laravel\Ai\Files\Document;
 use Laravel\Ai\Responses\StructuredAgentResponse;
 use Thinkycz\LaravelCore\Support\Typer;
@@ -86,7 +88,14 @@ final class ParseBankStatementJob implements ShouldBeEncrypted, ShouldQueue
             $service->applyParsed($statement, Typer::assertStringKeyArray($structured->toArray()), $this->generation);
         } catch (InvalidBankStatementPayloadException) {
             $service->fail($statement, 'invalid_parser_payload', $this->generation);
-        } catch (Throwable) {
+        } catch (RateLimitedException) {
+            $service->fail($statement, 'provider_rate_limited', $this->generation);
+        } catch (Throwable $exception) {
+            Log::warning('Bank statement extraction failed.', [
+                'statement_id' => $statement->getKey(),
+                'exception_class' => $exception::class,
+                'exception_code' => $exception->getCode(),
+            ]);
             $service->fail($statement, 'provider_or_parse_failed', $this->generation);
         }
     }

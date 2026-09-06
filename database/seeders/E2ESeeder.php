@@ -10,9 +10,13 @@ use App\Enums\StockMovementTypeEnum;
 use App\Models\AssistantTurn;
 use App\Models\AssistantTurnEvent;
 use App\Models\AttendanceSession;
+use App\Models\BankStatement;
+use App\Models\BankStatementTransaction;
 use App\Models\Shift;
 use App\Models\ShiftPreset;
 use App\Models\ShiftShareLink;
+use App\Models\Statement;
+use App\Models\StatementDay;
 use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
@@ -48,6 +52,8 @@ class E2ESeeder extends Seeder
         if (!$store instanceof Store) {
             return;
         }
+
+        $this->seedBankReviews($store);
 
         $crossStore = Store::query()
             ->where('user_id', $user->getKey())
@@ -495,6 +501,35 @@ class E2ESeeder extends Seeder
                     'end_time' => $preset['end_time'],
                 ],
             );
+        }
+    }
+
+    /**
+     * Isolated synthetic review drafts for locale and save-workflow browser checks.
+     */
+    private function seedBankReviews(Store $store): void
+    {
+        foreach (['en' => 4, 'cs' => 5, 'sk' => 6] as $locale => $month) {
+            $first = \sprintf('2026-%02d-01', $month);
+            $second = \sprintf('2026-%02d-02', $month);
+            $booked = \sprintf('2026-%02d-15', $month);
+            $statement = Statement::factory()->forStore($store)->forMonth(2026, $month)->create();
+            StatementDay::factory()->for($statement, 'statement')->create(['date' => $first, 'card' => '1000.00', 'wolt' => (string) (100 * ($month - 3)), 'bolt' => '100.00', 'bolt_cash' => '0.00']);
+            StatementDay::factory()->for($statement, 'statement')->create(['date' => $second, 'wolt' => (string) (200 * ($month - 3)), 'bolt' => '100.00', 'bolt_cash' => '0.00']);
+            $bank = BankStatement::factory()->forStore($store)->create([
+                'bank_name' => 'Synthetic bank',
+                'original_name' => 'synthetic-review-' . $locale . '.pdf', 'period_from' => $first, 'period_to' => $booked,
+                'opening_balance' => '100.00', 'total_credits' => (string) (1050 + 210 * ($month - 3)), 'total_debits' => '0.00',
+                'closing_balance' => (string) (1150 + 210 * ($month - 3)), 'credit_count' => 3, 'debit_count' => 0,
+            ]);
+            foreach (['card' => '985.00', 'wolt' => (string) (210 * ($month - 3)), 'bolt' => '65.00'] as $category => $amount) {
+                BankStatementTransaction::factory()->forStatement($bank)->create([
+                    'booked_on' => $booked, 'category' => $category, 'amount' => $amount,
+                    'item_type' => 'Synthetic ' . $category, 'description' => null, 'counterparty_name' => null,
+                    'specific_symbol' => null, 'sales_from' => $category === 'card' ? $first : null,
+                    'sales_to' => $category === 'card' ? $first : null,
+                ]);
+            }
         }
     }
 }

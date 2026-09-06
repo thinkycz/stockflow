@@ -1129,7 +1129,7 @@
         "bank_control": {
             "title": "Kontrola bankovních plateb",
             "description": "Stav importu výpisu pro vybraný měsíc.",
-            "summary": "Shody: {matched}, rozdíly: {mismatch}, nevyřešeno: {unresolved}",
+            "summary": "Spárováno: {paired}, v toleranci: {matched}, rozdíly částek: {mismatch}, nevyřešeno: {unresolved}",
             "action": "Otevřít kontrolu"
         }
     },
@@ -1181,10 +1181,12 @@
             "all_results": "Všechny výsledky"
         },
         "result": {
-            "matched": "Shoda",
-            "mismatch": "Rozdíl",
+            "matched": "V toleranci",
+            "mismatch": "Rozdíl částky",
             "unresolved": "Nevyřešeno",
-            "excluded": "Mimo kontrolu"
+            "excluded": "Mimo kontrolu",
+            "paired": "Spárováno",
+            "pending": "Uložte pro přepočet"
         },
         "transaction": {
             "date": "Zaúčtováno",
@@ -1192,7 +1194,7 @@
             "category": "Kategorie",
             "sales_period": "Období tržeb od–do",
             "actual": "Skutečně",
-            "expected": "Očekáváno",
+            "expected": "Odhad platby",
             "result": "Kontrola"
         },
         "actions": {
@@ -1228,6 +1230,26 @@
             "balance_mismatch": "Nesedí rovnice zůstatků.",
             "unsupported_bank": "Výpis není z podporované banky.",
             "unsupported_currency": "Výpis není v CZK."
+        },
+        "tolerance": "Tolerance: {amount} CZK",
+        "blockers": {
+            "unsaved": "Před potvrzením uložte koncept, aby se změny přepočítaly.",
+            "periods": "Před potvrzením doplňte platná období tržeb u všech plateb kartou a rozvozových služeb."
+        },
+        "suggestions": {
+            "title": "Navržená období",
+            "use": "Použít období",
+            "explicit": "Období z textu platby · neuloženo",
+            "inferred": "Automaticky navržené období · neuloženo"
+        },
+        "reasons": {
+            "missing_sales_period": "Chybí období tržeb. Zadejte data nebo zkontrolujte návrhy.",
+            "missing_statement_days": "Pro část období chybí denní výkazy.",
+            "duplicate_statement_days": "Pro některý den období existuje více denních výkazů.",
+            "no_matching_period": "Žádné vhodné období neodpovídá částce v toleranci. Zkontrolujte podklady k platbě nebo zadejte období ručně.",
+            "ambiguous_period": "Částce odpovídá více období. Před výběrem ověřte data.",
+            "period_conflict": "Období se překrývá s jinou platbou nebo neodpovídá pořadí plateb.",
+            "manual_period": "Tento pohyb byl upraven. Vyberte období ručně, aby se zachovala vaše kontrola."
         }
     },
     "inventory_counts": {

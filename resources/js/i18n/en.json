@@ -1129,7 +1129,7 @@
         "bank_control": {
             "title": "Bank payment check",
             "description": "Import status for the selected month.",
-            "summary": "Matches: {matched}, differences: {mismatch}, unresolved: {unresolved}",
+            "summary": "Paired: {paired}, within tolerance: {matched}, amount differences: {mismatch}, unresolved: {unresolved}",
             "action": "Open check"
         }
     },
@@ -1181,10 +1181,12 @@
             "all_results": "All results"
         },
         "result": {
-            "matched": "Matched",
-            "mismatch": "Mismatch",
+            "matched": "Within tolerance",
+            "mismatch": "Amount difference",
             "unresolved": "Unresolved",
-            "excluded": "Excluded"
+            "excluded": "Excluded",
+            "paired": "Paired",
+            "pending": "Save to recalculate"
         },
         "transaction": {
             "date": "Booked",
@@ -1192,7 +1194,7 @@
             "category": "Category",
             "sales_period": "Sales period from–to",
             "actual": "Actual",
-            "expected": "Expected",
+            "expected": "Estimated payout",
             "result": "Check"
         },
         "actions": {
@@ -1228,6 +1230,26 @@
             "balance_mismatch": "The balance equation does not match.",
             "unsupported_bank": "This bank is not supported.",
             "unsupported_currency": "The statement is not in CZK."
+        },
+        "tolerance": "Tolerance: {amount} CZK",
+        "blockers": {
+            "unsaved": "Save the draft to recalculate changes before confirmation.",
+            "periods": "Complete valid sales periods for all card and marketplace payments before confirmation."
+        },
+        "suggestions": {
+            "title": "Suggested periods",
+            "use": "Use period",
+            "explicit": "Period from payment text · not saved",
+            "inferred": "Automatically suggested period · not saved"
+        },
+        "reasons": {
+            "missing_sales_period": "Sales period is missing. Enter dates or review the suggestions.",
+            "missing_statement_days": "Daily statements are missing for part of this period.",
+            "duplicate_statement_days": "More than one daily statement exists for a date in this period.",
+            "no_matching_period": "No eligible period matches within tolerance. Check the payout details or enter the period manually.",
+            "ambiguous_period": "Several periods match the amount. Review the dates before choosing.",
+            "period_conflict": "This period overlaps another payout or conflicts with payout order.",
+            "manual_period": "This movement was edited. Choose a period manually to preserve your review."
         }
     },
     "inventory_counts": {

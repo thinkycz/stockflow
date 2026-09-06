@@ -6,6 +6,7 @@ import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
 import DataTable from '@/components/ui/DataTable.vue';
+import FilterField from '@/components/ui/FilterField.vue';
 import FieldError from '@/components/ui/FieldError.vue';
 import Input from '@/components/ui/Input.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
@@ -29,6 +30,13 @@ const {
     filterOptions,
     resultFilterOptions,
     confirmationBlocked,
+    confirmationReasons,
+    reviewCounts,
+    isPending,
+    applyCandidate,
+    candidatesFor,
+    reasonFor,
+    automaticSource,
     statementError,
     transactionError,
     addRow,
@@ -165,30 +173,64 @@ const {
                 </div>
             </Card>
 
-            <Card v-if="props.transactions.length > 0" padded>
+            <section
+                v-if="props.transactions.length > 0 || props.statement.editable"
+                data-testid="bank-transactions"
+            >
+                <Alert
+                    v-if="
+                        props.statement.editable && confirmationReasons.length
+                    "
+                    variant="info"
+                    class="mb-4"
+                >
+                    <p v-for="reason in confirmationReasons" :key="reason">
+                        {{ reason }}
+                    </p>
+                </Alert>
                 <div class="mb-4 flex flex-wrap items-end gap-3">
-                    <Select
-                        v-model="filter"
-                        :options="filterOptions"
-                        class="max-w-64"
-                    />
-                    <Select
-                        v-model="resultFilter"
-                        :options="resultFilterOptions"
-                        class="max-w-64"
-                    />
+                    <FilterField
+                        for="bank-category"
+                        :label="t('bank_statements.transaction.category')"
+                    >
+                        <Select
+                            id="bank-category"
+                            v-model="filter"
+                            :options="filterOptions"
+                            class="max-w-64"
+                        />
+                    </FilterField>
+                    <FilterField
+                        for="bank-result"
+                        :label="t('bank_statements.transaction.result')"
+                    >
+                        <Select
+                            id="bank-result"
+                            v-model="resultFilter"
+                            :options="resultFilterOptions"
+                            class="max-w-64"
+                        />
+                    </FilterField>
                     <div class="flex flex-1 flex-wrap gap-2 text-xs">
+                        <Badge variant="neutral"
+                            >{{ t('bank_statements.result.paired') }}:
+                            {{ reviewCounts.paired }}</Badge
+                        >
+                        <Badge v-if="reviewCounts.pending" variant="neutral"
+                            >{{ t('bank_statements.result.pending') }}:
+                            {{ reviewCounts.pending }}</Badge
+                        >
                         <Badge variant="success"
                             >{{ t('bank_statements.result.matched') }}:
-                            {{ props.reconciliation.counts.matched }}</Badge
+                            {{ reviewCounts.matched }}</Badge
                         >
                         <Badge variant="danger"
                             >{{ t('bank_statements.result.mismatch') }}:
-                            {{ props.reconciliation.counts.mismatch }}</Badge
+                            {{ reviewCounts.mismatch }}</Badge
                         >
                         <Badge variant="warning"
                             >{{ t('bank_statements.result.unresolved') }}:
-                            {{ props.reconciliation.counts.unresolved }}</Badge
+                            {{ reviewCounts.unresolved }}</Badge
                         >
                     </div>
                     <Button
@@ -203,7 +245,7 @@ const {
                 </div>
 
                 <form @submit.prevent="save">
-                    <DataTable density="compact" variant="nested">
+                    <DataTable density="compact">
                         <thead>
                             <tr>
                                 <th>
@@ -334,7 +376,7 @@ const {
                                         )
                                     }}</span>
                                 </td>
-                                <td>
+                                <td data-mobile-layout="stack">
                                     <div
                                         v-if="props.statement.editable"
                                         class="flex min-w-64 gap-1"
@@ -384,6 +426,82 @@ const {
                                         >{{ transaction.sales_from ?? '—' }} –
                                         {{ transaction.sales_to ?? '—' }}</span
                                     >
+                                    <p
+                                        v-if="automaticSource(transaction)"
+                                        class="mt-2 text-xs text-on-surface-variant"
+                                    >
+                                        {{
+                                            t(
+                                                `bank_statements.suggestions.${automaticSource(transaction)}`,
+                                            )
+                                        }}
+                                    </p>
+                                    <details
+                                        v-if="
+                                            props.statement.editable &&
+                                            candidatesFor(transaction).length
+                                        "
+                                        class="mt-2 text-xs"
+                                    >
+                                        <summary class="cursor-pointer">
+                                            {{
+                                                t(
+                                                    'bank_statements.suggestions.title',
+                                                )
+                                            }}
+                                        </summary>
+                                        <div
+                                            v-for="candidate in candidatesFor(
+                                                transaction,
+                                            )"
+                                            :key="`${candidate.from}-${candidate.to}`"
+                                            class="mt-2 space-y-1"
+                                        >
+                                            <p>
+                                                {{ candidate.from }} –
+                                                {{ candidate.to }}
+                                            </p>
+                                            <p>
+                                                {{
+                                                    t(
+                                                        'bank_statements.transaction.expected',
+                                                    )
+                                                }}:
+                                                {{ candidate.expected ?? '—' }}
+                                                CZK · Δ
+                                                {{
+                                                    candidate.difference ?? '—'
+                                                }}
+                                                CZK
+                                            </p>
+                                            <p v-if="candidate.reason">
+                                                {{
+                                                    t(
+                                                        `bank_statements.reasons.${candidate.reason}`,
+                                                    )
+                                                }}
+                                            </p>
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                size="compact"
+                                                :disabled="
+                                                    candidate.reason !== null
+                                                "
+                                                @click="
+                                                    applyCandidate(
+                                                        transaction,
+                                                        candidate,
+                                                    )
+                                                "
+                                                >{{
+                                                    t(
+                                                        'bank_statements.suggestions.use',
+                                                    )
+                                                }}</Button
+                                            >
+                                        </div>
+                                    </details>
                                 </td>
                                 <td class="text-right">
                                     <div v-if="props.statement.editable">
@@ -411,30 +529,94 @@ const {
                                         resultFor(transaction)?.expected ?? '—'
                                     }}
                                 </td>
-                                <td>
-                                    <Badge
-                                        :variant="
-                                            badgeVariant(
-                                                resultFor(transaction)
-                                                    ?.status ?? 'unresolved',
-                                            )
-                                        "
-                                        >{{
-                                            t(
-                                                `bank_statements.result.${resultFor(transaction)?.status ?? 'unresolved'}`,
-                                            )
-                                        }}</Badge
+                                <td data-mobile-layout="stack">
+                                    <div
+                                        class="flex min-w-36 flex-col items-start gap-1"
                                     >
-                                    <p
-                                        v-if="
-                                            resultFor(transaction)?.difference
-                                        "
-                                        class="mt-1 text-[10px]"
-                                    >
-                                        Δ
-                                        {{ resultFor(transaction)?.difference }}
-                                        CZK
-                                    </p>
+                                        <p
+                                            v-if="isPending(transaction)"
+                                            class="text-xs"
+                                        >
+                                            {{
+                                                t(
+                                                    'bank_statements.result.pending',
+                                                )
+                                            }}
+                                        </p>
+                                        <template v-else>
+                                            <Badge
+                                                v-if="
+                                                    resultFor(transaction)
+                                                        ?.pairing === 'paired'
+                                                "
+                                                variant="neutral"
+                                                >{{
+                                                    t(
+                                                        'bank_statements.result.paired',
+                                                    )
+                                                }}</Badge
+                                            >
+                                            <Badge
+                                                :variant="
+                                                    badgeVariant(
+                                                        resultFor(transaction)
+                                                            ?.status ??
+                                                            'unresolved',
+                                                    )
+                                                "
+                                                >{{
+                                                    t(
+                                                        `bank_statements.result.${resultFor(transaction)?.status ?? 'unresolved'}`,
+                                                    )
+                                                }}</Badge
+                                            >
+                                            <p
+                                                v-if="
+                                                    resultFor(transaction)
+                                                        ?.difference !== null &&
+                                                    resultFor(transaction)
+                                                        ?.difference !==
+                                                        undefined
+                                                "
+                                                class="mt-1 text-xs"
+                                            >
+                                                Δ
+                                                {{
+                                                    resultFor(transaction)
+                                                        ?.difference
+                                                }}
+                                                CZK
+                                            </p>
+                                            <p
+                                                v-if="
+                                                    resultFor(transaction)
+                                                        ?.tolerance
+                                                "
+                                                class="mt-1 text-xs text-on-surface-variant"
+                                            >
+                                                {{
+                                                    t(
+                                                        'bank_statements.tolerance',
+                                                        {
+                                                            amount: resultFor(
+                                                                transaction,
+                                                            )?.tolerance,
+                                                        },
+                                                    )
+                                                }}
+                                            </p>
+                                            <p
+                                                v-if="reasonFor(transaction)"
+                                                class="mt-1 text-xs text-on-surface-variant"
+                                            >
+                                                {{
+                                                    t(
+                                                        `bank_statements.reasons.${reasonFor(transaction)}`,
+                                                    )
+                                                }}
+                                            </p>
+                                        </template>
+                                    </div>
                                 </td>
                                 <td v-if="props.statement.editable">
                                     <Button
@@ -459,7 +641,7 @@ const {
                         >
                     </div>
                 </form>
-            </Card>
+            </section>
         </div>
     </AppLayout>
 </template>

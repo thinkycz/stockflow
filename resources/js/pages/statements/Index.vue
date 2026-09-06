@@ -132,10 +132,11 @@ const {
                                 "
                             >
                                 {{
-                                    t(
-                                        'statements.bank_control.summary',
-                                        props.bank_reconciliation.counts,
-                                    )
+                                    t('statements.bank_control.summary', {
+                                        ...props.bank_reconciliation.counts,
+                                        paired: props.bank_reconciliation
+                                            .paired_count,
+                                    })
                                 }}
                             </template>
                             <template v-else>{{

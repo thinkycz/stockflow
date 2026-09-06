@@ -12,7 +12,7 @@ use App\Models\StatementDay;
 use App\Models\Store;
 use Illuminate\Support\Facades\DB;
 
-\test('card payouts reconcile against current net statement revenue with a five crown tolerance', function (): void {
+\test('card payouts reconcile against current net statement revenue with proportional tolerance', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $user->getKey()]);
     $dailyStatement = Statement::factory()->forStore($store)->forMonth(2026, 8)->create();
@@ -37,7 +37,7 @@ use Illuminate\Support\Facades\DB;
         'difference' => '-5.00',
     ]);
 
-    $transaction->update(['amount' => '984.99']);
+    $transaction->update(['amount' => '977.61']);
 
     \expect((new BankStatementReconciliationService())->forTransaction($transaction)['status'])
         ->toBe('mismatch');

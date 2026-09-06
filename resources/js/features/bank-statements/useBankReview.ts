@@ -4,9 +4,10 @@ import { useI18n } from 'vue-i18n';
 import { useDialog } from '@/composables/useDialog';
 import { useRoute } from '@/composables/useRoute';
 import { useSharedProps } from '@/composables/useSharedProps';
+import { sameTransaction, restoreReviewDraft } from './review-draft';
 import { withActionErrorToast } from '@/lib/action-errors';
 
-type Transaction = {
+export type Transaction = {
     id?: number;
     booked_on: string;
     executed_on: string | null;
@@ -26,6 +27,17 @@ type Transaction = {
     manually_edited: boolean;
 };
 
+export type PeriodCandidate = {
+    from: string;
+    to: string;
+    expected: string | null;
+    difference: string | null;
+    tolerance: string | null;
+    within_tolerance: boolean;
+    reason: string | null;
+    source: 'explicit' | 'inferred';
+};
+
 type ReconciliationRow = {
     transaction_id: number;
     status: string;
@@ -33,6 +45,12 @@ type ReconciliationRow = {
     expected: string | null;
     difference: string | null;
     reason: string | null;
+    pairing: 'paired' | 'unresolved' | 'excluded';
+    amount_check: 'within_tolerance' | 'difference' | 'not_checked';
+    tolerance: string | null;
+    candidates: PeriodCandidate[];
+    automatic: PeriodCandidate | null;
+    discovery_reason: string | null;
 };
 export type BankReviewProps = {
     statement: {
@@ -61,6 +79,7 @@ export type BankReviewProps = {
     };
     transactions: Transaction[];
     reconciliation: {
+        paired_count: number;
         counts: Record<
             'matched' | 'mismatch' | 'unresolved' | 'excluded',
             number
@@ -76,7 +95,7 @@ export function useBankReview(props: BankReviewProps) {
 
     const dialog = useDialog();
 
-    const { errors: pageErrors } = useSharedProps();
+    const { errors: pageErrors, user } = useSharedProps();
 
     const filter = ref('all');
 
@@ -85,14 +104,115 @@ export function useBankReview(props: BankReviewProps) {
     const form = useForm<{ transactions: Transaction[] }>({
         transactions: props.transactions.map((row) => ({ ...row })),
     });
+    form.defaults({
+        transactions: props.transactions.map((row) => ({ ...row })),
+    });
+    const savedRows = ref(props.transactions.map((row) => ({ ...row })));
+    const automaticSources = ref<Record<number, PeriodCandidate>>({});
+
+    function synchronize(force = false): void {
+        if (!force && form.isDirty && props.statement.editable) return;
+        savedRows.value = props.transactions.map((row) => ({ ...row }));
+        form.transactions = savedRows.value.map((row) => ({ ...row }));
+        form.defaults({
+            transactions: savedRows.value.map((row) => ({ ...row })),
+        });
+        automaticSources.value = {};
+        populateAutomaticPeriods();
+    }
+
+    function populateAutomaticPeriods(): void {
+        if (!props.statement.editable) return;
+        for (const row of form.transactions) {
+            const candidate = props.reconciliation.rows.find(
+                (result) => result.transaction_id === row.id,
+            )?.automatic;
+            if (
+                candidate &&
+                !row.sales_from &&
+                !row.sales_to &&
+                !row.manually_edited &&
+                !isPending(row)
+            ) {
+                applyCandidate(row, candidate);
+                if (row.id) automaticSources.value[row.id] = candidate;
+            }
+        }
+    }
+
+    function applyCandidate(
+        row: Transaction,
+        candidate: PeriodCandidate,
+    ): void {
+        if (!props.statement.editable || candidate.reason) return;
+        row.sales_from = candidate.from;
+        row.sales_to = candidate.to;
+    }
+
+    function automaticSource(row: Transaction): string | null {
+        const candidate = row.id ? automaticSources.value[row.id] : null;
+        return candidate &&
+            candidate.from === row.sales_from &&
+            candidate.to === row.sales_to
+            ? candidate.source
+            : null;
+    }
+
+    function isPending(row: Transaction): boolean {
+        return !sameTransaction(
+            row,
+            savedRows.value.find((saved) => saved.id === row.id),
+        );
+    }
+
+    function candidatesFor(row: Transaction): PeriodCandidate[] {
+        if (isPending(row)) return [];
+        return (
+            props.reconciliation.rows.find(
+                (result) => result.transaction_id === row.id,
+            )?.candidates ?? []
+        );
+    }
+
+    function reasonFor(row: Transaction): string | null {
+        if (isPending(row)) return null;
+        const result = resultFor(row);
+        return result?.discovery_reason ?? result?.reason ?? null;
+    }
+
+    const draftKey = `bank-review-${user.value?.id}-${props.statement.id}`;
+    let draftReady = false;
+    watch(
+        () => form.transactions,
+        () => {
+            if (!draftReady || !props.statement.editable) return;
+            try {
+                if (
+                    form.transactions.length === savedRows.value.length &&
+                    form.transactions.every((row) => !isPending(row))
+                ) {
+                    sessionStorage.removeItem(draftKey);
+                } else {
+                    sessionStorage.setItem(
+                        draftKey,
+                        JSON.stringify({
+                            baseline: JSON.stringify(savedRows.value),
+                            rows: form.transactions,
+                        }),
+                    );
+                }
+            } catch {
+                /* The form remains usable when browser storage is unavailable. */
+            }
+        },
+        { deep: true },
+    );
 
     let polling: ReturnType<typeof setInterval> | null = null;
 
     watch(
         () => props.transactions,
-        (rows) => {
-            form.transactions = rows.map((row) => ({ ...row }));
-        },
+        () => synchronize(),
     );
 
     watch(
@@ -103,6 +223,20 @@ export function useBankReview(props: BankReviewProps) {
     );
 
     onMounted(() => {
+        try {
+            if (props.statement.editable) {
+                const restored = restoreReviewDraft(
+                    sessionStorage.getItem(draftKey),
+                    savedRows.value,
+                );
+                if (restored) form.transactions = restored;
+            } else sessionStorage.removeItem(draftKey);
+        } catch {
+            /* Browser storage is optional. */
+        }
+        draftReady = true;
+        if (!props.statement.editable) synchronize(true);
+        else populateAutomaticPeriods();
         if (!props.statement.terminal) {
             polling = setInterval(() => {
                 router.reload({
@@ -138,7 +272,11 @@ export function useBankReview(props: BankReviewProps) {
                     transaction.category === filter.value;
                 const resultMatches =
                     resultFilter.value === 'all' ||
-                    (resultFor(transaction)?.status ?? 'unresolved') ===
+                    (resultFilter.value === 'paired' &&
+                        resultFor(transaction)?.pairing === 'paired') ||
+                    (isPending(transaction)
+                        ? 'pending'
+                        : (resultFor(transaction)?.status ?? 'unresolved')) ===
                         resultFilter.value;
 
                 return categoryMatches && resultMatches;
@@ -164,24 +302,64 @@ export function useBankReview(props: BankReviewProps) {
 
     const resultFilterOptions = computed(() => [
         { value: 'all', label: t('bank_statements.filter.all_results') },
+        { value: 'paired', label: t('bank_statements.result.paired') },
+        { value: 'pending', label: t('bank_statements.result.pending') },
         { value: 'matched', label: t('bank_statements.result.matched') },
         { value: 'mismatch', label: t('bank_statements.result.mismatch') },
         { value: 'unresolved', label: t('bank_statements.result.unresolved') },
         { value: 'excluded', label: t('bank_statements.result.excluded') },
     ]);
 
-    const confirmationBlocked = computed(
-        () =>
-            form.isDirty ||
-            props.statement.parse_warnings.length > 0 ||
+    const confirmationReasons = computed(() => {
+        const reasons: string[] = [];
+        if (form.isDirty) reasons.push(t('bank_statements.blockers.unsaved'));
+        if (props.statement.parse_warnings.length > 0)
+            reasons.push(t('bank_statements.integrity_blocked'));
+        if (
             form.transactions.some(
-                (transaction) =>
+                (row) =>
                     ['card', 'wolt', 'bolt', 'foodora'].includes(
-                        transaction.category,
+                        row.category,
                     ) &&
-                    (!transaction.sales_from || !transaction.sales_to),
-            ),
+                    (!row.sales_from ||
+                        !row.sales_to ||
+                        row.sales_from > row.sales_to),
+            )
+        ) {
+            reasons.push(t('bank_statements.blockers.periods'));
+        }
+        return reasons;
+    });
+    const confirmationBlocked = computed(
+        () => form.processing || confirmationReasons.value.length > 0,
     );
+    const reviewCounts = computed(() => {
+        const counts = {
+            paired: 0,
+            matched: 0,
+            mismatch: 0,
+            unresolved: 0,
+            excluded: 0,
+            pending: 0,
+        };
+        for (const row of form.transactions) {
+            if (isPending(row)) {
+                counts.pending++;
+                continue;
+            }
+            const result = resultFor(row);
+            if (result?.pairing === 'paired') counts.paired++;
+            const status = result?.status ?? 'unresolved';
+            if (
+                status === 'matched' ||
+                status === 'mismatch' ||
+                status === 'excluded' ||
+                status === 'unresolved'
+            )
+                counts[status]++;
+        }
+        return counts;
+    });
 
     const statementError = computed(() => errorFor('statement'));
 
@@ -231,6 +409,14 @@ export function useBankReview(props: BankReviewProps) {
             }),
             withActionErrorToast({
                 preserveScroll: true,
+                onSuccess: () => {
+                    synchronize(true);
+                    try {
+                        sessionStorage.removeItem(draftKey);
+                    } catch {
+                        /* Browser storage is optional. */
+                    }
+                },
             }),
         );
     }
@@ -283,6 +469,7 @@ export function useBankReview(props: BankReviewProps) {
     }
 
     function resultFor(transaction: Transaction): ReconciliationRow | null {
+        if (isPending(transaction)) return null;
         return transaction.id
             ? (reconciliationById.value.get(transaction.id) ?? null)
             : null;
@@ -307,6 +494,13 @@ export function useBankReview(props: BankReviewProps) {
         filterOptions,
         resultFilterOptions,
         confirmationBlocked,
+        confirmationReasons,
+        reviewCounts,
+        isPending,
+        applyCandidate,
+        candidatesFor,
+        reasonFor,
+        automaticSource,
         statementError,
         transactionError,
         addRow,

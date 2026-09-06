@@ -60,6 +60,7 @@ export type StatementEditorProps = {
     };
     is_admin: boolean;
     bank_reconciliation: {
+        paired_count: number;
         statement_id: number | null;
         status: string;
         counts: {

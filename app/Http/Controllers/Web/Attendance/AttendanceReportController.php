@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Web\Attendance;
 
 use App\Domain\Workforce\AttendanceReportService;
 use App\Domain\Workforce\AttendanceService;
+use App\Models\Shift;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
@@ -45,6 +46,19 @@ class AttendanceReportController
         Worker::querySelect($activeWorkerQuery);
         $activeWorkers = $activeWorkerQuery->orderBy('last_name')->orderBy('first_name')->take(self::TAKE)->get();
 
+        $report = (new AttendanceReportService())->build($admin, $store, $month, $workerId);
+        $shiftQuery = Shift::query();
+        Shift::scopeForUser($shiftQuery, $admin);
+        Shift::scopeForStore($shiftQuery, $store->getKey());
+        $dates = \array_values(\array_unique(\array_column($report['rows'], 'date')));
+        $shiftIds = \array_values(\array_filter(\array_column($report['rows'], 'shift_id'), static fn(int|null $id): bool => $id !== null));
+        $candidates = $shiftQuery->where(static function ($query) use ($dates, $shiftIds): void {
+            $query->whereIn('id', $shiftIds);
+            foreach ($dates as $date) {
+                $query->orWhereDate('date', $date);
+            }
+        })->orderBy('date')->orderBy('start_time')->get();
+
         return Inertia::render('attendance/Report', [
             'store' => ['id' => $store->getKey(), 'name' => $store->getName(), 'is_active' => $store->isActive()],
             'workers' => $workers->map(static fn(Worker $worker): array => [
@@ -54,7 +68,11 @@ class AttendanceReportController
                 'id' => $worker->getKey(), 'first_name' => $worker->getFirstName(), 'last_name' => $worker->getLastName(),
             ])->all(),
             'filters' => ['month' => $month, 'worker_id' => $workerId],
-            'report' => (new AttendanceReportService())->build($admin, $store, $month, $workerId),
+            'report' => $report,
+            'shift_candidates' => $candidates->map(static fn(Shift $shift): array => [
+                'id' => $shift->getKey(), 'worker_id' => $shift->getWorkerId(), 'date' => $shift->getDate(),
+                'start_time' => $shift->getStartTimeShort(), 'end_time' => $shift->getEndTimeShort(),
+            ])->all(),
         ]);
     }
 }

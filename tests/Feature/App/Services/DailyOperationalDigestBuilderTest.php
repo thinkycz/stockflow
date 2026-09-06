@@ -142,10 +142,10 @@ use Carbon\CarbonImmutable;
 
     \expect(\implode(' ', $snapshot['sections'][0]['paragraphs']))
         ->not->toContain('Finance za 08/2026')
-        ->not->toContain('Výkaz za 02. 08. 2026')
+        ->not->toContain('Výkaz za 2.8.2026')
         ->and(\implode(' ', $snapshot['sections'][1]['paragraphs']))
         ->toContain('Finance za 08/2026: příjmy 100,00 Kč; výdaje 40,00 Kč; zisk 60,00 Kč.')
-        ->toContain('Výkaz za 02. 08. 2026: celkem 100,00 Kč.');
+        ->toContain('Výkaz za 2.8.2026: celkem 100,00 Kč.');
 });
 
 \test('builder respects the twenty-five-hour Prague daylight-saving day', function (): void {

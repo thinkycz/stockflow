@@ -169,7 +169,7 @@ class AttendanceDeviationReviewService
                 [['store' => $store, 'perspective' => null]],
                 [
                     'Slack worker' => $worker->getFullName(),
-                    'Slack attendance date' => $lockedShift->getDate(),
+                    'Slack attendance date' => CarbonImmutable::parse($lockedShift->getDate(), AttendanceService::BUSINESS_TIMEZONE)->format('j.n.Y'),
                     'Slack planned time' => $expectedStartTime . '–' . $expectedEndTime,
                     'Slack actual time' => $first->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->format('H:i') . '–' . $last->getEndedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->format('H:i'),
                     'Slack reviewed time' => $afterStartTime . '–' . $afterEndTime,

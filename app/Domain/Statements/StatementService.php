@@ -573,7 +573,7 @@ class StatementService
 
         if ($todayDay instanceof StatementDay) {
             $facts += [
-                'Slack statement date' => $today->format('j. n. Y'),
+                'Slack statement date' => $today->format('j.n.Y'),
                 'Slack statement cash' => $this->formatCurrency($todayDay->getCash()),
                 'Slack statement card' => $this->formatCurrency($todayDay->getCard()),
                 'Slack statement wolt' => $this->formatCurrency($todayDay->getWolt()),

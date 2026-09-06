@@ -311,5 +311,14 @@
     "Exactly one main administrator": "Práve jeden hlavný administrátor",
     "No orphan root users": "Žiadni osirelí koreňoví používatelia",
     "Demo credential removed": "Demonštračné prihlasovacie údaje odstránené",
-    "Exactly one active main warehouse": "Práve jeden aktívny hlavný sklad"
+    "Exactly one active main warehouse": "Práve jeden aktívny hlavný sklad",
+    "Departure is required before restoring attendance.": "Pred obnovením dochádzky doplňte odchod.",
+    "Complete attendance breaks before restoring attendance.": "Pred obnovením dochádzky ukončite prestávky.",
+    "Restore attendance before matching it.": "Pred párovaním obnovte platnosť dochádzky.",
+    "Select a shift for the same worker, store and attendance day.": "Vyberte zmenu rovnakého pracovníka, prevádzky a dňa dochádzky.",
+    "An attendance correction reason is required.": "Vyplňte dôvod opravy dochádzky.",
+    "Reopen the payroll report before changing attendance.": "Pred zmenou dochádzky znovu otvorte mzdový prehľad.",
+    "Attendance validity restored.": "Platnosť dochádzky bola obnovená.",
+    "Attendance matched.": "Dochádzka bola spárovaná.",
+    "Attendance matching: :matched matched, :unmatched without a shift, :ambiguous ambiguous.": "Párovanie dochádzky: spárovaných :matched, bez zmeny :unmatched, nejednoznačných :ambiguous."
 }

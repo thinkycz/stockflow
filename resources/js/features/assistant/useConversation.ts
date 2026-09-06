@@ -1,3 +1,4 @@
+import { formatDateTime } from '@/lib/format';
 import {
     actionApprovalParts,
     isActionApprovalPart,
@@ -42,7 +43,7 @@ export type ConversationProps = {
 };
 
 export function useConversation(props: ConversationProps) {
-    const { locale, t } = useI18n();
+    const { t } = useI18n();
 
     const route = useRoute();
 
@@ -583,14 +584,6 @@ export function useConversation(props: ConversationProps) {
         );
     }
 
-    const messageDateTimeFormatter = computed(
-        () =>
-            new Intl.DateTimeFormat(locale.value, {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-            }),
-    );
-
     function messageTimestamp(message: AssistantUIMessage): string {
         const persisted = message.metadata?.created_at;
 
@@ -611,9 +604,7 @@ export function useConversation(props: ConversationProps) {
     }
 
     function formattedMessageTimestamp(message: AssistantUIMessage): string {
-        return messageDateTimeFormatter.value.format(
-            new Date(messageTimestamp(message)),
-        );
+        return formatDateTime(new Date(messageTimestamp(message)));
     }
 
     function updateScrollAffinity(): void {

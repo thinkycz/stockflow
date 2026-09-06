@@ -166,7 +166,7 @@ test('admin manages and closes a monthly financial report while limited users ar
 
     await page.getByRole('button', { name: 'Add income' }).click();
     await expect(page.getByLabel('Type')).toHaveValue('income');
-    await page.getByLabel('Date').fill('2030-01-15');
+    await page.getByLabel('Date').fill('15.1.2030');
     await page.getByLabel('Item').fill('E2E extra income');
     await page.getByLabel('Amount').fill('125.50');
     await page.getByLabel('Note').fill('Created by Playwright');

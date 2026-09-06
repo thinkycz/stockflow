@@ -311,7 +311,7 @@ class AttendanceService
             [['store' => $store, 'perspective' => null]],
             [
                 'Slack worker' => $worker->getFullName(),
-                'Slack attendance date' => $occurredAt->setTimezone(self::BUSINESS_TIMEZONE)->toDateString(),
+                'Slack attendance date' => $occurredAt->setTimezone(self::BUSINESS_TIMEZONE)->format('j.n.Y'),
             ],
         );
     }

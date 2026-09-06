@@ -121,6 +121,8 @@ export function useAttendance(props: AttendanceProps) {
         return new Intl.DateTimeFormat(locale.value, {
             hour: '2-digit',
             minute: '2-digit',
+            timeZone: 'Europe/Prague',
+            hourCycle: 'h23',
         }).format(new Date(value));
     }
 

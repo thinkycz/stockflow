@@ -72,6 +72,11 @@ class AttendanceSession extends BaseModel
     }
 
     /**
+     * Owning administrator id.
+     */
+    public function getUserId(): int { return $this->assertInt('user_id'); }
+
+    /**
      * Store id getter.
      */
     public function getStoreId(): int { return $this->assertInt('store_id'); }

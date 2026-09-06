@@ -1,3 +1,4 @@
+import { formatDate } from '@/lib/format';
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -12,11 +13,7 @@ type FinancialRow = {
     kind: 'automatic' | 'manual';
     direction: 'income' | 'expense';
     source_type:
-        | 'revenue'
-        | 'stock_movement'
-        | 'wage'
-        | 'recurring_expense'
-        | null;
+        'revenue' | 'stock_movement' | 'wage' | 'recurring_expense' | null;
     source_key: string | null;
     label: string;
     occurred_on: string | null;
@@ -129,11 +126,7 @@ export function useFinanceEntries(props: FinanceEntriesProps) {
     }
 
     function date(value: string | null): string {
-        return value === null
-            ? '—'
-            : new Intl.DateTimeFormat(locale.value).format(
-                  new Date(`${value}T12:00:00`),
-              );
+        return formatDate(value);
     }
 
     function changeMonth(value: string): void {

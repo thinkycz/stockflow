@@ -182,7 +182,7 @@ function static_translation_keys(string $path): array
         if (
             !\is_array($token) ||
             !\in_array($token[0], [\T_STRING, \T_NAME_FULLY_QUALIFIED], true) ||
-            \ltrim($token[1], '\\') !== '__'
+            \mb_ltrim($token[1], '\\') !== '__'
         ) {
             continue;
         }

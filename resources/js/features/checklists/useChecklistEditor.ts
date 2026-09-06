@@ -10,11 +10,7 @@ type Task = { id: number; text: string };
 type ShiftTasks = { morning: Task[]; afternoon: Task[] };
 
 type Status =
-    | 'not_configured'
-    | 'in_progress'
-    | 'completed'
-    | 'incomplete'
-    | 'excused';
+    'not_configured' | 'in_progress' | 'completed' | 'incomplete' | 'excused';
 
 type HistoryRow = {
     id: number;

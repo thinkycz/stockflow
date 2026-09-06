@@ -136,7 +136,7 @@ class DailyOperationalDigestBuilder
                     'income' => Typer::parseFloat($totals['income'] ?? null),
                     'expenses' => Typer::parseFloat($totals['expenses'] ?? null),
                     'profit' => Typer::parseFloat($totals['profit'] ?? null),
-                    'statement_date' => $localStart->format('d. m. Y'),
+                    'statement_date' => $localStart->format('j.n.Y'),
                     'statement_total' => $statementDay instanceof StatementDay ? $statementDay->getTotal() : 0.0,
                 ];
             }
@@ -186,8 +186,7 @@ class DailyOperationalDigestBuilder
         $sections[] = $this->buildSection('company', 'Celofiremní', false, $companyActivities, null);
 
         $activityCount = $activities->count();
-        $formattedDate = Typer::assertInstance($localStart->locale('cs'), CarbonImmutable::class)
-            ->translatedFormat('j. F Y');
+        $formattedDate = $localStart->format('j.n.Y');
 
         return [
             'date' => $localStart->toDateString(),

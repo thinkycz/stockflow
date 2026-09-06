@@ -76,7 +76,9 @@
         "move_up": "Move up",
         "move_down": "Move down",
         "first_page": "First page",
-        "last_page": "Last page"
+        "last_page": "Last page",
+        "invalid_date": "Enter a valid date as d.m.yyyy, optionally followed by HH:mm.",
+        "date_out_of_range": "Date is outside the allowed range."
     },
     "assistant": {
         "title": "AI Assistant",
@@ -1927,6 +1929,18 @@
             "reason": "Correction reason",
             "reason_prompt": "Enter the reason for voiding",
             "add_break": "Add break"
+        },
+        "matching": {
+            "restore": "Restore validity",
+            "bulk": "Match attendances",
+            "match": "Match to shift",
+            "change": "Change shift",
+            "current": "current assignment",
+            "shift": "Shift",
+            "select": "Select a shift",
+            "no_candidates": "No shifts for this worker and day.",
+            "departure": "Departure time",
+            "bulk_help": "Match valid unpaired attendance within the applied report filters. Ambiguous cases will be skipped."
         }
     },
     "gift_vouchers": {

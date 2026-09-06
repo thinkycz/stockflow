@@ -360,6 +360,10 @@ Resolver::resolveRouteRegistrar()
         $router->put('attendance/sessions/{attendanceSession}', [AttendanceCorrectionController::class, 'update'])->whereNumber('attendanceSession')->name('attendance.sessions.update');
         $router->post('attendance/sessions/{attendanceSession}/void', [AttendanceCorrectionController::class, 'void'])->whereNumber('attendanceSession')->name('attendance.sessions.void');
 
+        $router->post('attendance/sessions/{attendanceSession}/restore', [AttendanceCorrectionController::class, 'restore'])->whereNumber('attendanceSession')->name('attendance.sessions.restore');
+        $router->post('attendance/sessions/{attendanceSession}/match', [AttendanceCorrectionController::class, 'matchShift'])->whereNumber('attendanceSession')->name('attendance.sessions.match');
+        $router->post('attendance/report/match', [AttendanceCorrectionController::class, 'matchReport'])->name('attendance.report.match');
+
         // Store checklist administration
         $router->get('checklists', ChecklistIndexController::class)->name('checklists.index');
         $router->put('checklists/templates', ChecklistTemplateController::class)->name('checklists.templates.update');

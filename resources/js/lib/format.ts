@@ -1,3 +1,4 @@
+import { formatDateInput, parseCzechDateInput } from '@/lib/date-input';
 import { getIntlLocale } from '@/i18n';
 
 export function formatMoney(value: number): string {
@@ -41,51 +42,38 @@ export function formatSignedNumber(value: number): string {
     }).format(value);
 }
 
-/**
- * Format a date string as `dd.MM.yyyy`.
- *
- * The backend emits ISO 8601 and the frontend formats it using the UI locale.
- */
-export function formatDate(date: string | Date | null | undefined): string {
-    if (date === null || date === undefined || date === '') {
-        return '—';
+/** Render complete dates in Czech notation in every UI language. */
+export function formatDate(value: string | Date | null | undefined): string {
+    if (value === null || value === undefined || value === '') return '—';
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const text = formatDateInput(value);
+        return parseCzechDateInput(text) === value ? text : '—';
     }
-
-    const parsed = date instanceof Date ? date : new Date(date);
-    if (Number.isNaN(parsed.getTime())) {
-        return '—';
-    }
-
-    return new Intl.DateTimeFormat(getIntlLocale(), {
-        day: '2-digit',
-        month: '2-digit',
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    const parts = new Intl.DateTimeFormat('cs-CZ', {
+        day: 'numeric',
+        month: 'numeric',
         year: 'numeric',
         timeZone: 'Europe/Prague',
-    }).format(parsed);
+    }).formatToParts(date);
+    const part = (type: string) =>
+        parts.find((item) => item.type === type)?.value ?? '';
+    return `${part('day')}.${part('month')}.${part('year')}`;
 }
 
-/**
- * Format a date-time string as `dd.MM.yyyy HH:mm`.
- */
-export function formatDateTime(date: string | Date | null | undefined): string {
-    if (date === null || date === undefined || date === '') {
-        return '—';
-    }
-
-    const parsed = date instanceof Date ? date : new Date(date);
-    if (Number.isNaN(parsed.getTime())) {
-        return '—';
-    }
-
-    return new Intl.DateTimeFormat(getIntlLocale(), {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
+/** Render instants in Prague time with a 24-hour clock. */
+export function formatDateTime(
+    value: string | Date | null | undefined,
+): string {
+    const dateText = formatDate(value);
+    if (dateText === '—' || value === null || value === undefined) return '—';
+    return `${dateText} ${new Intl.DateTimeFormat('cs-CZ', {
         hour: '2-digit',
         minute: '2-digit',
-        hour12: false,
+        hourCycle: 'h23',
         timeZone: 'Europe/Prague',
-    }).format(parsed);
+    }).format(value instanceof Date ? value : new Date(value))}`;
 }
 
 /**

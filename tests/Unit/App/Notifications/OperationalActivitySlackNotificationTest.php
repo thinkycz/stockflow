@@ -50,7 +50,7 @@ use Illuminate\Notifications\AnonymousNotifiable;
     \expect($encoded)->toContain('Příchod zaznamenán')
         ->toContain('Praha &lt;centrum&gt;')
         ->toContain('Jan &amp; Petr')
-        ->toContain('22. 7. 2026 12:15')
+        ->toContain('22.7.2026 12:15')
         ->toContain('Otevřít ve StockFlow');
 });
 

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\AttendanceSession;
+use App\Models\Shift;
 use App\Models\Store;
 use App\Models\Worker;
 use Illuminate\Support\Facades\DB;
@@ -30,10 +31,13 @@ use Illuminate\Support\Facades\DB;
         'ended_at' => '2026-07-10 16:00:00',
     ]);
 
+    $shift = Shift::factory()->create(['user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(), 'date' => '2026-07-10']);
+
     $this->be($admin, 'users')->get('/attendance/report?month=2026-07', $this->inertiaHeaders())
         ->assertOk()
         ->assertJsonPath('component', 'attendance/Report')
         ->assertJsonPath('props.store.id', $store->getKey())
+        ->assertJsonPath('props.shift_candidates.0.id', $shift->getKey())
         ->assertJsonPath('props.workers.0.id', $worker->getKey())
         ->assertJsonPath('props.workers.1.id', $archived->getKey())
         ->assertJsonCount(1, 'props.active_workers')

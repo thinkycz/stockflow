@@ -103,7 +103,9 @@ test('public shift requests toggle and appear in the admin calendar overlay', as
     const approvalForm = requestDialog.getByTestId(
         'shift-request-approval-form',
     );
-    await expect(approvalForm).toContainText(`E2E Worker · ${date}`);
+    await expect(approvalForm).toContainText(
+        `E2E Worker · 15.${month}.${year}`,
+    );
     await expect(
         approvalForm.getByLabel('Employee', { exact: true }),
     ).toHaveCount(0);

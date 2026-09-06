@@ -8,11 +8,14 @@ use App\Enums\OperationalActivityTypeEnum;
 use App\Models\AttendanceAudit;
 use App\Models\AttendanceBreak;
 use App\Models\AttendanceSession;
+use App\Models\PayrollReport;
+use App\Models\Shift;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
 use App\Support\OperationalActivityService;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Thrower;
@@ -117,6 +120,158 @@ class AttendanceCorrectionService
     }
 
     /**
+     * Restore a voided session, completing an unfinished interval atomically.
+     */
+    public function restore(User $actor, AttendanceSession $session, string $reason, CarbonImmutable|null $endedAt = null): AttendanceSession
+    {
+        return DB::transaction(function () use ($actor, $session, $reason, $endedAt): AttendanceSession {
+            $locked = $this->lockSession($actor, $session, $reason);
+            if ($locked->getVoidedAt() === null) {
+                return $locked;
+            }
+            $end = $locked->getEndedAt()?->toImmutable() ?? $endedAt;
+            if ($end === null) {
+                $this->fail('ended_at', Typer::assertString(\__('Departure is required before restoring attendance.')));
+            }
+            $breaks = $locked->attendanceBreaks()->orderBy('started_at')->get()->map(static fn(AttendanceBreak $break): array => [
+                'started_at' => $break->getStartedAt()->toImmutable(),
+                'ended_at' => $break->getEndedAt()?->toImmutable(),
+            ])->all();
+            foreach ($breaks as $break) {
+                if ($break['ended_at'] === null) {
+                    $this->fail('breaks', Typer::assertString(\__('Complete attendance breaks before restoring attendance.')));
+                }
+            }
+            $this->validateIntervals($locked->getStartedAt()->toImmutable(), $end, \array_values($breaks));
+            $this->assertPayrollOpen($actor, $locked, $end);
+            $before = $this->snapshot($locked);
+            $locked->update(['voided_at' => null, 'voided_by_user_id' => null, 'active_worker_id' => null, 'ended_at' => $end]);
+            $this->audit($locked, $actor, 'correction_restore', $reason, $before, $this->snapshot($locked));
+
+            return $locked->refresh();
+        });
+    }
+
+    /**
+     * Manually select a shift without changing recorded attendance intervals.
+     */
+    public function matchShift(User $actor, AttendanceSession $session, int $shiftId, string $reason): AttendanceSession
+    {
+        return DB::transaction(function () use ($actor, $session, $shiftId, $reason): AttendanceSession {
+            $locked = $this->lockSession($actor, $session, $reason);
+            if ($locked->getVoidedAt() !== null) {
+                $this->fail('session', Typer::assertString(\__('Restore attendance before matching it.')));
+            }
+            $shift = Shift::query()->whereKey($shiftId)->lockForUpdate()->firstOrFail();
+            if ($shift->getUserId() !== $actor->getKey() || $shift->getStoreId() !== $locked->getStoreId() ||
+                $shift->getWorkerId() !== $locked->getWorkerId() ||
+                $shift->getDate() !== $locked->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toDateString()) {
+                $this->fail('shift_id', Typer::assertString(\__('Select a shift for the same worker, store and attendance day.')));
+            }
+            $this->assertPayrollOpen($actor, $locked, $locked->getEndedAt()?->toImmutable());
+            $before = $this->snapshot($locked);
+            $locked->fill([
+                'shift_id' => $shift->getKey(), 'scheduled_date' => $shift->getDate(),
+                'scheduled_start_time' => $shift->getStartTime(), 'scheduled_end_time' => $shift->getEndTime(),
+                'hourly_rate' => $shift->getHourlyRate(),
+            ]);
+            if ($locked->isDirty()) {
+                $locked->save();
+                $this->audit($locked, $actor, 'correction_match', $reason, $before, $this->snapshot($locked));
+            }
+
+            return $locked->refresh();
+        });
+    }
+
+    /**
+     * Match only unambiguous unpaired rows from the current report scope.
+     *
+     * @return array{matched: int, unmatched: int, ambiguous: int}
+     */
+    public function matchReport(User $actor, Store $store, string $month, int|null $workerId, string $reason): array
+    {
+        return DB::transaction(function () use ($actor, $store, $month, $workerId, $reason): array {
+            $store = Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail();
+            if (!$actor->isAdmin() || $store->getUserId() !== $actor->getKey() || !$store->isActive() || $store->isWarehouse()) {
+                \abort(404);
+            }
+            $result = ['matched' => 0, 'unmatched' => 0, 'ambiguous' => 0];
+            $sessions = AttendanceReportService::sessionsQuery($actor, $store, $month, $workerId)
+                ->whereNull('voided_at')->whereNull('shift_id')->lockForUpdate()->get();
+            foreach ($sessions as $session) {
+                $candidates = $this->shiftCandidates($actor, $session)->filter(
+                    static fn(Shift $shift): bool => (new AttendanceService())->matchesCurrentWindow($shift, $session->getStartedAt()->toImmutable()),
+                );
+                if ($candidates->count() !== 1) {
+                    ++$result[$candidates->isEmpty() ? 'unmatched' : 'ambiguous'];
+
+                    continue;
+                }
+                $shift = $candidates->firstOrFail();
+                $this->matchShift($actor, $session, $shift->getKey(), $reason);
+                ++$result['matched'];
+            }
+
+            return $result;
+        });
+    }
+
+    /**
+     * List same-day candidates for one owned attendance.
+     *
+     * @return Collection<int, Shift>
+     */
+    public function shiftCandidates(User $actor, AttendanceSession $session): Collection
+    {
+        $query = Shift::query();
+        Shift::scopeForUser($query, $actor);
+
+        return $query->where('store_id', $session->getStoreId())->where('worker_id', $session->getWorkerId())
+            ->whereDate('date', $session->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toDateString())
+            ->orderBy('start_time')->orderBy('id')->get();
+    }
+
+    /**
+     * Serialize mutations with store lifecycle changes and validate ownership.
+     */
+    private function lockSession(User $actor, AttendanceSession $session, string $reason): AttendanceSession
+    {
+        $store = Store::query()->whereKey($session->getStoreId())->lockForUpdate()->firstOrFail();
+        $locked = AttendanceSession::query()->whereKey($session->getKey())->lockForUpdate()->firstOrFail();
+        $this->authorize($actor, $store, Worker::query()->whereKey($locked->getWorkerId())->firstOrFail());
+        if ($locked->getUserId() !== $actor->getKey() || \mb_trim($reason) === '') {
+            $this->fail('reason', Typer::assertString(\__('An attendance correction reason is required.')));
+        }
+
+        return $locked;
+    }
+
+    /**
+     * Prevent changes to any closed payroll period touched by the session.
+     */
+    private function assertPayrollOpen(User $actor, AttendanceSession $session, CarbonImmutable|null $end): void
+    {
+        $start = $session->getStartedAt()->toImmutable()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->startOfMonth();
+        $last = ($end ?? CarbonImmutable::now())->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->startOfMonth();
+        $months = [];
+        for ($date = $start; $date->lessThanOrEqualTo($last); $date = $date->addMonth()) {
+            $months[] = $date->format('Y-m');
+        }
+        $months[] = $start->format('Y-m');
+        if ($session->getScheduledDate() !== null) {
+            $months[] = $session->getScheduledDate()->format('Y-m');
+        }
+        $query = PayrollReport::query();
+        PayrollReport::scopeForUser($query, $actor);
+        foreach ($query->where('store_id', $session->getStoreId())->where('status', 'closed')->get() as $report) {
+            if (\in_array(\sprintf('%04d-%02d', $report->getYear(), $report->getMonth()), $months, true)) {
+                $this->fail('payroll', Typer::assertString(\__('Reopen the payroll report before changing attendance.')));
+            }
+        }
+    }
+
+    /**
      * Ensure corrected work and break intervals form a valid timeline.
      *
      * @param list<array{started_at: CarbonImmutable, ended_at: CarbonImmutable}> $breaks
@@ -169,6 +324,11 @@ class AttendanceCorrectionService
     {
         return [
             'worker_id' => $session->getWorkerId(),
+            'shift_id' => $session->getShiftId(),
+            'scheduled_date' => $session->getScheduledDate()?->toDateString(),
+            'scheduled_start_time' => $session->getScheduledStartTime(),
+            'scheduled_end_time' => $session->getScheduledEndTime(),
+            'hourly_rate' => $session->getHourlyRate(),
             'started_at' => $session->getStartedAt()->toIso8601String(),
             'ended_at' => $session->getEndedAt()?->toIso8601String(),
             'voided_at' => $session->getVoidedAt()?->toIso8601String(),
@@ -206,7 +366,7 @@ class AttendanceCorrectionService
             [['store' => $store, 'perspective' => null]],
             [
                 'Slack worker' => $worker->getFullName(),
-                'Slack attendance date' => $session->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toDateString(),
+                'Slack attendance date' => $session->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->format('j.n.Y'),
             ],
         );
     }

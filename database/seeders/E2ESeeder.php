@@ -378,6 +378,22 @@ class E2ESeeder extends Seeder
                 'hourly_rate' => $secondWorker->getHourlyRate(),
             ],
         );
+        foreach ([10, 11, 12] as $day) {
+            $date = '2032-03-' . $day;
+            Shift::query()->create([
+                'user_id' => $user->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
+                'date' => $date, 'start_time' => $day === 11 ? '18:00' : '08:00', 'end_time' => $day === 11 ? '22:00' : '16:00',
+                'hourly_rate' => $worker->getHourlyRate(),
+            ]);
+            AttendanceSession::query()->create([
+                'user_id' => $user->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
+                'created_by_user_id' => $user->getKey(), 'active_worker_id' => null, 'shift_id' => null,
+                'hourly_rate' => $worker->getHourlyRate(), 'started_at' => $date . ' 07:00:00',
+                'ended_at' => $day === 12 ? null : $date . ' 15:00:00',
+                'voided_at' => $day === 12 ? $date . ' 15:00:00' : null,
+                'voided_by_user_id' => $day === 12 ? $user->getKey() : null,
+            ]);
+        }
         $deviationShift = Shift::query()->updateOrCreate(
             [
                 'user_id' => $user->getKey(),

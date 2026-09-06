@@ -705,7 +705,7 @@ class RecipeDefaultCatalog
      */
     private static function number(float|int $number): string
     {
-        return \rtrim(\rtrim(\number_format((float) $number, 3, '.', ''), '0'), '.');
+        return \mb_rtrim(\mb_rtrim(\number_format((float) $number, 3, '.', ''), '0'), '.');
     }
 
     /**

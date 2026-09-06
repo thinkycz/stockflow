@@ -37,7 +37,7 @@ class AttendanceCorrectionController
         (new AttendanceCorrectionService())->create($admin, $store, $worker, $startedAt, $endedAt, $breaks, $validated->assertString('reason'));
         Inertia::flash('success', \__('Attendance correction created.'));
 
-        return Resolver::resolveRedirector()->route('attendance.report');
+        return Resolver::resolveRedirector()->back(302, [], Resolver::resolveUrlGenerator()->route('attendance.report'));
     }
 
     /**
@@ -53,7 +53,7 @@ class AttendanceCorrectionController
         (new AttendanceCorrectionService())->update($admin, $attendanceSession, $worker, $startedAt, $endedAt, $breaks, $validated->assertString('reason'));
         Inertia::flash('success', \__('Attendance correction saved.'));
 
-        return Resolver::resolveRedirector()->route('attendance.report');
+        return Resolver::resolveRedirector()->back(302, [], Resolver::resolveUrlGenerator()->route('attendance.report'));
     }
 
     /**
@@ -69,7 +69,66 @@ class AttendanceCorrectionController
         (new AttendanceCorrectionService())->void($admin, $attendanceSession, $validated->assertString('reason'));
         Inertia::flash('success', \__('Attendance session voided.'));
 
-        return Resolver::resolveRedirector()->route('attendance.report');
+        return Resolver::resolveRedirector()->back(302, [], Resolver::resolveUrlGenerator()->route('attendance.report'));
+    }
+
+    /**
+     * Restore validity and optionally complete a historical session.
+     */
+    public function restore(Request $request, AttendanceSession $attendanceSession): RedirectResponse
+    {
+        $admin = User::mustAuth();
+        $store = $this->storeFor($request, $admin);
+        if ($attendanceSession->getStoreId() !== $store->getKey()) { \abort(404); }
+        $validity = AttendanceValidity::inject($admin->getKey());
+        $validated = $this->validateRequest($request, [
+            'reason' => $validity->reason()->required()->toArray(),
+            'ended_at' => $validity->localDateTime()->nullable()->toArray(),
+        ]);
+        $endValue = $validated->assertNullableString('ended_at');
+        $end = $endValue === null ? null : CarbonImmutable::createFromFormat('!Y-m-d\\TH:i', $endValue, AttendanceService::BUSINESS_TIMEZONE);
+        (new AttendanceCorrectionService())->restore($admin, $attendanceSession, $validated->assertString('reason'), $end instanceof CarbonImmutable ? $end->utc() : null);
+        Inertia::flash('success', \__('Attendance validity restored.'));
+
+        return Resolver::resolveRedirector()->back();
+    }
+
+    /**
+     * Assign the administrator-selected shift to a session.
+     */
+    public function matchShift(Request $request, AttendanceSession $attendanceSession): RedirectResponse
+    {
+        $admin = User::mustAuth();
+        $store = $this->storeFor($request, $admin);
+        if ($attendanceSession->getStoreId() !== $store->getKey()) { \abort(404); }
+        $validity = AttendanceValidity::inject($admin->getKey());
+        $validated = $this->validateRequest($request, [
+            'reason' => $validity->reason()->required()->toArray(),
+            'shift_id' => $validity->shiftId()->required()->toArray(),
+        ]);
+        (new AttendanceCorrectionService())->matchShift($admin, $attendanceSession, $validated->parseInt('shift_id'), $validated->assertString('reason'));
+        Inertia::flash('success', \__('Attendance matched.'));
+
+        return Resolver::resolveRedirector()->back();
+    }
+
+    /**
+     * Match unpaired attendance within the selected report filters.
+     */
+    public function matchReport(Request $request): RedirectResponse
+    {
+        $admin = User::mustAuth();
+        $store = $this->storeFor($request, $admin);
+        $validity = AttendanceValidity::inject($admin->getKey());
+        $validated = $this->validateRequest($request, [
+            'reason' => $validity->reason()->required()->toArray(),
+            'month' => $validity->month()->required()->toArray(),
+            'worker_id' => $validity->workerId()->nullable()->toArray(),
+        ]);
+        $result = (new AttendanceCorrectionService())->matchReport($admin, $store, $validated->assertString('month'), $validated->parseNullableInt('worker_id'), $validated->assertString('reason'));
+        Inertia::flash('success', \__('Attendance matching: :matched matched, :unmatched without a shift, :ambiguous ambiguous.', $result));
+
+        return Resolver::resolveRedirector()->back();
     }
 
     /**

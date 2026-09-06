@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDate } from '@/lib/format';
 import { Link } from '@inertiajs/vue3';
 import {
     ArrowDown,
@@ -258,7 +259,7 @@ const {
                             </thead>
                             <tbody>
                                 <tr v-for="row in history.data" :key="row.id">
-                                    <td>{{ row.date }}</td>
+                                    <td>{{ formatDate(row.date) }}</td>
                                     <td>
                                         <Badge
                                             :variant="

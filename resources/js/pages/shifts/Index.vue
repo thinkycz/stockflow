@@ -40,7 +40,7 @@ import ShiftMonthlySummaryTable from '@/features/shifts/components/ShiftMonthlyS
 import { useBoundLocale } from '@/composables/useBoundLocale';
 import { useRoute } from '@/composables/useRoute';
 import { withActionErrorToast } from '@/lib/action-errors';
-import { formatDateTime } from '@/lib/format';
+import { formatDateTime, formatDate } from '@/lib/format';
 import { buildCalendarDays } from '@/features/shifts/shift-calendar';
 import type { MonthlyShiftSummary } from '@/features/shifts/types';
 
@@ -531,7 +531,7 @@ const {
 
         <Modal
             :open="modalOpen"
-            :title="t('shifts.day_title', { date: modalDate })"
+            :title="t('shifts.day_title', { date: formatDate(modalDate) })"
             @close="closeModal"
         >
             <div class="space-y-4">
@@ -758,7 +758,7 @@ const {
                                 class="mt-1 text-sm font-semibold text-on-surface"
                             >
                                 {{ editingRequest?.worker_name }} ·
-                                {{ modalDate }}
+                                {{ formatDate(modalDate) }}
                             </p>
                             <p class="mt-1 text-xs text-on-surface-variant">
                                 {{ t('shifts.requests.edit_help') }}

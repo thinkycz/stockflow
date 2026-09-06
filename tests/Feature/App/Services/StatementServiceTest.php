@@ -69,7 +69,7 @@ use Thinkycz\LaravelCore\Support\Config;
             $payload = $notification->toSlack(new AnonymousNotifiable())->toArray();
             $encoded = \json_encode($payload, flags: \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
 
-            return \str_contains($encoded, '23. 7. 2026') &&
+            return \str_contains($encoded, '23.7.2026') &&
                 \str_contains($encoded, 'Hotovost') &&
                 \str_contains($encoded, 'Karta') &&
                 \str_contains($encoded, 'Wolt') &&

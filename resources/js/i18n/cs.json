@@ -76,7 +76,9 @@
         "move_up": "Posunout nahoru",
         "move_down": "Posunout dolů",
         "first_page": "První stránka",
-        "last_page": "Poslední stránka"
+        "last_page": "Poslední stránka",
+        "invalid_date": "Zadejte platné datum ve tvaru d.m.rrrr, případně s časem HH:mm.",
+        "date_out_of_range": "Datum je mimo povolený rozsah."
     },
     "assistant": {
         "title": "AI asistent",
@@ -1927,6 +1929,18 @@
             "reason": "Důvod opravy",
             "reason_prompt": "Zadejte důvod zneplatnění",
             "add_break": "Přidat pauzu"
+        },
+        "matching": {
+            "restore": "Obnovit platnost",
+            "bulk": "Spárovat docházky",
+            "match": "Spárovat se směnou",
+            "change": "Změnit směnu",
+            "current": "aktuální přiřazení",
+            "shift": "Směna",
+            "select": "Vyberte směnu",
+            "no_candidates": "Pro tento den a pracovníka nejsou žádné směny.",
+            "departure": "Čas odchodu",
+            "bulk_help": "Spárují se platné nespárované docházky podle použitých filtrů reportu. Nejednoznačné případy se přeskočí."
         }
     },
     "gift_vouchers": {

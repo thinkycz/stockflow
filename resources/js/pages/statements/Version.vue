@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDate } from '@/lib/format';
 import AppLayout from '@/layouts/AppLayout.vue';
 import BackLink from '@/components/ui/BackLink.vue';
 import Button from '@/components/ui/Button.vue';
@@ -99,7 +100,7 @@ const { t, route, rowCashTotal, totals, restore } = useStatementVersion(props);
                             <td
                                 class="font-mono text-xs text-on-surface-variant"
                             >
-                                {{ row.date }}
+                                {{ formatDate(row.date) }}
                             </td>
                             <td
                                 class="text-right font-semibold text-on-surface"

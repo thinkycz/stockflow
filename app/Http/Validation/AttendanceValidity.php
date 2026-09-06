@@ -39,6 +39,16 @@ class AttendanceValidity
     public function workerId(): Validity { return $this->baseValidity->id()->exists('workers', 'id', ['user_id', (string) $this->userId]); }
 
     /**
+     * Validate an owned shift.
+     */
+    public function shiftId(): Validity { return $this->baseValidity->id()->exists('shifts', 'id', ['user_id', (string) $this->userId]); }
+
+    /**
+     * Validate the selected report month.
+     */
+    public function month(): Validity { return $this->baseValidity->make()->string(null)->dateFormat('Y-m'); }
+
+    /**
      * Validate an attendance state action.
      */
     public function action(): Validity { return $this->baseValidity->make()->inString(AttendanceActionEnum::values()); }

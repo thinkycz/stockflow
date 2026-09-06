@@ -96,7 +96,7 @@ class OperationalActivitySlackNotification extends Notification implements Shoul
         $title = $this->translate($this->type->translationKey());
         $time = CarbonImmutable::parse($this->occurredAt)
             ->setTimezone('Europe/Prague')
-            ->format('j. n. Y H:i');
+            ->format('j.n.Y H:i');
 
         $message = (new SlackMessage())
             ->text($this->storeName === null ? $title : $title . ': ' . $this->storeName)

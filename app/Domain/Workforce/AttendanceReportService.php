@@ -13,6 +13,7 @@ use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
@@ -22,6 +23,33 @@ use Illuminate\Database\Eloquent\Collection;
  */
 class AttendanceReportService
 {
+    /**
+     * Share the report interval and worker filters with bulk matching.
+     *
+     * @return Builder<AttendanceSession>
+     */
+    public static function sessionsQuery(User $owner, Store $store, string $month, int|null $workerId): Builder
+    {
+        $start = CarbonImmutable::createFromFormat('!Y-m', $month, AttendanceService::BUSINESS_TIMEZONE);
+        if (!$start instanceof CarbonImmutable) { \abort(422); }
+        $periodStart = $start->utc();
+        $periodEnd = $start->addMonth()->utc();
+        $query = AttendanceSession::query();
+        AttendanceSession::scopeForUser($query, $owner);
+        AttendanceSession::scopeForStore($query, $store->getKey());
+        if ($workerId !== null) {
+            $query->where('worker_id', $workerId);
+        }
+        AttendanceSession::querySelect($query);
+
+        return $query
+            ->where('started_at', '<', $periodEnd)
+            ->where(static function ($query) use ($periodStart): void {
+                $query->whereNull('ended_at')->orWhere('ended_at', '>=', $periodStart);
+            })
+            ->orderBy('started_at');
+    }
+
     /**
      * Build report rows and per-worker totals for one month.
      *
@@ -37,20 +65,7 @@ class AttendanceReportService
         $end = $start->addMonth();
         $periodStart = $start->utc();
         $periodEnd = $end->utc();
-        $query = AttendanceSession::query();
-        AttendanceSession::scopeForUser($query, $owner);
-        AttendanceSession::scopeForStore($query, $store->getKey());
-        if ($workerId !== null) {
-            $query->where('worker_id', $workerId);
-        }
-        AttendanceSession::querySelect($query);
-        $sessions = $query
-            ->where('started_at', '<', $periodEnd)
-            ->where(static function ($query) use ($periodStart): void {
-                $query->whereNull('ended_at')->orWhere('ended_at', '>=', $periodStart);
-            })
-            ->orderBy('started_at')
-            ->get();
+        $sessions = self::sessionsQuery($owner, $store, $month, $workerId)->get();
 
         $workerQuery = Worker::query();
         Worker::scopeForUser($workerQuery, $owner);

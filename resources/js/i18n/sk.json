@@ -76,7 +76,9 @@
         "move_up": "Posunúť hore",
         "move_down": "Posunúť dole",
         "first_page": "Prvá stránka",
-        "last_page": "Posledná stránka"
+        "last_page": "Posledná stránka",
+        "invalid_date": "Zadajte platný dátum v tvare d.m.rrrr, prípadne s časom HH:mm.",
+        "date_out_of_range": "Dátum je mimo povoleného rozsahu."
     },
     "assistant": {
         "title": "AI asistent",
@@ -1927,6 +1929,18 @@
             "reason": "Dôvod opravy",
             "reason_prompt": "Zadajte dôvod zneplatnenia",
             "add_break": "Pridať prestávku"
+        },
+        "matching": {
+            "restore": "Obnoviť platnosť",
+            "bulk": "Spárovať dochádzky",
+            "match": "Spárovať so zmenou",
+            "change": "Zmeniť zmenu",
+            "current": "aktuálne priradenie",
+            "shift": "Zmena",
+            "select": "Vyberte zmenu",
+            "no_candidates": "Pre tento deň a pracovníka nie sú žiadne zmeny.",
+            "departure": "Čas odchodu",
+            "bulk_help": "Spárujú sa platné nespárované dochádzky podľa použitých filtrov reportu. Nejednoznačné prípady sa preskočia."
         }
     },
     "gift_vouchers": {

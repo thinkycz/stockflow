@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDate } from '@/lib/format';
 import { Head } from '@inertiajs/vue3';
 import { nextTick, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -12,7 +13,7 @@ defineProps<{
     simple: boolean;
 }>();
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 
 function duration(seconds: number | null): string {
     if (seconds === null) return '—';
@@ -27,9 +28,7 @@ function duration(seconds: number | null): string {
 }
 
 function date(value: string): string {
-    return new Intl.DateTimeFormat(locale.value).format(
-        new Date(value + 'T12:00:00'),
-    );
+    return formatDate(value);
 }
 
 onMounted(async () => {

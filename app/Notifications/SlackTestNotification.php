@@ -44,7 +44,7 @@ class SlackTestNotification extends Notification implements ShouldQueue
         $title = $this->translate('Slack test title');
         $time = CarbonImmutable::now()
             ->setTimezone('Europe/Prague')
-            ->format('j. n. Y H:i');
+            ->format('j.n.Y H:i');
 
         return (new SlackMessage())
             ->text($title)

@@ -114,7 +114,7 @@ class GiftVoucherService
                     'Slack voucher quantity' => (string) $batch->getQuantity(),
                     'Slack voucher amount' => $this->formatCurrency($batch->getAmount()),
                     'Slack voucher total value' => $this->formatCurrency($batch->getAmount() * $batch->getQuantity()),
-                    'Slack voucher expiration' => $batch->getExpiresAt()?->setTimezone(self::BUSINESS_TIMEZONE)->format('j. n. Y') ?? 'Bez expirace',
+                    'Slack voucher expiration' => $batch->getExpiresAt()?->setTimezone(self::BUSINESS_TIMEZONE)->format('j.n.Y') ?? 'Bez expirace',
                 ],
             );
 

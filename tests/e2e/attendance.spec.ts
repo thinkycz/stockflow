@@ -181,3 +181,83 @@ test('admin disables attendance rating without disabling attendance actions', as
         page.getByRole('row', { name: /Scheduled Worker/ }),
     ).toContainText('Enabled');
 });
+
+test('report restores validity, matches shifts and uses Czech dates in English', async ({
+    page,
+}) => {
+    await login(page);
+    await page.goto('/attendance/report?month=2032-03');
+    const row = (date: string) =>
+        page.getByRole('row').filter({
+            has: page.getByRole('cell', { name: date, exact: true }),
+        });
+    await expect(row('10.3.2032')).toContainText('08:00');
+    await page
+        .getByRole('button', { name: 'Match attendances', exact: true })
+        .click();
+    let dialog = page.getByRole('dialog', {
+        name: 'Match attendances',
+        exact: true,
+    });
+    await dialog
+        .getByLabel('Reason', { exact: true })
+        .fill('Repair missing links');
+    await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(dialog).not.toBeVisible();
+    await expect(
+        row('10.3.2032').getByRole('button', { name: 'Change shift' }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/month=2032-03/);
+
+    await row('11.3.2032')
+        .getByRole('button', { name: 'Match to shift' })
+        .click();
+    dialog = page.getByRole('dialog', { name: 'Match to shift', exact: true });
+    await dialog
+        .getByLabel('Shift', { exact: true })
+        .selectOption({ label: '18:00–22:00' });
+    await dialog
+        .getByLabel('Reason', { exact: true })
+        .fill('Manual assignment outside window');
+    await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(dialog).not.toBeVisible();
+    await expect(row('11.3.2032')).toContainText('08:00');
+    await expect(
+        row('11.3.2032').getByRole('button', { name: 'Change shift' }),
+    ).toBeVisible();
+
+    await row('12.3.2032')
+        .getByRole('button', { name: 'Restore validity' })
+        .click();
+    dialog = page.getByRole('dialog', {
+        name: 'Restore validity',
+        exact: true,
+    });
+    await dialog.getByLabel('Departure time').fill('31.2.2032 16:00');
+    await dialog
+        .getByLabel('Reason', { exact: true })
+        .fill('Restore completed work');
+    await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(dialog).toBeVisible();
+    expect(
+        await dialog
+            .getByLabel('Departure time')
+            .evaluate((element: HTMLInputElement) => element.checkValidity()),
+    ).toBe(false);
+    await dialog.getByLabel('Departure time').fill('12.3.2032 16:00');
+    await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(dialog).not.toBeVisible();
+    await expect(
+        row('12.3.2032').getByRole('button', { name: 'Void', exact: true }),
+    ).toBeVisible();
+    await expect(row('12.3.2032')).toContainText('16:00');
+    await expect(page).toHaveURL(/month=2032-03/);
+
+    await page.goto('/attendance/print?month=2032-03');
+    await expect(
+        page.getByRole('cell', { name: '10.3.2032', exact: true }),
+    ).toBeVisible();
+    await expect(
+        page.getByRole('cell', { name: '12.3.2032', exact: true }),
+    ).toBeVisible();
+});

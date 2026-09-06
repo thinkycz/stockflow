@@ -16,6 +16,7 @@ type BreakRow = {
 type SessionRow = {
     id: number;
     worker_id: number;
+    shift_id: number | null;
     worker_name: string;
     worker_color: string;
     date: string;
@@ -53,6 +54,13 @@ type SummaryRow = {
     wage: number;
 };
 export type AttendanceReportProps = {
+    shift_candidates?: Array<{
+        id: number;
+        worker_id: number;
+        date: string;
+        start_time: string;
+        end_time: string;
+    }>;
     store: { id: number; name: string; is_active: boolean } | null;
     workers: Worker[];
     active_workers: Worker[];
@@ -93,6 +101,73 @@ export function useAttendanceReport(props: AttendanceReportProps) {
         breaks: [] as Array<{ started_at: string; ended_at: string }>,
         reason: '',
     });
+
+    const actionRow = ref<SessionRow | null>(null);
+    const actionMode = ref<'restore' | 'match' | 'bulk' | null>(null);
+    const actionForm = useForm({
+        store_id: props.store?.id ?? null,
+        reason: '',
+        ended_at: '',
+        shift_id: '',
+        month: '',
+        worker_id: null as number | null,
+    });
+    const actionErrors = computed(() => Object.values(actionForm.errors));
+    const matchingOptions = computed(() =>
+        (props.shift_candidates ?? [])
+            .filter(
+                (shift) =>
+                    shift.worker_id === actionRow.value?.worker_id &&
+                    shift.date === actionRow.value?.date,
+            )
+            .map((shift) => ({
+                value: String(shift.id),
+                label: `${shift.start_time}–${shift.end_time}${shift.id === actionRow.value?.shift_id ? ` (${t('attendance.matching.current')})` : ''}`,
+            })),
+    );
+
+    const currentShift = computed(() =>
+        (props.shift_candidates ?? []).find(
+            (shift) => shift.id === actionRow.value?.shift_id,
+        ),
+    );
+
+    function openAction(
+        mode: 'restore' | 'match' | 'bulk',
+        row: SessionRow | null = null,
+    ): void {
+        actionForm.reset();
+        actionForm.clearErrors();
+        actionRow.value = row;
+        actionMode.value = mode;
+        actionForm.shift_id =
+            row?.shift_id === null ||
+            row?.shift_id === undefined ||
+            !matchingOptions.value.some(
+                (option) => option.value === String(row.shift_id),
+            )
+                ? ''
+                : String(row.shift_id);
+        actionForm.month = props.filters?.month ?? '';
+        actionForm.worker_id = props.filters?.worker_id ?? null;
+    }
+
+    function submitAction(): void {
+        if (actionForm.processing || actionMode.value === null) return;
+        const url =
+            actionMode.value === 'bulk'
+                ? route('attendance.report.match')
+                : route(
+                      `attendance.sessions.${actionMode.value}`,
+                      actionRow.value?.id,
+                  );
+        actionForm.post(url, {
+            preserveScroll: true,
+            onSuccess: () => {
+                actionMode.value = null;
+            },
+        });
+    }
 
     const reviewOpen = ref(false);
 
@@ -167,14 +242,26 @@ export function useAttendanceReport(props: AttendanceReportProps) {
         return new Intl.DateTimeFormat(locale.value, {
             hour: '2-digit',
             minute: '2-digit',
+            timeZone: 'Europe/Prague',
+            hourCycle: 'h23',
         }).format(new Date(value));
     }
 
     function localInput(value: string | null): string {
         if (value === null) return '';
         const date = new Date(value);
-        const offset = date.getTimezoneOffset() * 60_000;
-        return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+        const parts = new Intl.DateTimeFormat('sv-SE', {
+            timeZone: 'Europe/Prague',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hourCycle: 'h23',
+        }).formatToParts(date);
+        const part = (type: string) =>
+            parts.find((item) => item.type === type)?.value ?? '';
+        return `${part('year')}-${part('month')}-${part('day')}T${part('hour')}:${part('minute')}`;
     }
 
     function duration(seconds: number | null | undefined): string {
@@ -288,19 +375,27 @@ export function useAttendanceReport(props: AttendanceReportProps) {
     }
 
     function saveCorrection(): void {
+        if (correctionForm.processing) return;
         if (editingSessionId.value === null) {
             correctionForm.post(route('attendance.corrections.store'), {
+                preserveScroll: true,
                 onSuccess: () => (correctionOpen.value = false),
             });
             return;
         }
         correctionForm.put(
             route('attendance.sessions.update', editingSessionId.value),
-            { onSuccess: () => (correctionOpen.value = false) },
+            {
+                preserveScroll: true,
+                onSuccess: () => (correctionOpen.value = false),
+            },
         );
     }
 
+    const voidProcessing = ref(false);
+
     async function voidSession(id: number): Promise<void> {
+        if (voidProcessing.value) return;
         const reason = await dialog.prompt({
             title: t('attendance.correction.void'),
             message: t('attendance.correction.reason_prompt'),
@@ -310,10 +405,16 @@ export function useAttendanceReport(props: AttendanceReportProps) {
             required: true,
         });
         if (reason?.trim()) {
+            voidProcessing.value = true;
             router.post(
                 route('attendance.sessions.void', id),
                 { store_id: props.store?.id ?? null, reason: reason.trim() },
-                withActionErrorToast(),
+                withActionErrorToast({
+                    preserveScroll: true,
+                    onFinish: () => {
+                        voidProcessing.value = false;
+                    },
+                }),
             );
         }
     }
@@ -326,6 +427,15 @@ export function useAttendanceReport(props: AttendanceReportProps) {
         correctionForm.breaks.splice(index, 1);
     }
     return {
+        currentShift,
+        actionMode,
+        actionRow,
+        actionForm,
+        actionErrors,
+        matchingOptions,
+        openAction,
+        submitAction,
+        voidProcessing,
         t,
         route,
         reportMonth,

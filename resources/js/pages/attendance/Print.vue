@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatDate } from '@/lib/format';
 import { Head } from '@inertiajs/vue3';
 import { nextTick, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -46,9 +47,11 @@ function duration(seconds: number | null): string {
 function time(value: string | null): string {
     return value === null
         ? '—'
-        : new Intl.DateTimeFormat(locale.value, { timeStyle: 'short' }).format(
-              new Date(value),
-          );
+        : new Intl.DateTimeFormat(locale.value, {
+              timeStyle: 'short',
+              timeZone: 'Europe/Prague',
+              hourCycle: 'h23',
+          }).format(new Date(value));
 }
 onMounted(async () => {
     await nextTick();
@@ -99,7 +102,7 @@ onMounted(async () => {
                         :key="row.id"
                         :class="row.voided ? 'line-through opacity-50' : ''"
                     >
-                        <td>{{ row.date }}</td>
+                        <td>{{ formatDate(row.date) }}</td>
                         <td>
                             {{ time(row.started_at) }} –
                             {{ time(row.ended_at) }}

@@ -16,7 +16,7 @@ import MonthPicker from '@/components/ui/MonthPicker.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, formatDate } from '@/lib/format';
 import {
     useAttendanceReport,
     type AttendanceReportProps,
@@ -24,6 +24,15 @@ import {
 
 const props = defineProps<AttendanceReportProps>();
 const {
+    currentShift,
+    actionMode,
+    actionRow,
+    actionForm,
+    actionErrors,
+    matchingOptions,
+    openAction,
+    submitAction,
+    voidProcessing,
     t,
     route,
     reportMonth,
@@ -116,6 +125,14 @@ const {
                             t('common.apply')
                         }}</Button>
                         <div class="flex-1"></div>
+                        <Button
+                            v-if="store.is_active"
+                            variant="secondary"
+                            :disabled="actionForm.processing"
+                            @click="openAction('bulk')"
+                        >
+                            {{ t('attendance.matching.bulk') }}
+                        </Button>
                         <Link
                             :href="
                                 route('attendance.print', {
@@ -211,7 +228,7 @@ const {
                             :key="row.id"
                             :class="row.voided ? 'opacity-50' : ''"
                         >
-                            <td class="py-3">{{ row.date }}</td>
+                            <td class="py-3">{{ formatDate(row.date) }}</td>
                             <td class="font-medium">
                                 <span class="flex items-center gap-2">
                                     <span
@@ -318,10 +335,35 @@ const {
                                     {{ t('common.edit') }}
                                 </Button>
                                 <Button
+                                    v-if="store.is_active && row.voided"
+                                    variant="ghost"
+                                    size="compact"
+                                    :disabled="actionForm.processing"
+                                    @click="openAction('restore', row)"
+                                >
+                                    {{ t('attendance.matching.restore') }}
+                                </Button>
+                                <Button
+                                    v-if="store.is_active && !row.voided"
+                                    variant="ghost"
+                                    size="compact"
+                                    :disabled="actionForm.processing"
+                                    @click="openAction('match', row)"
+                                >
+                                    {{
+                                        t(
+                                            row.shift_id === null
+                                                ? 'attendance.matching.match'
+                                                : 'attendance.matching.change',
+                                        )
+                                    }}
+                                </Button>
+                                <Button
                                     v-if="store.is_active && !row.voided"
                                     variant="ghost"
                                     size="compact"
                                     class="text-error-red hover:text-error-red"
+                                    :disabled="voidProcessing"
                                     @click="voidSession(row.id)"
                                 >
                                     {{ t('attendance.correction.void') }}
@@ -342,6 +384,100 @@ const {
                 </DataTable>
             </template>
         </div>
+
+        <Modal
+            :open="actionMode !== null"
+            :title="
+                t(
+                    actionMode === 'restore'
+                        ? 'attendance.matching.restore'
+                        : actionMode === 'bulk'
+                          ? 'attendance.matching.bulk'
+                          : 'attendance.matching.match',
+                )
+            "
+            @close="!actionForm.processing && (actionMode = null)"
+        >
+            <form class="space-y-4" @submit.prevent="submitAction">
+                <p v-if="actionRow" class="text-sm">
+                    {{ actionRow.worker_name }} ·
+                    {{ formatDate(actionRow.date) }}
+                </p>
+                <p v-if="actionMode === 'bulk'" class="text-sm">
+                    {{ t('attendance.matching.bulk_help') }}
+                </p>
+                <template v-if="actionMode === 'match'">
+                    <p v-if="currentShift" class="text-sm">
+                        {{ t('attendance.matching.current') }}:
+                        {{ formatDate(currentShift.date) }}
+                        {{ currentShift.start_time }}–{{
+                            currentShift.end_time
+                        }}
+                    </p>
+                    <Label for="attendance_shift">{{
+                        t('attendance.matching.shift')
+                    }}</Label>
+                    <Select
+                        id="attendance_shift"
+                        v-model="actionForm.shift_id"
+                        :options="matchingOptions"
+                        :placeholder="t('attendance.matching.select')"
+                        required
+                    />
+                    <p v-if="matchingOptions.length === 0" class="text-sm">
+                        {{ t('attendance.matching.no_candidates') }}
+                    </p>
+                </template>
+                <template
+                    v-if="
+                        actionMode === 'restore' && actionRow?.ended_at === null
+                    "
+                >
+                    <Label for="restore_end">{{
+                        t('attendance.matching.departure')
+                    }}</Label>
+                    <Input
+                        id="restore_end"
+                        v-model="actionForm.ended_at"
+                        type="datetime-local"
+                        required
+                    />
+                </template>
+                <div>
+                    <Label for="attendance_action_reason">{{
+                        t('common.reason')
+                    }}</Label>
+                    <Input
+                        id="attendance_action_reason"
+                        v-model="actionForm.reason"
+                        required
+                    />
+                </div>
+                <p
+                    v-for="error in actionErrors"
+                    :key="error"
+                    class="text-sm text-error-red"
+                >
+                    {{ error }}
+                </p>
+                <div class="flex justify-end gap-2">
+                    <Button
+                        variant="secondary"
+                        :disabled="actionForm.processing"
+                        @click="actionMode = null"
+                        >{{ t('common.cancel') }}</Button
+                    >
+                    <Button
+                        type="submit"
+                        :disabled="
+                            actionForm.processing ||
+                            (actionMode === 'match' && !actionForm.shift_id)
+                        "
+                        >{{ t('common.save') }}</Button
+                    >
+                </div>
+            </form>
+        </Modal>
 
         <Modal
             :open="reviewOpen"

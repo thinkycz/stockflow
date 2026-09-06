@@ -311,5 +311,14 @@
     "Exactly one main administrator": "Exactly one main administrator",
     "No orphan root users": "No orphan root users",
     "Demo credential removed": "Demo credential removed",
-    "Exactly one active main warehouse": "Exactly one active main warehouse"
+    "Exactly one active main warehouse": "Exactly one active main warehouse",
+    "Departure is required before restoring attendance.": "Departure is required before restoring attendance.",
+    "Complete attendance breaks before restoring attendance.": "Complete attendance breaks before restoring attendance.",
+    "Restore attendance before matching it.": "Restore attendance before matching it.",
+    "Select a shift for the same worker, store and attendance day.": "Select a shift for the same worker, store and attendance day.",
+    "An attendance correction reason is required.": "An attendance correction reason is required.",
+    "Reopen the payroll report before changing attendance.": "Reopen the payroll report before changing attendance.",
+    "Attendance validity restored.": "Attendance validity restored.",
+    "Attendance matched.": "Attendance matched.",
+    "Attendance matching: :matched matched, :unmatched without a shift, :ambiguous ambiguous.": "Attendance matching: :matched matched, :unmatched without a shift, :ambiguous ambiguous."
 }

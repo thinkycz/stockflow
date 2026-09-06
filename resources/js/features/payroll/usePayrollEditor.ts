@@ -1,3 +1,4 @@
+import { formatDate } from '@/lib/format';
 import { router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -63,9 +64,7 @@ export function usePayrollEditor(props: PayrollEditorProps) {
     }
 
     function date(value: string): string {
-        return new Intl.DateTimeFormat(locale.value).format(
-            new Date(`${value}T12:00:00`),
-        );
+        return formatDate(value);
     }
 
     function time(value: string | null): string {
@@ -73,6 +72,8 @@ export function usePayrollEditor(props: PayrollEditorProps) {
         return new Intl.DateTimeFormat(locale.value, {
             hour: '2-digit',
             minute: '2-digit',
+            timeZone: 'Europe/Prague',
+            hourCycle: 'h23',
         }).format(new Date(value));
     }
 

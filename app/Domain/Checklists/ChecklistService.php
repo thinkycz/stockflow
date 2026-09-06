@@ -398,7 +398,7 @@ class ChecklistService
         ChecklistDay $day,
         ChecklistShiftEnum|null $shift = null,
     ): void {
-        $facts = ['Slack checklist date' => $day->getDate()->format('j. n. Y')];
+        $facts = ['Slack checklist date' => $day->getDate()->format('j.n.Y')];
         if ($shift instanceof ChecklistShiftEnum) {
             $facts['Slack checklist shift'] = match ($shift) {
                 ChecklistShiftEnum::Morning => 'Ranní',

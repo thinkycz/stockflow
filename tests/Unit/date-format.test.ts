@@ -9,6 +9,9 @@ describe('Czech dates across languages', () => {
         '%s uses exact Czech calendar notation',
         (locale) => {
             setActiveLocale(locale);
+            expect(formatCzechDateRange('2026-09-06', '2026-09-06')).toBe(
+                '6.9.2026',
+            );
             expect(formatDate('2026-09-06')).toBe('6.9.2026');
             expect(formatDateTime('2026-09-05T22:05:00Z')).toBe(
                 '6.9.2026 00:05',

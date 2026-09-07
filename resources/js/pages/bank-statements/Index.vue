@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatCzechDate } from '@/composables/useCzechDate';
+import { formatCzechDateRange } from '@/composables/useCzechDate';
 import { useBankStatementActions } from '@/features/bank-statements/useBankStatementActions';
 import { Link, useForm } from '@inertiajs/vue3';
 import { Upload } from '@lucide/vue';
@@ -131,14 +131,11 @@ function badgeVariant(
                         <td>{{ statement.original_name }}</td>
                         <td>
                             {{
-                                statement.period_from
-                                    ? formatCzechDate(statement.period_from)
-                                    : '—'
-                            }}
-                            –
-                            {{
-                                statement.period_to
-                                    ? formatCzechDate(statement.period_to)
+                                statement.period_from && statement.period_to
+                                    ? formatCzechDateRange(
+                                          statement.period_from,
+                                          statement.period_to,
+                                      )
                                     : '—'
                             }}
                         </td>

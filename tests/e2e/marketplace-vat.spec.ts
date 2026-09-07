@@ -34,7 +34,9 @@ for (const [locale, title] of [
         );
         await page.goto('/reports?year=2025&month=7');
         const reportFees = page.locator('[data-marketplace-fees]').first();
-        await reportFees.locator('summary').focus();
+        const trigger = page.getByRole('button', { name: title }).first();
+        await expect(reportFees).toHaveCount(0);
+        await trigger.focus();
         await page.keyboard.press('Enter');
         await expect(reportFees).toContainText(title);
         await expect(
@@ -60,9 +62,11 @@ for (const [locale, title] of [
         const wolt = page.getByRole('row').filter({
             has: page.getByRole('link', { name: 'Wolt', exact: true }),
         });
-        const financeFees = wolt.locator('[data-marketplace-fees]');
-        await expect(wolt.locator('[data-estimate-range]')).toBeVisible();
-        await financeFees.locator('summary').click();
+        const financeFees = page
+            .getByRole('dialog')
+            .locator('[data-marketplace-fees]');
+        await expect(wolt.locator('[data-estimate-summary]')).toBeVisible();
+        await wolt.getByRole('button', { name: title }).click();
         await expect(
             financeFees.locator('[data-fee-field="vat"] dd'),
         ).toContainText(/14[,.]70/);
@@ -75,7 +79,7 @@ for (const [locale, title] of [
         const receiptFees = page
             .getByRole('dialog')
             .locator('[data-marketplace-fees]');
-        await receiptFees.locator('summary').click();
+        await expect(page.getByRole('dialog')).toHaveCount(1);
         await expect(
             receiptFees.locator('[data-fee-field="vat"] dd'),
         ).toContainText(/14[,.]70/);
@@ -84,7 +88,14 @@ for (const [locale, title] of [
         });
         await page.getByRole('dialog').getByRole('link').click();
         const bankFees = page.locator('[data-marketplace-fees]').first();
-        await bankFees.locator('summary').click();
+        await page
+            .getByRole('row')
+            .filter({ hasText: 'Wolt' })
+            .first()
+            .getByRole('button', {
+                name: locale === 'en' ? 'Payment details' : 'Detail platby',
+            })
+            .click();
         await expect(
             bankFees.locator('[data-fee-field="vat"] dd'),
         ).toContainText(/14[,.]70/);

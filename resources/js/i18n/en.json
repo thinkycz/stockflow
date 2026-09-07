@@ -1217,7 +1217,9 @@
             "sales_period": "Sales period from–to",
             "actual": "Actual",
             "expected": "Estimated payout",
-            "result": "Check"
+            "result": "Check",
+            "details": "Payment details",
+            "extraction_note": "Extraction note"
         },
         "actions": {
             "detail": "Detail",

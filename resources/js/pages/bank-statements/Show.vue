@@ -2,10 +2,15 @@
 import PayoutEstimate from '@/components/PayoutEstimate.vue';
 import MarketplaceFeeBreakdown from '@/components/MarketplaceFeeBreakdown.vue';
 
-import { formatCzechDate } from '@/composables/useCzechDate';
+import { ref } from 'vue';
+import Modal from '@/components/ui/Modal.vue';
+import {
+    formatCzechDate,
+    formatCzechDateRange,
+} from '@/composables/useCzechDate';
 import { useBankStatementActions } from '@/features/bank-statements/useBankStatementActions';
 import { Link } from '@inertiajs/vue3';
-import { Download, Plus, RefreshCw, Save, Trash2 } from '@lucide/vue';
+import { Download, Eye, Plus, RefreshCw, Save, Trash2 } from '@lucide/vue';
 import Alert from '@/components/ui/Alert.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
@@ -29,6 +34,7 @@ const {
     reanalyze,
 } = useBankStatementActions();
 const props = defineProps<BankReviewProps>();
+const detailIndex = ref<number | null>(null);
 const {
     t,
     route,
@@ -182,14 +188,11 @@ const {
                     </p>
                     <p class="text-sm font-semibold">
                         {{
-                            props.statement.period_from
-                                ? formatCzechDate(props.statement.period_from)
-                                : '—'
-                        }}
-                        –
-                        {{
-                            props.statement.period_to
-                                ? formatCzechDate(props.statement.period_to)
+                            statement.period_from && statement.period_to
+                                ? formatCzechDateRange(
+                                      statement.period_from,
+                                      statement.period_to,
+                                  )
                                 : '—'
                         }}
                     </p>
@@ -329,7 +332,11 @@ const {
                                         t('bank_statements.transaction.result')
                                     }}
                                 </th>
-                                <th v-if="props.statement.editable"></th>
+                                <th>
+                                    {{
+                                        t('bank_statements.transaction.details')
+                                    }}
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -367,7 +374,7 @@ const {
                                     <div v-if="props.statement.editable">
                                         <Input
                                             v-model="transaction.item_type"
-                                            class="min-w-44"
+                                            class="min-w-32"
                                         />
                                         <FieldError
                                             :message="
@@ -378,19 +385,15 @@ const {
                                             "
                                         />
                                     </div>
-                                    <span v-else>{{
-                                        transaction.item_type
-                                    }}</span>
+                                    <span
+                                        v-else
+                                        class="line-clamp-2 max-w-56"
+                                        >{{ transaction.item_type }}</span
+                                    >
                                     <p
-                                        class="mt-1 text-[10px] text-on-surface-variant"
+                                        class="mt-1 line-clamp-1 max-w-56 text-xs text-on-surface-variant"
                                     >
                                         {{ transaction.counterparty_name }}
-                                    </p>
-                                    <p
-                                        v-if="transaction.review_note"
-                                        class="mt-1 text-[10px] text-amber-700"
-                                    >
-                                        {{ transaction.review_note }}
                                     </p>
                                 </td>
                                 <td>
@@ -419,7 +422,7 @@ const {
                                 <td data-mobile-layout="stack">
                                     <div
                                         v-if="props.statement.editable"
-                                        class="flex min-w-64 gap-1"
+                                        class="flex min-w-32 flex-col gap-1"
                                     >
                                         <div class="flex-1">
                                             <Input
@@ -462,173 +465,15 @@ const {
                                             />
                                         </div>
                                     </div>
-                                    <span v-else
-                                        >{{
-                                            transaction.sales_from
-                                                ? formatCzechDate(
-                                                      transaction.sales_from,
-                                                  )
-                                                : '—'
-                                        }}
-                                        –
-                                        {{
-                                            transaction.sales_to
-                                                ? formatCzechDate(
-                                                      transaction.sales_to,
-                                                  )
-                                                : '—'
-                                        }}</span
-                                    >
-                                    <p
-                                        v-if="automaticSource(transaction)"
-                                        class="mt-2 text-xs text-on-surface-variant"
-                                    >
-                                        {{
-                                            t(
-                                                `bank_statements.suggestions.${automaticSource(transaction)}`,
-                                            )
-                                        }}
-                                    </p>
-                                    <div
-                                        v-if="
-                                            ['wolt', 'bolt'].includes(
-                                                transaction.category,
-                                            ) &&
-                                            ['review', 'confirmed'].includes(
-                                                props.statement.status,
-                                            )
-                                        "
-                                        class="mt-2 space-y-1 text-xs"
-                                    >
-                                        <Button
-                                            variant="secondary"
-                                            size="compact"
-                                            :loading="requests.has(transaction)"
-                                            @click="
-                                                recommendPeriod(transaction)
-                                            "
-                                            >{{
-                                                t(
-                                                    'bank_statements.suggestions.recommend',
-                                                )
-                                            }}</Button
-                                        >
-                                        <p
-                                            v-if="
-                                                recommendationStale(
-                                                    transaction,
-                                                ) &&
-                                                candidatesFor(transaction)
-                                                    .length
-                                            "
-                                        >
-                                            {{
-                                                t(
-                                                    'bank_statements.suggestions.stale',
-                                                )
-                                            }}
-                                        </p>
-                                        <p v-if="!props.statement.editable">
-                                            {{
-                                                t(
-                                                    'bank_statements.suggestions.reopen',
-                                                )
-                                            }}
-                                        </p>
-                                    </div>
-                                    <details
-                                        v-if="candidatesFor(transaction).length"
-                                        class="mt-2 text-xs"
-                                    >
-                                        <summary class="cursor-pointer">
-                                            {{
-                                                t(
-                                                    'bank_statements.suggestions.title',
-                                                )
-                                            }}
-                                        </summary>
-                                        <div
-                                            v-for="candidate in candidatesFor(
-                                                transaction,
-                                            )"
-                                            :key="`${candidate.from}-${candidate.to}`"
-                                            class="mt-2 space-y-1"
-                                        >
-                                            <p>
-                                                {{
-                                                    formatCzechDate(
-                                                        candidate.from,
-                                                    )
-                                                }}
-                                                –
-                                                {{
-                                                    formatCzechDate(
-                                                        candidate.to,
-                                                    )
-                                                }}
-                                            </p>
-                                            <div>
-                                                {{
-                                                    t(
-                                                        'bank_statements.transaction.expected',
-                                                    )
-                                                }}:
-                                                <PayoutEstimate
-                                                    :expected="
-                                                        candidate.expected
-                                                    "
-                                                    :fees="candidate.fees"
-                                                    :range="candidate.range"
-                                                />
-                                                <template
-                                                    v-if="!candidate.range"
-                                                    >CZK · Δ
-                                                    {{
-                                                        candidate.difference ??
-                                                        '—'
-                                                    }}
-                                                    CZK</template
-                                                >
-                                            </div>
-                                            <p>
-                                                {{
-                                                    t(
-                                                        `bank_statements.suggestions.source_${candidate.source}`,
-                                                    )
-                                                }}
-                                            </p>
-                                            <p v-if="candidate.reason">
-                                                {{
-                                                    t(
-                                                        `bank_statements.reasons.${candidate.reason}`,
-                                                    )
-                                                }}
-                                            </p>
-                                            <Button
-                                                type="button"
-                                                variant="secondary"
-                                                size="compact"
-                                                :disabled="
-                                                    candidate.reason !== null ||
-                                                    recommendationStale(
-                                                        transaction,
-                                                    ) ||
-                                                    !props.statement.editable
-                                                "
-                                                @click="
-                                                    applyCandidate(
-                                                        transaction,
-                                                        candidate,
-                                                    )
-                                                "
-                                                >{{
-                                                    t(
-                                                        'bank_statements.suggestions.use',
-                                                    )
-                                                }}</Button
-                                            >
-                                        </div>
-                                    </details>
+                                    <span v-else class="whitespace-nowrap">{{
+                                        transaction.sales_from &&
+                                        transaction.sales_to
+                                            ? formatCzechDateRange(
+                                                  transaction.sales_from,
+                                                  transaction.sales_to,
+                                              )
+                                            : '—'
+                                    }}</span>
                                 </td>
                                 <td class="text-right">
                                     <div v-if="props.statement.editable">
@@ -657,15 +502,11 @@ const {
                                             resultFor(transaction)?.expected
                                         "
                                         :fees="resultFor(transaction)?.fees"
-                                        :range="resultFor(transaction)?.range"
-                                    />
-                                    <MarketplaceFeeBreakdown
-                                        :fees="resultFor(transaction)?.fees"
                                     />
                                 </td>
                                 <td data-mobile-layout="stack">
                                     <div
-                                        class="flex min-w-36 flex-col items-start gap-1"
+                                        class="flex min-w-28 flex-col items-start gap-1"
                                     >
                                         <p
                                             v-if="isPending(transaction)"
@@ -723,6 +564,297 @@ const {
                                                 }}
                                                 CZK
                                             </p>
+                                        </template>
+                                    </div>
+                                </td>
+                                <td>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        :aria-label="
+                                            t(
+                                                'bank_statements.transaction.details',
+                                            )
+                                        "
+                                        :title="
+                                            t(
+                                                'bank_statements.transaction.details',
+                                            )
+                                        "
+                                        @click="detailIndex = index"
+                                        ><Eye :size="16"
+                                    /></Button>
+                                    <Modal
+                                        :open="detailIndex === index"
+                                        :title="
+                                            t(
+                                                'bank_statements.transaction.details',
+                                            )
+                                        "
+                                        size="lg"
+                                        body-class="max-h-[75dvh] overflow-y-auto space-y-5"
+                                        @close="detailIndex = null"
+                                    >
+                                        <div>
+                                            <p class="font-semibold">
+                                                {{ transaction.item_type }}
+                                            </p>
+                                            <p>
+                                                {{
+                                                    transaction.counterparty_name
+                                                }}
+                                            </p>
+                                            <p>
+                                                {{
+                                                    formatCzechDate(
+                                                        transaction.booked_on,
+                                                    )
+                                                }}
+                                                · {{ transaction.amount }} CZK
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-semibold">
+                                                {{
+                                                    t(
+                                                        'bank_statements.transaction.sales_period',
+                                                    )
+                                                }}
+                                            </h3>
+                                            <p>
+                                                {{
+                                                    transaction.sales_from &&
+                                                    transaction.sales_to
+                                                        ? formatCzechDateRange(
+                                                              transaction.sales_from,
+                                                              transaction.sales_to,
+                                                          )
+                                                        : '—'
+                                                }}
+                                            </p>
+                                            <p
+                                                v-if="
+                                                    automaticSource(transaction)
+                                                "
+                                                class="mt-2 text-xs text-on-surface-variant"
+                                            >
+                                                {{
+                                                    t(
+                                                        `bank_statements.suggestions.${automaticSource(transaction)}`,
+                                                    )
+                                                }}
+                                            </p>
+                                            <div
+                                                v-if="
+                                                    ['wolt', 'bolt'].includes(
+                                                        transaction.category,
+                                                    ) &&
+                                                    [
+                                                        'review',
+                                                        'confirmed',
+                                                    ].includes(
+                                                        props.statement.status,
+                                                    )
+                                                "
+                                                class="mt-2 space-y-1 text-xs"
+                                            >
+                                                <Button
+                                                    variant="secondary"
+                                                    size="compact"
+                                                    :loading="
+                                                        requests.has(
+                                                            transaction,
+                                                        )
+                                                    "
+                                                    @click="
+                                                        recommendPeriod(
+                                                            transaction,
+                                                        )
+                                                    "
+                                                    >{{
+                                                        t(
+                                                            'bank_statements.suggestions.recommend',
+                                                        )
+                                                    }}</Button
+                                                >
+                                                <p
+                                                    v-if="
+                                                        recommendationStale(
+                                                            transaction,
+                                                        ) &&
+                                                        candidatesFor(
+                                                            transaction,
+                                                        ).length
+                                                    "
+                                                >
+                                                    {{
+                                                        t(
+                                                            'bank_statements.suggestions.stale',
+                                                        )
+                                                    }}
+                                                </p>
+                                                <p
+                                                    v-if="
+                                                        !props.statement
+                                                            .editable
+                                                    "
+                                                >
+                                                    {{
+                                                        t(
+                                                            'bank_statements.suggestions.reopen',
+                                                        )
+                                                    }}
+                                                </p>
+                                            </div>
+                                            <section
+                                                data-period-suggestions
+                                                v-if="
+                                                    candidatesFor(transaction)
+                                                        .length
+                                                "
+                                                class="mt-2 text-xs"
+                                            >
+                                                <h4 class="font-semibold">
+                                                    {{
+                                                        t(
+                                                            'bank_statements.suggestions.title',
+                                                        )
+                                                    }}
+                                                </h4>
+                                                <div
+                                                    v-for="candidate in candidatesFor(
+                                                        transaction,
+                                                    )"
+                                                    :key="`${candidate.from}-${candidate.to}`"
+                                                    class="mt-2 space-y-1"
+                                                >
+                                                    <p>
+                                                        {{
+                                                            formatCzechDateRange(
+                                                                candidate.from,
+                                                                candidate.to,
+                                                            )
+                                                        }}
+                                                    </p>
+                                                    <div>
+                                                        {{
+                                                            t(
+                                                                'bank_statements.transaction.expected',
+                                                            )
+                                                        }}:
+                                                        <PayoutEstimate
+                                                            :expected="
+                                                                candidate.expected
+                                                            "
+                                                            :fees="
+                                                                candidate.fees
+                                                            "
+                                                            :range="
+                                                                candidate.range
+                                                            "
+                                                        />
+                                                        <template
+                                                            v-if="
+                                                                !candidate.range
+                                                            "
+                                                            >CZK · Δ
+                                                            {{
+                                                                candidate.difference ??
+                                                                '—'
+                                                            }}
+                                                            CZK</template
+                                                        >
+                                                    </div>
+                                                    <p>
+                                                        {{
+                                                            t(
+                                                                `bank_statements.suggestions.source_${candidate.source}`,
+                                                            )
+                                                        }}
+                                                    </p>
+                                                    <p v-if="candidate.reason">
+                                                        {{
+                                                            t(
+                                                                `bank_statements.reasons.${candidate.reason}`,
+                                                            )
+                                                        }}
+                                                    </p>
+                                                    <Button
+                                                        type="button"
+                                                        variant="secondary"
+                                                        size="compact"
+                                                        :disabled="
+                                                            candidate.reason !==
+                                                                null ||
+                                                            recommendationStale(
+                                                                transaction,
+                                                            ) ||
+                                                            !props.statement
+                                                                .editable
+                                                        "
+                                                        @click="
+                                                            applyCandidate(
+                                                                transaction,
+                                                                candidate,
+                                                            )
+                                                        "
+                                                        >{{
+                                                            t(
+                                                                'bank_statements.suggestions.use',
+                                                            )
+                                                        }}</Button
+                                                    >
+                                                </div>
+                                            </section>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-semibold">
+                                                {{
+                                                    t(
+                                                        'bank_statements.transaction.expected',
+                                                    )
+                                                }}
+                                            </h3>
+                                            <p v-if="isPending(transaction)">
+                                                {{
+                                                    t(
+                                                        'bank_statements.result.pending',
+                                                    )
+                                                }}
+                                            </p>
+                                            <PayoutEstimate
+                                                :expected="
+                                                    resultFor(transaction)
+                                                        ?.expected
+                                                "
+                                                :fees="
+                                                    resultFor(transaction)?.fees
+                                                "
+                                                :range="
+                                                    resultFor(transaction)
+                                                        ?.range
+                                                "
+                                            />
+                                            <p
+                                                v-if="
+                                                    !resultFor(transaction)
+                                                        ?.range &&
+                                                    resultFor(transaction)
+                                                        ?.difference != null
+                                                "
+                                                class="text-sm"
+                                            >
+                                                {{
+                                                    t(
+                                                        'statements.receipts.difference',
+                                                    )
+                                                }}:
+                                                {{
+                                                    resultFor(transaction)
+                                                        ?.difference
+                                                }}
+                                                CZK
+                                            </p>
                                             <p
                                                 v-if="
                                                     !resultFor(transaction)
@@ -753,11 +885,33 @@ const {
                                                     )
                                                 }}
                                             </p>
-                                        </template>
-                                    </div>
-                                </td>
-                                <td v-if="props.statement.editable">
+                                            <MarketplaceFeeBreakdown
+                                                inline
+                                                :fees="
+                                                    resultFor(transaction)?.fees
+                                                "
+                                            />
+                                        </div>
+                                        <details v-if="transaction.review_note">
+                                            <summary
+                                                class="cursor-pointer text-sm"
+                                            >
+                                                {{
+                                                    t(
+                                                        'bank_statements.transaction.extraction_note',
+                                                    )
+                                                }}
+                                            </summary>
+                                            <p
+                                                v-if="transaction.review_note"
+                                                class="mt-1 text-[10px] text-amber-700"
+                                            >
+                                                {{ transaction.review_note }}
+                                            </p>
+                                        </details>
+                                    </Modal>
                                     <Button
+                                        v-if="props.statement.editable"
                                         variant="ghost"
                                         size="icon-sm"
                                         @click="removeRow(index)"

@@ -9,7 +9,10 @@ import { useI18n } from 'vue-i18n';
 import Button from '@/components/ui/Button.vue';
 import Modal from '@/components/ui/Modal.vue';
 import { useRoute } from '@/composables/useRoute';
-import { formatCzechDate } from '@/composables/useCzechDate';
+import {
+    formatCzechDate,
+    formatCzechDateRange,
+} from '@/composables/useCzechDate';
 import { formatMoney } from '@/lib/format';
 import type { Receipt } from './receipt-status';
 
@@ -61,10 +64,10 @@ function money(value: string | null): string {
         <Clock3 v-else :size="14" aria-hidden="true" />
     </Button>
     <Modal
-        v-if="open"
         :open="open"
         :title="label"
         size="sm"
+        body-class="max-h-[75dvh] overflow-y-auto"
         @close="open = false"
     >
         <p class="mb-4 text-sm text-on-surface-variant">
@@ -84,8 +87,7 @@ function money(value: string | null): string {
             </p>
             <p>
                 {{ t('statements.receipts.period') }}:
-                {{ formatCzechDate(receipt.from) }} –
-                {{ formatCzechDate(receipt.to) }}
+                {{ formatCzechDateRange(receipt.from, receipt.to) }}
             </p>
             <p>
                 {{ t('statements.receipts.actual') }}:
@@ -114,6 +116,7 @@ function money(value: string | null): string {
                 {{ t('marketplace_fees.receipt_estimate') }}
             </p>
             <MarketplaceFeeBreakdown
+                inline
                 v-if="!pending"
                 :fees="receipt.check.fees"
             />

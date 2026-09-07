@@ -38,6 +38,9 @@ for (const [locale, month] of [
         page,
     }) => {
         const t = labels[locale];
+        const detailLabel =
+            locale === 'en' ? 'Payment details' : 'Detail platby';
+        const dialog = page.getByRole('dialog');
         await page.goto('/login');
         await page.getByLabel('Email').fill('test@test.com');
         await page.getByLabel('Password', { exact: true }).fill('password');
@@ -87,11 +90,11 @@ for (const [locale, month] of [
         await expect(row.getByRole('textbox').first()).toHaveValue(
             `8.${month}.2027`,
         );
-        await row
+        await row.getByRole('button', { name: detailLabel }).click();
+        await dialog
             .getByRole('button', { name: t.recommend, exact: true })
             .click();
-        const suggestions = row.locator('details:not([data-marketplace-fees])');
-        await suggestions.locator(':scope > summary').click();
+        const suggestions = dialog.locator('[data-period-suggestions]');
         await expect(suggestions).toContainText(`1.${month}.2027`);
         await expect(suggestions.getByRole('button').first()).toBeEnabled();
         let releaseResponse!: () => void;
@@ -108,24 +111,32 @@ for (const [locale, month] of [
             await release;
             await route.fulfill({ response });
         });
-        await row
+        await dialog
             .getByRole('button', { name: t.recommend, exact: true })
             .click();
         await ready;
+        await page.keyboard.press('Escape');
         await row.getByRole('spinbutton').fill('317.5');
+        await row.getByRole('button', { name: detailLabel }).click();
         releaseResponse();
         await expect(
-            row.getByRole('button', { name: t.recommend, exact: true }),
+            dialog.getByRole('button', { name: t.recommend, exact: true }),
         ).toBeEnabled();
         await page.unroute('**/bank-statements/*/recommend');
-        await expect(row.getByText(t.stale, { exact: false })).toBeVisible();
+        await expect(dialog.getByText(t.stale, { exact: false })).toBeVisible();
         await expect(suggestions.getByRole('button').first()).toBeDisabled();
-        await row
+        await dialog
             .getByRole('button', { name: t.recommend, exact: true })
             .click();
         await expect(suggestions.getByRole('button').first()).toBeEnabled();
         await suggestions.getByRole('button').first().click();
         await page.setViewportSize({ width: 390, height: 844 });
+        const detailBox = await dialog.boundingBox();
+        expect(detailBox!.x + detailBox!.width).toBeLessThanOrEqual(390);
+        await page.keyboard.press('Escape');
+        await expect(
+            row.getByRole('button', { name: detailLabel }),
+        ).toBeFocused();
         await row.getByRole('button', { name: t.calendar }).last().click();
         await expect(page.getByRole('dialog')).toBeVisible();
         const box = await page.getByRole('dialog').boundingBox();
@@ -143,7 +154,7 @@ for (const [locale, month] of [
         ).toBe(`2027-${String(month).padStart(2, '0')}-08`);
         await page.reload();
         await expect(
-            row.getByRole('button', { name: t.recommend, exact: true }),
+            row.getByRole('button', { name: detailLabel, exact: true }),
         ).toBeVisible();
         await page
             .getByRole('button', { name: t.reanalyze, exact: true })

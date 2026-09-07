@@ -38,6 +38,9 @@ for (const locale of ['en', 'cs', 'sk'] as const) {
         page,
     }) => {
         const t = labels[locale];
+        const detailLabel =
+            locale === 'en' ? 'Payment details' : 'Detail platby';
+        const dialog = page.getByRole('dialog');
         await page.goto('/login');
         await page.getByLabel('Email').fill('test@test.com');
         await page.getByLabel('Password', { exact: true }).fill('password');
@@ -81,12 +84,13 @@ for (const locale of ['en', 'cs', 'sk'] as const) {
         await expect(card.getByText(t.paired, { exact: true })).toBeVisible();
         await expect(card.getByText(t.matched, { exact: true })).toBeVisible();
         await expect(wolt.getByText(t.auto, { exact: true })).toHaveCount(0);
-        await wolt.getByText(t.candidates, { exact: true }).click();
-        await wolt
+        await wolt.getByRole('button', { name: detailLabel }).click();
+        await dialog
             .getByRole('button', { name: t.use, exact: true })
             .and(page.locator(':enabled'))
             .first()
             .click();
+        await page.keyboard.press('Escape');
         await expect(wolt.getByText(t.pending, { exact: true })).toBeVisible();
         await expect(
             page.getByRole('button', { name: t.confirm, exact: true }),
@@ -94,18 +98,19 @@ for (const locale of ['en', 'cs', 'sk'] as const) {
         await expect(section.locator('.data-table-frame--nested')).toHaveCount(
             0,
         );
+        await bolt.getByRole('button', { name: detailLabel }).click();
         await expect(
-            bolt.getByText(t.candidates, { exact: true }),
+            dialog.getByText(t.candidates, { exact: true }),
         ).toBeVisible();
-        await bolt.getByText(t.candidates, { exact: true }).click();
         await expect(
-            bolt.getByRole('button', { name: t.use, exact: true }),
+            dialog.getByRole('button', { name: t.use, exact: true }),
         ).toHaveCount(3);
-        await bolt
+        await dialog
             .getByRole('button', { name: t.use, exact: true })
             .and(page.locator(':enabled'))
             .first()
             .click();
+        await page.keyboard.press('Escape');
         await expect(bolt.getByText(t.pending, { exact: true })).toBeVisible();
         // A refresh must preserve the selected period before it is saved.
         await page.reload();

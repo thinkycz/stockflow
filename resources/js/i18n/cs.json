@@ -1217,7 +1217,9 @@
             "sales_period": "Období tržeb od–do",
             "actual": "Skutečně",
             "expected": "Odhad platby",
-            "result": "Kontrola"
+            "result": "Kontrola",
+            "details": "Detail platby",
+            "extraction_note": "Poznámka k vytěžení"
         },
         "actions": {
             "detail": "Detail",

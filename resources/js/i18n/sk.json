@@ -266,6 +266,18 @@
                 "input-available": "Pripravené",
                 "input-streaming": "Pripravujem"
             }
+        },
+        "slack": {
+            "thread": "Vlákno v Slacku",
+            "shared": "Nové správy a odpovede asistenta sa zdieľajú so všetkými účastníkmi kanála. Účastníci používajú nastavený administrátorský účet.",
+            "store": "Predajňa konverzácie",
+            "company": "Celá firma · bez vybranej predajne",
+            "ambiguous": "Kanál používa viac predajní. Vyberte predajňu v konverzácii.",
+            "history_error": "Históriu vlákna sa nepodarilo načítať. Overte prístup ku kanálu a použite Opakovať v Slacku.",
+            "decisions": "Rozhodnutia účastníkov",
+            "approve": "Schválené",
+            "reject": "Zamietnuté",
+            "select": "Vybrané"
         }
     },
     "auth": {

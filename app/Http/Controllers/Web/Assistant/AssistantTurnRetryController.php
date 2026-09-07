@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Web\Assistant;
 use App\Ai\AssistantConversationLock;
 use App\Ai\AssistantTurnService;
 use App\Ai\ConversationRepository;
+use App\Ai\Slack\SlackThreadService;
+use App\Ai\Slack\SlackTurnAdmission;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Jobs\RunAssistantTurnJob;
 use App\Models\User;
@@ -38,6 +40,12 @@ final class AssistantTurnRetryController
         $conversation = $repository->findOwned($failed->getConversationId(), $actor);
         if (!$conversation instanceof Conversation) {
             \abort(404);
+        }
+
+        if (Resolver::resolve(SlackThreadService::class)->binding($failed->getConversationId()) !== null) {
+            $submission = Resolver::resolve(SlackTurnAdmission::class)->submit($actor, $conversation, Typer::assertString($validated->parseNullableString('turn_id')), $failed->getKind(), $failed->getInputPayload(), 'web', (string) $actor->getKey(), $failed);
+
+            return \response()->json(['turn_id' => $submission['turn']->getTurnId(), 'recovery_mode' => $submission['turn']->getRecoveryMode()], $submission['created'] ? 202 : 200);
         }
 
         $lock = Resolver::resolve(AssistantConversationLock::class)->tryAcquire($failed->getConversationId());

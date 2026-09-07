@@ -266,6 +266,18 @@
                 "input-available": "Prepared",
                 "input-streaming": "Preparing"
             }
+        },
+        "slack": {
+            "thread": "Slack thread",
+            "shared": "New messages and assistant replies are shared with everyone in this channel. Participants use the configured administrator account.",
+            "store": "Conversation store",
+            "company": "Company-wide · no store selected",
+            "ambiguous": "Several stores use this channel. Choose the store in conversation.",
+            "history_error": "Thread history could not be loaded. Check channel access and use Retry in Slack.",
+            "decisions": "Participant decisions",
+            "approve": "Approved",
+            "reject": "Rejected",
+            "select": "Selected"
         }
     },
     "auth": {

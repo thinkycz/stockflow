@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import {
     BotMessageSquare,
     History,
@@ -195,6 +195,64 @@ const {
                 </header>
 
                 <div
+                    v-if="conversation?.slack"
+                    class="border-b border-outline-glass px-4 py-3 text-sm"
+                >
+                    <a
+                        :href="conversation.slack.url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="font-medium text-primary"
+                        >{{ t('assistant.slack.thread') }}</a
+                    >
+                    <p>{{ t('assistant.slack.shared') }}</p>
+                    <p>
+                        {{ t('assistant.slack.store') }}:
+                        {{
+                            conversation.slack.active_store_name ??
+                            t('assistant.slack.company')
+                        }}
+                    </p>
+                    <p v-if="conversation.slack.mapping_status === 'ambiguous'">
+                        {{ t('assistant.slack.ambiguous') }}
+                    </p>
+                    <details
+                        v-if="conversation.slack.decisions.length"
+                        class="mt-1"
+                    >
+                        <summary>{{ t('assistant.slack.decisions') }}</summary>
+                        <p
+                            v-for="(decision, index) in conversation.slack
+                                .decisions"
+                            :key="index"
+                        >
+                            {{
+                                decision.origin === 'slack'
+                                    ? 'Slack'
+                                    : 'Stockflow'
+                            }}
+                            · {{ decision.author_id }} ·
+                            {{ t('assistant.slack.' + decision.action) }}
+                        </p>
+                    </details>
+                    <p v-if="conversation.slack.history_error" role="alert">
+                        {{ t('assistant.slack.history_error') }}
+                    </p>
+                    <Button
+                        v-if="conversation.slack.history_error"
+                        variant="secondary"
+                        @click="
+                            router.post(
+                                route(
+                                    'assistant.slack-history.retry',
+                                    conversation.id,
+                                ),
+                            )
+                        "
+                        >{{ t('assistant.retry') }}</Button
+                    >
+                </div>
+                <div
                     ref="messageViewport"
                     class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 sm:p-6"
                     aria-live="polite"
@@ -383,8 +441,8 @@ const {
                             class="h-auto w-[3.125rem] shrink-0"
                             :disabled="
                                 (draft?.trim() ?? '') === '' ||
-                                hasPendingApprovals ||
-                                isBusy
+                                (!conversation?.slack &&
+                                    (hasPendingApprovals || isBusy))
                             "
                             :aria-label="t('assistant.send')"
                         >

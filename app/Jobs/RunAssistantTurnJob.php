@@ -12,6 +12,10 @@ use App\Ai\AssistantDecisionGuard;
 use App\Ai\AssistantTurnEventRecorder;
 use App\Ai\AssistantTurnService;
 use App\Ai\ConversationRepository;
+use App\Ai\Slack\SlackConfiguration;
+use App\Ai\Slack\SlackOutbox;
+use App\Ai\Slack\SlackThreadService;
+use App\Ai\Slack\SlackTurnAdmission;
 use App\Enums\AssistantTurnStatusEnum;
 use App\Exceptions\AssistantTurnCancelledException;
 use App\Models\AssistantTurn;
@@ -27,6 +31,7 @@ use Laravel\Ai\Streaming\Events\StreamEnd;
 use Laravel\Ai\Streaming\Events\StreamEvent;
 use Laravel\Ai\Streaming\Events\TextDelta;
 use Laravel\Ai\Streaming\Events\ToolApprovalRequest;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 use Throwable;
 
@@ -104,9 +109,17 @@ final class RunAssistantTurnJob implements ShouldBeEncrypted, ShouldQueue
             return;
         }
 
+        $binding = Resolver::resolve(SlackThreadService::class)->binding($turn->getConversationId());
+        if ($binding !== null && (Resolver::resolve(SlackConfiguration::class)->admin()?->getKey() !== $actor->getKey() || !(bool) $binding->history_ready)) {
+            return;
+        }
+
         $lock = $locks->tryAcquire($turn->getConversationId());
 
         if ($lock === null) {
+            if ($binding !== null) {
+                return;
+            }
             if ($this->lockAttempt < 3) {
                 \dispatch(new self(
                     $this->turnId,
@@ -122,13 +135,42 @@ final class RunAssistantTurnJob implements ShouldBeEncrypted, ShouldQueue
         }
 
         $nativeStreamCompleted = false;
+        $decisionBatch = [];
         $completionStatus = AssistantTurnStatusEnum::COMPLETED;
 
         try {
+            $freshTurn = $turn->fresh();
+            if (!$freshTurn instanceof AssistantTurn || $conversation->fresh() === null) {
+                return;
+            }
+            $turn = $freshTurn;
+            if ($binding !== null) {
+                $binding = Resolver::resolve(SlackThreadService::class)->binding($turn->getConversationId());
+                if ($binding === null) { return; }
+            }
+            if ($turn->getStatus()->terminal()) {
+                return;
+            }
+            if ($turn->getStatus() === AssistantTurnStatusEnum::CANCEL_REQUESTED) {
+                $turns->transition($turn, AssistantTurnStatusEnum::CANCELLED);
+
+                return;
+            }
+            if ($turn->getStatus() !== AssistantTurnStatusEnum::QUEUED) {
+                return;
+            }
+            if ($binding !== null && Resolver::resolve(SlackTurnAdmission::class)->next($conversation)?->getTurnId() !== $turn->getTurnId()) {
+                return;
+            }
             $turns->transition($turn, AssistantTurnStatusEnum::RUNNING);
             Context::add('assistant_turn_id', $turn->getTurnId());
-            Context::add(ActiveStoreResolver::SESSION_ID_CONTEXT, $this->browserSessionId);
+            Context::add(ActiveStoreResolver::SESSION_ID_CONTEXT, $binding === null ? $this->browserSessionId : null);
+            Context::add('assistant_conversation_id', $turn->getConversationId());
             $input = $turn->getInputPayload();
+            if ($binding !== null && $turn->getKind() === 'decisions') {
+                $decisionBatch = Resolver::resolve(SlackTurnAdmission::class)->decisions($conversation) ?? [];
+                $input['decisions'] = $decisionBatch;
+            }
             $prompt = match ($turn->getKind()) {
                 'message', 'recovery' => Typer::assertString($input['message'] ?? null),
                 'decisions' => $decisions->decisions($conversation, Typer::assertStringKeyArray(Typer::assertArray($input['decisions'] ?? null))),
@@ -139,7 +181,7 @@ final class RunAssistantTurnJob implements ShouldBeEncrypted, ShouldQueue
             $response = StockflowAssistant::make(
                 actor: $actor,
                 assistantConversationId: $turn->getConversationId(),
-                activeStoreId: $this->activeStoreId,
+                activeStoreId: $binding === null ? $this->activeStoreId : Typer::assertNullableInt($binding->active_store_id),
             )
                 ->continue($turn->getConversationId(), $actor)
                 ->stream($prompt);
@@ -211,8 +253,19 @@ final class RunAssistantTurnJob implements ShouldBeEncrypted, ShouldQueue
             \report($exception);
         } finally {
             Context::forget('assistant_turn_id');
+            Context::forget('assistant_conversation_id');
             Context::forget(ActiveStoreResolver::SESSION_ID_CONTEXT);
+            if ($binding !== null && $turn->getStatus()->terminal()) {
+                Resolver::resolve(SlackTurnAdmission::class)->finishDecisionBatch($turn, $decisionBatch);
+            }
             $lock->release();
+            if ($binding !== null && $turn->getStatus()->terminal()) {
+                Resolver::resolve(SlackOutbox::class)->publish($turn, $conversation, $actor);
+                $next = Resolver::resolve(SlackTurnAdmission::class)->next($conversation);
+                if ($next !== null) {
+                    \dispatch(new self($next->getTurnId()));
+                }
+            }
         }
     }
 }

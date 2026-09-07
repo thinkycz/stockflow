@@ -11,6 +11,16 @@ export type ConversationPayload = {
     title: string;
     messages: AssistantUIMessage[];
     active_turn: AssistantTurnPayload | null;
+    slack?: {
+        url: string;
+        channel_id: string;
+        active_store_id: number | null;
+        active_store_name: string | null;
+        mapping_status: string;
+        history_ready: boolean;
+        history_error: string | null;
+        decisions: { origin: string; author_id: string; action: string }[];
+    } | null;
 };
 
 export type AssistantTurnPayload = {

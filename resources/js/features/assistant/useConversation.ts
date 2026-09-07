@@ -10,7 +10,7 @@ import {
     showsToolCard,
     showsReadResult,
 } from './message-presentation';
-import { router } from '@inertiajs/vue3';
+import { router, usePoll } from '@inertiajs/vue3';
 import { useChat } from '@ai-sdk/vue';
 import {
     DefaultChatTransport,
@@ -96,7 +96,11 @@ export function useConversation(props: ConversationProps) {
         const turn = props.conversation?.active_turn;
         const hydrated = [...persisted];
 
-        if (turn?.kind === 'message' && turn.message !== null) {
+        if (
+            turn?.kind === 'message' &&
+            turn.message !== null &&
+            !persisted.some((message) => message.id === `queued-${turn.id}`)
+        ) {
             hydrated.push({
                 id: `turn-${turn.id}`,
                 role: 'user',
@@ -381,7 +385,11 @@ export function useConversation(props: ConversationProps) {
         () =>
             status.value === 'submitted' ||
             status.value === 'streaming' ||
-            reconnecting.value,
+            reconnecting.value ||
+            (!!props.conversation?.slack &&
+                ['queued', 'running', 'cancel_requested'].includes(
+                    props.conversation.active_turn?.status ?? '',
+                )),
     );
 
     const hasPendingApprovals = computed(() =>
@@ -414,10 +422,43 @@ export function useConversation(props: ConversationProps) {
     async function submit(): Promise<void> {
         const message = draft.value?.trim() ?? '';
 
-        if (message === '' || isBusy.value || hasPendingApprovals.value) {
+        if (
+            message === '' ||
+            (!props.conversation?.slack &&
+                (isBusy.value || hasPendingApprovals.value))
+        ) {
             return;
         }
 
+        if (props.conversation?.slack) {
+            const response = await globalThis.fetch(route('assistant.chat'), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    ...csrfHeader(),
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Assistant-Queue': 'true',
+                },
+                body: JSON.stringify({
+                    message,
+                    conversation_id: conversationId.value,
+                    turn_id: crypto.randomUUID(),
+                }),
+            });
+            if (!response.ok) {
+                hydratedFailure.value = (
+                    await assistantResponseError(
+                        response,
+                        t('assistant.unavailable'),
+                    )
+                ).message;
+                return;
+            }
+            draft.value = '';
+            router.reload({ only: ['conversation', 'conversations'] });
+            return;
+        }
         draft.value = '';
         pendingConversationTitle.value = message;
         clearError();
@@ -543,7 +584,47 @@ export function useConversation(props: ConversationProps) {
         }
     }
 
+    async function submitLinkedDecisions(
+        decisions: Record<string, { action: string; option_id?: string }>,
+    ): Promise<void> {
+        const response = await globalThis.fetch(route('assistant.chat'), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                ...csrfHeader(),
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-Assistant-Queue': 'true',
+            },
+            body: JSON.stringify({
+                decisions,
+                conversation_id: conversationId.value,
+                turn_id: crypto.randomUUID(),
+            }),
+        });
+        if (!response.ok) {
+            hydratedFailure.value = (
+                await assistantResponseError(
+                    response,
+                    t('assistant.unavailable'),
+                )
+            ).message;
+        }
+        router.reload({ only: ['conversation', 'conversations'] });
+    }
+
     async function decide(payload: ApprovalDecision): Promise<void> {
+        if (props.conversation?.slack) {
+            await submitLinkedDecisions({
+                [payload.id]: {
+                    action: payload.action,
+                    ...(payload.action === 'select'
+                        ? { option_id: payload.optionId }
+                        : {}),
+                },
+            });
+            return;
+        }
         if (payload.action === 'select') {
             choiceSelections.set(payload.id, payload.optionId);
         }
@@ -558,6 +639,19 @@ export function useConversation(props: ConversationProps) {
         parts: AssistantActionApprovalPart[],
         action: 'approve' | 'reject',
     ): Promise<void> {
+        if (props.conversation?.slack) {
+            await submitLinkedDecisions(
+                Object.fromEntries(
+                    parts
+                        .filter((part) => part.state === 'approval-requested')
+                        .map((part) => [
+                            part.approval?.id ?? part.toolCallId,
+                            { action },
+                        ]),
+                ),
+            );
+            return;
+        }
         for (const part of parts) {
             if (part.state !== 'approval-requested') {
                 continue;
@@ -641,6 +735,7 @@ export function useConversation(props: ConversationProps) {
         }
 
         if (
+            !props.conversation?.slack &&
             activeTurnId.value !== null &&
             ['queued', 'running', 'cancel_requested'].includes(
                 props.conversation?.active_turn?.status ?? '',
@@ -649,6 +744,30 @@ export function useConversation(props: ConversationProps) {
             await resumeStream();
         }
     });
+
+    usePoll(
+        3000,
+        { only: ['conversation', 'conversations'] },
+        { autoStart: !!props.conversation?.slack },
+    );
+    watch(
+        () => props.conversation,
+        (value) => {
+            if (
+                value?.slack &&
+                status.value !== 'streaming' &&
+                status.value !== 'submitted' &&
+                !reconnecting.value
+            ) {
+                messages.value = initialMessages();
+                activeTurnId.value = value.active_turn?.id ?? null;
+                hydratedFailure.value =
+                    value.active_turn?.failure?.message ?? null;
+                hydratedFailureCode.value =
+                    value.active_turn?.failure?.code ?? null;
+            }
+        },
+    );
 
     watch(messages, scrollToLatest, { deep: true, flush: 'post' });
 

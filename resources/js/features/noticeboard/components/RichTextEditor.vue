@@ -105,7 +105,8 @@ function setTextSize(size: 'small' | 'normal' | 'large'): void {
 
 async function setLink(): Promise<void> {
     const current = editor.value?.getAttributes('link').href as
-        string | undefined;
+        | string
+        | undefined;
     const href = await dialog.prompt({
         title: t('noticeboard.editor.link'),
         message: t('noticeboard.editor.link_prompt'),
@@ -151,7 +152,9 @@ function toolbarClass(active = false): string {
                 @change="
                     setTextSize(
                         ($event.target as HTMLSelectElement).value as
-                            'small' | 'normal' | 'large',
+                            | 'small'
+                            | 'normal'
+                            | 'large',
                     )
                 "
             >

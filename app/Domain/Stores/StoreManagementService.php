@@ -152,6 +152,10 @@ class StoreManagementService
         if (!$store->isActive()) {
             \abort(404);
         }
+        $conversationId = Context::get('assistant_conversation_id');
+        if (\is_string($conversationId) && DB::table('assistant_slack_threads')->where('conversation_id', $conversationId)->where('admin_user_id', $actor->getKey())->whereNull('detached_at')->update(['active_store_id' => $store->getKey(), 'mapping_status' => 'selected', 'updated_at' => \now()]) > 0) {
+            return;
+        }
         $browserSessionId = Typer::parseNullableString(Context::get(ActiveStoreResolver::SESSION_ID_CONTEXT));
         $request = Resolver::resolveRequest();
 

@@ -9,6 +9,8 @@ use App\Ai\AssistantDecisionGuard;
 use App\Ai\AssistantTurnService;
 use App\Ai\AssistantTurnStream;
 use App\Ai\ConversationRepository;
+use App\Ai\Slack\SlackThreadService;
+use App\Ai\Slack\SlackTurnAdmission;
 use App\Http\Controllers\Web\Concerns\ThrottlesWebRequests;
 use App\Http\Controllers\Web\Concerns\ValidatesWebRequests;
 use App\Jobs\RunAssistantTurnJob;
@@ -77,6 +79,14 @@ class AssistantChatController
         }
 
         $turnId = Typer::assertString($validated->parseNullableString('turn_id'));
+        if (Resolver::resolve(SlackThreadService::class)->binding($conversationId) !== null) {
+            $submission = Resolver::resolve(SlackTurnAdmission::class)->submit($user, $conversation, $turnId, $message === null ? 'decisions' : 'message', $message === null ? ['decisions' => $decisions] : ['message' => $message], 'web', (string) $user->getKey());
+            if ($request->header('X-Assistant-Queue') === 'true') {
+                return \response()->json(['turn_id' => $submission['turn']->getTurnId()], $submission['created'] ? 202 : 200);
+            }
+
+            return $this->durableResponse($submission['turn'], $conversation, $repository);
+        }
         $turns = Resolver::resolve(AssistantTurnService::class);
         $admissionLock = Resolver::resolve(AssistantConversationLock::class)->tryAcquire($conversationId);
         if ($admissionLock === null) {

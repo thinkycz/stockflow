@@ -26,6 +26,13 @@ return [
     ],
 
     'slack' => [
+        'assistant' => [
+            'enabled' => $env->parseBool('SLACK_ASSISTANT_ENABLED'),
+            'admin_user_id' => $env->parseNullableInt('SLACK_ASSISTANT_ADMIN_USER_ID'),
+            'workspace_id' => $env->parseNullableString('SLACK_ASSISTANT_WORKSPACE_ID'),
+            'signing_secret' => $env->parseNullableString('SLACK_SIGNING_SECRET'),
+            'bot_user_id' => $env->parseNullableString('SLACK_ASSISTANT_BOT_USER_ID'),
+        ],
         'notifications' => [
             'bot_user_oauth_token' => $env->parseNullableString('SLACK_BOT_USER_OAUTH_TOKEN'),
         ],

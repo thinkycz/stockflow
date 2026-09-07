@@ -43,7 +43,7 @@ final class AssistantConversationLock
 
         $lock = $store->lock(
             'assistant:conversation:' . $conversationId,
-            Config::inject()->assertInt('ai.assistant.timeout_seconds') + 10,
+            Config::inject()->assertInt('ai.assistant.timeout_seconds') + 60,
         );
 
         return $lock->get() === true ? $lock : null;

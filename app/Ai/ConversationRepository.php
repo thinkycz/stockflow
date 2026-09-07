@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Ai;
 
+use App\Ai\Slack\SlackThreadService;
+use App\Models\AssistantTurn;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -66,6 +68,7 @@ class ConversationRepository
         $conversationId = $this->conversationId($conversation);
 
         DB::transaction(static function () use ($conversation, $conversationId): void {
+            DB::table('assistant_slack_threads')->where('conversation_id', $conversationId)->update(['conversation_id' => null, 'detached_at' => \now(), 'activation_ts' => \sprintf('%.6f', \microtime(true)), 'updated_at' => \now()]);
             $turnIds = DB::table('assistant_turns')
                 ->where('conversation_id', $conversationId)
                 ->pluck('id');
@@ -98,12 +101,23 @@ class ConversationRepository
             $messages[] = $this->messagePayload($message);
         }
 
-        $turn = $turns->recoverableForConversation($conversationId, $actor);
+        $linked = Resolver::resolve(SlackThreadService::class)->payload($conversationId);
+        if ($linked !== null) {
+            foreach (AssistantTurn::query()->where('conversation_id', $conversationId)->where('status', 'queued')->where('kind', 'message')->orderBy('queued_at')->get() as $queued) {
+                $logical = $turns->logicalUserMessage($queued);
+                if ($logical !== null) {
+                    $messages[] = ['id' => 'queued-' . $queued->getTurnId(), 'role' => 'user', 'metadata' => ['created_at' => $logical['queued_at']->toJSON()], 'parts' => [['type' => 'text', 'text' => $logical['message']]]];
+                }
+            }
+        }
+        $turn = $linked === null ? null : AssistantTurn::query()->where('conversation_id', $conversationId)->whereIn('status', ['running', 'cancel_requested'])->orderBy('queued_at')->first();
+        $turn ??= $turns->recoverableForConversation($conversationId, $actor);
 
         return [
             'id' => $conversationId,
             'title' => $this->title($conversation),
             'messages' => $messages,
+            'slack' => $linked,
             'active_turn' => $turn === null ? null : $turns->payload($turn),
         ];
     }

@@ -163,6 +163,7 @@ $matrix = [
         'attendance.report.match' => 'Report-only batch matching of the applied filters; no assistant adapter is exposed.',
         'assistant.chat' => 'Assistant control-plane streaming endpoint, not a domain operation.',
         'assistant.turns.cancel' => 'Durable assistant transport lifecycle, not an application-domain operation.',
+        'assistant.slack-history.retry' => 'Linked Slack history transport recovery; it does not execute a domain operation.',
         'assistant.turns.retry' => 'Durable assistant recovery lifecycle, not an application-domain operation.',
         'assistant.conversations.destroy' => 'Assistant transcript lifecycle, not an application-domain operation.',
         'bank-statements.store' => 'Binary bank document upload requires an explicit administrator action.',

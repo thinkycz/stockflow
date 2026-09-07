@@ -12,6 +12,8 @@ use App\Models\AssistantTurn;
 use App\Models\AssistantTurnEvent;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Thinkycz\LaravelCore\Support\Config;
 
 final class MaintainAssistantTurnsJob implements ShouldQueue
@@ -36,6 +38,10 @@ final class MaintainAssistantTurnsJob implements ShouldQueue
 
         AssistantActionAudit::query()->where('status', AssistantActionStatusEnum::RUNNING->value)
             ->where('classification', AssistantActionClassificationEnum::EXTERNAL_SIDE_EFFECT->value)
+            ->where(static function (Builder $query): void {
+                $query->where('status', '!=', AssistantTurnStatusEnum::QUEUED->value)
+                    ->orWhereNotIn('conversation_id', DB::table('assistant_slack_threads')->whereNull('detached_at')->select('conversation_id'));
+            })
             ->where('updated_at', '<', $abandonedBefore)
             ->update(['status' => AssistantActionStatusEnum::UNCERTAIN->value, 'error_summary' => 'External outcome is uncertain; verify it before any new action.', 'completed_at' => \now()]);
 
@@ -45,6 +51,10 @@ final class MaintainAssistantTurnsJob implements ShouldQueue
                 AssistantTurnStatusEnum::RUNNING->value,
                 AssistantTurnStatusEnum::CANCEL_REQUESTED->value,
             ])
+            ->where(static function (Builder $query): void {
+                $query->where('status', '!=', AssistantTurnStatusEnum::QUEUED->value)
+                    ->orWhereNotIn('conversation_id', DB::table('assistant_slack_threads')->whereNull('detached_at')->select('conversation_id'));
+            })
             ->where('updated_at', '<', $abandonedBefore)
             ->update([
                 'status' => AssistantTurnStatusEnum::FAILED->value,

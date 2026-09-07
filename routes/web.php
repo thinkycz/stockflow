@@ -93,6 +93,8 @@ use App\Http\Controllers\Web\Shift\ShiftUpdateController;
 use App\Http\Controllers\Web\ShiftPreset\ShiftPresetDestroyController;
 use App\Http\Controllers\Web\ShiftPreset\ShiftPresetStoreController;
 use App\Http\Controllers\Web\ShiftPreset\ShiftPresetUpdateController;
+use App\Http\Controllers\Web\Slack\SlackEventController;
+use App\Http\Controllers\Web\Slack\SlackHistoryRetryController;
 use App\Http\Controllers\Web\Statement\StatementClearController;
 use App\Http\Controllers\Web\Statement\StatementHistoryController;
 use App\Http\Controllers\Web\Statement\StatementIndexController;
@@ -239,6 +241,7 @@ Resolver::resolveRouteRegistrar()
             $router->post('assistant/turns/{turn}/cancel', AssistantTurnCancelController::class)->whereUuid('turn')->name('assistant.turns.cancel');
             $router->post('assistant/turns/{turn}/retry', AssistantTurnRetryController::class)->whereUuid('turn')->name('assistant.turns.retry');
             $router->get('assistant/conversations/{conversation}', [AssistantController::class, 'show'])->whereUuid('conversation')->name('assistant.conversations.show');
+            $router->post('assistant/conversations/{conversation}/slack-history-retry', SlackHistoryRetryController::class)->whereUuid('conversation')->name('assistant.slack-history.retry');
             $router->delete('assistant/conversations/{conversation}', [AssistantController::class, 'destroy'])->whereUuid('conversation')->name('assistant.conversations.destroy');
         });
 
@@ -387,3 +390,6 @@ Resolver::resolveRouteRegistrar()
         $router->get('recipe-test-results', RecipeTestResultIndexController::class)->name('recipe-test-results.index');
         $router->get('recipe-test-results/{recipeTest}', RecipeTestResultShowController::class)->whereNumber('recipeTest')->name('recipe-test-results.show');
     });
+
+Resolver::resolveRouteRegistrar()->post('slack/events', SlackEventController::class)->name('slack.events');
+Resolver::resolveRouteRegistrar()->post('slack/interactivity', SlackEventController::class)->name('slack.interactivity');

@@ -1062,3 +1062,74 @@ test.describe('main-admin AI assistant', () => {
         ).toBeVisible();
     });
 });
+
+test('linked Slack conversation shares queued app text and accepts a decision with later text pending', async ({
+    page,
+}) => {
+    await login(page);
+    await page.goto('/assistant');
+    await page.route(
+        `**/assistant/conversations/${pendingConversationId}`,
+        async (route) => {
+            const response = await route.fetch();
+            const body = await response.json();
+            body.props.conversation.slack = {
+                url: 'https://app.slack.com/archives/CSTORE/p100000001',
+                channel_id: 'CSTORE',
+                active_store_id: null,
+                active_store_name: null,
+                mapping_status: 'general',
+                history_ready: true,
+                history_error: null,
+                decisions: [],
+            };
+            body.props.conversation.messages.push({
+                id: 'queued-slack-user',
+                role: 'user',
+                parts: [
+                    {
+                        type: 'text',
+                        text: '[Slack · UBOB] A later queued question',
+                    },
+                ],
+            });
+            await route.fulfill({ response, json: body });
+        },
+    );
+    const submitted: Record<string, unknown>[] = [];
+    await page.route('**/assistant/chat', async (route) => {
+        expect(route.request().headers()['x-assistant-queue']).toBe('true');
+        submitted.push(route.request().postDataJSON());
+        await route.fulfill({
+            status: 202,
+            json: { turn_id: '019fef6f-a4ab-7813-a09c-518d7157e2e1' },
+        });
+    });
+    await page
+        .locator(`a[href$="/assistant/conversations/${pendingConversationId}"]`)
+        .first()
+        .click();
+    await expect(
+        page.getByRole('link', { name: 'Slack thread' }),
+    ).toBeVisible();
+    await expect(
+        page.getByText('Company-wide · no store selected'),
+    ).toBeVisible();
+    await expect(
+        page.getByText('[Slack · UBOB] A later queued question'),
+    ).toBeVisible();
+    await page.locator('textarea').fill('A message from the app');
+    await page
+        .getByRole('button', { name: 'Send message', exact: true })
+        .click();
+    await expect.poll(() => submitted.length).toBe(1);
+    expect(submitted[0]).toMatchObject({
+        message: 'A message from the app',
+        conversation_id: pendingConversationId,
+    });
+    await page.getByRole('button', { name: 'Perform', exact: true }).click();
+    await expect.poll(() => submitted.length).toBe(2);
+    expect(submitted[1]).toMatchObject({
+        decisions: { 'e2e-cross-store-transfer': { action: 'approve' } },
+    });
+});

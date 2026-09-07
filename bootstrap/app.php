@@ -6,6 +6,7 @@ use App\Console\Commands\AdminBootstrapCommand;
 use App\Console\Commands\AuditIntegrityCommand;
 use App\Console\Commands\BackfillInventoryConsumptionCommand;
 use App\Console\Commands\DiagnoseAssistantCommand;
+use App\Console\Commands\DiagnoseSlackAssistantCommand;
 use App\Console\Commands\GenerateDailyChecklistsCommand;
 use App\Console\Commands\IdentityReadinessCommand;
 use App\Console\Commands\PruneNoticeboardCardsCommand;
@@ -18,6 +19,7 @@ use App\Http\Middleware\ResolveActiveStore;
 use App\Jobs\CreateDailyOperationalDigestJob;
 use App\Jobs\MaintainAssistantTurnsJob;
 use App\Jobs\MaintainBankStatementImportsJob;
+use App\Jobs\MaintainSlackAssistantJob;
 use App\Jobs\PruneAssistantActionAuditsJob;
 use App\Jobs\PruneOperationalDigestHistoryJob;
 use App\Jobs\RecordAssistantQueueHeartbeatJob;
@@ -52,6 +54,7 @@ return Application::configure(basePath: \dirname(__DIR__))
     ->withMiddleware(static function (Middleware $middleware): void {
         $middleware->trustProxies(at: Env::inject()->parseNullableString('TRUSTED_PROXIES'));
         $middleware->redirectGuestsTo('/login');
+        $middleware->validateCsrfTokens(except: ['slack/events', 'slack/interactivity']);
         $middleware->redirectUsersTo('/dashboard');
 
         $middleware->alias([
@@ -85,6 +88,7 @@ return Application::configure(basePath: \dirname(__DIR__))
         AdminBootstrapCommand::class,
         AuditIntegrityCommand::class,
         DiagnoseAssistantCommand::class,
+        DiagnoseSlackAssistantCommand::class,
         GenerateDailyChecklistsCommand::class,
         IdentityReadinessCommand::class,
         PruneNoticeboardCardsCommand::class,
@@ -139,6 +143,8 @@ return Application::configure(basePath: \dirname(__DIR__))
             ->timezone($timezone)
             ->withoutOverlapping()
             ->onOneServer();
+
+        $schedule->job(new MaintainSlackAssistantJob())->everyMinute()->withoutOverlapping()->onOneServer();
 
         $schedule
             ->job(new MaintainAssistantTurnsJob())

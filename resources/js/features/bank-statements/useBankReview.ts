@@ -1,3 +1,4 @@
+import type { MarketplaceFees } from '@/types/marketplace-fees';
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -34,6 +35,7 @@ export type PeriodCandidate = {
     expected: string | null;
     difference: string | null;
     tolerance: string | null;
+    fees?: MarketplaceFees | null;
     within_tolerance: boolean;
     reason: string | null;
     source: 'explicit' | 'inferred' | 'calendar';
@@ -49,6 +51,7 @@ type ReconciliationRow = {
     pairing: 'paired' | 'unresolved' | 'excluded';
     amount_check: 'within_tolerance' | 'difference' | 'not_checked';
     tolerance: string | null;
+    fees?: MarketplaceFees | null;
     candidates: PeriodCandidate[];
     automatic: PeriodCandidate | null;
     discovery_reason: string | null;

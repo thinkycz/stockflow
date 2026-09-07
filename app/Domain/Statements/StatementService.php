@@ -14,6 +14,7 @@ use App\Models\StatementVersionDay;
 use App\Models\Store;
 use App\Models\User;
 use App\Support\CommissionRates;
+use App\Support\MarketplacePayout;
 use App\Support\OperationalActivityService;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Carbon;
@@ -269,7 +270,7 @@ class StatementService
      *
      * @return array{
      *     period: array<string, mixed>,
-     *     totals: array<string, float|int>,
+     *     totals: array{total_revenue: float, investment: float, card_provision: float, marketplace_provision: float, marketplace_fees: array<string, array<string, string>>, provisions: float, gross_margin: float, margin_percent: float, daily_average: float},
      *     channels: array<string, float>,
      *     daily: array<int, array{label: string, value: float}>,
      *     days_with_revenue: int,
@@ -331,7 +332,8 @@ class StatementService
 
         $investment = $this->calculateReportInvestment($user, $storeId, $year, $month);
         $cardProvision = \round($totals['card'] * (float) CommissionRates::CARD, 2);
-        $marketplaceProvision = $this->marketplaceProvision($totals['wolt'], $totals['bolt'], $totals['bolt_cash'], $totals['foodora']);
+        $fees = MarketplacePayout::forDays($rows);
+        $marketplaceProvision = MarketplacePayout::totalDeduction($fees);
         $provisions = \round($cardProvision + $marketplaceProvision, 2);
         $grossMargin = \round($totals['total_revenue'] - $investment - $provisions, 2);
         $marginPercent = $totals['total_revenue'] > 0 ? \round(($grossMargin / $totals['total_revenue']) * 100, 2) : 0.0;
@@ -348,6 +350,7 @@ class StatementService
                 'investment' => \round($investment, 2),
                 'card_provision' => $cardProvision,
                 'marketplace_provision' => $marketplaceProvision,
+                'marketplace_fees' => $fees,
                 'provisions' => $provisions,
                 'gross_margin' => $grossMargin,
                 'margin_percent' => $marginPercent,
@@ -401,9 +404,11 @@ class StatementService
         $boltTotal = 0.0;
         $boltCashTotal = 0.0;
         $foodoraTotal = 0.0;
+        $feeDays = [];
         $daysWithRevenue = 0;
 
         foreach ($days as $day) {
+            $feeDays[] = $day;
             $total = $day->getTotal();
             $totalRevenue += $total;
             $cashTotal += $day->getCash();
@@ -420,7 +425,8 @@ class StatementService
         $totalRevenue = \round($totalRevenue, 2);
         $investment = \round($investment, 2);
         $cardProvision = \round($cardTotal * (float) CommissionRates::CARD, 2);
-        $marketplaceProvision = $this->marketplaceProvision($woltTotal, $boltTotal, $boltCashTotal, $foodoraTotal);
+        $fees = MarketplacePayout::forDays($feeDays);
+        $marketplaceProvision = MarketplacePayout::totalDeduction($fees);
         $provisions = \round($cardProvision + $marketplaceProvision, 2);
         $grossMargin = \round($totalRevenue - $investment - $provisions, 2);
         $marginPercent = $totalRevenue > 0 ? \round(($grossMargin / $totalRevenue) * 100, 2) : 0.0;
@@ -431,6 +437,7 @@ class StatementService
             'investment' => $investment,
             'card_provision' => $cardProvision,
             'marketplace_provision' => $marketplaceProvision,
+            'marketplace_fees' => $fees,
             'provisions' => $provisions,
             'gross_margin' => $grossMargin,
             'margin_percent' => $marginPercent,
@@ -759,18 +766,5 @@ class StatementService
             'covered_items' => \count($secondsByItem),
             'last_inventory_at' => Typer::parseNullableString($lastInventory),
         ];
-    }
-
-    /**
-     * Calculate marketplace provisions using each platform's contracted rate.
-     */
-    private function marketplaceProvision(float $wolt, float $bolt, float $boltCash, float $foodora): float
-    {
-        return \round(
-            $wolt * (float) CommissionRates::WOLT
-                + ($bolt + $boltCash) * (float) CommissionRates::BOLT
-                + $foodora * (float) CommissionRates::FOODORA,
-            2,
-        );
     }
 }

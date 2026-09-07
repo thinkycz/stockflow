@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import MarketplaceFeeBreakdown from '@/components/MarketplaceFeeBreakdown.vue';
+
 import { Link } from '@inertiajs/vue3';
 import { CircleCheck, CircleAlert, Clock3 } from '@lucide/vue';
 import { computed, ref } from 'vue';
@@ -103,6 +105,10 @@ function money(value: string | null): string {
             <p v-if="receipt.check.reason">
                 {{ t(`bank_statements.reasons.${receipt.check.reason}`) }}
             </p>
+            <MarketplaceFeeBreakdown
+                v-if="!pending"
+                :fees="receipt.check.fees"
+            />
             <Link
                 :href="
                     route('bank-statements.show', {

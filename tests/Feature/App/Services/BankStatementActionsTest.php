@@ -91,7 +91,7 @@ use Thinkycz\LaravelCore\Support\Resolver;
         StatementDay::factory()->for($daily, 'statement')->create(['date' => \sprintf('2026-08-%02d', $day), 'wolt' => '100.00']);
     }
     $transaction = BankStatementTransaction::factory()->forStatement($bank)->create(['category' => 'wolt', 'amount' => '100.00', 'booked_on' => '2026-08-07', 'sales_from' => '2026-08-01', 'sales_to' => '2026-08-05', 'manually_edited' => true]);
-    $row = ['id' => $transaction->getKey(), 'category' => 'wolt', 'amount' => '350.00', 'booked_on' => '2026-08-07', 'sales_from' => '2026-08-01', 'sales_to' => '2026-08-05'];
+    $row = ['id' => $transaction->getKey(), 'category' => 'wolt', 'amount' => '318.50', 'booked_on' => '2026-08-07', 'sales_from' => '2026-08-01', 'sales_to' => '2026-08-05'];
     $service = new BankStatementReconciliationService();
     $result = $service->recommend($bank, $user, [$row], 0);
     \expect($result['candidates'][0])->toMatchArray(['from' => '2026-08-01', 'to' => '2026-08-05', 'reason' => null, 'within_tolerance' => true])

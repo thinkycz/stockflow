@@ -14,6 +14,7 @@ use App\Models\StatementDay;
 use App\Models\Store;
 use App\Models\User;
 use App\Support\CommissionRates;
+use App\Support\MarketplacePayout;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
@@ -21,11 +22,13 @@ use InvalidArgumentException;
 use Thinkycz\LaravelCore\Support\Typer;
 
 /**
- * @phpstan-type Check array{status: string, actual: string, expected: string|null, difference: string|null, reason: string|null, pairing: string, amount_check: string, tolerance: string|null}
- * @phpstan-type Candidate array{from: string, to: string, expected: string|null, difference: string|null, tolerance: string|null, within_tolerance: bool, reason: string|null, source: string}
+ * @phpstan-import-type Breakdown from MarketplacePayout
+ *
+ * @phpstan-type Check array{status: string, actual: string, expected: string|null, difference: string|null, reason: string|null, pairing: string, amount_check: string, tolerance: string|null, fees: Breakdown|null}
+ * @phpstan-type Candidate array{from: string, to: string, expected: string|null, difference: string|null, tolerance: string|null, fees: Breakdown|null, within_tolerance: bool, reason: string|null, source: string}
  * @phpstan-type Discovery array{candidates: list<Candidate>, automatic: Candidate|null, reason: string|null}
  * @phpstan-type Payment array{transaction_id: int, statement_id: int, channel: string, booked_on: string, from: string, to: string, state: string, check: Check}
- * @phpstan-type Row array{transaction_id: int, status: string, actual: string, expected: string|null, difference: string|null, reason: string|null, pairing: string, amount_check: string, tolerance: string|null, candidates: list<Candidate>, automatic: Candidate|null, discovery_reason: string|null}
+ * @phpstan-type Row array{transaction_id: int, status: string, actual: string, expected: string|null, difference: string|null, reason: string|null, pairing: string, amount_check: string, tolerance: string|null, fees: Breakdown|null, candidates: list<Candidate>, automatic: Candidate|null, discovery_reason: string|null}
  */
 class BankStatementReconciliationService
 {
@@ -276,20 +279,23 @@ class BankStatementReconciliationService
             $foodora = $foodora->plus($day->getFoodoraDecimal());
         }
 
-        $expected = match ($category) {
-            BankStatementTransactionCategoryEnum::CARD => $card->multipliedBy(BigDecimal::one()->minus(CommissionRates::CARD)),
-            BankStatementTransactionCategoryEnum::WOLT => $wolt->multipliedBy(BigDecimal::one()->minus(CommissionRates::WOLT)),
-            BankStatementTransactionCategoryEnum::FOODORA => $foodora->multipliedBy(BigDecimal::one()->minus(CommissionRates::FOODORA)),
-            BankStatementTransactionCategoryEnum::BOLT => $bolt->minus($bolt->plus($boltCash)->multipliedBy(CommissionRates::BOLT)),
-            default => BigDecimal::zero(),
-        };
+        $fees = $category === BankStatementTransactionCategoryEnum::CARD ? null : MarketplacePayout::calculate(
+            $category->value,
+            (string) match ($category) {
+                BankStatementTransactionCategoryEnum::WOLT => $wolt,
+                BankStatementTransactionCategoryEnum::BOLT => $bolt,
+                default => $foodora,
+            },
+            (string) $boltCash,
+        );
+        $expected = $fees === null ? $card->multipliedBy(BigDecimal::one()->minus(CommissionRates::CARD)) : BigDecimal::of($fees['expected_transfer']);
         $expected = $expected->toScale(2, RoundingMode::HalfUp);
         $difference = $actual->minus($expected)->toScale(2, RoundingMode::HalfUp);
-        $status = $difference->abs()->isLessThanOrEqualTo($this->tolerance($category, $expected))
+        $status = !($actual->isPositive() && !$expected->isPositive()) && $difference->abs()->isLessThanOrEqualTo($this->tolerance($category, $expected))
             ? BankStatementReconciliationStatusEnum::MATCHED
             : BankStatementReconciliationStatusEnum::MISMATCH;
 
-        return $this->result($status, $actual, $expected, $difference, null, $this->tolerance($category, $expected));
+        return $this->result($status, $actual, $expected, $difference, null, $this->tolerance($category, $expected), $fees);
     }
 
     /**
@@ -555,7 +561,7 @@ class BankStatementReconciliationService
     {
         $check = $this->reconcile($transaction, $days, $from, $to);
 
-        return ['from' => $from, 'to' => $to, 'expected' => $check['expected'], 'difference' => $check['difference'],
+        return ['from' => $from, 'to' => $to, 'fees' => $check['fees'], 'expected' => $check['expected'], 'difference' => $check['difference'],
             'tolerance' => $check['tolerance'], 'within_tolerance' => $check['status'] === 'matched', 'reason' => $check['reason'], 'source' => $source];
     }
 
@@ -629,6 +635,8 @@ class BankStatementReconciliationService
     /**
      * Serialize a reconciliation result.
      *
+     * @param Breakdown|null $fees
+     *
      * @return Check
      */
     private function result(
@@ -638,8 +646,10 @@ class BankStatementReconciliationService
         BigDecimal|null $difference,
         string|null $reason,
         BigDecimal|null $tolerance = null,
+        array|null $fees = null,
     ): array {
         return [
+            'fees' => $fees,
             'status' => $status->value,
             'pairing' => $expected !== null ? 'paired' : ($status === BankStatementReconciliationStatusEnum::EXCLUDED ? 'excluded' : 'unresolved'),
             'amount_check' => $expected === null ? 'not_checked' : ($status === BankStatementReconciliationStatusEnum::MATCHED ? 'within_tolerance' : 'difference'),

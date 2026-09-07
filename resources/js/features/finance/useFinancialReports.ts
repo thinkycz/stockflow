@@ -1,3 +1,4 @@
+import type { MarketplaceFees } from '@/types/marketplace-fees';
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -11,6 +12,7 @@ type FinancialReport = {
         investment: number;
         card_provision: number;
         marketplace_provision: number;
+        marketplace_fees: Record<'wolt' | 'bolt' | 'foodora', MarketplaceFees>;
         provisions: number;
         gross_margin: number;
         margin_percent: number;

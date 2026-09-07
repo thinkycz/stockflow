@@ -410,7 +410,7 @@ function readToolResult(Tool $tool, array $arguments): array
             'provisions',
         ])->and($financialResult['ok'])->toBeTrue()
         ->and($financialResult['dataset'])->toBe('reports')
-        ->and($financialResult['summary']['totals'])->toBe(['income' => 3330, 'expenses' => 1200, 'profit' => 2130])
+        ->and($financialResult['summary']['totals'])->toBe(['income' => 3298.5, 'expenses' => 1200, 'profit' => 2098.5])
         ->and($financialResult['summary']['income_rows'])->not->toBeEmpty()
         ->and($financialResult['summary']['expense_rows'])->toContainEqual([
             'id' => 'manual:1',

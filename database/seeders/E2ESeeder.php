@@ -521,10 +521,10 @@ class E2ESeeder extends Seeder
             $bank = BankStatement::factory()->forStore($store)->create([
                 'bank_name' => 'Synthetic bank',
                 'original_name' => 'synthetic-review-' . $locale . '.pdf', 'period_from' => $first, 'period_to' => $booked,
-                'opening_balance' => '100.00', 'total_credits' => (string) (1050 + 210 * ($month - 3)), 'total_debits' => '0.00',
-                'closing_balance' => (string) (1150 + 210 * ($month - 3)), 'credit_count' => 3, 'debit_count' => 0,
+                'opening_balance' => '100.00', 'total_credits' => (string) (1042.65 + 191.10 * ($month - 3)), 'total_debits' => '0.00',
+                'closing_balance' => (string) (1142.65 + 191.10 * ($month - 3)), 'credit_count' => 3, 'debit_count' => 0,
             ]);
-            foreach (['card' => '985.00', 'wolt' => (string) (210 * ($month - 3)), 'bolt' => '65.00'] as $category => $amount) {
+            foreach (['card' => '985.00', 'wolt' => (string) (191.10 * ($month - 3)), 'bolt' => '57.65'] as $category => $amount) {
                 BankStatementTransaction::factory()->forStatement($bank)->create([
                     'booked_on' => $booked, 'category' => $category, 'amount' => $amount,
                     'item_type' => 'Synthetic ' . $category, 'description' => null, 'counterparty_name' => null,
@@ -547,7 +547,7 @@ class E2ESeeder extends Seeder
             foreach ([$from, $to] as $date) {
                 StatementDay::factory()->for($statement, 'statement')->create(['date' => $date, 'card' => '100.00', 'wolt' => '100.00', 'bolt' => '100.00', 'bolt_cash' => '40.00', 'foodora' => '100.00']);
             }
-            foreach (['card' => '198.00', 'wolt' => '90.00', 'bolt' => '102.00', 'foodora' => '140.00'] as $channel => $amount) {
+            foreach (['card' => '198.00', 'wolt' => '90.00', 'bolt' => '81.42', 'foodora' => '127.40'] as $channel => $amount) {
                 $bank = BankStatement::factory()->forStore($store)->create(['bank_name' => 'Synthetic bank', 'original_name' => 'synthetic-receipt-' . $channel . '.pdf', 'status' => 'confirmed', 'period_from' => $from, 'period_to' => $to]);
                 BankStatementTransaction::factory()->forStatement($bank)->create(['category' => $channel, 'amount' => $amount, 'sales_from' => $from, 'sales_to' => $to, 'booked_on' => \sprintf('2025-%02d-05', $month)]);
             }
@@ -567,7 +567,7 @@ class E2ESeeder extends Seeder
                 StatementDay::factory()->for($statement, 'statement')->create(['date' => \sprintf('2027-%02d-%02d', $month, $day), 'wolt' => '100.00']);
             }
             $bank = BankStatement::factory()->forStore($store)->create(['bank_name' => 'Synthetic bank', 'original_name' => 'synthetic-actions-' . $locale . '.pdf', 'period_from' => $first, 'period_to' => $last]);
-            BankStatementTransaction::factory()->forStatement($bank)->create(['category' => 'wolt', 'amount' => '350.00', 'booked_on' => \sprintf('2027-%02d-07', $month), 'sales_from' => $first, 'sales_to' => $last, 'item_type' => 'Calendar action row', 'description' => null, 'variable_symbol' => null, 'specific_symbol' => null, 'manually_edited' => true]);
+            BankStatementTransaction::factory()->forStatement($bank)->create(['category' => 'wolt', 'amount' => '318.50', 'booked_on' => \sprintf('2027-%02d-07', $month), 'sales_from' => $first, 'sales_to' => $last, 'item_type' => 'Calendar action row', 'description' => null, 'variable_symbol' => null, 'specific_symbol' => null, 'manually_edited' => true]);
         }
     }
 }

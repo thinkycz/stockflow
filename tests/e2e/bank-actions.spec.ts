@@ -90,8 +90,8 @@ for (const [locale, month] of [
         await row
             .getByRole('button', { name: t.recommend, exact: true })
             .click();
-        const suggestions = row.locator('details');
-        await suggestions.locator('summary').click();
+        const suggestions = row.locator('details:not([data-marketplace-fees])');
+        await suggestions.locator(':scope > summary').click();
         await expect(suggestions).toContainText(`1.${month}.2027`);
         await expect(suggestions.getByRole('button').first()).toBeEnabled();
         let releaseResponse!: () => void;
@@ -112,7 +112,7 @@ for (const [locale, month] of [
             .getByRole('button', { name: t.recommend, exact: true })
             .click();
         await ready;
-        await row.getByRole('spinbutton').fill('349');
+        await row.getByRole('spinbutton').fill('317.5');
         releaseResponse();
         await expect(
             row.getByRole('button', { name: t.recommend, exact: true }),
@@ -157,7 +157,7 @@ for (const [locale, month] of [
             page.getByRole('alert').filter({ hasText: /AI/ }).first(),
         ).toBeVisible();
         await page.reload();
-        await expect(row.getByRole('spinbutton')).toHaveValue('349.00');
+        await expect(row.getByRole('spinbutton')).toHaveValue('317.50');
         await page.getByRole('button', { name: t.remove, exact: true }).click();
         await page
             .getByRole('dialog')

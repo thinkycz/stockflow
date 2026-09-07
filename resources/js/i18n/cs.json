@@ -963,7 +963,7 @@
             "inventory_coverage": "Pokrytí: {days} dní / {items} položek",
             "provisions": "Provize plateb",
             "card_provision": "karta (1 %)",
-            "marketplace_provision": "marketplace (30–35 %)",
+            "marketplace_provision": "Provize platforem včetně DPH",
             "gross_margin": "Odhadovaná hrubá marže",
             "margin_percent": "Procentuální marže",
             "daily_average": "Denní průměr",
@@ -2077,5 +2077,15 @@
             "qr_alt": "QR kód dárkového poukazu",
             "code_help": "Kód předložte obsluze"
         }
+    },
+    "marketplace_fees": {
+        "title": "Rozpis provize a DPH",
+        "base": "Základ provize",
+        "commission": "Provize bez DPH",
+        "vat": "DPH z provize",
+        "deduction": "Celková srážka",
+        "net_revenue": "Čistá tržba včetně přijaté hotovosti",
+        "expected_transfer": "Odhad bankovního převodu",
+        "estimate": "Peněžní odhad za celé období bez dalších poplatků a úprav. Nezohledňuje odpočet DPH."
     }
 }

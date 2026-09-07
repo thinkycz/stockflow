@@ -12,17 +12,17 @@ final class CommissionRates
     public const string CARD = '0.01';
 
     /**
-     * Bolt commission, including its cash sales base.
+     * Bolt commission excluding VAT, including its cash sales base.
      */
     public const string BOLT = '0.35';
 
     /**
-     * Wolt commission.
+     * Wolt commission excluding VAT.
      */
     public const string WOLT = '0.30';
 
     /**
-     * Foodora commission.
+     * Foodora commission excluding VAT.
      */
     public const string FOODORA = '0.30';
 }

@@ -72,9 +72,9 @@ use Illuminate\Support\Facades\DB;
     $service = new BankStatementReconciliationService();
 
     foreach ([
-        BankStatementTransactionCategoryEnum::WOLT->value => '70.00',
-        BankStatementTransactionCategoryEnum::FOODORA->value => '140.00',
-        BankStatementTransactionCategoryEnum::BOLT->value => '51.00',
+        BankStatementTransactionCategoryEnum::WOLT->value => '63.70',
+        BankStatementTransactionCategoryEnum::FOODORA->value => '127.40',
+        BankStatementTransactionCategoryEnum::BOLT->value => '40.71',
     ] as $category => $amount) {
         $transaction = BankStatementTransaction::factory()->forStatement($bankStatement)->create([
             'amount' => $amount,
@@ -109,7 +109,7 @@ use Illuminate\Support\Facades\DB;
     StatementDay::factory()->for($september, 'statement')->create(['date' => '2026-09-01', 'wolt' => '100.00', 'total' => '100.00']);
     $bankStatement = BankStatement::factory()->forStore($store)->create();
     $transaction = BankStatementTransaction::factory()->forStatement($bankStatement)->create([
-        'amount' => '140.00',
+        'amount' => '127.40',
         'category' => BankStatementTransactionCategoryEnum::WOLT->value,
         'sales_from' => '2026-08-31',
         'sales_to' => '2026-09-01',

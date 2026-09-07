@@ -1,3 +1,4 @@
+import type { MarketplaceFees } from '@/types/marketplace-fees';
 import { formatDate } from '@/lib/format';
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -21,7 +22,7 @@ type FinancialRow = {
     override_amount: number | null;
     effective_amount: number;
     note: string | null;
-    details: Record<string, number | string>;
+    details: Record<string, unknown> & { marketplace_fees?: MarketplaceFees };
 };
 
 type FinancialReport = {

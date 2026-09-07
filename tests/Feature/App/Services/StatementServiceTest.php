@@ -252,10 +252,10 @@ use Thinkycz\LaravelCore\Support\Config;
     \expect($metrics['total_revenue'])->toBe(285.0);
     \expect($metrics['investment'])->toBe(100.0);
     \expect($metrics['card_provision'])->toBe(0.50);
-    \expect($metrics['marketplace_provision'])->toBe(51.0);
-    \expect($metrics['provisions'])->toBe(51.50);
-    \expect($metrics['gross_margin'])->toBe(133.50);
-    \expect($metrics['margin_percent'])->toBe(46.84);
+    \expect($metrics['marketplace_provision'])->toBe(61.71);
+    \expect($metrics['provisions'])->toBe(62.21);
+    \expect($metrics['gross_margin'])->toBe(122.79);
+    \expect($metrics['margin_percent'])->toBe(43.08);
     \expect($metrics['channels']['cash'])->toBe(75.0);
     \expect($metrics['channels']['wolt'])->toBe(50.0);
     \expect($metrics['channels']['bolt_cash'])->toBe(10.0);
@@ -276,9 +276,9 @@ use Thinkycz\LaravelCore\Support\Config;
     $metrics = $service->buildMetrics($statement, $statement->getDays(), 0.0);
 
     \expect($metrics['card_provision'])->toBe(10.0);
-    \expect($metrics['marketplace_provision'])->toBe(1300.0);
-    \expect($metrics['provisions'])->toBe(1310.0);
-    \expect($metrics['gross_margin'])->toBe(4690.0);
+    \expect($metrics['marketplace_provision'])->toBe(1573.0);
+    \expect($metrics['provisions'])->toBe(1583.0);
+    \expect($metrics['gross_margin'])->toBe(4417.0);
 });
 
 \test('buildMetrics leaves pure cash revenue free of provisions', function (): void {
@@ -332,8 +332,8 @@ use Thinkycz\LaravelCore\Support\Config;
 
     \expect($report['totals']['total_revenue'])->toBe(500.0);
     \expect($report['channels']['wolt'])->toBe(500.0);
-    \expect($report['marketplace_provision'] ?? $report['totals']['marketplace_provision'])->toBe(150.0);
-    \expect($report['totals']['marketplace_provision'])->toBe(150.0);
+    \expect($report['marketplace_provision'] ?? $report['totals']['marketplace_provision'])->toBe(181.5);
+    \expect($report['totals']['marketplace_provision'])->toBe(181.5);
 });
 
 \test('buildReport excludes open inventory drafts from coverage', function (): void {

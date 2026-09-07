@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import MarketplaceFeeBreakdown from '@/components/MarketplaceFeeBreakdown.vue';
+
 import { formatCzechDate } from '@/composables/useCzechDate';
 import { useBankStatementActions } from '@/features/bank-statements/useBankStatementActions';
 import { Link } from '@inertiajs/vue3';
@@ -634,6 +636,9 @@ const {
                                     {{
                                         resultFor(transaction)?.expected ?? '—'
                                     }}
+                                    <MarketplaceFeeBreakdown
+                                        :fees="resultFor(transaction)?.fees"
+                                    />
                                 </td>
                                 <td data-mobile-layout="stack">
                                     <div

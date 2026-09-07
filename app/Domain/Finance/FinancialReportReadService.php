@@ -19,6 +19,7 @@ use App\Models\StockMovement;
 use App\Models\Store;
 use App\Models\User;
 use App\Support\CommissionRates;
+use App\Support\MarketplacePayout;
 use Carbon\CarbonImmutable;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -172,8 +173,10 @@ class FinancialReportReadService
         $statement = $query->first();
         $gross = ['cash' => 0.0, 'card' => 0.0, 'bolt' => 0.0, 'wolt' => 0.0, 'foodora' => 0.0];
 
+        $days = $statement instanceof Statement ? $statement->getDays() : [];
+        $fees = MarketplacePayout::forDays($days);
         if ($statement instanceof Statement) {
-            foreach ($statement->getDays() as $day) {
+            foreach ($days as $day) {
                 $gross['cash'] += $day->getCash();
                 $gross['card'] += $day->getCard();
                 $gross['bolt'] += $day->getBolt() + $day->getBoltCash();
@@ -186,11 +189,13 @@ class FinancialReportReadService
         foreach (self::REVENUE_RATES as $channel => $decimalRate) {
             $rate = (float) $decimalRate;
             $channelGross = \round($gross[$channel], 2);
-            $commission = \round($channelGross * $rate, 2);
-            $rows[] = $this->automaticRow(FinancialDirectionEnum::INCOME, FinancialSourceTypeEnum::REVENUE, $channel, \ucfirst($channel), null, \round($channelGross - $commission, 2), [
+            $fee = $fees[$channel] ?? null;
+            $commission = $fee === null ? \round($channelGross * $rate, 2) : (float) $fee['commission'];
+            $rows[] = $this->automaticRow(FinancialDirectionEnum::INCOME, FinancialSourceTypeEnum::REVENUE, $channel, \ucfirst($channel), null, $fee === null ? \round($channelGross - $commission, 2) : (float) $fee['net_revenue'], [
                 'gross_amount' => $channelGross,
                 'commission_rate' => $rate,
                 'commission_amount' => $commission,
+                ...($fee === null ? [] : ['marketplace_fees' => $fee]),
             ]);
         }
 

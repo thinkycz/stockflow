@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import MarketplaceFeeBreakdown from '@/components/MarketplaceFeeBreakdown.vue';
+
 import { Link } from '@inertiajs/vue3';
 import {
     ArrowDownCircle,
@@ -301,6 +303,9 @@ const {
                                     >
                                         {{ rowSecondary(row) }}
                                     </div>
+                                    <MarketplaceFeeBreakdown
+                                        :fees="row.details.marketplace_fees"
+                                    />
                                 </td>
                                 <td class="px-5 py-4">
                                     <Badge variant="neutral">{{

@@ -963,7 +963,7 @@
             "inventory_coverage": "Coverage: {days} days / {items} items",
             "provisions": "Payment provisions",
             "card_provision": "card (1%)",
-            "marketplace_provision": "marketplace (30–35%)",
+            "marketplace_provision": "Platform commissions including VAT",
             "gross_margin": "Estimated gross margin",
             "margin_percent": "Margin percent",
             "daily_average": "Daily average",
@@ -2077,5 +2077,15 @@
             "qr_alt": "Gift voucher QR code",
             "code_help": "Present this code to staff"
         }
+    },
+    "marketplace_fees": {
+        "title": "Commission and VAT breakdown",
+        "base": "Commission base",
+        "commission": "Commission excluding VAT",
+        "vat": "VAT on commission",
+        "deduction": "Total deduction",
+        "net_revenue": "Net revenue including cash received",
+        "expected_transfer": "Estimated bank transfer",
+        "estimate": "Cash estimate for the whole period excluding other fees and adjustments. Does not account for VAT recovery."
     }
 }

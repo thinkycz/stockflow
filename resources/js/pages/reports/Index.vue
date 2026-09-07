@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import MarketplaceFeeBreakdown from '@/components/MarketplaceFeeBreakdown.vue';
+
 import {
     Boxes,
     CircleDollarSign,
@@ -159,6 +161,23 @@ const {
                             :title="t('reports.statements.cash_share')"
                             :value="`${props.financial_report.totals.total_revenue > 0 ? ((props.financial_report.channels.cash / props.financial_report.totals.total_revenue) * 100).toFixed(1) : '0.0'} %`"
                         />
+                    </div>
+                    <div class="rounded-xl border border-outline-glass p-4">
+                        <h3 class="text-sm font-semibold">
+                            {{ t('reports.statements.marketplace_provision') }}
+                        </h3>
+                        <div class="grid gap-4 sm:grid-cols-3">
+                            <div
+                                v-for="(fees, channel) in props.financial_report
+                                    .totals.marketplace_fees"
+                                :key="channel"
+                            >
+                                <p class="mt-3 text-sm font-medium capitalize">
+                                    {{ channel }}
+                                </p>
+                                <MarketplaceFeeBreakdown :fees="fees" />
+                            </div>
+                        </div>
                     </div>
                     <Chart
                         type="line"

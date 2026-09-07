@@ -18,11 +18,11 @@ use Illuminate\Support\Facades\DB;
         StatementDay::factory()->for($statement, 'statement')->create(['date' => $date, 'wolt' => '100.00', 'bolt' => '100.00', 'bolt_cash' => '40.00']);
     }
     $bank = BankStatement::factory()->forStore($store)->create(['status' => 'confirmed', 'period_from' => '2026-09-01', 'period_to' => '2026-09-30']);
-    BankStatementTransaction::factory()->forStatement($bank)->create(['category' => 'wolt', 'amount' => '140.00', 'sales_from' => '2026-07-31', 'sales_to' => '2026-08-01']);
+    BankStatementTransaction::factory()->forStatement($bank)->create(['category' => 'wolt', 'amount' => '127.40', 'sales_from' => '2026-07-31', 'sales_to' => '2026-08-01']);
     $second = BankStatement::factory()->forStore($store)->create(['status' => 'confirmed']);
-    BankStatementTransaction::factory()->forStatement($second)->create(['category' => 'bolt', 'amount' => '51.00', 'sales_from' => '2026-08-02', 'sales_to' => '2026-08-02']);
+    BankStatementTransaction::factory()->forStatement($second)->create(['category' => 'bolt', 'amount' => '40.71', 'sales_from' => '2026-08-02', 'sales_to' => '2026-08-02']);
     $draft = BankStatement::factory()->forStore($store)->create();
-    BankStatementTransaction::factory()->forStatement($draft)->create(['category' => 'wolt', 'amount' => '140.00', 'sales_from' => '2026-07-31', 'sales_to' => '2026-08-01']);
+    BankStatementTransaction::factory()->forStatement($draft)->create(['category' => 'wolt', 'amount' => '127.40', 'sales_from' => '2026-07-31', 'sales_to' => '2026-08-01']);
     $service = new BankStatementReconciliationService();
     DB::enableQueryLog();
     DB::flushQueryLog();
@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\DB;
     \expect($queries)->toBeLessThanOrEqual(4)
         ->and($result['counts']['matched'])->toBe(2)
         ->and($result['cells']['2026-08-01']['wolt'][0]['state'])->toBe('verified')
-        ->and($result['cells']['2026-08-02']['bolt'][0]['check']['expected'])->toBe('51.00')
+        ->and($result['cells']['2026-08-02']['bolt'][0]['check']['expected'])->toBe('40.71')
         ->and($result['cells']['2026-08-02'])->not->toHaveKey('bolt_cash')
         ->and($result['cells'])->not->toHaveKey('2026-07-31');
     StatementDay::query()->where('statement_id', $statement->getKey())->whereDate('date', '2026-07-31')->update(['wolt' => '200.00']);
@@ -65,9 +65,9 @@ use Illuminate\Support\Facades\DB;
     $store = Store::factory()->create(['user_id' => $user->getKey()]);
     $otherStore = Store::factory()->create(['user_id' => $user->getKey()]);
     $bank = BankStatement::factory()->forStore($otherStore)->create(['status' => 'confirmed']);
-    BankStatementTransaction::factory()->forStatement($bank)->create(['category' => 'wolt', 'amount' => '70.00', 'sales_from' => '2026-08-01', 'sales_to' => '2026-08-01']);
+    BankStatementTransaction::factory()->forStatement($bank)->create(['category' => 'wolt', 'amount' => '63.70', 'sales_from' => '2026-08-01', 'sales_to' => '2026-08-01']);
     $foreign = BankStatement::factory()->create(['store_id' => $store->getKey(), 'status' => 'confirmed']);
-    BankStatementTransaction::factory()->forStatement($foreign)->create(['category' => 'wolt', 'amount' => '70.00', 'sales_from' => '2026-08-01', 'sales_to' => '2026-08-01']);
+    BankStatementTransaction::factory()->forStatement($foreign)->create(['category' => 'wolt', 'amount' => '63.70', 'sales_from' => '2026-08-01', 'sales_to' => '2026-08-01']);
     $own = BankStatement::factory()->forStore($store)->create(['status' => 'confirmed']);
     BankStatementTransaction::factory()->forStatement($own)->create(['category' => 'card', 'amount' => '-10.00', 'sales_from' => '2026-08-01', 'sales_to' => '2026-08-01']);
     \expect((new BankStatementReconciliationService())->monthlyStatus($user, $store, 2026, 8)['cells'])->toBe([]);

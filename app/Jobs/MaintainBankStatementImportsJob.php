@@ -26,6 +26,7 @@ final class MaintainBankStatementImportsJob implements ShouldQueue
      */
     public function handle(): void
     {
+        (new BankStatementService())->cleanupDeletedOriginals();
         $queued = BankStatement::query()
             ->where('status', BankStatementStatusEnum::QUEUED->value)
             ->where('queued_at', '<=', \now()->subMinutes(5))

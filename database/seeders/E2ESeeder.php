@@ -55,6 +55,7 @@ class E2ESeeder extends Seeder
 
         $this->seedBankReviews($store);
         $this->seedReceiptIndicators($store);
+        $this->seedBankActions($store);
 
         $crossStore = Store::query()
             ->where('user_id', $user->getKey())
@@ -550,6 +551,23 @@ class E2ESeeder extends Seeder
                 $bank = BankStatement::factory()->forStore($store)->create(['bank_name' => 'Synthetic bank', 'original_name' => 'synthetic-receipt-' . $channel . '.pdf', 'status' => 'confirmed', 'period_from' => $from, 'period_to' => $to]);
                 BankStatementTransaction::factory()->forStatement($bank)->create(['category' => $channel, 'amount' => $amount, 'sales_from' => $from, 'sales_to' => $to, 'booked_on' => \sprintf('2025-%02d-05', $month)]);
             }
+        }
+    }
+
+    /**
+     * Isolated statement action and date-picker browser fixtures.
+     */
+    private function seedBankActions(Store $store): void
+    {
+        foreach (['en' => 1, 'cs' => 2, 'sk' => 3] as $locale => $month) {
+            $first = \sprintf('2027-%02d-01', $month);
+            $last = \sprintf('2027-%02d-05', $month);
+            $statement = Statement::factory()->forStore($store)->forMonth(2027, $month)->create();
+            foreach (\range(1, 5) as $day) {
+                StatementDay::factory()->for($statement, 'statement')->create(['date' => \sprintf('2027-%02d-%02d', $month, $day), 'wolt' => '100.00']);
+            }
+            $bank = BankStatement::factory()->forStore($store)->create(['bank_name' => 'Synthetic bank', 'original_name' => 'synthetic-actions-' . $locale . '.pdf', 'period_from' => $first, 'period_to' => $last]);
+            BankStatementTransaction::factory()->forStatement($bank)->create(['category' => 'wolt', 'amount' => '350.00', 'booked_on' => \sprintf('2027-%02d-07', $month), 'sales_from' => $first, 'sales_to' => $last, 'item_type' => 'Calendar action row', 'description' => null, 'variable_symbol' => null, 'specific_symbol' => null, 'manually_edited' => true]);
         }
     }
 }

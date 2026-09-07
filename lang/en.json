@@ -320,5 +320,8 @@
     "Reopen the payroll report before changing attendance.": "Reopen the payroll report before changing attendance.",
     "Attendance validity restored.": "Attendance validity restored.",
     "Attendance matched.": "Attendance matched.",
-    "Attendance matching: :matched matched, :unmatched without a shift, :ambiguous ambiguous.": "Attendance matching: :matched matched, :unmatched without a shift, :ambiguous ambiguous."
+    "Attendance matching: :matched matched, :unmatched without a shift, :ambiguous ambiguous.": "Attendance matching: :matched matched, :unmatched without a shift, :ambiguous ambiguous.",
+    "Bank statement deleted.": "Bank statement deleted.",
+    "invalid_recommendation_target": "Choose a Wolt or Bolt transaction.",
+    "statement_delete_failed": "The statement could not be deleted. Please try again."
 }

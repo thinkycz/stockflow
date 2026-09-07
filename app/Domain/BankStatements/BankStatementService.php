@@ -131,6 +131,36 @@ final class BankStatementService
     }
 
     /**
+     * Delete the owned import, staging durable private-file cleanup before commit.
+     */
+    public function delete(BankStatement $statement, User $actor): void
+    {
+        $this->assertAdministrator($actor, $statement->getUserId());
+        DB::transaction(function () use ($statement): void {
+            Store::query()->whereKey($statement->getStoreId())->lockForUpdate()->firstOrFail();
+            $statement = $this->lockedStatement($statement);
+            $path = $statement->getOriginalPath();
+            $marker = 'bank-statement-deletions/' . \hash('sha256', $path);
+            $disk = Resolver::resolveFilesystemManager()->disk(FilesystemDiskEnum::Private->value);
+            if (!$disk->put($marker, Resolver::resolveEncrypter()->encryptString($path))) {
+                throw new RuntimeException('statement_delete_failed');
+            }
+            $statement->delete();
+            DB::afterCommit(fn() => $this->cleanupOriginal($marker));
+        });
+    }
+
+    /**
+     * Retry private file cleanup after crashes, storage failures or queue outages.
+     */
+    public function cleanupDeletedOriginals(): void
+    {
+        foreach (Resolver::resolveFilesystemManager()->disk(FilesystemDiskEnum::Private->value)->files('bank-statement-deletions') as $marker) {
+            $this->cleanupOriginal($marker);
+        }
+    }
+
+    /**
      * Decrypt an archived original into memory for an authorized consumer.
      */
     public function originalContents(BankStatement $statement): string
@@ -166,7 +196,10 @@ final class BankStatementService
 
         DB::transaction(function () use ($statement, $payload, $sourcePayload, $integrity, $generation): void {
             $this->lockActiveStore($statement->getStoreId());
-            $statement = $this->lockedStatement($statement);
+            $statement = BankStatement::query()->whereKey($statement->getKey())->lockForUpdate()->first();
+            if (!$statement instanceof BankStatement) {
+                return;
+            }
             if ($generation !== $statement->getParseGeneration() ||
                 !\in_array($statement->getStatus(), [BankStatementStatusEnum::QUEUED, BankStatementStatusEnum::PROCESSING], true)) {
                 return;
@@ -193,7 +226,7 @@ final class BankStatementService
 
             if ($logicalDuplicate) {
                 $statement->update([
-                    'status' => BankStatementStatusEnum::FAILED->value,
+                    'status' => $this->failureStatus($statement)->value,
                     'last_error' => 'duplicate_statement',
                     'parsed_at' => \now(),
                 ]);
@@ -360,13 +393,15 @@ final class BankStatementService
             $this->lockActiveStore($statement->getStoreId());
             $statement = $this->lockedStatement($statement);
             $this->assertAdministrator($actor, $statement->getUserId());
-            if (!\in_array($statement->getStatus(), [BankStatementStatusEnum::REVIEW, BankStatementStatusEnum::FAILED], true)) {
+            if (!\in_array($statement->getStatus(), [BankStatementStatusEnum::REVIEW, BankStatementStatusEnum::FAILED, BankStatementStatusEnum::CONFIRMED], true)) {
                 throw new InvalidArgumentException('statement_not_retryable');
             }
 
             $statement->update([
                 'status' => BankStatementStatusEnum::QUEUED->value,
                 'parse_generation' => $statement->getParseGeneration() + 1,
+                'confirmed_at' => null,
+                'confirmed_by_user_id' => null,
                 'last_error' => null,
                 'queued_at' => \now(),
                 'started_at' => null,
@@ -419,7 +454,10 @@ final class BankStatementService
     public function fail(BankStatement $statement, string $error, int $generation, string|null $staleBefore = null): void
     {
         DB::transaction(function () use ($statement, $error, $generation, $staleBefore): void {
-            $statement = $this->lockedStatement($statement);
+            $statement = BankStatement::query()->whereKey($statement->getKey())->lockForUpdate()->first();
+            if (!$statement instanceof BankStatement) {
+                return;
+            }
             if ($generation !== $statement->getParseGeneration() ||
                 !\in_array($statement->getStatus(), [BankStatementStatusEnum::QUEUED, BankStatementStatusEnum::PROCESSING], true)) {
                 return;
@@ -432,11 +470,43 @@ final class BankStatementService
             }
 
             $statement->update([
-                'status' => BankStatementStatusEnum::FAILED->value,
+                'status' => $this->failureStatus($statement)->value,
                 'last_error' => $error,
                 'parsed_at' => \now(),
             ]);
         });
+    }
+
+    /**
+     * A row lock distinguishes a committed deletion from an in-flight or rolled-back one.
+     */
+    private function cleanupOriginal(string $marker): void
+    {
+        try {
+            $disk = Resolver::resolveFilesystemManager()->disk(FilesystemDiskEnum::Private->value);
+            if (!$disk->exists($marker)) {
+                return;
+            }
+            $path = Resolver::resolveEncrypter()->decryptString(Typer::assertString($disk->get($marker)));
+            DB::transaction(static function () use ($disk, $path, $marker): void {
+                $existing = BankStatement::query()->where('original_path', $path)->lockForUpdate()->first();
+                if ($existing instanceof BankStatement || !$disk->exists($path) || $disk->delete($path)) {
+                    $disk->delete($marker);
+                }
+            });
+        } catch (Throwable) {
+            // The durable marker remains for the scheduled maintenance retry.
+        }
+    }
+
+    /**
+     * Keep previous parsed metadata and transactions editable after a failed reanalysis.
+     */
+    private function failureStatus(BankStatement $statement): BankStatementStatusEnum
+    {
+        return ($statement->hasParserResponse() || $statement->transactions()->exists()) && $statement->getPeriodFrom() !== null && $statement->getPeriodTo() !== null &&
+            $statement->getOpeningBalance() !== null && $statement->getClosingBalance() !== null
+            ? BankStatementStatusEnum::REVIEW : BankStatementStatusEnum::FAILED;
     }
 
     /**

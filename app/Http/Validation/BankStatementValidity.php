@@ -60,7 +60,7 @@ final class BankStatementValidity
      */
     public function date(): Validity
     {
-        return $this->baseValidity->date();
+        return $this->baseValidity->make()->string(null)->dateFormat('Y-m-d');
     }
 
     /**
@@ -68,7 +68,7 @@ final class BankStatementValidity
      */
     public function optionalDate(): Validity
     {
-        return $this->baseValidity->date();
+        return $this->baseValidity->make()->string(null)->dateFormat('Y-m-d');
     }
 
     /**

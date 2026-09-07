@@ -16,8 +16,8 @@ const statementsPage = workflowSource(
 );
 
 describe('bank statement ui contract', () => {
-    test('upload warns about external AI and only accepts PDF', () => {
-        expect(indexPage).toContain('external_ai_notice');
+    test('upload omits the removed notice and only accepts PDF', () => {
+        expect(indexPage).not.toContain('external_ai_notice');
         expect(indexPage).toContain('accept="application/pdf,.pdf"');
         expect(indexPage).toContain('forceFormData: true');
     });
@@ -38,7 +38,7 @@ describe('bank statement ui contract', () => {
     });
 
     test('all mutations surface action errors and field errors at the correct scope', () => {
-        expect(detailPage.match(/withActionErrorToast\(/g)).toHaveLength(4);
+        expect(detailPage.match(/withActionErrorToast\(/g)).toHaveLength(5);
         expect(detailPage).toContain(
             "const statementError = computed(() => errorFor('statement'))",
         );

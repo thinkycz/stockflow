@@ -320,5 +320,8 @@
     "Reopen the payroll report before changing attendance.": "Pred zmenou dochádzky znovu otvorte mzdový prehľad.",
     "Attendance validity restored.": "Platnosť dochádzky bola obnovená.",
     "Attendance matched.": "Dochádzka bola spárovaná.",
-    "Attendance matching: :matched matched, :unmatched without a shift, :ambiguous ambiguous.": "Párovanie dochádzky: spárovaných :matched, bez zmeny :unmatched, nejednoznačných :ambiguous."
+    "Attendance matching: :matched matched, :unmatched without a shift, :ambiguous ambiguous.": "Párovanie dochádzky: spárovaných :matched, bez zmeny :unmatched, nejednoznačných :ambiguous.",
+    "Bank statement deleted.": "Výpis z účtu bol zmazaný.",
+    "invalid_recommendation_target": "Vyberte transakciu Wolt alebo Bolt.",
+    "statement_delete_failed": "Výpis sa nepodarilo zmazať. Skúste to znovu."
 }

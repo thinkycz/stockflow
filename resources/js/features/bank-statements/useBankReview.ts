@@ -5,6 +5,7 @@ import { useDialog } from '@/composables/useDialog';
 import { useRoute } from '@/composables/useRoute';
 import { useSharedProps } from '@/composables/useSharedProps';
 import { sameTransaction, restoreReviewDraft } from './review-draft';
+import { showErrorToast } from '@/composables/useClientToast';
 import { withActionErrorToast } from '@/lib/action-errors';
 
 export type Transaction = {
@@ -144,7 +145,12 @@ export function useBankReview(props: BankReviewProps) {
         row: Transaction,
         candidate: PeriodCandidate,
     ): void {
-        if (!props.statement.editable || candidate.reason) return;
+        if (
+            !props.statement.editable ||
+            candidate.reason ||
+            recommendationStale(row)
+        )
+            return;
         row.sales_from = candidate.from;
         row.sales_to = candidate.to;
     }
@@ -165,16 +171,72 @@ export function useBankReview(props: BankReviewProps) {
         );
     }
 
+    const recommendations = ref(
+        new Map<
+            Transaction,
+            {
+                fingerprint: string;
+                candidates: PeriodCandidate[];
+                reason: string | null;
+            }
+        >(),
+    );
+    const requests = ref(new Map<Transaction, number>());
+    let requestSequence = 0;
+    function recommendationStale(row: Transaction): boolean {
+        const entry = recommendations.value.get(row);
+        return entry
+            ? entry.fingerprint !== JSON.stringify(form.transactions)
+            : isPending(row);
+    }
     function candidatesFor(row: Transaction): PeriodCandidate[] {
-        if (isPending(row)) return [];
         return (
+            recommendations.value.get(row)?.candidates ??
             props.reconciliation.rows.find(
                 (result) => result.transaction_id === row.id,
-            )?.candidates ?? []
+            )?.candidates ??
+            []
         );
+    }
+    async function recommendPeriod(row: Transaction): Promise<void> {
+        const target = form.transactions.indexOf(row);
+        if (target < 0) return;
+        const fingerprint = JSON.stringify(form.transactions);
+        const sequence = ++requestSequence;
+        requests.value.set(row, sequence);
+        try {
+            const response = await window.axios.post<{
+                candidates: PeriodCandidate[];
+                reason: string | null;
+            }>(
+                route('bank-statements.recommend', {
+                    bankStatement: props.statement.id,
+                }),
+                { transactions: JSON.parse(fingerprint), target },
+            );
+            if (
+                requests.value.get(row) === sequence &&
+                fingerprint === JSON.stringify(form.transactions) &&
+                form.transactions.includes(row)
+            ) {
+                recommendations.value.set(row, {
+                    fingerprint,
+                    ...response.data,
+                });
+            }
+        } catch {
+            if (requests.value.get(row) === sequence)
+                showErrorToast(t('bank_statements.suggestions.failed'));
+        } finally {
+            if (requests.value.get(row) === sequence)
+                requests.value.delete(row);
+        }
     }
 
     function reasonFor(row: Transaction): string | null {
+        const recommendation = recommendations.value.get(row);
+        if (recommendation && !recommendationStale(row))
+            return recommendation.reason;
         if (isPending(row)) return null;
         const result = resultFor(row);
         return result?.discovery_reason ?? result?.reason ?? null;
@@ -458,16 +520,6 @@ export function useBankReview(props: BankReviewProps) {
         );
     }
 
-    function retry(): void {
-        router.post(
-            route('bank-statements.retry', {
-                bankStatement: props.statement.id,
-            }),
-            {},
-            withActionErrorToast({ preserveScroll: true }),
-        );
-    }
-
     function resultFor(transaction: Transaction): ReconciliationRow | null {
         if (isPending(transaction)) return null;
         return transaction.id
@@ -499,6 +551,9 @@ export function useBankReview(props: BankReviewProps) {
         isPending,
         applyCandidate,
         candidatesFor,
+        recommendPeriod,
+        recommendationStale,
+        requests,
         reasonFor,
         automaticSource,
         statementError,
@@ -508,7 +563,6 @@ export function useBankReview(props: BankReviewProps) {
         save,
         confirmStatement,
         reopenStatement,
-        retry,
         resultFor,
         badgeVariant,
     };

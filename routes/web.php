@@ -228,6 +228,8 @@ Resolver::resolveRouteRegistrar()
         $router->put('bank-statements/{bankStatement}', [BankStatementController::class, 'update'])->whereNumber('bankStatement')->name('bank-statements.update');
         $router->post('bank-statements/{bankStatement}/confirm', [BankStatementController::class, 'confirm'])->whereNumber('bankStatement')->name('bank-statements.confirm');
         $router->post('bank-statements/{bankStatement}/reopen', [BankStatementController::class, 'reopen'])->whereNumber('bankStatement')->name('bank-statements.reopen');
+        $router->delete('bank-statements/{bankStatement}', [BankStatementController::class, 'destroy'])->whereNumber('bankStatement')->name('bank-statements.destroy');
+        $router->post('bank-statements/{bankStatement}/recommend', [BankStatementController::class, 'recommend'])->whereNumber('bankStatement')->name('bank-statements.recommend');
         $router->post('bank-statements/{bankStatement}/retry', [BankStatementController::class, 'retry'])->whereNumber('bankStatement')->name('bank-statements.retry');
 
         $router->middleware(EnsureAiAssistantIsEnabled::class)->group(static function (Router $router): void {

@@ -78,7 +78,16 @@
         "first_page": "First page",
         "last_page": "Last page",
         "invalid_date": "Enter a valid date as d.m.yyyy, optionally followed by HH:mm.",
-        "date_out_of_range": "Date is outside the allowed range."
+        "date_out_of_range": "Date is outside the allowed range.",
+        "date_picker": {
+            "open": "Open calendar",
+            "title": "Choose date",
+            "previous": "Previous month",
+            "next": "Next month",
+            "time": "Time",
+            "clear": "Clear",
+            "apply": "Use date"
+        }
     },
     "assistant": {
         "title": "AI Assistant",
@@ -1153,7 +1162,6 @@
         "upload": {
             "title": "Upload statement",
             "description": "CZK statements from any bank. Text or scanned PDF up to 10 MB.",
-            "external_ai_notice": "The document will be sent to the external AI provider OpenRouter for extraction.",
             "action": "Upload and process"
         },
         "empty": {
@@ -1216,7 +1224,9 @@
             "reopen": "Return to review",
             "confirm": "Confirm statement",
             "add": "Add movement",
-            "save": "Save draft"
+            "save": "Save draft",
+            "delete": "Delete statement",
+            "reanalyze": "Analyze again with AI"
         },
         "confirm": {
             "title": "Confirm statement?",
@@ -1256,7 +1266,11 @@
             "calendar": "Payout calendar suggestion · not saved",
             "source_calendar": "Payout calendar suggestion, not a documented settlement",
             "source_explicit": "Period stated in the transaction",
-            "source_inferred": "Suggestion based on sales"
+            "source_inferred": "Suggestion based on sales",
+            "recommend": "Recommend period",
+            "stale": "Suggestions are outdated. Recalculate them using the edited values.",
+            "reopen": "Reopen the statement to apply a suggestion.",
+            "failed": "Could not calculate recommendations. Check dates, amounts and required fields, then try again."
         },
         "reasons": {
             "missing_sales_period": "Sales period is missing. Enter dates or review the suggestions.",
@@ -1267,7 +1281,9 @@
             "period_conflict": "This period overlaps another payout or conflicts with payout order.",
             "manual_period": "This movement was edited. Choose a period manually to preserve your review.",
             "calendar_conflict": "The amount matches a different period from the payout calendar. Verify the period and choose it manually."
-        }
+        },
+        "delete_message": "Delete this statement, its transactions and archived PDF? Its received-payment indicators will disappear from Statements. This cannot be undone.",
+        "reanalyze_message": "Analyze the stored PDF again with AI? A successful result replaces transactions, manual edits and sales periods. Unsaved edits will be discarded. Confirmation will be revoked and payment indicators will disappear until you confirm again. If analysis fails, the existing saved data will be retained."
     },
     "inventory_counts": {
         "title": "Stock count",

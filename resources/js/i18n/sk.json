@@ -78,7 +78,16 @@
         "first_page": "Prvá stránka",
         "last_page": "Posledná stránka",
         "invalid_date": "Zadajte platný dátum v tvare d.m.rrrr, prípadne s časom HH:mm.",
-        "date_out_of_range": "Dátum je mimo povoleného rozsahu."
+        "date_out_of_range": "Dátum je mimo povoleného rozsahu.",
+        "date_picker": {
+            "open": "Otvoriť kalendár",
+            "title": "Vybrať dátum",
+            "previous": "Predchádzajúci mesiac",
+            "next": "Nasledujúci mesiac",
+            "time": "Čas",
+            "clear": "Vymazať",
+            "apply": "Použiť dátum"
+        }
     },
     "assistant": {
         "title": "AI asistent",
@@ -1153,7 +1162,6 @@
         "upload": {
             "title": "Nahrať výpis",
             "description": "Výpisy v CZK z ľubovoľnej banky. Textové alebo naskenované PDF do 10 MB.",
-            "external_ai_notice": "Dokument bude na účely vyťaženia odovzdaný externému poskytovateľovi AI OpenRouter.",
             "action": "Nahrať a spracovať"
         },
         "empty": {
@@ -1216,7 +1224,9 @@
             "reopen": "Vrátiť na kontrolu",
             "confirm": "Potvrdiť výpis",
             "add": "Pridať pohyb",
-            "save": "Uložiť koncept"
+            "save": "Uložiť koncept",
+            "delete": "Zmazať výpis",
+            "reanalyze": "Znovu analyzovať AI"
         },
         "confirm": {
             "title": "Potvrdiť výpis?",
@@ -1256,7 +1266,11 @@
             "calendar": "Návrh podľa výplatného kalendára · neuložené",
             "source_calendar": "Návrh podľa výplatného kalendára, nie doložené vyúčtovanie",
             "source_explicit": "Obdobie uvedené v transakcii",
-            "source_inferred": "Návrh podľa tržieb"
+            "source_inferred": "Návrh podľa tržieb",
+            "recommend": "Odporučiť obdobie",
+            "stale": "Návrhy nie sú aktuálne. Prepočítajte ich podľa zmenených údajov.",
+            "reopen": "Pre použitie návrhu znovu otvorte výpis.",
+            "failed": "Odporúčanie sa nepodarilo vypočítať. Skontrolujte dátumy, sumy a povinné údaje a skúste to znovu."
         },
         "reasons": {
             "missing_sales_period": "Chýba obdobie tržieb. Zadajte dátumy alebo skontrolujte návrhy.",
@@ -1267,7 +1281,9 @@
             "period_conflict": "Obdobie sa prekrýva s inou platbou alebo nezodpovedá poradiu platieb.",
             "manual_period": "Tento pohyb bol upravený. Vyberte obdobie ručne, aby sa zachovala vaša kontrola.",
             "calendar_conflict": "Suma zodpovedá inému obdobiu než výplatný kalendár. Overte obdobie a vyberte ho ručne."
-        }
+        },
+        "delete_message": "Zmazať výpis vrátane transakcií a archivovaného PDF? Značky prijatých platieb z tohto výpisu zmiznú z Výkazov. Túto akciu nemožno vrátiť.",
+        "reanalyze_message": "Znovu načítať uložené PDF pomocou AI? Úspešný výsledok nahradí transakcie, ručné úpravy a obdobia. Neuložené zmeny budú zahodené. Potvrdenie výpisu sa zruší a značky platieb zmiznú až do nového potvrdenia. Pri chybe zostanú doterajšie uložené údaje zachované."
     },
     "inventory_counts": {
         "title": "Inventúra",

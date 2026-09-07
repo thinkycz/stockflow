@@ -152,6 +152,7 @@ $matrix = [
 
     // POST endpoints that are semantically queries and therefore use bounded read tools.
     'semantically_read_only' => [
+        'bank-statements.recommend' => 'Calculates settlement suggestions from an administrator draft without persisting changes.',
         'gift-vouchers.lookup' => 'Exact company-scoped lookup; the assistant read tool never returns voucher codes.',
     ],
 
@@ -169,6 +170,7 @@ $matrix = [
         'bank-statements.confirm' => 'Sensitive bank statement confirmation is deliberately excluded from chat.',
         'bank-statements.reopen' => 'Sensitive bank statement lifecycle is deliberately excluded from chat.',
         'bank-statements.retry' => 'External AI processing of a private document requires an explicit administrator action.',
+        'bank-statements.destroy' => 'Private bank statement and source deletion requires explicit administrator review outside chat.',
         'logout' => 'Authentication lifecycle is excluded from chat.',
         'settings.password.update' => 'Password and credential flows are excluded from chat.',
         'verify-email.store' => 'Email-verification lifecycle is excluded from chat.',

@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { formatCzechDate } from '@/composables/useCzechDate';
+import { useBankStatementActions } from '@/features/bank-statements/useBankStatementActions';
 import { Link, useForm } from '@inertiajs/vue3';
 import { Upload } from '@lucide/vue';
 import { useI18n } from 'vue-i18n';
-import Alert from '@/components/ui/Alert.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Button from '@/components/ui/Button.vue';
 import Card from '@/components/ui/Card.vue';
@@ -28,6 +29,7 @@ type StatementSummary = {
     created_at: string;
 };
 
+const { busy: actionBusy, deleteStatement } = useBankStatementActions();
 const props = defineProps<{
     statements: StatementSummary[];
     active_store: { id: number; name: string } | null;
@@ -80,9 +82,6 @@ function badgeVariant(
                             {{ t('bank_statements.upload.description') }}
                         </p>
                     </div>
-                    <Alert variant="warning">
-                        {{ t('bank_statements.upload.external_ai_notice') }}
-                    </Alert>
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-start">
                         <div class="flex-1">
                             <Input
@@ -131,8 +130,17 @@ function badgeVariant(
                     >
                         <td>{{ statement.original_name }}</td>
                         <td>
-                            {{ statement.period_from ?? '—' }} –
-                            {{ statement.period_to ?? '—' }}
+                            {{
+                                statement.period_from
+                                    ? formatCzechDate(statement.period_from)
+                                    : '—'
+                            }}
+                            –
+                            {{
+                                statement.period_to
+                                    ? formatCzechDate(statement.period_to)
+                                    : '—'
+                            }}
                         </td>
                         <td>{{ statement.bank_name ?? '—' }}</td>
                         <td>
@@ -156,6 +164,15 @@ function badgeVariant(
                                     {{ t('bank_statements.actions.detail') }}
                                 </Button>
                             </Link>
+                            <Button
+                                variant="ghost"
+                                size="compact"
+                                :disabled="actionBusy"
+                                @click="deleteStatement(statement.id)"
+                                >{{
+                                    t('bank_statements.actions.delete')
+                                }}</Button
+                            >
                         </td>
                     </tr>
                 </tbody>

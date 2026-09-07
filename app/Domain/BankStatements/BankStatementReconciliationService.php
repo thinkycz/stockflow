@@ -17,6 +17,8 @@ use App\Support\CommissionRates;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
+use InvalidArgumentException;
+use Thinkycz\LaravelCore\Support\Typer;
 
 /**
  * @phpstan-type Check array{status: string, actual: string, expected: string|null, difference: string|null, reason: string|null, pairing: string, amount_check: string, tolerance: string|null}
@@ -40,6 +42,49 @@ class BankStatementReconciliationService
     public function forTransaction(BankStatementTransaction $transaction): array
     {
         return $this->assignedCheck($transaction, $this->loadDays($transaction->getBankStatement(), [$transaction]), $this->reservations($transaction->getBankStatement(), [$transaction], $transaction->getBankStatement()->getStatus() === BankStatementStatusEnum::CONFIRMED));
+    }
+
+    /**
+     * Recommend replacement periods from a validated in-memory draft, without writes.
+     *
+     * @param list<array<string, mixed>> $rows
+     *
+     * @return Discovery
+     */
+    public function recommend(BankStatement $statement, User $actor, array $rows, int $target): array
+    {
+        if (!$actor->isAdmin() || $actor->getKey() !== $statement->getUserId()) {
+            \abort(404);
+        }
+        if (!\in_array($statement->getStatus(), [BankStatementStatusEnum::REVIEW, BankStatementStatusEnum::CONFIRMED], true)) {
+            throw new InvalidArgumentException('statement_not_editable');
+        }
+        $existing = $statement->getTransactions();
+        $transactions = [];
+        if ($statement->getStatus() === BankStatementStatusEnum::CONFIRMED) {
+            foreach ($existing as $transaction) {
+                $transactions[] = clone $transaction;
+            }
+        } else {
+            foreach ($rows as $index => $row) {
+                $id = Typer::parseNullableInt($row['id'] ?? null);
+                if ($id !== null && !$existing->contains(static fn(BankStatementTransaction $transaction): bool => $id === $transaction->getKey())) {
+                    \abort(404);
+                }
+                $transaction = new BankStatementTransaction();
+                $transaction->forceFill(['description' => null, 'variable_symbol' => null, 'specific_symbol' => null, ...$row, 'id' => -($index + 1), 'bank_statement_id' => $statement->getKey(), 'manually_edited' => true]);
+                $transactions[] = $transaction;
+            }
+        }
+        $selected = $transactions[$target] ?? null;
+        if (!$selected instanceof BankStatementTransaction || !\in_array($selected->getCategory(), [BankStatementTransactionCategoryEnum::WOLT, BankStatementTransactionCategoryEnum::BOLT], true)) {
+            throw new InvalidArgumentException('invalid_recommendation_target');
+        }
+        $selected->forceFill(['sales_from' => null, 'sales_to' => null, 'manually_edited' => false]);
+        $days = $this->loadDays($statement, $transactions);
+        $reservations = $this->reservations($statement, $transactions, $statement->getStatus() === BankStatementStatusEnum::CONFIRMED, true);
+
+        return $this->discoverPeriods($transactions, $days, $reservations)[$selected->getKey()];
     }
 
     /**
@@ -361,12 +406,15 @@ class BankStatementReconciliationService
      *
      * @return list<BankStatementTransaction>
      */
-    private function reservations(BankStatement $statement, array $transactions, bool $confirmedOnly = false): array
+    private function reservations(BankStatement $statement, array $transactions, bool $confirmedOnly = false, bool $replaceCurrent = false): array
     {
         if ($transactions === []) {
             return $transactions;
         }
         $parents = BankStatement::query()->select('id');
+        if ($replaceCurrent) {
+            $parents->whereKeyNot($statement->getKey());
+        }
         if ($confirmedOnly) {
             $parents->where('status', BankStatementStatusEnum::CONFIRMED->value);
         }

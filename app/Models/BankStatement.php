@@ -231,6 +231,16 @@ class BankStatement extends BaseModel
     }
 
     /**
+     * Whether a previous validated parser response remains available.
+     */
+    public function hasParserResponse(): bool
+    {
+        $payload = $this->getAttribute('raw_ai_response');
+
+        return $payload !== null && Typer::assertArray($payload) !== [];
+    }
+
+    /**
      * Bank clearing code.
      */
     public function getBankCode(): string|null

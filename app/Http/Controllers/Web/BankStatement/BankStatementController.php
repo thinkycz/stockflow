@@ -13,12 +13,14 @@ use App\Models\BankStatementTransaction;
 use App\Models\Store;
 use App\Models\User;
 use App\Support\ActiveStoreResolver;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Inertia\Inertia;
 use Inertia\Response;
 use InvalidArgumentException;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Thrower;
@@ -124,40 +126,47 @@ final class BankStatementController
      */
     public function update(Request $request, BankStatementService $service): RedirectResponse
     {
-        $validity = BankStatementValidity::inject();
-        $nullableText = $validity->text()->nullable()->toArray();
-        $nullableDate = $validity->optionalDate()->nullable()->toArray();
-        $data = Typer::assertStringKeyArray(Typer::assertArray($request->validate([
-            'transactions' => $validity->transactions()->required()->toArray(),
-            'transactions.*.id' => $validity->rowId()->nullable()->toArray(),
-            'transactions.*.booked_on' => $validity->date()->required()->toArray(),
-            'transactions.*.executed_on' => $nullableDate,
-            'transactions.*.item_type' => $validity->shortText()->required()->toArray(),
-            'transactions.*.amount' => $validity->amount()->required()->toArray(),
-            'transactions.*.currency' => $validity->currency()->required()->toArray(),
-            'transactions.*.counterparty_name' => $nullableText,
-            'transactions.*.counterparty_account' => $nullableText,
-            'transactions.*.variable_symbol' => $nullableText,
-            'transactions.*.constant_symbol' => $nullableText,
-            'transactions.*.specific_symbol' => $nullableText,
-            'transactions.*.description' => $nullableText,
-            'transactions.*.category' => $validity->category()->required()->toArray(),
-            'transactions.*.sales_from' => $nullableDate,
-            'transactions.*.sales_to' => $nullableDate,
-            'transactions.*.review_note' => $nullableText,
-        ])));
-        $rows = \array_map(
-            static fn(mixed $row): array => Typer::assertStringKeyArray(Typer::assertArray($row)),
-            Typer::assertArray($data['transactions']),
-        );
+        $rows = $this->draftRows($request);
         try {
-            $service->updateDraft($this->activeStatement($request, $service), \array_values($rows), User::mustAuth());
+            $service->updateDraft($this->activeStatement($request, $service), $rows, User::mustAuth());
         } catch (InvalidArgumentException $exception) {
             Thrower::default()->message('statement', \__($exception->getMessage()))->throw();
         }
         Inertia::flash('success', \__('Bank statement draft saved.'));
 
         return Resolver::resolveRedirector()->back();
+    }
+
+    /**
+     * Delete an owned import, including confirmed and active imports.
+     */
+    public function destroy(Request $request, BankStatementService $service): RedirectResponse
+    {
+        $statement = $this->activeStatement($request, $service, false);
+        try {
+            $service->delete($statement, User::mustAuth());
+        } catch (RuntimeException) {
+            Thrower::default()->message('statement', \__('statement_delete_failed'))->throw();
+        }
+        Inertia::flash('success', \__('Bank statement deleted.'));
+
+        return Resolver::resolveRedirector()->route('bank-statements.index');
+    }
+
+    /**
+     * Calculate replacement period suggestions without changing the stored draft.
+     */
+    public function recommend(Request $request, BankStatementService $service, BankStatementReconciliationService $reconciliation): JsonResponse
+    {
+        $rows = $this->draftRows($request);
+        $target = Typer::parseInt(Typer::assertArray($request->validate(['target' => ['required', 'integer', 'min:0', 'max:' . (\count($rows) - 1)]]))['target']);
+        try {
+            $result = $reconciliation->recommend($this->activeStatement($request, $service, false), User::mustAuth(), $rows, $target);
+        } catch (InvalidArgumentException $exception) {
+            Thrower::default()->message('statement', \__($exception->getMessage()))->throw();
+        }
+
+        return Resolver::resolveResponseFactory()->json($result);
     }
 
     /**
@@ -300,6 +309,43 @@ final class BankStatementController
     private static function mask(string|null $value): string|null
     {
         return $value === null || $value === '' ? null : '•••• ' . \mb_substr($value, -4);
+    }
+
+    /**
+     * Validate the shared draft contract for saves and read-only recommendations.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function draftRows(Request $request): array
+    {
+        $validity = BankStatementValidity::inject();
+        $nullableText = $validity->text()->nullable()->toArray();
+        $nullableDate = $validity->optionalDate()->nullable()->toArray();
+        $data = Typer::assertStringKeyArray(Typer::assertArray($request->validate([
+            'transactions' => $validity->transactions()->required()->toArray(),
+            'transactions.*.id' => $validity->rowId()->nullable()->toArray(),
+            'transactions.*.booked_on' => $validity->date()->required()->toArray(),
+            'transactions.*.executed_on' => $nullableDate,
+            'transactions.*.item_type' => $validity->shortText()->required()->toArray(),
+            'transactions.*.amount' => $validity->amount()->required()->toArray(),
+            'transactions.*.currency' => $validity->currency()->required()->toArray(),
+            'transactions.*.counterparty_name' => $nullableText,
+            'transactions.*.counterparty_account' => $nullableText,
+            'transactions.*.variable_symbol' => $nullableText,
+            'transactions.*.constant_symbol' => $nullableText,
+            'transactions.*.specific_symbol' => $nullableText,
+            'transactions.*.description' => $nullableText,
+            'transactions.*.category' => $validity->category()->required()->toArray(),
+            'transactions.*.sales_from' => $nullableDate,
+            'transactions.*.sales_to' => $nullableDate,
+            'transactions.*.review_note' => $nullableText,
+        ])));
+        $rows = \array_map(
+            static fn(mixed $row): array => Typer::assertStringKeyArray(Typer::assertArray($row)),
+            Typer::assertArray($data['transactions']),
+        );
+
+        return \array_values($rows);
     }
 
     /**

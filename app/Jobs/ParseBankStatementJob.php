@@ -58,8 +58,10 @@ final class ParseBankStatementJob implements ShouldBeEncrypted, ShouldQueue
         }
 
         $statement = DB::transaction(function (): BankStatement|null {
-            $statement = BankStatement::query()->whereKey($this->bankStatementId)->lockForUpdate()->firstOrFail();
-            $statement = Typer::assertInstance($statement, BankStatement::class);
+            $statement = BankStatement::query()->whereKey($this->bankStatementId)->lockForUpdate()->first();
+            if (!$statement instanceof BankStatement) {
+                return null;
+            }
             if ($this->generation !== $statement->getParseGeneration() || $statement->getStatus() !== BankStatementStatusEnum::QUEUED) {
                 return null;
             }

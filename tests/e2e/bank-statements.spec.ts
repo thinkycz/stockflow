@@ -12,7 +12,7 @@ test('administrator uploads a synthetic anonymized Czech bank statement', async 
     await page.goto('/bank-statements');
     await expect(
         page.getByText(/external AI provider OpenRouter/i),
-    ).toBeVisible();
+    ).toHaveCount(0);
     await page.locator('input[type="file"]').setInputFiles({
         name: 'synthetic-cs-statement.pdf',
         mimeType: 'application/pdf',

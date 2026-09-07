@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { formatCzechDate } from '@/composables/useCzechDate';
+import { useBankStatementActions } from '@/features/bank-statements/useBankStatementActions';
 import { Link } from '@inertiajs/vue3';
 import { Download, Plus, RefreshCw, Save, Trash2 } from '@lucide/vue';
 import Alert from '@/components/ui/Alert.vue';
@@ -18,6 +20,11 @@ import {
     type BankReviewProps,
 } from '@/features/bank-statements/useBankReview';
 
+const {
+    busy: actionBusy,
+    deleteStatement,
+    reanalyze,
+} = useBankStatementActions();
 const props = defineProps<BankReviewProps>();
 const {
     t,
@@ -35,6 +42,9 @@ const {
     isPending,
     applyCandidate,
     candidatesFor,
+    recommendPeriod,
+    recommendationStale,
+    requests,
     reasonFor,
     automaticSource,
     statementError,
@@ -44,7 +54,6 @@ const {
     save,
     confirmStatement,
     reopenStatement,
-    retry,
     resultFor,
     badgeVariant,
 } = useBankReview(props);
@@ -79,13 +88,16 @@ const {
                     <Button
                         v-if="
                             props.statement.store_active &&
-                            props.statement.status === 'failed'
+                            ['failed', 'review', 'confirmed'].includes(
+                                props.statement.status,
+                            )
                         "
                         variant="secondary"
-                        @click="retry"
+                        @click="reanalyze(props.statement.id)"
+                        :disabled="actionBusy"
                     >
                         <RefreshCw :size="15" />{{
-                            t('bank_statements.actions.retry')
+                            t('bank_statements.actions.reanalyze')
                         }}
                     </Button>
                     <Button
@@ -106,6 +118,14 @@ const {
                     >
                         {{ t('bank_statements.actions.confirm') }}
                     </Button>
+                    <Button
+                        variant="ghost"
+                        :disabled="actionBusy"
+                        @click="deleteStatement(props.statement.id)"
+                        ><Trash2 :size="15" />{{
+                            t('bank_statements.actions.delete')
+                        }}</Button
+                    >
                 </template>
             </PageHeader>
 
@@ -158,8 +178,17 @@ const {
                         {{ t('bank_statements.columns.period') }}
                     </p>
                     <p class="text-sm font-semibold">
-                        {{ props.statement.period_from ?? '—' }} –
-                        {{ props.statement.period_to ?? '—' }}
+                        {{
+                            props.statement.period_from
+                                ? formatCzechDate(props.statement.period_from)
+                                : '—'
+                        }}
+                        –
+                        {{
+                            props.statement.period_to
+                                ? formatCzechDate(props.statement.period_to)
+                                : '—'
+                        }}
                     </p>
                 </div>
                 <div>
@@ -320,7 +349,7 @@ const {
                                         />
                                     </div>
                                     <span v-else>{{
-                                        transaction.booked_on
+                                        formatCzechDate(transaction.booked_on)
                                     }}</span>
                                 </td>
                                 <td>
@@ -423,8 +452,21 @@ const {
                                         </div>
                                     </div>
                                     <span v-else
-                                        >{{ transaction.sales_from ?? '—' }} –
-                                        {{ transaction.sales_to ?? '—' }}</span
+                                        >{{
+                                            transaction.sales_from
+                                                ? formatCzechDate(
+                                                      transaction.sales_from,
+                                                  )
+                                                : '—'
+                                        }}
+                                        –
+                                        {{
+                                            transaction.sales_to
+                                                ? formatCzechDate(
+                                                      transaction.sales_to,
+                                                  )
+                                                : '—'
+                                        }}</span
                                     >
                                     <p
                                         v-if="automaticSource(transaction)"
@@ -436,11 +478,55 @@ const {
                                             )
                                         }}
                                     </p>
-                                    <details
+                                    <div
                                         v-if="
-                                            props.statement.editable &&
-                                            candidatesFor(transaction).length
+                                            ['wolt', 'bolt'].includes(
+                                                transaction.category,
+                                            ) &&
+                                            ['review', 'confirmed'].includes(
+                                                props.statement.status,
+                                            )
                                         "
+                                        class="mt-2 space-y-1 text-xs"
+                                    >
+                                        <Button
+                                            variant="secondary"
+                                            size="compact"
+                                            :loading="requests.has(transaction)"
+                                            @click="
+                                                recommendPeriod(transaction)
+                                            "
+                                            >{{
+                                                t(
+                                                    'bank_statements.suggestions.recommend',
+                                                )
+                                            }}</Button
+                                        >
+                                        <p
+                                            v-if="
+                                                recommendationStale(
+                                                    transaction,
+                                                ) &&
+                                                candidatesFor(transaction)
+                                                    .length
+                                            "
+                                        >
+                                            {{
+                                                t(
+                                                    'bank_statements.suggestions.stale',
+                                                )
+                                            }}
+                                        </p>
+                                        <p v-if="!props.statement.editable">
+                                            {{
+                                                t(
+                                                    'bank_statements.suggestions.reopen',
+                                                )
+                                            }}
+                                        </p>
+                                    </div>
+                                    <details
+                                        v-if="candidatesFor(transaction).length"
                                         class="mt-2 text-xs"
                                     >
                                         <summary class="cursor-pointer">
@@ -458,8 +544,17 @@ const {
                                             class="mt-2 space-y-1"
                                         >
                                             <p>
-                                                {{ candidate.from }} –
-                                                {{ candidate.to }}
+                                                {{
+                                                    formatCzechDate(
+                                                        candidate.from,
+                                                    )
+                                                }}
+                                                –
+                                                {{
+                                                    formatCzechDate(
+                                                        candidate.to,
+                                                    )
+                                                }}
                                             </p>
                                             <p>
                                                 {{
@@ -493,7 +588,11 @@ const {
                                                 variant="secondary"
                                                 size="compact"
                                                 :disabled="
-                                                    candidate.reason !== null
+                                                    candidate.reason !== null ||
+                                                    recommendationStale(
+                                                        transaction,
+                                                    ) ||
+                                                    !props.statement.editable
                                                 "
                                                 @click="
                                                     applyCandidate(

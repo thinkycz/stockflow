@@ -212,3 +212,35 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->assertJsonValidationErrors('statement');
     \expect($statement->fresh()?->getStatus())->toBe(BankStatementStatusEnum::REVIEW);
 });
+
+\test('administrators can recommend populated periods without saving and delete active imports', function (): void {
+    Storage::fake(FilesystemDiskEnum::Private->value);
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $bank = BankStatement::factory()->forStore($store)->create();
+    $transaction = BankStatementTransaction::factory()->forStatement($bank)->create(['category' => 'wolt', 'sales_from' => '2026-08-01', 'sales_to' => '2026-08-05', 'booked_on' => '2026-08-07']);
+    $this->withSession(\activeStoreSession($store));
+    $page = $this->be($admin, 'users')->get('/bank-statements/' . $bank->getKey(), $this->inertiaHeaders());
+    $rows = $page->json('props.transactions');
+    $this->postJson('/bank-statements/' . $bank->getKey() . '/recommend', ['transactions' => $rows, 'target' => 0])
+        ->assertOk()->assertJsonPath('candidates.0.from', '2026-08-01')->assertJsonPath('candidates.0.reason', 'missing_statement_days');
+    \expect($transaction->fresh()->getSalesFrom()->toDateString())->toBe('2026-08-01');
+    $this->postJson('/bank-statements/' . $bank->getKey() . '/recommend', ['transactions' => $rows, 'target' => 999])->assertUnprocessable();
+    $this->postJson('/bank-statements/' . $bank->getKey() . '/recommend', ['transactions' => [[...$rows[0], 'id' => 999999]], 'target' => 0])->assertNotFound();
+    $bank->update(['status' => 'processing']);
+    $this->delete('/bank-statements/' . $bank->getKey())->assertRedirect('/bank-statements');
+    $this->assertDatabaseMissing('bank_statements', ['id' => $bank->getKey()]);
+});
+
+\test('nonowners cannot delete or recommend bank statement periods', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
+    $other = BankStatement::factory()->create();
+    $this->withSession(\activeStoreSession($store));
+    $this->be($admin, 'users')->delete('/bank-statements/' . $other->getKey())->assertNotFound();
+    $this->postJson('/bank-statements/' . $other->getKey() . '/recommend', ['target' => 0, 'transactions' => [['booked_on' => '2026-08-07', 'amount' => '100.00', 'currency' => 'CZK', 'category' => 'wolt', 'item_type' => 'Test']]])->assertNotFound();
+    $limited = UserFactory::new()->limited($store)->createOne();
+    $own = BankStatement::factory()->forStore($store)->create();
+    $this->be($limited, 'users')->delete('/bank-statements/' . $own->getKey())->assertRedirect();
+    $this->post('/bank-statements/' . $own->getKey() . '/recommend')->assertRedirect();
+});

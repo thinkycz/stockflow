@@ -96,7 +96,7 @@ function money(value: string | null): string {
             <div>
                 {{ t('bank_statements.transaction.expected') }}:
                 <PayoutEstimate
-                    :expected="money(receipt.check.expected)"
+                    :expected="receipt.check.expected"
                     :fees="receipt.check.fees"
                     :range="receipt.check.range"
                 />

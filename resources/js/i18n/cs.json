@@ -1257,7 +1257,7 @@
             "unsupported_bank": "Výpis není z podporované banky.",
             "unsupported_currency": "Výpis není v CZK."
         },
-        "tolerance": "Tolerance: {amount} CZK",
+        "tolerance": "Tolerance: {amount}",
         "blockers": {
             "unsaved": "Před potvrzením uložte koncept, aby se změny přepočítaly.",
             "periods": "Před potvrzením doplňte platná období tržeb u všech plateb kartou a rozvozových služeb."

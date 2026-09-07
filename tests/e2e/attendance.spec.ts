@@ -135,7 +135,7 @@ test('admin rejects and then approves a monthly attendance deviation', async ({
         .locator('[data-testid^="payroll-row-"]')
         .filter({ hasText: 'E2E Worker' });
     await expect(payrollRow).toContainText('8.25 h');
-    await expect(payrollRow).toContainText('1,650');
+    await expect(payrollRow).toContainText('1 650,00 Kč');
 });
 
 test('admin disables attendance rating without disabling attendance actions', async ({

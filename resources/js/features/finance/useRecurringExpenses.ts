@@ -1,3 +1,4 @@
+import { formatMoney } from '@/lib/format';
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, nextTick, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -164,13 +165,7 @@ export function useRecurringExpenses(props: RecurringExpensesProps) {
         );
     }
 
-    function money(value: number): string {
-        return new Intl.NumberFormat(locale.value, {
-            style: 'currency',
-            currency: 'CZK',
-            minimumFractionDigits: 2,
-        }).format(value);
-    }
+    const money = formatMoney;
 
     function period(value: string): string {
         return new Intl.DateTimeFormat(locale.value, {

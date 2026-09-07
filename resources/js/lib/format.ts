@@ -1,17 +1,24 @@
 import { formatDateInput, parseCzechDateInput } from '@/lib/date-input';
 import { getIntlLocale } from '@/i18n';
 
-export function formatMoney(value: number): string {
-    return new Intl.NumberFormat(getIntlLocale(), {
+export function formatMoney(value: number | string | null | undefined): string {
+    if (
+        value === null ||
+        value === undefined ||
+        value === '' ||
+        !Number.isFinite(Number(value))
+    )
+        return '—';
+    return new Intl.NumberFormat('cs-CZ', {
         style: 'currency',
         currency: 'CZK',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-    }).format(value);
+    }).format(Number(value));
 }
 
 export function formatSignedMoney(value: number): string {
-    return new Intl.NumberFormat(getIntlLocale(), {
+    return new Intl.NumberFormat('cs-CZ', {
         style: 'currency',
         currency: 'CZK',
         minimumFractionDigits: 2,

@@ -11,8 +11,7 @@ defineProps<{
     range?: EstimateComparison | null;
 }>();
 const { t } = useI18n();
-const money = (value: string | undefined) =>
-    value === undefined ? '—' : formatMoney(Number(value));
+const money = formatMoney;
 </script>
 <template>
     <div
@@ -37,5 +36,5 @@ const money = (value: string | undefined) =>
             </p>
         </template>
     </div>
-    <span v-else>{{ expected ?? '—' }}</span>
+    <span v-else>{{ money(expected) }}</span>
 </template>

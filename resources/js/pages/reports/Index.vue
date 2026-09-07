@@ -180,6 +180,7 @@ const {
                         </div>
                     </div>
                     <Chart
+                        currency
                         type="line"
                         :title="t('reports.statements.daily_revenue')"
                         :data="props.financial_report.daily"
@@ -187,6 +188,7 @@ const {
                     />
                     <div class="grid gap-4 lg:grid-cols-2">
                         <Chart
+                            currency
                             type="pie"
                             :title="t('reports.statements.channel_pie')"
                             :data="channelData"
@@ -194,6 +196,7 @@ const {
                             :empty-text="t('reports.statements.empty')"
                         />
                         <Chart
+                            currency
                             type="bar"
                             :title="t('reports.statements.channel_bars')"
                             :data="channelData"

@@ -81,7 +81,7 @@ test('admin issues and prints three-up vouchers and limited account redeems one'
     await page.goto('/gift-vouchers');
     await page.getByLabel('Voucher code').fill(code);
     await page.getByRole('button', { name: 'Check code' }).click();
-    await expect(page.getByText('CZK 450.00')).toBeVisible();
+    await expect(page.getByText('450,00 Kč')).toBeVisible();
     await page.getByRole('button', { name: 'Confirm redemption' }).click();
     await expect(page.getByText('Gift voucher redeemed.')).toBeVisible();
 

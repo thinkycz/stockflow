@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatMoney } from '@/lib/format';
 import PayoutEstimate from '@/components/PayoutEstimate.vue';
 import MarketplaceFeeBreakdown from '@/components/MarketplaceFeeBreakdown.vue';
 
@@ -202,8 +203,8 @@ const {
                         {{ t('bank_statements.columns.balance') }}
                     </p>
                     <p class="text-sm font-semibold">
-                        {{ props.statement.opening_balance ?? '—' }} →
-                        {{ props.statement.closing_balance ?? '—' }} CZK
+                        {{ formatMoney(props.statement.opening_balance) }} →
+                        {{ formatMoney(props.statement.closing_balance) }}
                     </p>
                 </div>
             </Card>
@@ -492,9 +493,9 @@ const {
                                             "
                                         />
                                     </div>
-                                    <span v-else
-                                        >{{ transaction.amount }} CZK</span
-                                    >
+                                    <span v-else>{{
+                                        formatMoney(transaction.amount)
+                                    }}</span>
                                 </td>
                                 <td class="text-right">
                                     <PayoutEstimate
@@ -559,10 +560,11 @@ const {
                                             >
                                                 Δ
                                                 {{
-                                                    resultFor(transaction)
-                                                        ?.difference
+                                                    formatMoney(
+                                                        resultFor(transaction)
+                                                            ?.difference,
+                                                    )
                                                 }}
-                                                CZK
                                             </p>
                                         </template>
                                     </div>
@@ -610,7 +612,12 @@ const {
                                                         transaction.booked_on,
                                                     )
                                                 }}
-                                                · {{ transaction.amount }} CZK
+                                                ·
+                                                {{
+                                                    formatMoney(
+                                                        transaction.amount,
+                                                    )
+                                                }}
                                             </p>
                                         </div>
                                         <div>
@@ -757,12 +764,13 @@ const {
                                                             v-if="
                                                                 !candidate.range
                                                             "
-                                                            >CZK · Δ
+                                                        >
+                                                            · Δ
                                                             {{
-                                                                candidate.difference ??
-                                                                '—'
-                                                            }}
-                                                            CZK</template
+                                                                formatMoney(
+                                                                    candidate.difference,
+                                                                )
+                                                            }}</template
                                                         >
                                                     </div>
                                                     <p>
@@ -850,10 +858,11 @@ const {
                                                     )
                                                 }}:
                                                 {{
-                                                    resultFor(transaction)
-                                                        ?.difference
+                                                    formatMoney(
+                                                        resultFor(transaction)
+                                                            ?.difference,
+                                                    )
                                                 }}
-                                                CZK
                                             </p>
                                             <p
                                                 v-if="
@@ -868,9 +877,11 @@ const {
                                                     t(
                                                         'bank_statements.tolerance',
                                                         {
-                                                            amount: resultFor(
-                                                                transaction,
-                                                            )?.tolerance,
+                                                            amount: formatMoney(
+                                                                resultFor(
+                                                                    transaction,
+                                                                )?.tolerance,
+                                                            ),
                                                         },
                                                     )
                                                 }}

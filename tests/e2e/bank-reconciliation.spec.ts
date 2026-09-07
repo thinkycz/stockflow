@@ -81,6 +81,12 @@ for (const locale of ['en', 'cs', 'sk'] as const) {
         const bolt = section
             .getByRole('row')
             .filter({ has: page.locator('input[value="Synthetic bolt"]') });
+        await expect(
+            card.getByText('990,00 Kč', { exact: true }),
+        ).toBeVisible();
+        await expect(
+            card.getByText('Δ -5,00 Kč', { exact: true }),
+        ).toBeVisible();
         await expect(card.getByText(t.paired, { exact: true })).toBeVisible();
         await expect(card.getByText(t.matched, { exact: true })).toBeVisible();
         await expect(wolt.getByText(t.auto, { exact: true })).toHaveCount(0);

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { getIntlLocale } from '@/i18n';
+import { formatMoney, formatNumber } from '@/lib/format';
 
 type ChartType = 'line' | 'bar' | 'pie';
 
@@ -16,6 +16,7 @@ type BarSlice = { label: string; value: number };
 const props = withDefaults(
     defineProps<{
         type: ChartType;
+        currency?: boolean;
         title?: string;
         data: LinePoint[] | BarSlice[];
         series?: Series[];
@@ -29,6 +30,10 @@ const props = withDefaults(
         emptyText: '',
     },
 );
+
+const formatValue = (value: number) =>
+    props.currency ? formatMoney(value) : formatNumber(value);
+const axisLeft = computed(() => (props.currency ? 100 : 56));
 
 const palette = [
     '#1f6feb',
@@ -97,7 +102,12 @@ const barGeometry = computed(
         label: string;
         value: number;
     }> => {
-        const padding = { top: 10, right: 12, bottom: 28, left: 44 };
+        const padding = {
+            top: 10,
+            right: 12,
+            bottom: 28,
+            left: axisLeft.value,
+        };
         const width = 720;
         const height = props.height;
         const innerW = width - padding.left - padding.right;
@@ -132,7 +142,12 @@ const lineGeometry = computed(
         points: Array<{ x: number; y: number; label: string; value: number }>;
         yTicks: Array<{ y: number; label: string }>;
     } => {
-        const padding = { top: 16, right: 12, bottom: 28, left: 56 };
+        const padding = {
+            top: 16,
+            right: 12,
+            bottom: 28,
+            left: axisLeft.value,
+        };
         const width = 720;
         const height = props.height;
         const innerW = width - padding.left - padding.right;
@@ -163,12 +178,7 @@ const lineGeometry = computed(
                 : '';
         const yTicks = [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
             const y = padding.top + innerH - ratio * innerH;
-            const labelValue = (effectiveMax * ratio).toLocaleString(
-                getIntlLocale(),
-                {
-                    maximumFractionDigits: 0,
-                },
-            );
+            const labelValue = formatValue(effectiveMax * ratio);
             return { y, label: labelValue };
         });
         return { path, area, points, yTicks };
@@ -201,22 +211,18 @@ const chartWidth = 720;
         >
             <line
                 v-for="tick in [
-                    { y: props.height - 28, label: '0' },
+                    { y: props.height - 28, label: formatValue(0) },
                     {
                         y: (props.height - 28) * 0.5,
-                        label: (max / 2).toLocaleString(getIntlLocale(), {
-                            maximumFractionDigits: 0,
-                        }),
+                        label: formatValue(max / 2),
                     },
                     {
                         y: 16,
-                        label: max.toLocaleString(getIntlLocale(), {
-                            maximumFractionDigits: 0,
-                        }),
+                        label: formatValue(max),
                     },
                 ]"
                 :key="tick.label"
-                :x1="44"
+                :x1="axisLeft"
                 :x2="chartWidth - 12"
                 :y1="tick.y"
                 :y2="tick.y"
@@ -226,18 +232,14 @@ const chartWidth = 720;
             />
             <text
                 v-for="tick in [
-                    { y: props.height - 28, label: '0' },
+                    { y: props.height - 28, label: formatValue(0) },
                     {
                         y: (props.height - 28) * 0.5,
-                        label: (max / 2).toLocaleString(getIntlLocale(), {
-                            maximumFractionDigits: 0,
-                        }),
+                        label: formatValue(max / 2),
                     },
                     {
                         y: 16,
-                        label: max.toLocaleString(getIntlLocale(), {
-                            maximumFractionDigits: 0,
-                        }),
+                        label: formatValue(max),
                     },
                 ]"
                 :key="`label-${tick.label}`"
@@ -263,11 +265,7 @@ const chartWidth = 720;
                     class="fill-current text-[9px] opacity-70"
                     text-anchor="middle"
                 >
-                    {{
-                        bar.value.toLocaleString(getIntlLocale(), {
-                            maximumFractionDigits: 0,
-                        })
-                    }}
+                    {{ formatValue(bar.value) }}
                 </text>
             </g>
             <text
@@ -294,7 +292,7 @@ const chartWidth = 720;
             <line
                 v-for="tick in lineGeometry.yTicks"
                 :key="`grid-${tick.y}`"
-                :x1="56"
+                :x1="axisLeft"
                 :x2="chartWidth - 12"
                 :y1="tick.y"
                 :y2="tick.y"

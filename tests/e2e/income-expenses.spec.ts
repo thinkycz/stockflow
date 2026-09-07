@@ -132,7 +132,7 @@ test('admin manages and closes a monthly financial report while limited users ar
     await page.goto('/income-expenses?year=2030&month=1');
     const recurringRow = page.getByTestId(/financial-row-recurring_expense-/);
     await expect(recurringRow).toContainText('E2E rent');
-    await expect(recurringRow).toContainText('1,000.00');
+    await expect(recurringRow).toContainText('1 000,00 Kč');
 
     await page.getByRole('button', { name: 'Recurring expenses' }).click();
     await recurringDefinition
@@ -145,7 +145,7 @@ test('admin manages and closes a monthly financial report while limited users ar
     await expect(page.getByText('E2E rent', { exact: true })).toBeVisible();
     await expect(
         page.getByTestId(/financial-row-recurring_expense-/),
-    ).toContainText('1,100.00');
+    ).toContainText('1 100,00 Kč');
 
     await page.getByRole('button', { name: 'Recurring expenses' }).click();
     const recurringDefinitionForTermination = page
@@ -162,7 +162,7 @@ test('admin manages and closes a monthly financial report while limited users ar
     await page.goto('/income-expenses?year=2030&month=1');
     await expect(
         page.getByTestId(/financial-row-recurring_expense-/),
-    ).toContainText('1,000.00');
+    ).toContainText('1 000,00 Kč');
 
     await page.getByRole('button', { name: 'Add income' }).click();
     await expect(page.getByLabel('Type')).toHaveValue('income');
@@ -176,7 +176,7 @@ test('admin manages and closes a monthly financial report while limited users ar
     await cashRow.getByRole('button', { name: 'Edit amount' }).click();
     await page.getByLabel('Used').fill('50');
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(cashRow).toContainText('50.00');
+    await expect(cashRow).toContainText('50,00 Kč');
     await expect(cashRow).toContainText('Manually adjusted');
 
     await page.getByRole('button', { name: 'Close month' }).click();

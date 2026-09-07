@@ -1257,7 +1257,7 @@
             "unsupported_bank": "This bank is not supported.",
             "unsupported_currency": "The statement is not in CZK."
         },
-        "tolerance": "Tolerance: {amount} CZK",
+        "tolerance": "Tolerance: {amount}",
         "blockers": {
             "unsaved": "Save the draft to recalculate changes before confirmation.",
             "periods": "Complete valid sales periods for all card and marketplace payments before confirmation."

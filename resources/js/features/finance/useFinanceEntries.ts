@@ -1,3 +1,4 @@
+import { formatMoney } from '@/lib/format';
 import type { MarketplaceFees } from '@/types/marketplace-fees';
 import { formatDate } from '@/lib/format';
 import { router, useForm } from '@inertiajs/vue3';
@@ -55,7 +56,7 @@ export type FinanceEntriesProps = {
 };
 
 export function useFinanceEntries(props: FinanceEntriesProps) {
-    const { t, locale } = useI18n();
+    const { t } = useI18n();
 
     useBoundLocale();
 
@@ -118,13 +119,7 @@ export function useFinanceEntries(props: FinanceEntriesProps) {
         amount: '',
     });
 
-    function money(value: number): string {
-        return new Intl.NumberFormat(locale.value, {
-            style: 'currency',
-            currency: 'CZK',
-            minimumFractionDigits: 2,
-        }).format(value);
-    }
+    const money = formatMoney;
 
     function date(value: string | null): string {
         return formatDate(value);

@@ -22,6 +22,7 @@ use Carbon\CarbonImmutable;
  * @phpstan-type Check array{status: string, actual: string, expected: string|null, difference: string|null, reason: string|null, pairing: string, amount_check: string, tolerance: string|null}
  * @phpstan-type Candidate array{from: string, to: string, expected: string|null, difference: string|null, tolerance: string|null, within_tolerance: bool, reason: string|null, source: string}
  * @phpstan-type Discovery array{candidates: list<Candidate>, automatic: Candidate|null, reason: string|null}
+ * @phpstan-type Payment array{transaction_id: int, statement_id: int, channel: string, booked_on: string, from: string, to: string, state: string, check: Check}
  * @phpstan-type Row array{transaction_id: int, status: string, actual: string, expected: string|null, difference: string|null, reason: string|null, pairing: string, amount_check: string, tolerance: string|null, candidates: list<Candidate>, automatic: Candidate|null, discovery_reason: string|null}
  */
 class BankStatementReconciliationService
@@ -38,7 +39,7 @@ class BankStatementReconciliationService
      */
     public function forTransaction(BankStatementTransaction $transaction): array
     {
-        return $this->reconcile($transaction, $this->loadDays($transaction->getBankStatement(), [$transaction]));
+        return $this->assignedCheck($transaction, $this->loadDays($transaction->getBankStatement(), [$transaction]), $this->reservations($transaction->getBankStatement(), [$transaction], $transaction->getBankStatement()->getStatus() === BankStatementStatusEnum::CONFIRMED));
     }
 
     /**
@@ -53,11 +54,12 @@ class BankStatementReconciliationService
 
         $transactions = $statement->getTransactions();
         $days = $this->loadDays($statement, $transactions);
+        $reservations = $this->reservations($statement, \array_values($transactions->all()), $statement->getStatus() === BankStatementStatusEnum::CONFIRMED);
         $discoveries = $statement->getStatus() === BankStatementStatusEnum::REVIEW
-            ? $this->discoverPeriods(\array_values($transactions->all()), $days, $this->reservations($statement, \array_values($transactions->all()))) : [];
+            ? $this->discoverPeriods(\array_values($transactions->all()), $days, $reservations) : [];
         $pairedCount = 0;
         foreach ($transactions as $transaction) {
-            $result = $this->reconcile($transaction, $days);
+            $result = $this->assignedCheck($transaction, $days, $reservations);
             match ($result['status']) {
                 'matched' => ++$counts['matched'],
                 'mismatch' => ++$counts['mismatch'],
@@ -77,38 +79,104 @@ class BankStatementReconciliationService
     }
 
     /**
-     * Build the compact bank-control status for a statement month.
+     * Project all confirmed receipts touching this sales month; never persist paid flags.
      *
-     * @return array{statement_id: int|null, status: string, paired_count: int, counts: array{matched: int, mismatch: int, unresolved: int, excluded: int}}
+     * @return array{statement_id: int|null, status: string, paired_count: int, counts: array{matched: int, mismatch: int, unresolved: int, excluded: int}, cells: array<string, array<string, list<Payment>>>}
      */
     public function monthlyStatus(User $user, Store|null $store, int $year, int $month): array
     {
-        $empty = ['matched' => 0, 'mismatch' => 0, 'unresolved' => 0, 'excluded' => 0];
-
+        $result = ['statement_id' => null, 'status' => 'not_uploaded', 'paired_count' => 0,
+            'counts' => ['matched' => 0, 'mismatch' => 0, 'unresolved' => 0, 'excluded' => 0], 'cells' => []];
         if (!$store instanceof Store) {
-            return ['statement_id' => null, 'status' => 'not_uploaded', 'paired_count' => 0, 'counts' => $empty];
+            return $result;
+        }
+        $start = CarbonImmutable::parse(\sprintf('%04d-%02d-01', $year, $month))->startOfDay();
+        $end = $start->endOfMonth();
+        $parents = BankStatement::query()->select('id')->where('status', BankStatementStatusEnum::CONFIRMED->value);
+        BankStatement::scopeForUser($parents, $user->resolveScopeUser());
+        BankStatement::scopeForStore($parents, $store->getKey());
+        $transactions = BankStatementTransaction::query()->with('bankStatement')->whereIn('bank_statement_id', $parents)
+            ->whereIn('category', ['card', 'wolt', 'bolt', 'foodora'])->where('amount', '>', 0)
+            ->whereDate('sales_from', '<=', $end->toDateString())->whereDate('sales_to', '>=', $start->toDateString())
+            ->orderBy('booked_on')->orderBy('id')->get();
+        $first = $transactions->first();
+        if (!$first instanceof BankStatementTransaction) {
+            $query = BankStatement::query();
+            BankStatement::scopeForUser($query, $user->resolveScopeUser());
+            BankStatement::scopeForStore($query, $store->getKey());
+            BankStatement::scopeForMonth($query, $year, $month);
+            $latest = $query->latest()->first();
+            if ($latest instanceof BankStatement) {
+                $result['statement_id'] = $latest->getKey();
+                $result['status'] = $latest->getStatus()->value;
+            }
+
+            return $result;
+        }
+        $days = $this->loadDays($first->getBankStatement(), $transactions);
+        $reservations = $this->reservations($first->getBankStatement(), \array_values($transactions->all()), true);
+        $result['status'] = 'confirmed';
+        foreach ($transactions as $transaction) {
+            $from = $transaction->getSalesFrom();
+            $to = $transaction->getSalesTo();
+            if ($from === null || $to === null || $from->isAfter($to)) {
+                continue;
+            }
+            $check = $this->assignedCheck($transaction, $days, $reservations);
+            if ($check['status'] === 'matched') {
+                ++$result['counts']['matched'];
+            } elseif ($check['status'] === 'mismatch') {
+                ++$result['counts']['mismatch'];
+            } else {
+                ++$result['counts']['unresolved'];
+            }
+            if ($check['pairing'] === 'paired') {
+                ++$result['paired_count'];
+            }
+            $result['statement_id'] = $transaction->getBankStatement()->getKey();
+            $payment = ['transaction_id' => $transaction->getKey(), 'statement_id' => $result['statement_id'],
+                'channel' => $transaction->getCategory()->value, 'booked_on' => $transaction->getBookedOn()->toDateString(),
+                'from' => $from->toDateString(), 'to' => $to->toDateString(),
+                'state' => $check['pairing'] === 'paired' && $check['amount_check'] === 'within_tolerance' ? 'verified' : 'review', 'check' => $check];
+            for ($date = \max($from->toDateString(), $start->toDateString()); $date <= \min($to->toDateString(), $end->toDateString()); $date = CarbonImmutable::parse($date)->addDay()->toDateString()) {
+                $result['cells'][$date][$transaction->getCategory()->value][] = $payment;
+            }
         }
 
-        $query = BankStatement::query();
-        BankStatement::scopeForUser($query, $user->resolveScopeUser());
-        BankStatement::scopeForStore($query, $store->getKey());
-        BankStatement::scopeForMonth($query, $year, $month);
-        $statement = $query->latest()->first();
+        return $result;
+    }
 
-        if (!$statement instanceof BankStatement) {
-            return ['statement_id' => null, 'status' => 'not_uploaded', 'paired_count' => 0, 'counts' => $empty];
+    /**
+     * Preserve the amount calculation while flagging conflicting assigned periods.
+     *
+     * @param array<string, list<StatementDay>> $days
+     * @param list<BankStatementTransaction> $reservations
+     *
+     * @return Check
+     */
+    private function assignedCheck(BankStatementTransaction $transaction, array $days, array $reservations): array
+    {
+        $check = $this->reconcile($transaction, $days);
+        $from = $transaction->getSalesFrom()?->toDateString();
+        $to = $transaction->getSalesTo()?->toDateString();
+        if (!$transaction->getCategory()->reconciliable() || $from === null || $to === null) {
+            return $check;
+        }
+        foreach ($reservations as $other) {
+            $otherFrom = $other->getSalesFrom()?->toDateString();
+            $otherTo = $other->getSalesTo()?->toDateString();
+            if ($other->getKey() === $transaction->getKey() || $other->getCategory() !== $transaction->getCategory() || $otherFrom === null || $otherTo === null) {
+                continue;
+            }
+            if ($from <= $otherTo && $otherFrom <= $to) {
+                $check['status'] = 'unresolved';
+                $check['pairing'] = 'unresolved';
+                $check['reason'] = 'period_conflict';
+                break;
+            }
         }
 
-        $result = $statement->getStatus() === BankStatementStatusEnum::CONFIRMED
-            ? $this->forStatement($statement)
-            : ['counts' => $empty, 'paired_count' => 0];
-
-        return [
-            'statement_id' => $statement->getKey(),
-            'status' => $statement->getStatus()->value,
-            'counts' => $result['counts'],
-            'paired_count' => $result['paired_count'],
-        ];
+        return $check;
     }
 
     /**
@@ -293,17 +361,20 @@ class BankStatementReconciliationService
      *
      * @return list<BankStatementTransaction>
      */
-    private function reservations(BankStatement $statement, array $transactions): array
+    private function reservations(BankStatement $statement, array $transactions, bool $confirmedOnly = false): array
     {
-        if (\array_filter($transactions, $this->needsDiscovery(...)) === []) {
+        if ($transactions === []) {
             return $transactions;
         }
-        $parents = BankStatement::query()->select('id')->where('id', '!=', $statement->getKey());
+        $parents = BankStatement::query()->select('id');
+        if ($confirmedOnly) {
+            $parents->where('status', BankStatementStatusEnum::CONFIRMED->value);
+        }
         BankStatement::scopeForUser($parents, $statement->getUserId());
         BankStatement::scopeForStore($parents, $statement->getStoreId());
 
         return [...$transactions, ...BankStatementTransaction::query()->whereIn('bank_statement_id', $parents)
-            ->whereIn('category', ['wolt', 'bolt'])->whereNotNull('sales_from')->whereNotNull('sales_to')->get()->all()];
+            ->whereIn('category', ['card', 'wolt', 'bolt', 'foodora'])->where('amount', '>', 0)->whereNotNull('sales_from')->whereNotNull('sales_to')->get()->all()];
     }
 
     /**
@@ -323,6 +394,7 @@ class BankStatementReconciliationService
                 continue;
             }
             $candidates = [];
+            $calendar = $this->calendarPeriod($transaction);
             $explicit = $this->explicitPeriod($transaction);
             if ($explicit !== null) {
                 $candidates[] = $this->candidate($transaction, $days, $explicit['from'], $explicit['to'], 'explicit');
@@ -334,18 +406,22 @@ class BankStatementReconciliationService
                         if (!$to->isBefore($booked)) {
                             break;
                         }
-                        $candidate = $this->candidate($transaction, $days, $from->toDateString(), $to->toDateString(), 'inferred');
+                        $source = $this->isCalendarPeriod($transaction->getCategory(), $from, $to) ? 'calendar' : 'inferred';
+                        $candidate = $this->candidate($transaction, $days, $from->toDateString(), $to->toDateString(), $source);
                         if ($candidate['expected'] !== null && BigDecimal::of($candidate['expected'])->isPositive()) {
                             $candidates[] = $candidate;
                         }
                     }
                 }
             }
+            if ($explicit === null && $calendar !== null && \array_filter($candidates, static fn(array $candidate): bool => $candidate['from'] === $calendar['from'] && $candidate['to'] === $calendar['to']) === []) {
+                $candidates[] = $this->candidate($transaction, $days, $calendar['from'], $calendar['to'], 'calendar');
+            }
             foreach ($candidates as &$candidate) {
                 foreach ($reservations as $reserved) {
                     $from = $reserved->getSalesFrom()?->toDateString();
                     $to = $reserved->getSalesTo()?->toDateString();
-                    if ($reserved->getCategory() !== $transaction->getCategory() || $from === null || $to === null) {
+                    if ($reserved->getKey() === $transaction->getKey() || $reserved->getCategory() !== $transaction->getCategory() || $from === null || $to === null) {
                         continue;
                     }
                     if ($this->periodsConflict($transaction, $candidate, $reserved, ['from' => $from, 'to' => $to])) {
@@ -355,14 +431,22 @@ class BankStatementReconciliationService
                 }
             }
             unset($candidate);
-            \usort($candidates, function (array $a, array $b): int {
+            \usort($candidates, static function (array $a, array $b) use ($calendar): int {
+                $priorityA = $calendar !== null && $a['from'] === $calendar['from'] && $a['to'] === $calendar['to'];
+                $priorityB = $calendar !== null && $b['from'] === $calendar['from'] && $b['to'] === $calendar['to'];
+                if ($priorityA !== $priorityB) {
+                    return $priorityB <=> $priorityA;
+                }
+                if (($a['difference'] === null) !== ($b['difference'] === null)) {
+                    return ($a['difference'] === null) <=> ($b['difference'] === null);
+                }
                 $difference = BigDecimal::of($a['difference'] ?? '0')->abs()->compareTo(BigDecimal::of($b['difference'] ?? '0')->abs());
                 if ($difference !== 0) {
                     return $difference;
                 }
-                $weekly = $this->weeklyRank($b) <=> $this->weeklyRank($a);
+                $delay = \strcmp($b['to'], $a['to']);
 
-                return $weekly !== 0 ? $weekly : \strcmp($b['to'], $a['to']);
+                return $delay !== 0 ? $delay : \strcmp($a['from'], $b['from']);
             });
             $all[$transaction->getKey()] = $candidates;
         }
@@ -382,8 +466,10 @@ class BankStatementReconciliationService
                     if ($other->getKey() === $transaction->getKey() || $other->getCategory() !== $transaction->getCategory()) {
                         continue;
                     }
+                    $otherCalendar = $this->calendarPeriod($other);
                     foreach ($all[$other->getKey()] ?? [] as $competing) {
-                        if ($this->eligibleCandidate($competing) && $this->periodsConflict($transaction, $automatic, $other, $competing)) {
+                        $calendarSuggestion = $otherCalendar !== null && $competing['reason'] === null && $competing['from'] === $otherCalendar['from'] && $competing['to'] === $otherCalendar['to'];
+                        if (($this->eligibleCandidate($competing) || $calendarSuggestion) && $this->periodsConflict($transaction, $automatic, $other, $competing)) {
                             $automatic = null;
                             $reason = 'period_conflict';
                             break 2;
@@ -393,6 +479,12 @@ class BankStatementReconciliationService
             }
             if ($eligible === [] && $candidates !== []) {
                 $reason = $candidates[0]['reason'] ?? $reason;
+            }
+            $calendar = $this->calendarPeriod($transaction);
+            if ($automatic !== null && $automatic['source'] !== 'explicit' && $calendar !== null &&
+                ($automatic['from'] !== $calendar['from'] || $automatic['to'] !== $calendar['to'])) {
+                $automatic = null;
+                $reason = 'calendar_conflict';
             }
             if ($transaction->isManuallyEdited()) {
                 $automatic = null;
@@ -420,26 +512,49 @@ class BankStatementReconciliationService
     }
 
     /**
-     * Explicit dates can establish pairing even when the amount needs review.
+     * Automatic draft choices require a successful amount check even for explicit dates.
      *
      * @param Candidate $candidate
      */
     private function eligibleCandidate(array $candidate): bool
     {
-        return $candidate['reason'] === null && ($candidate['source'] === 'explicit' || $candidate['within_tolerance']);
+        return $candidate['reason'] === null && $candidate['within_tolerance'] && $candidate['expected'] !== null && BigDecimal::of($candidate['expected'])->isPositive();
     }
 
     /**
-     * A weekly boundary only ranks alternatives, never establishes a match.
+     * Latest completed provider calendar period, offered only within seven days.
+     * This is a suggestion, not evidence of the provider's actual settlement.
      *
-     * @param Candidate $candidate
+     * @return array{from: string, to: string}|null
      */
-    private function weeklyRank(array $candidate): int
+    private function calendarPeriod(BankStatementTransaction $transaction): array|null
     {
-        $from = CarbonImmutable::parse($candidate['from']);
-        $to = CarbonImmutable::parse($candidate['to']);
+        $booked = CarbonImmutable::parse($transaction->getBookedOn()->toDateString());
+        for ($delay = 1; $delay <= 7; ++$delay) {
+            $to = $booked->subDays($delay);
+            $from = $transaction->getCategory() === BankStatementTransactionCategoryEnum::BOLT
+                ? $to->subDays(6)
+                : $to->startOfMonth()->addDays($to->day > 25 ? 25 : $to->day - 5);
+            if ($this->isCalendarPeriod($transaction->getCategory(), $from, $to)) {
+                return ['from' => $from->toDateString(), 'to' => $to->toDateString()];
+            }
+        }
 
-        return $from->isMonday() && $to->isSunday() && $from->diffInDays($to) === 6.0 ? 1 : 0;
+        return null;
+    }
+
+    /**
+     * Recognize inclusive weekly Bolt and six-times-monthly Wolt boundaries.
+     */
+    private function isCalendarPeriod(BankStatementTransactionCategoryEnum $category, CarbonImmutable $from, CarbonImmutable $to): bool
+    {
+        if ($category === BankStatementTransactionCategoryEnum::BOLT) {
+            return $from->isMonday() && $to->isSunday() && $from->diffInDays($to) === 6.0;
+        }
+
+        return $category === BankStatementTransactionCategoryEnum::WOLT && $from->format('Y-m') === $to->format('Y-m') &&
+            (($from->day === 26 && $to->isLastOfMonth()) ||
+                (\in_array($from->day, [1, 6, 11, 16, 21], true) && $to->day === $from->day + 4));
     }
 
     /**

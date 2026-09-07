@@ -1128,9 +1128,21 @@
         },
         "bank_control": {
             "title": "Kontrola bankových platieb",
-            "description": "Stav importu výpisu pre vybraný mesiac.",
+            "description": "Potvrdené platby za tržby zobrazeného mesiaca. Bunka bez značky nemá overenú platbu; neznamená to, že nebola zaplatená.",
             "summary": "Spárované: {paired}, v tolerancii: {matched}, rozdiely súm: {mismatch}, nevyriešené: {unresolved}",
             "action": "Otvoriť kontrolu"
+        },
+        "receipts": {
+            "verified": "Platba prijatá · v tolerancii",
+            "review": "Platba prijatá · vyžaduje kontrolu",
+            "pending": "Čaká na prepočet",
+            "period_scope": "Kontrola sa vzťahuje na celé uvedené obdobie, nie na samostatnú výplatu za každý deň.",
+            "pending_description": "Údaje boli zmenené. Zobrazené sumy vychádzajú z posledného uloženia; pre novú kontrolu uložte Výkazy.",
+            "received_on": "Prijaté dňa",
+            "period": "Obdobie tržieb",
+            "actual": "Prijatá suma",
+            "difference": "Rozdiel",
+            "tolerance": "Tolerancia"
         }
     },
     "bank_statements": {
@@ -1240,7 +1252,11 @@
             "title": "Navrhnuté obdobia",
             "use": "Použiť obdobie",
             "explicit": "Obdobie z textu platby · neuložené",
-            "inferred": "Automaticky navrhnuté obdobie · neuložené"
+            "inferred": "Automaticky navrhnuté obdobie · neuložené",
+            "calendar": "Návrh podľa výplatného kalendára · neuložené",
+            "source_calendar": "Návrh podľa výplatného kalendára, nie doložené vyúčtovanie",
+            "source_explicit": "Obdobie uvedené v transakcii",
+            "source_inferred": "Návrh podľa tržieb"
         },
         "reasons": {
             "missing_sales_period": "Chýba obdobie tržieb. Zadajte dátumy alebo skontrolujte návrhy.",
@@ -1249,7 +1265,8 @@
             "no_matching_period": "Žiadne vhodné obdobie nezodpovedá sume v tolerancii. Skontrolujte podklady k platbe alebo zadajte obdobie ručne.",
             "ambiguous_period": "Sume zodpovedá viac období. Pred výberom overte dátumy.",
             "period_conflict": "Obdobie sa prekrýva s inou platbou alebo nezodpovedá poradiu platieb.",
-            "manual_period": "Tento pohyb bol upravený. Vyberte obdobie ručne, aby sa zachovala vaša kontrola."
+            "manual_period": "Tento pohyb bol upravený. Vyberte obdobie ručne, aby sa zachovala vaša kontrola.",
+            "calendar_conflict": "Suma zodpovedá inému obdobiu než výplatný kalendár. Overte obdobie a vyberte ho ručne."
         }
     },
     "inventory_counts": {

@@ -1128,9 +1128,21 @@
         },
         "bank_control": {
             "title": "Bank payment check",
-            "description": "Import status for the selected month.",
+            "description": "Confirmed receipts covering sales in this month. An unmarked cell has no verified receipt; this does not establish that it is unpaid.",
             "summary": "Paired: {paired}, within tolerance: {matched}, amount differences: {mismatch}, unresolved: {unresolved}",
             "action": "Open check"
+        },
+        "receipts": {
+            "verified": "Payment received · within tolerance",
+            "review": "Payment received · review needed",
+            "pending": "Awaiting recalculation",
+            "period_scope": "This check covers the entire period, not a separate payment for each day.",
+            "pending_description": "Sales were edited. Amounts shown use the last saved values; save Statements to recalculate.",
+            "received_on": "Received on",
+            "period": "Sales period",
+            "actual": "Received amount",
+            "difference": "Difference",
+            "tolerance": "Tolerance"
         }
     },
     "bank_statements": {
@@ -1240,7 +1252,11 @@
             "title": "Suggested periods",
             "use": "Use period",
             "explicit": "Period from payment text · not saved",
-            "inferred": "Automatically suggested period · not saved"
+            "inferred": "Automatically suggested period · not saved",
+            "calendar": "Payout calendar suggestion · not saved",
+            "source_calendar": "Payout calendar suggestion, not a documented settlement",
+            "source_explicit": "Period stated in the transaction",
+            "source_inferred": "Suggestion based on sales"
         },
         "reasons": {
             "missing_sales_period": "Sales period is missing. Enter dates or review the suggestions.",
@@ -1249,7 +1265,8 @@
             "no_matching_period": "No eligible period matches within tolerance. Check the payout details or enter the period manually.",
             "ambiguous_period": "Several periods match the amount. Review the dates before choosing.",
             "period_conflict": "This period overlaps another payout or conflicts with payout order.",
-            "manual_period": "This movement was edited. Choose a period manually to preserve your review."
+            "manual_period": "This movement was edited. Choose a period manually to preserve your review.",
+            "calendar_conflict": "The amount matches a different period from the payout calendar. Verify the period and choose it manually."
         }
     },
     "inventory_counts": {

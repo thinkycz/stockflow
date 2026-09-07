@@ -147,6 +147,6 @@ use Illuminate\Support\Facades\DB;
         DB::disableQueryLog();
         DB::flushQueryLog();
     }
-    \expect($queries)->toBe(2)
-        ->and($result['counts'])->toBe(['matched' => $count, 'mismatch' => 0, 'unresolved' => 1, 'excluded' => 0]);
+    \expect($queries)->toBe(3)
+        ->and($result['counts'])->toBe(['matched' => 0, 'mismatch' => 0, 'unresolved' => $count + 1, 'excluded' => 0]);
 })->with([10, 100]);

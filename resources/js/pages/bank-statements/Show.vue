@@ -474,6 +474,13 @@ const {
                                                 }}
                                                 CZK
                                             </p>
+                                            <p>
+                                                {{
+                                                    t(
+                                                        `bank_statements.suggestions.source_${candidate.source}`,
+                                                    )
+                                                }}
+                                            </p>
                                             <p v-if="candidate.reason">
                                                 {{
                                                     t(

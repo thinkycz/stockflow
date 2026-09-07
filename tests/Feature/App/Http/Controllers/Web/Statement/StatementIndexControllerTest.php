@@ -212,6 +212,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     $response->assertOk();
     $response->assertJsonPath('props.filters.store_id', $own->getKey());
     $response->assertJsonPath('props.is_admin', false);
+    $response->assertJsonPath('props.bank_reconciliation', null);
     $response->assertJsonPath('props.active_attendances', []);
 
     // A `?store_id=` override for a non-assigned store is silently

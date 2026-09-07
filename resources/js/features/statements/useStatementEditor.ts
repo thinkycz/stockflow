@@ -1,3 +1,8 @@
+import {
+    receiptPending,
+    type ReceiptCells,
+    type Receipt,
+} from './receipt-status';
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -60,6 +65,7 @@ export type StatementEditorProps = {
     };
     is_admin: boolean;
     bank_reconciliation: {
+        cells: ReceiptCells;
         paired_count: number;
         statement_id: number | null;
         status: string;
@@ -142,6 +148,35 @@ export function useStatementEditor(props: StatementEditorProps) {
 
     const editingRows = computed(() =>
         Object.values(editing).sort((a, b) => a.date.localeCompare(b.date)),
+    );
+
+    function isReceiptPending(receipt: Receipt): boolean {
+        if (receiptPending(receipt, props.days, editingRows.value)) return true;
+        return (
+            props.today_day !== null &&
+            receiptPending(
+                receipt,
+                [props.today_day],
+                [
+                    {
+                        ...props.today_day,
+                        card: Number(todayForm.card),
+                        wolt: Number(todayForm.wolt),
+                        bolt: Number(todayForm.bolt),
+                        bolt_cash: Number(todayForm.bolt_cash),
+                        foodora: Number(todayForm.foodora),
+                    },
+                ],
+            )
+        );
+    }
+
+    const hasPendingReceipts = computed(() =>
+        Object.values(props.bank_reconciliation?.cells ?? {}).some((channels) =>
+            Object.values(channels).some((receipts) =>
+                receipts.some(isReceiptPending),
+            ),
+        ),
     );
 
     const submitting = ref(false);
@@ -422,6 +457,8 @@ export function useStatementEditor(props: StatementEditorProps) {
         form,
         todayForm,
         editingRows,
+        isReceiptPending,
+        hasPendingReceipts,
         submitting,
         checkingAttendances,
         attendanceModalOpen,

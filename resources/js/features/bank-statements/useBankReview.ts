@@ -35,7 +35,7 @@ export type PeriodCandidate = {
     tolerance: string | null;
     within_tolerance: boolean;
     reason: string | null;
-    source: 'explicit' | 'inferred';
+    source: 'explicit' | 'inferred' | 'calendar';
 };
 
 type ReconciliationRow = {

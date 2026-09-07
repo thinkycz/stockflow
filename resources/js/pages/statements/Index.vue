@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ReceiptIndicator from '@/features/statements/ReceiptIndicator.vue';
 import { Link } from '@inertiajs/vue3';
 import { Clock3, Save, UserRound } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -30,6 +31,8 @@ const {
     todayFields,
     todayForm,
     editingRows,
+    isReceiptPending,
+    hasPendingReceipts,
     submitting,
     checkingAttendances,
     attendanceModalOpen,
@@ -106,7 +109,7 @@ const {
                             <Badge
                                 :variant="
                                     props.bank_reconciliation.status ===
-                                    'confirmed'
+                                        'confirmed' && !hasPendingReceipts
                                         ? 'success'
                                         : props.bank_reconciliation.status ===
                                             'failed'
@@ -128,7 +131,7 @@ const {
                             <template
                                 v-if="
                                     props.bank_reconciliation.status ===
-                                    'confirmed'
+                                        'confirmed' && !hasPendingReceipts
                                 "
                             >
                                 {{
@@ -139,9 +142,12 @@ const {
                                     })
                                 }}
                             </template>
-                            <template v-else>{{
+                            <span v-if="hasPendingReceipts" class="block">{{
+                                t('statements.receipts.pending_description')
+                            }}</span>
+                            <span class="block">{{
                                 t('statements.bank_control.description')
-                            }}</template>
+                            }}</span>
                         </p>
                     </div>
                     <Link
@@ -308,58 +314,124 @@ const {
                                     />
                                 </td>
                                 <td class="text-right">
-                                    <Input
-                                        :model-value="String(day.card || 0)"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        class="text-right"
-                                        :disabled="!props.editable"
-                                        @update:model-value="
-                                            (value) =>
-                                                updateEditing(
-                                                    editingKey(day),
-                                                    'card',
-                                                    String(value),
-                                                )
-                                        "
-                                    />
+                                    <div class="flex items-center gap-0.5">
+                                        <Input
+                                            :model-value="String(day.card || 0)"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            class="text-right"
+                                            :disabled="!props.editable"
+                                            @update:model-value="
+                                                (value) =>
+                                                    updateEditing(
+                                                        editingKey(day),
+                                                        'card',
+                                                        String(value),
+                                                    )
+                                            "
+                                        />
+                                        <ReceiptIndicator
+                                            v-if="
+                                                props.is_admin &&
+                                                props.bank_reconciliation
+                                                    ?.cells[day.date]?.card
+                                                    ?.length
+                                            "
+                                            :receipts="
+                                                props.bank_reconciliation.cells[
+                                                    day.date
+                                                ]?.card ?? []
+                                            "
+                                            :pending="
+                                                (
+                                                    props.bank_reconciliation
+                                                        .cells[day.date]
+                                                        ?.card ?? []
+                                                ).some(isReceiptPending)
+                                            "
+                                        />
+                                    </div>
                                 </td>
                                 <td class="text-right">
-                                    <Input
-                                        :model-value="String(day.wolt || 0)"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        class="text-right"
-                                        :disabled="!props.editable"
-                                        @update:model-value="
-                                            (value) =>
-                                                updateEditing(
-                                                    editingKey(day),
-                                                    'wolt',
-                                                    String(value),
-                                                )
-                                        "
-                                    />
+                                    <div class="flex items-center gap-0.5">
+                                        <Input
+                                            :model-value="String(day.wolt || 0)"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            class="text-right"
+                                            :disabled="!props.editable"
+                                            @update:model-value="
+                                                (value) =>
+                                                    updateEditing(
+                                                        editingKey(day),
+                                                        'wolt',
+                                                        String(value),
+                                                    )
+                                            "
+                                        />
+                                        <ReceiptIndicator
+                                            v-if="
+                                                props.is_admin &&
+                                                props.bank_reconciliation
+                                                    ?.cells[day.date]?.wolt
+                                                    ?.length
+                                            "
+                                            :receipts="
+                                                props.bank_reconciliation.cells[
+                                                    day.date
+                                                ]?.wolt ?? []
+                                            "
+                                            :pending="
+                                                (
+                                                    props.bank_reconciliation
+                                                        .cells[day.date]
+                                                        ?.wolt ?? []
+                                                ).some(isReceiptPending)
+                                            "
+                                        />
+                                    </div>
                                 </td>
                                 <td class="text-right">
-                                    <Input
-                                        :model-value="String(day.bolt || 0)"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        class="text-right"
-                                        :disabled="!props.editable"
-                                        @update:model-value="
-                                            (value) =>
-                                                updateEditing(
-                                                    editingKey(day),
-                                                    'bolt',
-                                                    String(value),
-                                                )
-                                        "
-                                    />
+                                    <div class="flex items-center gap-0.5">
+                                        <Input
+                                            :model-value="String(day.bolt || 0)"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            class="text-right"
+                                            :disabled="!props.editable"
+                                            @update:model-value="
+                                                (value) =>
+                                                    updateEditing(
+                                                        editingKey(day),
+                                                        'bolt',
+                                                        String(value),
+                                                    )
+                                            "
+                                        />
+                                        <ReceiptIndicator
+                                            v-if="
+                                                props.is_admin &&
+                                                props.bank_reconciliation
+                                                    ?.cells[day.date]?.bolt
+                                                    ?.length
+                                            "
+                                            :receipts="
+                                                props.bank_reconciliation.cells[
+                                                    day.date
+                                                ]?.bolt ?? []
+                                            "
+                                            :pending="
+                                                (
+                                                    props.bank_reconciliation
+                                                        .cells[day.date]
+                                                        ?.bolt ?? []
+                                                ).some(isReceiptPending)
+                                            "
+                                        />
+                                    </div>
                                 </td>
                                 <td class="text-right">
                                     <Input
@@ -382,22 +454,46 @@ const {
                                     />
                                 </td>
                                 <td class="text-right">
-                                    <Input
-                                        :model-value="String(day.foodora || 0)"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        class="text-right"
-                                        :disabled="!props.editable"
-                                        @update:model-value="
-                                            (value) =>
-                                                updateEditing(
-                                                    editingKey(day),
-                                                    'foodora',
-                                                    String(value),
-                                                )
-                                        "
-                                    />
+                                    <div class="flex items-center gap-0.5">
+                                        <Input
+                                            :model-value="
+                                                String(day.foodora || 0)
+                                            "
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            class="text-right"
+                                            :disabled="!props.editable"
+                                            @update:model-value="
+                                                (value) =>
+                                                    updateEditing(
+                                                        editingKey(day),
+                                                        'foodora',
+                                                        String(value),
+                                                    )
+                                            "
+                                        />
+                                        <ReceiptIndicator
+                                            v-if="
+                                                props.is_admin &&
+                                                props.bank_reconciliation
+                                                    ?.cells[day.date]?.foodora
+                                                    ?.length
+                                            "
+                                            :receipts="
+                                                props.bank_reconciliation.cells[
+                                                    day.date
+                                                ]?.foodora ?? []
+                                            "
+                                            :pending="
+                                                (
+                                                    props.bank_reconciliation
+                                                        .cells[day.date]
+                                                        ?.foodora ?? []
+                                                ).some(isReceiptPending)
+                                            "
+                                        />
+                                    </div>
                                 </td>
                                 <td
                                     class="text-right font-semibold text-on-surface"

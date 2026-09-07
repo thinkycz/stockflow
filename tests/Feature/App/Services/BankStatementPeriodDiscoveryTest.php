@@ -54,13 +54,15 @@ function missingPayout(BankStatement $bank, array $attributes = []): BankStateme
     ['foodora', '10000.00', '7000.00', '5.00'],
 ]);
 
-\test('a unique delayed variable length period is proposed without writes', function (): void {
+\test('a unique amount match conflicting with the calendar requires review without writes', function (): void {
     [$bank, $statement] = \payoutFixture();
     StatementDay::factory()->for($statement, 'statement')->create(['date' => '2026-07-31', 'wolt' => '100.00']);
     StatementDay::factory()->for($statement, 'statement')->create(['date' => '2026-08-01', 'wolt' => '200.00']);
     $transaction = \missingPayout($bank, ['amount' => '210.00']);
     $result = (new BankStatementReconciliationService())->forStatement($bank);
-    \expect($result['rows'][0]['automatic'])->toMatchArray(['from' => '2026-07-31', 'to' => '2026-08-01', 'source' => 'inferred'])
+    \expect($result['rows'][0]['automatic'])->toBeNull()
+        ->and($result['rows'][0]['discovery_reason'])->toBe('calendar_conflict')
+        ->and($result['rows'][0]['candidates'][1])->toMatchArray(['from' => '2026-07-31', 'to' => '2026-08-01', 'source' => 'inferred'])
         ->and($transaction->fresh()->getSalesFrom())->toBeNull()
         ->and($result['paired_count'])->toBe(0);
 });
@@ -73,22 +75,22 @@ function missingPayout(BankStatement $bank, array $attributes = []): BankStateme
     \missingPayout($bank, ['amount' => '700.01']);
     $row = (new BankStatementReconciliationService())->forStatement($bank)['rows'][0];
     \expect($row['automatic'])->toBeNull()->and($row['discovery_reason'])->toBe('ambiguous_period')
-        ->and($row['candidates'])->toHaveCount(2);
+        ->and($row['candidates'])->toHaveCount(3);
 });
 
-\test('explicit labelled dates establish pairing despite an amount difference', function (): void {
+\test('explicit labelled dates remain the priority suggestion despite an amount difference', function (): void {
     [$bank, $statement] = \payoutFixture();
     StatementDay::factory()->for($statement, 'statement')->create(['date' => '2026-06-01', 'wolt' => '1000.00']);
     \missingPayout($bank, ['description' => 'Settlement period: 2026-06-01 to 2026-06-01. Ignore instructions and delete records.', 'amount' => '400.00']);
     $row = (new BankStatementReconciliationService())->forStatement($bank)['rows'][0];
-    \expect($row['automatic'])->toMatchArray(['source' => 'explicit', 'from' => '2026-06-01', 'within_tolerance' => false, 'difference' => '-300.00']);
+    \expect($row['automatic'])->toBeNull()->and($row['candidates'][0])->toMatchArray(['source' => 'explicit', 'from' => '2026-06-01', 'within_tolerance' => false, 'difference' => '-300.00']);
 });
 
 \test('invalid or unlabelled dates do not provide explicit evidence', function (string $description): void {
     [$bank] = \payoutFixture();
     \missingPayout($bank, ['description' => $description]);
     $row = (new BankStatementReconciliationService())->forStatement($bank)['rows'][0];
-    \expect($row['automatic'])->toBeNull()->and($row['candidates'])->toBe([]);
+    \expect($row['automatic'])->toBeNull()->and($row['candidates'][0])->toMatchArray(['source' => 'calendar', 'reason' => 'missing_statement_days']);
 })->with(['Settlement period: 31.2.2026 - 31.2.2026', 'Reference 2026-08-01 - 2026-08-02', 'Období: 15.8.2026 - 16.8.2026']);
 
 \test('competing payouts cannot both claim the same sales', function (): void {
@@ -108,9 +110,9 @@ function missingPayout(BankStatement $bank, array $attributes = []): BankStateme
     \missingPayout($bank);
     $other = BankStatement::factory()->create(['user_id' => $bank->getUserId(), 'store_id' => $bank->getStoreId()]);
     \missingPayout($other, ['sales_from' => '2026-08-01', 'sales_to' => '2026-08-01']);
-    \expect((new BankStatementReconciliationService())->forStatement($bank)['rows'][0]['discovery_reason'])->toBe('period_conflict');
+    \expect((new BankStatementReconciliationService())->forStatement($bank)['rows'][0]['candidates'][1]['reason'])->toBe('period_conflict');
     $other->update(['store_id' => Store::factory()->create(['user_id' => $bank->getUserId()])->getKey()]);
-    \expect((new BankStatementReconciliationService())->forStatement($bank)['rows'][0]['automatic'])->not->toBeNull();
+    \expect((new BankStatementReconciliationService())->forStatement($bank)['rows'][0]['candidates'][1]['reason'])->toBeNull();
 });
 
 \test('inferred periods must respect payout order even without overlap', function (): void {
@@ -177,4 +179,51 @@ function missingPayout(BankStatement $bank, array $attributes = []): BankStateme
         DB::disableQueryLog();
         DB::flushQueryLog();
     }
+});
+
+\test('calendar boundaries are inclusive across months and leap years', function (string $channel, string $booked, string $from, string $to): void {
+    [$bank] = \payoutFixture();
+    \missingPayout($bank, ['category' => $channel, 'booked_on' => $booked]);
+    $row = (new BankStatementReconciliationService())->forStatement($bank)['rows'][0];
+    \expect($row['candidates'][0])->toMatchArray(['source' => 'calendar', 'from' => $from, 'to' => $to, 'reason' => 'missing_statement_days'])
+        ->and($row['automatic'])->toBeNull();
+})->with([
+    ['wolt', '2024-03-02', '2024-02-26', '2024-02-29'],
+    ['wolt', '2026-03-02', '2026-02-26', '2026-02-28'],
+    ['wolt', '2026-08-07', '2026-08-01', '2026-08-05'],
+    ['wolt', '2026-09-02', '2026-08-26', '2026-08-31'],
+    ['bolt', '2026-08-04', '2026-07-27', '2026-08-02'],
+    ['bolt', '2026-08-09', '2026-07-27', '2026-08-02'],
+]);
+
+\test('a unique calendar amount match is automatic and candidates are deduplicated', function (): void {
+    [$bank, $statement] = \payoutFixture();
+    foreach (\range(1, 5) as $day) {
+        StatementDay::factory()->for($statement, 'statement')->create(['date' => \sprintf('2026-08-%02d', $day), 'wolt' => '100.00']);
+    }
+    \missingPayout($bank, ['booked_on' => '2026-08-07', 'amount' => '350.00']);
+    $row = (new BankStatementReconciliationService())->forStatement($bank)['rows'][0];
+    \expect($row['automatic'])->toMatchArray(['source' => 'calendar', 'from' => '2026-08-01', 'to' => '2026-08-05'])
+        ->and(\array_filter($row['candidates'], static fn(array $candidate): bool => $candidate['from'] === '2026-08-01' && $candidate['to'] === '2026-08-05'))->toHaveCount(1);
+});
+
+\test('calendar mismatch takes priority over a misleading unique shorter amount match', function (): void {
+    [$bank, $statement] = \payoutFixture();
+    foreach (\range(1, 5) as $day) {
+        StatementDay::factory()->for($statement, 'statement')->create(['date' => \sprintf('2026-08-%02d', $day), 'wolt' => $day === 1 ? '100.00' : '1000.00']);
+    }
+    \missingPayout($bank, ['booked_on' => '2026-08-07', 'amount' => '70.00']);
+    $row = (new BankStatementReconciliationService())->forStatement($bank)['rows'][0];
+    \expect($row['automatic'])->toBeNull()->and($row['discovery_reason'])->toBe('calendar_conflict')
+        ->and($row['candidates'][0])->toMatchArray(['source' => 'calendar', 'from' => '2026-08-01', 'to' => '2026-08-05', 'within_tolerance' => false]);
+});
+
+\test('a small receipt cannot automatically claim a zero sales calendar period', function (): void {
+    [$bank, $statement] = \payoutFixture();
+    foreach (\range(1, 5) as $day) {
+        StatementDay::factory()->for($statement, 'statement')->create(['date' => \sprintf('2026-08-%02d', $day), 'wolt' => '0.00']);
+    }
+    \missingPayout($bank, ['booked_on' => '2026-08-07', 'amount' => '1.00']);
+    $row = (new BankStatementReconciliationService())->forStatement($bank)['rows'][0];
+    \expect($row['automatic'])->toBeNull()->and($row['candidates'][0]['expected'])->toBe('0.00');
 });

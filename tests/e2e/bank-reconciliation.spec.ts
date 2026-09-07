@@ -80,7 +80,13 @@ for (const locale of ['en', 'cs', 'sk'] as const) {
             .filter({ has: page.locator('input[value="Synthetic bolt"]') });
         await expect(card.getByText(t.paired, { exact: true })).toBeVisible();
         await expect(card.getByText(t.matched, { exact: true })).toBeVisible();
-        await expect(wolt.getByText(t.auto, { exact: true })).toBeVisible();
+        await expect(wolt.getByText(t.auto, { exact: true })).toHaveCount(0);
+        await wolt.getByText(t.candidates, { exact: true }).click();
+        await wolt
+            .getByRole('button', { name: t.use, exact: true })
+            .and(page.locator(':enabled'))
+            .first()
+            .click();
         await expect(wolt.getByText(t.pending, { exact: true })).toBeVisible();
         await expect(
             page.getByRole('button', { name: t.confirm, exact: true }),
@@ -97,6 +103,7 @@ for (const locale of ['en', 'cs', 'sk'] as const) {
         ).toHaveCount(3);
         await bolt
             .getByRole('button', { name: t.use, exact: true })
+            .and(page.locator(':enabled'))
             .first()
             .click();
         await expect(bolt.getByText(t.pending, { exact: true })).toBeVisible();

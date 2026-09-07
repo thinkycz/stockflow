@@ -54,6 +54,7 @@ class E2ESeeder extends Seeder
         }
 
         $this->seedBankReviews($store);
+        $this->seedReceiptIndicators($store);
 
         $crossStore = Store::query()
             ->where('user_id', $user->getKey())
@@ -529,6 +530,25 @@ class E2ESeeder extends Seeder
                     'specific_symbol' => null, 'sales_from' => $category === 'card' ? $first : null,
                     'sales_to' => $category === 'card' ? $first : null,
                 ]);
+            }
+        }
+    }
+
+    /**
+     * Confirmed receipts isolated by month for each locale's editing regression.
+     */
+    private function seedReceiptIndicators(Store $store): void
+    {
+        foreach ([7, 8, 9] as $month) {
+            $from = \sprintf('2025-%02d-01', $month);
+            $to = \sprintf('2025-%02d-02', $month);
+            $statement = Statement::factory()->forStore($store)->forMonth(2025, $month)->create();
+            foreach ([$from, $to] as $date) {
+                StatementDay::factory()->for($statement, 'statement')->create(['date' => $date, 'card' => '100.00', 'wolt' => '100.00', 'bolt' => '100.00', 'bolt_cash' => '40.00', 'foodora' => '100.00']);
+            }
+            foreach (['card' => '198.00', 'wolt' => '90.00', 'bolt' => '102.00', 'foodora' => '140.00'] as $channel => $amount) {
+                $bank = BankStatement::factory()->forStore($store)->create(['bank_name' => 'Synthetic bank', 'original_name' => 'synthetic-receipt-' . $channel . '.pdf', 'status' => 'confirmed', 'period_from' => $from, 'period_to' => $to]);
+                BankStatementTransaction::factory()->forStatement($bank)->create(['category' => $channel, 'amount' => $amount, 'sales_from' => $from, 'sales_to' => $to, 'booked_on' => \sprintf('2025-%02d-05', $month)]);
             }
         }
     }

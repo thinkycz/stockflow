@@ -19,12 +19,12 @@ use App\Models\Store;
     $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $statement = Statement::factory()->forStore($store)->forMonth(2026, 8)->create();
     $day = StatementDay::factory()->for($statement, 'statement')->create([
-        'date' => '2026-08-01', 'card' => '0', 'wolt' => '0', 'bolt' => '0', 'foodora' => '0', $channel => '1000', 'bolt_cash' => $cash,
+        'date' => '2026-08-04', 'card' => '0', 'wolt' => '0', 'bolt' => '0', 'foodora' => '0', $channel => '1000', 'bolt_cash' => $cash,
     ]);
     $bank = BankStatement::factory()->forStore($store)->create(['status' => 'confirmed']);
     $transaction = BankStatementTransaction::factory()->forStatement($bank)->create([
         'category' => $channel, 'amount' => $transfer, 'booked_on' => '2026-08-07',
-        'sales_from' => '2026-08-01', 'sales_to' => '2026-08-01', 'manually_edited' => true, 'review_note' => 'Reviewed period',
+        'sales_from' => '2026-08-04', 'sales_to' => '2026-08-04', 'manually_edited' => true, 'review_note' => 'Reviewed period',
     ]);
     $original = $transaction->fresh()->getAttributes();
     $reconciliation = new BankStatementReconciliationService();
@@ -32,20 +32,21 @@ use App\Models\Store;
     $metrics = (new StatementService())->buildMetrics($statement, [$day], 0.0);
     $summary = (new StatementService())->buildReport($admin, $store->getKey(), 2026, 8);
     $income = \collect((new FinancialReportReadService())->build($admin, $store, 2026, 8)['income_rows'])->firstWhere('source_key', $channel);
-    \expect($check)->toMatchArray(['status' => 'matched', 'expected' => $transfer, 'difference' => '0.00'])
+    \expect($check)->toMatchArray(['status' => $channel === 'wolt' ? 'within_estimate' : 'matched', 'expected' => $transfer, 'difference' => '0.00'])
         ->and($check['fees']['deduction'])->toBe($deduction)
         ->and($metrics['marketplace_fees'][$channel])->toBe($check['fees'])
         ->and($summary['totals']['marketplace_fees'][$channel])->toBe($check['fees'])
         ->and($income['details']['marketplace_fees'])->toBe($check['fees'])
+        ->and($income['details']['commission_rate'])->toBe((float) $check['fees']['commission_rate'])
         ->and($income['calculated_amount'])->toBe((float) $net)
-        ->and($reconciliation->monthlyStatus($admin, $store, 2026, 8)['cells']['2026-08-01'][$channel][0]['state'])->toBe('verified')
+        ->and($reconciliation->monthlyStatus($admin, $store, 2026, 8)['cells']['2026-08-04'][$channel][0]['state'])->toBe($channel === 'wolt' ? 'review' : 'verified')
         ->and($transaction->fresh()->getAttributes())->toBe($original)
         ->and($bank->fresh()->getStatus()->value)->toBe('confirmed');
     // A pre-VAT synthetic payment stays a visible discrepancy instead of becoming a false match.
     $transaction->update(['amount' => $channel === 'bolt' ? '580.00' : '700.00']);
-    \expect($reconciliation->monthlyStatus($admin, $store, 2026, 8)['cells']['2026-08-01'][$channel][0]['state'])->toBe('review');
+    \expect($reconciliation->monthlyStatus($admin, $store, 2026, 8)['cells']['2026-08-04'][$channel][0]['state'])->toBe('review');
 })->with([
-    ['wolt', '0', '637.00', '637.00', '363.00'],
+    ['wolt', '0', '564.40', '564.40', '435.60'],
     ['foodora', '0', '637.00', '637.00', '363.00'],
     ['bolt', '200', '491.80', '691.80', '508.20'],
 ]);
@@ -54,7 +55,7 @@ use App\Models\Store;
     [$admin] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $statement = Statement::factory()->forStore($store)->forMonth(2026, 8)->create();
-    StatementDay::factory()->for($statement, 'statement')->create(['date' => '2026-08-01', 'wolt' => '1000']);
+    StatementDay::factory()->for($statement, 'statement')->create(['date' => '2026-08-04', 'wolt' => '1000']);
     $legacy = ['income_rows' => [['source_key' => 'wolt', 'calculated_amount' => 700]], 'expense_rows' => [], 'totals' => ['income' => 700, 'expenses' => 0, 'profit' => 700]];
     $report = FinancialReport::factory()->forStore($store)->forMonth(2026, 8)->create(['status' => 'closed', 'snapshot' => $legacy]);
     FinancialReportOverride::factory()->create(['financial_report_id' => $report->getKey(), 'source_type' => 'revenue', 'source_key' => 'wolt', 'amount' => '600']);
@@ -62,16 +63,16 @@ use App\Models\Store;
     \expect($read->build($admin, $store, 2026, 8)['income_rows'])->toBe($legacy['income_rows']);
     (new FinancialReportService())->reopen($admin, $store, 2026, 8);
     $wolt = \collect($read->build($admin, $store, 2026, 8)['income_rows'])->firstWhere('source_key', 'wolt');
-    \expect($wolt)->toMatchArray(['calculated_amount' => 637.0, 'effective_amount' => 600.0, 'override_amount' => 600.0]);
+    \expect($wolt)->toMatchArray(['calculated_amount' => 564.4, 'effective_amount' => 600.0, 'override_amount' => 600.0]);
 });
 
 \test('nonpositive estimates never match a small incoming payment or auto select a period', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $statement = Statement::factory()->forStore($store)->forMonth(2026, 8)->create();
-    StatementDay::factory()->for($statement, 'statement')->create(['date' => '2026-08-01', 'bolt' => '0', 'bolt_cash' => '1']);
+    StatementDay::factory()->for($statement, 'statement')->create(['date' => '2026-08-04', 'bolt' => '0', 'bolt_cash' => '1']);
     $bank = BankStatement::factory()->forStore($store)->create();
-    $transaction = BankStatementTransaction::factory()->forStatement($bank)->create(['category' => 'bolt', 'amount' => '1.00', 'booked_on' => '2026-08-04', 'sales_from' => '2026-08-01', 'sales_to' => '2026-08-01']);
+    $transaction = BankStatementTransaction::factory()->forStatement($bank)->create(['category' => 'bolt', 'amount' => '1.00', 'booked_on' => '2026-08-04', 'sales_from' => '2026-08-04', 'sales_to' => '2026-08-04']);
     $service = new BankStatementReconciliationService();
     \expect($service->forTransaction($transaction))->toMatchArray(['status' => 'mismatch', 'expected' => '-0.42']);
     $transaction->update(['sales_from' => null, 'sales_to' => null, 'description' => 'Settlement period: 1.8.2026 - 1.8.2026']);
@@ -82,7 +83,7 @@ use App\Models\Store;
     [$admin] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create(['user_id' => $admin->getKey()]);
     $statement = Statement::factory()->forStore($store)->forMonth(2026, 8)->create();
-    foreach (['2026-08-01', '2026-08-02'] as $date) {
+    foreach (['2026-08-04', '2026-08-02'] as $date) {
         StatementDay::factory()->for($statement, 'statement')->create(['date' => $date, 'wolt' => '0.01']);
     }
     $fees = (new StatementService())->buildReport($admin, $store->getKey(), 2026, 8)['totals']['marketplace_fees']['wolt'];

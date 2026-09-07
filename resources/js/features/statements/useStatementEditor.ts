@@ -70,6 +70,8 @@ export type StatementEditorProps = {
         statement_id: number | null;
         status: string;
         counts: {
+            within_estimate?: number;
+            outside_estimate?: number;
             matched: number;
             mismatch: number;
             unresolved: number;

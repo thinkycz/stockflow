@@ -136,5 +136,7 @@ for (const locale of ['en', 'cs', 'sk'] as const) {
         await page.reload();
         await expect(wolt.getByText(t.paired, { exact: true })).toBeVisible();
         await expect(wolt.getByText(t.auto, { exact: true })).toHaveCount(0);
+        await expect(wolt.locator('[data-payout-range]').first()).toBeVisible();
+        await expect(wolt.getByText(t.matched, { exact: true })).toHaveCount(0);
     });
 }

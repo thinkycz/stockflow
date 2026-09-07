@@ -1,4 +1,7 @@
-import type { MarketplaceFees } from '@/types/marketplace-fees';
+import type {
+    MarketplaceFees,
+    EstimateComparison,
+} from '@/types/marketplace-fees';
 export type ReceiptChannel = 'card' | 'wolt' | 'bolt' | 'foodora';
 export type Receipt = {
     transaction_id: number;
@@ -10,6 +13,7 @@ export type Receipt = {
     state: 'verified' | 'review';
     check: {
         fees?: MarketplaceFees | null;
+        range?: EstimateComparison | null;
         actual: string;
         expected: string | null;
         difference: string | null;

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PayoutEstimate from '@/components/PayoutEstimate.vue';
 import MarketplaceFeeBreakdown from '@/components/MarketplaceFeeBreakdown.vue';
 
 import { formatCzechDate } from '@/composables/useCzechDate';
@@ -250,6 +251,14 @@ const {
                         <Badge v-if="reviewCounts.pending" variant="neutral"
                             >{{ t('bank_statements.result.pending') }}:
                             {{ reviewCounts.pending }}</Badge
+                        >
+                        <Badge variant="warning"
+                            >{{ t('bank_statements.result.within_estimate') }}:
+                            {{ reviewCounts.within_estimate }}</Badge
+                        >
+                        <Badge variant="warning"
+                            >{{ t('bank_statements.result.outside_estimate') }}:
+                            {{ reviewCounts.outside_estimate }}</Badge
                         >
                         <Badge variant="success"
                             >{{ t('bank_statements.result.matched') }}:
@@ -558,19 +567,29 @@ const {
                                                     )
                                                 }}
                                             </p>
-                                            <p>
+                                            <div>
                                                 {{
                                                     t(
                                                         'bank_statements.transaction.expected',
                                                     )
                                                 }}:
-                                                {{ candidate.expected ?? '—' }}
-                                                CZK · Δ
-                                                {{
-                                                    candidate.difference ?? '—'
-                                                }}
-                                                CZK
-                                            </p>
+                                                <PayoutEstimate
+                                                    :expected="
+                                                        candidate.expected
+                                                    "
+                                                    :fees="candidate.fees"
+                                                    :range="candidate.range"
+                                                />
+                                                <template
+                                                    v-if="!candidate.range"
+                                                    >CZK · Δ
+                                                    {{
+                                                        candidate.difference ??
+                                                        '—'
+                                                    }}
+                                                    CZK</template
+                                                >
+                                            </div>
                                             <p>
                                                 {{
                                                     t(
@@ -633,9 +652,13 @@ const {
                                     >
                                 </td>
                                 <td class="text-right">
-                                    {{
-                                        resultFor(transaction)?.expected ?? '—'
-                                    }}
+                                    <PayoutEstimate
+                                        :expected="
+                                            resultFor(transaction)?.expected
+                                        "
+                                        :fees="resultFor(transaction)?.fees"
+                                        :range="resultFor(transaction)?.range"
+                                    />
                                     <MarketplaceFeeBreakdown
                                         :fees="resultFor(transaction)?.fees"
                                     />
@@ -683,6 +706,8 @@ const {
                                             >
                                             <p
                                                 v-if="
+                                                    !resultFor(transaction)
+                                                        ?.range &&
                                                     resultFor(transaction)
                                                         ?.difference !== null &&
                                                     resultFor(transaction)
@@ -700,6 +725,8 @@ const {
                                             </p>
                                             <p
                                                 v-if="
+                                                    !resultFor(transaction)
+                                                        ?.range &&
                                                     resultFor(transaction)
                                                         ?.tolerance
                                                 "

@@ -136,6 +136,8 @@ const {
                             >
                                 {{
                                     t('statements.bank_control.summary', {
+                                        within_estimate: 0,
+                                        outside_estimate: 0,
                                         ...props.bank_reconciliation.counts,
                                         paired: props.bank_reconciliation
                                             .paired_count,

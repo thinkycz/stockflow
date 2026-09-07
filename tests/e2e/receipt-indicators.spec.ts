@@ -44,6 +44,21 @@ for (const [locale, month, pending] of [
         await expect(
             first.locator('td').nth(5).locator('[data-receipt-state]'),
         ).toHaveCount(0);
+        const woltIndicator = first.locator('td').nth(3).getByRole('button');
+        await expect(
+            first.locator('td').nth(3).locator('[data-receipt-state="review"]'),
+        ).toHaveCount(1);
+        await woltIndicator.click();
+        await expect(
+            page.getByRole('dialog').locator('[data-payout-range]'),
+        ).toBeVisible();
+        await expect(
+            page.getByRole('dialog').locator('[data-estimate-range]'),
+        ).toBeVisible();
+        await page.screenshot({
+            path: test.info().outputPath(`wolt-range-${locale}.png`),
+        });
+        await page.keyboard.press('Escape');
         const indicator = first.locator('td').nth(4).getByRole('button');
         await indicator.focus();
         await page.keyboard.press('Enter');

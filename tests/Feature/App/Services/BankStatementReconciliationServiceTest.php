@@ -74,7 +74,7 @@ use Illuminate\Support\Facades\DB;
     foreach ([
         BankStatementTransactionCategoryEnum::WOLT->value => '63.70',
         BankStatementTransactionCategoryEnum::FOODORA->value => '127.40',
-        BankStatementTransactionCategoryEnum::BOLT->value => '40.71',
+        BankStatementTransactionCategoryEnum::BOLT->value => '51.00',
     ] as $category => $amount) {
         $transaction = BankStatementTransaction::factory()->forStatement($bankStatement)->create([
             'amount' => $amount,
@@ -83,7 +83,7 @@ use Illuminate\Support\Facades\DB;
             'sales_to' => '2026-08-01',
         ]);
 
-        \expect($service->forTransaction($transaction)['status'])->toBe('matched');
+        \expect($service->forTransaction($transaction)['status'])->toBe($category === 'wolt' ? 'within_estimate' : 'matched');
     }
 
     $outgoing = BankStatementTransaction::factory()->forStatement($bankStatement)->create([
@@ -116,7 +116,7 @@ use Illuminate\Support\Facades\DB;
     ]);
     $service = new BankStatementReconciliationService();
 
-    \expect($service->forTransaction($transaction)['status'])->toBe('matched');
+    \expect($service->forTransaction($transaction)['status'])->toBe('within_estimate');
 
     StatementDay::query()->whereDate('date', '2026-09-01')->delete();
 
@@ -148,5 +148,5 @@ use Illuminate\Support\Facades\DB;
         DB::flushQueryLog();
     }
     \expect($queries)->toBe(3)
-        ->and($result['counts'])->toBe(['matched' => 0, 'mismatch' => 0, 'unresolved' => $count + 1, 'excluded' => 0]);
+        ->and($result['counts'])->toBe(['matched' => 0, 'mismatch' => 0, 'unresolved' => $count + 1, 'excluded' => 0, 'within_estimate' => 0, 'outside_estimate' => 0]);
 })->with([10, 100]);

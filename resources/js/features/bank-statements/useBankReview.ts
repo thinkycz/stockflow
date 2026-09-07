@@ -1,4 +1,7 @@
-import type { MarketplaceFees } from '@/types/marketplace-fees';
+import type {
+    MarketplaceFees,
+    EstimateComparison,
+} from '@/types/marketplace-fees';
 import { router, useForm } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -36,6 +39,7 @@ export type PeriodCandidate = {
     difference: string | null;
     tolerance: string | null;
     fees?: MarketplaceFees | null;
+    range?: EstimateComparison | null;
     within_tolerance: boolean;
     reason: string | null;
     source: 'explicit' | 'inferred' | 'calendar';
@@ -49,9 +53,15 @@ type ReconciliationRow = {
     difference: string | null;
     reason: string | null;
     pairing: 'paired' | 'unresolved' | 'excluded';
-    amount_check: 'within_tolerance' | 'difference' | 'not_checked';
+    amount_check:
+        | 'within_tolerance'
+        | 'difference'
+        | 'not_checked'
+        | 'within_estimate'
+        | 'outside_estimate';
     tolerance: string | null;
     fees?: MarketplaceFees | null;
+    range?: EstimateComparison | null;
     candidates: PeriodCandidate[];
     automatic: PeriodCandidate | null;
     discovery_reason: string | null;
@@ -87,7 +97,8 @@ export type BankReviewProps = {
         counts: Record<
             'matched' | 'mismatch' | 'unresolved' | 'excluded',
             number
-        >;
+        > &
+            Partial<Record<'within_estimate' | 'outside_estimate', number>>;
         rows: ReconciliationRow[];
     };
 };
@@ -369,6 +380,14 @@ export function useBankReview(props: BankReviewProps) {
         { value: 'all', label: t('bank_statements.filter.all_results') },
         { value: 'paired', label: t('bank_statements.result.paired') },
         { value: 'pending', label: t('bank_statements.result.pending') },
+        {
+            value: 'within_estimate',
+            label: t('bank_statements.result.within_estimate'),
+        },
+        {
+            value: 'outside_estimate',
+            label: t('bank_statements.result.outside_estimate'),
+        },
         { value: 'matched', label: t('bank_statements.result.matched') },
         { value: 'mismatch', label: t('bank_statements.result.mismatch') },
         { value: 'unresolved', label: t('bank_statements.result.unresolved') },
@@ -401,6 +420,8 @@ export function useBankReview(props: BankReviewProps) {
     const reviewCounts = computed(() => {
         const counts = {
             paired: 0,
+            within_estimate: 0,
+            outside_estimate: 0,
             matched: 0,
             mismatch: 0,
             unresolved: 0,
@@ -416,6 +437,8 @@ export function useBankReview(props: BankReviewProps) {
             if (result?.pairing === 'paired') counts.paired++;
             const status = result?.status ?? 'unresolved';
             if (
+                status === 'within_estimate' ||
+                status === 'outside_estimate' ||
                 status === 'matched' ||
                 status === 'mismatch' ||
                 status === 'excluded' ||

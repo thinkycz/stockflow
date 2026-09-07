@@ -6,6 +6,10 @@ namespace App\Enums;
 
 enum BankStatementReconciliationStatusEnum: string
 {
+    case WITHIN_ESTIMATE = 'within_estimate';
+
+    case OUTSIDE_ESTIMATE = 'outside_estimate';
+
     case MATCHED = 'matched';
 
     case MISMATCH = 'mismatch';

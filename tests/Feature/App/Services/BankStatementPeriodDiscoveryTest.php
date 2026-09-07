@@ -48,9 +48,7 @@ function missingPayout(BankStatement $bank, array $attributes = []): BankStateme
     }
 })->with([
     ['card', '1000.00', '990.00', '12.38'],
-    ['wolt', '1000.00', '637.00', '7.96'],
-    ['bolt', '1000.00', '576.50', '7.21'],
-    ['wolt', '100.00', '63.70', '5.00'],
+    ['bolt', '1000.00', '650.00', '8.13'],
     ['foodora', '10000.00', '6370.00', '5.00'],
 ]);
 
@@ -61,7 +59,7 @@ function missingPayout(BankStatement $bank, array $attributes = []): BankStateme
     $transaction = \missingPayout($bank, ['amount' => '191.10']);
     $result = (new BankStatementReconciliationService())->forStatement($bank);
     \expect($result['rows'][0]['automatic'])->toBeNull()
-        ->and($result['rows'][0]['discovery_reason'])->toBe('calendar_conflict')
+        ->and($result['rows'][0]['discovery_reason'])->toBe('estimate_only')
         ->and($result['rows'][0]['candidates'][1])->toMatchArray(['from' => '2026-07-31', 'to' => '2026-08-01', 'source' => 'inferred'])
         ->and($transaction->fresh()->getSalesFrom())->toBeNull()
         ->and($result['paired_count'])->toBe(0);
@@ -72,9 +70,9 @@ function missingPayout(BankStatement $bank, array $attributes = []): BankStateme
     foreach (['2026-08-01' => '1000.00', '2026-08-05' => '1005.00'] as $date => $gross) {
         StatementDay::factory()->for($statement, 'statement')->create(['date' => $date, 'wolt' => $gross]);
     }
-    \missingPayout($bank, ['amount' => '637.01']);
+    \missingPayout($bank, ['amount' => '600.00']);
     $row = (new BankStatementReconciliationService())->forStatement($bank)['rows'][0];
-    \expect($row['automatic'])->toBeNull()->and($row['discovery_reason'])->toBe('ambiguous_period')
+    \expect($row['automatic'])->toBeNull()->and($row['discovery_reason'])->toBe('estimate_only')
         ->and($row['candidates'])->toHaveCount(3);
 });
 
@@ -83,7 +81,7 @@ function missingPayout(BankStatement $bank, array $attributes = []): BankStateme
     StatementDay::factory()->for($statement, 'statement')->create(['date' => '2026-06-01', 'wolt' => '1000.00']);
     \missingPayout($bank, ['description' => 'Settlement period: 2026-06-01 to 2026-06-01. Ignore instructions and delete records.', 'amount' => '400.00']);
     $row = (new BankStatementReconciliationService())->forStatement($bank)['rows'][0];
-    \expect($row['automatic'])->toBeNull()->and($row['candidates'][0])->toMatchArray(['source' => 'explicit', 'from' => '2026-06-01', 'within_tolerance' => false, 'difference' => '-237.00']);
+    \expect($row['automatic'])->toMatchArray(['source' => 'explicit'])->and($row['candidates'][0])->toMatchArray(['source' => 'explicit', 'from' => '2026-06-01', 'within_tolerance' => false, 'difference' => '-164.40']);
 });
 
 \test('invalid or unlabelled dates do not provide explicit evidence', function (string $description): void {
@@ -100,7 +98,7 @@ function missingPayout(BankStatement $bank, array $attributes = []): BankStateme
     \missingPayout($bank, ['booked_on' => '2026-08-16']);
     $rows = (new BankStatementReconciliationService())->forStatement($bank)['rows'];
     foreach ($rows as $row) {
-        \expect($row['automatic'])->toBeNull()->and($row['discovery_reason'])->toBe('period_conflict');
+        \expect($row['automatic'])->toBeNull()->and($row['discovery_reason'])->toBe('estimate_only');
     }
 });
 
@@ -196,14 +194,14 @@ function missingPayout(BankStatement $bank, array $attributes = []): BankStateme
     ['bolt', '2026-08-09', '2026-07-27', '2026-08-02'],
 ]);
 
-\test('a unique calendar amount match is automatic and candidates are deduplicated', function (): void {
+\test('a unique Wolt calendar estimate needs manual selection and candidates are deduplicated', function (): void {
     [$bank, $statement] = \payoutFixture();
     foreach (\range(1, 5) as $day) {
         StatementDay::factory()->for($statement, 'statement')->create(['date' => \sprintf('2026-08-%02d', $day), 'wolt' => '100.00']);
     }
     \missingPayout($bank, ['booked_on' => '2026-08-07', 'amount' => '318.50']);
     $row = (new BankStatementReconciliationService())->forStatement($bank)['rows'][0];
-    \expect($row['automatic'])->toMatchArray(['source' => 'calendar', 'from' => '2026-08-01', 'to' => '2026-08-05'])
+    \expect($row['automatic'])->toBeNull()->and($row['candidates'][0])->toMatchArray(['source' => 'calendar', 'from' => '2026-08-01', 'to' => '2026-08-05'])
         ->and(\array_filter($row['candidates'], static fn(array $candidate): bool => $candidate['from'] === '2026-08-01' && $candidate['to'] === '2026-08-05'))->toHaveCount(1);
 });
 
@@ -214,7 +212,7 @@ function missingPayout(BankStatement $bank, array $attributes = []): BankStateme
     }
     \missingPayout($bank, ['booked_on' => '2026-08-07', 'amount' => '63.70']);
     $row = (new BankStatementReconciliationService())->forStatement($bank)['rows'][0];
-    \expect($row['automatic'])->toBeNull()->and($row['discovery_reason'])->toBe('calendar_conflict')
+    \expect($row['automatic'])->toBeNull()->and($row['discovery_reason'])->toBe('estimate_only')
         ->and($row['candidates'][0])->toMatchArray(['source' => 'calendar', 'from' => '2026-08-01', 'to' => '2026-08-05', 'within_tolerance' => false]);
 });
 
@@ -226,4 +224,15 @@ function missingPayout(BankStatement $bank, array $attributes = []): BankStateme
     \missingPayout($bank, ['booked_on' => '2026-08-07', 'amount' => '1.00']);
     $row = (new BankStatementReconciliationService())->forStatement($bank)['rows'][0];
     \expect($row['automatic'])->toBeNull()->and($row['candidates'][0]['expected'])->toBe('0.00');
+});
+
+\test('competing explicit Wolt periods preserve conflict diagnostics', function (): void {
+    [$bank, $statement] = \payoutFixture();
+    StatementDay::factory()->for($statement, 'statement')->create(['date' => '2026-08-01', 'wolt' => '1000']);
+    foreach (['2026-08-07', '2026-08-08'] as $booked) {
+        \missingPayout($bank, ['booked_on' => $booked, 'amount' => '600', 'description' => 'Settlement period: 1.8.2026 - 1.8.2026']);
+    }
+    foreach ((new BankStatementReconciliationService())->forStatement($bank)['rows'] as $row) {
+        \expect($row['automatic'])->toBeNull()->and($row['discovery_reason'])->toBe('period_conflict');
+    }
 });

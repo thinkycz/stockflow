@@ -24,11 +24,12 @@ use Thinkycz\LaravelCore\Support\Typer;
 /**
  * @phpstan-import-type Breakdown from MarketplacePayout
  *
- * @phpstan-type Check array{status: string, actual: string, expected: string|null, difference: string|null, reason: string|null, pairing: string, amount_check: string, tolerance: string|null, fees: Breakdown|null}
- * @phpstan-type Candidate array{from: string, to: string, expected: string|null, difference: string|null, tolerance: string|null, fees: Breakdown|null, within_tolerance: bool, reason: string|null, source: string}
+ * @phpstan-type RangeCheck array{tolerance_min: string, tolerance_max: string, difference_min: string, difference_max: string, distance: string}
+ * @phpstan-type Check array{status: string, actual: string, expected: string|null, difference: string|null, reason: string|null, pairing: string, amount_check: string, tolerance: string|null, fees: Breakdown|null, range: RangeCheck|null}
+ * @phpstan-type Candidate array{from: string, to: string, expected: string|null, difference: string|null, tolerance: string|null, fees: Breakdown|null, range: RangeCheck|null, within_tolerance: bool, reason: string|null, source: string}
  * @phpstan-type Discovery array{candidates: list<Candidate>, automatic: Candidate|null, reason: string|null}
  * @phpstan-type Payment array{transaction_id: int, statement_id: int, channel: string, booked_on: string, from: string, to: string, state: string, check: Check}
- * @phpstan-type Row array{transaction_id: int, status: string, actual: string, expected: string|null, difference: string|null, reason: string|null, pairing: string, amount_check: string, tolerance: string|null, fees: Breakdown|null, candidates: list<Candidate>, automatic: Candidate|null, discovery_reason: string|null}
+ * @phpstan-type Row array{transaction_id: int, status: string, actual: string, expected: string|null, difference: string|null, reason: string|null, pairing: string, amount_check: string, tolerance: string|null, fees: Breakdown|null, range: RangeCheck|null, candidates: list<Candidate>, automatic: Candidate|null, discovery_reason: string|null}
  */
 class BankStatementReconciliationService
 {
@@ -93,22 +94,22 @@ class BankStatementReconciliationService
     /**
      * Build reconciliation rows and aggregate counts for one import.
      *
-     * @return array{counts: array{matched: int, mismatch: int, unresolved: int, excluded: int}, rows: list<Row>, paired_count: int}
+     * @return array{counts: array{matched: int, mismatch: int, unresolved: int, excluded: int, within_estimate: int, outside_estimate: int}, rows: list<Row>, paired_count: int}
      */
     public function forStatement(BankStatement $statement): array
     {
-        $counts = ['matched' => 0, 'mismatch' => 0, 'unresolved' => 0, 'excluded' => 0];
-        $rows = [];
-
+        $counts = ['matched' => 0, 'mismatch' => 0, 'unresolved' => 0, 'excluded' => 0, 'within_estimate' => 0, 'outside_estimate' => 0];
         $transactions = $statement->getTransactions();
         $days = $this->loadDays($statement, $transactions);
         $reservations = $this->reservations($statement, \array_values($transactions->all()), $statement->getStatus() === BankStatementStatusEnum::CONFIRMED);
         $discoveries = $statement->getStatus() === BankStatementStatusEnum::REVIEW
             ? $this->discoverPeriods(\array_values($transactions->all()), $days, $reservations) : [];
         $pairedCount = 0;
-        foreach ($transactions as $transaction) {
+        $rows = $transactions->map(function (BankStatementTransaction $transaction) use ($days, $reservations, $discoveries, &$counts, &$pairedCount): array {
             $result = $this->assignedCheck($transaction, $days, $reservations);
             match ($result['status']) {
+                'within_estimate' => ++$counts['within_estimate'],
+                'outside_estimate' => ++$counts['outside_estimate'],
                 'matched' => ++$counts['matched'],
                 'mismatch' => ++$counts['mismatch'],
                 'unresolved' => ++$counts['unresolved'],
@@ -119,22 +120,22 @@ class BankStatementReconciliationService
                 ++$pairedCount;
             }
             $discovery = $discoveries[$transaction->getKey()] ?? ['candidates' => [], 'automatic' => null, 'reason' => null];
-            $rows[] = ['transaction_id' => $transaction->getKey(), ...$result,
-                'candidates' => $discovery['candidates'], 'automatic' => $discovery['automatic'], 'discovery_reason' => $discovery['reason']];
-        }
 
-        return ['counts' => $counts, 'rows' => $rows, 'paired_count' => $pairedCount];
+            return $this->reviewRow($transaction->getKey(), $result, $discovery);
+        })->values()->all();
+
+        return ['counts' => $counts, 'rows' => \array_values($rows), 'paired_count' => $pairedCount];
     }
 
     /**
      * Project all confirmed receipts touching this sales month; never persist paid flags.
      *
-     * @return array{statement_id: int|null, status: string, paired_count: int, counts: array{matched: int, mismatch: int, unresolved: int, excluded: int}, cells: array<string, array<string, list<Payment>>>}
+     * @return array{statement_id: int|null, status: string, paired_count: int, counts: array{matched: int, mismatch: int, unresolved: int, excluded: int, within_estimate: int, outside_estimate: int}, cells: array<string, array<string, list<Payment>>>}
      */
     public function monthlyStatus(User $user, Store|null $store, int $year, int $month): array
     {
         $result = ['statement_id' => null, 'status' => 'not_uploaded', 'paired_count' => 0,
-            'counts' => ['matched' => 0, 'mismatch' => 0, 'unresolved' => 0, 'excluded' => 0], 'cells' => []];
+            'counts' => ['matched' => 0, 'mismatch' => 0, 'unresolved' => 0, 'excluded' => 0, 'within_estimate' => 0, 'outside_estimate' => 0], 'cells' => []];
         if (!$store instanceof Store) {
             return $result;
         }
@@ -171,7 +172,9 @@ class BankStatementReconciliationService
                 continue;
             }
             $check = $this->assignedCheck($transaction, $days, $reservations);
-            if ($check['status'] === 'matched') {
+            if ($check['status'] === 'within_estimate' || $check['status'] === 'outside_estimate') {
+                ++$result['counts'][$check['status']];
+            } elseif ($check['status'] === 'matched') {
                 ++$result['counts']['matched'];
             } elseif ($check['status'] === 'mismatch') {
                 ++$result['counts']['mismatch'];
@@ -192,6 +195,20 @@ class BankStatementReconciliationService
         }
 
         return $result;
+    }
+
+    /**
+     * Serialize one typed review row before collecting the import projection.
+     *
+     * @param Check $result
+     * @param Discovery $discovery
+     *
+     * @return Row
+     */
+    private function reviewRow(int $transactionId, array $result, array $discovery): array
+    {
+        return ['transaction_id' => $transactionId, 'status' => $result['status'], 'actual' => $result['actual'], 'expected' => $result['expected'], 'difference' => $result['difference'], 'reason' => $result['reason'], 'pairing' => $result['pairing'], 'amount_check' => $result['amount_check'], 'tolerance' => $result['tolerance'], 'fees' => $result['fees'], 'range' => $result['range'],
+            'candidates' => $discovery['candidates'], 'automatic' => $discovery['automatic'], 'discovery_reason' => $discovery['reason']];
     }
 
     /**
@@ -266,28 +283,10 @@ class BankStatementReconciliationService
         }
 
         $card = BigDecimal::zero();
-        $wolt = BigDecimal::zero();
-        $bolt = BigDecimal::zero();
-        $boltCash = BigDecimal::zero();
-        $foodora = BigDecimal::zero();
-
         foreach ($days as $day) {
             $card = $card->plus($day->getCardDecimal());
-            $wolt = $wolt->plus($day->getWoltDecimal());
-            $bolt = $bolt->plus($day->getBoltDecimal());
-            $boltCash = $boltCash->plus($day->getBoltCashDecimal());
-            $foodora = $foodora->plus($day->getFoodoraDecimal());
         }
-
-        $fees = $category === BankStatementTransactionCategoryEnum::CARD ? null : MarketplacePayout::calculate(
-            $category->value,
-            (string) match ($category) {
-                BankStatementTransactionCategoryEnum::WOLT => $wolt,
-                BankStatementTransactionCategoryEnum::BOLT => $bolt,
-                default => $foodora,
-            },
-            (string) $boltCash,
-        );
+        $fees = $category === BankStatementTransactionCategoryEnum::CARD ? null : MarketplacePayout::forDays($days)[match ($category) { BankStatementTransactionCategoryEnum::WOLT => 'wolt', BankStatementTransactionCategoryEnum::BOLT => 'bolt', default => 'foodora' }];
         $expected = $fees === null ? $card->multipliedBy(BigDecimal::one()->minus(CommissionRates::CARD)) : BigDecimal::of($fees['expected_transfer']);
         $expected = $expected->toScale(2, RoundingMode::HalfUp);
         $difference = $actual->minus($expected)->toScale(2, RoundingMode::HalfUp);
@@ -494,7 +493,7 @@ class BankStatementReconciliationService
                 if (($a['difference'] === null) !== ($b['difference'] === null)) {
                     return ($a['difference'] === null) <=> ($b['difference'] === null);
                 }
-                $difference = BigDecimal::of($a['difference'] ?? '0')->abs()->compareTo(BigDecimal::of($b['difference'] ?? '0')->abs());
+                $difference = BigDecimal::of($a['range']['distance'] ?? $a['difference'] ?? '0')->abs()->compareTo(BigDecimal::of($b['range']['distance'] ?? $b['difference'] ?? '0')->abs());
                 if ($difference !== 0) {
                     return $difference;
                 }
@@ -540,6 +539,9 @@ class BankStatementReconciliationService
                 $automatic = null;
                 $reason = 'calendar_conflict';
             }
+            if ($transaction->getCategory() === BankStatementTransactionCategoryEnum::WOLT && $automatic === null && \in_array($reason, ['no_matching_period', 'ambiguous_period', 'missing_statement_days'], true) && \array_filter($candidates, static fn(array $candidate): bool => $candidate['reason'] === null) !== []) {
+                $reason = 'estimate_only';
+            }
             if ($transaction->isManuallyEdited()) {
                 $automatic = null;
                 $reason = 'manual_period';
@@ -562,7 +564,7 @@ class BankStatementReconciliationService
         $check = $this->reconcile($transaction, $days, $from, $to);
 
         return ['from' => $from, 'to' => $to, 'fees' => $check['fees'], 'expected' => $check['expected'], 'difference' => $check['difference'],
-            'tolerance' => $check['tolerance'], 'within_tolerance' => $check['status'] === 'matched', 'reason' => $check['reason'], 'source' => $source];
+            'tolerance' => $check['tolerance'], 'range' => $check['range'], 'within_tolerance' => $check['status'] === 'matched', 'reason' => $check['reason'], 'source' => $source];
     }
 
     /**
@@ -572,7 +574,13 @@ class BankStatementReconciliationService
      */
     private function eligibleCandidate(array $candidate): bool
     {
-        return $candidate['reason'] === null && $candidate['within_tolerance'] && $candidate['expected'] !== null && BigDecimal::of($candidate['expected'])->isPositive();
+        if ($candidate['reason'] !== null || $candidate['expected'] === null || !BigDecimal::of($candidate['expected'])->isPositive()) {
+            return false;
+        }
+
+        return ($candidate['fees']['estimate_type'] ?? null) === 'range'
+            ? $candidate['source'] === 'explicit'
+            : $candidate['within_tolerance'];
     }
 
     /**
@@ -648,11 +656,28 @@ class BankStatementReconciliationService
         BigDecimal|null $tolerance = null,
         array|null $fees = null,
     ): array {
+        $range = null;
+        $amountCheck = $expected === null ? 'not_checked' : ($status === BankStatementReconciliationStatusEnum::MATCHED ? 'within_tolerance' : 'difference');
+        if ($fees !== null && $fees['estimate_type'] === 'range' && $expected !== null) {
+            $min = BigDecimal::of($fees['transfer_min']);
+            $max = BigDecimal::of($fees['transfer_max']);
+            $minTolerance = $this->tolerance(BankStatementTransactionCategoryEnum::WOLT, $min);
+            $maxTolerance = $this->tolerance(BankStatementTransactionCategoryEnum::WOLT, $max);
+            $inside = !($actual->isPositive() && !$max->isPositive()) && $actual->isGreaterThanOrEqualTo($min->minus($minTolerance)) && $actual->isLessThanOrEqualTo($max->plus($maxTolerance));
+            $amountCheck = $inside ? 'within_estimate' : 'outside_estimate';
+            $status = $inside ? BankStatementReconciliationStatusEnum::WITHIN_ESTIMATE : BankStatementReconciliationStatusEnum::OUTSIDE_ESTIMATE;
+            $range = ['tolerance_min' => (string) $minTolerance, 'tolerance_max' => (string) $maxTolerance,
+                'difference_min' => (string) $actual->minus($min)->toScale(2, RoundingMode::HalfUp),
+                'difference_max' => (string) $actual->minus($max)->toScale(2, RoundingMode::HalfUp),
+                'distance' => (string) BigDecimal::max('0', $min->minus($actual), $actual->minus($max))->toScale(2, RoundingMode::HalfUp)];
+        }
+
         return [
             'fees' => $fees,
             'status' => $status->value,
             'pairing' => $expected !== null ? 'paired' : ($status === BankStatementReconciliationStatusEnum::EXCLUDED ? 'excluded' : 'unresolved'),
-            'amount_check' => $expected === null ? 'not_checked' : ($status === BankStatementReconciliationStatusEnum::MATCHED ? 'within_tolerance' : 'difference'),
+            'amount_check' => $amountCheck,
+            'range' => $range,
             'tolerance' => $tolerance === null ? null : (string) $tolerance,
             'actual' => (string) $actual,
             'expected' => $expected === null ? null : (string) $expected,

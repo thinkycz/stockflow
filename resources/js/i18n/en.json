@@ -1138,7 +1138,7 @@
         "bank_control": {
             "title": "Bank payment check",
             "description": "Confirmed receipts covering sales in this month. An unmarked cell has no verified receipt; this does not establish that it is unpaid.",
-            "summary": "Paired: {paired}, within tolerance: {matched}, amount differences: {mismatch}, unresolved: {unresolved}",
+            "summary": "Paired: {paired}, within tolerance: {matched}, amount differences: {mismatch}, unresolved: {unresolved} · Within estimate range: {within_estimate}, outside estimate: {outside_estimate}",
             "action": "Open check"
         },
         "receipts": {
@@ -1206,7 +1206,9 @@
             "unresolved": "Unresolved",
             "excluded": "Excluded",
             "paired": "Paired",
-            "pending": "Save to recalculate"
+            "pending": "Save to recalculate",
+            "within_estimate": "Within estimate range",
+            "outside_estimate": "Outside estimate range"
         },
         "transaction": {
             "date": "Booked",
@@ -1280,7 +1282,8 @@
             "ambiguous_period": "Several periods match the amount. Review the dates before choosing.",
             "period_conflict": "This period overlaps another payout or conflicts with payout order.",
             "manual_period": "This movement was edited. Choose a period manually to preserve your review.",
-            "calendar_conflict": "The amount matches a different period from the payout calendar. Verify the period and choose it manually."
+            "calendar_conflict": "The amount matches a different period from the payout calendar. Verify the period and choose it manually.",
+            "estimate_only": "Select the period manually; the amount range is only an estimate."
         },
         "delete_message": "Delete this statement, its transactions and archived PDF? Its received-payment indicators will disappear from Statements. This cannot be undone.",
         "reanalyze_message": "Analyze the stored PDF again with AI? A successful result replaces transactions, manual edits and sales periods. Unsaved edits will be discarded. Confirmation will be revoked and payment indicators will disappear until you confirm again. If analysis fails, the existing saved data will be retained."
@@ -2086,6 +2089,16 @@
         "deduction": "Total deduction",
         "net_revenue": "Net revenue including cash received",
         "expected_transfer": "Estimated bank transfer",
-        "estimate": "Cash estimate for the whole period excluding other fees and adjustments. Does not account for VAT recovery."
+        "estimate": "Cash estimate for the whole period excluding other fees and adjustments. Does not account for VAT recovery.",
+        "range": "Net income range",
+        "conservative": "Totals use the lower income estimate.",
+        "range_limits": "The range accounts only for the Wolt and Wolt+ sales mix. Advertising, VAT on delivery and service fees, and other adjustments are excluded. Actual payouts may fall outside the range.",
+        "bolt_limits": "The Bolt estimate excludes additional fees and settlement adjustments.",
+        "tax_regimes": "VAT regimes by sales date",
+        "transaction_fee": "Transaction fee",
+        "transaction_vat": "VAT on transaction fee",
+        "lower_boundary": "Lower boundary",
+        "upper_boundary": "Upper boundary",
+        "receipt_estimate": "Payment received; amount compared only with an estimate."
     }
 }

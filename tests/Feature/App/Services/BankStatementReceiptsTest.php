@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\DB;
     $bank = BankStatement::factory()->forStore($store)->create(['status' => 'confirmed', 'period_from' => '2026-09-01', 'period_to' => '2026-09-30']);
     BankStatementTransaction::factory()->forStatement($bank)->create(['category' => 'wolt', 'amount' => '127.40', 'sales_from' => '2026-07-31', 'sales_to' => '2026-08-01']);
     $second = BankStatement::factory()->forStore($store)->create(['status' => 'confirmed']);
-    BankStatementTransaction::factory()->forStatement($second)->create(['category' => 'bolt', 'amount' => '40.71', 'sales_from' => '2026-08-02', 'sales_to' => '2026-08-02']);
+    BankStatementTransaction::factory()->forStatement($second)->create(['category' => 'bolt', 'amount' => '51.00', 'sales_from' => '2026-08-02', 'sales_to' => '2026-08-02']);
     $draft = BankStatement::factory()->forStore($store)->create();
     BankStatementTransaction::factory()->forStatement($draft)->create(['category' => 'wolt', 'amount' => '127.40', 'sales_from' => '2026-07-31', 'sales_to' => '2026-08-01']);
     $service = new BankStatementReconciliationService();
@@ -30,9 +30,10 @@ use Illuminate\Support\Facades\DB;
     $queries = \count(DB::getQueryLog());
     DB::disableQueryLog();
     \expect($queries)->toBeLessThanOrEqual(4)
-        ->and($result['counts']['matched'])->toBe(2)
-        ->and($result['cells']['2026-08-01']['wolt'][0]['state'])->toBe('verified')
-        ->and($result['cells']['2026-08-02']['bolt'][0]['check']['expected'])->toBe('40.71')
+        ->and($result['counts']['matched'])->toBe(1)
+        ->and($result['counts']['within_estimate'])->toBe(1)
+        ->and($result['cells']['2026-08-01']['wolt'][0]['state'])->toBe('review')
+        ->and($result['cells']['2026-08-02']['bolt'][0]['check']['expected'])->toBe('51.00')
         ->and($result['cells']['2026-08-02'])->not->toHaveKey('bolt_cash')
         ->and($result['cells'])->not->toHaveKey('2026-07-31');
     StatementDay::query()->where('statement_id', $statement->getKey())->whereDate('date', '2026-07-31')->update(['wolt' => '200.00']);

@@ -1138,7 +1138,7 @@
         "bank_control": {
             "title": "Kontrola bankovních plateb",
             "description": "Potvrzené platby za tržby zobrazeného měsíce. Buňka bez značky nemá ověřenou platbu; neznamená to, že nebyla zaplacena.",
-            "summary": "Spárováno: {paired}, v toleranci: {matched}, rozdíly částek: {mismatch}, nevyřešeno: {unresolved}",
+            "summary": "Spárováno: {paired}, v toleranci: {matched}, rozdíly částek: {mismatch}, nevyřešeno: {unresolved} · V rozmezí odhadu: {within_estimate}, mimo odhad: {outside_estimate}",
             "action": "Otevřít kontrolu"
         },
         "receipts": {
@@ -1206,7 +1206,9 @@
             "unresolved": "Nevyřešeno",
             "excluded": "Mimo kontrolu",
             "paired": "Spárováno",
-            "pending": "Uložte pro přepočet"
+            "pending": "Uložte pro přepočet",
+            "within_estimate": "V rozmezí odhadu",
+            "outside_estimate": "Mimo rozmezí odhadu"
         },
         "transaction": {
             "date": "Zaúčtováno",
@@ -1280,7 +1282,8 @@
             "ambiguous_period": "Částce odpovídá více období. Před výběrem ověřte data.",
             "period_conflict": "Období se překrývá s jinou platbou nebo neodpovídá pořadí plateb.",
             "manual_period": "Tento pohyb byl upraven. Vyberte období ručně, aby se zachovala vaše kontrola.",
-            "calendar_conflict": "Částka odpovídá jinému období než výplatní kalendář. Ověřte období a vyberte jej ručně."
+            "calendar_conflict": "Částka odpovídá jinému období než výplatní kalendář. Ověřte období a vyberte jej ručně.",
+            "estimate_only": "Období vyberte ručně; rozmezí částky je pouze odhad."
         },
         "delete_message": "Smazat výpis včetně transakcí a archivovaného PDF? Značky přijatých plateb z tohoto výpisu zmizí z Výkazů. Tuto akci nelze vrátit.",
         "reanalyze_message": "Znovu načíst uložené PDF pomocí AI? Úspěšný výsledek nahradí transakce, ruční úpravy a období. Neuložené změny budou zahozeny. Potvrzení výpisu se zruší a značky plateb zmizí až do nového potvrzení. Při chybě zůstanou dosavadní uložená data zachována."
@@ -2086,6 +2089,16 @@
         "deduction": "Celková srážka",
         "net_revenue": "Čistá tržba včetně přijaté hotovosti",
         "expected_transfer": "Odhad bankovního převodu",
-        "estimate": "Peněžní odhad za celé období bez dalších poplatků a úprav. Nezohledňuje odpočet DPH."
+        "estimate": "Peněžní odhad za celé období bez dalších poplatků a úprav. Nezohledňuje odpočet DPH.",
+        "range": "Rozmezí čistého příjmu",
+        "conservative": "Součty používají nižší odhad příjmu.",
+        "range_limits": "Rozmezí zohledňuje pouze podíl Woltu a Wolt+. Nezahrnuje reklamu, DPH z dopravy a servisních poplatků ani další úpravy. Skutečná výplata může být mimo rozmezí.",
+        "bolt_limits": "Odhad Boltu nezahrnuje další poplatky a úpravy vyúčtování.",
+        "tax_regimes": "Použité režimy DPH podle dne tržby",
+        "transaction_fee": "Transakční poplatek",
+        "transaction_vat": "DPH z transakčního poplatku",
+        "lower_boundary": "Dolní hranice",
+        "upper_boundary": "Horní hranice",
+        "receipt_estimate": "Platba přijata, částka porovnána pouze s odhadem."
     }
 }

@@ -37,8 +37,21 @@ for (const [locale, title] of [
         await reportFees.locator('summary').focus();
         await page.keyboard.press('Enter');
         await expect(reportFees).toContainText(title);
-        await expect(reportFees.locator('dd').nth(2)).toContainText(/12[,.]60/);
-        await expect(reportFees.locator('dd').nth(3)).toContainText(/72[,.]60/);
+        await expect(
+            page.locator('[data-estimate-range]').first(),
+        ).toBeVisible();
+        await expect(
+            reportFees.locator('[data-fee-field="transaction_fee"] dd'),
+        ).toContainText(/2[,.]00/);
+        await expect(
+            reportFees.locator('[data-fee-field="transaction_vat"] dd'),
+        ).toContainText(/0[,.]42/);
+        await expect(
+            reportFees.locator('[data-fee-field="vat"] dd'),
+        ).toContainText(/14[,.]70/);
+        await expect(
+            reportFees.locator('[data-fee-field="deduction"] dd'),
+        ).toContainText(/87[,.]12/);
         await page.screenshot({
             path: test.info().outputPath(`vat-${locale}-desktop.png`),
             fullPage: true,
@@ -48,10 +61,11 @@ for (const [locale, title] of [
             has: page.getByRole('link', { name: 'Wolt', exact: true }),
         });
         const financeFees = wolt.locator('[data-marketplace-fees]');
+        await expect(wolt.locator('[data-estimate-range]')).toBeVisible();
         await financeFees.locator('summary').click();
-        await expect(financeFees.locator('dd').nth(2)).toContainText(
-            /12[,.]60/,
-        );
+        await expect(
+            financeFees.locator('[data-fee-field="vat"] dd'),
+        ).toContainText(/14[,.]70/);
         await page.setViewportSize({ width: 390, height: 844 });
         const box = await financeFees.boundingBox();
         expect(box!.x + box!.width).toBeLessThanOrEqual(390);
@@ -62,15 +76,17 @@ for (const [locale, title] of [
             .getByRole('dialog')
             .locator('[data-marketplace-fees]');
         await receiptFees.locator('summary').click();
-        await expect(receiptFees.locator('dd').nth(2)).toContainText(
-            /12[,.]60/,
-        );
+        await expect(
+            receiptFees.locator('[data-fee-field="vat"] dd'),
+        ).toContainText(/14[,.]70/);
         await page.screenshot({
             path: test.info().outputPath(`vat-${locale}-mobile.png`),
         });
         await page.getByRole('dialog').getByRole('link').click();
         const bankFees = page.locator('[data-marketplace-fees]').first();
         await bankFees.locator('summary').click();
-        await expect(bankFees.locator('dd').nth(2)).toContainText(/12[,.]60/);
+        await expect(
+            bankFees.locator('[data-fee-field="vat"] dd'),
+        ).toContainText(/14[,.]70/);
     });
 }

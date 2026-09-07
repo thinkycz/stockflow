@@ -94,7 +94,7 @@ use Thinkycz\LaravelCore\Support\Resolver;
     $row = ['id' => $transaction->getKey(), 'category' => 'wolt', 'amount' => '318.50', 'booked_on' => '2026-08-07', 'sales_from' => '2026-08-01', 'sales_to' => '2026-08-05'];
     $service = new BankStatementReconciliationService();
     $result = $service->recommend($bank, $user, [$row], 0);
-    \expect($result['candidates'][0])->toMatchArray(['from' => '2026-08-01', 'to' => '2026-08-05', 'reason' => null, 'within_tolerance' => true])
+    \expect($result['candidates'][0])->toMatchArray(['from' => '2026-08-01', 'to' => '2026-08-05', 'reason' => null, 'within_tolerance' => false])
         ->and($transaction->fresh()->getAmount())->toBe('100.00');
     $result = $service->recommend($bank, $user, [$row, [...$row, 'id' => null, 'sales_from' => '2026-08-03', 'sales_to' => '2026-08-03']], 0);
     \expect($result['candidates'][0]['reason'])->toBe('period_conflict');

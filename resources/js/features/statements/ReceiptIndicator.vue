@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PayoutEstimate from '@/components/PayoutEstimate.vue';
 import MarketplaceFeeBreakdown from '@/components/MarketplaceFeeBreakdown.vue';
 
 import { Link } from '@inertiajs/vue3';
@@ -90,20 +91,27 @@ function money(value: string | null): string {
                 {{ t('statements.receipts.actual') }}:
                 {{ money(receipt.check.actual) }}
             </p>
-            <p>
+            <div>
                 {{ t('bank_statements.transaction.expected') }}:
-                {{ money(receipt.check.expected) }}
-            </p>
-            <p>
+                <PayoutEstimate
+                    :expected="money(receipt.check.expected)"
+                    :fees="receipt.check.fees"
+                    :range="receipt.check.range"
+                />
+            </div>
+            <p v-if="!receipt.check.range">
                 {{ t('statements.receipts.difference') }}:
                 {{ money(receipt.check.difference) }}
             </p>
-            <p>
+            <p v-if="!receipt.check.range">
                 {{ t('statements.receipts.tolerance') }}:
                 {{ money(receipt.check.tolerance) }}
             </p>
             <p v-if="receipt.check.reason">
                 {{ t(`bank_statements.reasons.${receipt.check.reason}`) }}
+            </p>
+            <p v-if="receipt.channel === 'wolt' && !pending">
+                {{ t('marketplace_fees.receipt_estimate') }}
             </p>
             <MarketplaceFeeBreakdown
                 v-if="!pending"

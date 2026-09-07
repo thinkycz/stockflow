@@ -22,6 +22,9 @@ use Illuminate\Support\Facades\DB;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
+/**
+ * @phpstan-import-type Breakdown from MarketplacePayout
+ */
 class StatementService
 {
     /**
@@ -270,7 +273,7 @@ class StatementService
      *
      * @return array{
      *     period: array<string, mixed>,
-     *     totals: array{total_revenue: float, investment: float, card_provision: float, marketplace_provision: float, marketplace_fees: array<string, array<string, string>>, provisions: float, gross_margin: float, margin_percent: float, daily_average: float},
+     *     totals: array{total_revenue: float, investment: float, card_provision: float, marketplace_provision: float, marketplace_fees: array<string, Breakdown>, provisions: float, gross_margin: float, margin_percent: float, daily_average: float},
      *     channels: array<string, float>,
      *     daily: array<int, array{label: string, value: float}>,
      *     days_with_revenue: int,

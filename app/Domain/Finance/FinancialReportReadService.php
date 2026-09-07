@@ -193,7 +193,7 @@ class FinancialReportReadService
             $commission = $fee === null ? \round($channelGross * $rate, 2) : (float) $fee['commission'];
             $rows[] = $this->automaticRow(FinancialDirectionEnum::INCOME, FinancialSourceTypeEnum::REVENUE, $channel, \ucfirst($channel), null, $fee === null ? \round($channelGross - $commission, 2) : (float) $fee['net_revenue'], [
                 'gross_amount' => $channelGross,
-                'commission_rate' => $rate,
+                'commission_rate' => $fee === null ? $rate : (float) $fee['commission_rate'],
                 'commission_amount' => $commission,
                 ...($fee === null ? [] : ['marketplace_fees' => $fee]),
             ]);

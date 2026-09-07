@@ -74,15 +74,15 @@ use Thinkycz\LaravelCore\Support\Config;
         ->and($report['income_rows'][1]['details']['commission_amount'])->toBe(1.0)
         ->and($report['income_rows'][2]['details']['commission_rate'])->toBe(0.35)
         ->and($report['income_rows'][2]['details']['commission_amount'])->toBe(52.5)
-        ->and($report['income_rows'][2]['calculated_amount'])->toBe(86.47)
-        ->and($report['totals']['income'])->toBe(412.87)
+        ->and($report['income_rows'][2]['calculated_amount'])->toBe(97.5)
+        ->and($report['totals']['income'])->toBe(416.64)
         ->and($report['expense_rows'])->toHaveCount(3)
         ->and($incomingRow['details']['destination_store_name'])->toBe('Retail')
         ->and($incomingRow['details'])->not->toHaveKey('source_store_name')
         ->and($transferRow['details']['source_store_name'])->toBe('Warehouse')
         ->and($transferRow['details']['destination_store_name'])->toBe('Retail')
         ->and($report['totals']['expenses'])->toBe(2070.0)
-        ->and($report['totals']['profit'])->toBe(-1657.13);
+        ->and($report['totals']['profit'])->toBe(-1653.36);
 
     (new PayrollReportService())->close($admin, $store, 2026, 7);
     $service->close($admin, $store, 2026, 7);

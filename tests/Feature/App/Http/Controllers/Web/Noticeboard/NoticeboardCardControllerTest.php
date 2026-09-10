@@ -6,6 +6,7 @@ use App\Enums\FilesystemDiskEnum;
 use App\Models\NoticeboardCard;
 use App\Models\Store;
 use App\Models\User;
+use App\Notifications\OperationalActivitySlackNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
@@ -35,7 +36,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->and($card->getTitle())->toBe('Ahoj týme')
         ->and($card->getBodyHtml())->toContain('<strong>týme</strong>')
         ->not->toContain('<script');
-    Notification::assertNothingSent();
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 1);
 });
 
 \test('card validation rejects invalid rich text and stores expiration at Prague end of day in UTC', function (): void {

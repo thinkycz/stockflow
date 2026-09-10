@@ -114,7 +114,7 @@ class OperationalActivitySlackNotification extends Notification implements Shoul
                 }
             });
 
-        foreach (\array_chunk($this->facts, 10, true) as $facts) {
+        foreach (\array_chunk(\array_slice($this->facts, 0, 40, true), 10, true) as $facts) {
             $message->sectionBlock(function (SectionBlock $block) use ($facts): void {
                 foreach ($facts as $label => $value) {
                     $block->field('*' . $this->translate($label) . ":*\n" . $this->escape($value))->markdown();
@@ -148,6 +148,6 @@ class OperationalActivitySlackNotification extends Notification implements Shoul
      */
     private function escape(string $value): string
     {
-        return \str_replace(['&', '<', '>'], ['&amp;', '&lt;', '&gt;'], $value);
+        return \str_replace(['&', '<', '>'], ['&amp;', '&lt;', '&gt;'], \mb_strimwidth($value, 0, 300, '…'));
     }
 }

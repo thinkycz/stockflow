@@ -188,7 +188,7 @@ use Thinkycz\LaravelCore\Support\Config;
     \expect($service->copyPreviousManualRows($admin, $store, 2026, 2))->toBe(1)
         ->and($service->copyPreviousManualRows($admin, $store, 2026, 2))->toBe(0)
         ->and(FinancialReportManualRow::query()->latest('id')->firstOrFail()->getOccurredOn())->toBe('2026-02-28');
-    Notification::assertNothingSent();
+    Notification::assertSentTimes(OperationalActivitySlackNotification::class, 2);
 });
 
 \test('recurring expenses generate one store scoped row and clamp the due day', function (): void {

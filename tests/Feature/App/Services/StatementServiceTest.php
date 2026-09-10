@@ -38,7 +38,11 @@ use Thinkycz\LaravelCore\Support\Config;
         'foodora' => 0,
     ]], $user);
     $version = $statement->versions()->orderByDesc('id')->firstOrFail();
+    $service->updateDays($statement, [['date' => $day->getDate(), 'cash' => 100, 'card' => 50, 'wolt' => 0, 'bolt' => 0, 'foodora' => 0]], $user);
+    Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 1);
     $service->clear($statement, $user);
+    $service->clear($statement, $user);
+    $service->restoreVersion($version, $user);
     $service->restoreVersion($version, $user);
 
     Notification::assertSentOnDemandTimes(OperationalActivitySlackNotification::class, 3);

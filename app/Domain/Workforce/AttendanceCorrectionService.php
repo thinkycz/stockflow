@@ -88,7 +88,9 @@ class AttendanceCorrectionService
             ]);
             $this->replaceBreaks($locked, $actor, $breaks);
             $this->audit($locked, $actor, 'correction_update', $reason, $before, $this->snapshot($locked));
-            $this->notify($actor, $store, $worker, $locked, OperationalActivityTypeEnum::ATTENDANCE_CORRECTION_UPDATED);
+            if ($before !== $this->snapshot($locked)) {
+                $this->notify($actor, $store, $worker, $locked, OperationalActivityTypeEnum::ATTENDANCE_CORRECTION_UPDATED);
+            }
 
             return $locked->refresh();
         });
@@ -107,6 +109,9 @@ class AttendanceCorrectionService
             $locked = AttendanceSession::query()->whereKey($session->getKey())->lockForUpdate()->firstOrFail();
             $worker = Worker::query()->whereKey($locked->getWorkerId())->firstOrFail();
             $this->authorize($actor, $store, $worker);
+            if ($locked->getVoidedAt() !== null) {
+                return $locked;
+            }
             $before = $this->snapshot($locked);
             $now = CarbonImmutable::now('UTC');
             AttendanceBreak::query()->where('attendance_session_id', $locked->getKey())->whereNull('ended_at')
@@ -147,6 +152,7 @@ class AttendanceCorrectionService
             $before = $this->snapshot($locked);
             $locked->update(['voided_at' => null, 'voided_by_user_id' => null, 'active_worker_id' => null, 'ended_at' => $end]);
             $this->audit($locked, $actor, 'correction_restore', $reason, $before, $this->snapshot($locked));
+            $this->notify($actor, Store::query()->whereKey($locked->getStoreId())->firstOrFail(), Worker::query()->whereKey($locked->getWorkerId())->firstOrFail(), $locked, OperationalActivityTypeEnum::ATTENDANCE_CORRECTION_RESTORED);
 
             return $locked->refresh();
         });
@@ -157,31 +163,7 @@ class AttendanceCorrectionService
      */
     public function matchShift(User $actor, AttendanceSession $session, int $shiftId, string $reason): AttendanceSession
     {
-        return DB::transaction(function () use ($actor, $session, $shiftId, $reason): AttendanceSession {
-            $locked = $this->lockSession($actor, $session, $reason);
-            if ($locked->getVoidedAt() !== null) {
-                $this->fail('session', Typer::assertString(\__('Restore attendance before matching it.')));
-            }
-            $shift = Shift::query()->whereKey($shiftId)->lockForUpdate()->firstOrFail();
-            if ($shift->getUserId() !== $actor->getKey() || $shift->getStoreId() !== $locked->getStoreId() ||
-                $shift->getWorkerId() !== $locked->getWorkerId() ||
-                $shift->getDate() !== $locked->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toDateString()) {
-                $this->fail('shift_id', Typer::assertString(\__('Select a shift for the same worker, store and attendance day.')));
-            }
-            $this->assertPayrollOpen($actor, $locked, $locked->getEndedAt()?->toImmutable());
-            $before = $this->snapshot($locked);
-            $locked->fill([
-                'shift_id' => $shift->getKey(), 'scheduled_date' => $shift->getDate(),
-                'scheduled_start_time' => $shift->getStartTime(), 'scheduled_end_time' => $shift->getEndTime(),
-                'hourly_rate' => $shift->getHourlyRate(),
-            ]);
-            if ($locked->isDirty()) {
-                $locked->save();
-                $this->audit($locked, $actor, 'correction_match', $reason, $before, $this->snapshot($locked));
-            }
-
-            return $locked->refresh();
-        });
+        return $this->applyShiftMatch($actor, $session, $shiftId, $reason, true);
     }
 
     /**
@@ -209,8 +191,19 @@ class AttendanceCorrectionService
                     continue;
                 }
                 $shift = $candidates->firstOrFail();
-                $this->matchShift($actor, $session, $shift->getKey(), $reason);
+                $this->applyShiftMatch($actor, $session, $shift->getKey(), $reason, false);
                 ++$result['matched'];
+            }
+
+            if ($result['matched'] > 0) {
+                OperationalActivityService::dispatchForStore(
+                    OperationalActivityTypeEnum::ATTENDANCE_REPORT_MATCHED,
+                    $actor,
+                    $store,
+                    'attendance.report',
+                    ['month' => $month],
+                    ['Slack report month' => $month, 'Slack affected count' => (string) $result['matched']],
+                );
             }
 
             return $result;
@@ -230,6 +223,41 @@ class AttendanceCorrectionService
         return $query->where('store_id', $session->getStoreId())->where('worker_id', $session->getWorkerId())
             ->whereDate('date', $session->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toDateString())
             ->orderBy('start_time')->orderBy('id')->get();
+    }
+
+    /**
+     * Apply a shift match, optionally journaling the individual action.
+     */
+    private function applyShiftMatch(User $actor, AttendanceSession $session, int $shiftId, string $reason, bool $notify): AttendanceSession
+    {
+        return DB::transaction(function () use ($actor, $session, $shiftId, $reason, $notify): AttendanceSession {
+            $locked = $this->lockSession($actor, $session, $reason);
+            if ($locked->getVoidedAt() !== null) {
+                $this->fail('session', Typer::assertString(\__('Restore attendance before matching it.')));
+            }
+            $shift = Shift::query()->whereKey($shiftId)->lockForUpdate()->firstOrFail();
+            if ($shift->getUserId() !== $actor->getKey() || $shift->getStoreId() !== $locked->getStoreId() ||
+                $shift->getWorkerId() !== $locked->getWorkerId() ||
+                $shift->getDate() !== $locked->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->toDateString()) {
+                $this->fail('shift_id', Typer::assertString(\__('Select a shift for the same worker, store and attendance day.')));
+            }
+            $this->assertPayrollOpen($actor, $locked, $locked->getEndedAt()?->toImmutable());
+            $before = $this->snapshot($locked);
+            $locked->fill([
+                'shift_id' => $shift->getKey(), 'scheduled_date' => $shift->getDate(),
+                'scheduled_start_time' => $shift->getStartTime(), 'scheduled_end_time' => $shift->getEndTime(),
+                'hourly_rate' => $shift->getHourlyRate(),
+            ]);
+            if ($locked->isDirty()) {
+                $locked->save();
+                $this->audit($locked, $actor, 'correction_match', $reason, $before, $this->snapshot($locked));
+                if ($notify) {
+                    $this->notify($actor, Store::query()->whereKey($locked->getStoreId())->firstOrFail(), Worker::query()->whereKey($locked->getWorkerId())->firstOrFail(), $locked, OperationalActivityTypeEnum::ATTENDANCE_SHIFT_MATCHED);
+                }
+            }
+
+            return $locked->refresh();
+        });
     }
 
     /**
@@ -362,7 +390,7 @@ class AttendanceCorrectionService
             $type,
             $actor,
             CarbonImmutable::now('UTC')->toIso8601String(),
-            Resolver::resolveUrlGenerator()->route('attendance.report'),
+            Resolver::resolveUrlGenerator()->route('attendance.report', ['store_id' => $store->getKey(), 'month' => $session->getStartedAt()->setTimezone(AttendanceService::BUSINESS_TIMEZONE)->format('Y-m')]),
             [['store' => $store, 'perspective' => null]],
             [
                 'Slack worker' => $worker->getFullName(),

@@ -25,6 +25,21 @@ class DailyOperationalDigestBuilder
      * @var list<string>
      */
     private const SAFE_FACT_KEYS = [
+        'Slack amount',
+        'Slack previous amount',
+        'Slack entry',
+        'Slack entry date',
+        'Slack entry direction',
+        'Slack affected count',
+        'Slack effective month',
+        'Slack due day',
+        'Slack source',
+        'Slack shift date',
+        'Slack shift time',
+        'Slack previous shift',
+        'Slack announcement',
+        'Slack bank statement',
+
         'Slack actual time',
         'Slack attendance date',
         'Slack checklist date',

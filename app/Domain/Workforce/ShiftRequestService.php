@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Domain\Workforce;
 
+use App\Enums\OperationalActivityTypeEnum;
 use App\Models\Shift;
 use App\Models\ShiftRequest;
 use App\Models\ShiftRequestMonthLock;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
+use App\Support\OperationalActivityService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Thinkycz\LaravelCore\Support\Thrower;
@@ -65,6 +67,7 @@ class ShiftRequestService
 
             if ($existingShift instanceof Shift) {
                 $shiftRequest->delete();
+                ShiftAssignmentService::notify(OperationalActivityTypeEnum::SHIFT_REQUEST_APPROVED, $admin, $lockedStore, $existingShift);
 
                 return $existingShift;
             }
@@ -87,6 +90,7 @@ class ShiftRequestService
                 $shiftRequest->getDate(),
                 $startTime,
                 $endTime,
+                OperationalActivityTypeEnum::SHIFT_REQUEST_APPROVED,
             );
             $shiftRequest->delete();
 
@@ -160,6 +164,17 @@ class ShiftRequestService
             $lockedStore = Typer::assertInstance(Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(), Store::class);
             $this->assertAdminStore($admin, $lockedStore);
 
+            if ($locked === $this->isLocked($lockedStore, $year, $month)) {
+                return;
+            }
+            OperationalActivityService::dispatchForStore(
+                $locked ? OperationalActivityTypeEnum::SHIFT_REQUESTS_LOCKED : OperationalActivityTypeEnum::SHIFT_REQUESTS_UNLOCKED,
+                $admin,
+                $lockedStore,
+                'shifts.index',
+                ['year' => $year, 'month' => $month],
+                ['Slack report month' => \sprintf('%02d/%d', $month, $year)],
+            );
             if ($locked) {
                 ShiftRequestMonthLock::query()->updateOrCreate(
                     ['store_id' => $lockedStore->getKey(), 'year' => $year, 'month' => $month],

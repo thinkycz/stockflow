@@ -138,6 +138,12 @@ class StatementService
     {
         DB::transaction(function () use ($statement, $user): void {
             $statement = $this->lockActiveStatement($statement);
+            $changed = $statement->days()->where(function ($query): void {
+                foreach (['cash', 'card', 'wolt', 'bolt', 'bolt_cash', 'foodora', 'total'] as $column) {
+                    $query->orWhere($column, '<>', 0);
+                }
+                $query->orWhere('cash_checked', true);
+            })->exists();
             $statement->days()->update([
                 'cash' => 0,
                 'card' => 0,
@@ -150,7 +156,9 @@ class StatementService
             ]);
 
             $this->snapshotLocked($statement, $user);
-            $this->notify($statement, $user, OperationalActivityTypeEnum::STATEMENT_CLEARED);
+            if ($changed) {
+                $this->notify($statement, $user, OperationalActivityTypeEnum::STATEMENT_CLEARED);
+            }
         });
     }
 
@@ -192,6 +200,7 @@ class StatementService
 
             $existing = $statement->days()->lockForUpdate()->get()->keyBy(static fn(StatementDay $day): string => $day->getDate());
 
+            $changed = false;
             foreach ($version->days()->orderBy('date')->get() as $versionDay) {
                 $day = $existing->get($versionDay->getDate());
 
@@ -209,9 +218,12 @@ class StatementService
                     'total' => $versionDay->getTotal(),
                     'cash_checked' => $versionDay->getCashChecked(),
                 ]);
+                $changed = $day->wasChanged(['cash', 'card', 'wolt', 'bolt', 'bolt_cash', 'foodora', 'total', 'cash_checked']) || $changed;
             }
 
-            $this->notify($statement, $user, OperationalActivityTypeEnum::STATEMENT_RESTORED);
+            if ($changed) {
+                $this->notify($statement, $user, OperationalActivityTypeEnum::STATEMENT_RESTORED);
+            }
         });
     }
 
@@ -465,6 +477,7 @@ class StatementService
     {
         $existing = $statement->days()->lockForUpdate()->get()->keyBy(static fn(StatementDay $day): string => $day->getDate());
 
+        $changed = false;
         foreach ($rows as $row) {
             $row = Typer::assertArray($row);
             $date = Typer::assertString($row['date'] ?? '');
@@ -496,10 +509,13 @@ class StatementService
             }
 
             $day->update($update);
+            $changed = $day->wasChanged(\array_keys($update)) || $changed;
         }
 
         $this->snapshotLocked($statement, $user);
-        $this->notify($statement, $user, OperationalActivityTypeEnum::STATEMENT_SAVED);
+        if ($changed) {
+            $this->notify($statement, $user, OperationalActivityTypeEnum::STATEMENT_SAVED);
+        }
     }
 
     /**

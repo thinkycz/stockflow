@@ -9,11 +9,30 @@ use App\Events\OperationalActivityEvent;
 use App\Models\OperationalActivity;
 use App\Models\Store;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
 class OperationalActivityService
 {
+    /**
+     * Journal a committed business change using a store destination and named route.
+     *
+     * @param array<string, int|string> $parameters
+     * @param array<string, string> $facts
+     */
+    public static function dispatchForStore(OperationalActivityTypeEnum $type, User $actor, Store $store, string $route, array $parameters, array $facts): void
+    {
+        self::dispatch(
+            $type,
+            $actor,
+            CarbonImmutable::now('UTC')->toIso8601String(),
+            Resolver::resolveUrlGenerator()->route($route, ['store_id' => $store->getKey(), ...$parameters]),
+            [['store' => $store, 'perspective' => null]],
+            $facts,
+        );
+    }
+
     /**
      * Dispatch a scalar operational snapshot to configured store destinations.
      *

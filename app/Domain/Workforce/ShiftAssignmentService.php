@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Workforce;
 
+use App\Enums\OperationalActivityTypeEnum;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Worker;
+use App\Support\OperationalActivityService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +18,27 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 class ShiftAssignmentService
 {
+    /**
+     * Snapshot a shift without its hourly rate.
+     *
+     * @param array<string, string> $facts
+     */
+    public static function notify(OperationalActivityTypeEnum $type, User $actor, Store $store, Shift $shift, array $facts = []): void
+    {
+        $worker = Worker::query()->where('user_id', $store->getUserId())->whereKey($shift->getWorkerId())->firstOrFail();
+        OperationalActivityService::dispatchForStore(
+            $type,
+            $actor,
+            $store,
+            'shifts.index',
+            ['year' => (int) \mb_substr($shift->getDate(), 0, 4), 'month' => (int) \mb_substr($shift->getDate(), 5, 2)],
+            [
+                'Slack worker' => $worker->getFullName(), 'Slack shift date' => $shift->getDate(),
+                'Slack shift time' => $shift->getStartTimeShort() . '–' . $shift->getEndTimeShort(), ...$facts,
+            ],
+        );
+    }
+
     /**
      * Find an exact existing assignment.
      */
@@ -75,8 +98,9 @@ class ShiftAssignmentService
         string $date,
         string $startTime,
         string $endTime,
+        OperationalActivityTypeEnum $activityType = OperationalActivityTypeEnum::SHIFT_CREATED,
     ): Shift {
-        return DB::transaction(function () use ($user, $store, $worker, $date, $startTime, $endTime): Shift {
+        return DB::transaction(function () use ($user, $store, $worker, $date, $startTime, $endTime, $activityType): Shift {
             $lockedStore = Typer::assertInstance(
                 Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
                 Store::class,
@@ -98,7 +122,7 @@ class ShiftAssignmentService
                 Thrower::default()->message('worker_id', \__('Archived workers cannot receive new work.'))->throw();
             }
 
-            return Shift::query()->create([
+            $shift = Shift::query()->create([
                 'user_id' => $user->getKey(),
                 'store_id' => $lockedStore->getKey(),
                 'worker_id' => $lockedWorker->getKey(),
@@ -107,6 +131,9 @@ class ShiftAssignmentService
                 'end_time' => $endTime,
                 'hourly_rate' => $lockedWorker->getHourlyRate(),
             ]);
+            self::notify($activityType, $user, $lockedStore, $shift);
+
+            return $shift;
         });
     }
 

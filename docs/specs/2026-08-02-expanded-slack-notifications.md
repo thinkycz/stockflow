@@ -1,5 +1,7 @@
 # Rozšířené Slack notifikace
 
+> Výjimky pro průběžné finanční/mzdové změny a nástěnku nahrazuje [pokrytí z 10. 9. 2026](2026-09-10-business-slack-coverage.md).
+
 ## Zdroj pravdy
 
 - Uživatelem schválený plán z 2. 8. 2026.

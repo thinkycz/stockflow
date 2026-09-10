@@ -190,6 +190,8 @@ Copy `.env.example` to `.env` and set:
 
 ## Slack notifications
 
+See the [business action coverage matrix](specs/2026-09-10-business-slack-coverage.md) for finance, payroll, workforce, bank statement and noticeboard events, batching and privacy rules.
+
 - Each store may define its own optional Slack channel name or ID in the store administration form.
 - A single deployment-wide bot token is read from `SLACK_BOT_USER_OAUTH_TOKEN`; no default channel is used.
 - Attendance, finalized inventory, statement mutations, and manual stock movements produce queued Czech operational messages after the surrounding database transaction commits.

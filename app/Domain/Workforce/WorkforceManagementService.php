@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Workforce;
 
+use App\Enums\OperationalActivityTypeEnum;
 use App\Models\Shift;
 use App\Models\ShiftPreset;
 use App\Models\ShiftShareLink;
@@ -145,6 +146,9 @@ class WorkforceManagementService
                 Thrower::default()->message('overlap', \__('This shift overlaps an existing assignment.'))->throw();
             }
 
+            $previousShift = Worker::query()->whereKey($shift->getWorkerId())->firstOrFail()->getFullName() . ': ' . $shift->getDate() . ' ' . $shift->getStartTimeShort() . '–' . $shift->getEndTimeShort();
+            $changed = $shift->getWorkerId() !== $worker->getKey() || $date !== $shift->getDate() ||
+                $startTime !== $shift->getStartTimeShort() || $endTime !== $shift->getEndTimeShort();
             $attributes = [
                 'worker_id' => $worker->getKey(),
                 'date' => $date,
@@ -157,6 +161,9 @@ class WorkforceManagementService
             }
 
             $shift->update($attributes);
+            if ($changed) {
+                ShiftAssignmentService::notify(OperationalActivityTypeEnum::SHIFT_UPDATED, $actor, $store, $shift, ['Slack previous shift' => $previousShift]);
+            }
 
             return $shift->refresh();
         });
@@ -182,6 +189,7 @@ class WorkforceManagementService
                 \abort(404);
             }
 
+            ShiftAssignmentService::notify(OperationalActivityTypeEnum::SHIFT_DELETED, $actor, $store, $shift);
             $shift->delete();
         });
     }

@@ -33,9 +33,11 @@ class FinancialReportService
         DB::transaction(function () use ($admin, $store, $year, $month, $sourceType, $sourceKey, $amount): void {
             $report = $this->openReport($admin, $store, $year, $month);
             $exists = false;
+            $previousAmount = 0.0;
             foreach ((new FinancialReportReadService())->automaticRows($admin, $store, $year, $month) as $row) {
                 if ($row['source_type'] === $sourceType->value && $row['source_key'] === $sourceKey) {
                     $exists = true;
+                    $previousAmount = $row['effective_amount'];
                     break;
                 }
             }
@@ -44,10 +46,17 @@ class FinancialReportService
                 Thrower::default()->message('source_key', \__('The selected calculated row no longer exists.'))->throw();
             }
 
-            FinancialReportOverride::query()->updateOrCreate(
+            $override = FinancialReportOverride::query()->updateOrCreate(
                 ['financial_report_id' => $report->getKey(), 'source_type' => $sourceType->value, 'source_key' => $sourceKey],
                 ['amount' => \round($amount, 2)],
             );
+            if ($override->wasRecentlyCreated || $override->wasChanged('amount')) {
+                $this->notifyChange(OperationalActivityTypeEnum::FINANCIAL_OVERRIDE_SET, $admin, $store, $year, $month, [
+                    'Slack source' => $sourceType->value . ': ' . $sourceKey,
+                    'Slack previous amount' => $this->formatCurrency($previousAmount),
+                    'Slack amount' => $this->formatCurrency(\round($amount, 2)),
+                ]);
+            }
         });
     }
 
@@ -58,7 +67,20 @@ class FinancialReportService
     {
         DB::transaction(function () use ($admin, $store, $year, $month, $sourceType, $sourceKey): void {
             $report = $this->requireOpenReport($admin, $store, $year, $month);
-            $report->overrides()->where('source_type', $sourceType->value)->where('source_key', $sourceKey)->delete();
+            $override = $report->overrides()->where('source_type', $sourceType->value)->where('source_key', $sourceKey)->first();
+            if (!$override instanceof FinancialReportOverride) {
+                return;
+            }
+            $previousAmount = $override->getAmount();
+            $override->delete();
+            $facts = ['Slack source' => $sourceType->value . ': ' . $sourceKey, 'Slack previous amount' => $this->formatCurrency($previousAmount)];
+            foreach ((new FinancialReportReadService())->automaticRows($admin, $store, $year, $month) as $row) {
+                if ($row['source_type'] === $sourceType->value && $row['source_key'] === $sourceKey) {
+                    $facts['Slack amount'] = $this->formatCurrency($row['effective_amount']);
+                    break;
+                }
+            }
+            $this->notifyChange(OperationalActivityTypeEnum::FINANCIAL_OVERRIDE_RESET, $admin, $store, $year, $month, $facts);
         });
     }
 
@@ -67,13 +89,18 @@ class FinancialReportService
      */
     public function createManualRow(User $admin, Store $store, int $year, int $month, FinancialDirectionEnum $direction, string $label, string $occurredOn, float $amount, string|null $note): FinancialReportManualRow
     {
-        return DB::transaction(fn(): FinancialReportManualRow => $this->openReport($admin, $store, $year, $month)->manualRows()->create([
-            'direction' => $direction->value,
-            'label' => $label,
-            'occurred_on' => $occurredOn,
-            'amount' => \round($amount, 2),
-            'note' => $note,
-        ]));
+        return DB::transaction(function () use ($admin, $store, $year, $month, $direction, $label, $occurredOn, $amount, $note): FinancialReportManualRow {
+            $row = $this->openReport($admin, $store, $year, $month)->manualRows()->create([
+                'direction' => $direction->value,
+                'label' => $label,
+                'occurred_on' => $occurredOn,
+                'amount' => \round($amount, 2),
+                'note' => $note,
+            ]);
+            $this->notifyChange(OperationalActivityTypeEnum::FINANCIAL_ROW_CREATED, $admin, $store, $year, $month, $this->rowFacts($row->refresh()));
+
+            return $row;
+        });
     }
 
     /**
@@ -83,7 +110,13 @@ class FinancialReportService
     {
         DB::transaction(function () use ($admin, $store, $year, $month, $rowId, $direction, $label, $occurredOn, $amount, $note): void {
             $row = $this->manualRow($this->requireOpenReport($admin, $store, $year, $month), $rowId);
+            $previousAmount = $row->getAmount();
             $row->update(['direction' => $direction->value, 'label' => $label, 'occurred_on' => $occurredOn, 'amount' => \round($amount, 2), 'note' => $note]);
+            if ($row->wasChanged(['direction', 'label', 'occurred_on', 'amount', 'note'])) {
+                $this->notifyChange(OperationalActivityTypeEnum::FINANCIAL_ROW_UPDATED, $admin, $store, $year, $month, [
+                    ...$this->rowFacts($row->refresh()), 'Slack previous amount' => $this->formatCurrency($previousAmount),
+                ]);
+            }
         });
     }
 
@@ -93,7 +126,10 @@ class FinancialReportService
     public function deleteManualRow(User $admin, Store $store, int $year, int $month, int $rowId): void
     {
         DB::transaction(function () use ($admin, $store, $year, $month, $rowId): void {
-            $this->manualRow($this->requireOpenReport($admin, $store, $year, $month), $rowId)->delete();
+            $row = $this->manualRow($this->requireOpenReport($admin, $store, $year, $month), $rowId);
+            $facts = $this->rowFacts($row);
+            $row->delete();
+            $this->notifyChange(OperationalActivityTypeEnum::FINANCIAL_ROW_DELETED, $admin, $store, $year, $month, $facts);
         });
     }
 
@@ -130,6 +166,10 @@ class FinancialReportService
                 }
             }
 
+            if ($count > 0) {
+                $this->notifyChange(OperationalActivityTypeEnum::FINANCIAL_ROWS_COPIED, $admin, $store, $year, $month, ['Slack affected count' => (string) $count]);
+            }
+
             return $count;
         });
     }
@@ -157,6 +197,11 @@ class FinancialReportService
                 'note' => $note,
             ]);
 
+            $this->notifyChange(OperationalActivityTypeEnum::RECURRING_EXPENSE_CREATED, $admin, $store, $year, $month, [
+                'Slack entry' => $label, 'Slack amount' => $this->formatCurrency(\round($amount, 2)),
+                'Slack effective month' => $startsOn->format('Y-m'), 'Slack due day' => (string) $dueDay,
+            ]);
+
             return $expense;
         });
     }
@@ -178,12 +223,23 @@ class FinancialReportService
                 Thrower::default()->message('recurring_expense', \__('An ended recurring expense cannot be changed.'))->throw();
             }
             $version = $expense->versions()->whereDate('effective_from', $effectiveFrom->toDateString())->first();
+            $previousVersion = $expense->versions()->whereDate('effective_from', '<=', $effectiveFrom->toDateString())->orderByDesc('effective_from')->first();
+            $previousAmount = $previousVersion?->getAmount();
             $attributes = ['label' => $label, 'amount' => \round($amount, 2), 'due_day' => $dueDay, 'note' => $note];
             if ($version instanceof FinancialRecurringExpenseVersion) {
-                $version->update($attributes);
+                $version->fill($attributes);
+                if (!$version->isDirty()) {
+                    return;
+                }
+                $version->save();
             } else {
                 $expense->versions()->create(['effective_from' => $effectiveFrom->toDateString(), ...$attributes]);
             }
+            $this->notifyChange(OperationalActivityTypeEnum::RECURRING_EXPENSE_UPDATED, $admin, $store, $year, $month, [
+                'Slack entry' => $label, 'Slack amount' => $this->formatCurrency(\round($amount, 2)),
+                'Slack effective month' => $effectiveFrom->format('Y-m'), 'Slack due day' => (string) $dueDay,
+                ...($previousAmount === null ? [] : ['Slack previous amount' => $this->formatCurrency($previousAmount)]),
+            ]);
         });
     }
 
@@ -204,6 +260,11 @@ class FinancialReportService
                 Thrower::default()->message('recurring_expense', \__('The recurring expense has already ended.'))->throw();
             }
             $expense->update(['ends_before' => $endsBefore->toDateString()]);
+            $version = $expense->versions()->whereDate('effective_from', '<=', $endsBefore->toDateString())->orderByDesc('effective_from')->firstOrFail();
+            $this->notifyChange(OperationalActivityTypeEnum::RECURRING_EXPENSE_TERMINATED, $admin, $store, $year, $month, [
+                'Slack entry' => $version->getLabel(), 'Slack amount' => $this->formatCurrency($version->getAmount()),
+                'Slack effective month' => $endsBefore->format('Y-m'),
+            ]);
         });
     }
 
@@ -280,7 +341,7 @@ class FinancialReportService
             $type,
             $admin,
             CarbonImmutable::now('UTC')->toIso8601String(),
-            Resolver::resolveUrlGenerator()->route('income-expenses.index', ['year' => $year, 'month' => $month]),
+            Resolver::resolveUrlGenerator()->route('income-expenses.index', ['store_id' => $store->getKey(), 'year' => $year, 'month' => $month]),
             [['store' => $store, 'perspective' => null]],
             [
                 'Slack report month' => \sprintf('%02d/%d', $month, $year),
@@ -289,6 +350,38 @@ class FinancialReportService
                 'Slack financial profit' => $this->formatCurrency(Typer::parseFloat($totals['profit'] ?? null)),
             ],
         );
+    }
+
+    /**
+     * Journal one financial change with safe report context.
+     *
+     * @param array<string, string> $facts
+     */
+    private function notifyChange(OperationalActivityTypeEnum $type, User $actor, Store $store, int $year, int $month, array $facts): void
+    {
+        OperationalActivityService::dispatchForStore(
+            $type,
+            $actor,
+            $store,
+            'income-expenses.index',
+            ['year' => $year, 'month' => $month],
+            ['Slack report month' => \sprintf('%02d/%d', $month, $year), ...$facts],
+        );
+    }
+
+    /**
+     * Snapshot a manual row without exposing its private note.
+     *
+     * @return array<string, string>
+     */
+    private function rowFacts(FinancialReportManualRow $row): array
+    {
+        return [
+            'Slack entry' => $row->getLabel(),
+            'Slack entry date' => $row->getOccurredOn(),
+            'Slack entry direction' => Typer::assertString(Resolver::resolveTranslator()->get('Slack ' . $row->getDirection()->value . ' direction', [], 'cs')),
+            'Slack amount' => $this->formatCurrency($row->getAmount()),
+        ];
     }
 
     /**

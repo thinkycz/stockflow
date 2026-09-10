@@ -75,3 +75,40 @@ use Illuminate\Notifications\AnonymousNotifiable;
         ->toContain('admin@example.com')
         ->toContain('2026-08');
 });
+
+\test('every operational type has translated renderable Slack and digest labels', function (OperationalActivityTypeEnum $type): void {
+    foreach (['en', 'cs', 'sk'] as $locale) {
+        \expect(\__($type->translationKey(), [], $locale))->not->toBe($type->translationKey());
+    }
+    $notification = new OperationalActivitySlackNotification(
+        $type,
+        'admin@example.com',
+        'Store',
+        null,
+        '2026-09-10T10:00:00Z',
+        ['Slack amount' => '100,00 Kč'],
+        'https://stockflow.test/dashboard',
+    );
+    \expect($notification->toSlack(new AnonymousNotifiable())->toArray()['blocks'][0]['text']['text'])->toBe(\__($type->translationKey(), [], 'cs'))
+        ->and($type->digestLabel())->not->toBeEmpty()
+        ->and($type->digestCategory())->not->toBeEmpty();
+})->with(OperationalActivityTypeEnum::cases());
+
+\test('long user supplied values remain escaped and bounded in Slack fields', function (): void {
+    $notification = new OperationalActivitySlackNotification(
+        OperationalActivityTypeEnum::FINANCIAL_ROW_CREATED,
+        'admin@example.com',
+        'Store',
+        null,
+        '2026-09-10T10:00:00Z',
+        ['Slack entry' => \str_repeat('<!channel>&', 1000)],
+        'https://stockflow.test/income-expenses',
+    );
+    $payload = $notification->toSlack(new AnonymousNotifiable())->toArray();
+    foreach ($payload['blocks'] as $block) {
+        foreach ($block['fields'] ?? [] as $field) {
+            \expect(\mb_strlen($field['text']))->toBeLessThanOrEqual(2000)
+                ->and($field['text'])->not->toContain('<!channel>');
+        }
+    }
+});

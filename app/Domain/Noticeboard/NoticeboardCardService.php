@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Domain\Noticeboard;
 
 use App\Enums\FilesystemDiskEnum;
+use App\Enums\OperationalActivityTypeEnum;
 use App\Models\NoticeboardCard;
 use App\Models\Store;
 use App\Models\User;
+use App\Support\OperationalActivityService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -40,7 +42,7 @@ class NoticeboardCardService
             return DB::transaction(function () use ($actor, $store, $content, $label, $color, $size, $expiresOn, $imageData): NoticeboardCard {
                 $store = $this->lockActiveStore($actor->resolveScopeUser()->getKey(), $store->getKey());
 
-                return NoticeboardCard::query()->create([
+                $card = NoticeboardCard::query()->create([
                     'user_id' => $actor->resolveScopeUser()->getKey(),
                     'store_id' => $store->getKey(),
                     'created_by_user_id' => $actor->getKey(),
@@ -56,6 +58,9 @@ class NoticeboardCardService
                     'expires_at' => $this->expiration($expiresOn),
                     'lock_version' => 1,
                 ]);
+                $this->notifyChange(OperationalActivityTypeEnum::NOTICEBOARD_CREATED, $card, $actor);
+
+                return $card;
             });
         } catch (Throwable $throwable) {
             $this->deleteImage($imageData['path']);
@@ -128,7 +133,11 @@ class NoticeboardCardService
                     $locked->setAttribute('image_mime', null);
                 }
 
+                $changed = $locked->isDirty(['body_html', 'body_text', 'label', 'expires_at', 'image_path']);
                 $locked->save();
+                if ($changed) {
+                    $this->notifyChange(OperationalActivityTypeEnum::NOTICEBOARD_UPDATED, $locked, $actor);
+                }
 
                 return $locked;
             });
@@ -151,14 +160,18 @@ class NoticeboardCardService
     public function trash(NoticeboardCard $card, User $actor): void
     {
         $this->authorize($actor, $card->getUserId(), $card->getStoreId(), false);
-        DB::transaction(function () use ($card): void {
+        DB::transaction(function () use ($card, $actor): void {
             $this->lockActiveStore($card->getUserId(), $card->getStoreId());
-            NoticeboardCard::query()
+            $locked = NoticeboardCard::query()
                 ->where('store_id', $card->getStoreId())
                 ->whereKey($card->getKey())
                 ->lockForUpdate()
-                ->firstOrFail()
-                ->delete();
+                ->firstOrFail();
+            if ($locked->trashed() !== false) {
+                return;
+            }
+            $locked->delete();
+            $this->notifyChange(OperationalActivityTypeEnum::NOTICEBOARD_TRASHED, $locked, $actor);
         });
     }
 
@@ -168,15 +181,19 @@ class NoticeboardCardService
     public function restore(NoticeboardCard $card, User $actor): void
     {
         $this->authorize($actor, $card->getUserId(), $card->getStoreId(), true);
-        DB::transaction(function () use ($card): void {
+        DB::transaction(function () use ($card, $actor): void {
             $this->lockActiveStore($card->getUserId(), $card->getStoreId());
-            NoticeboardCard::query()
+            $locked = NoticeboardCard::query()
                 ->withTrashed()
                 ->where('store_id', $card->getStoreId())
                 ->whereKey($card->getKey())
                 ->lockForUpdate()
-                ->firstOrFail()
-                ->restore();
+                ->firstOrFail();
+            if ($locked->trashed() === false) {
+                return;
+            }
+            $locked->restore();
+            $this->notifyChange(OperationalActivityTypeEnum::NOTICEBOARD_RESTORED, $locked, $actor);
         });
     }
 
@@ -200,6 +217,21 @@ class NoticeboardCardService
 
             return (bool) $locked->forceDelete();
         });
+    }
+
+    /**
+     * Journal a bounded announcement title and dashboard link only.
+     */
+    private function notifyChange(OperationalActivityTypeEnum $type, NoticeboardCard $card, User $actor): void
+    {
+        OperationalActivityService::dispatchForStore(
+            $type,
+            $actor,
+            Store::query()->whereKey($card->getStoreId())->firstOrFail(),
+            'dashboard',
+            [],
+            ['Slack announcement' => Str::limit($card->getTitle(), 150)],
+        );
     }
 
     /**

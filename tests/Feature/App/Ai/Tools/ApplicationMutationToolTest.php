@@ -8,11 +8,13 @@ use App\Ai\Tools\AbstractApprovableResourceTool;
 use App\Ai\Tools\WriteWorkersTool;
 use App\Enums\AssistantActionStatusEnum;
 use App\Enums\FilesystemDiskEnum;
+use App\Enums\OperationalActivityTypeEnum;
 use App\Models\AssistantActionAudit;
 use App\Models\FinancialReportManualRow;
 use App\Models\InventorySession;
 use App\Models\Item;
 use App\Models\NoticeboardCard;
+use App\Models\OperationalActivity;
 use App\Models\PayrollAdjustment;
 use App\Models\RecipeCategory;
 use App\Models\Shift;
@@ -245,7 +247,9 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
     \expect($result['operation'])->toBe('create_financial_row')
         ->and($row->getLabel())->toBe('Assistant repair')
         ->and($row->getAmount())->toBe(125.5)
-        ->and($row->getNote())->toBe('Approved repair');
+        ->and($row->getNote())->toBe('Approved repair')
+        ->and(OperationalActivity::query()->sole()->getType())->toBe(OperationalActivityTypeEnum::FINANCIAL_ROW_CREATED)
+        ->and(OperationalActivity::query()->sole()->getFacts()['Slack amount'])->toBe('125,50 Kč');
 });
 
 \test('payroll assistant distributes tips through the shared payroll service', function (): void {

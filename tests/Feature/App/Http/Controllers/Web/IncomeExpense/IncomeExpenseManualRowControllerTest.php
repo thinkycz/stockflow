@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Enums\OperationalActivityTypeEnum;
 use App\Models\FinancialReportManualRow;
+use App\Models\OperationalActivity;
 use App\Models\Store;
 
 \test('admin can create update and delete a manual financial row', function (): void {
@@ -16,7 +18,10 @@ use App\Models\Store;
     $this->be($admin, 'users')->put('/income-expenses/manual-rows/' . $row->getKey() . '?store_id=' . $store->getKey(), [...$payload, 'amount' => 1200])->assertRedirect();
     \expect($row->refresh()->getAmount())->toBe(1200.0);
     $this->be($admin, 'users')->delete('/income-expenses/manual-rows/' . $row->getKey() . '?store_id=' . $store->getKey(), ['year' => 2026, 'month' => 7])->assertRedirect();
-    \expect(FinancialReportManualRow::query()->count())->toBe(0);
+    \expect(FinancialReportManualRow::query()->count())->toBe(0)
+        ->and(OperationalActivity::query()->orderBy('id')->get()->map(fn(OperationalActivity $activity) => $activity->getType())->all())->toBe([
+            OperationalActivityTypeEnum::FINANCIAL_ROW_CREATED, OperationalActivityTypeEnum::FINANCIAL_ROW_UPDATED, OperationalActivityTypeEnum::FINANCIAL_ROW_DELETED,
+        ]);
 });
 
 \test('manual date must be in the selected month', function (): void {

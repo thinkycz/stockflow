@@ -7,11 +7,13 @@ namespace App\Domain\BankStatements;
 use App\Enums\BankStatementStatusEnum;
 use App\Enums\BankStatementTransactionCategoryEnum;
 use App\Enums\FilesystemDiskEnum;
+use App\Enums\OperationalActivityTypeEnum;
 use App\Jobs\ParseBankStatementJob;
 use App\Models\BankStatement;
 use App\Models\BankStatementTransaction;
 use App\Models\Store;
 use App\Models\User;
+use App\Support\OperationalActivityService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -136,7 +138,7 @@ final class BankStatementService
     public function delete(BankStatement $statement, User $actor): void
     {
         $this->assertAdministrator($actor, $statement->getUserId());
-        DB::transaction(function () use ($statement): void {
+        DB::transaction(function () use ($statement, $actor): void {
             Store::query()->whereKey($statement->getStoreId())->lockForUpdate()->firstOrFail();
             $statement = $this->lockedStatement($statement);
             $path = $statement->getOriginalPath();
@@ -145,6 +147,7 @@ final class BankStatementService
             if (!$disk->put($marker, Resolver::resolveEncrypter()->encryptString($path))) {
                 throw new RuntimeException('statement_delete_failed');
             }
+            $this->notifyChange(OperationalActivityTypeEnum::BANK_STATEMENT_DELETED, $statement, $actor);
             $statement->delete();
             DB::afterCommit(fn() => $this->cleanupOriginal($marker));
         });
@@ -358,6 +361,7 @@ final class BankStatementService
                 'confirmed_by_user_id' => $actor->getKey(),
                 'confirmed_at' => \now(),
             ]);
+            $this->notifyChange(OperationalActivityTypeEnum::BANK_STATEMENT_CONFIRMED, $statement, $actor);
         });
     }
 
@@ -381,6 +385,7 @@ final class BankStatementService
                 'confirmed_by_user_id' => null,
                 'confirmed_at' => null,
             ]);
+            $this->notifyChange(OperationalActivityTypeEnum::BANK_STATEMENT_REOPENED, $statement, $actor);
         });
     }
 
@@ -475,6 +480,24 @@ final class BankStatementService
                 'parsed_at' => \now(),
             ]);
         });
+    }
+
+    /**
+     * Journal import lifecycle without document or bank-account data.
+     */
+    private function notifyChange(OperationalActivityTypeEnum $type, BankStatement $statement, User $actor): void
+    {
+        OperationalActivityService::dispatchForStore(
+            $type,
+            $actor,
+            $statement->getStore(),
+            $type === OperationalActivityTypeEnum::BANK_STATEMENT_DELETED ? 'bank-statements.index' : 'bank-statements.show',
+            $type === OperationalActivityTypeEnum::BANK_STATEMENT_DELETED ? [] : ['bankStatement' => $statement->getKey()],
+            [
+                'Slack bank statement' => '#' . $statement->getKey(),
+                'Slack statement period' => ($statement->getPeriodFrom()?->toDateString() ?? '—') . ' – ' . ($statement->getPeriodTo()?->toDateString() ?? '—'),
+            ],
+        );
     }
 
     /**

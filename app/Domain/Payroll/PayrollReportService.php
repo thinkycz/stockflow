@@ -38,6 +38,7 @@ class PayrollReportService
                 $this->fail('worker_id', Typer::assertString(\__('This worker already has a payroll entry.')));
             }
             $report->workerEntries()->create(['worker_id' => $worker->getKey()]);
+            $this->notifyChange(OperationalActivityTypeEnum::PAYROLL_WORKER_ADDED, $admin, $store, $year, $month, $worker->getKey());
         });
     }
 
@@ -54,6 +55,7 @@ class PayrollReportService
                 $this->fail('worker_id', Typer::assertString(\__('This payroll entry is not empty and cannot be removed.')));
             }
             $entry->delete();
+            $this->notifyChange(OperationalActivityTypeEnum::PAYROLL_WORKER_REMOVED, $admin, $store, $year, $month, $workerId);
         });
     }
 
@@ -82,10 +84,13 @@ class PayrollReportService
                 ->isNegative()) {
                 $this->fail('hours', Typer::assertString(\__('The wage override cannot make the final payroll amount negative.')));
             }
-            $report->wageOverrides()->updateOrCreate(
+            $override = $report->wageOverrides()->updateOrCreate(
                 ['worker_id' => $worker->getKey()],
                 ['hours' => (string) $normalizedHours, 'hourly_rate' => (string) $normalizedHourlyRate],
             );
+            if ($override->wasRecentlyCreated || $override->wasChanged(['hours', 'hourly_rate'])) {
+                $this->notifyChange(OperationalActivityTypeEnum::PAYROLL_WAGE_OVERRIDE_SET, $admin, $store, $year, $month, $worker->getKey());
+            }
         });
     }
 
@@ -105,6 +110,7 @@ class PayrollReportService
                 $this->fail('hours', Typer::assertString(\__('Restoring automatic wages cannot make the final payroll amount negative.')));
             }
             $override->delete();
+            $this->notifyChange(OperationalActivityTypeEnum::PAYROLL_WAGE_OVERRIDE_RESET, $admin, $store, $year, $month, $workerId);
         });
     }
 
@@ -137,12 +143,15 @@ class PayrollReportService
                 }
             }
 
-            return $report->adjustments()->create([
+            $adjustment = $report->adjustments()->create([
                 'worker_id' => $worker->getKey(),
                 'type' => $type->value,
                 'amount' => (string) $normalizedAmount,
                 'reason' => $reason,
             ]);
+            $this->notifyChange(OperationalActivityTypeEnum::PAYROLL_ADJUSTMENT_CREATED, $admin, $store, $year, $month, $worker->getKey());
+
+            return $adjustment;
         });
     }
 
@@ -202,6 +211,7 @@ class PayrollReportService
                 ++$allocations[$index]['share_cents'];
             }
 
+            $count = 0;
             foreach ($allocations as $allocation) {
                 if ($allocation['share_cents'] === 0) {
                     continue;
@@ -212,7 +222,12 @@ class PayrollReportService
                     'amount' => (string) BigDecimal::of($allocation['share_cents'])->dividedBy(100, 2),
                     'reason' => Typer::assertString(\__('Proportionally distributed tips')),
                 ]);
+                ++$count;
             }
+            $this->notifyChange(OperationalActivityTypeEnum::PAYROLL_TIPS_DISTRIBUTED, $admin, $store, $year, $month, null, [
+                'Slack affected count' => (string) $count,
+                'Slack payroll tips' => $this->formatCurrency($totalCents / 100),
+            ]);
         });
     }
 
@@ -249,6 +264,9 @@ class PayrollReportService
                 'amount' => (string) $normalizedAmount,
                 'reason' => $reason,
             ]);
+            if ($adjustment->wasChanged(['type', 'amount', 'reason'])) {
+                $this->notifyChange(OperationalActivityTypeEnum::PAYROLL_ADJUSTMENT_UPDATED, $admin, $store, $year, $month, $adjustment->getWorkerId());
+            }
         });
     }
 
@@ -269,6 +287,7 @@ class PayrollReportService
                 }
             }
             $adjustment->delete();
+            $this->notifyChange(OperationalActivityTypeEnum::PAYROLL_ADJUSTMENT_DELETED, $admin, $store, $year, $month, $adjustment->getWorkerId());
         });
     }
 
@@ -334,6 +353,27 @@ class PayrollReportService
     }
 
     /**
+     * Journal a payroll mutation without individual amounts, rates or reasons.
+     *
+     * @param array<string, string> $facts
+     */
+    private function notifyChange(OperationalActivityTypeEnum $type, User $actor, Store $store, int $year, int $month, int|null $workerId, array $facts = []): void
+    {
+        if ($workerId !== null) {
+            $worker = Worker::query()->where('user_id', $actor->getKey())->whereKey($workerId)->firstOrFail();
+            $facts['Slack worker'] = $worker->getFullName();
+        }
+        OperationalActivityService::dispatchForStore(
+            $type,
+            $actor,
+            $store,
+            'payroll.index',
+            ['year' => $year, 'month' => $month],
+            ['Slack report month' => \sprintf('%02d/%d', $month, $year), ...$facts],
+        );
+    }
+
+    /**
      * Dispatch one payroll report lifecycle milestone.
      *
      * @param array<string, mixed> $snapshot
@@ -363,7 +403,7 @@ class PayrollReportService
             $type,
             $admin,
             CarbonImmutable::now('UTC')->toIso8601String(),
-            Resolver::resolveUrlGenerator()->route('payroll.index', ['year' => $year, 'month' => $month]),
+            Resolver::resolveUrlGenerator()->route('payroll.index', ['store_id' => $store->getKey(), 'year' => $year, 'month' => $month]),
             [['store' => $store, 'perspective' => null]],
             [
                 'Slack report month' => \sprintf('%02d/%d', $month, $year),

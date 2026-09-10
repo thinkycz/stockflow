@@ -183,7 +183,7 @@ use Thinkycz\LaravelCore\Support\Config;
             106,
             'Invalid',
         ))->toThrow(ValidationException::class);
-    Notification::assertNothingSent();
+    Notification::assertSentTimes(OperationalActivitySlackNotification::class, 2);
 });
 
 \test('tips are distributed by payable hours with an exact deterministic total', function (): void {

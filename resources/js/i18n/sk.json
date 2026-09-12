@@ -2075,12 +2075,15 @@
         "print": {
             "title": "Tlač darčekových poukazov",
             "eyebrow": "Darčekový poukaz",
-            "default_message": "Darujte radosť podľa vlastného výberu.",
+            "default_message": "Chvíľka pohody podľa vášho výberu.",
             "valid_until": "Platí do {date}",
             "no_expiration": "Bez obmedzenia platnosti",
             "one_use": "Jednorazové uplatnenie v plnej hodnote",
             "qr_alt": "QR kód darčekového poukazu",
-            "code_help": "Kód predložte obsluhe"
+            "code_help": "Na uplatnenie predložte poukaz obsluhe.",
+            "any_branch": "Platí na ktorejkoľvek našej pobočke.",
+            "terms": "Poukaz možno uplatniť iba jednorazovo v celej hodnote. Nemožno ho zameniť za peniaze.",
+            "stamp_signature": "Pečiatka / podpis"
         }
     },
     "marketplace_fees": {

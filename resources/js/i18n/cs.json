@@ -2075,12 +2075,15 @@
         "print": {
             "title": "Tisk dárkových poukazů",
             "eyebrow": "Dárkový poukaz",
-            "default_message": "Darujte radost podle vlastního výběru.",
+            "default_message": "Chvilka pohody podle vašeho výběru.",
             "valid_until": "Platí do {date}",
             "no_expiration": "Bez omezení platnosti",
             "one_use": "Jednorázové uplatnění v plné hodnotě",
             "qr_alt": "QR kód dárkového poukazu",
-            "code_help": "Kód předložte obsluze"
+            "code_help": "Pro uplatnění předložte poukaz obsluze.",
+            "any_branch": "Platí na kterékoli naší pobočce.",
+            "terms": "Poukaz lze uplatnit pouze jednorázově v celé hodnotě. Nelze jej směnit za peníze.",
+            "stamp_signature": "Razítko / podpis"
         }
     },
     "marketplace_fees": {

@@ -8,6 +8,7 @@ use App\Domain\GiftVouchers\GiftVoucherBrandingService;
 use App\Enums\GiftVoucherStatusEnum;
 use App\Models\GiftVoucher;
 use App\Models\GiftVoucherBatch;
+use App\Models\Store;
 use App\Models\User;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
@@ -75,7 +76,18 @@ class GiftVoucherPrintController
             'qr' => $this->qr($voucher->getCode()),
         ], $vouchers);
 
+        $stores = Store::query();
+        Store::scopeForUser($stores, $batch->getUserId());
+        Store::scopeActive($stores);
+        Store::scopeRetail($stores);
+
         return Inertia::render('gift-vouchers/Print', [
+            'branches' => $stores->orderBy('name')->orderBy('id')->get()
+                ->map(static fn(Store $store): array => [
+                    'id' => $store->getKey(),
+                    'name' => $store->getName(),
+                    'address' => $store->getAddress(),
+                ])->values()->all(),
             'batch' => [
                 'id' => $batch->getKey(),
                 'brand_name' => $batch->getBrandName(),

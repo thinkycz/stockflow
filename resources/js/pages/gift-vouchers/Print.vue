@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import teachaLogo from '../../../images/teacha-logo-print.svg';
 import { Head } from '@inertiajs/vue3';
 import { nextTick, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -21,6 +22,7 @@ defineProps<{
         expires_at: string | null;
     };
     sheets: PrintableVoucher[][];
+    branches: { id: number; name: string; address: string | null }[];
 }>();
 
 const { t } = useI18n();
@@ -42,6 +44,7 @@ onMounted(async () => {
                   }),
         ),
     );
+    await document.fonts.ready;
     window.print();
 });
 </script>
@@ -61,26 +64,29 @@ onMounted(async () => {
                 class="voucher"
                 data-testid="gift-voucher-print-item"
             >
-                <div class="voucher-accent" aria-hidden="true"></div>
+                <svg
+                    class="voucher-botanical"
+                    viewBox="0 0 120 150"
+                    fill="none"
+                    aria-hidden="true"
+                >
+                    <path
+                        d="M26 145C28 94 51 52 96 10M43 93C16 91 10 73 11 60C36 59 48 73 43 93ZM59 64C57 40 67 27 83 25C89 43 77 59 59 64Z"
+                    />
+                    <path
+                        d="M32 122C49 101 67 96 83 102C76 122 56 130 32 122ZM76 43C91 28 105 29 115 34C105 50 90 53 76 43"
+                    />
+                </svg>
                 <div class="voucher-copy">
                     <header class="voucher-brand">
                         <img
-                            v-if="batch.brand_logo"
-                            :src="batch.brand_logo"
-                            :alt="batch.brand_name"
+                            :src="teachaLogo"
+                            alt="teacha"
                             class="voucher-logo"
                         />
-                        <div v-else class="voucher-monogram" aria-hidden="true">
-                            {{ batch.brand_name.slice(0, 1).toUpperCase() }}
-                        </div>
-                        <div>
-                            <p class="voucher-brand-name">
-                                {{ batch.brand_name }}
-                            </p>
-                            <p class="voucher-kicker">
-                                {{ t('gift_vouchers.print.eyebrow') }}
-                            </p>
-                        </div>
+                        <h1 class="voucher-title">
+                            {{ t('gift_vouchers.print.eyebrow') }}
+                        </h1>
                     </header>
 
                     <div class="voucher-value">
@@ -94,6 +100,9 @@ onMounted(async () => {
                     </p>
 
                     <div class="voucher-meta">
+                        <div class="voucher-stamp">
+                            {{ t('gift_vouchers.print.stamp_signature') }}
+                        </div>
                         <span v-if="batch.expires_at">
                             {{
                                 t('gift_vouchers.print.valid_until', {
@@ -104,7 +113,6 @@ onMounted(async () => {
                         <span v-else>
                             {{ t('gift_vouchers.print.no_expiration') }}
                         </span>
-                        <span>{{ t('gift_vouchers.print.one_use') }}</span>
                     </div>
                 </div>
 
@@ -119,6 +127,22 @@ onMounted(async () => {
                         {{ t('gift_vouchers.print.code_help') }}
                     </p>
                 </div>
+                <footer class="voucher-footer">
+                    <p class="voucher-redemption">
+                        {{ t('gift_vouchers.print.any_branch') }}
+                    </p>
+                    <ul v-if="branches.length" class="voucher-branches">
+                        <li v-for="branch in branches" :key="branch.id">
+                            <strong>{{ branch.name }}</strong
+                            ><template v-if="branch.address">
+                                · {{ branch.address }}</template
+                            >
+                        </li>
+                    </ul>
+                    <p class="voucher-terms">
+                        {{ t('gift_vouchers.print.terms') }}
+                    </p>
+                </footer>
             </article>
         </section>
     </main>
@@ -126,15 +150,17 @@ onMounted(async () => {
 
 <style scoped>
 .print-root {
+    --voucher-green: #344c28;
     margin: 0 auto;
     width: 190mm;
     background: #fff;
-    color: #0f172a;
+    color: var(--voucher-green);
+    font-family: Arial, sans-serif;
 }
 
 .voucher-sheet {
     display: grid;
-    grid-template-rows: repeat(3, 1fr);
+    grid-template-rows: repeat(3, minmax(0, 1fr));
     width: 190mm;
     height: 277mm;
     break-after: page;
@@ -147,155 +173,176 @@ onMounted(async () => {
 .voucher {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 50mm;
+    grid-template-columns: minmax(0, 1fr) 48mm;
+    grid-template-rows: minmax(0, 1fr) auto;
     min-height: 0;
-    overflow: hidden;
     break-inside: avoid;
-    border-bottom: 0.25mm dashed #94a3b8;
-    background:
-        radial-gradient(
-            circle at 82% 12%,
-            rgb(14 116 144 / 10%),
-            transparent 32%
-        ),
-        linear-gradient(135deg, #fff 0%, #f8fafc 100%);
+    border-bottom: 0.25mm dashed #8c987f;
+    background: #faf8f1;
 }
 
-.voucher:last-child {
-    border-bottom: 0;
-}
-
-.voucher-accent {
+.voucher::before {
     position: absolute;
-    inset: 0 auto 0 0;
-    width: 3mm;
-    background: linear-gradient(180deg, #0f172a, #0e7490);
+    inset: 4mm;
+    border: 0.25mm solid #bdc7b2;
+    content: '';
+    pointer-events: none;
+}
+
+.voucher-botanical {
+    position: absolute;
+    top: 6mm;
+    right: 50mm;
+    width: 18mm;
+    height: 24mm;
+    stroke: #a3b393;
+    stroke-width: 1.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .voucher-copy {
     display: flex;
     min-width: 0;
+    min-height: 0;
     flex-direction: column;
-    padding: 9mm 7mm 7mm 11mm;
+    padding: 8mm 7mm 3mm 10mm;
 }
 
 .voucher-brand {
     display: flex;
     align-items: center;
-    gap: 3mm;
+    gap: 4mm;
+    padding-right: 16mm;
 }
 
 .voucher-logo {
-    width: auto;
-    max-width: 30mm;
-    height: 11mm;
+    flex: none;
+    width: 15mm;
+    height: 15mm;
     object-fit: contain;
 }
 
-.voucher-monogram {
-    display: flex;
-    width: 11mm;
-    height: 11mm;
-    align-items: center;
-    justify-content: center;
-    border-radius: 3mm;
-    background: #0f172a;
-    color: #fff;
-    font-size: 5mm;
-    font-weight: 800;
-}
-
-.voucher-brand-name {
+.voucher-title {
     margin: 0;
-    font-size: 4mm;
-    font-weight: 800;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 6mm;
+    font-weight: 400;
     line-height: 1.1;
 }
 
-.voucher-kicker {
-    margin: 1mm 0 0;
-    color: #64748b;
-    font-size: 2.3mm;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-}
-
 .voucher-value {
-    margin-top: auto;
-    font-size: 11mm;
-    font-weight: 850;
-    line-height: 1;
+    margin-top: 4mm;
+    font-size: 9mm;
+    font-weight: 700;
+    line-height: 1.1;
     letter-spacing: -0.04em;
 }
 
 .voucher-message {
-    max-width: 105mm;
-    margin: 3mm 0 0;
-    color: #475569;
-    font-size: 3mm;
+    margin: 2mm 0 0;
+    color: #46523e;
+    font-size: 2.8mm;
     line-height: 1.45;
+    overflow-wrap: anywhere;
+    white-space: pre-line;
 }
 
 .voucher-meta {
     display: flex;
-    flex-wrap: wrap;
-    gap: 2mm 5mm;
+    align-items: end;
+    justify-content: space-between;
+    gap: 4mm;
     margin-top: auto;
-    padding-top: 4mm;
-    color: #64748b;
-    font-size: 2.35mm;
-    font-weight: 650;
+    padding-top: 3mm;
+    color: #46523e;
+    font-size: 2.5mm;
+    line-height: 1.35;
+}
+
+.voucher-stamp {
+    display: flex;
+    flex: none;
+    align-items: end;
+    justify-content: center;
+    width: 45mm;
+    height: 15mm;
+    padding-bottom: 1mm;
+    border: 0.2mm dashed #8c987f;
+    color: #46523e;
+    font-size: 2.2mm;
 }
 
 .voucher-code-panel {
     display: flex;
+    min-width: 0;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-left: 0.25mm solid #e2e8f0;
-    padding: 6mm;
-    background: rgb(255 255 255 / 75%);
+    margin-block: 8mm 3mm;
+    border-left: 0.25mm solid #bdc7b2;
+    padding: 5mm 6mm 5mm 4mm;
 }
 
 .voucher-qr {
-    width: 34mm;
-    height: 34mm;
+    width: 32mm;
+    height: 32mm;
+    flex: none;
+    background: #fff;
 }
 
 .voucher-code {
     margin: 3mm 0 0;
-    font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: 2.8mm;
-    font-weight: 800;
-    letter-spacing: 0.08em;
+    color: #1b2417;
+    font-family: ui-monospace, monospace;
+    font-size: 2.65mm;
+    font-weight: 700;
     white-space: nowrap;
 }
 
 .voucher-code-help {
-    margin: 1.5mm 0 0;
-    color: #64748b;
-    font-size: 2mm;
+    margin: 2mm 0 0;
+    color: #46523e;
+    font-size: 2.6mm;
+    line-height: 1.45;
     text-align: center;
+}
+
+.voucher-footer {
+    grid-column: 1 / -1;
+    margin: 0 10mm 7mm;
+    border-top: 0.25mm solid #bdc7b2;
+    padding-top: 2.5mm;
+    color: #46523e;
+    font-size: 2.4mm;
+    line-height: 1.4;
+}
+
+.voucher-redemption {
+    margin: 0;
+    font-weight: 700;
+}
+.voucher-branches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7mm 4mm;
+    margin: 1mm 0;
+    padding: 0;
+    list-style: none;
+    overflow-wrap: anywhere;
+}
+.voucher-terms {
+    margin: 1mm 0 0;
 }
 
 @media screen {
     .print-root {
         margin-block: 20px;
-        box-shadow: 0 8px 40px rgb(15 23 42 / 12%);
+        box-shadow: 0 8px 40px rgb(52 76 40 / 12%);
     }
 }
 
 @media print {
-    .print-root,
-    .voucher-sheet {
-        width: 190mm;
-    }
-
-    .voucher-sheet {
-        height: 277mm;
-    }
-
     .voucher {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;

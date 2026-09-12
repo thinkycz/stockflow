@@ -2075,12 +2075,15 @@
         "print": {
             "title": "Print gift vouchers",
             "eyebrow": "Gift voucher",
-            "default_message": "Give the joy of choosing.",
+            "default_message": "A moment of calm, your way.",
             "valid_until": "Valid until {date}",
             "no_expiration": "No expiration",
             "one_use": "Single use for the full value",
             "qr_alt": "Gift voucher QR code",
-            "code_help": "Present this code to staff"
+            "code_help": "Present this voucher to our staff to redeem it.",
+            "any_branch": "Valid at any of our branches.",
+            "terms": "The full voucher value must be redeemed in a single visit. It cannot be exchanged for cash.",
+            "stamp_signature": "Stamp / signature"
         }
     },
     "marketplace_fees": {

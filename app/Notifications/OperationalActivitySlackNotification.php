@@ -106,7 +106,10 @@ class OperationalActivitySlackNotification extends Notification implements Shoul
                     $block->field('*' . $this->translate('Slack store') . ":*\n" . $this->escape($this->storeName))->markdown();
                 }
 
-                $block->field('*' . $this->translate('Slack actor') . ":*\n" . $this->escape($this->actorEmail))->markdown();
+                if ($this->type->hasSlackActor()) {
+                    $block->field('*' . $this->translate('Slack actor') . ":*\n" . $this->escape($this->actorEmail))->markdown();
+                }
+
                 $block->field('*' . $this->translate('Slack time') . ":*\n" . $time)->markdown();
 
                 if ($this->perspective !== null) {

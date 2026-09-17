@@ -90,6 +90,10 @@ enum OperationalActivityTypeEnum: string
 
     case ATTENDANCE_DEVIATION_REJECTED = 'attendance_deviation_rejected';
 
+    case SHIFT_REQUEST_CREATED = 'shift_request_created';
+
+    case SHIFT_REQUEST_UPDATED = 'shift_request_updated';
+
     case CHECKLIST_SHIFT_COMPLETED = 'checklist_shift_completed';
 
     case CHECKLIST_SHIFT_REOPENED = 'checklist_shift_reopened';
@@ -193,6 +197,8 @@ enum OperationalActivityTypeEnum: string
             self::ATTENDANCE_CORRECTION_VOIDED => 'Slack activity attendance correction voided',
             self::ATTENDANCE_DEVIATION_APPROVED => 'Slack activity attendance deviation approved',
             self::ATTENDANCE_DEVIATION_REJECTED => 'Slack activity attendance deviation rejected',
+            self::SHIFT_REQUEST_CREATED => 'Slack activity shift request created',
+            self::SHIFT_REQUEST_UPDATED => 'Slack activity shift request updated',
             self::CHECKLIST_SHIFT_COMPLETED => 'Slack activity checklist shift completed',
             self::CHECKLIST_SHIFT_REOPENED => 'Slack activity checklist shift reopened',
             self::CHECKLIST_DAY_EXCUSED => 'Slack activity checklist day excused',
@@ -267,6 +273,8 @@ enum OperationalActivityTypeEnum: string
             self::ATTENDANCE_CORRECTION_VOIDED,
             self::ATTENDANCE_DEVIATION_APPROVED,
             self::ATTENDANCE_DEVIATION_REJECTED => 'Docházka',
+            self::SHIFT_REQUEST_CREATED,
+            self::SHIFT_REQUEST_UPDATED => 'Směny',
             self::CHECKLIST_SHIFT_COMPLETED,
             self::CHECKLIST_SHIFT_REOPENED,
             self::CHECKLIST_DAY_EXCUSED,
@@ -341,6 +349,8 @@ enum OperationalActivityTypeEnum: string
             self::ATTENDANCE_CORRECTION_VOIDED => 'korekce docházky zrušena',
             self::ATTENDANCE_DEVIATION_APPROVED => 'odchylka docházky schválena',
             self::ATTENDANCE_DEVIATION_REJECTED => 'odchylka docházky zamítnuta',
+            self::SHIFT_REQUEST_CREATED => 'požadavek na směnu zadán',
+            self::SHIFT_REQUEST_UPDATED => 'požadavek na směnu upraven',
             self::CHECKLIST_SHIFT_COMPLETED => 'checklist dokončen',
             self::CHECKLIST_SHIFT_REOPENED => 'checklist znovu otevřen',
             self::CHECKLIST_DAY_EXCUSED => 'den omluven',
@@ -434,6 +444,17 @@ enum OperationalActivityTypeEnum: string
             self::GIFT_VOUCHER_REDEMPTION_REVERSED,
             self::STOCK_MOVEMENT_REVERSED,
             self::STOCK_TRANSFER_REVERSED,
+        ], true);
+    }
+
+    /**
+     * Whether the immediate Slack message should identify the authenticated actor.
+     */
+    public function hasSlackActor(): bool
+    {
+        return !\in_array($this, [
+            self::SHIFT_REQUEST_CREATED,
+            self::SHIFT_REQUEST_UPDATED,
         ], true);
     }
 }

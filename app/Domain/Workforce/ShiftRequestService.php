@@ -14,6 +14,7 @@ use App\Models\Worker;
 use App\Support\OperationalActivityService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Thrower;
 use Thinkycz\LaravelCore\Support\Typer;
 
@@ -135,8 +136,10 @@ class ShiftRequestService
                 }
 
                 $request->update(['start_time' => $startTime, 'end_time' => $endTime]);
+                $request = $request->refresh();
+                $this->notify($lockedStore, $worker, $request, OperationalActivityTypeEnum::SHIFT_REQUEST_UPDATED);
 
-                return ['status' => 'updated', 'request' => $request->refresh()];
+                return ['status' => 'updated', 'request' => $request];
             }
 
             $request = ShiftRequest::query()->create([
@@ -147,6 +150,7 @@ class ShiftRequestService
                 'start_time' => $startTime,
                 'end_time' => $endTime,
             ]);
+            $this->notify($lockedStore, $worker, $request, OperationalActivityTypeEnum::SHIFT_REQUEST_CREATED);
 
             return ['status' => 'created', 'request' => $request];
         });
@@ -248,5 +252,30 @@ class ShiftRequestService
         if (!$admin->isAdmin() || $admin->getKey() !== $store->getUserId() || !$store->isActive() || $store->isWarehouse()) {
             Thrower::default()->message('store_id', \__('The selected store is invalid.'))->throw();
         }
+    }
+
+    /**
+     * Dispatch a committed activity when a worker submits a shift request.
+     */
+    private function notify(Store $store, Worker $worker, ShiftRequest $request, OperationalActivityTypeEnum $type): void
+    {
+        $admin = Typer::assertInstance(User::query()->whereKey($store->getUserId())->firstOrFail(), User::class);
+        $date = CarbonImmutable::parse($request->getDate());
+
+        OperationalActivityService::dispatch(
+            $type,
+            $admin,
+            CarbonImmutable::now('UTC')->toIso8601String(),
+            Resolver::resolveUrlGenerator()->route('shifts.index', [
+                'year' => $date->year,
+                'month' => $date->month,
+            ]),
+            [['store' => $store, 'perspective' => null]],
+            [
+                'Slack worker' => $worker->getFullName(),
+                'Slack shift request date' => $date->format('j. n. Y'),
+                'Slack shift request time' => $request->getStartTimeShort() . '–' . $request->getEndTimeShort(),
+            ],
+        );
     }
 }

@@ -64,6 +64,8 @@ class DailyOperationalDigestBuilder
         'Slack recipe',
         'Slack report month',
         'Slack reviewed time',
+        'Slack shift request date',
+        'Slack shift request time',
         'Slack statement bolt cash',
         'Slack statement bolt',
         'Slack statement card',

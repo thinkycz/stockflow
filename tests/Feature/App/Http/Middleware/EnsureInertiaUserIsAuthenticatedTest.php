@@ -20,10 +20,21 @@ use Thinkycz\LaravelCore\Support\Typer;
     static::assertStringContainsString('/login', (string) $response->headers->get('Location'));
 });
 
-\test('guest with json format throws authentication exception', function (): void {
+\test('guest opening a web page with json preference is redirected to login', function (): void {
     $middleware = new App\Http\Middleware\EnsureInertiaUserIsAuthenticated();
 
     $request = Request::create('/dashboard', 'GET', [], [], [], ['HTTP_ACCEPT' => 'application/json']);
+
+    $response = $middleware->handle($request, static fn(Request $r): SymfonyResponse => new Illuminate\Http\Response('ok'));
+
+    static::assertSame(302, $response->getStatusCode());
+    static::assertStringContainsString('/login', (string) $response->headers->get('Location'));
+});
+
+\test('guest submitting a json mutation gets an authentication exception', function (): void {
+    $middleware = new App\Http\Middleware\EnsureInertiaUserIsAuthenticated();
+
+    $request = Request::create('/dashboard', 'POST', [], [], [], ['HTTP_ACCEPT' => 'application/json']);
 
     $this->expectException(AuthenticationException::class);
 

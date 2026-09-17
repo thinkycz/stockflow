@@ -14,7 +14,7 @@ use Thinkycz\LaravelCore\Support\Resolver;
 class EnsureInertiaUserIsAuthenticated
 {
     /**
-     * Redirect unauthenticated web users to login; return 401 for JSON clients.
+     * Redirect unauthenticated page visits to login; return 401 for JSON mutations.
      *
      * @param Closure(Request): SymfonyResponse $next
      */
@@ -24,7 +24,7 @@ class EnsureInertiaUserIsAuthenticated
             return $next($request);
         }
 
-        if ($request->getRequestFormat() === 'json' || $request->expectsJson()) {
+        if (!$request->isMethodSafe() && ($request->getRequestFormat() === 'json' || $request->expectsJson())) {
             throw new AuthenticationException();
         }
 

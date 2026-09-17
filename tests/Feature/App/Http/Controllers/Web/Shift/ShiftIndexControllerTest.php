@@ -285,3 +285,10 @@ use Thinkycz\LaravelCore\Support\Resolver;
 \test('guest is redirected to the login screen', function (): void {
     $this->get(\route('shifts.index'), $this->inertiaHeaders())->assertRedirect('/login');
 });
+
+\test('guest opening a shift notification link with json preference is redirected to login', function (): void {
+    $this->get(
+        \route('shifts.index', ['year' => 2026, 'month' => 9]),
+        ['Accept' => 'application/json'],
+    )->assertRedirect('/login');
+});

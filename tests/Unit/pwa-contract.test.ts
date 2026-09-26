@@ -86,7 +86,7 @@ describe('Teacha PWA contract', () => {
     test('keeps the service worker limited to versioned assets and brand icons', () => {
         const serviceWorker = source('public/sw.js');
 
-        expect(serviceWorker).toContain('`${CACHE_PREFIX}v3`');
+        expect(serviceWorker).toContain('`${CACHE_PREFIX}v4`');
         expect(serviceWorker).toContain(
             "url.pathname.startsWith('/build/assets/')",
         );
@@ -112,7 +112,10 @@ describe('Teacha PWA contract', () => {
         expect(shell).toContain('rel="manifest" href="{{ $manifestHref }}"');
         expect(shell).toContain('name="theme-color" content="#344c28"');
         expect(shell).toContain('rel="apple-touch-icon"');
-        expect(shell).toContain('rel="icon" type="image/svg+xml"');
+        expect(shell).toContain(
+            'rel="icon" type="image/svg+xml" href="/favicon.svg?v=3"',
+        );
+        expect(shell).toContain('href="/favicon.ico?v=3"');
         expect(routes).toContain("->name('public-shifts.manifest')");
         expect(employeeManifest).toContain("'name' => 'Teacha Shifts'");
         expect(employeeManifest).toContain("'id' => $startUrl");

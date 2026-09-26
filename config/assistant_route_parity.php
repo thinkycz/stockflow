@@ -158,6 +158,7 @@ $matrix = [
 
     // Authenticated mutation-shaped routes intentionally outside assistant operations.
     'excluded' => [
+        'shifts.bulk-destroy' => 'Calendar selection and batch confirmation are handled in the shift management dialog; the assistant retains individual shift deletion.',
         'attendance.sessions.restore' => 'Report-only restoration with a reviewed departure and reason; no assistant adapter is exposed.',
         'attendance.sessions.match' => 'Report-only explicit shift selection; no assistant adapter is exposed.',
         'attendance.report.match' => 'Report-only batch matching of the applied filters; no assistant adapter is exposed.',

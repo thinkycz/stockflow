@@ -376,5 +376,8 @@
     "Slack announcement": "Oznámenie",
     "Slack bank statement": "Bankový výpis",
     "Slack income direction": "Príjem",
-    "Slack expense direction": "Výdavok"
+    "Slack expense direction": "Výdavok",
+    "Selected shifts deleted: :count.": "Vybrané smeny boli zmazané. Počet: :count.",
+    "Select valid shifts from the displayed month.": "Vyberte platné smeny zo zobrazeného mesiaca.",
+    "Some selected shifts are no longer available in this store and month. Refresh the calendar and select them again.": "Niektoré vybrané smeny už nie sú v tejto pobočke a mesiaci dostupné. Obnovte kalendár a vyberte smeny znova."
 }

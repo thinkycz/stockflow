@@ -24,9 +24,8 @@ use Thinkycz\LaravelCore\Support\Typer;
 class ShiftIndexController
 {
     /**
-     * Page size hint required by the web index controller architecture test.
-     * Shifts render within a single month calendar, so the list is always
-     * bounded by the calendar and pagination is not exposed.
+     * Page size for incoming requests. Assigned shifts load the complete
+     * store month so bulk selection never silently omits assignments.
      */
     public const int TAKE = 1000;
 
@@ -56,7 +55,7 @@ class ShiftIndexController
             Shift::querySelect($query);
             $query->orderBy('date')->orderBy('start_time');
 
-            $shiftModels = $query->take(self::TAKE)->get();
+            $shiftModels = $query->get();
             foreach ($shiftModels as $shift) {
                 $shifts[] = [
                     'id' => $shift->getKey(),

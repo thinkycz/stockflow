@@ -1647,6 +1647,16 @@
             "worker": "Brigádnik",
             "start_time": "Začiatok",
             "end_time": "Koniec"
+        },
+        "bulk_delete": {
+            "manage": "Spravovať smeny",
+            "select_month": "Označiť celý mesiac",
+            "clear": "Zrušiť výber",
+            "delete_selected": "Zmazať vybrané ({count})",
+            "selected_count": "Vybrané {count} z {total}",
+            "empty": "V tomto mesiaci nie sú žiadne smeny.",
+            "confirm_title": "Zmazať vybrané smeny?",
+            "confirm_message": "Naozaj chcete zmazať vybrané smeny ({count}) pre pobočku {store}, {month}? Túto akciu nemožno vrátiť späť."
         }
     },
     "checklists": {

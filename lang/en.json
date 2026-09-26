@@ -376,5 +376,8 @@
     "Slack announcement": "Announcement",
     "Slack bank statement": "Bank statement",
     "Slack income direction": "Income",
-    "Slack expense direction": "Expense"
+    "Slack expense direction": "Expense",
+    "Selected shifts deleted: :count.": "Selected shifts deleted: :count.",
+    "Select valid shifts from the displayed month.": "Select valid shifts from the displayed month.",
+    "Some selected shifts are no longer available in this store and month. Refresh the calendar and select them again.": "Some selected shifts are no longer available in this store and month. Refresh the calendar and select them again."
 }

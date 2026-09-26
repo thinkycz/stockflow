@@ -3,6 +3,8 @@ import { useShiftSharing } from '@/features/shifts/useShiftSharing';
 import { useShiftPresets } from '@/features/shifts/useShiftPresets';
 import { useShiftEditor } from '@/features/shifts/useShiftEditor';
 import { useShiftQuickAdd } from '@/features/shifts/useShiftQuickAdd';
+import { useShiftBulkDelete } from '@/features/shifts/useShiftBulkDelete';
+import ShiftBulkDeleteModal from '@/features/shifts/components/ShiftBulkDeleteModal.vue';
 import { router } from '@inertiajs/vue3';
 import {
     CalendarDays,
@@ -304,10 +306,33 @@ const {
     stopQuickAdd,
     handleDayClick,
 } = useShiftQuickAdd(props, localShifts, localMonthlySummary, openDayModal);
+
+const bulkDelete = useShiftBulkDelete(
+    props,
+    localShifts,
+    month,
+    year,
+    currentMonthLabel,
+    stopQuickAdd,
+);
 </script>
 
 <template>
     <AppLayout :title="t('shifts.title')">
+        <ShiftBulkDeleteModal
+            :open="bulkDelete.open.value && !bulkDelete.confirming.value"
+            :store-name="store?.name ?? ''"
+            :month-label="currentMonthLabel"
+            :rows="bulkDelete.rows.value"
+            :selected-ids="bulkDelete.selectedSet.value"
+            :busy="bulkDelete.busy.value"
+            :error="bulkDelete.error.value"
+            @close="bulkDelete.close"
+            @toggle="bulkDelete.toggle"
+            @select-all="bulkDelete.selectAll"
+            @clear-selection="bulkDelete.clearSelection"
+            @submit="bulkDelete.submit"
+        />
         <div class="flex flex-col gap-6">
             <PageHeader
                 :title="t('shifts.title')"
@@ -318,6 +343,14 @@ const {
                 </template>
                 <template #actions>
                     <div v-if="store && is_admin" class="flex flex-wrap gap-2">
+                        <Button
+                            variant="secondary"
+                            :disabled="pendingDates.size > 0"
+                            @click="bulkDelete.show"
+                        >
+                            <ClipboardList :size="14" />
+                            {{ t('shifts.bulk_delete.manage') }}
+                        </Button>
                         <Button
                             variant="secondary"
                             type="button"

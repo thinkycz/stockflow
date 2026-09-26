@@ -52,13 +52,13 @@ describe('Teacha PWA contract', () => {
         expect(manifest.icons).toEqual(
             expect.arrayContaining([
                 expect.objectContaining({
-                    src: '/pwa-192x192.png?v=2',
+                    src: '/pwa-192x192.png?v=3',
                     sizes: '192x192',
                     type: 'image/png',
                     purpose: 'any',
                 }),
                 expect.objectContaining({
-                    src: '/pwa-512x512.png?v=2',
+                    src: '/pwa-512x512.png?v=3',
                     sizes: '512x512',
                     type: 'image/png',
                     purpose: 'any',
@@ -86,7 +86,7 @@ describe('Teacha PWA contract', () => {
     test('keeps the service worker limited to versioned assets and brand icons', () => {
         const serviceWorker = source('public/sw.js');
 
-        expect(serviceWorker).toContain('`${CACHE_PREFIX}v2`');
+        expect(serviceWorker).toContain('`${CACHE_PREFIX}v3`');
         expect(serviceWorker).toContain(
             "url.pathname.startsWith('/build/assets/')",
         );

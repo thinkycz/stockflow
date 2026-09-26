@@ -32,13 +32,13 @@ use App\Models\Store;
             'background_color' => '#f8fafc',
             'icons' => [
                 [
-                    'src' => '/pwa-192x192.png?v=2',
+                    'src' => '/pwa-192x192.png?v=3',
                     'sizes' => '192x192',
                     'type' => 'image/png',
                     'purpose' => 'any',
                 ],
                 [
-                    'src' => '/pwa-512x512.png?v=2',
+                    'src' => '/pwa-512x512.png?v=3',
                     'sizes' => '512x512',
                     'type' => 'image/png',
                     'purpose' => 'any',

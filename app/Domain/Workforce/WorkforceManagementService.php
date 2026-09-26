@@ -195,6 +195,42 @@ class WorkforceManagementService
     }
 
     /**
+     * Delete only the selected shifts atomically, using current locked records.
+     *
+     * @param list<int> $shiftIds
+     */
+    public function deleteShifts(User $actor, Store $store, int $year, int $month, array $shiftIds): int
+    {
+        return DB::transaction(function () use ($actor, $store, $year, $month, $shiftIds): int {
+            $store = Typer::assertInstance(
+                Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(),
+                Store::class,
+            );
+            $this->authorizeStore($actor, $store);
+
+            if ($shiftIds === [] || \count(\array_unique($shiftIds)) !== \count($shiftIds) || $year < 2000 || $year > 2100 || $month < 1 || $month > 12) {
+                Thrower::default()->message('shift_ids', \__('Select valid shifts from the displayed month.'))->throw();
+            }
+
+            $query = Shift::query();
+            Shift::scopeForUser($query, $actor);
+            Shift::scopeForStore($query, $store->getKey());
+            Shift::scopeForMonth($query, $year, $month);
+            $shifts = $query->whereKey($shiftIds)->orderBy('id')->lockForUpdate()->get();
+
+            if ($shifts->count() !== \count($shiftIds)) {
+                Thrower::default()->message('shift_ids', \__('Some selected shifts are no longer available in this store and month. Refresh the calendar and select them again.'))->throw();
+            }
+
+            foreach ($shifts as $shift) {
+                $this->deleteShift($actor, $store, $shift);
+            }
+
+            return $shifts->count();
+        });
+    }
+
+    /**
      * Create a shift preset in an owned store.
      */
     public function createPreset(User $actor, Store $store, string $name, string $startTime, string $endTime): ShiftPreset

@@ -1647,6 +1647,16 @@
             "worker": "Worker",
             "start_time": "Start",
             "end_time": "End"
+        },
+        "bulk_delete": {
+            "manage": "Manage shifts",
+            "select_month": "Select entire month",
+            "clear": "Clear selection",
+            "delete_selected": "Delete selected ({count})",
+            "selected_count": "Selected {count} of {total}",
+            "empty": "There are no shifts this month.",
+            "confirm_title": "Delete selected shifts?",
+            "confirm_message": "Delete the selected shifts ({count}) for {store}, {month}? This action cannot be undone."
         }
     },
     "checklists": {

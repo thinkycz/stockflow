@@ -81,6 +81,7 @@ use App\Http\Controllers\Web\Shift\SharedShiftIndexController;
 use App\Http\Controllers\Web\Shift\SharedShiftManifestController;
 use App\Http\Controllers\Web\Shift\SharedShiftRequestIndexController;
 use App\Http\Controllers\Web\Shift\SharedShiftRequestToggleController;
+use App\Http\Controllers\Web\Shift\ShiftBulkDestroyController;
 use App\Http\Controllers\Web\Shift\ShiftDestroyController;
 use App\Http\Controllers\Web\Shift\ShiftIndexController;
 use App\Http\Controllers\Web\Shift\ShiftQuickAddController;
@@ -342,6 +343,7 @@ Resolver::resolveRouteRegistrar()
         $router->post('workers/{worker}/restore', WorkerRestoreController::class)->whereNumber('worker')->name('workers.restore');
 
         // Shifts (admin write)
+        $router->post('shifts/bulk-delete', ShiftBulkDestroyController::class)->name('shifts.bulk-destroy');
         $router->post('shifts', ShiftStoreController::class)->name('shifts.store');
         $router->post('shifts/quick-add', ShiftQuickAddController::class)->name('shifts.quick-add');
         $router->post('shift-requests/{shiftRequest}/approve', ShiftRequestApproveController::class)->whereNumber('shiftRequest')->name('shift-requests.approve');

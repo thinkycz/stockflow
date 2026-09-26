@@ -1647,6 +1647,16 @@
             "worker": "Brigádník",
             "start_time": "Začátek",
             "end_time": "Konec"
+        },
+        "bulk_delete": {
+            "manage": "Spravovat směny",
+            "select_month": "Označit celý měsíc",
+            "clear": "Zrušit výběr",
+            "delete_selected": "Smazat vybrané ({count})",
+            "selected_count": "Vybráno {count} z {total}",
+            "empty": "V tomto měsíci nejsou žádné směny.",
+            "confirm_title": "Smazat vybrané směny?",
+            "confirm_message": "Opravdu chcete smazat vybrané směny ({count}) pro pobočku {store}, {month}? Tuto akci nelze vrátit zpět."
         }
     },
     "checklists": {

@@ -81,12 +81,50 @@ test('public shift requests toggle and appear in the admin calendar overlay', as
             .getByTestId('calendar-shift-request'),
     ).toContainText('10:00–18:00');
 
+    const deletedDate = `${year}-${String(month).padStart(2, '0')}-17`;
+    await page.getByTestId(`calendar-day-${deletedDate}`).click();
+    await expect(
+        page
+            .getByTestId(`calendar-day-${deletedDate}`)
+            .getByTestId('calendar-shift-request'),
+    ).toContainText('10:00–18:00');
+
     await page.goto('/login');
     await page.getByLabel('Email').fill('test@test.com');
     await page.getByLabel('Password', { exact: true }).fill('password');
     await page.getByRole('button', { name: 'Log in' }).click();
     await page.waitForURL(/\/dashboard$/);
     await page.goto(`/shifts?year=${year}&month=${month}`);
+
+    await page.getByTestId(`calendar-day-${deletedDate}`).click();
+    const deletedRequest = page.getByTestId('modal-shift-request');
+    await deletedRequest.getByRole('button', { name: 'Edit' }).click();
+    await deletedRequest
+        .getByRole('button', { name: 'Delete request' })
+        .click();
+    const deleteConfirmation = page.getByRole('dialog').filter({
+        hasText: `Delete the shift request for E2E Worker on ${deletedDate}`,
+    });
+    await deleteConfirmation
+        .getByRole('button', { name: 'Cancel', exact: true })
+        .click();
+    await expect(deletedRequest).toHaveCount(1);
+    await deletedRequest
+        .getByRole('button', { name: 'Delete request' })
+        .click();
+    await deleteConfirmation
+        .getByRole('button', { name: 'Delete', exact: true })
+        .click();
+    await expect(deletedRequest).toHaveCount(0);
+    await expect(page.getByTestId('shift-request-approval-form')).toHaveCount(
+        0,
+    );
+    await page.keyboard.press('Escape');
+    await page.reload();
+    await page.getByTestId(`calendar-day-${deletedDate}`).click();
+    await expect(page.getByTestId('modal-shift-request')).toHaveCount(0);
+    await expect(page.getByRole('dialog')).not.toContainText('10:00–18:00');
+    await page.keyboard.press('Escape');
 
     await expect(
         page

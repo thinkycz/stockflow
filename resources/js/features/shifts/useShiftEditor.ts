@@ -1,6 +1,6 @@
 import { useShiftRequestApproval } from './useShiftRequestApproval';
 import { router, useForm } from '@inertiajs/vue3';
-import { computed, ref, type Ref, type ComputedRef } from 'vue';
+import { computed, ref, watch, type Ref, type ComputedRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useDialog } from '@/composables/useDialog';
 import { useRoute } from '@/composables/useRoute';
@@ -15,7 +15,11 @@ import type {
 } from './scheduling-types';
 
 export function useShiftEditor(
-    props: { workers: Worker[]; shift_presets?: ShiftPreset[] },
+    props: {
+        store: { id: number } | null;
+        workers: Worker[];
+        shift_presets?: ShiftPreset[];
+    },
     month: Ref<number>,
     year: Ref<number>,
     calendarDays: ComputedRef<CalendarDay[]>,
@@ -36,6 +40,19 @@ export function useShiftEditor(
     const modalOpen = ref<boolean>(false);
     const modalDate = ref<string>('');
     const editingShiftId = ref<number | null>(null);
+    const deletingRequestId = ref<number | null>(null);
+    let requestContextVersion = 0;
+    watch(
+        () => [
+            props.store?.id,
+            month.value,
+            year.value,
+            modalDate.value,
+            modalOpen.value,
+        ],
+        () => requestContextVersion++,
+        { flush: 'sync' },
+    );
     type ShiftForm = {
         worker_id: string;
         date: string;
@@ -238,12 +255,64 @@ export function useShiftEditor(
         );
     }
 
+    async function deleteRequest(shiftRequest: CalendarRequest): Promise<void> {
+        if (
+            deletingRequestId.value !== null ||
+            approvingRequestId.value !== null ||
+            requestApprovalForm.processing ||
+            props.store === null
+        )
+            return;
+        const version = requestContextVersion;
+        const storeId = props.store.id;
+        deletingRequestId.value = shiftRequest.id;
+        const confirmed = await dialog.confirm({
+            title: t('shifts.requests.delete'),
+            message: t('shifts.requests.confirm_delete', {
+                worker: shiftRequest.worker_name,
+                date: shiftRequest.date,
+                start: shiftRequest.start_time,
+                end: shiftRequest.end_time,
+            }),
+            confirmLabel: t('common.delete'),
+            variant: 'danger',
+        });
+        if (
+            !confirmed ||
+            version !== requestContextVersion ||
+            !modalRequests.value.some(
+                (request) => request.id === shiftRequest.id,
+            )
+        ) {
+            deletingRequestId.value = null;
+            return;
+        }
+        router.delete(
+            route('shift-requests.destroy', {
+                shiftRequest: shiftRequest.id,
+                store_id: storeId,
+                month: month.value,
+                year: year.value,
+            }),
+            withActionErrorToast({
+                preserveState: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    if (editingRequestId.value === shiftRequest.id)
+                        cancelEdit();
+                },
+                onFinish: () => (deletingRequestId.value = null),
+            }),
+        );
+    }
+
     return {
         modalOpen,
         modalDate,
         editingShiftId,
         editingRequestId,
         approvingRequestId,
+        deletingRequestId,
         form,
         requestApprovalForm,
         overlapError,
@@ -263,5 +332,6 @@ export function useShiftEditor(
         submitRequestApproval,
         submitShift,
         deleteShift,
+        deleteRequest,
     };
 }

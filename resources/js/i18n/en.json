@@ -702,7 +702,7 @@
         "active_store": "Active store"
     },
     "stores": {
-        "deactivation_help": "Deactivation preserves stock, accounts, and history. Assigned users cannot access this store while it is inactive.",
+        "deactivation_help": "Deactivation preserves stock, accounts, shift requests, and history. Assigned users cannot access this store while it is inactive.",
         "deactivation_blocked": "Before deactivating this store, resolve:",
         "slack_channel_placeholder": "#store-prague or C0123456789",
         "slack_channel_help": "Optional Slack channel name or ID for operational notifications.",
@@ -1574,6 +1574,8 @@
         "requests": {
             "title": "Shift requests — {store}",
             "heading": "Shift requests",
+            "delete": "Delete request",
+            "confirm_delete": "Delete the shift request for {worker} on {date} ({start}–{end})?",
             "subtitle": "Select an employee and times, then mark the requested days for {store}.",
             "open_form": "Submit requests",
             "back": "Back to shift calendar",

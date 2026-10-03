@@ -702,7 +702,7 @@
         "active_store": "Aktivní pobočka"
     },
     "stores": {
-        "deactivation_help": "Deaktivace zachová zásoby, účty i historii. Přiřazení uživatelé nebudou mít k neaktivní provozovně přístup.",
+        "deactivation_help": "Deaktivace zachová zásoby, účty, požadavky na směny i historii. Přiřazení uživatelé nebudou mít k neaktivní provozovně přístup.",
         "deactivation_blocked": "Před deaktivací provozovny vyřešte:",
         "slack_channel_placeholder": "#prodejna-praha nebo C0123456789",
         "slack_channel_help": "Volitelný název nebo ID Slack kanálu pro provozní oznámení.",
@@ -1574,6 +1574,8 @@
         "requests": {
             "title": "Požadavky na směny — {store}",
             "heading": "Požadavky na směny",
+            "delete": "Odstranit požadavek",
+            "confirm_delete": "Odstranit požadavek na směnu pro {worker} dne {date} ({start}–{end})?",
             "subtitle": "Vyberte brigádníka a časy a poté označte požadované dny pro provozovnu {store}.",
             "open_form": "Zadat požadavky",
             "back": "Zpět na kalendář směn",

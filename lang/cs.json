@@ -45,6 +45,7 @@
     "Cannot delete a worker with existing shifts.": "Brigádníka se směnami nelze smazat.",
     "Shift created.": "Směna byla vytvořena.",
     "Shift request approved.": "Požadavek byl potvrzen a převeden na směnu.",
+    "Shift request deleted.": "Požadavek na směnu byl odstraněn.",
     "Shift updated.": "Směna byla aktualizována.",
     "Shift deleted.": "Směna byla smazána.",
     "Shift preset created.": "Předvolba směny byla vytvořena.",
@@ -384,6 +385,5 @@
     "Unfinished inventories: :count": "Rozpracované inventury: :count",
     "Open attendance sessions: :count": "Otevřená docházka: :count",
     "Shifts today or in the future: :count": "Dnešní a budoucí směny: :count",
-    "Shift requests today or in the future: :count": "Dnešní a budoucí požadavky na směny: :count",
     "Unfinished bank statement imports: :count": "Nedokončené importy bankovních výpisů: :count"
 }

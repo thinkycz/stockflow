@@ -246,6 +246,7 @@ const {
     editingShiftId,
     editingRequestId,
     approvingRequestId,
+    deletingRequestId,
     form,
     requestApprovalForm,
     overlapError,
@@ -265,6 +266,7 @@ const {
     submitRequestApproval,
     submitShift,
     deleteShift,
+    deleteRequest,
 } = useShiftEditor(props, month, year, calendarDays);
 
 const {
@@ -755,6 +757,12 @@ const bulkDelete = useShiftBulkDelete(
                                     approvingRequestId === shiftRequest.id
                                 "
                                 :loading-label="t('common.saving')"
+                                :disabled="
+                                    deletingRequestId !== null ||
+                                    requestApprovalForm.processing ||
+                                    (approvingRequestId !== null &&
+                                        approvingRequestId !== shiftRequest.id)
+                                "
                                 @click="approveRequest(shiftRequest)"
                             >
                                 <Check :size="14" />
@@ -764,11 +772,31 @@ const bulkDelete = useShiftBulkDelete(
                                 variant="secondary"
                                 size="compact"
                                 type="button"
-                                :disabled="approvingRequestId !== null"
+                                :disabled="
+                                    approvingRequestId !== null ||
+                                    deletingRequestId !== null ||
+                                    requestApprovalForm.processing
+                                "
                                 @click="editRequest(shiftRequest)"
                             >
                                 <Pencil :size="14" />
                                 {{ t('common.edit') }}
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="compact"
+                                type="button"
+                                :aria-label="t('shifts.requests.delete')"
+                                :loading="deletingRequestId === shiftRequest.id"
+                                :disabled="
+                                    approvingRequestId !== null ||
+                                    requestApprovalForm.processing ||
+                                    (deletingRequestId !== null &&
+                                        deletingRequestId !== shiftRequest.id)
+                                "
+                                @click="deleteRequest(shiftRequest)"
+                            >
+                                <Trash2 :size="14" />
                             </Button>
                         </div>
                     </div>
@@ -845,6 +873,10 @@ const bulkDelete = useShiftBulkDelete(
                         <Button
                             type="submit"
                             :loading="requestApprovalForm.processing"
+                            :disabled="
+                                deletingRequestId !== null ||
+                                approvingRequestId !== null
+                            "
                             :loading-label="t('common.saving')"
                         >
                             <Check :size="14" />

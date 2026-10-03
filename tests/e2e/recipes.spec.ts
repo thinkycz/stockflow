@@ -65,7 +65,7 @@ async function completeCurrentRecipe(
     await expect(
         reference.getByRole('heading', { name: recipeName, exact: true }),
     ).toBeVisible();
-    if (variantName) {
+    if (variantName && (await reference.getByRole('tablist').count()) > 0) {
         await reference
             .getByRole('tab', { name: variantName, exact: true })
             .click();

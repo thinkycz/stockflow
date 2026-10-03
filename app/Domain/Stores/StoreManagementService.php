@@ -200,7 +200,6 @@ class StoreManagementService
             'Unfinished inventories: :count' => DB::table('inventory_sessions')->where('store_id', $storeId)->where('status', 'draft')->count(),
             'Open attendance sessions: :count' => DB::table('attendance_sessions')->where('store_id', $storeId)->whereNull('ended_at')->whereNull('voided_at')->count(),
             'Shifts today or in the future: :count' => DB::table('shifts')->where('store_id', $storeId)->whereDate('date', '>=', $today)->count(),
-            'Shift requests today or in the future: :count' => DB::table('shift_requests')->where('store_id', $storeId)->whereDate('date', '>=', $today)->count(),
             'Unfinished bank statement imports: :count' => DB::table('bank_statements')->where('store_id', $storeId)->whereIn('status', ['queued', 'processing', 'review'])->count(),
         ];
         $blockers = [];

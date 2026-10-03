@@ -21,6 +21,25 @@ use Thinkycz\LaravelCore\Support\Typer;
 class ShiftRequestService
 {
     /**
+     * Delete a request as the store administrator, including locked periods.
+     */
+    public function deleteRequest(User $admin, Store $store, int $shiftRequestId): void
+    {
+        $this->assertAdminStore($admin, $store);
+        DB::transaction(function () use ($admin, $store, $shiftRequestId): void {
+            $lockedStore = Typer::assertInstance(Store::query()->whereKey($store->getKey())->lockForUpdate()->firstOrFail(), Store::class);
+            $this->assertAdminStore($admin, $lockedStore);
+            ShiftRequest::query()
+                ->where('user_id', $admin->getKey())
+                ->where('store_id', $lockedStore->getKey())
+                ->whereKey($shiftRequestId)
+                ->lockForUpdate()
+                ->firstOrFail()
+                ->delete();
+        });
+    }
+
+    /**
      * Convert a request into a shift, optionally overriding an overlap.
      */
     public function approve(

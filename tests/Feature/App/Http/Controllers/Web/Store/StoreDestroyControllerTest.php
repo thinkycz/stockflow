@@ -170,7 +170,7 @@ use Database\Factories\UserFactory;
 \test('active attendance future shifts and nonterminal bank imports block store removal', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
 
-    foreach (['attendance', 'shift', 'shift_request', 'bank'] as $blocker) {
+    foreach (['attendance', 'shift', 'bank'] as $blocker) {
         $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
 
         if ($blocker === 'attendance') {
@@ -190,13 +190,6 @@ use Database\Factories\UserFactory;
                 'worker_id' => Worker::factory()->create(['user_id' => $admin->getKey()])->getKey(),
                 'date' => CarbonImmutable::today()->addDay()->toDateString(),
             ]);
-        } elseif ($blocker === 'shift_request') {
-            ShiftRequest::factory()->create([
-                'user_id' => $admin->getKey(),
-                'store_id' => $store->getKey(),
-                'worker_id' => Worker::factory()->create(['user_id' => $admin->getKey()])->getKey(),
-                'date' => CarbonImmutable::today()->addMonth()->toDateString(),
-            ]);
         } else {
             BankStatement::factory()->create([
                 'user_id' => $admin->getKey(),
@@ -209,6 +202,19 @@ use Database\Factories\UserFactory;
         $this->be($admin, 'users')->delete("/stores/{$store->getKey()}")->assertStatus(422);
         \expect($store->refresh()->getStatus())->toBe(StoreStatusEnum::ACTIVE);
     }
+});
+
+\test('store removal with future requests deactivates the store and preserves requests', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $shiftRequest = ShiftRequest::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(),
+        'worker_id' => Worker::factory()->create(['user_id' => $admin->getKey()])->getKey(),
+        'date' => CarbonImmutable::today('Europe/Prague')->addMonth()->toDateString(),
+    ]);
+    $this->be($admin, 'users')->delete("/stores/{$store->getKey()}")->assertRedirect('/stores');
+    \expect($store->refresh()->getStatus())->toBe(StoreStatusEnum::INACTIVE);
+    $this->assertDatabaseHas('shift_requests', ['id' => $shiftRequest->getKey()]);
 });
 
 \test('can delete an empty store with no movement history', function (): void {

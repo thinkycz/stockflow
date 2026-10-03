@@ -45,6 +45,7 @@
     "Cannot delete a worker with existing shifts.": "Brigádnika so smenami nie je možné zmazať.",
     "Shift created.": "Smena bola vytvorená.",
     "Shift request approved.": "Požiadavka bola potvrdená a prevedená na smenu.",
+    "Shift request deleted.": "Požiadavka na smenu bola odstránená.",
     "Shift updated.": "Smena bola aktualizovaná.",
     "Shift deleted.": "Smena bola zmazaná.",
     "Shift preset created.": "Predvoľba smeny bola vytvorená.",
@@ -384,6 +385,5 @@
     "Unfinished inventories: :count": "Rozpracované inventúry: :count",
     "Open attendance sessions: :count": "Otvorená dochádzka: :count",
     "Shifts today or in the future: :count": "Dnešné a budúce zmeny: :count",
-    "Shift requests today or in the future: :count": "Dnešné a budúce požiadavky na zmeny: :count",
     "Unfinished bank statement imports: :count": "Nedokončené importy bankových výpisov: :count"
 }

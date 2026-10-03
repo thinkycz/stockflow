@@ -9,6 +9,7 @@ use App\Models\InventorySession;
 use App\Models\Item;
 use App\Models\Shift;
 use App\Models\ShiftRequest;
+use App\Models\ShiftRequestMonthLock;
 use App\Models\Statement;
 use App\Models\Store;
 use App\Models\StoreItem;
@@ -149,9 +150,8 @@ use Database\Factories\UserFactory;
             'ended_at' => null,
             'voided_at' => null,
         ]);
-    } elseif ($blocker === 'shift' || $blocker === 'shift_request') {
-        $factory = $blocker === 'shift' ? Shift::factory() : ShiftRequest::factory();
-        $factory->create([
+    } elseif ($blocker === 'shift') {
+        Shift::factory()->create([
             'user_id' => $user->getKey(),
             'store_id' => $store->getKey(),
             'worker_id' => Worker::factory()->create(['user_id' => $user->getKey()])->getKey(),
@@ -184,11 +184,40 @@ use Database\Factories\UserFactory;
     'draft inventory' => ['inventory', 'Rozpracované inventury: 1'],
     'open attendance' => ['attendance', 'Otevřená docházka: 1'],
     'future shift' => ['shift', 'Dnešní a budoucí směny: 1'],
-    'future shift request' => ['shift_request', 'Dnešní a budoucí požadavky na směny: 1'],
     'queued bank import' => ['queued', 'Nedokončené importy bankovních výpisů: 1'],
     'processing bank import' => ['processing', 'Nedokončené importy bankovních výpisů: 1'],
     'bank import under review' => ['review', 'Nedokončené importy bankovních výpisů: 1'],
 ]);
+
+\test('store deactivation preserves fourteen current and future requests including a locked month', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $admin->getKey(), 'is_warehouse' => false]);
+    $worker = Worker::factory()->create(['user_id' => $admin->getKey(), 'archived_at' => CarbonImmutable::now()]);
+    $today = CarbonImmutable::today('Europe/Prague');
+    for ($i = 0; $i < 14; ++$i) {
+        ShiftRequest::factory()->create([
+            'user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(),
+            'date' => $today->addDays($i)->toDateString(),
+        ]);
+    }
+    $lock = ShiftRequestMonthLock::factory()->create([
+        'user_id' => $admin->getKey(), 'store_id' => $store->getKey(),
+        'year' => $today->year, 'month' => $today->month, 'locked_by_user_id' => $admin->getKey(),
+    ]);
+    $this->be($admin, 'users')->get("/stores/{$store->getKey()}/edit", $this->inertiaHeaders())
+        ->assertOk()->assertJsonPath('props.deactivation_blockers', []);
+    $this->put("/stores/{$store->getKey()}", [
+        'name' => $store->getName(), 'status' => StoreStatusEnum::INACTIVE->value, 'is_warehouse' => false,
+    ], $this->inertiaHeaders())->assertSessionHasNoErrors()->assertRedirect();
+    \expect($store->refresh()->isActive())->toBeFalse();
+    $this->assertDatabaseCount('shift_requests', 14);
+    $this->assertDatabaseHas('shift_request_month_locks', ['id' => $lock->getKey()]);
+    $this->put("/stores/{$store->getKey()}", [
+        'name' => $store->getName(), 'status' => StoreStatusEnum::ACTIVE->value, 'is_warehouse' => false,
+    ], $this->inertiaHeaders())->assertSessionHasNoErrors();
+    \expect($store->refresh()->isActive())->toBeTrue();
+    $this->assertDatabaseCount('shift_requests', 14);
+});
 
 \test('completed operations and another stores live work do not block deactivation', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();

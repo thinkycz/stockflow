@@ -702,6 +702,8 @@
         "active_store": "Aktívna pobočka"
     },
     "stores": {
+        "deactivation_help": "Deaktivácia zachová zásoby, účty aj históriu. Priradení používatelia nebudú mať k neaktívnej prevádzke prístup.",
+        "deactivation_blocked": "Pred deaktiváciou prevádzky vyriešte:",
         "slack_channel_placeholder": "#predajna-bratislava alebo C0123456789",
         "slack_channel_help": "Voliteľný názov alebo ID Slack kanála pre prevádzkové oznámenia.",
         "title": "Predajne",

@@ -89,10 +89,14 @@ class StoreManagementService
             }
 
             if ($lockedStore->getStatus() === StoreStatusEnum::ACTIVE &&
-                $status === StoreStatusEnum::INACTIVE->value &&
-                $this->storeHasLiveWork($lockedStore)
+                $status === StoreStatusEnum::INACTIVE->value
             ) {
-                Thrower::default()->message('status', \__('Resolve active store work before deactivating this store.'))->throw();
+                $blockers = $this->deactivationBlockers($actor, $lockedStore);
+                if ($blockers !== []) {
+                    Thrower::default()->message('status', \__('Before deactivating this store, resolve: :blockers.', [
+                        'blockers' => \implode('; ', $blockers),
+                    ]))->throw();
+                }
             }
 
             $wasInactive = !$lockedStore->isActive();
@@ -126,7 +130,10 @@ class StoreManagementService
             $lockedStore = Typer::assertInstance(Store::query()->lockForUpdate()->findOrFail($store->getKey()), Store::class);
             $this->authorizeStore($actor, $lockedStore);
 
-            if ($this->storeHasLiveWork($lockedStore)) {
+            if ($lockedStore->assignedUser()->exists() ||
+                $lockedStore->storeItems()->where('quantity', '!=', 0)->exists() ||
+                $this->deactivationBlockers($actor, $lockedStore) !== []
+            ) {
                 return RemovalOutcomeEnum::BLOCKED;
             }
 
@@ -175,6 +182,39 @@ class StoreManagementService
     }
 
     /**
+     * Identify unfinished operations while allowing stock and account assignments to be preserved.
+     *
+     * @return list<string>
+     */
+    public function deactivationBlockers(User $actor, Store $store): array
+    {
+        $this->authorizeStore($actor, $store);
+
+        if ($store->isWarehouse()) {
+            return [Typer::assertString(\__('The required warehouse must remain active.'))];
+        }
+
+        $storeId = $store->getKey();
+        $today = CarbonImmutable::today('Europe/Prague')->toDateString();
+        $counts = [
+            'Unfinished inventories: :count' => DB::table('inventory_sessions')->where('store_id', $storeId)->where('status', 'draft')->count(),
+            'Open attendance sessions: :count' => DB::table('attendance_sessions')->where('store_id', $storeId)->whereNull('ended_at')->whereNull('voided_at')->count(),
+            'Shifts today or in the future: :count' => DB::table('shifts')->where('store_id', $storeId)->whereDate('date', '>=', $today)->count(),
+            'Shift requests today or in the future: :count' => DB::table('shift_requests')->where('store_id', $storeId)->whereDate('date', '>=', $today)->count(),
+            'Unfinished bank statement imports: :count' => DB::table('bank_statements')->where('store_id', $storeId)->whereIn('status', ['queued', 'processing', 'review'])->count(),
+        ];
+        $blockers = [];
+
+        foreach ($counts as $message => $count) {
+            if ($count > 0) {
+                $blockers[] = Typer::assertString(\__($message, ['count' => $count]));
+            }
+        }
+
+        return $blockers;
+    }
+
+    /**
      * Ensure a store belongs to the main administrator.
      */
     private function authorizeStore(User $actor, Store $store): void
@@ -194,37 +234,6 @@ class StoreManagementService
         if (!$actor->isAdmin()) {
             \abort(403);
         }
-    }
-
-    /**
-     * Store state that must be resolved rather than implicitly cancelled.
-     */
-    private function storeHasLiveWork(Store $store): bool
-    {
-        $storeId = $store->getKey();
-        $today = CarbonImmutable::today()->toDateString();
-
-        if ($store->isWarehouse() || $store->assignedUser()->exists() || $store->storeItems()->where('quantity', '!=', 0)->exists()) {
-            return true;
-        }
-
-        if (DB::table('inventory_sessions')->where('store_id', $storeId)->where('status', 'draft')->exists()) {
-            return true;
-        }
-
-        if (DB::table('attendance_sessions')->where('store_id', $storeId)->whereNull('ended_at')->whereNull('voided_at')->exists()) {
-            return true;
-        }
-
-        if (DB::table('shifts')->where('store_id', $storeId)->whereDate('date', '>=', $today)->exists()) {
-            return true;
-        }
-
-        if (DB::table('shift_requests')->where('store_id', $storeId)->whereDate('date', '>=', $today)->exists()) {
-            return true;
-        }
-
-        return DB::table('bank_statements')->where('store_id', $storeId)->whereIn('status', ['queued', 'processing', 'review'])->exists();
     }
 
     /**

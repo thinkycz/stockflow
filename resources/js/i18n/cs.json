@@ -702,6 +702,8 @@
         "active_store": "Aktivní pobočka"
     },
     "stores": {
+        "deactivation_help": "Deaktivace zachová zásoby, účty i historii. Přiřazení uživatelé nebudou mít k neaktivní provozovně přístup.",
+        "deactivation_blocked": "Před deaktivací provozovny vyřešte:",
         "slack_channel_placeholder": "#prodejna-praha nebo C0123456789",
         "slack_channel_help": "Volitelný název nebo ID Slack kanálu pro provozní oznámení.",
         "title": "Prodejny",

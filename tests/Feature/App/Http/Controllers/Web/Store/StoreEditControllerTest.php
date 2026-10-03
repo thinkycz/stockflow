@@ -3,9 +3,18 @@
 declare(strict_types=1);
 
 use App\Enums\StoreStatusEnum;
+use App\Models\AttendanceSession;
+use App\Models\BankStatement;
+use App\Models\InventorySession;
 use App\Models\Item;
+use App\Models\Shift;
+use App\Models\ShiftRequest;
+use App\Models\Statement;
 use App\Models\Store;
 use App\Models\StoreItem;
+use App\Models\Worker;
+use Carbon\CarbonImmutable;
+use Database\Factories\UserFactory;
 
 \test('store edit form is reachable', function (): void {
     [$user] = \createIsolatedUserWithWarehouse();
@@ -85,21 +94,127 @@ use App\Models\StoreItem;
     \expect($store->refresh()->isWarehouse())->toBeFalse();
 });
 
-\test('retail store with live work cannot be deactivated through edit', function (): void {
-    [$user] = \createIsolatedUserWithWarehouse();
+\test('retail store deactivation preserves stock history and the assigned account', function (int $quantity): void {
+    [$user, $warehouse] = \createIsolatedUserWithWarehouse();
     $store = Store::factory()->create([
         'user_id' => $user->getKey(),
         'is_warehouse' => false,
         'status' => StoreStatusEnum::ACTIVE->value,
     ]);
     $item = Item::factory()->create(['user_id' => $user->getKey()]);
-    StoreItem::query()->create(['store_id' => $store->getKey(), 'item_id' => $item->getKey(), 'quantity' => 1]);
+    $stock = StoreItem::query()->create(['store_id' => $store->getKey(), 'item_id' => $item->getKey(), 'quantity' => $quantity]);
+    $assignedUser = UserFactory::new()->limited($store)->createOne();
+    $statement = Statement::factory()->forStore($store)->create();
+
+    $this->be($user, 'users')->withSession(\activeStoreSession($store))->put("/stores/{$store->getKey()}", [
+        'name' => $store->getName(),
+        'status' => StoreStatusEnum::INACTIVE->value,
+        'is_warehouse' => false,
+    ], $this->inertiaHeaders())->assertSessionHasNoErrors()->assertRedirect("/stores/{$store->getKey()}");
+
+    \expect($store->refresh()->getStatus())->toBe(StoreStatusEnum::INACTIVE)
+        ->and($stock->refresh()->getQuantity())->toBe($quantity)
+        ->and($assignedUser->refresh()->getAssignedStoreId())->toBe($store->getKey())
+        ->and(Statement::query()->whereKey($statement->getKey())->exists())->toBeTrue();
+
+    $this->get("/stores/{$store->getKey()}", $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.active_store.id', $warehouse->getKey())
+        ->assertJsonCount(1, 'props.available_stores');
+
+    $this->be($assignedUser, 'users')->get('/dashboard', $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.active_store', null)
+        ->assertJsonPath('props.available_stores', []);
+})->with([5, -1]);
+
+\test('store edit identifies the operational work blocking deactivation', function (string $blocker, string $reason): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $user->update(['locale' => 'cs']);
+    $store = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
+
+    if ($blocker === 'inventory') {
+        InventorySession::factory()->forStore($store)->create([
+            'status' => 'draft',
+            'active_store_key' => $store->getKey(),
+            'closed_at' => null,
+        ]);
+    } elseif ($blocker === 'attendance') {
+        $worker = Worker::factory()->create(['user_id' => $user->getKey()]);
+        AttendanceSession::factory()->create([
+            'user_id' => $user->getKey(),
+            'store_id' => $store->getKey(),
+            'worker_id' => $worker->getKey(),
+            'active_worker_id' => $worker->getKey(),
+            'ended_at' => null,
+            'voided_at' => null,
+        ]);
+    } elseif ($blocker === 'shift' || $blocker === 'shift_request') {
+        $factory = $blocker === 'shift' ? Shift::factory() : ShiftRequest::factory();
+        $factory->create([
+            'user_id' => $user->getKey(),
+            'store_id' => $store->getKey(),
+            'worker_id' => Worker::factory()->create(['user_id' => $user->getKey()])->getKey(),
+            'date' => CarbonImmutable::today('Europe/Prague')->addDay()->toDateString(),
+        ]);
+    } else {
+        BankStatement::factory()->create([
+            'user_id' => $user->getKey(),
+            'store_id' => $store->getKey(),
+            'uploaded_by_user_id' => $user->getKey(),
+            'status' => $blocker,
+        ]);
+    }
+
+    $this->be($user, 'users')->get("/stores/{$store->getKey()}/edit", $this->inertiaHeaders())
+        ->assertOk()
+        ->assertJsonPath('props.deactivation_blockers', [$reason]);
+
+    $this->put("/stores/{$store->getKey()}", [
+        'name' => 'Must not be saved',
+        'status' => StoreStatusEnum::INACTIVE->value,
+        'is_warehouse' => false,
+    ], $this->inertiaHeaders())->assertSessionHasErrors([
+        'status' => 'Před deaktivací provozovny vyřešte: ' . $reason . '.',
+    ]);
+
+    \expect($store->refresh()->getStatus())->toBe(StoreStatusEnum::ACTIVE)
+        ->and($store->getName())->not->toBe('Must not be saved');
+})->with([
+    'draft inventory' => ['inventory', 'Rozpracované inventury: 1'],
+    'open attendance' => ['attendance', 'Otevřená docházka: 1'],
+    'future shift' => ['shift', 'Dnešní a budoucí směny: 1'],
+    'future shift request' => ['shift_request', 'Dnešní a budoucí požadavky na směny: 1'],
+    'queued bank import' => ['queued', 'Nedokončené importy bankovních výpisů: 1'],
+    'processing bank import' => ['processing', 'Nedokončené importy bankovních výpisů: 1'],
+    'bank import under review' => ['review', 'Nedokončené importy bankovních výpisů: 1'],
+]);
+
+\test('completed operations and another stores live work do not block deactivation', function (): void {
+    [$user] = \createIsolatedUserWithWarehouse();
+    $store = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
+    $otherStore = Store::factory()->create(['user_id' => $user->getKey(), 'is_warehouse' => false]);
+    InventorySession::factory()->forStore($otherStore)->create([
+        'status' => 'draft',
+        'active_store_key' => $otherStore->getKey(),
+        'closed_at' => null,
+    ]);
+    $inventory = InventorySession::factory()->forStore($store)->create(['status' => 'closed']);
+    $shift = Shift::factory()->create([
+        'user_id' => $user->getKey(),
+        'store_id' => $store->getKey(),
+        'worker_id' => Worker::factory()->create(['user_id' => $user->getKey()])->getKey(),
+        'date' => CarbonImmutable::today('Europe/Prague')->subDay()->toDateString(),
+    ]);
 
     $this->be($user, 'users')->put("/stores/{$store->getKey()}", [
         'name' => $store->getName(),
         'status' => StoreStatusEnum::INACTIVE->value,
         'is_warehouse' => false,
-    ], $this->inertiaHeaders())->assertSessionHasErrors('status');
+    ], $this->inertiaHeaders())->assertSessionHasNoErrors()->assertRedirect();
 
-    \expect($store->refresh()->getStatus())->toBe(StoreStatusEnum::ACTIVE);
+    \expect($store->refresh()->getStatus())->toBe(StoreStatusEnum::INACTIVE)
+        ->and($otherStore->refresh()->getStatus())->toBe(StoreStatusEnum::ACTIVE)
+        ->and(InventorySession::query()->whereKey($inventory->getKey())->exists())->toBeTrue()
+        ->and(Shift::query()->whereKey($shift->getKey())->exists())->toBeTrue();
 });

@@ -2,6 +2,7 @@
 import { Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Alert from '@/components/ui/Alert.vue';
 import Button from '@/components/ui/Button.vue';
 import Checkbox from '@/components/ui/Checkbox.vue';
 import Card from '@/components/ui/Card.vue';
@@ -24,6 +25,7 @@ type StoreFields = {
 };
 
 const props = defineProps<{
+    deactivation_blockers: string[];
     store: {
         id: number;
         name: string;
@@ -110,6 +112,34 @@ function submit(): void {
                             ]"
                         />
                         <FieldError :message="form.errors.status" />
+                        <template
+                            v-if="
+                                !store.is_warehouse &&
+                                form.status === 'inactive'
+                            "
+                        >
+                            <p class="text-xs text-on-surface-variant">
+                                {{ t('stores.deactivation_help') }}
+                            </p>
+                            <Alert
+                                v-if="
+                                    store.status === 'active' &&
+                                    deactivation_blockers.length > 0 &&
+                                    !form.errors.status
+                                "
+                                variant="warning"
+                            >
+                                <p>{{ t('stores.deactivation_blocked') }}</p>
+                                <ul class="mt-2 list-disc space-y-1 pl-4">
+                                    <li
+                                        v-for="blocker in deactivation_blockers"
+                                        :key="blocker"
+                                    >
+                                        {{ blocker }}
+                                    </li>
+                                </ul>
+                            </Alert>
+                        </template>
                     </div>
 
                     <div class="space-y-2">

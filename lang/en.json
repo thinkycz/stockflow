@@ -379,5 +379,11 @@
     "Slack expense direction": "Expense",
     "Selected shifts deleted: :count.": "Selected shifts deleted: :count.",
     "Select valid shifts from the displayed month.": "Select valid shifts from the displayed month.",
-    "Some selected shifts are no longer available in this store and month. Refresh the calendar and select them again.": "Some selected shifts are no longer available in this store and month. Refresh the calendar and select them again."
+    "Some selected shifts are no longer available in this store and month. Refresh the calendar and select them again.": "Some selected shifts are no longer available in this store and month. Refresh the calendar and select them again.",
+    "Before deactivating this store, resolve: :blockers.": "Before deactivating this store, resolve: :blockers.",
+    "Unfinished inventories: :count": "Unfinished inventories: :count",
+    "Open attendance sessions: :count": "Open attendance sessions: :count",
+    "Shifts today or in the future: :count": "Shifts today or in the future: :count",
+    "Shift requests today or in the future: :count": "Shift requests today or in the future: :count",
+    "Unfinished bank statement imports: :count": "Unfinished bank statement imports: :count"
 }

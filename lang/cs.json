@@ -379,5 +379,11 @@
     "Slack expense direction": "Výdaj",
     "Selected shifts deleted: :count.": "Vybrané směny byly smazány. Počet: :count.",
     "Select valid shifts from the displayed month.": "Vyberte platné směny ze zobrazeného měsíce.",
-    "Some selected shifts are no longer available in this store and month. Refresh the calendar and select them again.": "Některé vybrané směny už nejsou v této pobočce a měsíci dostupné. Obnovte kalendář a vyberte směny znovu."
+    "Some selected shifts are no longer available in this store and month. Refresh the calendar and select them again.": "Některé vybrané směny už nejsou v této pobočce a měsíci dostupné. Obnovte kalendář a vyberte směny znovu.",
+    "Before deactivating this store, resolve: :blockers.": "Před deaktivací provozovny vyřešte: :blockers.",
+    "Unfinished inventories: :count": "Rozpracované inventury: :count",
+    "Open attendance sessions: :count": "Otevřená docházka: :count",
+    "Shifts today or in the future: :count": "Dnešní a budoucí směny: :count",
+    "Shift requests today or in the future: :count": "Dnešní a budoucí požadavky na směny: :count",
+    "Unfinished bank statement imports: :count": "Nedokončené importy bankovních výpisů: :count"
 }

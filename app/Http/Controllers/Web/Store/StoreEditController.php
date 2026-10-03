@@ -25,6 +25,7 @@ class StoreEditController
     public function edit(Store $store): Response
     {
         return Inertia::render('stores/Edit', [
+            'deactivation_blockers' => (new StoreManagementService())->deactivationBlockers(User::mustAuth(), $store),
             'store' => [
                 'id' => $store->getKey(),
                 'name' => $store->getName(),

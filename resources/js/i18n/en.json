@@ -702,6 +702,8 @@
         "active_store": "Active store"
     },
     "stores": {
+        "deactivation_help": "Deactivation preserves stock, accounts, and history. Assigned users cannot access this store while it is inactive.",
+        "deactivation_blocked": "Before deactivating this store, resolve:",
         "slack_channel_placeholder": "#store-prague or C0123456789",
         "slack_channel_help": "Optional Slack channel name or ID for operational notifications.",
         "title": "Stores",

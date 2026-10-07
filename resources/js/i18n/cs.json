@@ -552,7 +552,9 @@
             "expires_on": "Platí do",
             "image": "Obrázek",
             "choose_image": "Vybrat obrázek",
-            "remove_image": "Odebrat obrázek"
+            "remove_image": "Odebrat obrázek",
+            "display_on": "Zobrazit při příchodu",
+            "display_on_help": "V tento den kartičku povinně potvrdí první příchozí v prodejně. Bez data se potvrzení nevyžaduje."
         },
         "editor": {
             "text_size": "Velikost textu",
@@ -567,6 +569,15 @@
             "link": "Odkaz",
             "link_prompt": "Zadejte adresu odkazu",
             "clear": "Zrušit formátování"
+        },
+        "display_on": "Při příchodu {date}",
+        "confirmed_by": "Potvrzeno pracovníkem {name} dne {datetime}",
+        "confirmation": {
+            "title": "Kartičky pro dnešní směnu",
+            "description": "{name}, přečtěte si kartičky pro {date}, každou označte a potvrďte celý seznam. Příchod je již zaznamenán.",
+            "read": "Kartičku jsem přečetl/a",
+            "progress": "Označeno {selected} z {total}",
+            "confirm": "Potvrdit kartičky"
         }
     },
     "dashboard": {

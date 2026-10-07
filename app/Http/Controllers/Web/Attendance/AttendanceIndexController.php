@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Attendance;
 
+use App\Domain\Noticeboard\NoticeboardConfirmationService;
 use App\Domain\Workforce\AttendanceOverviewService;
 use App\Domain\Workforce\AttendanceReportService;
 use App\Models\Store;
@@ -29,6 +30,7 @@ class AttendanceIndexController
             'store' => $store instanceof Store ? ['id' => $store->getKey(), 'name' => $store->getName(), 'is_warehouse' => $store->isWarehouse()] : null,
             'attendance_rows' => [], 'off_schedule_workers' => [],
             'store_state' => 'empty', 'is_admin' => $user->isAdmin(),
+            'noticeboard_confirmation' => null,
         ];
         if (!$store instanceof Store || $store->isWarehouse()) {
             return Inertia::render('attendance/Index', $props);
@@ -37,6 +39,7 @@ class AttendanceIndexController
         $props = [...$props, ...(new AttendanceOverviewService())->build($owner, $store)];
         $reportService = new AttendanceReportService();
         $props['store_state'] = $reportService->storeState($owner, $store);
+        $props['noticeboard_confirmation'] = (new NoticeboardConfirmationService())->pendingForStore($user, $store);
 
         return Inertia::render('attendance/Index', $props);
     }

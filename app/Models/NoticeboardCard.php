@@ -64,7 +64,7 @@ class NoticeboardCard extends BaseModel
         return $query->select([
             'id', 'user_id', 'store_id', 'created_by_user_id', 'updated_by_user_id',
             'title', 'body_html', 'body_text', 'label', 'color', 'size', 'image_path',
-            'image_mime', 'expires_at', 'lock_version', 'created_at', 'updated_at', 'deleted_at',
+            'image_mime', 'expires_at', 'display_on', 'lock_version', 'created_at', 'updated_at', 'deleted_at',
         ]);
     }
 
@@ -176,6 +176,14 @@ class NoticeboardCard extends BaseModel
     public function getExpiresAt(): Carbon|null
     {
         return $this->assertNullableCarbon('expires_at');
+    }
+
+    /**
+     * Local day on which the first arriving worker reads this card.
+     */
+    public function getDisplayOn(): string|null
+    {
+        return $this->assertNullableString('display_on');
     }
 
     /**

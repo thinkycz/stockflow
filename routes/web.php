@@ -13,6 +13,8 @@ use App\Http\Controllers\Web\Attendance\AttendanceDeviationReviewController;
 use App\Http\Controllers\Web\Attendance\AttendanceIndexController;
 use App\Http\Controllers\Web\Attendance\AttendancePrintController;
 use App\Http\Controllers\Web\Attendance\AttendanceReportController;
+use App\Http\Controllers\Web\Attendance\NoticeboardConfirmationImageController;
+use App\Http\Controllers\Web\Attendance\NoticeboardConfirmationStoreController;
 use App\Http\Controllers\Web\Auth\EmailVerificationConfirmController;
 use App\Http\Controllers\Web\Auth\ForgotPasswordController;
 use App\Http\Controllers\Web\Auth\LoginController;
@@ -195,6 +197,8 @@ Resolver::resolveRouteRegistrar()
         // Attendance (admin + limited assigned-store users)
         $router->get('attendance', AttendanceIndexController::class)->middleware('limited-section:attendance')->name('attendance.index');
         $router->post('attendance/actions', AttendanceActionController::class)->middleware('limited-section:attendance')->name('attendance.actions.store');
+        $router->post('attendance/noticeboard-confirmations/{confirmation}', NoticeboardConfirmationStoreController::class)->whereNumber('confirmation')->middleware('limited-section:attendance')->name('attendance.noticeboard-confirmations.store');
+        $router->get('attendance/noticeboard-confirmation-items/{item}/image', NoticeboardConfirmationImageController::class)->whereNumber('item')->middleware('limited-section:attendance')->name('attendance.noticeboard-confirmation-items.image');
 
         // Gift vouchers (admin + limited redemption)
         $router->get('gift-vouchers/redeem', [GiftVoucherIndexController::class, 'redeem'])->middleware('limited-section:gift_vouchers')->name('gift-vouchers.redeem-page');

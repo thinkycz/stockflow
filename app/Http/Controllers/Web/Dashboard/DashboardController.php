@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Web\Dashboard;
 
 use App\Domain\Checklists\ChecklistService;
 use App\Domain\Inventory\InventoryReadService;
+use App\Domain\Noticeboard\NoticeboardConfirmationService;
 use App\Domain\Workforce\AttendanceService;
 use App\Enums\LimitedUserSectionEnum;
 use App\Enums\NoticeboardCardColorEnum;
@@ -296,7 +297,8 @@ class DashboardController
         }
 
         $paginator = $query->orderByDesc('created_at')->orderByDesc('id')->paginate(24)->withQueryString();
-        $cards = $paginator->getCollection()->map(static function (NoticeboardCard $card): array {
+        $confirmations = $store->isWarehouse() ? [] : (new NoticeboardConfirmationService())->confirmedCards($user, $store, $paginator->getCollection());
+        $cards = $paginator->getCollection()->map(static function (NoticeboardCard $card) use ($confirmations): array {
             return [
                 'id' => $card->getKey(),
                 'body_html' => $card->getBodyHtml(),
@@ -307,6 +309,8 @@ class DashboardController
                     ? null
                     : Resolver::resolveUrlGenerator()->route('noticeboard-cards.image', $card->getKey()),
                 'expires_on' => $card->getExpiresAt()?->setTimezone('Europe/Prague')->toDateString(),
+                'display_on' => $card->getDisplayOn(),
+                'confirmation' => $confirmations[$card->getKey()] ?? null,
                 'version' => $card->getLockVersion(),
             ];
         })->all();

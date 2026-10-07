@@ -552,7 +552,9 @@
             "expires_on": "Expires on",
             "image": "Image",
             "choose_image": "Choose image",
-            "remove_image": "Remove image"
+            "remove_image": "Remove image",
+            "display_on": "Show on arrival",
+            "display_on_help": "The first arriving worker at this store must confirm this card on this date. Leave empty to require no confirmation."
         },
         "editor": {
             "text_size": "Text size",
@@ -567,6 +569,15 @@
             "link": "Link",
             "link_prompt": "Enter the link address",
             "clear": "Clear formatting"
+        },
+        "display_on": "On arrival {date}",
+        "confirmed_by": "Confirmed by {name} on {datetime}",
+        "confirmation": {
+            "title": "Cards for today’s shift",
+            "description": "{name}, read the cards for {date}, select each one and confirm the complete list. Your arrival is already recorded.",
+            "read": "I have read this card",
+            "progress": "{selected} of {total} selected",
+            "confirm": "Confirm cards"
         }
     },
     "dashboard": {

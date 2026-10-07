@@ -48,6 +48,7 @@ final class AssistantActionPresenter
         'direction',
         'occurred_on',
         'expires_on',
+        'display_on',
         'due_day',
         'locked',
         'archived',

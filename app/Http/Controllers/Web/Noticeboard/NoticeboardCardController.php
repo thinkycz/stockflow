@@ -40,6 +40,7 @@ class NoticeboardCardController
             'color' => $validity->color()->required()->toArray(),
             'size' => $validity->size()->nullable()->toArray(),
             'expires_on' => $validity->expiresOn()->nullable()->toArray(),
+            'display_on' => $validity->displayOn()->nullable()->toArray(),
             'image' => $validity->image()->nullable()->toArray(),
         ]);
 
@@ -53,6 +54,7 @@ class NoticeboardCardController
                 $validated->assertNullableString('size') ?? NoticeboardCardSizeEnum::Medium->value,
                 $validated->assertNullableString('expires_on'),
                 $validated->assertNullableFile('image'),
+                $validated->assertNullableString('display_on'),
             );
         } catch (InvalidArgumentException) {
             Thrower::default()->message('body_html', \__('The card content must contain visible text.'))->throw();
@@ -78,6 +80,7 @@ class NoticeboardCardController
             'color' => $validity->color()->required()->toArray(),
             'size' => $validity->size()->nullable()->toArray(),
             'expires_on' => $validity->expiresOn()->nullable()->toArray(),
+            'display_on' => $validity->displayOn()->nullable()->toArray(),
             'image' => $validity->image()->nullable()->toArray(),
             'remove_image' => $validity->removeImage()->nullable()->toArray(),
             'lock_version' => $validity->lockVersion()->required()->toArray(),
@@ -95,6 +98,8 @@ class NoticeboardCardController
                 $validated->assertNullableFile('image'),
                 $validated->parseBool('remove_image'),
                 $validated->parseInt('lock_version'),
+                $validated->assertNullableString('display_on'),
+                $request->exists('display_on'),
             );
         } catch (InvalidArgumentException) {
             Thrower::default()->message('body_html', \__('The card content must contain visible text.'))->throw();

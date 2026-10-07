@@ -18,6 +18,7 @@ Allowed cross-domain dependencies:
 | Payroll               | Workforce attendance reports                     |
 | Finance               | Payroll reports, Workforce attendance            |
 | OperationalActivity   | Finance reports                                  |
+| Workforce             | Noticeboard daily arrival confirmations          |
 | All remaining domains | None                                             |
 
 `DomainArchitectureTest` rejects unlisted edges, cycles, controller/assistant

@@ -65,7 +65,7 @@ const sizes = {
         "
     >
         <Loader2 v-if="props.loading" :size="14" class="animate-spin" />
-        <span v-if="props.loadingLabel" class="sr-only">
+        <span v-if="props.loading && props.loadingLabel" class="sr-only">
             {{ props.loadingLabel }}
         </span>
         <slot />

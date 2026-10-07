@@ -70,7 +70,7 @@ final class ReadNoticeboardTool extends AbstractReadResourceTool
     /**
      * @return array<string, mixed>
      */
-    private function record(NoticeboardCard $card, bool $includeText): array { $record = ['id' => $card->getKey(), 'store_id' => $card->getStoreId(), 'title' => $card->getTitle(), 'label' => $card->getLabel()->value, 'color' => $card->getColor()->value, 'size' => $card->getSize()->value, 'expires_at' => $card->getExpiresAt()?->toJSON(), 'deleted_at' => $card->getDeletedAt()?->toJSON(), 'has_image' => $card->getImagePath() !== null, 'binary_content_excluded' => $card->getImagePath() !== null, 'url' => Resolver::resolveUrlGenerator()->route('dashboard', ['store_id' => $card->getStoreId()])];
+    private function record(NoticeboardCard $card, bool $includeText): array { $record = ['id' => $card->getKey(), 'store_id' => $card->getStoreId(), 'title' => $card->getTitle(), 'label' => $card->getLabel()->value, 'color' => $card->getColor()->value, 'size' => $card->getSize()->value, 'expires_at' => $card->getExpiresAt()?->toJSON(), 'display_on' => $card->getDisplayOn(), 'deleted_at' => $card->getDeletedAt()?->toJSON(), 'has_image' => $card->getImagePath() !== null, 'binary_content_excluded' => $card->getImagePath() !== null, 'url' => Resolver::resolveUrlGenerator()->route('dashboard', ['store_id' => $card->getStoreId()])];
         if ($includeText) { $record['text'] = Resolver::resolve(NoticeboardContentSanitizer::class)->sanitize($card->getBodyHtml())['text']; }
 
         return $record; }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Workforce;
 
+use App\Domain\Noticeboard\NoticeboardConfirmationService;
 use App\Enums\AttendanceActionEnum;
 use App\Enums\OperationalActivityTypeEnum;
 use App\Models\AttendanceAudit;
@@ -194,6 +195,7 @@ class AttendanceService
                     'voided_at' => null,
                     'voided_by_user_id' => null,
                 ]);
+                (new NoticeboardConfirmationService())->initializeForArrival($actor, $store, $worker, $session);
                 $this->audit($session, $actor, $action->value);
                 $this->notify($actor, $store, $worker, $action, $now);
 

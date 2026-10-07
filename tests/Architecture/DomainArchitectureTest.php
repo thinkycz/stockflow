@@ -9,7 +9,7 @@ declare(strict_types=1);
 \test('domain dependencies follow the approved acyclic module graph', function (): void {
     $allowed = [
         'Identity' => [], 'Stores' => ['Inventory', 'Checklists'], 'Catalog' => [],
-        'Inventory' => [], 'Statements' => ['Workforce'], 'Workforce' => [],
+        'Inventory' => [], 'Statements' => ['Workforce'], 'Workforce' => ['Noticeboard'],
         'Payroll' => ['Workforce'], 'Finance' => ['Payroll', 'Workforce'],
         'BankStatements' => [], 'Recipes' => [], 'GiftVouchers' => [],
         'Checklists' => [], 'Noticeboard' => [], 'OperationalActivity' => ['Finance'],

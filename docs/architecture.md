@@ -309,6 +309,23 @@ Expirované a není totožná se smazáním. Privátní obrázek se vydává př
 autorizovaný store-scoped endpoint. Soft-deleted záznamy starší 30 dní
 odstraňuje denní příkaz `stockflow:prune-noticeboard-cards`.
 
+Volitelné `display_on` určuje pražský den povinného přečtení při prvním
+příchodu. Workforce při zaznamenání příchodu pod stejným zámkem prodejny
+vytvoří `noticeboard_confirmations` s unikátním párem prodejny a dne, i pokud
+nenajde žádné kartičky. `noticeboard_confirmation_items` ukládá neměnný
+obsah, vzhled a soukromý obrázek všech tehdy platných kartiček bez stránkování.
+Pozdější úpravy nemění denní seznam a již existující docházka před nasazením
+nevytváří zpětnou povinnost.
+
+Docházka vrací dnešní nevyřízené potvrzení v `noticeboard_confirmation`.
+Nezavíratelný dialog vyžaduje označení každé uložené položky; server ověří
+úplnou množinu ID a eviduje prvního pracovníka, potvrzující účet a čas.
+Docházka už během čtení běží. Potvrzování zůstává lidskou akcí, zatímco
+asistent může číst a upravovat datum kartičky. Nástěnka hromadně načítá
+indikátory potvrzení pro aktuální `display_on`; změna data skryje indikátor,
+historická kopie zůstane zachována. Obrázky používané kopiemi se nemažou
+s původní kartičkou a vydávají se přes autorizovaný endpoint uložené položky.
+
 Nástěnka je vizuálně plochá část dashboardu bez vnořených panelů; pastelové
 karty používají stejné zaoblení, border a stín jako ostatní systémové karty.
 Admin dashboard ponechává pouze kompaktní provozní metriky a poslední pohyby.

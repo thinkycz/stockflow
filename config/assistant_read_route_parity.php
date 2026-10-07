@@ -64,6 +64,7 @@ return [
         'read_financial_reports:rows' => 'Financial rows are embedded in the monthly financial report.',
     ],
     'excluded' => [
+        'attendance.noticeboard-confirmation-items.image' => 'Private binary snapshot images are excluded from model context.',
         'assistant.index' => 'Assistant control-plane page, not business data.',
         'assistant.conversations.show' => 'Assistant transcript control-plane data.',
         'assistant.turns.stream' => 'Durable event transport.',

@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { ArchiveRestore, ImagePlus, Pencil, Plus, Trash2 } from '@lucide/vue';
+import {
+    ArchiveRestore,
+    BadgeCheck,
+    CalendarDays,
+    ImagePlus,
+    Pencil,
+    Plus,
+    Trash2,
+} from '@lucide/vue';
 import Button from '@/components/ui/Button.vue';
 import Alert from '@/components/ui/Alert.vue';
 import Badge from '@/components/ui/Badge.vue';
@@ -15,6 +23,8 @@ import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import Tabs from '@/components/ui/Tabs.vue';
 import RichTextEditor from '@/features/noticeboard/components/RichTextEditor.vue';
+import NoticeboardCardContent from '@/features/noticeboard/components/NoticeboardCardContent.vue';
+import { formatDate } from '@/lib/format';
 import {
     useNoticeboard,
     type NoticeboardProps,
@@ -46,6 +56,7 @@ const {
     labelIcon,
     colorSwatchClass,
     cardClass,
+    confirmationLabel,
 } = useNoticeboard(props);
 </script>
 
@@ -118,19 +129,31 @@ const {
                     :class="cardClass(card.color, card.size)"
                     :data-card-color="card.color"
                     :data-card-size="card.size"
+                    :data-testid="`noticeboard-card-${card.id}`"
                 >
                     <div class="flex items-start justify-between gap-3">
-                        <Badge
-                            class="bg-white/60 py-1.5 text-slate-700 shadow-sm"
-                            :title="t(`noticeboard.labels.${card.label}`)"
-                        >
-                            <component
-                                :is="labelIcon(card.label)"
-                                :size="15"
-                                aria-hidden="true"
-                            />
-                            {{ t(`noticeboard.labels.${card.label}`) }}
-                        </Badge>
+                        <div class="flex min-w-0 items-center gap-2">
+                            <Badge
+                                class="bg-white/60 py-1.5 text-slate-700 shadow-sm"
+                                :title="t(`noticeboard.labels.${card.label}`)"
+                            >
+                                <component
+                                    :is="labelIcon(card.label)"
+                                    :size="15"
+                                    aria-hidden="true"
+                                />
+                                {{ t(`noticeboard.labels.${card.label}`) }}
+                            </Badge>
+                            <span
+                                v-if="card.confirmation"
+                                role="img"
+                                class="shrink-0 text-emerald-700"
+                                :title="confirmationLabel(card)"
+                                :aria-label="confirmationLabel(card)"
+                                data-testid="noticeboard-confirmed"
+                                ><BadgeCheck :size="20" aria-hidden="true"
+                            /></span>
+                        </div>
                         <div
                             class="flex opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                             @click.stop
@@ -180,16 +203,18 @@ const {
                             </template>
                         </div>
                     </div>
-                    <img
-                        v-if="card.image_url"
-                        :src="card.image_url"
-                        :alt="t(`noticeboard.labels.${card.label}`)"
-                        class="mt-4 h-32 w-full rounded-xl object-cover"
-                    />
-                    <div
-                        class="noticeboard-rich-text mt-4 max-h-48 overflow-y-auto pr-1 text-sm leading-relaxed text-slate-700"
-                        v-html="card.body_html"
-                    />
+                    <p
+                        v-if="card.display_on"
+                        class="mt-3 flex items-center gap-1.5 text-xs text-slate-600"
+                    >
+                        <CalendarDays :size="14" aria-hidden="true" />
+                        {{
+                            t('noticeboard.display_on', {
+                                date: formatDate(card.display_on),
+                            })
+                        }}
+                    </p>
+                    <NoticeboardCardContent :card="card" compact />
                 </article>
             </div>
 
@@ -330,6 +355,20 @@ const {
                         type="date"
                     />
                 </div>
+                <div>
+                    <Label for="noticeboard-display-on" class="mb-1.5 block">{{
+                        t('noticeboard.form.display_on')
+                    }}</Label>
+                    <Input
+                        id="noticeboard-display-on"
+                        v-model="form.display_on"
+                        type="date"
+                    />
+                    <p class="mt-1.5 text-xs text-on-surface-variant">
+                        {{ t('noticeboard.form.display_on_help') }}
+                    </p>
+                    <FieldError :message="form.errors.display_on" />
+                </div>
             </div>
 
             <div>
@@ -395,34 +434,3 @@ const {
         </form>
     </Modal>
 </template>
-
-<style>
-.noticeboard-rich-text p + p,
-.noticeboard-rich-text ul + p,
-.noticeboard-rich-text ol + p {
-    margin-top: 0.65rem;
-}
-
-.noticeboard-rich-text ul {
-    list-style: disc;
-    padding-left: 1.25rem;
-}
-
-.noticeboard-rich-text ol {
-    list-style: decimal;
-    padding-left: 1.25rem;
-}
-
-.noticeboard-rich-text a {
-    color: var(--color-primary);
-    text-decoration: underline;
-}
-
-.noticeboard-rich-text [data-text-size='small'] {
-    font-size: 0.75rem;
-}
-
-.noticeboard-rich-text [data-text-size='large'] {
-    font-size: 1.25rem;
-}
-</style>

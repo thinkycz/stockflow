@@ -35,6 +35,7 @@ class E2ESeeder extends Seeder
     public function run(): void
     {
         $this->call(DatabaseSeeder::class);
+        $this->seedNoticeboardConfirmations();
         $user = User::query()->where('email', 'test@test.com')->first();
 
         if (!$user instanceof User) {
@@ -568,6 +569,19 @@ class E2ESeeder extends Seeder
             }
             $bank = BankStatement::factory()->forStore($store)->create(['bank_name' => 'Synthetic bank', 'original_name' => 'synthetic-actions-' . $locale . '.pdf', 'period_from' => $first, 'period_to' => $last]);
             BankStatementTransaction::factory()->forStatement($bank)->create(['category' => 'wolt', 'amount' => '318.50', 'booked_on' => \sprintf('2027-%02d-07', $month), 'sales_from' => $first, 'sales_to' => $last, 'item_type' => 'Calendar action row', 'description' => null, 'variable_symbol' => null, 'specific_symbol' => null, 'manually_edited' => true]);
+        }
+    }
+
+    /**
+     * Isolated first-arrival browser account without existing attendance.
+     */
+    private function seedNoticeboardConfirmations(): void
+    {
+        $owner = UserFactory::new()->admin()->password()->createOne(['email' => 'noticeboard@test.com', 'locale' => 'en']);
+        $store = Store::factory()->create(['user_id' => $owner->getKey(), 'is_warehouse' => false, 'name' => 'Noticeboard Store']);
+        foreach (['First', 'Second'] as $name) {
+            $worker = Worker::factory()->create(['user_id' => $owner->getKey(), 'first_name' => $name, 'last_name' => 'Arrival']);
+            Shift::factory()->create(['user_id' => $owner->getKey(), 'store_id' => $store->getKey(), 'worker_id' => $worker->getKey(), 'date' => CarbonImmutable::now('Europe/Prague')->toDateString(), 'start_time' => '00:00', 'end_time' => '23:59']);
         }
     }
 }

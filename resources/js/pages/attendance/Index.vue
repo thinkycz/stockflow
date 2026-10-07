@@ -25,6 +25,7 @@ import PageHeader from '@/components/ui/PageHeader.vue';
 import Select from '@/components/ui/Select.vue';
 import StoreContextIndicator from '@/components/ui/StoreContextIndicator.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import NoticeboardConfirmationDialog from '@/features/noticeboard/components/NoticeboardConfirmationDialog.vue';
 import {
     useAttendance,
     type AttendanceProps,
@@ -60,6 +61,9 @@ const {
 
 <template>
     <AppLayout :title="t('attendance.title')">
+        <NoticeboardConfirmationDialog
+            :confirmation="noticeboard_confirmation"
+        />
         <div class="flex flex-col gap-6">
             <PageHeader
                 :title="t('attendance.title')"

@@ -155,6 +155,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
             'color' => 'yellow',
             'size' => 'medium',
             'expires_on' => null,
+            'display_on' => '2026-10-07',
         ], \JSON_THROW_ON_ERROR),
     ];
     $arguments = \nativeResourceArguments($arguments);
@@ -166,8 +167,23 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
     $card = NoticeboardCard::query()->sole();
 
     \expect($card->getTitle())->toBe('Assistant notice')
+        ->and($card->getDisplayOn())->toBe('2026-10-07')
         ->and($card->getBodyHtml())->toContain('<strong>notice</strong>')
         ->not->toContain('<script');
+});
+
+\test('assistant noticeboard date updates distinguish omitted values from explicit removal', function (): void {
+    [$admin, $store] = \createIsolatedUserWithWarehouse();
+    $card = NoticeboardCard::factory()->create(['user_id' => $admin->getKey(), 'store_id' => $store->getKey(), 'display_on' => '2026-10-07']);
+    $tool = \nativeResourceTool($admin, 'noticeboard-date-edit', 'write_noticeboard');
+    foreach ([[], ['display_on' => '2026-10-08'], ['display_on' => null]] as $index => $dateFields) {
+        $tool->handle(new Request(['request' => [
+            'action' => 'update_noticeboard_card', 'store_id' => $store->getKey(), 'target_id' => $card->getKey(),
+            'context' => ['lock_version' => $index + 1],
+            'values' => ['body_html' => '<p>Updated card</p>', 'label' => 'information', 'color' => 'yellow', ...$dateFields],
+        ]], 'noticeboard-date-' . $index, 'noticeboard-date-invocation-' . $index));
+        \expect($card->refresh()->getDisplayOn())->toBe([0 => '2026-10-07', 1 => '2026-10-08', 2 => null][$index]);
+    }
 });
 
 \test('operations assistant cannot mutate noticeboard history for an inactive store', function (): void {

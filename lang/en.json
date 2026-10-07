@@ -385,5 +385,8 @@
     "Unfinished inventories: :count": "Unfinished inventories: :count",
     "Open attendance sessions: :count": "Open attendance sessions: :count",
     "Shifts today or in the future: :count": "Shifts today or in the future: :count",
-    "Unfinished bank statement imports: :count": "Unfinished bank statement imports: :count"
+    "Unfinished bank statement imports: :count": "Unfinished bank statement imports: :count",
+    "This confirmation belongs to a different day.": "This confirmation belongs to a different day.",
+    "Read and select every card before confirming.": "Read and select every card before confirming.",
+    "Cards confirmed.": "Cards confirmed."
 }

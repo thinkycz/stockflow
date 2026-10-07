@@ -6,7 +6,9 @@ namespace App\Domain\Noticeboard;
 
 use App\Enums\FilesystemDiskEnum;
 use App\Enums\OperationalActivityTypeEnum;
+use App\Http\Validation\NoticeboardCardValidity;
 use App\Models\NoticeboardCard;
+use App\Models\NoticeboardConfirmationItem;
 use App\Models\Store;
 use App\Models\User;
 use App\Support\OperationalActivityService;
@@ -33,13 +35,16 @@ class NoticeboardCardService
         string $size,
         string|null $expiresOn,
         UploadedFile|null $image,
+        string|null $displayOn = null,
     ): NoticeboardCard {
         $this->authorize($actor, $store->getUserId(), $store->getKey());
+        $displayOn = $displayOn === '' ? null : $displayOn;
+        $this->validateDisplayOn($displayOn);
         $content = (new NoticeboardContentSanitizer())->sanitize($bodyHtml);
         $imageData = $this->storeImage($store, $image);
 
         try {
-            return DB::transaction(function () use ($actor, $store, $content, $label, $color, $size, $expiresOn, $imageData): NoticeboardCard {
+            return DB::transaction(function () use ($actor, $store, $content, $label, $color, $size, $expiresOn, $imageData, $displayOn): NoticeboardCard {
                 $store = $this->lockActiveStore($actor->resolveScopeUser()->getKey(), $store->getKey());
 
                 $card = NoticeboardCard::query()->create([
@@ -56,6 +61,7 @@ class NoticeboardCardService
                     'image_path' => $imageData['path'],
                     'image_mime' => $imageData['mime'],
                     'expires_at' => $this->expiration($expiresOn),
+                    'display_on' => $displayOn,
                     'lock_version' => 1,
                 ]);
                 $this->notifyChange(OperationalActivityTypeEnum::NOTICEBOARD_CREATED, $card, $actor);
@@ -83,8 +89,14 @@ class NoticeboardCardService
         UploadedFile|null $image,
         bool $removeImage,
         int $lockVersion,
+        string|null $displayOn = null,
+        bool $updateDisplayOn = false,
     ): NoticeboardCard {
         $this->authorize($actor, $card->getUserId(), $card->getStoreId());
+        $displayOn = $displayOn === '' ? null : $displayOn;
+        if ($updateDisplayOn) {
+            $this->validateDisplayOn($displayOn);
+        }
         $content = (new NoticeboardContentSanitizer())->sanitize($bodyHtml);
         $imageData = $this->storeImage($card->getStoreId(), $image);
         $oldImagePath = $card->getImagePath();
@@ -101,6 +113,8 @@ class NoticeboardCardService
                 $imageData,
                 $removeImage,
                 $lockVersion,
+                $displayOn,
+                $updateDisplayOn,
             ): NoticeboardCard {
                 $this->lockActiveStore($actor->resolveScopeUser()->getKey(), $card->getStoreId());
                 $locked = NoticeboardCard::query()
@@ -122,6 +136,9 @@ class NoticeboardCardService
                 $locked->setAttribute('color', $color);
                 $locked->setAttribute('size', $size);
                 $locked->setAttribute('expires_at', $this->expiration($expiresOn));
+                if ($updateDisplayOn) {
+                    $locked->setAttribute('display_on', $displayOn);
+                }
                 $locked->setAttribute('updated_by_user_id', $actor->getKey());
                 $locked->setAttribute('lock_version', $lockVersion + 1);
 
@@ -133,7 +150,7 @@ class NoticeboardCardService
                     $locked->setAttribute('image_mime', null);
                 }
 
-                $changed = $locked->isDirty(['body_html', 'body_text', 'label', 'expires_at', 'image_path']);
+                $changed = $locked->isDirty(['body_html', 'body_text', 'label', 'expires_at', 'display_on', 'image_path']);
                 $locked->save();
                 if ($changed) {
                     $this->notifyChange(OperationalActivityTypeEnum::NOTICEBOARD_UPDATED, $locked, $actor);
@@ -284,9 +301,24 @@ class NoticeboardCardService
             return true;
         }
 
+        if (NoticeboardConfirmationItem::query()->where('image_path', $path)->exists()) {
+            return true;
+        }
+
         $disk = Resolver::resolveFilesystemManager()->disk(FilesystemDiskEnum::Private->value);
 
         return !$disk->exists($path) || $disk->delete($path);
+    }
+
+    /**
+     * Enforce the same date contract for every domain caller.
+     */
+    private function validateDisplayOn(string|null $displayOn): void
+    {
+        Resolver::resolveValidatorFactory()->make(
+            ['display_on' => $displayOn],
+            ['display_on' => NoticeboardCardValidity::inject()->displayOn()->nullable()->toArray()],
+        )->validate();
     }
 
     /**

@@ -361,7 +361,7 @@ final class AssistantResourceToolDefinitions
     /**
      * @return array<string, array<string, mixed>>
      */
-    private static function noticeValues(): array { return ['body_html' => self::textarea(true, 'Content'), 'label' => self::text(true, 'Label'), 'color' => self::text(true, 'Color'), 'size' => self::text(false, 'Size'), 'expires_on' => self::date(false, 'Expires on')]; }
+    private static function noticeValues(): array { return ['body_html' => self::textarea(true, 'Content'), 'label' => self::text(true, 'Label'), 'color' => self::text(true, 'Color'), 'size' => self::text(false, 'Size'), 'expires_on' => self::date(false, 'Expires on'), 'display_on' => [...self::date(false, 'Show on arrival'), 'nullable' => true]]; }
 
     /**
      * @return array<string, array<string, mixed>>

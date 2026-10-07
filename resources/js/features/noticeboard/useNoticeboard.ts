@@ -12,17 +12,8 @@ import { useRoute } from '@/composables/useRoute';
 import { useDialog } from '@/composables/useDialog';
 import { withActionErrorToast } from '@/lib/action-errors';
 import { cn } from '@/lib/utils';
-
-export type NoticeboardCard = {
-    id: number;
-    body_html: string;
-    label: 'information' | 'important' | 'task' | 'event';
-    color: 'yellow' | 'pink' | 'blue' | 'green' | 'purple';
-    size: 'small' | 'medium' | 'large';
-    image_url: string | null;
-    expires_on: string | null;
-    version: number;
-};
+import { formatDateTime } from '@/lib/format';
+import type { NoticeboardCard } from '@/types/noticeboard';
 
 export type NoticeboardPayload = {
     cards: NoticeboardCard[];
@@ -46,6 +37,27 @@ export type NoticeboardProps = {
     noticeboard: NoticeboardPayload;
     activeStore: { id: number; name: string } | null;
 };
+
+export function noticeboardCardClass(
+    color: NoticeboardCard['color'],
+    size: NoticeboardCard['size'],
+): string {
+    return cn(
+        'group relative flex flex-col overflow-hidden rounded-2xl border p-5 shadow-sm transition hover:border-primary/25 hover:shadow-md',
+        {
+            yellow: 'border-amber-200/80 bg-amber-50',
+            pink: 'border-pink-200/80 bg-pink-50',
+            blue: 'border-sky-200/80 bg-sky-50',
+            green: 'border-emerald-200/80 bg-emerald-50',
+            purple: 'border-violet-200/80 bg-violet-50',
+        }[color],
+        {
+            small: 'min-h-48',
+            medium: 'min-h-60 sm:col-span-2',
+            large: 'min-h-72 sm:col-span-2 xl:col-span-4',
+        }[size],
+    );
+}
 
 export function useNoticeboard(props: NoticeboardProps) {
     const { t } = useI18n();
@@ -72,6 +84,7 @@ export function useNoticeboard(props: NoticeboardProps) {
         color: 'yellow',
         size: 'medium',
         expires_on: '',
+        display_on: '',
         image: null as File | null,
         remove_image: false,
         lock_version: 1,
@@ -164,6 +177,7 @@ export function useNoticeboard(props: NoticeboardProps) {
         form.color = card.color;
         form.size = card.size;
         form.expires_on = card.expires_on ?? '';
+        form.display_on = card.display_on ?? '';
         form.image = null;
         form.remove_image = false;
         form.lock_version = card.version;
@@ -274,25 +288,13 @@ export function useNoticeboard(props: NoticeboardProps) {
         }[color];
     }
 
-    function cardClass(
-        color: NoticeboardCard['color'],
-        size: NoticeboardCard['size'],
-    ): string {
-        return cn(
-            'group relative flex flex-col overflow-hidden rounded-2xl border p-5 shadow-sm transition hover:border-primary/25 hover:shadow-md',
-            {
-                yellow: 'border-amber-200/80 bg-amber-50',
-                pink: 'border-pink-200/80 bg-pink-50',
-                blue: 'border-sky-200/80 bg-sky-50',
-                green: 'border-emerald-200/80 bg-emerald-50',
-                purple: 'border-violet-200/80 bg-violet-50',
-            }[color],
-            {
-                small: 'min-h-48',
-                medium: 'min-h-60 sm:col-span-2',
-                large: 'min-h-72 sm:col-span-2 xl:col-span-4',
-            }[size],
-        );
+    function confirmationLabel(card: NoticeboardCard): string {
+        return card.confirmation
+            ? t('noticeboard.confirmed_by', {
+                  name: card.confirmation.worker_name,
+                  datetime: formatDateTime(card.confirmation.confirmed_at),
+              })
+            : '';
     }
     return {
         t,
@@ -318,6 +320,7 @@ export function useNoticeboard(props: NoticeboardProps) {
         forceDestroy,
         labelIcon,
         colorSwatchClass,
-        cardClass,
+        cardClass: noticeboardCardClass,
+        confirmationLabel,
     };
 }

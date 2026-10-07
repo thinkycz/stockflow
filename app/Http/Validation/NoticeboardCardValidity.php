@@ -74,6 +74,14 @@ class NoticeboardCardValidity
     }
 
     /**
+     * Optional Prague business date for the reading confirmation.
+     */
+    public function displayOn(): Validity
+    {
+        return $this->baseValidity->make()->string(null)->dateFormat('Y-m-d');
+    }
+
+    /**
      * Optional card image.
      */
     public function image(): Validity

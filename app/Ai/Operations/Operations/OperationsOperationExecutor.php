@@ -150,6 +150,7 @@ final class OperationsOperationExecutor implements AssistantOperationExecutor
                     Typer::parseNullableString($values['size'] ?? null) ?? NoticeboardCardSizeEnum::Medium->value,
                     Typer::parseNullableString($values['expires_on'] ?? null),
                     null,
+                    Typer::parseNullableString($values['display_on'] ?? null),
                 )->getKey();
             } catch (InvalidArgumentException) {
                 Thrower::default()->message('body_html', \__('The card content must contain visible text.'))->throw();
@@ -177,6 +178,8 @@ final class OperationsOperationExecutor implements AssistantOperationExecutor
                     null,
                     Typer::parseBool($values['remove_image'] ?? false),
                     Typer::parseInt($context['lock_version'] ?? null),
+                    Typer::parseNullableString($values['display_on'] ?? null),
+                    \array_key_exists('display_on', $values),
                 );
             } catch (InvalidArgumentException) {
                 Thrower::default()->message('body_html', \__('The card content must contain visible text.'))->throw();
@@ -211,8 +214,8 @@ final class OperationsOperationExecutor implements AssistantOperationExecutor
             'update_checklist_item' => ['completed' => $checklist->completed()->required()->toArray(), 'worker_id' => $checklist->workerId()->nullable()->toArray(), 'lock_version' => $checklist->lockVersion()->required()->toArray()],
             'excuse_checklist_day', 'restore_checklist_day' => ['reason' => $checklist->reason()->required()->toArray()],
             'replace_checklist_template' => ['scope' => $checklist->scope()->required()->toArray(), 'weekday' => $checklist->weekday()->nullable()->toArray(), 'shift' => $checklist->shift()->required()->toArray(), 'tasks' => $checklist->tasks()->required()->toArray(), 'tasks.*.text' => $checklist->taskText()->required()->toArray()],
-            'create_noticeboard_card' => ['body_html' => $card->bodyHtml()->required()->toArray(), 'label' => $card->label()->required()->toArray(), 'color' => $card->color()->required()->toArray(), 'size' => $card->size()->nullable()->toArray(), 'expires_on' => $card->expiresOn()->nullable()->toArray()],
-            'update_noticeboard_card' => ['body_html' => $card->bodyHtml()->required()->toArray(), 'label' => $card->label()->required()->toArray(), 'color' => $card->color()->required()->toArray(), 'size' => $card->size()->nullable()->toArray(), 'expires_on' => $card->expiresOn()->nullable()->toArray(), 'remove_image' => $card->removeImage()->nullable()->toArray(), 'lock_version' => $card->lockVersion()->required()->toArray()],
+            'create_noticeboard_card' => ['body_html' => $card->bodyHtml()->required()->toArray(), 'label' => $card->label()->required()->toArray(), 'color' => $card->color()->required()->toArray(), 'size' => $card->size()->nullable()->toArray(), 'expires_on' => $card->expiresOn()->nullable()->toArray(), 'display_on' => $card->displayOn()->nullable()->toArray()],
+            'update_noticeboard_card' => ['body_html' => $card->bodyHtml()->required()->toArray(), 'label' => $card->label()->required()->toArray(), 'color' => $card->color()->required()->toArray(), 'size' => $card->size()->nullable()->toArray(), 'expires_on' => $card->expiresOn()->nullable()->toArray(), 'display_on' => $card->displayOn()->nullable()->toArray(), 'remove_image' => $card->removeImage()->nullable()->toArray(), 'lock_version' => $card->lockVersion()->required()->toArray()],
             'trash_noticeboard_card', 'restore_noticeboard_card', 'delete_noticeboard_card_permanently' => [],
             default => throw new InvalidArgumentException('Unknown daily-operations action.'),
         };

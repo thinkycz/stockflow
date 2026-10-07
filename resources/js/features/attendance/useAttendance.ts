@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useDialog } from '@/composables/useDialog';
 import { useRoute } from '@/composables/useRoute';
+import type { NoticeboardConfirmation } from '@/types/noticeboard';
 
 type AttendanceStatus = 'absent' | 'present' | 'break' | 'stale';
 
@@ -36,6 +37,7 @@ export type AttendanceProps = {
     off_schedule_workers: Array<{ id: number; name: string }>;
     store_state: 'occupied' | 'empty' | 'unclear';
     is_admin: boolean;
+    noticeboard_confirmation: NoticeboardConfirmation | null;
 };
 
 export function useAttendance(props: AttendanceProps) {
@@ -264,6 +266,7 @@ export function useAttendance(props: AttendanceProps) {
                         'attendance_rows',
                         'off_schedule_workers',
                         'store_state',
+                        'noticeboard_confirmation',
                     ],
                 });
         }, 30_000);

@@ -292,6 +292,10 @@ abstract class ConfiguredWriteResourceTool extends AbstractExecutorBackedResourc
             $type->description($definition['description']);
         }
 
+        if (($definition['nullable'] ?? false) === true) {
+            $type->nullable();
+        }
+
         return $type;
     }
 

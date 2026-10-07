@@ -158,6 +158,7 @@ $matrix = [
 
     // Authenticated mutation-shaped routes intentionally outside assistant operations.
     'excluded' => [
+        'attendance.noticeboard-confirmations.store' => 'A worker must personally read and confirm the daily cards in the attendance dialog.',
         'shifts.bulk-destroy' => 'Calendar selection and batch confirmation are handled in the shift management dialog; the assistant retains individual shift deletion.',
         'shift-requests.destroy' => 'Individual request cancellation is handled in the administrator calendar dialog; no assistant adapter is exposed.',
         'attendance.sessions.restore' => 'Report-only restoration with a reviewed departure and reason; no assistant adapter is exposed.',

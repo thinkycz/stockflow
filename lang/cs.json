@@ -385,5 +385,8 @@
     "Unfinished inventories: :count": "Rozpracované inventury: :count",
     "Open attendance sessions: :count": "Otevřená docházka: :count",
     "Shifts today or in the future: :count": "Dnešní a budoucí směny: :count",
-    "Unfinished bank statement imports: :count": "Nedokončené importy bankovních výpisů: :count"
+    "Unfinished bank statement imports: :count": "Nedokončené importy bankovních výpisů: :count",
+    "This confirmation belongs to a different day.": "Potvrzení patří k jinému dni.",
+    "Read and select every card before confirming.": "Před potvrzením si přečtěte a označte všechny kartičky.",
+    "Cards confirmed.": "Kartičky potvrzeny."
 }

@@ -14,6 +14,26 @@ use Illuminate\Support\Facades\Storage;
 use Thinkycz\LaravelCore\Support\Config;
 use Thinkycz\LaravelCore\Support\Typer;
 
+\test('card display date validates persists preserves omitted updates and clears explicitly', function (): void {
+    [$admin, $store] = \createIsolatedUserWithWarehouse();
+    $this->withSession(\activeStoreSession($store));
+    $this->be($admin, 'users');
+    $base = ['body_html' => '<p>Reading card</p>', 'label' => 'information', 'color' => 'yellow'];
+    foreach (['invalid', '2026-02-30', '2026-10-07T08:00:00'] as $invalid) {
+        $this->post('/noticeboard-cards', [...$base, 'display_on' => $invalid])->assertUnprocessable();
+    }
+    $this->post('/noticeboard-cards', [...$base, 'display_on' => '2026-10-07'])->assertRedirect('/dashboard');
+    $card = NoticeboardCard::query()->sole();
+    \expect($card->getDisplayOn())->toBe('2026-10-07');
+    $url = '/noticeboard-cards/' . $card->getKey();
+    $this->put($url, [...$base, 'lock_version' => 1])->assertRedirect('/dashboard');
+    \expect($card->refresh()->getDisplayOn())->toBe('2026-10-07');
+    $this->put($url, [...$base, 'lock_version' => 2, 'display_on' => '2026-10-08'])->assertRedirect('/dashboard');
+    \expect($card->refresh()->getDisplayOn())->toBe('2026-10-08');
+    $this->put($url, [...$base, 'lock_version' => 3, 'display_on' => null])->assertRedirect('/dashboard');
+    \expect($card->refresh()->getDisplayOn())->toBeNull();
+});
+
 \test('admin can create a sanitized card for the active store', function (): void {
     Notification::fake();
     Config::inject()->assign('services.slack.notifications.bot_user_oauth_token', 'xoxb-test');

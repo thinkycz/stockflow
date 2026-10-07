@@ -15,6 +15,7 @@ const props = withDefaults(
         class?: string;
         bodyClass?: string;
         closeOnBackdrop?: boolean;
+        dismissible?: boolean;
         layer?: 'default' | 'alert';
         size?: 'sm' | 'md' | 'lg' | 'full';
     }>(),
@@ -23,6 +24,7 @@ const props = withDefaults(
         class: '',
         bodyClass: '',
         closeOnBackdrop: true,
+        dismissible: true,
         layer: 'default',
         size: 'md',
     },
@@ -72,7 +74,7 @@ function focusable(): HTMLElement[] {
 }
 
 function close(): void {
-    emit('close');
+    if (props.dismissible) emit('close');
 }
 
 function onKeydown(e: KeyboardEvent): void {
@@ -129,6 +131,7 @@ watch(
             previousFocus = null;
         }
     },
+    { immediate: true },
 );
 </script>
 
@@ -172,6 +175,7 @@ watch(
                         </h2>
                     </slot>
                     <Button
+                        v-if="dismissible"
                         size="icon-sm"
                         variant="ghost"
                         class="rounded-lg"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, useId } from 'vue';
 import { useI18n } from 'vue-i18n';
 import RecipeInstructionIcon from './RecipeInstructionIcon.vue';
 import type { RecipeIngredient } from '../types';
@@ -10,6 +10,7 @@ const props = withDefaults(
 );
 const checked = defineModel<string[]>({ default: () => [] });
 const { t, locale } = useI18n();
+const id = useId();
 const groups = computed(() =>
     [...new Set(props.ingredients.map((ingredient) => ingredient.group))].map(
         (name) => ({
@@ -41,8 +42,14 @@ function amount(ingredient: RecipeIngredient): string {
 
 <template>
     <div class="space-y-5" data-testid="recipe-ingredients">
-        <section v-for="group in groups" :key="group.name">
+        <section
+            v-for="(group, index) in groups"
+            :key="group.name"
+            :aria-labelledby="`${id}-group-${index}`"
+            data-testid="recipe-ingredient-group"
+        >
             <h3
+                :id="`${id}-group-${index}`"
                 class="mb-2 text-xs font-bold tracking-wide text-on-surface-variant uppercase"
             >
                 {{ group.name }}
@@ -51,6 +58,8 @@ function amount(ingredient: RecipeIngredient): string {
                 <label
                     v-for="ingredient in group.ingredients"
                     :key="ingredient.key"
+                    data-testid="recipe-ingredient-row"
+                    :data-icon-group="ingredient.icon_group"
                     class="grid min-h-12 grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 py-2.5 sm:grid-cols-[auto_minmax(0,1fr)_auto]"
                     :class="checklist ? 'cursor-pointer' : ''"
                 >

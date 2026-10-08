@@ -15,13 +15,23 @@ use Thinkycz\LaravelCore\Support\Typer;
  * @phpstan-type IngredientRow array{key: string, group: string, name: string, quantity_value: float|int|null, quantity_text: string|null, unit: string|null, icon_group: string}
  * @phpstan-type StepRow array{key: string, title: string, text: string, action_key: string, timer_seconds: int|null}
  * @phpstan-type AdjustmentRow array{ingredient_name: string, unit: string, base_quantity: float|int, two_toppings_quantity: float|int, three_toppings_quantity: float|int}
- * @phpstan-type VariantRow array{key: string, name: string, selectors: array<string, string>, ingredients: list<IngredientRow>, steps: list<StepRow>, tips_html: string, topping_adjustments: list<AdjustmentRow>}
+ * @phpstan-type VariantRow array{key: string, name: string, selectors: array<string, string>, selector_labels: array<string, string>, ingredients: list<IngredientRow>, steps: list<StepRow>, tips_html: string, topping_adjustments: list<AdjustmentRow>}
  * @phpstan-type RelatedRow array{key: string, name: string, url: string}
  * @phpstan-type RecipeRow array{key: string, slug: string, name: string, category: CategoryRow, position: int, summary: string, tags: list<string>, aliases: list<string>, equipment: list<string>, variants: list<VariantRow>, notes_html: string, related: list<RelatedRow>, url: string}
  * @phpstan-type LookupRow array{key: string, name: string, category_name: string, category_key: string, aliases: list<string>, keywords: list<string>, url: string}
  */
 final class RecipeCatalogRepository
 {
+    /**
+     * Ingredient components use the same relative order in every authored variant.
+     */
+    private const array COMPONENTS = ['Drink base', 'Drink mixture', 'Steamed milk', 'Hot tea', 'Taro mixture', 'Milk to volume', 'Matcha', 'Tea blend', 'Batch', 'Cooking', 'Rinsing', 'Sauce', 'Ice', 'Top-up', 'Cloud / topping', 'Finish'];
+
+    /**
+     * Localize authored content while keeping keys, quantities, and actions unchanged.
+     */
+    private readonly RecipeContentTranslator $translator;
+
     /**
      * @var list<RecipeRow>|null
      */
@@ -35,7 +45,10 @@ final class RecipeCatalogRepository
          * Alternate catalog directory for isolated validation.
          */
         private readonly string|null $directory = null,
-    ) {}
+        string $locale = 'en',
+    ) {
+        $this->translator = new RecipeContentTranslator($locale);
+    }
 
     /**
      * @return list<RecipeRow>
@@ -108,7 +121,7 @@ final class RecipeCatalogRepository
         return \array_map(static fn(array $recipe): array => [
             'key' => $recipe['key'], 'name' => $recipe['name'], 'category_name' => $recipe['category']['name'],
             'category_key' => $recipe['category']['key'], 'aliases' => $recipe['aliases'],
-            'keywords' => [...$recipe['tags'], ...\array_column($recipe['variants'], 'name')], 'url' => $recipe['url'],
+            'keywords' => [...$recipe['tags'], ...\array_column($recipe['variants'], 'name'), ...\array_unique(\array_merge(...\array_map(static fn(array $variant): array => \array_column($variant['ingredients'], 'name'), $recipe['variants'])))], 'url' => $recipe['url'],
         ], $this->recipes());
     }
 
@@ -122,7 +135,7 @@ final class RecipeCatalogRepository
             $row = Typer::assertStringKeyArray(Typer::assertArray($value));
             $key = Typer::assertString($row['key'] ?? null);
             $this->assertKey($key);
-            $categories[] = ['key' => $key, 'name' => Typer::assertString($row['name'] ?? null), 'position' => Typer::assertInt($row['position'] ?? null), 'recipe_count' => 0];
+            $categories[] = ['key' => $key, 'name' => $this->translator->text(Typer::assertString($row['name'] ?? null)), 'position' => Typer::assertInt($row['position'] ?? null), 'recipe_count' => 0];
         }
         if (\count(\array_column($categories, 'key')) !== \count(\array_unique(\array_column($categories, 'key')))) {
             throw new RuntimeException('Duplicate recipe categories.');
@@ -181,14 +194,18 @@ final class RecipeCatalogRepository
                 if ($timer !== null && $timer <= 0) {
                     throw new RuntimeException('Timer must be positive: ' . $path);
                 }
-                $steps[] = ['key' => 'step-' . ($index + 1), 'title' => $step[2], 'text' => $step[3], 'action_key' => $actions[$index], 'timer_seconds' => $timer];
+                $steps[] = ['key' => 'step-' . ($index + 1), 'title' => $this->translator->text($step[2]), 'text' => $this->translator->text($step[3]), 'action_key' => $actions[$index], 'timer_seconds' => $timer];
             }
             foreach (\array_keys($timers) as $timerIndex) {
                 if (!\is_int($timerIndex) || $timerIndex < 1 || $timerIndex > \count($steps)) {
                     throw new RuntimeException('Timer references a missing step: ' . $path);
                 }
             }
-            $variants[] = ['key' => $key, 'name' => $name, 'selectors' => $this->selectors(Typer::assertArray($variant['selectors'] ?? [])),
+            $selectors = $this->selectors(Typer::assertArray($variant['selectors'] ?? []));
+            $variants[] = ['key' => $key, 'name' => $name, 'selectors' => $selectors,
+                'selector_labels' => \array_map(fn(string $value): string => $this->translator->text(match ($value) {
+                    'with-ice' => 'With ice', 'no-ice' => 'No ice', default => $value,
+                }), $selectors),
                 'ingredients' => $ingredients, 'steps' => $steps, 'tips_html' => $this->markdown($this->subsection($content, 'Tips')),
                 'topping_adjustments' => $category['key'] === 'preparations' ? [] : $this->adjustments($ingredients)];
         }
@@ -206,16 +223,32 @@ final class RecipeCatalogRepository
         $related = [];
         \preg_match_all('~^- \\[([^]]+)\\]\\(/recipes/([a-z0-9-]+/[a-z0-9-]+)\\)$~m', $sections['Related preparations'] ?? '', $links, \PREG_SET_ORDER);
         foreach ($links as $link) {
-            $related[] = ['key' => $link[2], 'name' => $link[1], 'url' => '/recipes/' . $link[2]];
+            $related[] = ['key' => $link[2], 'name' => $this->translator->text($link[1]), 'url' => '/recipes/' . $link[2]];
         }
+        foreach ($variants as &$localizedVariant) {
+            $localizedVariant['name'] = \implode(' — ', \array_map($this->translator->text(...), \explode(' — ', $localizedVariant['name'])));
+            foreach ($localizedVariant['topping_adjustments'] as &$adjustment) {
+                $adjustment['ingredient_name'] = $this->translator->text($adjustment['ingredient_name']);
+            }
+            unset($adjustment);
+            foreach ($localizedVariant['ingredients'] as &$ingredient) {
+                $ingredient['name'] = $this->translator->text($ingredient['name']);
+                $ingredient['group'] = $this->translator->text($ingredient['group']);
+                if ($ingredient['quantity_text'] !== null) {
+                    $ingredient['quantity_text'] = $this->translator->text($ingredient['quantity_text']);
+                }
+            }
+            unset($ingredient);
+        }
+        unset($localizedVariant);
         $slug = \pathinfo($path, \PATHINFO_FILENAME);
         $this->assertKey($slug);
 
-        return ['key' => $category['key'] . '/' . $slug, 'slug' => $slug, 'name' => $intro[1], 'category' => $category,
-            'position' => Typer::assertInt($metadata['position'] ?? null), 'summary' => \mb_trim($intro[2]),
+        return ['key' => $category['key'] . '/' . $slug, 'slug' => $slug, 'name' => $category['key'] === 'preparations' ? $this->translator->text($intro[1]) : $intro[1], 'category' => $category,
+            'position' => Typer::assertInt($metadata['position'] ?? null), 'summary' => $this->translator->text(\mb_trim($intro[2])),
             'tags' => \array_values(Typer::assertStringArray(Typer::assertArray($metadata['tags'] ?? []))),
-            'aliases' => \array_values(Typer::assertStringArray(Typer::assertArray($metadata['aliases'] ?? []))),
-            'equipment' => $this->bullets($sections['Equipment'] ?? ''), 'variants' => $variants,
+            'aliases' => \array_values(\array_unique([...Typer::assertStringArray(Typer::assertArray($metadata['aliases'] ?? [])), ...($category['key'] === 'preparations' ? [$intro[1]] : [])])),
+            'equipment' => \array_map($this->translator->text(...), $this->bullets($sections['Equipment'] ?? '')), 'variants' => $variants,
             'notes_html' => $this->markdown($sections['Notes'] ?? ''), 'related' => $related,
             'url' => '/recipes/' . $category['key'] . '/' . $slug];
     }
@@ -226,6 +259,7 @@ final class RecipeCatalogRepository
     private function ingredients(string $content): array
     {
         $rows = [];
+        $previousComponent = -1;
         $lines = \explode("\n", \mb_trim($content));
         if (\preg_replace('/\\s+/', '', $lines[0]) !== '|Component|Ingredient|Amount|Unit|') {
             throw new RuntimeException('Missing ingredient table header.');
@@ -235,6 +269,11 @@ final class RecipeCatalogRepository
             if (\count($cells) !== 4 || $cells[0] === '' || $cells[1] === '' || $cells[2] === '') {
                 throw new RuntimeException('Ingredients require Component, Ingredient, Amount, and Unit columns.');
             }
+            $component = \array_search($cells[0], self::COMPONENTS, true);
+            if ($component === false || $component < $previousComponent || ($this->iconGroup($cells[1]) === 'ice' && $cells[0] !== 'Ice')) {
+                throw new RuntimeException('Ingredient components must follow the standard order, with all ice in Ice.');
+            }
+            $previousComponent = $component;
             $number = \is_numeric($cells[2]) ? (float) $cells[2] : null;
             if ($number !== null && $number <= 0) {
                 throw new RuntimeException('Ingredient quantities must be positive.');
@@ -326,7 +365,7 @@ final class RecipeCatalogRepository
      */
     private function markdown(string $text): string
     {
-        return $text === '' ? '' : Str::markdown($text, ['html_input' => 'strip', 'allow_unsafe_links' => false]);
+        return $text === '' ? '' : Str::markdown($this->translator->text($text), ['html_input' => 'strip', 'allow_unsafe_links' => false]);
     }
 
     /**

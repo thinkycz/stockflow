@@ -131,9 +131,9 @@ Made with milk, matcha, whipping cream, matcha powder. Select the required varia
 | --------------- | ----------------- | ---------------- | ---- |
 | Drink base      | milk              | 100              | ml   |
 | Drink base      | liquid sugar      | 20               | ml   |
-| Ice             | ice cubes         | full serving cup | —    |
 | Matcha          | water at 70–80 °C | 50               | ml   |
 | Matcha          | matcha            | 3.5              | g    |
+| Ice             | ice cubes         | full serving cup | —    |
 | Cloud / topping | whipping cream    | 40               | ml   |
 | Cloud / topping | milk              | 40               | ml   |
 | Cloud / topping | matcha            | 3.5              | g    |
@@ -164,14 +164,14 @@ Made with milk, matcha, whipping cream, matcha powder. Select the required varia
 | --------------- | ----------------- | --------------- | ---- |
 | Drink base      | milk              | 100             | ml   |
 | Drink base      | liquid sugar      | 25              | ml   |
-| Drink base      | ice cubes         | 2–3             | —    |
 | Matcha          | water at 70–80 °C | 50              | ml   |
 | Matcha          | matcha            | 3.5             | g    |
+| Ice             | ice cubes         | 2–3             | —    |
+| Top-up          | milk              | to serving line | —    |
 | Cloud / topping | whipping cream    | 40              | ml   |
 | Cloud / topping | milk              | 40              | ml   |
 | Cloud / topping | matcha            | 3.5             | g    |
 | Finish          | matcha powder     | as needed       | —    |
-| Top-up          | milk              | to serving line | —    |
 
 ### Method
 
@@ -203,9 +203,9 @@ Made with milk, matcha, whipping cream, matcha powder. Select the required varia
 | --------------- | ----------------- | ---------------- | ---- |
 | Drink base      | milk              | 140              | ml   |
 | Drink base      | liquid sugar      | 25               | ml   |
-| Ice             | ice cubes         | full serving cup | —    |
 | Matcha          | water at 70–80 °C | 60               | ml   |
 | Matcha          | matcha            | 4.5              | g    |
+| Ice             | ice cubes         | full serving cup | —    |
 | Cloud / topping | whipping cream    | 50               | ml   |
 | Cloud / topping | milk              | 50               | ml   |
 | Cloud / topping | matcha            | 4.5              | g    |
@@ -236,14 +236,14 @@ Made with milk, matcha, whipping cream, matcha powder. Select the required varia
 | --------------- | ----------------- | --------------- | ---- |
 | Drink base      | milk              | 140             | ml   |
 | Drink base      | liquid sugar      | 35              | ml   |
-| Drink base      | ice cubes         | 2–3             | —    |
 | Matcha          | water at 70–80 °C | 60              | ml   |
 | Matcha          | matcha            | 4.5             | g    |
+| Ice             | ice cubes         | 2–3             | —    |
+| Top-up          | milk              | to serving line | —    |
 | Cloud / topping | whipping cream    | 50              | ml   |
 | Cloud / topping | milk              | 50              | ml   |
 | Cloud / topping | matcha            | 4.5             | g    |
 | Finish          | matcha powder     | as needed       | —    |
-| Top-up          | milk              | to serving line | —    |
 
 ### Method
 

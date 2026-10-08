@@ -1797,12 +1797,15 @@
         "reset_timer": "Vynulovat časovač",
         "timer_done": "Čas uplynul. Pokračujte dalším krokem.",
         "topping_adjustments": {
-            "title": "Sladkost při přidání toppingů",
-            "rule": "Recept uvádí základní množství pro 0–1 topping. U dvou toppingů snižte každý tekutý cukr nebo sirup o 5 ml. U tří toppingů snižte každý o 10 ml, nejméně na 0 ml.",
-            "informational": "Doporučená množství jsou uvedena zvlášť. Množství a postup v receptu zůstávají v základní podobě.",
-            "base": "0–1 topping",
-            "two": "2 toppingy",
-            "three": "3 toppingy"
+            "title": "Sladkost podle toppingů",
+            "choose": "Vyberte počet toppingů a podívejte se, kolik sladidla použít.",
+            "count": "Počet toppingů",
+            "unchanged": "Použijte základní množství",
+            "reduction": "Každé sladidlo snižte o {amount} ml, nejméně na 0 ml",
+            "original": "Základní recept: {amount}",
+            "use": "Použijte",
+            "omit": "Nepřidávat",
+            "informational": "Seznam surovin a postup uvádějí základní množství pro 0–1 topping."
         }
     },
     "attendance": {

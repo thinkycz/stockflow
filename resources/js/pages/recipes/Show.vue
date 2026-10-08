@@ -86,10 +86,12 @@ function choose(dimension: string, value: string): void {
             value,
         ).key;
 }
-function selectorLabel(value: string): string {
-    return ['with-ice', 'no-ice'].includes(value)
-        ? t(`recipes.${value === 'with-ice' ? 'with_ice' : 'no_ice'}`)
-        : value;
+function selectorLabel(dimension: string, value: string): string {
+    return (
+        props.recipe.variants.find(
+            (variant) => variant.selectors[dimension] === value,
+        )?.selector_labels[dimension] ?? value
+    );
 }
 function formatTimer(seconds: number): string {
     return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
@@ -161,7 +163,10 @@ const timerStarted = computed(
                                 :items="
                                     dimension.values.map((value) => ({
                                         value,
-                                        label: selectorLabel(value),
+                                        label: selectorLabel(
+                                            dimension.key,
+                                            value,
+                                        ),
                                     }))
                                 "
                                 @update:model-value="

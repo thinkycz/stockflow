@@ -32,11 +32,11 @@ Prepare the jasmine tea preparation batch before making drinks. Follow the selec
 
 ### Ingredients
 
-| Component      | Ingredient         | Amount             | Unit |
-| -------------- | ------------------ | ------------------ | ---- |
-| Tea blend      | jasmine tea leaves | 35                 | g    |
-| Batch          | water at 90 °C     | 2.5                | L    |
-| Batch dilution | ice cubes          | to 4 L total batch | —    |
+| Component | Ingredient         | Amount             | Unit |
+| --------- | ------------------ | ------------------ | ---- |
+| Tea blend | jasmine tea leaves | 35                 | g    |
+| Batch     | water at 90 °C     | 2.5                | L    |
+| Ice       | ice cubes          | to 4 L total batch | —    |
 
 ### Method
 

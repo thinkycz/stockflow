@@ -111,12 +111,12 @@ Made with milk, whipping cream, matcha, matcha powder. Select the required varia
 
 | Component       | Ingredient        | Amount           | Unit |
 | --------------- | ----------------- | ---------------- | ---- |
-| Finish          | brown sugar syrup | as needed        | —    |
 | Drink base      | milk              | 100              | ml   |
 | Ice             | ice cubes         | full serving cup | —    |
 | Cloud / topping | whipping cream    | 40               | ml   |
 | Cloud / topping | milk              | 40               | ml   |
 | Cloud / topping | matcha            | 3.5              | g    |
+| Finish          | brown sugar syrup | as needed        | —    |
 | Finish          | matcha powder     | as needed        | —    |
 
 ### Method
@@ -137,15 +137,15 @@ Made with milk, whipping cream, matcha, matcha powder. Select the required varia
 
 | Component       | Ingredient        | Amount          | Unit |
 | --------------- | ----------------- | --------------- | ---- |
-| Finish          | brown sugar syrup | as needed       | —    |
 | Drink base      | milk              | 100             | ml   |
-| Drink base      | ice cubes         | 2–3             | —    |
 | Drink base      | liquid sugar      | 5               | ml   |
+| Ice             | ice cubes         | 2–3             | —    |
+| Top-up          | milk              | to serving line | —    |
 | Cloud / topping | whipping cream    | 40              | ml   |
 | Cloud / topping | milk              | 40              | ml   |
 | Cloud / topping | matcha            | 3.5             | g    |
+| Finish          | brown sugar syrup | as needed       | —    |
 | Finish          | matcha powder     | as needed       | —    |
-| Top-up          | milk              | to serving line | —    |
 
 ### Method
 
@@ -172,12 +172,12 @@ Made with milk, whipping cream, matcha, matcha powder. Select the required varia
 
 | Component       | Ingredient        | Amount           | Unit |
 | --------------- | ----------------- | ---------------- | ---- |
-| Finish          | brown sugar syrup | as needed        | —    |
 | Drink base      | milk              | 140              | ml   |
 | Ice             | ice cubes         | full serving cup | —    |
 | Cloud / topping | whipping cream    | 50               | ml   |
 | Cloud / topping | milk              | 50               | ml   |
 | Cloud / topping | matcha            | 4.5              | g    |
+| Finish          | brown sugar syrup | as needed        | —    |
 | Finish          | matcha powder     | as needed        | —    |
 
 ### Method
@@ -198,15 +198,15 @@ Made with milk, whipping cream, matcha, matcha powder. Select the required varia
 
 | Component       | Ingredient        | Amount          | Unit |
 | --------------- | ----------------- | --------------- | ---- |
-| Finish          | brown sugar syrup | as needed       | —    |
 | Drink base      | milk              | 140             | ml   |
-| Drink base      | ice cubes         | 2–3             | —    |
 | Drink base      | liquid sugar      | 10              | ml   |
+| Ice             | ice cubes         | 2–3             | —    |
+| Top-up          | milk              | to serving line | —    |
 | Cloud / topping | whipping cream    | 50              | ml   |
 | Cloud / topping | milk              | 50              | ml   |
 | Cloud / topping | matcha            | 4.5             | g    |
+| Finish          | brown sugar syrup | as needed       | —    |
 | Finish          | matcha powder     | as needed       | —    |
-| Top-up          | milk              | to serving line | —    |
 
 ### Method
 

@@ -99,10 +99,10 @@ Prepare the black tapioca batch before making drinks. Follow the selected batch 
 | --------- | ----------------- | --------- | ---- |
 | Cooking   | water             | 4         | L    |
 | Cooking   | black tapioca     | 500       | g    |
+| Rinsing   | warm water        | as needed | —    |
 | Sauce     | granulated sugar  | 150       | g    |
 | Sauce     | water             | 100       | ml   |
 | Sauce     | brown sugar syrup | 30        | ml   |
-| Rinsing   | warm water        | as needed | —    |
 
 ### Method
 
@@ -126,10 +126,10 @@ Prepare the black tapioca batch before making drinks. Follow the selected batch 
 | --------- | ----------------- | --------- | ---- |
 | Cooking   | water             | 4         | L    |
 | Cooking   | black tapioca     | 700       | g    |
+| Rinsing   | warm water        | as needed | —    |
 | Sauce     | granulated sugar  | 210       | g    |
 | Sauce     | water             | 140       | ml   |
 | Sauce     | brown sugar syrup | 42        | ml   |
-| Rinsing   | warm water        | as needed | —    |
 
 ### Method
 
@@ -153,10 +153,10 @@ Prepare the black tapioca batch before making drinks. Follow the selected batch 
 | --------- | ----------------- | --------- | ---- |
 | Cooking   | water             | 4         | L    |
 | Cooking   | black tapioca     | 1         | kg   |
+| Rinsing   | warm water        | as needed | —    |
 | Sauce     | granulated sugar  | 300       | g    |
 | Sauce     | water             | 200       | ml   |
 | Sauce     | brown sugar syrup | 60        | ml   |
-| Rinsing   | warm water        | as needed | —    |
 
 ### Method
 

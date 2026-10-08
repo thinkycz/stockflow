@@ -103,11 +103,11 @@ Made with jasmine tea, peach purée. Select the required variant before measurin
 
 | Component     | Ingredient          | Amount           | Unit   |
 | ------------- | ------------------- | ---------------- | ------ |
+| Drink base    | dragon fruit pieces | 1.5              | scoops |
 | Drink mixture | brewed jasmine tea  | 200              | ml     |
 | Drink mixture | liquid sugar        | 20               | ml     |
 | Drink mixture | peach purée         | 30               | ml     |
 | Ice           | ice cubes           | full serving cup | —      |
-| Drink base    | dragon fruit pieces | 1.5              | scoops |
 
 ### Method
 
@@ -126,11 +126,11 @@ Made with jasmine tea, peach purée. Select the required variant before measurin
 
 | Component     | Ingredient          | Amount          | Unit   |
 | ------------- | ------------------- | --------------- | ------ |
+| Drink base    | dragon fruit pieces | 1.5             | scoops |
 | Drink mixture | brewed jasmine tea  | 200             | ml     |
 | Drink mixture | liquid sugar        | 25              | ml     |
 | Drink mixture | peach purée         | 30              | ml     |
-| Drink mixture | ice cubes           | 2–3             | —      |
-| Drink base    | dragon fruit pieces | 1.5             | scoops |
+| Ice           | ice cubes           | 2–3             | —      |
 | Top-up        | brewed jasmine tea  | to serving line | —      |
 
 ### Method
@@ -155,11 +155,11 @@ Made with jasmine tea, peach purée. Select the required variant before measurin
 
 | Component     | Ingredient          | Amount           | Unit   |
 | ------------- | ------------------- | ---------------- | ------ |
+| Drink base    | dragon fruit pieces | 2                | scoops |
 | Drink mixture | brewed jasmine tea  | 300              | ml     |
 | Drink mixture | liquid sugar        | 30               | ml     |
 | Drink mixture | peach purée         | 40               | ml     |
 | Ice           | ice cubes           | full serving cup | —      |
-| Drink base    | dragon fruit pieces | 2                | scoops |
 
 ### Method
 
@@ -178,11 +178,11 @@ Made with jasmine tea, peach purée. Select the required variant before measurin
 
 | Component     | Ingredient          | Amount          | Unit   |
 | ------------- | ------------------- | --------------- | ------ |
+| Drink base    | dragon fruit pieces | 2               | scoops |
 | Drink mixture | brewed jasmine tea  | 300             | ml     |
 | Drink mixture | liquid sugar        | 40              | ml     |
 | Drink mixture | peach purée         | 40              | ml     |
-| Drink mixture | ice cubes           | 2–3             | —      |
-| Drink base    | dragon fruit pieces | 2               | scoops |
+| Ice           | ice cubes           | 2–3             | —      |
 | Top-up        | brewed jasmine tea  | to serving line | —      |
 
 ### Method

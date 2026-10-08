@@ -88,10 +88,10 @@ Made with Earl Grey syrup, milk, matcha. Select the required variant before meas
 | Component  | Ingredient        | Amount           | Unit |
 | ---------- | ----------------- | ---------------- | ---- |
 | Drink base | Earl Grey syrup   | 20               | ml   |
-| Ice        | ice cubes         | full serving cup | —    |
 | Drink base | milk              | 100              | ml   |
 | Matcha     | water at 70–80 °C | 50               | ml   |
 | Matcha     | matcha            | 3.5              | g    |
+| Ice        | ice cubes         | full serving cup | —    |
 
 ### Method
 
@@ -110,11 +110,11 @@ Made with Earl Grey syrup, milk, matcha. Select the required variant before meas
 | Component  | Ingredient        | Amount          | Unit |
 | ---------- | ----------------- | --------------- | ---- |
 | Drink base | Earl Grey syrup   | 20              | ml   |
-| Drink base | ice cubes         | 2–3             | —    |
 | Drink base | milk              | 100             | ml   |
 | Drink base | liquid sugar      | 5               | ml   |
 | Matcha     | water at 70–80 °C | 50              | ml   |
 | Matcha     | matcha            | 3.5             | g    |
+| Ice        | ice cubes         | 2–3             | —    |
 | Top-up     | milk              | to serving line | —    |
 
 ### Method
@@ -141,10 +141,10 @@ Made with Earl Grey syrup, milk, matcha. Select the required variant before meas
 | Component  | Ingredient        | Amount           | Unit |
 | ---------- | ----------------- | ---------------- | ---- |
 | Drink base | Earl Grey syrup   | 25               | ml   |
-| Ice        | ice cubes         | full serving cup | —    |
 | Drink base | milk              | 140              | ml   |
 | Matcha     | water at 70–80 °C | 60               | ml   |
 | Matcha     | matcha            | 4.5              | g    |
+| Ice        | ice cubes         | full serving cup | —    |
 
 ### Method
 
@@ -163,11 +163,11 @@ Made with Earl Grey syrup, milk, matcha. Select the required variant before meas
 | Component  | Ingredient        | Amount          | Unit |
 | ---------- | ----------------- | --------------- | ---- |
 | Drink base | Earl Grey syrup   | 25              | ml   |
-| Drink base | ice cubes         | 2–3             | —    |
 | Drink base | milk              | 140             | ml   |
 | Drink base | liquid sugar      | 10              | ml   |
 | Matcha     | water at 70–80 °C | 60              | ml   |
 | Matcha     | matcha            | 4.5             | g    |
+| Ice        | ice cubes         | 2–3             | —    |
 | Top-up     | milk              | to serving line | —    |
 
 ### Method

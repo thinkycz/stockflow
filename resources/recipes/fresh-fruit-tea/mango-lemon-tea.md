@@ -144,7 +144,7 @@ Made with jasmine tea, mango purée, lemon syrup. Select the required variant be
 | Drink mixture | liquid sugar       | 25              | ml     |
 | Drink mixture | mango purée        | 30              | ml     |
 | Drink mixture | lemon syrup        | 5               | ml     |
-| Drink mixture | ice cubes          | 2–3             | —      |
+| Ice           | ice cubes          | 2–3             | —      |
 | Top-up        | brewed jasmine tea | to serving line | —      |
 
 ### Method
@@ -204,7 +204,7 @@ Made with jasmine tea, mango purée, lemon syrup. Select the required variant be
 | Drink mixture | liquid sugar       | 40              | ml     |
 | Drink mixture | mango purée        | 40              | ml     |
 | Drink mixture | lemon syrup        | 5               | ml     |
-| Drink mixture | ice cubes          | 2–3             | —      |
+| Ice           | ice cubes          | 2–3             | —      |
 | Top-up        | brewed jasmine tea | to serving line | —      |
 
 ### Method

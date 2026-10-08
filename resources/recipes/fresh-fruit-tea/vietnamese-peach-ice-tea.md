@@ -151,7 +151,7 @@ Made with lemongrass, Ceylon tea, peach purée, lemon syrup. Select the required
 | Drink mixture | liquid sugar      | 25              | ml     |
 | Drink mixture | peach purée       | 30              | ml     |
 | Drink mixture | lemon syrup       | 5               | ml     |
-| Drink mixture | ice cubes         | 2–3             | —      |
+| Ice           | ice cubes         | 2–3             | —      |
 | Top-up        | brewed Ceylon tea | to serving line | —      |
 
 ### Method
@@ -215,7 +215,7 @@ Made with lemongrass, Ceylon tea, peach purée, lemon syrup. Select the required
 | Drink mixture | liquid sugar      | 40              | ml     |
 | Drink mixture | peach purée       | 40              | ml     |
 | Drink mixture | lemon syrup       | 5               | ml     |
-| Drink mixture | ice cubes         | 2–3             | —      |
+| Ice           | ice cubes         | 2–3             | —      |
 | Top-up        | brewed Ceylon tea | to serving line | —      |
 
 ### Method

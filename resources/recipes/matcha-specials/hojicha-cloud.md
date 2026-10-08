@@ -140,12 +140,12 @@ Made with milk, whipping cream, hojicha, hojicha powder. Select the required var
 | --------------- | -------------- | --------------- | ---- |
 | Drink base      | milk           | 100             | ml   |
 | Drink base      | liquid sugar   | 25              | ml   |
-| Drink base      | ice cubes      | 2–3             | —    |
+| Ice             | ice cubes      | 2–3             | —    |
+| Top-up          | milk           | to serving line | —    |
 | Cloud / topping | whipping cream | 40              | ml   |
 | Cloud / topping | milk           | 40              | ml   |
 | Cloud / topping | hojicha powder | 3.5             | g    |
 | Finish          | hojicha powder | as needed       | —    |
-| Top-up          | milk           | to serving line | —    |
 
 ### Method
 
@@ -200,12 +200,12 @@ Made with milk, whipping cream, hojicha, hojicha powder. Select the required var
 | --------------- | -------------- | --------------- | ---- |
 | Drink base      | milk           | 140             | ml   |
 | Drink base      | liquid sugar   | 35              | ml   |
-| Drink base      | ice cubes      | 2–3             | —    |
+| Ice             | ice cubes      | 2–3             | —    |
+| Top-up          | milk           | to serving line | —    |
 | Cloud / topping | whipping cream | 50              | ml   |
 | Cloud / topping | milk           | 50              | ml   |
 | Cloud / topping | hojicha powder | 4.5             | g    |
 | Finish          | hojicha powder | as needed       | —    |
-| Top-up          | milk           | to serving line | —    |
 
 ### Method
 

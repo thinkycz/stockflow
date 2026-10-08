@@ -142,13 +142,13 @@ Made with milk, sweetened condensed milk (Salko), whipping cream, matcha. Select
 | --------------- | -------------------------------- | --------------- | ---- |
 | Drink base      | milk                             | 100             | ml   |
 | Drink base      | sweetened condensed milk (Salko) | 20              | ml   |
-| Drink base      | ice cubes                        | 2–3             | —    |
 | Drink base      | liquid sugar                     | 5               | ml   |
+| Ice             | ice cubes                        | 2–3             | —    |
+| Top-up          | milk                             | to serving line | —    |
 | Cloud / topping | whipping cream                   | 40              | ml   |
 | Cloud / topping | milk                             | 40              | ml   |
 | Cloud / topping | matcha                           | 3.5             | g    |
 | Finish          | matcha powder                    | as needed       | —    |
-| Top-up          | milk                             | to serving line | —    |
 
 ### Method
 
@@ -204,13 +204,13 @@ Made with milk, sweetened condensed milk (Salko), whipping cream, matcha. Select
 | --------------- | -------------------------------- | --------------- | ---- |
 | Drink base      | milk                             | 140             | ml   |
 | Drink base      | sweetened condensed milk (Salko) | 30              | ml   |
-| Drink base      | ice cubes                        | 2–3             | —    |
 | Drink base      | liquid sugar                     | 10              | ml   |
+| Ice             | ice cubes                        | 2–3             | —    |
+| Top-up          | milk                             | to serving line | —    |
 | Cloud / topping | whipping cream                   | 50              | ml   |
 | Cloud / topping | milk                             | 50              | ml   |
 | Cloud / topping | matcha                           | 4.5             | g    |
 | Finish          | matcha powder                    | as needed       | —    |
-| Top-up          | milk                             | to serving line | —    |
 
 ### Method
 

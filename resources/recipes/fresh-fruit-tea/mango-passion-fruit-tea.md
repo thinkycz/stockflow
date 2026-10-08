@@ -138,7 +138,7 @@ Made with passion fruit pulp, jasmine tea, passion fruit syrup, mango purée. Se
 | Drink mixture | liquid sugar        | 25              | ml     |
 | Drink mixture | passion fruit syrup | 15              | ml     |
 | Drink mixture | mango purée         | 15              | ml     |
-| Drink mixture | ice cubes           | 2–3             | —      |
+| Ice           | ice cubes           | 2–3             | —      |
 | Top-up        | brewed jasmine tea  | to serving line | —      |
 
 ### Method
@@ -196,7 +196,7 @@ Made with passion fruit pulp, jasmine tea, passion fruit syrup, mango purée. Se
 | Drink mixture | liquid sugar        | 40              | ml     |
 | Drink mixture | passion fruit syrup | 20              | ml     |
 | Drink mixture | mango purée         | 20              | ml     |
-| Drink mixture | ice cubes           | 2–3             | —      |
+| Ice           | ice cubes           | 2–3             | —      |
 | Top-up        | brewed jasmine tea  | to serving line | —      |
 
 ### Method

@@ -12,7 +12,8 @@ The reviewed code catalog is the source. Prices are omitted. The five hot drinks
 retain their gram measurements; `sp` means standard scoops. Recipe lookup appears
 on recipe pages only. The library includes a visual reference and optional guided
 preparation. Interface translations remain synchronized across English, Czech,
-and Slovak; recipe documents use English.
+and Slovak. Recipe source documents use English; the rendered catalogue follows
+the employee language through synchronized content dictionaries.
 
 ## Delivery
 
@@ -58,3 +59,7 @@ The [9 October recipe logic audit](../verification/2026-10-09-recipe-logic-audit
 records subsequent ingredient and method clarifications, four explicitly approved
 formula corrections, and the replacement of category buttons with a category
 side panel. The original signatures remain available for comparison.
+
+The [follow-up consistency review](../verification/2026-10-09-recipe-consistency-review.md)
+standardizes every ice component, localizes the full catalogue, replaces the
+sweetness table, and verifies all variants in each language in Chromium.

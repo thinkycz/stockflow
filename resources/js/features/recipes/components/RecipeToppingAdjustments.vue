@@ -1,77 +1,125 @@
 <script setup lang="ts">
-import { Info, ChevronDown } from '@lucide/vue';
+import { Candy } from '@lucide/vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import DataTable from '@/components/ui/DataTable.vue';
+import Tabs from '@/components/ui/Tabs.vue';
 import type { RecipeVariant } from '../types';
-defineProps<{ components: RecipeVariant['topping_adjustments'] }>();
-const { t } = useI18n();
+
+const props = defineProps<{
+    components: RecipeVariant['topping_adjustments'];
+}>();
+const { t, locale } = useI18n();
+const count = ref('base');
+const choices = computed(() => [
+    { value: 'base', label: '0–1' },
+    { value: 'two', label: '2' },
+    { value: 'three', label: '3' },
+]);
+const amounts = computed(() =>
+    props.components.map((component) => ({
+        ...component,
+        quantity:
+            count.value === 'two'
+                ? component.two_toppings_quantity
+                : count.value === 'three'
+                  ? component.three_toppings_quantity
+                  : component.base_quantity,
+    })),
+);
+const reduction = computed(() =>
+    count.value === 'base'
+        ? t('recipes.topping_adjustments.unchanged')
+        : t('recipes.topping_adjustments.reduction', {
+              amount: count.value === 'two' ? 5 : 10,
+          }),
+);
+watch(
+    () => props.components,
+    () => (count.value = 'base'),
+);
+function format(value: number): string {
+    return `${new Intl.NumberFormat(locale.value).format(value)} ml`;
+}
 </script>
 
 <template>
-    <details
-        class="group overflow-hidden rounded-2xl border border-amber-200 bg-amber-50/70"
+    <section
+        class="mx-auto max-w-3xl rounded-2xl border border-outline-glass bg-white p-5 sm:p-6"
         data-testid="recipe-topping-adjustments"
     >
-        <summary
-            class="flex min-h-14 cursor-pointer list-none items-center gap-3 px-5 py-4 text-sm font-semibold text-amber-950"
-        >
-            <Info :size="18" class="shrink-0" /><span class="flex-1">{{
-                t('recipes.topping_adjustments.title')
-            }}</span
-            ><ChevronDown :size="16" class="transition group-open:rotate-180" />
-        </summary>
-        <div class="space-y-4 border-t border-amber-200 px-5 py-4">
-            <p class="text-sm leading-6 text-amber-950">
-                {{ t('recipes.topping_adjustments.rule') }}
-            </p>
-            <p class="text-xs leading-5 text-amber-900">
-                {{ t('recipes.topping_adjustments.informational') }}
-            </p>
-            <DataTable
-                density="compact"
-                variant="nested"
-                class="text-amber-950"
-            >
-                <thead>
-                    <tr
-                        class="border-b border-amber-200 text-xs text-amber-900"
-                    >
-                        <th class="py-3 pr-3">
-                            {{ t('recipes.ingredient') }}
-                        </th>
-                        <th class="px-2 py-3">
-                            {{ t('recipes.topping_adjustments.base') }}
-                        </th>
-                        <th class="px-2 py-3">
-                            {{ t('recipes.topping_adjustments.two') }}
-                        </th>
-                        <th class="py-3 pl-2">
-                            {{ t('recipes.topping_adjustments.three') }}
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr
-                        v-for="component in components"
-                        :key="component.ingredient_name"
-                        class="border-b border-amber-200/60 last:border-0"
-                        data-testid="recipe-topping-component"
-                    >
-                        <th class="py-3 pr-3 font-medium text-amber-950">
-                            {{ component.ingredient_name }}
-                        </th>
-                        <td class="px-2 py-3 whitespace-nowrap">
-                            {{ component.base_quantity }} ml
-                        </td>
-                        <td class="px-2 py-3 whitespace-nowrap">
-                            {{ component.two_toppings_quantity }} ml
-                        </td>
-                        <td class="py-3 pl-2 whitespace-nowrap">
-                            {{ component.three_toppings_quantity }} ml
-                        </td>
-                    </tr>
-                </tbody>
-            </DataTable>
+        <div class="flex items-start gap-3">
+            <span
+                class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary"
+                ><Candy :size="20" aria-hidden="true"
+            /></span>
+            <div class="min-w-0">
+                <h2 class="font-heading text-base font-bold text-on-surface">
+                    {{ t('recipes.topping_adjustments.title') }}
+                </h2>
+                <p class="mt-1 text-sm leading-5 text-on-surface-variant">
+                    {{ t('recipes.topping_adjustments.choose') }}
+                </p>
+            </div>
         </div>
-    </details>
+        <div class="mt-5 grid items-center gap-3 sm:grid-cols-2">
+            <div>
+                <p class="mb-2 text-xs font-semibold text-on-surface-variant">
+                    {{ t('recipes.topping_adjustments.count') }}
+                </p>
+                <Tabs
+                    v-model="count"
+                    :items="choices"
+                    :label="t('recipes.topping_adjustments.count')"
+                    class="grid w-full grid-cols-3"
+                />
+            </div>
+            <p
+                class="text-xs font-medium text-primary sm:pt-6 sm:text-right"
+                data-testid="recipe-topping-rule"
+            >
+                {{ reduction }}
+            </p>
+        </div>
+        <div class="mt-4 space-y-2" aria-live="polite" aria-atomic="true">
+            <div
+                v-for="component in amounts"
+                :key="component.ingredient_name"
+                class="flex min-h-20 items-center justify-between gap-4 rounded-xl bg-surface-container-low px-4 py-3"
+                data-testid="recipe-topping-component"
+            >
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-on-surface">
+                        {{ component.ingredient_name }}
+                    </p>
+                    <p class="mt-1 text-xs leading-5 text-on-surface-variant">
+                        {{
+                            t('recipes.topping_adjustments.original', {
+                                amount: format(component.base_quantity),
+                            })
+                        }}
+                    </p>
+                </div>
+                <div class="shrink-0 text-right">
+                    <p
+                        class="text-[10px] font-semibold tracking-wide text-primary uppercase"
+                    >
+                        {{
+                            component.quantity === 0
+                                ? t('recipes.topping_adjustments.omit')
+                                : t('recipes.topping_adjustments.use')
+                        }}
+                    </p>
+                    <p
+                        class="mt-0.5 font-heading text-2xl font-bold text-primary tabular-nums"
+                        data-testid="recipe-topping-amount"
+                    >
+                        {{ format(component.quantity) }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <p class="mt-4 text-xs leading-5 text-on-surface-variant">
+            {{ t('recipes.topping_adjustments.informational') }}
+        </p>
+    </section>
 </template>

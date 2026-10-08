@@ -19,7 +19,8 @@ use Thinkycz\LaravelCore\Support\Typer;
         [$category, $slug] = \explode('/', Typer::assertString($expected['recipe']));
         $recipe = $catalog->find($category, $slug) ?? throw new RuntimeException('Missing reviewed recipe: ' . $category . '/' . $slug);
         $variant = \array_find($recipe['variants'], static fn(array $row): bool => $row['key'] === $expected['variant']) ?? throw new RuntimeException('Missing reviewed variant.');
-        $ingredients = \array_map(static fn(array $row): array => [$row['name'] === 'hojicha powder' && $row['quantity_value'] !== null ? 'hojicha' : $row['name'], $row['quantity_value'], $row['quantity_text'], $row['unit']], \array_values(\array_filter($variant['ingredients'], static fn(array $row): bool => !\in_array($row['group'], ['Ice', 'Batch dilution', 'Milk to volume', 'Top-up', 'Rinsing'], true))));
+        $ingredients = \array_map(static fn(array $row): array => [$row['name'] === 'hojicha powder' && $row['quantity_value'] !== null ? 'hojicha' : $row['name'], $row['quantity_value'], $row['quantity_text'], $row['unit']], \array_values(\array_filter($variant['ingredients'], static fn(array $row): bool => !\in_array($row['group'], ['Milk to volume', 'Top-up', 'Rinsing'], true) && ($row['icon_group'] !== 'ice' || $row['quantity_text'] === '2–3'))));
+        \usort($ingredients, static fn(array $a, array $b): int => \strcmp(\json_encode($a, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR), \json_encode($b, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR)));
         $steps = $variant['steps'];
         if (isset($expected['top_up_original_index'])) {
             $index = \array_find_key($steps, static fn(array $step): bool => \str_starts_with($step['text'], 'Top up with ')) ?? throw new RuntimeException('Missing original top-up action.');
@@ -27,7 +28,7 @@ use Thinkycz\LaravelCore\Support\Typer;
             \array_splice($steps, $index, 1);
             \array_splice($steps, Typer::assertInt($expected['top_up_original_index']), 0, [$topUp]);
         }
-        \expect(\hash('sha256', \json_encode($ingredients, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR)))->toBe($expected['ingredients_sha256'])
+        \expect(\hash('sha256', \json_encode($ingredients, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR)))->toBe($expected['ingredients_multiset_sha256'])
             ->and(\hash('sha256', \json_encode(\array_column($steps, 'action_key'), \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR)))->toBe($expected['actions_sha256']);
     }
 });
@@ -71,9 +72,46 @@ use Thinkycz\LaravelCore\Support\Typer;
                 $ice = \array_find($variant['ingredients'], static fn(array $ingredient): bool => $ingredient['name'] === 'ice cubes');
                 \expect($ice['quantity_text'] ?? null)->toBe('full serving cup');
             }
+            foreach ($variant['ingredients'] as $ingredient) {
+                if ($ingredient['icon_group'] === 'ice') {
+                    \expect($ingredient['group'])->toBe('Ice');
+                }
+            }
         }
     }
 });
+
+\test('recipe content follows the employee language while measurements and identities stay stable', function (string $locale, string $milk, string $ice, string $sugar): void {
+    $english = (new RecipeCatalogRepository())->recipes();
+    $catalog = new RecipeCatalogRepository(locale: $locale);
+    foreach ($catalog->recipes() as $index => $recipe) {
+        $source = $english[$index];
+        \expect($recipe['key'])->toBe($source['key'])
+            ->and($recipe['url'])->toBe($source['url'])
+            ->and($recipe['summary'])->not->toBe($source['summary'])
+            ->and($recipe['equipment'])->not->toBe($source['equipment']);
+        foreach ($recipe['variants'] as $variantIndex => $variant) {
+            $sourceVariant = $source['variants'][$variantIndex];
+            \expect($variant['key'])->toBe($sourceVariant['key'])
+                ->and($variant['selectors'])->toBe($sourceVariant['selectors'])
+                ->and(\array_column($variant['ingredients'], 'quantity_value'))->toBe(\array_column($sourceVariant['ingredients'], 'quantity_value'))
+                ->and(\array_column($variant['ingredients'], 'unit'))->toBe(\array_column($sourceVariant['ingredients'], 'unit'))
+                ->and(\array_column($variant['steps'], 'action_key'))->toBe(\array_column($sourceVariant['steps'], 'action_key'))
+                ->and(\array_column($variant['steps'], 'timer_seconds'))->toBe(\array_column($sourceVariant['steps'], 'timer_seconds'));
+            foreach ($variant['steps'] as $stepIndex => $step) {
+                \expect($step['title'])->not->toBe($sourceVariant['steps'][$stepIndex]['title'])
+                    ->and($step['text'])->not->toBe($sourceVariant['steps'][$stepIndex]['text']);
+                \preg_match_all('/\\d+(?:\\.\\d+)?/', $sourceVariant['steps'][$stepIndex]['text'], $sourceNumbers);
+                \preg_match_all('/\\d+(?:,\\d+)?/', $step['text'], $translatedNumbers);
+                \expect(\array_map(static fn(string $number): string => \str_replace(',', '.', $number), $translatedNumbers[0]))->toBe($sourceNumbers[0]);
+            }
+        }
+    }
+    $classic = $catalog->find('matcha-latte', 'classic-matcha-latte') ?? throw new RuntimeException('Missing matcha.');
+    \expect($classic['variants'][0]['ingredients'][0]['name'])->toBe($milk)
+        ->and(\array_find($classic['variants'][1]['ingredients'], static fn(array $ingredient): bool => $ingredient['icon_group'] === 'ice')['group'] ?? null)->toBe($ice)
+        ->and($classic['variants'][0]['topping_adjustments'][0]['ingredient_name'])->toBe($sugar);
+})->with([['cs', 'mléko', 'Led', 'tekutý cukr'], ['sk', 'mlieko', 'Ľad', 'tekutý cukor']]);
 
 \test('milk added to reach the taro mixture volume is listed separately from any final top-up', function (): void {
     foreach (['taro-milk-tea' => 'milk', 'taro-coco-milk-tea' => 'coconut milk'] as $slug => $milk) {

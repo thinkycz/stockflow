@@ -36,3 +36,26 @@ use Thinkycz\LaravelCore\Support\Typer;
         $this->be($admin, 'users')->get($url)->assertNotFound();
     }
 });
+
+\test('changing the account language localizes the catalogue alongside the interface', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    foreach ([['cs', 'Horké nápoje', 'mléko', 'Odměřte mléko'], ['sk', 'Horúce nápoje', 'mlieko', 'Odmerajte mlieko']] as [$locale, $category, $milk, $title]) {
+        $this->be($admin, 'users')->post('/settings/profile', ['email' => $admin->getEmail(), 'locale' => $locale], $this->inertiaHeaders())->assertOk();
+        $this->get('/recipes', $this->inertiaHeaders())->assertOk()
+            ->assertJsonPath('props.auth.user.locale', $locale)
+            ->assertJsonPath('props.categories.7.name', $category);
+        $this->get('/recipes/hot-drinks/classic-matcha', $this->inertiaHeaders())->assertOk()
+            ->assertJsonPath('props.auth.user.locale', $locale)
+            ->assertJsonPath('props.recipe.category.name', $category)
+            ->assertJsonPath('props.recipe.name', 'Classic Matcha')
+            ->assertJsonPath('props.recipe.variants.0.ingredients.0.name', $milk)
+            ->assertJsonPath('props.recipe.variants.0.ingredients.0.quantity_value', 200)
+            ->assertJsonPath('props.recipe.variants.0.ingredients.0.unit', 'g')
+            ->assertJsonPath('props.recipe.variants.0.steps.0.title', $title);
+        $limited = Typer::assertInstance(UserFactory::new()->limited(Store::factory()->create(['user_id' => $admin->getKey()]))->createOne(['locale' => $locale]), User::class);
+        $this->be($limited, 'users')->get('/recipes/hot-drinks/classic-matcha', $this->inertiaHeaders())->assertOk()
+            ->assertJsonPath('props.auth.user.locale', $locale)
+            ->assertJsonPath('props.recipe.variants.0.ingredients.0.name', $milk)
+            ->assertJsonPath('props.recipe.variants.0.steps.0.title', $title);
+    }
+});

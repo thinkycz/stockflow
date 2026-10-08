@@ -9,6 +9,7 @@ use Thinkycz\LaravelCore\Support\Typer;
 
 \test('assistant recipe lookup returns the same full file recipe for natural language questions', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();
+    $admin->update(['locale' => 'en']);
     $result = \fileRecipeRead(new ReadRecipesTool($admin, 'file-recipe-lookup'), ['operation' => 'lookup', 'dataset' => 'recipes', 'query' => 'Jak připravit Classic Matcha?']);
     \expect($result['returned_count'])->toBe(2)
         ->and($result['scope'])->toBe(['type' => 'company', 'store_scoped' => false]);
@@ -35,6 +36,19 @@ use Thinkycz\LaravelCore\Support\Typer;
     $summary = \fileRecipeRead($tool, ['operation' => 'summary', 'dataset' => 'recipes']);
     \expect($summary['summary'])->toMatchArray(['recipe_count' => 54, 'variant_count' => 189]);
 });
+
+\test('assistant recipes follow the administrator language and retain English preparation aliases', function (string $locale, string $milk): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $admin->update(['locale' => $locale]);
+    $tool = new ReadRecipesTool($admin, 'localized-file-recipes');
+    $hot = \fileRecipeRead($tool, ['operation' => 'lookup', 'dataset' => 'recipes', 'query' => 'Classic Matcha']);
+    $records = Typer::assertArray($hot['records']);
+    $recipe = Typer::assertArray(\array_find($records, static fn(mixed $row): bool => Typer::assertArray($row)['id'] === 'hot-drinks/classic-matcha'));
+    $variant = Typer::assertArray(Typer::assertArray($recipe['variants'])[0]);
+    \expect(Typer::assertArray($variant['ingredients'])[0])->toMatchArray(['name' => $milk, 'quantity_value' => 200, 'unit' => 'g']);
+    $preparation = \fileRecipeRead($tool, ['operation' => 'lookup', 'dataset' => 'recipes', 'query' => 'Ceylon Milk Tea Preparation']);
+    \expect($preparation['returned_count'])->toBe(1);
+})->with([['cs', 'mléko'], ['sk', 'mlieko']]);
 
 \test('assistant categories cannot establish recipe absence and retired write and staff test tools are absent', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();

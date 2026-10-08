@@ -30,11 +30,11 @@ Prepare the butterfly tea batch before making drinks. Follow the selected batch 
 
 ### Ingredients
 
-| Component      | Ingredient            | Amount                | Unit |
-| -------------- | --------------------- | --------------------- | ---- |
-| Batch          | dry butterfly pea tea | 5                     | g    |
-| Batch          | hot water             | 300                   | ml   |
-| Batch dilution | ice cubes             | to 600 ml total batch | —    |
+| Component | Ingredient            | Amount                | Unit |
+| --------- | --------------------- | --------------------- | ---- |
+| Batch     | dry butterfly pea tea | 5                     | g    |
+| Batch     | hot water             | 300                   | ml   |
+| Ice       | ice cubes             | to 600 ml total batch | —    |
 
 ### Method
 

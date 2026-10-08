@@ -108,7 +108,7 @@ Made with jasmine tea, strawberry purée. Select the required variant before mea
 | Drink mixture | brewed jasmine tea | 250             | ml     |
 | Drink mixture | liquid sugar       | 25              | ml     |
 | Drink mixture | strawberry purée   | 30              | ml     |
-| Drink mixture | ice cubes          | 2–3             | —      |
+| Ice           | ice cubes          | 2–3             | —      |
 | Top-up        | brewed jasmine tea | to serving line | —      |
 
 ### Method
@@ -158,7 +158,7 @@ Made with jasmine tea, strawberry purée. Select the required variant before mea
 | Drink mixture | brewed jasmine tea | 350             | ml     |
 | Drink mixture | liquid sugar       | 40              | ml     |
 | Drink mixture | strawberry purée   | 40              | ml     |
-| Drink mixture | ice cubes          | 2–3             | —      |
+| Ice           | ice cubes          | 2–3             | —      |
 | Top-up        | brewed jasmine tea | to serving line | —      |
 
 ### Method

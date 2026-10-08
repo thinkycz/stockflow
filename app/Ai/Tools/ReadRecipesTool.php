@@ -48,7 +48,7 @@ final class ReadRecipesTool extends AbstractReadResourceTool
      */
     protected function execute(array $request): array
     {
-        $catalog = new RecipeCatalogRepository();
+        $catalog = new RecipeCatalogRepository(locale: $this->actor->getLocale());
         $operation = Typer::parseNullableString($request['operation'] ?? null) ?? 'list';
         $dataset = Typer::parseNullableString($request['dataset'] ?? null) ?? 'recipes';
         if (!\in_array($dataset, ['recipes', 'categories'], true)) {

@@ -41,8 +41,12 @@ array, and a `timers` object. Copy an existing recipe as the starting point.
   Ranges, visual endpoints, and "a few minutes" must not become fixed timers.
 
 Each variant contains `### Ingredients` and `### Method`. The ingredient table uses
-exactly `Component | Ingredient | Amount | Unit`. Components visually group the
-base, matcha, cloud, or finishing ingredients. Use decimal points in numeric
+exactly `Component | Ingredient | Amount | Unit`. Components use one order across the catalogue:
+`Drink base`, `Drink mixture`, `Steamed milk`, `Hot tea`, `Taro mixture`,
+`Milk to volume`, `Matcha`, `Tea blend`, `Batch`, `Cooking`, `Rinsing`, `Sauce`,
+`Ice`, `Top-up`, `Cloud / topping`, `Finish`. Omit unused components, keep each
+component's rows together, and follow this relative order. The reader rejects
+unknown groups, interleaved groups, and ice placed anywhere except `Ice`. Use decimal points in numeric
 amounts. Preserve exact text such as `2–3` or `as needed` when no single number is
 specified. Units are `g`, `kg`, `ml`, `L`, `pieces`, `scoops`, or `—` for no unit.
 `scoops` always means standard scoops. Dry tea is named tea leaves; a brewed base is
@@ -59,7 +63,7 @@ line. Use text amounts for these additions rather than inventing a measured volu
 - Final additions: `Top-up | milk | to serving line | —`, using the correct milk
   or brewed tea. Assemble the drink base first, then top up in the serving cup.
   Leave room for any cloud or finishing tea layer and add that layer afterward.
-- Tea preparations: `Batch dilution | ice cubes | to 3.5 L total batch | —`, using
+- Tea preparations: `Ice | ice cubes | to 3.5 L total batch | —`, using
   the authored final batch size. Do not calculate the amount of ice by subtracting
   starting water from the final volume; powders and other ingredients add volume.
 - Tapioca: keep cooking water, sauce ingredients, and rinsing water in their own
@@ -90,10 +94,38 @@ words separated by hyphens. The folder and filename form the permanent URL:
 `/recipes/hot-drinks/classic-matcha`. Keep them stable when changing display names.
 Duplicate drink names across categories remain separate recipes.
 
+## Recipe languages
+
+The employee's account language controls the entire catalogue in English, Czech,
+or Slovak. Menu drink names retain their official spelling; categories, preparation
+names, variant labels, ingredients, equipment, methods, notes and links are localized.
+Both local ingredient terms and original preparation names work in quick lookup.
+The assistant reads the same catalogue in the administrator's language.
+
+Recipes remain one Markdown file each. Keep the structural headings and canonical
+ingredient/component names in English. Display text comes from `locales/en.json`,
+`locales/cs.json`, and `locales/sk.json`, using the same stable snake_case keys in
+all three files. The English value is the authored source phrase. If you add or
+change wording, add its Czech and Slovak counterparts under the same key. Missing
+translations fail catalogue validation instead of displaying mixed languages.
+
+Numbers are substituted from the selected Markdown recipe. Replace numbers in a
+translation template with `{n1}`, `{n2}`, etc., in source order. For example,
+`Add {n1} ml water at {n2}–{n3} °C to matcha bowl.` These placeholders must appear
+exactly once in every language. Changing a recipe's quantity alone needs no
+translation edits. Czech and Slovak use decimal commas when displaying quantities.
+Notes and tips translate as complete Markdown blocks before safe HTML rendering.
+Never add another quantity or change a unit in a translated instruction.
+
+Catalogue checks cover all 54 recipes / 189 variants in all three languages and
+preserve the reviewed measurement fingerprints independently of component order.
+Browser checks open every variant, compare its complete visible ingredient list
+and method, and start guided preparation in each language.
+
 ## Operational rules
 
 No-ice recipes still use the specified 2–3 chilling cubes, adjusted sweetener
-amounts, and top-ups. Both ice variants list their ice amounts explicitly. Follow
+amounts, and top-ups. All ice, including chilling cubes and batch dilution, belongs in the `Ice` component. Both ice variants list their ice amounts explicitly. Follow
 the selected variant rather than subtracting ice from another variant. Topping
 guidance is shown separately: liquid sugar and syrup in
 millilitres are reduced by 5 ml for two toppings or 10 ml for three, with a minimum

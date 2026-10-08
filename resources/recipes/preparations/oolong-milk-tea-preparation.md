@@ -44,13 +44,13 @@ Prepare the oolong milk tea preparation batch before making drinks. Follow the s
 
 ### Ingredients
 
-| Component      | Ingredient        | Amount               | Unit |
-| -------------- | ----------------- | -------------------- | ---- |
-| Tea blend      | oolong tea leaves | 70                   | g    |
-| Tea blend      | Ceylon tea leaves | 30                   | g    |
-| Batch          | water at 90 °C    | 2.5                  | L    |
-| Batch          | milk powder       | 900                  | g    |
-| Batch dilution | ice cubes         | to 3.5 L total batch | —    |
+| Component | Ingredient        | Amount               | Unit |
+| --------- | ----------------- | -------------------- | ---- |
+| Tea blend | oolong tea leaves | 70                   | g    |
+| Tea blend | Ceylon tea leaves | 30                   | g    |
+| Batch     | water at 90 °C    | 2.5                  | L    |
+| Batch     | milk powder       | 900                  | g    |
+| Ice       | ice cubes         | to 3.5 L total batch | —    |
 
 ### Method
 
@@ -66,13 +66,13 @@ Prepare the oolong milk tea preparation batch before making drinks. Follow the s
 
 ### Ingredients
 
-| Component      | Ingredient        | Amount               | Unit |
-| -------------- | ----------------- | -------------------- | ---- |
-| Tea blend      | oolong tea leaves | 30                   | g    |
-| Tea blend      | Ceylon tea leaves | 13                   | g    |
-| Batch          | water at 90 °C    | 1.07                 | L    |
-| Batch          | milk powder       | 386                  | g    |
-| Batch dilution | ice cubes         | to 1.5 L total batch | —    |
+| Component | Ingredient        | Amount               | Unit |
+| --------- | ----------------- | -------------------- | ---- |
+| Tea blend | oolong tea leaves | 30                   | g    |
+| Tea blend | Ceylon tea leaves | 13                   | g    |
+| Batch     | water at 90 °C    | 1.07                 | L    |
+| Batch     | milk powder       | 386                  | g    |
+| Ice       | ice cubes         | to 1.5 L total batch | —    |
 
 ### Method
 

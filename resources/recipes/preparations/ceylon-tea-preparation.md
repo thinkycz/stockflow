@@ -33,11 +33,11 @@ Prepare the ceylon tea preparation batch before making drinks. Follow the select
 
 ### Ingredients
 
-| Component      | Ingredient        | Amount               | Unit |
-| -------------- | ----------------- | -------------------- | ---- |
-| Batch          | Ceylon tea leaves | 60                   | g    |
-| Batch          | water             | 2.5                  | L    |
-| Batch dilution | ice cubes         | to 3.5 L total batch | —    |
+| Component | Ingredient        | Amount               | Unit |
+| --------- | ----------------- | -------------------- | ---- |
+| Batch     | Ceylon tea leaves | 60                   | g    |
+| Batch     | water             | 2.5                  | L    |
+| Ice       | ice cubes         | to 3.5 L total batch | —    |
 
 ### Method
 

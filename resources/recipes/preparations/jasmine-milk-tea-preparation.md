@@ -33,12 +33,12 @@ Prepare the jasmine milk tea preparation batch before making drinks. Follow the 
 
 ### Ingredients
 
-| Component      | Ingredient         | Amount               | Unit |
-| -------------- | ------------------ | -------------------- | ---- |
-| Tea blend      | jasmine tea leaves | 30                   | g    |
-| Batch          | water at 90 °C     | 2.5                  | L    |
-| Batch          | milk powder        | 600                  | g    |
-| Batch dilution | ice cubes          | to 3.5 L total batch | —    |
+| Component | Ingredient         | Amount               | Unit |
+| --------- | ------------------ | -------------------- | ---- |
+| Tea blend | jasmine tea leaves | 30                   | g    |
+| Batch     | water at 90 °C     | 2.5                  | L    |
+| Batch     | milk powder        | 600                  | g    |
+| Ice       | ice cubes          | to 3.5 L total batch | —    |
 
 ### Method
 

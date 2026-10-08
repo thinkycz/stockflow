@@ -110,9 +110,9 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 | Drink base | brewed jasmine tea | 70               | ml   |
 | Drink base | oat milk           | 50               | ml   |
 | Drink base | liquid sugar       | 25               | ml   |
-| Ice        | ice cubes          | full serving cup | —    |
 | Matcha     | water at 70–80 °C  | 50               | ml   |
 | Matcha     | matcha             | 3.5              | g    |
+| Ice        | ice cubes          | full serving cup | —    |
 
 ### Method
 
@@ -135,9 +135,9 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 | Drink base | brewed jasmine tea | 70              | ml   |
 | Drink base | oat milk           | 50              | ml   |
 | Drink base | liquid sugar       | 30              | ml   |
-| Drink base | ice cubes          | 2–3             | —    |
 | Matcha     | water at 70–80 °C  | 50              | ml   |
 | Matcha     | matcha             | 3.5             | g    |
+| Ice        | ice cubes          | 2–3             | —    |
 | Top-up     | oat milk           | to serving line | —    |
 
 ### Method
@@ -166,9 +166,9 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 | Drink base | brewed jasmine tea | 90               | ml   |
 | Drink base | oat milk           | 70               | ml   |
 | Drink base | liquid sugar       | 35               | ml   |
-| Ice        | ice cubes          | full serving cup | —    |
 | Matcha     | water at 70–80 °C  | 60               | ml   |
 | Matcha     | matcha             | 4.5              | g    |
+| Ice        | ice cubes          | full serving cup | —    |
 
 ### Method
 
@@ -191,9 +191,9 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 | Drink base | brewed jasmine tea | 90              | ml   |
 | Drink base | oat milk           | 70              | ml   |
 | Drink base | liquid sugar       | 45              | ml   |
-| Drink base | ice cubes          | 2–3             | —    |
 | Matcha     | water at 70–80 °C  | 60              | ml   |
 | Matcha     | matcha             | 4.5             | g    |
+| Ice        | ice cubes          | 2–3             | —    |
 | Top-up     | oat milk           | to serving line | —    |
 
 ### Method

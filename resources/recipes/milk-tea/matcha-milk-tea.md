@@ -136,7 +136,7 @@ Made with jasmine milk tea, matcha. Select the required variant before measuring
 | Drink mixture | liquid sugar      | 50              | ml   |
 | Matcha        | water at 70–80 °C | 50              | ml   |
 | Matcha        | matcha            | 3.5             | g    |
-| Drink mixture | ice cubes         | 2–3             | —    |
+| Ice           | ice cubes         | 2–3             | —    |
 | Top-up        | jasmine milk tea  | to serving line | —    |
 
 ### Method
@@ -190,7 +190,7 @@ Made with jasmine milk tea, matcha. Select the required variant before measuring
 | Drink mixture | liquid sugar      | 65              | ml   |
 | Matcha        | water at 70–80 °C | 60              | ml   |
 | Matcha        | matcha            | 4.5             | g    |
-| Drink mixture | ice cubes         | 2–3             | —    |
+| Ice           | ice cubes         | 2–3             | —    |
 | Top-up        | jasmine milk tea  | to serving line | —    |
 
 ### Method

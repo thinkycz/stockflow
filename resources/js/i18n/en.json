@@ -1797,12 +1797,15 @@
         "reset_timer": "Reset timer",
         "timer_done": "Time is up. Continue with the next step.",
         "topping_adjustments": {
-            "title": "Sweetness when adding toppings",
-            "rule": "The recipe uses the base amount for 0–1 toppings. For two toppings, reduce each liquid sugar or syrup by 5 ml. For three toppings, reduce each by 10 ml, with a minimum of 0 ml.",
-            "informational": "These suggested amounts are shown separately. The recipe quantities and preparation steps keep their base amounts.",
-            "base": "0–1 toppings",
-            "two": "2 toppings",
-            "three": "3 toppings"
+            "title": "Sweetness with toppings",
+            "choose": "Choose the topping count to see how much sweetener to use.",
+            "count": "Number of toppings",
+            "unchanged": "Use the base amounts",
+            "reduction": "Reduce each sweetener by {amount} ml, down to 0 ml",
+            "original": "Base recipe: {amount}",
+            "use": "Use",
+            "omit": "Leave out",
+            "informational": "The ingredient list and preparation steps show the base amounts for 0–1 toppings."
         }
     },
     "attendance": {

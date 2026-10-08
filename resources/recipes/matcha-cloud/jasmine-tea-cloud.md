@@ -140,12 +140,12 @@ Made with jasmine tea, whipping cream, milk, matcha. Select the required variant
 | --------------- | ------------------ | --------------- | ---- |
 | Drink base      | brewed jasmine tea | 100             | ml   |
 | Drink base      | liquid sugar       | 30              | ml   |
-| Drink base      | ice cubes          | 2–3             | —    |
+| Ice             | ice cubes          | 2–3             | —    |
+| Top-up          | brewed jasmine tea | to serving line | —    |
 | Cloud / topping | whipping cream     | 40              | ml   |
 | Cloud / topping | milk               | 40              | ml   |
 | Cloud / topping | matcha             | 3.5             | g    |
 | Finish          | matcha powder      | as needed       | —    |
-| Top-up          | brewed jasmine tea | to serving line | —    |
 
 ### Method
 
@@ -200,12 +200,12 @@ Made with jasmine tea, whipping cream, milk, matcha. Select the required variant
 | --------------- | ------------------ | --------------- | ---- |
 | Drink base      | brewed jasmine tea | 140             | ml   |
 | Drink base      | liquid sugar       | 45              | ml   |
-| Drink base      | ice cubes          | 2–3             | —    |
+| Ice             | ice cubes          | 2–3             | —    |
+| Top-up          | brewed jasmine tea | to serving line | —    |
 | Cloud / topping | whipping cream     | 50              | ml   |
 | Cloud / topping | milk               | 50              | ml   |
 | Cloud / topping | matcha             | 4.5             | g    |
 | Finish          | matcha powder      | as needed       | —    |
-| Top-up          | brewed jasmine tea | to serving line | —    |
 
 ### Method
 

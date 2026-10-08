@@ -108,6 +108,7 @@ function variant(
         key,
         name: key,
         selectors,
+        selector_labels: selectors,
         ingredients: [],
         steps: [],
         tips_html: '',

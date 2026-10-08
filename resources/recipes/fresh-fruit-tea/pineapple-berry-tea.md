@@ -138,7 +138,7 @@ Made with jasmine tea, pineapple purée, strawberry purée. Select the required 
 | Drink mixture | liquid sugar       | 25              | ml     |
 | Drink mixture | pineapple purée    | 15              | ml     |
 | Drink mixture | strawberry purée   | 15              | ml     |
-| Drink mixture | ice cubes          | 2–3             | —      |
+| Ice           | ice cubes          | 2–3             | —      |
 | Top-up        | brewed jasmine tea | to serving line | —      |
 
 ### Method
@@ -196,7 +196,7 @@ Made with jasmine tea, pineapple purée, strawberry purée. Select the required 
 | Drink mixture | liquid sugar       | 40              | ml     |
 | Drink mixture | pineapple purée    | 20              | ml     |
 | Drink mixture | strawberry purée   | 20              | ml     |
-| Drink mixture | ice cubes          | 2–3             | —      |
+| Ice           | ice cubes          | 2–3             | —      |
 | Top-up        | brewed jasmine tea | to serving line | —      |
 
 ### Method

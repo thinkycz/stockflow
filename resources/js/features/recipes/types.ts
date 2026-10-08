@@ -33,6 +33,7 @@ export type RecipeVariant = {
     key: string;
     name: string;
     selectors: Record<string, string>;
+    selector_labels: Record<string, string>;
     ingredients: RecipeIngredient[];
     steps: RecipeStep[];
     tips_html: string;

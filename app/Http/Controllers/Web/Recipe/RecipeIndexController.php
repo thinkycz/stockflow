@@ -5,17 +5,21 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Web\Recipe;
 
 use App\Domain\Recipes\RecipeCatalogRepository;
-use Illuminate\Http\Request;
+use App\Models\User;
 use Inertia\Inertia;
 use Inertia\Response;
+use Thinkycz\LaravelCore\Support\Resolver;
 
 class RecipeIndexController
 {
     /**
      * Render the full authored library and lightweight local lookup index.
      */
-    public function __invoke(Request $request, RecipeCatalogRepository $catalog): Response
+    public function __invoke(): Response
     {
+        $request = Resolver::resolveRequest();
+        $catalog = new RecipeCatalogRepository(locale: User::mustAuth()->getLocale());
+
         return Inertia::render('recipes/Index', [
             'categories' => $catalog->categories(), 'lookup' => $catalog->lookupIndex(),
             'recipes' => \array_map(static function (array $recipe): array {

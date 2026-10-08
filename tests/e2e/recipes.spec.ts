@@ -8,6 +8,24 @@ async function login(page: Page, email = 'test@test.com'): Promise<void> {
     await page.waitForURL(/\/dashboard$/);
 }
 
+async function setEmployeeLocale(page: Page, locale: string): Promise<void> {
+    await page.goto('/settings');
+    const selector = page.locator('#locale');
+    await selector.selectOption(locale);
+    const response = page.waitForResponse(
+        (response) =>
+            response.url().endsWith('/settings/profile') &&
+            response.request().method() === 'POST',
+    );
+    await page
+        .locator('form')
+        .filter({ has: selector })
+        .getByRole('button', { name: /./ })
+        .click();
+    expect((await response).ok()).toBe(true);
+    await expect(selector).toHaveValue(locale);
+}
+
 async function noOverflow(page: Page): Promise<void> {
     expect(
         await page.evaluate(
@@ -112,13 +130,25 @@ test('the visual library filters instantly and keyboard lookup opens the correct
     await noOverflow(page);
 });
 
-for (const [locale, lookup, categoryLabel, guided, scoops] of [
+for (const [
+    locale,
+    lookup,
+    categoryLabel,
+    guided,
+    scoops,
+    preparations,
+    hotDrinks,
+    powder,
+] of [
     [
         'en',
         'Find a recipe',
         'Browse categories',
         'Guided preparation',
         '3 standard scoops',
+        'PREPARATIONS',
+        'HOT DRINKS',
+        'milk powder',
     ],
     [
         'cs',
@@ -126,6 +156,9 @@ for (const [locale, lookup, categoryLabel, guided, scoops] of [
         'Procházet kategorie',
         'Příprava krok za krokem',
         '3 standardní odměrky',
+        'Přípravy',
+        'Horké nápoje',
+        'sušené mléko',
     ],
     [
         'sk',
@@ -133,23 +166,17 @@ for (const [locale, lookup, categoryLabel, guided, scoops] of [
         'Prechádzať kategórie',
         'Príprava krok za krokom',
         '3 štandardné odmerky',
+        'Prípravy',
+        'Horúce nápoje',
+        'sušené mlieko',
     ],
 ] as const) {
     test(`recipe quantities and preparation controls remain readable in ${locale}`, async ({
         page,
     }) => {
         await page.setViewportSize({ width: 320, height: 740 });
-        await login(page, 'limited@test.com');
-        await page.route('**/recipes**', async (route) => {
-            const response = await route.fetch();
-            const body = (await response.text())
-                .replaceAll('"locale":"en"', `"locale":"${locale}"`)
-                .replaceAll(
-                    '&quot;locale&quot;:&quot;en&quot;',
-                    `&quot;locale&quot;:&quot;${locale}&quot;`,
-                );
-            await route.fulfill({ response, body });
-        });
+        await login(page);
+        await setEmployeeLocale(page, locale);
         await page.goto('/recipes');
         const category = page.getByRole('button', {
             name: categoryLabel,
@@ -163,13 +190,17 @@ for (const [locale, lookup, categoryLabel, guided, scoops] of [
         await expect(drawer.getByRole('button')).toHaveCount(11);
         await noOverflow(page);
         await capture(page, `recipes-categories-${locale}-small-mobile`, false);
-        await drawer.getByRole('button', { name: /^PREPARATIONS/ }).click();
+        await drawer
+            .getByRole('button', { name: new RegExp(`^${preparations}`) })
+            .click();
         await expect(drawer).toHaveCount(0);
         await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(10);
         await category.click();
-        await drawer.getByRole('button', { name: /^HOT DRINKS/ }).click();
+        await drawer
+            .getByRole('button', { name: new RegExp(`^${hotDrinks}`) })
+            .click();
         await expect(drawer).toHaveCount(0);
-        await expect(category).toContainText('HOT DRINKS');
+        await expect(category).toContainText(hotDrinks);
         await expect(category).toBeFocused();
         await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(5);
         await noOverflow(page);
@@ -211,8 +242,15 @@ for (const [locale, lookup, categoryLabel, guided, scoops] of [
             );
         for (const row of rowBounds)
             expect(row.nameRight).toBeLessThanOrEqual(row.amountLeft);
+        await expect(
+            page.getByRole('checkbox', {
+                name: `${powder} — ${scoops}`,
+                exact: true,
+            }),
+        ).toBeVisible();
         await noOverflow(page);
         await capture(page, `recipes-guided-${locale}-small-mobile`);
+        await setEmployeeLocale(page, 'en');
     });
 }
 
@@ -233,15 +271,17 @@ test('variant selectors retain flavour size and ice choices with informational t
             .getByText('2–3', { exact: true }),
     ).toBeVisible();
     await expect(page.getByText(/Top up with jasmine milk tea/)).toBeVisible();
-    await page
-        .getByText('Sweetness when adding toppings', { exact: true })
-        .click();
+    await page.getByText('Sweetness with toppings', { exact: true }).click();
     await expect(
         page.getByTestId('recipe-topping-component').first(),
     ).toContainText('liquid sugar');
-    await expect(
-        page.getByTestId('recipe-topping-component').first(),
-    ).toContainText('30 ml');
+    await page
+        .getByRole('tablist', { name: 'Number of toppings' })
+        .getByRole('tab', { name: '2', exact: true })
+        .click();
+    await expect(page.getByTestId('recipe-topping-amount').first()).toHaveText(
+        '30 ml',
+    );
     await noOverflow(page);
 });
 
@@ -392,4 +432,257 @@ test('classic matcha lists a full cup of ice for iced drinks and the authored ch
         ingredients.getByText('to serving line', { exact: true }),
     ).toBeVisible();
     await noOverflow(page);
+});
+
+for (const [locale, reference, guided, begin, groupName] of [
+    ['en', 'Recipe overview', 'Guided preparation', 'Begin preparation', 'Ice'],
+    [
+        'cs',
+        'Přehled receptu',
+        'Příprava krok za krokem',
+        'Začít přípravu',
+        'Led',
+    ],
+    [
+        'sk',
+        'Prehľad receptu',
+        'Príprava krok za krokom',
+        'Začať prípravu',
+        'Ľad',
+    ],
+] as const) {
+    test(`every recipe and variant renders its complete ingredients, grouping and method in ${locale}`, async ({
+        page,
+    }) => {
+        test.setTimeout(180000);
+        await login(page);
+        await setEmployeeLocale(page, locale);
+        await page.goto('/recipes');
+        const links = await page
+            .getByTestId('recipe-catalog-row')
+            .evaluateAll((rows) =>
+                rows.map(
+                    (row) =>
+                        row.querySelector('a')?.getAttribute('href') ??
+                        row.getAttribute('href'),
+                ),
+            );
+        expect(links).toHaveLength(54);
+        let variantsChecked = 0;
+        let iceRowsChecked = 0;
+        for (const link of links) {
+            if (!link) throw new Error('Missing recipe link.');
+            const response = await page.goto(link);
+            const html = await response!.text();
+            const payload = html.match(
+                /<script data-page="app" type="application\/json">([\s\S]*?)<\/script>/,
+            )?.[1];
+            if (!payload) throw new Error('Missing Inertia page script.');
+            const recipe = JSON.parse(payload).props
+                .recipe as import('../../resources/js/features/recipes/types').RecipeDocument;
+            const selectable = [
+                ...new Set(
+                    recipe.variants.flatMap((variant) =>
+                        Object.keys(variant.selectors),
+                    ),
+                ),
+            ].filter(
+                (dimension) =>
+                    new Set(
+                        recipe.variants.map(
+                            (variant) => variant.selectors[dimension],
+                        ),
+                    ).size > 1,
+            );
+            for (const variant of recipe.variants) {
+                await page
+                    .getByRole('tab', { name: reference, exact: true })
+                    .click();
+                for (const dimension of selectable) {
+                    const tab = page.getByRole('tab', {
+                        name: variant.selector_labels[dimension],
+                        exact: true,
+                    });
+                    if ((await tab.getAttribute('aria-selected')) !== 'true')
+                        await tab.click();
+                }
+                if (selectable.length)
+                    await expect(
+                        page.getByTestId('recipe-selected-variant'),
+                    ).toHaveText(variant.name);
+                const expected = variant.ingredients.map((ingredient) => ({
+                    name: ingredient.name,
+                    group: ingredient.group,
+                    icon: ingredient.icon_group,
+                    amount:
+                        ingredient.quantity_value === null
+                            ? ingredient.quantity_text
+                            : new Intl.NumberFormat(locale, {
+                                  maximumFractionDigits: 3,
+                              }).format(ingredient.quantity_value),
+                }));
+                const rows = await page
+                    .getByTestId('recipe-ingredient-row')
+                    .evaluateAll((rows) =>
+                        rows.map((row) => ({
+                            name: row
+                                .querySelector('span:last-of-type')
+                                ?.textContent?.trim(),
+                            group: row
+                                .closest('section')
+                                ?.querySelector('h3')
+                                ?.textContent?.trim(),
+                            icon: row.getAttribute('data-icon-group'),
+                            amount: row
+                                .querySelector('strong')
+                                ?.textContent?.trim(),
+                        })),
+                    );
+                expect(rows).toHaveLength(expected.length);
+                for (let index = 0; index < expected.length; index++) {
+                    expect(rows[index]).toMatchObject({
+                        name: expected[index]!.name,
+                        group: expected[index]!.group,
+                        icon: expected[index]!.icon,
+                    });
+                    expect(rows[index]!.amount).toContain(
+                        expected[index]!.amount,
+                    );
+                    if (expected[index]!.icon === 'ice') {
+                        expect(rows[index]!.group).toBe(groupName);
+                        iceRowsChecked++;
+                    }
+                }
+                const method = await page
+                    .getByTestId('recipe-method-step')
+                    .evaluateAll((steps) =>
+                        steps.map((step) => ({
+                            title: step
+                                .querySelector('h3')
+                                ?.textContent?.trim(),
+                            text: step.querySelector('p')?.textContent?.trim(),
+                        })),
+                    );
+                expect(method).toEqual(
+                    variant.steps.map((step) => ({
+                        title: step.title,
+                        text: step.text,
+                    })),
+                );
+                const groups = await page
+                    .getByTestId('recipe-ingredient-group')
+                    .locator('h3')
+                    .allTextContents();
+                expect(groups.map((text) => text.trim())).toEqual([
+                    ...new Set(
+                        variant.ingredients.map(
+                            (ingredient) => ingredient.group,
+                        ),
+                    ),
+                ]);
+                await page
+                    .getByRole('tab', { name: guided, exact: true })
+                    .click();
+                await expect(page.getByRole('checkbox')).toHaveCount(
+                    variant.ingredients.length,
+                );
+                await page
+                    .getByRole('button', { name: begin, exact: true })
+                    .click();
+                await expect(page.getByTestId('guide-step-title')).toHaveText(
+                    variant.steps[0]!.title,
+                );
+                await expect(page.getByTestId('guide-step-text')).toHaveText(
+                    variant.steps[0]!.text,
+                );
+                await noOverflow(page);
+                variantsChecked++;
+            }
+        }
+        expect(variantsChecked).toBe(189);
+        expect(iceRowsChecked).toBe(177);
+        await setEmployeeLocale(page, 'en');
+    });
+}
+
+test('Czech sweetness guidance handles the screenshot case, multiple sweeteners and keyboard selection on phones', async ({
+    page,
+}) => {
+    await login(page);
+    await setEmployeeLocale(page, 'cs');
+    await page.goto('/recipes/matcha-cloud/milky-matcha-cloud');
+    await page.getByRole('tab', { name: 'Bez ledu', exact: true }).click();
+    const guidance = page.getByTestId('recipe-topping-adjustments');
+    const count = guidance.getByRole('tablist', { name: 'Počet toppingů' });
+    await expect(
+        guidance.getByTestId('recipe-topping-component'),
+    ).toContainText('tekutý cukr');
+    await expect(guidance.getByTestId('recipe-topping-amount')).toHaveText(
+        '5 ml',
+    );
+    await count.getByRole('tab', { name: '2', exact: true }).click();
+    await expect(guidance.getByTestId('recipe-topping-amount')).toHaveText(
+        '0 ml',
+    );
+    await expect(
+        guidance.getByText('Nepřidávat', { exact: true }),
+    ).toBeVisible();
+    await capture(page, 'recipes-sweetness-cs-desktop');
+    await guidance.screenshot({
+        path: 'output/playwright/recipes-sweetness-cs-detail.png',
+    });
+    await page.setViewportSize({ width: 320, height: 740 });
+    await capture(page, 'recipes-sweetness-cs-small-mobile');
+    await guidance.screenshot({
+        path: 'output/playwright/recipes-sweetness-cs-mobile-detail.png',
+    });
+    await noOverflow(page);
+    await count
+        .getByRole('tab', { name: '2', exact: true })
+        .press('ArrowRight');
+    await expect(
+        count.getByRole('tab', { name: '3', exact: true }),
+    ).toHaveAttribute('aria-selected', 'true');
+    await expect(guidance.getByTestId('recipe-topping-amount')).toHaveText(
+        '0 ml',
+    );
+    await page.getByRole('tab', { name: 'M', exact: true }).click();
+    await expect(
+        count.getByRole('tab', { name: '0–1', exact: true }),
+    ).toHaveAttribute('aria-selected', 'true');
+    await expect(guidance.getByTestId('recipe-topping-amount')).toHaveText(
+        '10 ml',
+    );
+    await page.getByRole('tab', { name: 'S ledem', exact: true }).click();
+    await expect(guidance).toHaveCount(0);
+    await page.getByRole('tab', { name: 'Bez ledu', exact: true }).click();
+    await expect(
+        count.getByRole('tab', { name: '0–1', exact: true }),
+    ).toHaveAttribute('aria-selected', 'true');
+    await page.goto('/recipes/fresh-fruit-tea/mango-lemon-tea');
+    await count.getByRole('tab', { name: '3', exact: true }).click();
+    const components = await guidance
+        .getByTestId('recipe-topping-component')
+        .allTextContents();
+    expect(components.length).toBeGreaterThan(1);
+    expect(components.join(' ')).not.toMatch(
+        /liquid sugar|syrup|Drink base|Top-up/,
+    );
+    await expect(guidance.getByTestId('recipe-topping-amount')).toHaveText([
+        '10 ml',
+        '0 ml',
+    ]);
+    await noOverflow(page);
+    await page
+        .getByRole('combobox', { name: 'Najít recept', exact: true })
+        .fill('pernik');
+    await page.getByRole('option', { name: /Banana Bread Matcha/ }).click();
+    await page.waitForURL('/recipes/hot-drinks/banana-bread-matcha');
+    await expect(
+        page
+            .getByTestId('recipe-ingredients')
+            .getByText('perníkový sirup', { exact: true }),
+    ).toBeVisible();
+    await expect(guidance).toHaveCount(0);
+    await setEmployeeLocale(page, 'en');
 });

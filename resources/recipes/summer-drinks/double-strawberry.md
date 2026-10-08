@@ -79,10 +79,10 @@ Made with strawberry purée, milk, matcha, whipping cream. Select the required v
 | Component       | Ingredient         | Amount           | Unit |
 | --------------- | ------------------ | ---------------- | ---- |
 | Drink base      | strawberry purée   | 30               | ml   |
-| Ice             | ice cubes          | full serving cup | —    |
 | Drink base      | milk               | 140              | ml   |
 | Matcha          | water at 70–80 °C  | 50               | ml   |
 | Matcha          | matcha             | 4.5              | g    |
+| Ice             | ice cubes          | full serving cup | —    |
 | Cloud / topping | whipping cream     | 40               | ml   |
 | Cloud / topping | milk               | 40               | ml   |
 | Cloud / topping | strawberry syrup   | 40               | ml   |
@@ -111,16 +111,16 @@ Made with strawberry purée, milk, matcha, whipping cream. Select the required v
 | Component       | Ingredient         | Amount          | Unit |
 | --------------- | ------------------ | --------------- | ---- |
 | Drink base      | strawberry purée   | 30              | ml   |
-| Drink base      | ice cubes          | 2–3             | —    |
 | Drink base      | milk               | 140             | ml   |
 | Drink base      | liquid sugar       | 5               | ml   |
 | Matcha          | water at 70–80 °C  | 50              | ml   |
 | Matcha          | matcha             | 4.5             | g    |
+| Ice             | ice cubes          | 2–3             | —    |
+| Top-up          | milk               | to serving line | —    |
 | Cloud / topping | whipping cream     | 40              | ml   |
 | Cloud / topping | milk               | 40              | ml   |
 | Cloud / topping | strawberry syrup   | 40              | ml   |
 | Finish          | dried strawberries | as needed       | —    |
-| Top-up          | milk               | to serving line | —    |
 
 ### Method
 

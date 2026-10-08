@@ -65,10 +65,10 @@ Made with oat milk, matcha. Select the required variant before measuring ingredi
 
 | Component       | Ingredient   | Amount           | Unit |
 | --------------- | ------------ | ---------------- | ---- |
+| Ice             | ice cubes    | full serving cup | —    |
 | Cloud / topping | oat milk     | 100              | ml   |
 | Cloud / topping | liquid sugar | 20               | ml   |
 | Cloud / topping | matcha       | 3.5              | g    |
-| Ice             | ice cubes    | full serving cup | —    |
 
 ### Method
 
@@ -85,11 +85,11 @@ Made with oat milk, matcha. Select the required variant before measuring ingredi
 
 | Component       | Ingredient   | Amount          | Unit |
 | --------------- | ------------ | --------------- | ---- |
+| Ice             | ice cubes    | 2–3             | —    |
+| Top-up          | oat milk     | to serving line | —    |
 | Cloud / topping | oat milk     | 100             | ml   |
 | Cloud / topping | liquid sugar | 25              | ml   |
 | Cloud / topping | matcha       | 3.5             | g    |
-| Drink base      | ice cubes    | 2–3             | —    |
-| Top-up          | oat milk     | to serving line | —    |
 
 ### Method
 
@@ -111,10 +111,10 @@ Made with oat milk, matcha. Select the required variant before measuring ingredi
 
 | Component       | Ingredient   | Amount           | Unit |
 | --------------- | ------------ | ---------------- | ---- |
+| Ice             | ice cubes    | full serving cup | —    |
 | Cloud / topping | oat milk     | 140              | ml   |
 | Cloud / topping | liquid sugar | 25               | ml   |
 | Cloud / topping | matcha       | 4.5              | g    |
-| Ice             | ice cubes    | full serving cup | —    |
 
 ### Method
 
@@ -131,11 +131,11 @@ Made with oat milk, matcha. Select the required variant before measuring ingredi
 
 | Component       | Ingredient   | Amount          | Unit |
 | --------------- | ------------ | --------------- | ---- |
+| Ice             | ice cubes    | 2–3             | —    |
+| Top-up          | oat milk     | to serving line | —    |
 | Cloud / topping | oat milk     | 140             | ml   |
 | Cloud / topping | liquid sugar | 35              | ml   |
 | Cloud / topping | matcha       | 4.5             | g    |
-| Drink base      | ice cubes    | 2–3             | —    |
-| Top-up          | oat milk     | to serving line | —    |
 
 ### Method
 

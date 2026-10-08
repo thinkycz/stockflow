@@ -131,9 +131,9 @@ Made with milk, matcha, whipping cream, strawberry syrup. Select the required va
 | --------------- | ------------------ | ---------------- | ---- |
 | Drink base      | milk               | 100              | ml   |
 | Drink base      | liquid sugar       | 5                | ml   |
-| Ice             | ice cubes          | full serving cup | —    |
 | Matcha          | water at 70–80 °C  | 50               | ml   |
 | Matcha          | matcha             | 3.5              | g    |
+| Ice             | ice cubes          | full serving cup | —    |
 | Cloud / topping | whipping cream     | 30               | ml   |
 | Cloud / topping | milk               | 30               | ml   |
 | Cloud / topping | strawberry syrup   | 30               | ml   |
@@ -164,14 +164,14 @@ Made with milk, matcha, whipping cream, strawberry syrup. Select the required va
 | --------------- | ------------------ | --------------- | ---- |
 | Drink base      | milk               | 100             | ml   |
 | Drink base      | liquid sugar       | 10              | ml   |
-| Drink base      | ice cubes          | 2–3             | —    |
 | Matcha          | water at 70–80 °C  | 50              | ml   |
 | Matcha          | matcha             | 3.5             | g    |
+| Ice             | ice cubes          | 2–3             | —    |
+| Top-up          | milk               | to serving line | —    |
 | Cloud / topping | whipping cream     | 30              | ml   |
 | Cloud / topping | milk               | 30              | ml   |
 | Cloud / topping | strawberry syrup   | 30              | ml   |
 | Finish          | dried strawberries | 1               | g    |
-| Top-up          | milk               | to serving line | —    |
 
 ### Method
 
@@ -203,9 +203,9 @@ Made with milk, matcha, whipping cream, strawberry syrup. Select the required va
 | --------------- | ------------------ | ---------------- | ---- |
 | Drink base      | milk               | 140              | ml   |
 | Drink base      | liquid sugar       | 10               | ml   |
-| Ice             | ice cubes          | full serving cup | —    |
 | Matcha          | water at 70–80 °C  | 50               | ml   |
 | Matcha          | matcha             | 4.5              | g    |
+| Ice             | ice cubes          | full serving cup | —    |
 | Cloud / topping | whipping cream     | 40               | ml   |
 | Cloud / topping | milk               | 40               | ml   |
 | Cloud / topping | strawberry syrup   | 40               | ml   |
@@ -236,14 +236,14 @@ Made with milk, matcha, whipping cream, strawberry syrup. Select the required va
 | --------------- | ------------------ | --------------- | ---- |
 | Drink base      | milk               | 140             | ml   |
 | Drink base      | liquid sugar       | 20              | ml   |
-| Drink base      | ice cubes          | 2–3             | —    |
 | Matcha          | water at 70–80 °C  | 50              | ml   |
 | Matcha          | matcha             | 4.5             | g    |
+| Ice             | ice cubes          | 2–3             | —    |
+| Top-up          | milk               | to serving line | —    |
 | Cloud / topping | whipping cream     | 40              | ml   |
 | Cloud / topping | milk               | 40              | ml   |
 | Cloud / topping | strawberry syrup   | 40              | ml   |
 | Finish          | dried strawberries | 1               | g    |
-| Top-up          | milk               | to serving line | —    |
 
 ### Method
 

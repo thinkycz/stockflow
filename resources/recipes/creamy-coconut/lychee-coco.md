@@ -112,8 +112,8 @@ Made with lychees, whipping cream, milk, lychee purée. Select the required vari
 | Component       | Ingredient     | Amount           | Unit   |
 | --------------- | -------------- | ---------------- | ------ |
 | Drink base      | lychees        | 2                | pieces |
-| Ice             | ice cubes      | full serving cup | —      |
 | Drink base      | coconut water  | 100              | ml     |
+| Ice             | ice cubes      | full serving cup | —      |
 | Cloud / topping | whipping cream | 30               | ml     |
 | Cloud / topping | milk           | 30               | ml     |
 | Cloud / topping | lychee purée   | 30               | ml     |
@@ -138,14 +138,14 @@ Made with lychees, whipping cream, milk, lychee purée. Select the required vari
 | Component       | Ingredient     | Amount          | Unit   |
 | --------------- | -------------- | --------------- | ------ |
 | Drink base      | lychees        | 2               | pieces |
-| Drink base      | ice cubes      | 2–3             | —      |
 | Drink base      | coconut water  | 100             | ml     |
 | Drink base      | liquid sugar   | 5               | ml     |
+| Ice             | ice cubes      | 2–3             | —      |
+| Top-up          | coconut water  | to serving line | —      |
 | Cloud / topping | whipping cream | 30              | ml     |
 | Cloud / topping | milk           | 30              | ml     |
 | Cloud / topping | lychee purée   | 30              | ml     |
 | Finish          | coconut flakes | as needed       | —      |
-| Top-up          | coconut water  | to serving line | —      |
 
 ### Method
 
@@ -173,8 +173,8 @@ Made with lychees, whipping cream, milk, lychee purée. Select the required vari
 | Component       | Ingredient     | Amount           | Unit   |
 | --------------- | -------------- | ---------------- | ------ |
 | Drink base      | lychees        | 3                | pieces |
-| Ice             | ice cubes      | full serving cup | —      |
 | Drink base      | coconut water  | 140              | ml     |
+| Ice             | ice cubes      | full serving cup | —      |
 | Cloud / topping | whipping cream | 40               | ml     |
 | Cloud / topping | milk           | 40               | ml     |
 | Cloud / topping | lychee purée   | 40               | ml     |
@@ -199,14 +199,14 @@ Made with lychees, whipping cream, milk, lychee purée. Select the required vari
 | Component       | Ingredient     | Amount          | Unit   |
 | --------------- | -------------- | --------------- | ------ |
 | Drink base      | lychees        | 3               | pieces |
-| Drink base      | ice cubes      | 2–3             | —      |
 | Drink base      | coconut water  | 140             | ml     |
 | Drink base      | liquid sugar   | 10              | ml     |
+| Ice             | ice cubes      | 2–3             | —      |
+| Top-up          | coconut water  | to serving line | —      |
 | Cloud / topping | whipping cream | 40              | ml     |
 | Cloud / topping | milk           | 40              | ml     |
 | Cloud / topping | lychee purée   | 40              | ml     |
 | Finish          | coconut flakes | as needed       | —      |
-| Top-up          | coconut water  | to serving line | —      |
 
 ### Method
 

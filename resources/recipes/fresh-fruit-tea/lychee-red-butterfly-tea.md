@@ -144,9 +144,9 @@ Made with lychee, jasmine tea, lychee purée, strawberry purée. Select the requ
 | Drink mixture | liquid sugar             | 25              | ml     |
 | Drink mixture | lychee purée             | 15              | ml     |
 | Drink mixture | strawberry purée         | 15              | ml     |
-| Drink mixture | ice cubes                | 2–3             | —      |
-| Finish        | brewed butterfly pea tea | as needed       | —      |
+| Ice           | ice cubes                | 2–3             | —      |
 | Top-up        | brewed jasmine tea       | to serving line | —      |
+| Finish        | brewed butterfly pea tea | as needed       | —      |
 
 ### Method
 
@@ -206,9 +206,9 @@ Made with lychee, jasmine tea, lychee purée, strawberry purée. Select the requ
 | Drink mixture | liquid sugar             | 40              | ml     |
 | Drink mixture | lychee purée             | 20              | ml     |
 | Drink mixture | strawberry purée         | 20              | ml     |
-| Drink mixture | ice cubes                | 2–3             | —      |
-| Finish        | brewed butterfly pea tea | as needed       | —      |
+| Ice           | ice cubes                | 2–3             | —      |
 | Top-up        | brewed jasmine tea       | to serving line | —      |
+| Finish        | brewed butterfly pea tea | as needed       | —      |
 
 ### Method
 

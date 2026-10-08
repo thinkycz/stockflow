@@ -138,7 +138,7 @@ Made with whipping cream, milk, matcha, dried coconut. Select the required varia
 | --------------- | -------------- | ------ | ---- |
 | Drink base      | coconut water  | 150    | ml   |
 | Drink base      | liquid sugar   | 25     | ml   |
-| Drink base      | ice cubes      | 2–3    | —    |
+| Ice             | ice cubes      | 2–3    | —    |
 | Cloud / topping | whipping cream | 40     | ml   |
 | Cloud / topping | milk           | 40     | ml   |
 | Cloud / topping | matcha         | 3.5    | g    |
@@ -196,7 +196,7 @@ Made with whipping cream, milk, matcha, dried coconut. Select the required varia
 | --------------- | -------------- | ------ | ---- |
 | Drink base      | coconut water  | 200    | ml   |
 | Drink base      | liquid sugar   | 35     | ml   |
-| Drink base      | ice cubes      | 2–3    | —    |
+| Ice             | ice cubes      | 2–3    | —    |
 | Cloud / topping | whipping cream | 50     | ml   |
 | Cloud / topping | milk           | 50     | ml   |
 | Cloud / topping | matcha         | 4.5    | g    |

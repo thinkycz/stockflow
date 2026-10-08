@@ -176,7 +176,7 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 | ------------- | --------------- | --------------- | ---- |
 | Drink mixture | Ceylon milk tea | 250             | ml   |
 | Drink mixture | liquid sugar    | 35              | ml   |
-| Drink mixture | ice cubes       | 2–3             | —    |
+| Ice           | ice cubes       | 2–3             | —    |
 | Top-up        | Ceylon milk tea | to serving line | —    |
 
 ### Method
@@ -218,7 +218,7 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 | ------------- | --------------- | --------------- | ---- |
 | Drink mixture | Ceylon milk tea | 350             | ml   |
 | Drink mixture | liquid sugar    | 50              | ml   |
-| Drink mixture | ice cubes       | 2–3             | —    |
+| Ice           | ice cubes       | 2–3             | —    |
 | Top-up        | Ceylon milk tea | to serving line | —    |
 
 ### Method
@@ -260,7 +260,7 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 | ------------- | ---------------- | --------------- | ---- |
 | Drink mixture | jasmine milk tea | 250             | ml   |
 | Drink mixture | liquid sugar     | 35              | ml   |
-| Drink mixture | ice cubes        | 2–3             | —    |
+| Ice           | ice cubes        | 2–3             | —    |
 | Top-up        | jasmine milk tea | to serving line | —    |
 
 ### Method
@@ -302,7 +302,7 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 | ------------- | ---------------- | --------------- | ---- |
 | Drink mixture | jasmine milk tea | 350             | ml   |
 | Drink mixture | liquid sugar     | 50              | ml   |
-| Drink mixture | ice cubes        | 2–3             | —    |
+| Ice           | ice cubes        | 2–3             | —    |
 | Top-up        | jasmine milk tea | to serving line | —    |
 
 ### Method
@@ -344,7 +344,7 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 | ------------- | --------------- | --------------- | ---- |
 | Drink mixture | oolong milk tea | 250             | ml   |
 | Drink mixture | liquid sugar    | 35              | ml   |
-| Drink mixture | ice cubes       | 2–3             | —    |
+| Ice           | ice cubes       | 2–3             | —    |
 | Top-up        | oolong milk tea | to serving line | —    |
 
 ### Method
@@ -386,7 +386,7 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 | ------------- | --------------- | --------------- | ---- |
 | Drink mixture | oolong milk tea | 350             | ml   |
 | Drink mixture | liquid sugar    | 50              | ml   |
-| Drink mixture | ice cubes       | 2–3             | —    |
+| Ice           | ice cubes       | 2–3             | —    |
 | Top-up        | oolong milk tea | to serving line | —    |
 
 ### Method

@@ -131,7 +131,7 @@ Made with passion fruit pulp, jasmine tea, passion fruit syrup, passion fruit pu
 | Drink mixture | liquid sugar        | 30              | ml     |
 | Drink mixture | passion fruit syrup | 15              | ml     |
 | Drink mixture | passion fruit purée | 10              | ml     |
-| Drink mixture | ice cubes           | 2–3             | —      |
+| Ice           | ice cubes           | 2–3             | —      |
 | Top-up        | brewed jasmine tea  | to serving line | —      |
 
 ### Method
@@ -185,7 +185,7 @@ Made with passion fruit pulp, jasmine tea, passion fruit syrup, passion fruit pu
 | Drink mixture | liquid sugar        | 45              | ml     |
 | Drink mixture | passion fruit syrup | 20              | ml     |
 | Drink mixture | passion fruit purée | 15              | ml     |
-| Drink mixture | ice cubes           | 2–3             | —      |
+| Ice           | ice cubes           | 2–3             | —      |
 | Top-up        | brewed jasmine tea  | to serving line | —      |
 
 ### Method

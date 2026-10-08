@@ -148,11 +148,11 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 | Component     | Ingredient        | Amount           | Unit |
 | ------------- | ----------------- | ---------------- | ---- |
-| Finish        | brown sugar syrup | as needed        | —    |
 | Drink mixture | Ceylon milk tea   | 250              | ml   |
 | Drink mixture | liquid sugar      | 5                | ml   |
 | Drink mixture | brown sugar syrup | 25               | ml   |
 | Ice           | ice cubes         | full serving cup | —    |
+| Finish        | brown sugar syrup | as needed        | —    |
 
 ### Method
 
@@ -170,12 +170,12 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 | Component     | Ingredient        | Amount          | Unit |
 | ------------- | ----------------- | --------------- | ---- |
-| Finish        | brown sugar syrup | as needed       | —    |
 | Drink mixture | Ceylon milk tea   | 250             | ml   |
 | Drink mixture | liquid sugar      | 10              | ml   |
 | Drink mixture | brown sugar syrup | 25              | ml   |
-| Drink mixture | ice cubes         | 2–3             | —    |
+| Ice           | ice cubes         | 2–3             | —    |
 | Top-up        | Ceylon milk tea   | to serving line | —    |
+| Finish        | brown sugar syrup | as needed       | —    |
 
 ### Method
 
@@ -198,11 +198,11 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 | Component     | Ingredient        | Amount           | Unit |
 | ------------- | ----------------- | ---------------- | ---- |
-| Finish        | brown sugar syrup | as needed        | —    |
 | Drink mixture | Ceylon milk tea   | 350              | ml   |
 | Drink mixture | liquid sugar      | 5                | ml   |
 | Drink mixture | brown sugar syrup | 35               | ml   |
 | Ice           | ice cubes         | full serving cup | —    |
+| Finish        | brown sugar syrup | as needed        | —    |
 
 ### Method
 
@@ -220,12 +220,12 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 | Component     | Ingredient        | Amount          | Unit |
 | ------------- | ----------------- | --------------- | ---- |
-| Finish        | brown sugar syrup | as needed       | —    |
 | Drink mixture | Ceylon milk tea   | 350             | ml   |
 | Drink mixture | liquid sugar      | 15              | ml   |
 | Drink mixture | brown sugar syrup | 35              | ml   |
-| Drink mixture | ice cubes         | 2–3             | —    |
+| Ice           | ice cubes         | 2–3             | —    |
 | Top-up        | Ceylon milk tea   | to serving line | —    |
+| Finish        | brown sugar syrup | as needed       | —    |
 
 ### Method
 
@@ -248,11 +248,11 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 | Component     | Ingredient        | Amount           | Unit |
 | ------------- | ----------------- | ---------------- | ---- |
-| Finish        | brown sugar syrup | as needed        | —    |
 | Drink mixture | milk              | 250              | ml   |
 | Drink mixture | liquid sugar      | 5                | ml   |
 | Drink mixture | brown sugar syrup | 25               | ml   |
 | Ice           | ice cubes         | full serving cup | —    |
+| Finish        | brown sugar syrup | as needed        | —    |
 
 ### Method
 
@@ -270,12 +270,12 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 | Component     | Ingredient        | Amount          | Unit |
 | ------------- | ----------------- | --------------- | ---- |
-| Finish        | brown sugar syrup | as needed       | —    |
 | Drink mixture | milk              | 250             | ml   |
 | Drink mixture | liquid sugar      | 10              | ml   |
 | Drink mixture | brown sugar syrup | 25              | ml   |
-| Drink mixture | ice cubes         | 2–3             | —    |
+| Ice           | ice cubes         | 2–3             | —    |
 | Top-up        | milk              | to serving line | —    |
+| Finish        | brown sugar syrup | as needed       | —    |
 
 ### Method
 
@@ -298,11 +298,11 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 | Component     | Ingredient        | Amount           | Unit |
 | ------------- | ----------------- | ---------------- | ---- |
-| Finish        | brown sugar syrup | as needed        | —    |
 | Drink mixture | milk              | 350              | ml   |
 | Drink mixture | liquid sugar      | 5                | ml   |
 | Drink mixture | brown sugar syrup | 35               | ml   |
 | Ice           | ice cubes         | full serving cup | —    |
+| Finish        | brown sugar syrup | as needed        | —    |
 
 ### Method
 
@@ -320,12 +320,12 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 | Component     | Ingredient        | Amount          | Unit |
 | ------------- | ----------------- | --------------- | ---- |
-| Finish        | brown sugar syrup | as needed       | —    |
 | Drink mixture | milk              | 350             | ml   |
 | Drink mixture | liquid sugar      | 15              | ml   |
 | Drink mixture | brown sugar syrup | 35              | ml   |
-| Drink mixture | ice cubes         | 2–3             | —    |
+| Ice           | ice cubes         | 2–3             | —    |
 | Top-up        | milk              | to serving line | —    |
+| Finish        | brown sugar syrup | as needed       | —    |
 
 ### Method
 

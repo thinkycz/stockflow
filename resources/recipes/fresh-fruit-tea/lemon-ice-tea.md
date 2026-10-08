@@ -108,7 +108,7 @@ Made with Ceylon tea, lemon syrup. Select the required variant before measuring 
 | Drink mixture | brewed Ceylon tea | 250             | ml     |
 | Drink mixture | liquid sugar      | 30              | ml     |
 | Drink mixture | lemon syrup       | 25              | ml     |
-| Drink mixture | ice cubes         | 2–3             | —      |
+| Ice           | ice cubes         | 2–3             | —      |
 | Top-up        | brewed Ceylon tea | to serving line | —      |
 
 ### Method
@@ -158,7 +158,7 @@ Made with Ceylon tea, lemon syrup. Select the required variant before measuring 
 | Drink mixture | brewed Ceylon tea | 350             | ml     |
 | Drink mixture | liquid sugar      | 45              | ml     |
 | Drink mixture | lemon syrup       | 35              | ml     |
-| Drink mixture | ice cubes         | 2–3             | —      |
+| Ice           | ice cubes         | 2–3             | —      |
 | Top-up        | brewed Ceylon tea | to serving line | —      |
 
 ### Method

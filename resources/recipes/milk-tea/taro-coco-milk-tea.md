@@ -136,7 +136,7 @@ Made with milk powder, taro powder. Select the required variant before measuring
 | Drink mixture  | taro powder  | 1.5                     | scoops |
 | Drink mixture  | liquid sugar | 25                      | ml     |
 | Milk to volume | coconut milk | to 300 ml total mixture | —      |
-| Drink mixture  | ice cubes    | 2–3                     | —      |
+| Ice            | ice cubes    | 2–3                     | —      |
 | Top-up         | coconut milk | to serving line         | —      |
 
 ### Method
@@ -192,7 +192,7 @@ Made with milk powder, taro powder. Select the required variant before measuring
 | Drink mixture  | taro powder  | 2                       | scoops |
 | Drink mixture  | liquid sugar | 40                      | ml     |
 | Milk to volume | coconut milk | to 400 ml total mixture | —      |
-| Drink mixture  | ice cubes    | 2–3                     | —      |
+| Ice            | ice cubes    | 2–3                     | —      |
 | Top-up         | coconut milk | to serving line         | —      |
 
 ### Method

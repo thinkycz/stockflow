@@ -43,14 +43,14 @@ Prepare the ceylon milk tea preparation batch before making drinks. Follow the s
 
 ### Ingredients
 
-| Component      | Ingredient        | Amount               | Unit |
-| -------------- | ----------------- | -------------------- | ---- |
-| Tea blend      | Ceylon tea leaves | 60                   | g    |
-| Tea blend      | Yunnan tea        | 30                   | g    |
-| Tea blend      | oolong tea leaves | 10                   | g    |
-| Batch          | hot water         | 2.5                  | L    |
-| Batch          | milk powder       | 900                  | g    |
-| Batch dilution | ice cubes         | to 3.5 L total batch | —    |
+| Component | Ingredient        | Amount               | Unit |
+| --------- | ----------------- | -------------------- | ---- |
+| Tea blend | Ceylon tea leaves | 60                   | g    |
+| Tea blend | Yunnan tea        | 30                   | g    |
+| Tea blend | oolong tea leaves | 10                   | g    |
+| Batch     | hot water         | 2.5                  | L    |
+| Batch     | milk powder       | 900                  | g    |
+| Ice       | ice cubes         | to 3.5 L total batch | —    |
 
 ### Method
 

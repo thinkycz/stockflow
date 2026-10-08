@@ -39,9 +39,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         },
@@ -80,9 +80,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         }
@@ -98,19 +98,21 @@ Made with passion fruit pulp, jasmine tea, passion fruit syrup, mango purée. Se
 
 - Serving Cup
 - Shaker
+- Stirring Spoon
 
 ## M — With ice
 
 ### Ingredients
 
-| Component     | Ingredient          | Amount | Unit   |
-| ------------- | ------------------- | ------ | ------ |
-| Drink mixture | passion fruit pulp  | 0.5    | scoops |
-| Drink mixture | mango pieces        | 0.5    | scoops |
-| Drink mixture | brewed jasmine tea  | 250    | ml     |
-| Drink mixture | liquid sugar        | 20     | ml     |
-| Drink mixture | passion fruit syrup | 15     | ml     |
-| Drink mixture | mango purée         | 15     | ml     |
+| Component     | Ingredient          | Amount           | Unit   |
+| ------------- | ------------------- | ---------------- | ------ |
+| Drink mixture | passion fruit pulp  | 0.5              | scoops |
+| Drink mixture | mango pieces        | 0.5              | scoops |
+| Drink mixture | brewed jasmine tea  | 250              | ml     |
+| Drink mixture | liquid sugar        | 20               | ml     |
+| Drink mixture | passion fruit syrup | 15               | ml     |
+| Drink mixture | mango purée         | 15               | ml     |
+| Ice           | ice cubes           | full serving cup | —      |
 
 ### Method
 
@@ -120,23 +122,24 @@ Made with passion fruit pulp, jasmine tea, passion fruit syrup, mango purée. Se
 4. **Measure liquid sugar.** Add 20 ml liquid sugar to shaker.
 5. **Measure passion fruit syrup.** Add 15 ml passion fruit syrup to shaker.
 6. **Measure mango purée.** Add 15 ml mango purée to shaker.
-7. **Chill the drink.** Fill the shaker with ice.
-8. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+7. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 
 ## M — No ice
 
 ### Ingredients
 
-| Component     | Ingredient          | Amount | Unit   |
-| ------------- | ------------------- | ------ | ------ |
-| Drink mixture | passion fruit pulp  | 0.5    | scoops |
-| Drink mixture | mango pieces        | 0.5    | scoops |
-| Drink mixture | brewed jasmine tea  | 250    | ml     |
-| Drink mixture | liquid sugar        | 25     | ml     |
-| Drink mixture | passion fruit syrup | 15     | ml     |
-| Drink mixture | mango purée         | 15     | ml     |
-| Drink mixture | ice cubes           | 2–3    | —      |
+| Component     | Ingredient          | Amount          | Unit   |
+| ------------- | ------------------- | --------------- | ------ |
+| Drink mixture | passion fruit pulp  | 0.5             | scoops |
+| Drink mixture | mango pieces        | 0.5             | scoops |
+| Drink mixture | brewed jasmine tea  | 250             | ml     |
+| Drink mixture | liquid sugar        | 25              | ml     |
+| Drink mixture | passion fruit syrup | 15              | ml     |
+| Drink mixture | mango purée         | 15              | ml     |
+| Drink mixture | ice cubes           | 2–3             | —      |
+| Top-up        | brewed jasmine tea  | to serving line | —      |
 
 ### Method
 
@@ -147,9 +150,9 @@ Made with passion fruit pulp, jasmine tea, passion fruit syrup, mango purée. Se
 5. **Measure passion fruit syrup.** Add 15 ml passion fruit syrup to shaker.
 6. **Measure mango purée.** Add 15 ml mango purée to shaker.
 7. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-8. **Top up the drink.** Top up with jasmine tea to the standard serving line.
-9. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-10. **Assemble the drink.** Pour into the serving cup.
+8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+9. **Assemble the drink.** Pour into the serving cup.
+10. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -159,14 +162,15 @@ Made with passion fruit pulp, jasmine tea, passion fruit syrup, mango purée. Se
 
 ### Ingredients
 
-| Component     | Ingredient          | Amount | Unit   |
-| ------------- | ------------------- | ------ | ------ |
-| Drink mixture | passion fruit pulp  | 0.5    | scoops |
-| Drink mixture | mango pieces        | 0.5    | scoops |
-| Drink mixture | brewed jasmine tea  | 350    | ml     |
-| Drink mixture | liquid sugar        | 30     | ml     |
-| Drink mixture | passion fruit syrup | 20     | ml     |
-| Drink mixture | mango purée         | 20     | ml     |
+| Component     | Ingredient          | Amount           | Unit   |
+| ------------- | ------------------- | ---------------- | ------ |
+| Drink mixture | passion fruit pulp  | 0.5              | scoops |
+| Drink mixture | mango pieces        | 0.5              | scoops |
+| Drink mixture | brewed jasmine tea  | 350              | ml     |
+| Drink mixture | liquid sugar        | 30               | ml     |
+| Drink mixture | passion fruit syrup | 20               | ml     |
+| Drink mixture | mango purée         | 20               | ml     |
+| Ice           | ice cubes           | full serving cup | —      |
 
 ### Method
 
@@ -176,23 +180,24 @@ Made with passion fruit pulp, jasmine tea, passion fruit syrup, mango purée. Se
 4. **Measure liquid sugar.** Add 30 ml liquid sugar to shaker.
 5. **Measure passion fruit syrup.** Add 20 ml passion fruit syrup to shaker.
 6. **Measure mango purée.** Add 20 ml mango purée to shaker.
-7. **Chill the drink.** Fill the shaker with ice.
-8. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+7. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 
 ## L — No ice
 
 ### Ingredients
 
-| Component     | Ingredient          | Amount | Unit   |
-| ------------- | ------------------- | ------ | ------ |
-| Drink mixture | passion fruit pulp  | 0.5    | scoops |
-| Drink mixture | mango pieces        | 0.5    | scoops |
-| Drink mixture | brewed jasmine tea  | 350    | ml     |
-| Drink mixture | liquid sugar        | 40     | ml     |
-| Drink mixture | passion fruit syrup | 20     | ml     |
-| Drink mixture | mango purée         | 20     | ml     |
-| Drink mixture | ice cubes           | 2–3    | —      |
+| Component     | Ingredient          | Amount          | Unit   |
+| ------------- | ------------------- | --------------- | ------ |
+| Drink mixture | passion fruit pulp  | 0.5             | scoops |
+| Drink mixture | mango pieces        | 0.5             | scoops |
+| Drink mixture | brewed jasmine tea  | 350             | ml     |
+| Drink mixture | liquid sugar        | 40              | ml     |
+| Drink mixture | passion fruit syrup | 20              | ml     |
+| Drink mixture | mango purée         | 20              | ml     |
+| Drink mixture | ice cubes           | 2–3             | —      |
+| Top-up        | brewed jasmine tea  | to serving line | —      |
 
 ### Method
 
@@ -203,9 +208,9 @@ Made with passion fruit pulp, jasmine tea, passion fruit syrup, mango purée. Se
 5. **Measure passion fruit syrup.** Add 20 ml passion fruit syrup to shaker.
 6. **Measure mango purée.** Add 20 ml mango purée to shaker.
 7. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-8. **Top up the drink.** Top up with jasmine tea to the standard serving line.
-9. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-10. **Assemble the drink.** Pour into the serving cup.
+8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+9. **Assemble the drink.** Pour into the serving cup.
+10. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 

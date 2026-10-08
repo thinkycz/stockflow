@@ -5,7 +5,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
-import Button from '@/components/ui/Button.vue';
+import RecipeCategoryBrowser from '@/features/recipes/components/RecipeCategoryBrowser.vue';
 import RecipeQuickLookup from '@/features/recipes/components/RecipeQuickLookup.vue';
 import RecipeIllustration from '@/features/recipes/components/RecipeIllustration.vue';
 import { searchRecipes } from '@/features/recipes/search';
@@ -94,36 +94,15 @@ watch([query, category], () => {
             </header>
 
             <section
-                class="rounded-2xl border border-outline-glass bg-primary/4 p-4 sm:p-5"
+                class="grid gap-4 rounded-2xl border border-outline-glass bg-primary/4 p-4 sm:p-5 md:grid-cols-[minmax(0,1fr)_18rem]"
             >
                 <RecipeQuickLookup v-model="query" :entries="lookup" />
+                <RecipeCategoryBrowser
+                    v-model="category"
+                    :categories="categories"
+                    :recipes="recipes"
+                />
             </section>
-
-            <nav
-                class="flex flex-wrap gap-2"
-                :aria-label="t('recipes.category_filter')"
-            >
-                <Button
-                    type="button"
-                    :aria-pressed="category === ''"
-                    :variant="category === '' ? 'primary' : 'secondary'"
-                    @click="category = ''"
-                >
-                    {{ t('recipes.all_categories') }}
-                    <span class="ml-1 opacity-70">{{ recipes.length }}</span>
-                </Button>
-                <Button
-                    v-for="item in categories"
-                    :key="item.key"
-                    type="button"
-                    :aria-pressed="category === item.key"
-                    :variant="category === item.key ? 'primary' : 'secondary'"
-                    @click="category = item.key"
-                >
-                    {{ item.name }}
-                    <span class="ml-1 opacity-70">{{ item.recipe_count }}</span>
-                </Button>
-            </nav>
 
             <div
                 class="flex items-center gap-2 text-xs text-on-surface-variant"

@@ -29,9 +29,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         },
@@ -60,9 +60,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         },
@@ -91,9 +91,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         },
@@ -122,9 +122,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         }
@@ -140,17 +140,19 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 - Serving Cup
 - Shaker
+- Stirring Spoon
 
 ## Ceylon Milk Tea — M — With ice
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount    | Unit |
-| ------------- | ----------------- | --------- | ---- |
-| Finish        | brown sugar syrup | as needed | —    |
-| Drink mixture | Ceylon milk tea   | 250       | ml   |
-| Drink mixture | liquid sugar      | 5         | ml   |
-| Drink mixture | brown sugar syrup | 25        | ml   |
+| Component     | Ingredient        | Amount           | Unit |
+| ------------- | ----------------- | ---------------- | ---- |
+| Finish        | brown sugar syrup | as needed        | —    |
+| Drink mixture | Ceylon milk tea   | 250              | ml   |
+| Drink mixture | liquid sugar      | 5                | ml   |
+| Drink mixture | brown sugar syrup | 25               | ml   |
+| Ice           | ice cubes         | full serving cup | —    |
 
 ### Method
 
@@ -158,21 +160,22 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 2. **Measure Ceylon milk tea.** Add 250 ml Ceylon milk tea to shaker.
 3. **Measure liquid sugar.** Add 5 ml liquid sugar to shaker.
 4. **Measure brown sugar syrup.** Add 25 ml brown sugar syrup to shaker.
-5. **Chill the drink.** Fill the shaker with ice.
-6. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+5. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+6. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 7. **Assemble the drink.** Pour into the prepared serving cup.
 
 ## Ceylon Milk Tea — M — No ice
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount    | Unit |
-| ------------- | ----------------- | --------- | ---- |
-| Finish        | brown sugar syrup | as needed | —    |
-| Drink mixture | Ceylon milk tea   | 250       | ml   |
-| Drink mixture | liquid sugar      | 10        | ml   |
-| Drink mixture | brown sugar syrup | 25        | ml   |
-| Drink mixture | ice cubes         | 2–3       | —    |
+| Component     | Ingredient        | Amount          | Unit |
+| ------------- | ----------------- | --------------- | ---- |
+| Finish        | brown sugar syrup | as needed       | —    |
+| Drink mixture | Ceylon milk tea   | 250             | ml   |
+| Drink mixture | liquid sugar      | 10              | ml   |
+| Drink mixture | brown sugar syrup | 25              | ml   |
+| Drink mixture | ice cubes         | 2–3             | —    |
+| Top-up        | Ceylon milk tea   | to serving line | —    |
 
 ### Method
 
@@ -181,9 +184,9 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 3. **Measure liquid sugar.** Add 10 ml liquid sugar to shaker.
 4. **Measure brown sugar syrup.** Add 25 ml brown sugar syrup to shaker.
 5. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-6. **Top up the drink.** Top up with Ceylon milk tea to the standard serving line.
-7. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-8. **Assemble the drink.** Pour into the prepared serving cup.
+6. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+7. **Assemble the drink.** Pour into the prepared serving cup.
+8. **Top up the drink.** Top up with Ceylon milk tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -193,12 +196,13 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount    | Unit |
-| ------------- | ----------------- | --------- | ---- |
-| Finish        | brown sugar syrup | as needed | —    |
-| Drink mixture | Ceylon milk tea   | 350       | ml   |
-| Drink mixture | liquid sugar      | 5         | ml   |
-| Drink mixture | brown sugar syrup | 35        | ml   |
+| Component     | Ingredient        | Amount           | Unit |
+| ------------- | ----------------- | ---------------- | ---- |
+| Finish        | brown sugar syrup | as needed        | —    |
+| Drink mixture | Ceylon milk tea   | 350              | ml   |
+| Drink mixture | liquid sugar      | 5                | ml   |
+| Drink mixture | brown sugar syrup | 35               | ml   |
+| Ice           | ice cubes         | full serving cup | —    |
 
 ### Method
 
@@ -206,21 +210,22 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 2. **Measure Ceylon milk tea.** Add 350 ml Ceylon milk tea to shaker.
 3. **Measure liquid sugar.** Add 5 ml liquid sugar to shaker.
 4. **Measure brown sugar syrup.** Add 35 ml brown sugar syrup to shaker.
-5. **Chill the drink.** Fill the shaker with ice.
-6. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+5. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+6. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 7. **Assemble the drink.** Pour into the prepared serving cup.
 
 ## Ceylon Milk Tea — L — No ice
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount    | Unit |
-| ------------- | ----------------- | --------- | ---- |
-| Finish        | brown sugar syrup | as needed | —    |
-| Drink mixture | Ceylon milk tea   | 350       | ml   |
-| Drink mixture | liquid sugar      | 15        | ml   |
-| Drink mixture | brown sugar syrup | 35        | ml   |
-| Drink mixture | ice cubes         | 2–3       | —    |
+| Component     | Ingredient        | Amount          | Unit |
+| ------------- | ----------------- | --------------- | ---- |
+| Finish        | brown sugar syrup | as needed       | —    |
+| Drink mixture | Ceylon milk tea   | 350             | ml   |
+| Drink mixture | liquid sugar      | 15              | ml   |
+| Drink mixture | brown sugar syrup | 35              | ml   |
+| Drink mixture | ice cubes         | 2–3             | —    |
+| Top-up        | Ceylon milk tea   | to serving line | —    |
 
 ### Method
 
@@ -229,9 +234,9 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 3. **Measure liquid sugar.** Add 15 ml liquid sugar to shaker.
 4. **Measure brown sugar syrup.** Add 35 ml brown sugar syrup to shaker.
 5. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-6. **Top up the drink.** Top up with Ceylon milk tea to the standard serving line.
-7. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-8. **Assemble the drink.** Pour into the prepared serving cup.
+6. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+7. **Assemble the drink.** Pour into the prepared serving cup.
+8. **Top up the drink.** Top up with Ceylon milk tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -241,12 +246,13 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount    | Unit |
-| ------------- | ----------------- | --------- | ---- |
-| Finish        | brown sugar syrup | as needed | —    |
-| Drink mixture | milk              | 250       | ml   |
-| Drink mixture | liquid sugar      | 5         | ml   |
-| Drink mixture | brown sugar syrup | 25        | ml   |
+| Component     | Ingredient        | Amount           | Unit |
+| ------------- | ----------------- | ---------------- | ---- |
+| Finish        | brown sugar syrup | as needed        | —    |
+| Drink mixture | milk              | 250              | ml   |
+| Drink mixture | liquid sugar      | 5                | ml   |
+| Drink mixture | brown sugar syrup | 25               | ml   |
+| Ice           | ice cubes         | full serving cup | —    |
 
 ### Method
 
@@ -254,21 +260,22 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 2. **Measure milk.** Add 250 ml milk to shaker.
 3. **Measure liquid sugar.** Add 5 ml liquid sugar to shaker.
 4. **Measure brown sugar syrup.** Add 25 ml brown sugar syrup to shaker.
-5. **Chill the drink.** Fill the shaker with ice.
-6. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+5. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+6. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 7. **Assemble the drink.** Pour into the prepared serving cup.
 
 ## Fresh Milk — M — No ice
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount    | Unit |
-| ------------- | ----------------- | --------- | ---- |
-| Finish        | brown sugar syrup | as needed | —    |
-| Drink mixture | milk              | 250       | ml   |
-| Drink mixture | liquid sugar      | 10        | ml   |
-| Drink mixture | brown sugar syrup | 25        | ml   |
-| Drink mixture | ice cubes         | 2–3       | —    |
+| Component     | Ingredient        | Amount          | Unit |
+| ------------- | ----------------- | --------------- | ---- |
+| Finish        | brown sugar syrup | as needed       | —    |
+| Drink mixture | milk              | 250             | ml   |
+| Drink mixture | liquid sugar      | 10              | ml   |
+| Drink mixture | brown sugar syrup | 25              | ml   |
+| Drink mixture | ice cubes         | 2–3             | —    |
+| Top-up        | milk              | to serving line | —    |
 
 ### Method
 
@@ -277,9 +284,9 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 3. **Measure liquid sugar.** Add 10 ml liquid sugar to shaker.
 4. **Measure brown sugar syrup.** Add 25 ml brown sugar syrup to shaker.
 5. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-6. **Top up the drink.** Top up with milk to the standard serving line.
-7. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-8. **Assemble the drink.** Pour into the prepared serving cup.
+6. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+7. **Assemble the drink.** Pour into the prepared serving cup.
+8. **Top up the drink.** Top up with milk in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -289,12 +296,13 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount    | Unit |
-| ------------- | ----------------- | --------- | ---- |
-| Finish        | brown sugar syrup | as needed | —    |
-| Drink mixture | milk              | 350       | ml   |
-| Drink mixture | liquid sugar      | 5         | ml   |
-| Drink mixture | brown sugar syrup | 35        | ml   |
+| Component     | Ingredient        | Amount           | Unit |
+| ------------- | ----------------- | ---------------- | ---- |
+| Finish        | brown sugar syrup | as needed        | —    |
+| Drink mixture | milk              | 350              | ml   |
+| Drink mixture | liquid sugar      | 5                | ml   |
+| Drink mixture | brown sugar syrup | 35               | ml   |
+| Ice           | ice cubes         | full serving cup | —    |
 
 ### Method
 
@@ -302,21 +310,22 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 2. **Measure milk.** Add 350 ml milk to shaker.
 3. **Measure liquid sugar.** Add 5 ml liquid sugar to shaker.
 4. **Measure brown sugar syrup.** Add 35 ml brown sugar syrup to shaker.
-5. **Chill the drink.** Fill the shaker with ice.
-6. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+5. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+6. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 7. **Assemble the drink.** Pour into the prepared serving cup.
 
 ## Fresh Milk — L — No ice
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount    | Unit |
-| ------------- | ----------------- | --------- | ---- |
-| Finish        | brown sugar syrup | as needed | —    |
-| Drink mixture | milk              | 350       | ml   |
-| Drink mixture | liquid sugar      | 15        | ml   |
-| Drink mixture | brown sugar syrup | 35        | ml   |
-| Drink mixture | ice cubes         | 2–3       | —    |
+| Component     | Ingredient        | Amount          | Unit |
+| ------------- | ----------------- | --------------- | ---- |
+| Finish        | brown sugar syrup | as needed       | —    |
+| Drink mixture | milk              | 350             | ml   |
+| Drink mixture | liquid sugar      | 15              | ml   |
+| Drink mixture | brown sugar syrup | 35              | ml   |
+| Drink mixture | ice cubes         | 2–3             | —    |
+| Top-up        | milk              | to serving line | —    |
 
 ### Method
 
@@ -325,9 +334,9 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 3. **Measure liquid sugar.** Add 15 ml liquid sugar to shaker.
 4. **Measure brown sugar syrup.** Add 35 ml brown sugar syrup to shaker.
 5. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-6. **Top up the drink.** Top up with milk to the standard serving line.
-7. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-8. **Assemble the drink.** Pour into the prepared serving cup.
+6. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+7. **Assemble the drink.** Pour into the prepared serving cup.
+8. **Top up the drink.** Top up with milk in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 

@@ -41,9 +41,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         },
@@ -84,9 +84,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         }
@@ -102,6 +102,8 @@ Made with lychees, jasmine tea, lychee purée, lemon syrup. Select the required 
 
 - Serving Cup
 - Shaker
+- Muddler
+- Stirring Spoon
 
 ## M — With ice
 
@@ -115,6 +117,7 @@ Made with lychees, jasmine tea, lychee purée, lemon syrup. Select the required 
 | Drink mixture | liquid sugar       | 20                   | ml     |
 | Drink mixture | lychee purée       | 30                   | ml     |
 | Drink mixture | lemon syrup        | 5                    | ml     |
+| Ice           | ice cubes          | full serving cup     | —      |
 
 ### Method
 
@@ -125,8 +128,8 @@ Made with lychees, jasmine tea, lychee purée, lemon syrup. Select the required 
 5. **Measure liquid sugar.** Add 20 ml liquid sugar to shaker.
 6. **Measure lychee purée.** Add 30 ml lychee purée to shaker.
 7. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-8. **Chill the drink.** Fill the shaker with ice.
-9. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+8. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+9. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 10. **Assemble the drink.** Pour into the serving cup.
 
 ## M — No ice
@@ -142,6 +145,7 @@ Made with lychees, jasmine tea, lychee purée, lemon syrup. Select the required 
 | Drink mixture | lychee purée       | 30                   | ml     |
 | Drink mixture | lemon syrup        | 5                    | ml     |
 | Drink mixture | ice cubes          | 2–3                  | —      |
+| Top-up        | brewed jasmine tea | to serving line      | —      |
 
 ### Method
 
@@ -153,9 +157,9 @@ Made with lychees, jasmine tea, lychee purée, lemon syrup. Select the required 
 6. **Measure lychee purée.** Add 30 ml lychee purée to shaker.
 7. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
 8. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-9. **Top up the drink.** Top up with jasmine tea to the standard serving line.
-10. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-11. **Assemble the drink.** Pour into the serving cup.
+9. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+10. **Assemble the drink.** Pour into the serving cup.
+11. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -173,6 +177,7 @@ Made with lychees, jasmine tea, lychee purée, lemon syrup. Select the required 
 | Drink mixture | liquid sugar       | 30                   | ml     |
 | Drink mixture | lychee purée       | 40                   | ml     |
 | Drink mixture | lemon syrup        | 5                    | ml     |
+| Ice           | ice cubes          | full serving cup     | —      |
 
 ### Method
 
@@ -183,8 +188,8 @@ Made with lychees, jasmine tea, lychee purée, lemon syrup. Select the required 
 5. **Measure liquid sugar.** Add 30 ml liquid sugar to shaker.
 6. **Measure lychee purée.** Add 40 ml lychee purée to shaker.
 7. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-8. **Chill the drink.** Fill the shaker with ice.
-9. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+8. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+9. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 10. **Assemble the drink.** Pour into the serving cup.
 
 ## L — No ice
@@ -200,6 +205,7 @@ Made with lychees, jasmine tea, lychee purée, lemon syrup. Select the required 
 | Drink mixture | lychee purée       | 40                   | ml     |
 | Drink mixture | lemon syrup        | 5                    | ml     |
 | Drink mixture | ice cubes          | 2–3                  | —      |
+| Top-up        | brewed jasmine tea | to serving line      | —      |
 
 ### Method
 
@@ -211,9 +217,9 @@ Made with lychees, jasmine tea, lychee purée, lemon syrup. Select the required 
 6. **Measure lychee purée.** Add 40 ml lychee purée to shaker.
 7. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
 8. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-9. **Top up the drink.** Top up with jasmine tea to the standard serving line.
-10. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-11. **Assemble the drink.** Pour into the serving cup.
+9. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+10. **Assemble the drink.** Pour into the serving cup.
+11. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 

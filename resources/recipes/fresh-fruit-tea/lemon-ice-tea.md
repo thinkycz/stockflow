@@ -27,9 +27,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         },
@@ -56,9 +56,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         }
@@ -74,17 +74,19 @@ Made with Ceylon tea, lemon syrup. Select the required variant before measuring 
 
 - Serving Cup
 - Shaker
+- Stirring Spoon
 
 ## M — With ice
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount | Unit   |
-| ------------- | ----------------- | ------ | ------ |
-| Drink mixture | lemon slices      | 2      | pieces |
-| Drink mixture | brewed Ceylon tea | 250    | ml     |
-| Drink mixture | liquid sugar      | 25     | ml     |
-| Drink mixture | lemon syrup       | 25     | ml     |
+| Component     | Ingredient        | Amount           | Unit   |
+| ------------- | ----------------- | ---------------- | ------ |
+| Drink mixture | lemon slices      | 2                | pieces |
+| Drink mixture | brewed Ceylon tea | 250              | ml     |
+| Drink mixture | liquid sugar      | 25               | ml     |
+| Drink mixture | lemon syrup       | 25               | ml     |
+| Ice           | ice cubes         | full serving cup | —      |
 
 ### Method
 
@@ -92,21 +94,22 @@ Made with Ceylon tea, lemon syrup. Select the required variant before measuring 
 2. **Measure brewed Ceylon tea.** Add 250 ml brewed Ceylon tea to shaker.
 3. **Measure liquid sugar.** Add 25 ml liquid sugar to shaker.
 4. **Measure lemon syrup.** Add 25 ml lemon syrup to shaker.
-5. **Chill the drink.** Fill the shaker with ice.
-6. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+5. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+6. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 7. **Assemble the drink.** Pour into the serving cup.
 
 ## M — No ice
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount | Unit   |
-| ------------- | ----------------- | ------ | ------ |
-| Drink mixture | lemon slices      | 2      | pieces |
-| Drink mixture | brewed Ceylon tea | 250    | ml     |
-| Drink mixture | liquid sugar      | 30     | ml     |
-| Drink mixture | lemon syrup       | 25     | ml     |
-| Drink mixture | ice cubes         | 2–3    | —      |
+| Component     | Ingredient        | Amount          | Unit   |
+| ------------- | ----------------- | --------------- | ------ |
+| Drink mixture | lemon slices      | 2               | pieces |
+| Drink mixture | brewed Ceylon tea | 250             | ml     |
+| Drink mixture | liquid sugar      | 30              | ml     |
+| Drink mixture | lemon syrup       | 25              | ml     |
+| Drink mixture | ice cubes         | 2–3             | —      |
+| Top-up        | brewed Ceylon tea | to serving line | —      |
 
 ### Method
 
@@ -115,9 +118,9 @@ Made with Ceylon tea, lemon syrup. Select the required variant before measuring 
 3. **Measure liquid sugar.** Add 30 ml liquid sugar to shaker.
 4. **Measure lemon syrup.** Add 25 ml lemon syrup to shaker.
 5. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-6. **Top up the drink.** Top up with Ceylon tea to the standard serving line.
-7. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-8. **Assemble the drink.** Pour into the serving cup.
+6. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+7. **Assemble the drink.** Pour into the serving cup.
+8. **Top up the drink.** Top up with brewed Ceylon tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -127,12 +130,13 @@ Made with Ceylon tea, lemon syrup. Select the required variant before measuring 
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount | Unit   |
-| ------------- | ----------------- | ------ | ------ |
-| Drink mixture | lemon slices      | 3      | pieces |
-| Drink mixture | brewed Ceylon tea | 350    | ml     |
-| Drink mixture | liquid sugar      | 35     | ml     |
-| Drink mixture | lemon syrup       | 35     | ml     |
+| Component     | Ingredient        | Amount           | Unit   |
+| ------------- | ----------------- | ---------------- | ------ |
+| Drink mixture | lemon slices      | 3                | pieces |
+| Drink mixture | brewed Ceylon tea | 350              | ml     |
+| Drink mixture | liquid sugar      | 35               | ml     |
+| Drink mixture | lemon syrup       | 35               | ml     |
+| Ice           | ice cubes         | full serving cup | —      |
 
 ### Method
 
@@ -140,21 +144,22 @@ Made with Ceylon tea, lemon syrup. Select the required variant before measuring 
 2. **Measure brewed Ceylon tea.** Add 350 ml brewed Ceylon tea to shaker.
 3. **Measure liquid sugar.** Add 35 ml liquid sugar to shaker.
 4. **Measure lemon syrup.** Add 35 ml lemon syrup to shaker.
-5. **Chill the drink.** Fill the shaker with ice.
-6. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+5. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+6. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 7. **Assemble the drink.** Pour into the serving cup.
 
 ## L — No ice
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount | Unit   |
-| ------------- | ----------------- | ------ | ------ |
-| Drink mixture | lemon slices      | 3      | pieces |
-| Drink mixture | brewed Ceylon tea | 350    | ml     |
-| Drink mixture | liquid sugar      | 45     | ml     |
-| Drink mixture | lemon syrup       | 35     | ml     |
-| Drink mixture | ice cubes         | 2–3    | —      |
+| Component     | Ingredient        | Amount          | Unit   |
+| ------------- | ----------------- | --------------- | ------ |
+| Drink mixture | lemon slices      | 3               | pieces |
+| Drink mixture | brewed Ceylon tea | 350             | ml     |
+| Drink mixture | liquid sugar      | 45              | ml     |
+| Drink mixture | lemon syrup       | 35              | ml     |
+| Drink mixture | ice cubes         | 2–3             | —      |
+| Top-up        | brewed Ceylon tea | to serving line | —      |
 
 ### Method
 
@@ -163,9 +168,9 @@ Made with Ceylon tea, lemon syrup. Select the required variant before measuring 
 3. **Measure liquid sugar.** Add 45 ml liquid sugar to shaker.
 4. **Measure lemon syrup.** Add 35 ml lemon syrup to shaker.
 5. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-6. **Top up the drink.** Top up with Ceylon tea to the standard serving line.
-7. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-8. **Assemble the drink.** Pour into the serving cup.
+6. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+7. **Assemble the drink.** Pour into the serving cup.
+8. **Top up the drink.** Top up with brewed Ceylon tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 

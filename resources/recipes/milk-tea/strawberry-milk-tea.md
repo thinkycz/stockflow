@@ -37,9 +37,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         },
@@ -76,9 +76,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         }
@@ -94,52 +94,56 @@ Made with jasmine milk tea, milk tea syrup. Select the required variant before m
 
 - Serving Cup
 - Shaker
+- Muddler
+- Stirring Spoon
 
 ## M — With ice
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount    | Unit |
-| ------------- | ----------------- | --------- | ---- |
-| Drink mixture | strawberry pieces | as needed | —    |
-| Drink mixture | jasmine milk tea  | 250       | ml   |
-| Drink mixture | liquid sugar      | 10        | ml   |
-| Drink mixture | milk tea syrup    | 30        | ml   |
+| Component     | Ingredient        | Amount           | Unit |
+| ------------- | ----------------- | ---------------- | ---- |
+| Drink mixture | strawberry pieces | as needed        | —    |
+| Drink mixture | jasmine milk tea  | 250              | ml   |
+| Drink mixture | liquid sugar      | 10               | ml   |
+| Drink mixture | milk tea syrup    | 30               | ml   |
+| Ice           | ice cubes         | full serving cup | —    |
 
 ### Method
 
-1. **Measure strawberry pieces.** Add as needed strawberry pieces to shaker.
+1. **Measure strawberry pieces.** Add strawberry pieces to the shaker as needed.
 2. **Crush the fruit.** Smash the strawberries.
 3. **Measure jasmine milk tea.** Add 250 ml jasmine milk tea to shaker.
 4. **Measure liquid sugar.** Add 10 ml liquid sugar to shaker.
 5. **Measure milk tea syrup.** Add 30 ml milk tea syrup to shaker.
-6. **Chill the drink.** Fill the shaker with ice.
-7. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+6. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+7. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 8. **Assemble the drink.** Pour into the serving cup.
 
 ## M — No ice
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount    | Unit |
-| ------------- | ----------------- | --------- | ---- |
-| Drink mixture | strawberry pieces | as needed | —    |
-| Drink mixture | jasmine milk tea  | 250       | ml   |
-| Drink mixture | liquid sugar      | 15        | ml   |
-| Drink mixture | milk tea syrup    | 30        | ml   |
-| Drink mixture | ice cubes         | 2–3       | —    |
+| Component     | Ingredient        | Amount          | Unit |
+| ------------- | ----------------- | --------------- | ---- |
+| Drink mixture | strawberry pieces | as needed       | —    |
+| Drink mixture | jasmine milk tea  | 250             | ml   |
+| Drink mixture | liquid sugar      | 15              | ml   |
+| Drink mixture | milk tea syrup    | 30              | ml   |
+| Drink mixture | ice cubes         | 2–3             | —    |
+| Top-up        | jasmine milk tea  | to serving line | —    |
 
 ### Method
 
-1. **Measure strawberry pieces.** Add as needed strawberry pieces to shaker.
+1. **Measure strawberry pieces.** Add strawberry pieces to the shaker as needed.
 2. **Crush the fruit.** Smash the strawberries.
 3. **Measure jasmine milk tea.** Add 250 ml jasmine milk tea to shaker.
 4. **Measure liquid sugar.** Add 15 ml liquid sugar to shaker.
 5. **Measure milk tea syrup.** Add 30 ml milk tea syrup to shaker.
 6. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-7. **Top up the drink.** Top up with jasmine milk tea to the standard serving line.
-8. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-9. **Assemble the drink.** Pour into the serving cup.
+7. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+8. **Assemble the drink.** Pour into the serving cup.
+9. **Top up the drink.** Top up with jasmine milk tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -149,47 +153,49 @@ Made with jasmine milk tea, milk tea syrup. Select the required variant before m
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount    | Unit |
-| ------------- | ----------------- | --------- | ---- |
-| Drink mixture | strawberry pieces | as needed | —    |
-| Drink mixture | jasmine milk tea  | 350       | ml   |
-| Drink mixture | liquid sugar      | 15        | ml   |
-| Drink mixture | milk tea syrup    | 35        | ml   |
+| Component     | Ingredient        | Amount           | Unit |
+| ------------- | ----------------- | ---------------- | ---- |
+| Drink mixture | strawberry pieces | as needed        | —    |
+| Drink mixture | jasmine milk tea  | 350              | ml   |
+| Drink mixture | liquid sugar      | 15               | ml   |
+| Drink mixture | milk tea syrup    | 35               | ml   |
+| Ice           | ice cubes         | full serving cup | —    |
 
 ### Method
 
-1. **Measure strawberry pieces.** Add as needed strawberry pieces to shaker.
+1. **Measure strawberry pieces.** Add strawberry pieces to the shaker as needed.
 2. **Crush the fruit.** Smash the strawberries.
 3. **Measure jasmine milk tea.** Add 350 ml jasmine milk tea to shaker.
 4. **Measure liquid sugar.** Add 15 ml liquid sugar to shaker.
 5. **Measure milk tea syrup.** Add 35 ml milk tea syrup to shaker.
-6. **Chill the drink.** Fill the shaker with ice.
-7. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+6. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+7. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 8. **Assemble the drink.** Pour into the serving cup.
 
 ## L — No ice
 
 ### Ingredients
 
-| Component     | Ingredient        | Amount    | Unit |
-| ------------- | ----------------- | --------- | ---- |
-| Drink mixture | strawberry pieces | as needed | —    |
-| Drink mixture | jasmine milk tea  | 350       | ml   |
-| Drink mixture | liquid sugar      | 25        | ml   |
-| Drink mixture | milk tea syrup    | 35        | ml   |
-| Drink mixture | ice cubes         | 2–3       | —    |
+| Component     | Ingredient        | Amount          | Unit |
+| ------------- | ----------------- | --------------- | ---- |
+| Drink mixture | strawberry pieces | as needed       | —    |
+| Drink mixture | jasmine milk tea  | 350             | ml   |
+| Drink mixture | liquid sugar      | 25              | ml   |
+| Drink mixture | milk tea syrup    | 35              | ml   |
+| Drink mixture | ice cubes         | 2–3             | —    |
+| Top-up        | jasmine milk tea  | to serving line | —    |
 
 ### Method
 
-1. **Measure strawberry pieces.** Add as needed strawberry pieces to shaker.
+1. **Measure strawberry pieces.** Add strawberry pieces to the shaker as needed.
 2. **Crush the fruit.** Smash the strawberries.
 3. **Measure jasmine milk tea.** Add 350 ml jasmine milk tea to shaker.
 4. **Measure liquid sugar.** Add 25 ml liquid sugar to shaker.
 5. **Measure milk tea syrup.** Add 35 ml milk tea syrup to shaker.
 6. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-7. **Top up the drink.** Top up with jasmine milk tea to the standard serving line.
-8. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-9. **Assemble the drink.** Pour into the serving cup.
+7. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+8. **Assemble the drink.** Pour into the serving cup.
+9. **Top up the drink.** Top up with jasmine milk tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 

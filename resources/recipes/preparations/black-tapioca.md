@@ -87,18 +87,22 @@ Prepare the black tapioca batch before making drinks. Follow the selected batch 
 ## Equipment
 
 - Pot
+- Pot Lid
+- Colander
+- Stirring Spoon
 
 ## 500 g batch
 
 ### Ingredients
 
-| Component | Ingredient        | Amount | Unit |
-| --------- | ----------------- | ------ | ---- |
-| Batch     | water             | 4      | L    |
-| Batch     | black tapioca     | 500    | g    |
-| Batch     | granulated sugar  | 150    | g    |
-| Batch     | water             | 100    | ml   |
-| Batch     | brown sugar syrup | 30     | ml   |
+| Component | Ingredient        | Amount    | Unit |
+| --------- | ----------------- | --------- | ---- |
+| Cooking   | water             | 4         | L    |
+| Cooking   | black tapioca     | 500       | g    |
+| Sauce     | granulated sugar  | 150       | g    |
+| Sauce     | water             | 100       | ml   |
+| Sauce     | brown sugar syrup | 30        | ml   |
+| Rinsing   | warm water        | as needed | —    |
 
 ### Method
 
@@ -108,7 +112,7 @@ Prepare the black tapioca batch before making drinks. Follow the selected batch 
 4. **Stir to combine.** Stir thoroughly and reduce to approximately heat setting 1500.
 5. **Allow the specified time.** Simmer for 40 minutes, stirring occasionally.
 6. **Cover the vessel.** Cover and rest for 40 minutes.
-7. **Rinse.** Rinse the cooked tapioca with warm water.
+7. **Drain and rinse the tapioca.** Drain away the cooking water, rinse the cooked tapioca with warm water, and drain well. Return the drained tapioca to the empty pot.
 8. **Measure granulated sugar.** Add 150 g granulated sugar to pot.
 9. **Measure water.** Add 100 ml water to pot.
 10. **Measure brown sugar syrup.** Add 30 ml brown sugar syrup to pot.
@@ -118,13 +122,14 @@ Prepare the black tapioca batch before making drinks. Follow the selected batch 
 
 ### Ingredients
 
-| Component | Ingredient        | Amount | Unit |
-| --------- | ----------------- | ------ | ---- |
-| Batch     | water             | 4      | L    |
-| Batch     | black tapioca     | 700    | g    |
-| Batch     | granulated sugar  | 210    | g    |
-| Batch     | water             | 150    | ml   |
-| Batch     | brown sugar syrup | 40     | ml   |
+| Component | Ingredient        | Amount    | Unit |
+| --------- | ----------------- | --------- | ---- |
+| Cooking   | water             | 4         | L    |
+| Cooking   | black tapioca     | 700       | g    |
+| Sauce     | granulated sugar  | 210       | g    |
+| Sauce     | water             | 140       | ml   |
+| Sauce     | brown sugar syrup | 42        | ml   |
+| Rinsing   | warm water        | as needed | —    |
 
 ### Method
 
@@ -134,23 +139,24 @@ Prepare the black tapioca batch before making drinks. Follow the selected batch 
 4. **Stir to combine.** Stir thoroughly and reduce to approximately heat setting 1500.
 5. **Allow the specified time.** Simmer for 40 minutes, stirring occasionally.
 6. **Cover the vessel.** Cover and rest for 40 minutes.
-7. **Rinse.** Rinse the cooked tapioca with warm water.
+7. **Drain and rinse the tapioca.** Drain away the cooking water, rinse the cooked tapioca with warm water, and drain well. Return the drained tapioca to the empty pot.
 8. **Measure granulated sugar.** Add 210 g granulated sugar to pot.
-9. **Measure water.** Add 150 ml water to pot.
-10. **Measure brown sugar syrup.** Add 40 ml brown sugar syrup to pot.
+9. **Measure water.** Add 140 ml water to pot.
+10. **Measure brown sugar syrup.** Add 42 ml brown sugar syrup to pot.
 11. **Cook the batch.** Cook the rinsed tapioca in the syrup mixture for a few minutes.
 
 ## 1 kg batch
 
 ### Ingredients
 
-| Component | Ingredient        | Amount | Unit |
-| --------- | ----------------- | ------ | ---- |
-| Batch     | water             | 4      | L    |
-| Batch     | black tapioca     | 1      | kg   |
-| Batch     | granulated sugar  | 300    | g    |
-| Batch     | water             | 200    | ml   |
-| Batch     | brown sugar syrup | 50     | ml   |
+| Component | Ingredient        | Amount    | Unit |
+| --------- | ----------------- | --------- | ---- |
+| Cooking   | water             | 4         | L    |
+| Cooking   | black tapioca     | 1         | kg   |
+| Sauce     | granulated sugar  | 300       | g    |
+| Sauce     | water             | 200       | ml   |
+| Sauce     | brown sugar syrup | 60        | ml   |
+| Rinsing   | warm water        | as needed | —    |
 
 ### Method
 
@@ -160,8 +166,8 @@ Prepare the black tapioca batch before making drinks. Follow the selected batch 
 4. **Stir to combine.** Stir thoroughly and reduce to approximately heat setting 1500.
 5. **Allow the specified time.** Simmer for 40 minutes, stirring occasionally.
 6. **Cover the vessel.** Cover and rest for 40 minutes.
-7. **Rinse.** Rinse the cooked tapioca with warm water.
+7. **Drain and rinse the tapioca.** Drain away the cooking water, rinse the cooked tapioca with warm water, and drain well. Return the drained tapioca to the empty pot.
 8. **Measure granulated sugar.** Add 300 g granulated sugar to pot.
 9. **Measure water.** Add 200 ml water to pot.
-10. **Measure brown sugar syrup.** Add 50 ml brown sugar syrup to pot.
+10. **Measure brown sugar syrup.** Add 60 ml brown sugar syrup to pot.
 11. **Cook the batch.** Cook the rinsed tapioca in the syrup mixture for a few minutes.

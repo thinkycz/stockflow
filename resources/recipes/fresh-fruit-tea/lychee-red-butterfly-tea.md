@@ -40,9 +40,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
                 "pour",
+                "add",
                 "garnish"
             ],
             "timers": {}
@@ -83,9 +83,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
                 "pour",
+                "add",
                 "garnish"
             ],
             "timers": {}
@@ -102,20 +102,22 @@ Made with lychee, jasmine tea, lychee purée, strawberry purée. Select the requ
 
 - Shaker
 - Serving Cup
+- Stirring Spoon
 
 ## M — With ice
 
 ### Ingredients
 
-| Component     | Ingredient               | Amount    | Unit   |
-| ------------- | ------------------------ | --------- | ------ |
-| Drink mixture | strawberry pieces        | a few     | —      |
-| Drink mixture | lychees                  | 1         | pieces |
-| Drink mixture | brewed jasmine tea       | 250       | ml     |
-| Drink mixture | liquid sugar             | 20        | ml     |
-| Drink mixture | lychee purée             | 15        | ml     |
-| Drink mixture | strawberry purée         | 15        | ml     |
-| Finish        | brewed butterfly pea tea | as needed | —      |
+| Component     | Ingredient               | Amount           | Unit   |
+| ------------- | ------------------------ | ---------------- | ------ |
+| Drink mixture | strawberry pieces        | a few            | —      |
+| Drink mixture | lychees                  | 1                | pieces |
+| Drink mixture | brewed jasmine tea       | 250              | ml     |
+| Drink mixture | liquid sugar             | 20               | ml     |
+| Drink mixture | lychee purée             | 15               | ml     |
+| Drink mixture | strawberry purée         | 15               | ml     |
+| Ice           | ice cubes                | full serving cup | —      |
+| Finish        | brewed butterfly pea tea | as needed        | —      |
 
 ### Method
 
@@ -125,8 +127,8 @@ Made with lychee, jasmine tea, lychee purée, strawberry purée. Select the requ
 4. **Measure liquid sugar.** Add 20 ml liquid sugar to shaker.
 5. **Measure lychee purée.** Add 15 ml lychee purée to shaker.
 6. **Measure strawberry purée.** Add 15 ml strawberry purée to shaker.
-7. **Chill the drink.** Fill the shaker with ice.
-8. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+7. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 10. **Finish the drink.** Top with brewed butterfly pea tea.
 
@@ -134,16 +136,17 @@ Made with lychee, jasmine tea, lychee purée, strawberry purée. Select the requ
 
 ### Ingredients
 
-| Component     | Ingredient               | Amount    | Unit   |
-| ------------- | ------------------------ | --------- | ------ |
-| Drink mixture | strawberry pieces        | a few     | —      |
-| Drink mixture | lychees                  | 1         | pieces |
-| Drink mixture | brewed jasmine tea       | 250       | ml     |
-| Drink mixture | liquid sugar             | 25        | ml     |
-| Drink mixture | lychee purée             | 15        | ml     |
-| Drink mixture | strawberry purée         | 15        | ml     |
-| Drink mixture | ice cubes                | 2–3       | —      |
-| Finish        | brewed butterfly pea tea | as needed | —      |
+| Component     | Ingredient               | Amount          | Unit   |
+| ------------- | ------------------------ | --------------- | ------ |
+| Drink mixture | strawberry pieces        | a few           | —      |
+| Drink mixture | lychees                  | 1               | pieces |
+| Drink mixture | brewed jasmine tea       | 250             | ml     |
+| Drink mixture | liquid sugar             | 25              | ml     |
+| Drink mixture | lychee purée             | 15              | ml     |
+| Drink mixture | strawberry purée         | 15              | ml     |
+| Drink mixture | ice cubes                | 2–3             | —      |
+| Finish        | brewed butterfly pea tea | as needed       | —      |
+| Top-up        | brewed jasmine tea       | to serving line | —      |
 
 ### Method
 
@@ -154,9 +157,9 @@ Made with lychee, jasmine tea, lychee purée, strawberry purée. Select the requ
 5. **Measure lychee purée.** Add 15 ml lychee purée to shaker.
 6. **Measure strawberry purée.** Add 15 ml strawberry purée to shaker.
 7. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-8. **Top up the drink.** Top up with jasmine tea to the standard serving line.
-9. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-10. **Assemble the drink.** Pour into the serving cup.
+8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+9. **Assemble the drink.** Pour into the serving cup.
+10. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line, leaving room for the butterfly tea topping. Stir gently to combine.
 11. **Finish the drink.** Top with brewed butterfly pea tea.
 
 ### Tips
@@ -167,15 +170,16 @@ Made with lychee, jasmine tea, lychee purée, strawberry purée. Select the requ
 
 ### Ingredients
 
-| Component     | Ingredient               | Amount    | Unit   |
-| ------------- | ------------------------ | --------- | ------ |
-| Drink mixture | strawberry pieces        | a few     | —      |
-| Drink mixture | lychees                  | 1         | pieces |
-| Drink mixture | brewed jasmine tea       | 350       | ml     |
-| Drink mixture | liquid sugar             | 30        | ml     |
-| Drink mixture | lychee purée             | 20        | ml     |
-| Drink mixture | strawberry purée         | 20        | ml     |
-| Finish        | brewed butterfly pea tea | as needed | —      |
+| Component     | Ingredient               | Amount           | Unit   |
+| ------------- | ------------------------ | ---------------- | ------ |
+| Drink mixture | strawberry pieces        | a few            | —      |
+| Drink mixture | lychees                  | 1                | pieces |
+| Drink mixture | brewed jasmine tea       | 350              | ml     |
+| Drink mixture | liquid sugar             | 30               | ml     |
+| Drink mixture | lychee purée             | 20               | ml     |
+| Drink mixture | strawberry purée         | 20               | ml     |
+| Ice           | ice cubes                | full serving cup | —      |
+| Finish        | brewed butterfly pea tea | as needed        | —      |
 
 ### Method
 
@@ -185,8 +189,8 @@ Made with lychee, jasmine tea, lychee purée, strawberry purée. Select the requ
 4. **Measure liquid sugar.** Add 30 ml liquid sugar to shaker.
 5. **Measure lychee purée.** Add 20 ml lychee purée to shaker.
 6. **Measure strawberry purée.** Add 20 ml strawberry purée to shaker.
-7. **Chill the drink.** Fill the shaker with ice.
-8. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+7. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 10. **Finish the drink.** Top with brewed butterfly pea tea.
 
@@ -194,16 +198,17 @@ Made with lychee, jasmine tea, lychee purée, strawberry purée. Select the requ
 
 ### Ingredients
 
-| Component     | Ingredient               | Amount    | Unit   |
-| ------------- | ------------------------ | --------- | ------ |
-| Drink mixture | strawberry pieces        | a few     | —      |
-| Drink mixture | lychees                  | 1         | pieces |
-| Drink mixture | brewed jasmine tea       | 350       | ml     |
-| Drink mixture | liquid sugar             | 40        | ml     |
-| Drink mixture | lychee purée             | 20        | ml     |
-| Drink mixture | strawberry purée         | 20        | ml     |
-| Drink mixture | ice cubes                | 2–3       | —      |
-| Finish        | brewed butterfly pea tea | as needed | —      |
+| Component     | Ingredient               | Amount          | Unit   |
+| ------------- | ------------------------ | --------------- | ------ |
+| Drink mixture | strawberry pieces        | a few           | —      |
+| Drink mixture | lychees                  | 1               | pieces |
+| Drink mixture | brewed jasmine tea       | 350             | ml     |
+| Drink mixture | liquid sugar             | 40              | ml     |
+| Drink mixture | lychee purée             | 20              | ml     |
+| Drink mixture | strawberry purée         | 20              | ml     |
+| Drink mixture | ice cubes                | 2–3             | —      |
+| Finish        | brewed butterfly pea tea | as needed       | —      |
+| Top-up        | brewed jasmine tea       | to serving line | —      |
 
 ### Method
 
@@ -214,9 +219,9 @@ Made with lychee, jasmine tea, lychee purée, strawberry purée. Select the requ
 5. **Measure lychee purée.** Add 20 ml lychee purée to shaker.
 6. **Measure strawberry purée.** Add 20 ml strawberry purée to shaker.
 7. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-8. **Top up the drink.** Top up with jasmine tea to the standard serving line.
-9. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-10. **Assemble the drink.** Pour into the serving cup.
+8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+9. **Assemble the drink.** Pour into the serving cup.
+10. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line, leaving room for the butterfly tea topping. Stir gently to combine.
 11. **Finish the drink.** Top with brewed butterfly pea tea.
 
 ### Tips

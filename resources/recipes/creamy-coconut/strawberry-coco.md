@@ -40,8 +40,8 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "whip",
+                "add",
                 "pour",
                 "garnish"
             ],
@@ -83,8 +83,8 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "whip",
+                "add",
                 "pour",
                 "garnish"
             ],
@@ -103,46 +103,49 @@ Made with whipping cream, milk, strawberry syrup, coconut flakes. Select the req
 - Serving Cup
 - Mixing Bowl
 - Whisk / Mixer
+- Stirring Spoon
 
 ## S — With ice
 
 ### Ingredients
 
-| Component       | Ingredient        | Amount    | Unit   |
-| --------------- | ----------------- | --------- | ------ |
-| Drink base      | strawberry pieces | 1         | scoops |
-| Drink base      | coconut water     | 100       | ml     |
-| Cloud / topping | whipping cream    | 30        | ml     |
-| Cloud / topping | milk              | 30        | ml     |
-| Cloud / topping | strawberry syrup  | 30        | ml     |
-| Finish          | coconut flakes    | as needed | —      |
+| Component       | Ingredient        | Amount           | Unit   |
+| --------------- | ----------------- | ---------------- | ------ |
+| Drink base      | strawberry pieces | 1                | scoops |
+| Ice             | ice cubes         | full serving cup | —      |
+| Drink base      | coconut water     | 100              | ml     |
+| Cloud / topping | whipping cream    | 30               | ml     |
+| Cloud / topping | milk              | 30               | ml     |
+| Cloud / topping | strawberry syrup  | 30               | ml     |
+| Finish          | coconut flakes    | as needed        | —      |
 
 ### Method
 
 1. **Measure strawberry pieces.** Add 1 standard scoop strawberry pieces to serving cup.
-2. **Chill the drink.** Fill the serving cup with ice.
+2. **Fill the cup with ice.** Fill the serving cup with ice.
 3. **Measure coconut water.** Add 100 ml coconut water to serving cup.
 4. **Measure whipping cream.** Add 30 ml whipping cream to mixing bowl.
 5. **Measure milk.** Add 30 ml milk to mixing bowl.
 6. **Measure strawberry syrup.** Add 30 ml strawberry syrup to mixing bowl.
 7. **Whip the cloud.** Whip until thick.
 8. **Assemble the drink.** Pour the cloud into the serving cup.
-9. **Finish the drink.** Garnish with as needed coconut flakes.
+9. **Finish the drink.** Garnish with coconut flakes as needed.
 
 ## S — No ice
 
 ### Ingredients
 
-| Component       | Ingredient        | Amount    | Unit   |
-| --------------- | ----------------- | --------- | ------ |
-| Drink base      | strawberry pieces | 1         | scoops |
-| Drink base      | ice cubes         | 2–3       | —      |
-| Drink base      | coconut water     | 100       | ml     |
-| Drink base      | liquid sugar      | 5         | ml     |
-| Cloud / topping | whipping cream    | 30        | ml     |
-| Cloud / topping | milk              | 30        | ml     |
-| Cloud / topping | strawberry syrup  | 30        | ml     |
-| Finish          | coconut flakes    | as needed | —      |
+| Component       | Ingredient        | Amount          | Unit   |
+| --------------- | ----------------- | --------------- | ------ |
+| Drink base      | strawberry pieces | 1               | scoops |
+| Drink base      | ice cubes         | 2–3             | —      |
+| Drink base      | coconut water     | 100             | ml     |
+| Drink base      | liquid sugar      | 5               | ml     |
+| Cloud / topping | whipping cream    | 30              | ml     |
+| Cloud / topping | milk              | 30              | ml     |
+| Cloud / topping | strawberry syrup  | 30              | ml     |
+| Finish          | coconut flakes    | as needed       | —      |
+| Top-up          | coconut water     | to serving line | —      |
 
 ### Method
 
@@ -151,13 +154,13 @@ Made with whipping cream, milk, strawberry syrup, coconut flakes. Select the req
 3. **Measure coconut water.** Add 100 ml coconut water to serving cup.
 4. **Measure liquid sugar.** Add 5 ml liquid sugar to serving cup.
 5. **Stir to combine.** Stir the ingredients until evenly combined.
-6. **Top up the drink.** Top up with coconut water to the standard serving line.
-7. **Measure whipping cream.** Add 30 ml whipping cream to mixing bowl.
-8. **Measure milk.** Add 30 ml milk to mixing bowl.
-9. **Measure strawberry syrup.** Add 30 ml strawberry syrup to mixing bowl.
-10. **Whip the cloud.** Whip until thick.
+6. **Measure whipping cream.** Add 30 ml whipping cream to mixing bowl.
+7. **Measure milk.** Add 30 ml milk to mixing bowl.
+8. **Measure strawberry syrup.** Add 30 ml strawberry syrup to mixing bowl.
+9. **Whip the cloud.** Whip until thick.
+10. **Top up the drink.** Top up with coconut water in the serving cup to the standard serving line, leaving room for the cloud. Stir the base gently to combine.
 11. **Assemble the drink.** Pour the cloud into the serving cup.
-12. **Finish the drink.** Garnish with as needed coconut flakes.
+12. **Finish the drink.** Garnish with coconut flakes as needed.
 
 ### Tips
 
@@ -167,41 +170,43 @@ Made with whipping cream, milk, strawberry syrup, coconut flakes. Select the req
 
 ### Ingredients
 
-| Component       | Ingredient        | Amount    | Unit   |
-| --------------- | ----------------- | --------- | ------ |
-| Drink base      | strawberry pieces | 1.5       | scoops |
-| Drink base      | coconut water     | 140       | ml     |
-| Cloud / topping | whipping cream    | 40        | ml     |
-| Cloud / topping | milk              | 40        | ml     |
-| Cloud / topping | strawberry syrup  | 40        | ml     |
-| Finish          | coconut flakes    | as needed | —      |
+| Component       | Ingredient        | Amount           | Unit   |
+| --------------- | ----------------- | ---------------- | ------ |
+| Drink base      | strawberry pieces | 1.5              | scoops |
+| Ice             | ice cubes         | full serving cup | —      |
+| Drink base      | coconut water     | 140              | ml     |
+| Cloud / topping | whipping cream    | 40               | ml     |
+| Cloud / topping | milk              | 40               | ml     |
+| Cloud / topping | strawberry syrup  | 40               | ml     |
+| Finish          | coconut flakes    | as needed        | —      |
 
 ### Method
 
 1. **Measure strawberry pieces.** Add 1.5 standard scoops strawberry pieces to serving cup.
-2. **Chill the drink.** Fill the serving cup with ice.
+2. **Fill the cup with ice.** Fill the serving cup with ice.
 3. **Measure coconut water.** Add 140 ml coconut water to serving cup.
 4. **Measure whipping cream.** Add 40 ml whipping cream to mixing bowl.
 5. **Measure milk.** Add 40 ml milk to mixing bowl.
 6. **Measure strawberry syrup.** Add 40 ml strawberry syrup to mixing bowl.
 7. **Whip the cloud.** Whip until thick.
 8. **Assemble the drink.** Pour the cloud into the serving cup.
-9. **Finish the drink.** Garnish with as needed coconut flakes.
+9. **Finish the drink.** Garnish with coconut flakes as needed.
 
 ## M — No ice
 
 ### Ingredients
 
-| Component       | Ingredient        | Amount    | Unit   |
-| --------------- | ----------------- | --------- | ------ |
-| Drink base      | strawberry pieces | 1.5       | scoops |
-| Drink base      | ice cubes         | 2–3       | —      |
-| Drink base      | coconut water     | 140       | ml     |
-| Drink base      | liquid sugar      | 10        | ml     |
-| Cloud / topping | whipping cream    | 40        | ml     |
-| Cloud / topping | milk              | 40        | ml     |
-| Cloud / topping | strawberry syrup  | 40        | ml     |
-| Finish          | coconut flakes    | as needed | —      |
+| Component       | Ingredient        | Amount          | Unit   |
+| --------------- | ----------------- | --------------- | ------ |
+| Drink base      | strawberry pieces | 1.5             | scoops |
+| Drink base      | ice cubes         | 2–3             | —      |
+| Drink base      | coconut water     | 140             | ml     |
+| Drink base      | liquid sugar      | 10              | ml     |
+| Cloud / topping | whipping cream    | 40              | ml     |
+| Cloud / topping | milk              | 40              | ml     |
+| Cloud / topping | strawberry syrup  | 40              | ml     |
+| Finish          | coconut flakes    | as needed       | —      |
+| Top-up          | coconut water     | to serving line | —      |
 
 ### Method
 
@@ -210,13 +215,13 @@ Made with whipping cream, milk, strawberry syrup, coconut flakes. Select the req
 3. **Measure coconut water.** Add 140 ml coconut water to serving cup.
 4. **Measure liquid sugar.** Add 10 ml liquid sugar to serving cup.
 5. **Stir to combine.** Stir the ingredients until evenly combined.
-6. **Top up the drink.** Top up with coconut water to the standard serving line.
-7. **Measure whipping cream.** Add 40 ml whipping cream to mixing bowl.
-8. **Measure milk.** Add 40 ml milk to mixing bowl.
-9. **Measure strawberry syrup.** Add 40 ml strawberry syrup to mixing bowl.
-10. **Whip the cloud.** Whip until thick.
+6. **Measure whipping cream.** Add 40 ml whipping cream to mixing bowl.
+7. **Measure milk.** Add 40 ml milk to mixing bowl.
+8. **Measure strawberry syrup.** Add 40 ml strawberry syrup to mixing bowl.
+9. **Whip the cloud.** Whip until thick.
+10. **Top up the drink.** Top up with coconut water in the serving cup to the standard serving line, leaving room for the cloud. Stir the base gently to combine.
 11. **Assemble the drink.** Pour the cloud into the serving cup.
-12. **Finish the drink.** Garnish with as needed coconut flakes.
+12. **Finish the drink.** Garnish with coconut flakes as needed.
 
 ### Tips
 

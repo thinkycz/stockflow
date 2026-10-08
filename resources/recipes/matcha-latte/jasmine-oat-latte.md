@@ -39,9 +39,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "whisk",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         },
@@ -80,9 +80,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "whisk",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         }
@@ -99,18 +99,20 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 - Serving Cup
 - Matcha Bowl
 - Matcha Whisk
+- Stirring Spoon
 
 ## S — With ice
 
 ### Ingredients
 
-| Component  | Ingredient         | Amount | Unit |
-| ---------- | ------------------ | ------ | ---- |
-| Drink base | brewed jasmine tea | 70     | ml   |
-| Drink base | oat milk           | 50     | ml   |
-| Drink base | liquid sugar       | 25     | ml   |
-| Matcha     | water at 70–80 °C  | 50     | ml   |
-| Matcha     | matcha             | 3.5    | g    |
+| Component  | Ingredient         | Amount           | Unit |
+| ---------- | ------------------ | ---------------- | ---- |
+| Drink base | brewed jasmine tea | 70               | ml   |
+| Drink base | oat milk           | 50               | ml   |
+| Drink base | liquid sugar       | 25               | ml   |
+| Ice        | ice cubes          | full serving cup | —    |
+| Matcha     | water at 70–80 °C  | 50               | ml   |
+| Matcha     | matcha             | 3.5              | g    |
 
 ### Method
 
@@ -118,7 +120,7 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 2. **Measure oat milk.** Add 50 ml oat milk to serving cup.
 3. **Measure liquid sugar.** Add 25 ml liquid sugar to serving cup.
 4. **Stir to combine.** Stir the ingredients until evenly combined.
-5. **Chill the drink.** Fill the serving cup with ice.
+5. **Fill the cup with ice.** Fill the serving cup with ice.
 6. **Measure water at 70–80 °C.** Add 50 ml water at 70–80 °C to matcha bowl.
 7. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
 8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
@@ -128,14 +130,15 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 
 ### Ingredients
 
-| Component  | Ingredient         | Amount | Unit |
-| ---------- | ------------------ | ------ | ---- |
-| Drink base | brewed jasmine tea | 70     | ml   |
-| Drink base | oat milk           | 50     | ml   |
-| Drink base | liquid sugar       | 30     | ml   |
-| Drink base | ice cubes          | 2–3    | —    |
-| Matcha     | water at 70–80 °C  | 50     | ml   |
-| Matcha     | matcha             | 3.5    | g    |
+| Component  | Ingredient         | Amount          | Unit |
+| ---------- | ------------------ | --------------- | ---- |
+| Drink base | brewed jasmine tea | 70              | ml   |
+| Drink base | oat milk           | 50              | ml   |
+| Drink base | liquid sugar       | 30              | ml   |
+| Drink base | ice cubes          | 2–3             | —    |
+| Matcha     | water at 70–80 °C  | 50              | ml   |
+| Matcha     | matcha             | 3.5             | g    |
+| Top-up     | oat milk           | to serving line | —    |
 
 ### Method
 
@@ -144,11 +147,11 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 3. **Measure liquid sugar.** Add 30 ml liquid sugar to serving cup.
 4. **Stir to combine.** Stir the ingredients until evenly combined.
 5. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-6. **Top up the drink.** Top up with oat milk to the standard serving line.
-7. **Measure water at 70–80 °C.** Add 50 ml water at 70–80 °C to matcha bowl.
-8. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
-9. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
-10. **Assemble the drink.** Pour the matcha into the serving cup.
+6. **Measure water at 70–80 °C.** Add 50 ml water at 70–80 °C to matcha bowl.
+7. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
+8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
+9. **Assemble the drink.** Pour the matcha into the serving cup.
+10. **Top up the drink.** Top up with oat milk in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -158,13 +161,14 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 
 ### Ingredients
 
-| Component  | Ingredient         | Amount | Unit |
-| ---------- | ------------------ | ------ | ---- |
-| Drink base | brewed jasmine tea | 90     | ml   |
-| Drink base | oat milk           | 70     | ml   |
-| Drink base | liquid sugar       | 35     | ml   |
-| Matcha     | water at 70–80 °C  | 60     | ml   |
-| Matcha     | matcha             | 4.5    | g    |
+| Component  | Ingredient         | Amount           | Unit |
+| ---------- | ------------------ | ---------------- | ---- |
+| Drink base | brewed jasmine tea | 90               | ml   |
+| Drink base | oat milk           | 70               | ml   |
+| Drink base | liquid sugar       | 35               | ml   |
+| Ice        | ice cubes          | full serving cup | —    |
+| Matcha     | water at 70–80 °C  | 60               | ml   |
+| Matcha     | matcha             | 4.5              | g    |
 
 ### Method
 
@@ -172,7 +176,7 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 2. **Measure oat milk.** Add 70 ml oat milk to serving cup.
 3. **Measure liquid sugar.** Add 35 ml liquid sugar to serving cup.
 4. **Stir to combine.** Stir the ingredients until evenly combined.
-5. **Chill the drink.** Fill the serving cup with ice.
+5. **Fill the cup with ice.** Fill the serving cup with ice.
 6. **Measure water at 70–80 °C.** Add 60 ml water at 70–80 °C to matcha bowl.
 7. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
 8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
@@ -182,14 +186,15 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 
 ### Ingredients
 
-| Component  | Ingredient         | Amount | Unit |
-| ---------- | ------------------ | ------ | ---- |
-| Drink base | brewed jasmine tea | 90     | ml   |
-| Drink base | oat milk           | 70     | ml   |
-| Drink base | liquid sugar       | 45     | ml   |
-| Drink base | ice cubes          | 2–3    | —    |
-| Matcha     | water at 70–80 °C  | 60     | ml   |
-| Matcha     | matcha             | 4.5    | g    |
+| Component  | Ingredient         | Amount          | Unit |
+| ---------- | ------------------ | --------------- | ---- |
+| Drink base | brewed jasmine tea | 90              | ml   |
+| Drink base | oat milk           | 70              | ml   |
+| Drink base | liquid sugar       | 45              | ml   |
+| Drink base | ice cubes          | 2–3             | —    |
+| Matcha     | water at 70–80 °C  | 60              | ml   |
+| Matcha     | matcha             | 4.5             | g    |
+| Top-up     | oat milk           | to serving line | —    |
 
 ### Method
 
@@ -198,11 +203,11 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 3. **Measure liquid sugar.** Add 45 ml liquid sugar to serving cup.
 4. **Stir to combine.** Stir the ingredients until evenly combined.
 5. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-6. **Top up the drink.** Top up with oat milk to the standard serving line.
-7. **Measure water at 70–80 °C.** Add 60 ml water at 70–80 °C to matcha bowl.
-8. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
-9. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
-10. **Assemble the drink.** Pour the matcha into the serving cup.
+6. **Measure water at 70–80 °C.** Add 60 ml water at 70–80 °C to matcha bowl.
+7. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
+8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
+9. **Assemble the drink.** Pour the matcha into the serving cup.
+10. **Top up the drink.** Top up with oat milk in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 

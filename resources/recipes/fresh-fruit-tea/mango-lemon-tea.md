@@ -41,9 +41,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         },
@@ -84,9 +84,9 @@
                 "add",
                 "add",
                 "add",
-                "add",
                 "shake",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         }
@@ -102,19 +102,22 @@ Made with jasmine tea, mango purée, lemon syrup. Select the required variant be
 
 - Serving Cup
 - Shaker
+- Muddler
+- Stirring Spoon
 
 ## M — With ice
 
 ### Ingredients
 
-| Component     | Ingredient         | Amount | Unit   |
-| ------------- | ------------------ | ------ | ------ |
-| Drink mixture | mango slices       | 1      | pieces |
-| Drink mixture | lemon slices       | 1      | pieces |
-| Drink mixture | brewed jasmine tea | 250    | ml     |
-| Drink mixture | liquid sugar       | 20     | ml     |
-| Drink mixture | mango purée        | 30     | ml     |
-| Drink mixture | lemon syrup        | 5      | ml     |
+| Component     | Ingredient         | Amount           | Unit   |
+| ------------- | ------------------ | ---------------- | ------ |
+| Drink mixture | mango slices       | 1                | pieces |
+| Drink mixture | lemon slices       | 1                | pieces |
+| Drink mixture | brewed jasmine tea | 250              | ml     |
+| Drink mixture | liquid sugar       | 20               | ml     |
+| Drink mixture | mango purée        | 30               | ml     |
+| Drink mixture | lemon syrup        | 5                | ml     |
+| Ice           | ice cubes          | full serving cup | —      |
 
 ### Method
 
@@ -125,23 +128,24 @@ Made with jasmine tea, mango purée, lemon syrup. Select the required variant be
 5. **Measure liquid sugar.** Add 20 ml liquid sugar to shaker.
 6. **Measure mango purée.** Add 30 ml mango purée to shaker.
 7. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-8. **Chill the drink.** Fill the shaker with ice.
-9. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+8. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+9. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 10. **Assemble the drink.** Pour into the serving cup.
 
 ## M — No ice
 
 ### Ingredients
 
-| Component     | Ingredient         | Amount | Unit   |
-| ------------- | ------------------ | ------ | ------ |
-| Drink mixture | mango slices       | 1      | pieces |
-| Drink mixture | lemon slices       | 1      | pieces |
-| Drink mixture | brewed jasmine tea | 250    | ml     |
-| Drink mixture | liquid sugar       | 25     | ml     |
-| Drink mixture | mango purée        | 30     | ml     |
-| Drink mixture | lemon syrup        | 5      | ml     |
-| Drink mixture | ice cubes          | 2–3    | —      |
+| Component     | Ingredient         | Amount          | Unit   |
+| ------------- | ------------------ | --------------- | ------ |
+| Drink mixture | mango slices       | 1               | pieces |
+| Drink mixture | lemon slices       | 1               | pieces |
+| Drink mixture | brewed jasmine tea | 250             | ml     |
+| Drink mixture | liquid sugar       | 25              | ml     |
+| Drink mixture | mango purée        | 30              | ml     |
+| Drink mixture | lemon syrup        | 5               | ml     |
+| Drink mixture | ice cubes          | 2–3             | —      |
+| Top-up        | brewed jasmine tea | to serving line | —      |
 
 ### Method
 
@@ -153,9 +157,9 @@ Made with jasmine tea, mango purée, lemon syrup. Select the required variant be
 6. **Measure mango purée.** Add 30 ml mango purée to shaker.
 7. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
 8. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-9. **Top up the drink.** Top up with jasmine tea to the standard serving line.
-10. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-11. **Assemble the drink.** Pour into the serving cup.
+9. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+10. **Assemble the drink.** Pour into the serving cup.
+11. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -165,14 +169,15 @@ Made with jasmine tea, mango purée, lemon syrup. Select the required variant be
 
 ### Ingredients
 
-| Component     | Ingredient         | Amount | Unit   |
-| ------------- | ------------------ | ------ | ------ |
-| Drink mixture | mango slices       | 2      | pieces |
-| Drink mixture | lemon slices       | 2      | pieces |
-| Drink mixture | brewed jasmine tea | 350    | ml     |
-| Drink mixture | liquid sugar       | 30     | ml     |
-| Drink mixture | mango purée        | 40     | ml     |
-| Drink mixture | lemon syrup        | 5      | ml     |
+| Component     | Ingredient         | Amount           | Unit   |
+| ------------- | ------------------ | ---------------- | ------ |
+| Drink mixture | mango slices       | 2                | pieces |
+| Drink mixture | lemon slices       | 2                | pieces |
+| Drink mixture | brewed jasmine tea | 350              | ml     |
+| Drink mixture | liquid sugar       | 30               | ml     |
+| Drink mixture | mango purée        | 40               | ml     |
+| Drink mixture | lemon syrup        | 5                | ml     |
+| Ice           | ice cubes          | full serving cup | —      |
 
 ### Method
 
@@ -183,23 +188,24 @@ Made with jasmine tea, mango purée, lemon syrup. Select the required variant be
 5. **Measure liquid sugar.** Add 30 ml liquid sugar to shaker.
 6. **Measure mango purée.** Add 40 ml mango purée to shaker.
 7. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-8. **Chill the drink.** Fill the shaker with ice.
-9. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+8. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+9. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 10. **Assemble the drink.** Pour into the serving cup.
 
 ## L — No ice
 
 ### Ingredients
 
-| Component     | Ingredient         | Amount | Unit   |
-| ------------- | ------------------ | ------ | ------ |
-| Drink mixture | mango slices       | 2      | pieces |
-| Drink mixture | lemon slices       | 2      | pieces |
-| Drink mixture | brewed jasmine tea | 350    | ml     |
-| Drink mixture | liquid sugar       | 40     | ml     |
-| Drink mixture | mango purée        | 40     | ml     |
-| Drink mixture | lemon syrup        | 5      | ml     |
-| Drink mixture | ice cubes          | 2–3    | —      |
+| Component     | Ingredient         | Amount          | Unit   |
+| ------------- | ------------------ | --------------- | ------ |
+| Drink mixture | mango slices       | 2               | pieces |
+| Drink mixture | lemon slices       | 2               | pieces |
+| Drink mixture | brewed jasmine tea | 350             | ml     |
+| Drink mixture | liquid sugar       | 40              | ml     |
+| Drink mixture | mango purée        | 40              | ml     |
+| Drink mixture | lemon syrup        | 5               | ml     |
+| Drink mixture | ice cubes          | 2–3             | —      |
+| Top-up        | brewed jasmine tea | to serving line | —      |
 
 ### Method
 
@@ -211,9 +217,9 @@ Made with jasmine tea, mango purée, lemon syrup. Select the required variant be
 6. **Measure mango purée.** Add 40 ml mango purée to shaker.
 7. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
 8. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-9. **Top up the drink.** Top up with jasmine tea to the standard serving line.
-10. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-11. **Assemble the drink.** Pour into the serving cup.
+9. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+10. **Assemble the drink.** Pour into the serving cup.
+11. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 

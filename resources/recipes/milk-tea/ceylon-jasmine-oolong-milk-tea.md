@@ -23,7 +23,7 @@
                 "ice": "no-ice",
                 "flavour": "Ceylon"
             },
-            "actions": ["add", "add", "add", "add", "shake", "pour"],
+            "actions": ["add", "add", "add", "shake", "pour", "add"],
             "timers": {}
         },
         {
@@ -45,7 +45,7 @@
                 "ice": "no-ice",
                 "flavour": "Ceylon"
             },
-            "actions": ["add", "add", "add", "add", "shake", "pour"],
+            "actions": ["add", "add", "add", "shake", "pour", "add"],
             "timers": {}
         },
         {
@@ -67,7 +67,7 @@
                 "ice": "no-ice",
                 "flavour": "Jasmine"
             },
-            "actions": ["add", "add", "add", "add", "shake", "pour"],
+            "actions": ["add", "add", "add", "shake", "pour", "add"],
             "timers": {}
         },
         {
@@ -89,7 +89,7 @@
                 "ice": "no-ice",
                 "flavour": "Jasmine"
             },
-            "actions": ["add", "add", "add", "add", "shake", "pour"],
+            "actions": ["add", "add", "add", "shake", "pour", "add"],
             "timers": {}
         },
         {
@@ -111,7 +111,7 @@
                 "ice": "no-ice",
                 "flavour": "Oolong"
             },
-            "actions": ["add", "add", "add", "add", "shake", "pour"],
+            "actions": ["add", "add", "add", "shake", "pour", "add"],
             "timers": {}
         },
         {
@@ -133,7 +133,7 @@
                 "ice": "no-ice",
                 "flavour": "Oolong"
             },
-            "actions": ["add", "add", "add", "add", "shake", "pour"],
+            "actions": ["add", "add", "add", "shake", "pour", "add"],
             "timers": {}
         }
     ]
@@ -148,42 +148,45 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 - Serving Cup
 - Shaker
+- Stirring Spoon
 
 ## Ceylon — M — With ice
 
 ### Ingredients
 
-| Component     | Ingredient      | Amount | Unit |
-| ------------- | --------------- | ------ | ---- |
-| Drink mixture | Ceylon milk tea | 250    | ml   |
-| Drink mixture | liquid sugar    | 30     | ml   |
+| Component     | Ingredient      | Amount           | Unit |
+| ------------- | --------------- | ---------------- | ---- |
+| Drink mixture | Ceylon milk tea | 250              | ml   |
+| Drink mixture | liquid sugar    | 30               | ml   |
+| Ice           | ice cubes       | full serving cup | —    |
 
 ### Method
 
 1. **Measure Ceylon milk tea.** Add 250 ml Ceylon milk tea to shaker.
 2. **Measure liquid sugar.** Add 30 ml liquid sugar to shaker.
-3. **Chill the drink.** Fill the shaker with ice.
-4. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+3. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+4. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 5. **Assemble the drink.** Pour into the serving cup.
 
 ## Ceylon — M — No ice
 
 ### Ingredients
 
-| Component     | Ingredient      | Amount | Unit |
-| ------------- | --------------- | ------ | ---- |
-| Drink mixture | Ceylon milk tea | 250    | ml   |
-| Drink mixture | liquid sugar    | 35     | ml   |
-| Drink mixture | ice cubes       | 2–3    | —    |
+| Component     | Ingredient      | Amount          | Unit |
+| ------------- | --------------- | --------------- | ---- |
+| Drink mixture | Ceylon milk tea | 250             | ml   |
+| Drink mixture | liquid sugar    | 35              | ml   |
+| Drink mixture | ice cubes       | 2–3             | —    |
+| Top-up        | Ceylon milk tea | to serving line | —    |
 
 ### Method
 
 1. **Measure Ceylon milk tea.** Add 250 ml Ceylon milk tea to shaker.
 2. **Measure liquid sugar.** Add 35 ml liquid sugar to shaker.
 3. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-4. **Top up the drink.** Top up with Ceylon milk tea to the standard serving line.
-5. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-6. **Assemble the drink.** Pour into the serving cup.
+4. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+5. **Assemble the drink.** Pour into the serving cup.
+6. **Top up the drink.** Top up with Ceylon milk tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -193,37 +196,39 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 ### Ingredients
 
-| Component     | Ingredient      | Amount | Unit |
-| ------------- | --------------- | ------ | ---- |
-| Drink mixture | Ceylon milk tea | 350    | ml   |
-| Drink mixture | liquid sugar    | 40     | ml   |
+| Component     | Ingredient      | Amount           | Unit |
+| ------------- | --------------- | ---------------- | ---- |
+| Drink mixture | Ceylon milk tea | 350              | ml   |
+| Drink mixture | liquid sugar    | 40               | ml   |
+| Ice           | ice cubes       | full serving cup | —    |
 
 ### Method
 
 1. **Measure Ceylon milk tea.** Add 350 ml Ceylon milk tea to shaker.
 2. **Measure liquid sugar.** Add 40 ml liquid sugar to shaker.
-3. **Chill the drink.** Fill the shaker with ice.
-4. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+3. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+4. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 5. **Assemble the drink.** Pour into the serving cup.
 
 ## Ceylon — L — No ice
 
 ### Ingredients
 
-| Component     | Ingredient      | Amount | Unit |
-| ------------- | --------------- | ------ | ---- |
-| Drink mixture | Ceylon milk tea | 350    | ml   |
-| Drink mixture | liquid sugar    | 50     | ml   |
-| Drink mixture | ice cubes       | 2–3    | —    |
+| Component     | Ingredient      | Amount          | Unit |
+| ------------- | --------------- | --------------- | ---- |
+| Drink mixture | Ceylon milk tea | 350             | ml   |
+| Drink mixture | liquid sugar    | 50              | ml   |
+| Drink mixture | ice cubes       | 2–3             | —    |
+| Top-up        | Ceylon milk tea | to serving line | —    |
 
 ### Method
 
 1. **Measure Ceylon milk tea.** Add 350 ml Ceylon milk tea to shaker.
 2. **Measure liquid sugar.** Add 50 ml liquid sugar to shaker.
 3. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-4. **Top up the drink.** Top up with Ceylon milk tea to the standard serving line.
-5. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-6. **Assemble the drink.** Pour into the serving cup.
+4. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+5. **Assemble the drink.** Pour into the serving cup.
+6. **Top up the drink.** Top up with Ceylon milk tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -233,37 +238,39 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 ### Ingredients
 
-| Component     | Ingredient       | Amount | Unit |
-| ------------- | ---------------- | ------ | ---- |
-| Drink mixture | jasmine milk tea | 250    | ml   |
-| Drink mixture | liquid sugar     | 30     | ml   |
+| Component     | Ingredient       | Amount           | Unit |
+| ------------- | ---------------- | ---------------- | ---- |
+| Drink mixture | jasmine milk tea | 250              | ml   |
+| Drink mixture | liquid sugar     | 30               | ml   |
+| Ice           | ice cubes        | full serving cup | —    |
 
 ### Method
 
 1. **Measure jasmine milk tea.** Add 250 ml jasmine milk tea to shaker.
 2. **Measure liquid sugar.** Add 30 ml liquid sugar to shaker.
-3. **Chill the drink.** Fill the shaker with ice.
-4. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+3. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+4. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 5. **Assemble the drink.** Pour into the serving cup.
 
 ## Jasmine — M — No ice
 
 ### Ingredients
 
-| Component     | Ingredient       | Amount | Unit |
-| ------------- | ---------------- | ------ | ---- |
-| Drink mixture | jasmine milk tea | 250    | ml   |
-| Drink mixture | liquid sugar     | 35     | ml   |
-| Drink mixture | ice cubes        | 2–3    | —    |
+| Component     | Ingredient       | Amount          | Unit |
+| ------------- | ---------------- | --------------- | ---- |
+| Drink mixture | jasmine milk tea | 250             | ml   |
+| Drink mixture | liquid sugar     | 35              | ml   |
+| Drink mixture | ice cubes        | 2–3             | —    |
+| Top-up        | jasmine milk tea | to serving line | —    |
 
 ### Method
 
 1. **Measure jasmine milk tea.** Add 250 ml jasmine milk tea to shaker.
 2. **Measure liquid sugar.** Add 35 ml liquid sugar to shaker.
 3. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-4. **Top up the drink.** Top up with jasmine milk tea to the standard serving line.
-5. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-6. **Assemble the drink.** Pour into the serving cup.
+4. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+5. **Assemble the drink.** Pour into the serving cup.
+6. **Top up the drink.** Top up with jasmine milk tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -273,37 +280,39 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 ### Ingredients
 
-| Component     | Ingredient       | Amount | Unit |
-| ------------- | ---------------- | ------ | ---- |
-| Drink mixture | jasmine milk tea | 350    | ml   |
-| Drink mixture | liquid sugar     | 40     | ml   |
+| Component     | Ingredient       | Amount           | Unit |
+| ------------- | ---------------- | ---------------- | ---- |
+| Drink mixture | jasmine milk tea | 350              | ml   |
+| Drink mixture | liquid sugar     | 40               | ml   |
+| Ice           | ice cubes        | full serving cup | —    |
 
 ### Method
 
 1. **Measure jasmine milk tea.** Add 350 ml jasmine milk tea to shaker.
 2. **Measure liquid sugar.** Add 40 ml liquid sugar to shaker.
-3. **Chill the drink.** Fill the shaker with ice.
-4. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+3. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+4. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 5. **Assemble the drink.** Pour into the serving cup.
 
 ## Jasmine — L — No ice
 
 ### Ingredients
 
-| Component     | Ingredient       | Amount | Unit |
-| ------------- | ---------------- | ------ | ---- |
-| Drink mixture | jasmine milk tea | 350    | ml   |
-| Drink mixture | liquid sugar     | 50     | ml   |
-| Drink mixture | ice cubes        | 2–3    | —    |
+| Component     | Ingredient       | Amount          | Unit |
+| ------------- | ---------------- | --------------- | ---- |
+| Drink mixture | jasmine milk tea | 350             | ml   |
+| Drink mixture | liquid sugar     | 50              | ml   |
+| Drink mixture | ice cubes        | 2–3             | —    |
+| Top-up        | jasmine milk tea | to serving line | —    |
 
 ### Method
 
 1. **Measure jasmine milk tea.** Add 350 ml jasmine milk tea to shaker.
 2. **Measure liquid sugar.** Add 50 ml liquid sugar to shaker.
 3. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-4. **Top up the drink.** Top up with jasmine milk tea to the standard serving line.
-5. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-6. **Assemble the drink.** Pour into the serving cup.
+4. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+5. **Assemble the drink.** Pour into the serving cup.
+6. **Top up the drink.** Top up with jasmine milk tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -313,37 +322,39 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 ### Ingredients
 
-| Component     | Ingredient      | Amount | Unit |
-| ------------- | --------------- | ------ | ---- |
-| Drink mixture | oolong milk tea | 250    | ml   |
-| Drink mixture | liquid sugar    | 30     | ml   |
+| Component     | Ingredient      | Amount           | Unit |
+| ------------- | --------------- | ---------------- | ---- |
+| Drink mixture | oolong milk tea | 250              | ml   |
+| Drink mixture | liquid sugar    | 30               | ml   |
+| Ice           | ice cubes       | full serving cup | —    |
 
 ### Method
 
 1. **Measure oolong milk tea.** Add 250 ml oolong milk tea to shaker.
 2. **Measure liquid sugar.** Add 30 ml liquid sugar to shaker.
-3. **Chill the drink.** Fill the shaker with ice.
-4. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+3. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+4. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 5. **Assemble the drink.** Pour into the serving cup.
 
 ## Oolong — M — No ice
 
 ### Ingredients
 
-| Component     | Ingredient      | Amount | Unit |
-| ------------- | --------------- | ------ | ---- |
-| Drink mixture | oolong milk tea | 250    | ml   |
-| Drink mixture | liquid sugar    | 35     | ml   |
-| Drink mixture | ice cubes       | 2–3    | —    |
+| Component     | Ingredient      | Amount          | Unit |
+| ------------- | --------------- | --------------- | ---- |
+| Drink mixture | oolong milk tea | 250             | ml   |
+| Drink mixture | liquid sugar    | 35              | ml   |
+| Drink mixture | ice cubes       | 2–3             | —    |
+| Top-up        | oolong milk tea | to serving line | —    |
 
 ### Method
 
 1. **Measure oolong milk tea.** Add 250 ml oolong milk tea to shaker.
 2. **Measure liquid sugar.** Add 35 ml liquid sugar to shaker.
 3. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-4. **Top up the drink.** Top up with oolong milk tea to the standard serving line.
-5. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-6. **Assemble the drink.** Pour into the serving cup.
+4. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+5. **Assemble the drink.** Pour into the serving cup.
+6. **Top up the drink.** Top up with oolong milk tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -353,37 +364,39 @@ Made with Ceylon milk tea. Select the required variant before measuring ingredie
 
 ### Ingredients
 
-| Component     | Ingredient      | Amount | Unit |
-| ------------- | --------------- | ------ | ---- |
-| Drink mixture | oolong milk tea | 350    | ml   |
-| Drink mixture | liquid sugar    | 40     | ml   |
+| Component     | Ingredient      | Amount           | Unit |
+| ------------- | --------------- | ---------------- | ---- |
+| Drink mixture | oolong milk tea | 350              | ml   |
+| Drink mixture | liquid sugar    | 40               | ml   |
+| Ice           | ice cubes       | full serving cup | —    |
 
 ### Method
 
 1. **Measure oolong milk tea.** Add 350 ml oolong milk tea to shaker.
 2. **Measure liquid sugar.** Add 40 ml liquid sugar to shaker.
-3. **Chill the drink.** Fill the shaker with ice.
-4. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+3. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+4. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 5. **Assemble the drink.** Pour into the serving cup.
 
 ## Oolong — L — No ice
 
 ### Ingredients
 
-| Component     | Ingredient      | Amount | Unit |
-| ------------- | --------------- | ------ | ---- |
-| Drink mixture | oolong milk tea | 350    | ml   |
-| Drink mixture | liquid sugar    | 50     | ml   |
-| Drink mixture | ice cubes       | 2–3    | —    |
+| Component     | Ingredient      | Amount          | Unit |
+| ------------- | --------------- | --------------- | ---- |
+| Drink mixture | oolong milk tea | 350             | ml   |
+| Drink mixture | liquid sugar    | 50              | ml   |
+| Drink mixture | ice cubes       | 2–3             | —    |
+| Top-up        | oolong milk tea | to serving line | —    |
 
 ### Method
 
 1. **Measure oolong milk tea.** Add 350 ml oolong milk tea to shaker.
 2. **Measure liquid sugar.** Add 50 ml liquid sugar to shaker.
 3. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-4. **Top up the drink.** Top up with oolong milk tea to the standard serving line.
-5. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
-6. **Assemble the drink.** Pour into the serving cup.
+4. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
+5. **Assemble the drink.** Pour into the serving cup.
+6. **Top up the drink.** Top up with oolong milk tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 

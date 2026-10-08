@@ -37,6 +37,7 @@ Himawari matcha with steamed banana milk and gingerbread syrup.
 - Steam Wand
 - Matcha Bowl
 - Matcha Whisk
+- Stirring Spoon
 
 ## Hot
 

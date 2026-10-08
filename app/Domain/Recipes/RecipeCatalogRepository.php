@@ -274,7 +274,10 @@ final class RecipeCatalogRepository
     private function iconGroup(string $name): string
     {
         $value = Str::lower($name);
-        foreach (['ice' => ['ice'], 'topping_garnish' => ['dried', 'flakes', 'crumbs', 'chopped'], 'syrup_sweetener' => ['sugar', 'syrup'], 'tea_matcha' => ['tea', 'matcha', 'hojicha'], 'powder' => ['powder', 'tapioca', 'paste'], 'milk_foam' => ['cream', 'condensed'], 'water_milk' => ['milk', 'water'], 'fruit' => ['fruit', 'mango', 'strawber', 'lychee', 'lychees', 'lemon', 'peach', 'orange', 'pineapple', 'lemongrass']] as $group => $terms) {
+        if (\in_array($value, ['ice', 'ice cubes'], true)) {
+            return 'ice';
+        }
+        foreach (['topping_garnish' => ['dried', 'flakes', 'crumbs', 'chopped'], 'syrup_sweetener' => ['sugar', 'syrup'], 'tea_matcha' => ['tea', 'matcha', 'hojicha'], 'powder' => ['powder', 'tapioca', 'paste'], 'milk_foam' => ['cream', 'condensed'], 'water_milk' => ['milk', 'water'], 'fruit' => ['fruit', 'mango', 'strawber', 'lychee', 'lychees', 'lemon', 'peach', 'orange', 'pineapple', 'lemongrass']] as $group => $terms) {
             if (Str::contains($value, $terms)) {
                 return $group;
             }

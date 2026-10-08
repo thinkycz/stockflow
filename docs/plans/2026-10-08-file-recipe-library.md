@@ -53,3 +53,8 @@ Verified on 9 October 2026:
 Local MySQL still refuses connections. The drop migration has **not** been applied
 to the local application database; it will run through the normal deployment
 migration workflow. All automated database checks used isolated test databases.
+
+The [9 October recipe logic audit](../verification/2026-10-09-recipe-logic-audit.md)
+records subsequent ingredient and method clarifications, four explicitly approved
+formula corrections, and the replacement of category buttons with a category
+side panel. The original signatures remain available for comparison.

@@ -98,17 +98,20 @@ Made with milk powder, taro powder. Select the required variant before measuring
 
 - Serving Cup
 - Shaker
+- Stirring Spoon
 
 ## M — With ice
 
 ### Ingredients
 
-| Component     | Ingredient   | Amount | Unit   |
-| ------------- | ------------ | ------ | ------ |
-| Drink mixture | hot water    | 100    | ml     |
-| Drink mixture | milk powder  | 2      | scoops |
-| Drink mixture | taro powder  | 1.5    | scoops |
-| Drink mixture | liquid sugar | 20     | ml     |
+| Component      | Ingredient   | Amount                  | Unit   |
+| -------------- | ------------ | ----------------------- | ------ |
+| Drink mixture  | hot water    | 100                     | ml     |
+| Drink mixture  | milk powder  | 2                       | scoops |
+| Drink mixture  | taro powder  | 1.5                     | scoops |
+| Drink mixture  | liquid sugar | 20                      | ml     |
+| Milk to volume | coconut milk | to 300 ml total mixture | —      |
+| Ice            | ice cubes    | full serving cup        | —      |
 
 ### Method
 
@@ -117,22 +120,24 @@ Made with milk powder, taro powder. Select the required variant before measuring
 3. **Measure taro powder.** Add 1.5 standard scoops taro powder to shaker.
 4. **Measure liquid sugar.** Add 20 ml liquid sugar to shaker.
 5. **Mix until smooth.** Mix until the powders have completely dissolved and no dry clumps remain.
-6. **Top up the mixture.** Add coconut milk until the mixture reaches 300 ml.
-7. **Chill the drink.** Fill the shaker with ice.
-8. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+6. **Top up the mixture.** Add coconut milk until all the ingredients together reach 300 ml in the shaker.
+7. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 
 ## M — No ice
 
 ### Ingredients
 
-| Component     | Ingredient   | Amount | Unit   |
-| ------------- | ------------ | ------ | ------ |
-| Drink mixture | hot water    | 100    | ml     |
-| Drink mixture | milk powder  | 2      | scoops |
-| Drink mixture | taro powder  | 1.5    | scoops |
-| Drink mixture | liquid sugar | 25     | ml     |
-| Drink mixture | ice cubes    | 2–3    | —      |
+| Component      | Ingredient   | Amount                  | Unit   |
+| -------------- | ------------ | ----------------------- | ------ |
+| Drink mixture  | hot water    | 100                     | ml     |
+| Drink mixture  | milk powder  | 2                       | scoops |
+| Drink mixture  | taro powder  | 1.5                     | scoops |
+| Drink mixture  | liquid sugar | 25                      | ml     |
+| Milk to volume | coconut milk | to 300 ml total mixture | —      |
+| Drink mixture  | ice cubes    | 2–3                     | —      |
+| Top-up         | coconut milk | to serving line         | —      |
 
 ### Method
 
@@ -141,11 +146,11 @@ Made with milk powder, taro powder. Select the required variant before measuring
 3. **Measure taro powder.** Add 1.5 standard scoops taro powder to shaker.
 4. **Measure liquid sugar.** Add 25 ml liquid sugar to shaker.
 5. **Mix until smooth.** Mix until the powders have completely dissolved and no dry clumps remain.
-6. **Top up the mixture.** Add coconut milk until the mixture reaches 300 ml.
+6. **Top up the mixture.** Add coconut milk until all the ingredients together reach 300 ml in the shaker.
 7. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-8. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
-10. **Top up the drink.** Top up with coconut milk to the standard serving line.
+10. **Top up the drink.** Top up with coconut milk in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -155,12 +160,14 @@ Made with milk powder, taro powder. Select the required variant before measuring
 
 ### Ingredients
 
-| Component     | Ingredient   | Amount | Unit   |
-| ------------- | ------------ | ------ | ------ |
-| Drink mixture | hot water    | 100    | ml     |
-| Drink mixture | milk powder  | 3      | scoops |
-| Drink mixture | taro powder  | 2      | scoops |
-| Drink mixture | liquid sugar | 30     | ml     |
+| Component      | Ingredient   | Amount                  | Unit   |
+| -------------- | ------------ | ----------------------- | ------ |
+| Drink mixture  | hot water    | 100                     | ml     |
+| Drink mixture  | milk powder  | 3                       | scoops |
+| Drink mixture  | taro powder  | 2                       | scoops |
+| Drink mixture  | liquid sugar | 30                      | ml     |
+| Milk to volume | coconut milk | to 400 ml total mixture | —      |
+| Ice            | ice cubes    | full serving cup        | —      |
 
 ### Method
 
@@ -169,22 +176,24 @@ Made with milk powder, taro powder. Select the required variant before measuring
 3. **Measure taro powder.** Add 2 standard scoops taro powder to shaker.
 4. **Measure liquid sugar.** Add 30 ml liquid sugar to shaker.
 5. **Mix until smooth.** Mix until the powders have completely dissolved and no dry clumps remain.
-6. **Top up the mixture.** Add coconut milk until the mixture reaches 400 ml.
-7. **Chill the drink.** Fill the shaker with ice.
-8. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+6. **Top up the mixture.** Add coconut milk until all the ingredients together reach 400 ml in the shaker.
+7. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 
 ## L — No ice
 
 ### Ingredients
 
-| Component     | Ingredient   | Amount | Unit   |
-| ------------- | ------------ | ------ | ------ |
-| Drink mixture | hot water    | 100    | ml     |
-| Drink mixture | milk powder  | 3      | scoops |
-| Drink mixture | taro powder  | 2      | scoops |
-| Drink mixture | liquid sugar | 40     | ml     |
-| Drink mixture | ice cubes    | 2–3    | —      |
+| Component      | Ingredient   | Amount                  | Unit   |
+| -------------- | ------------ | ----------------------- | ------ |
+| Drink mixture  | hot water    | 100                     | ml     |
+| Drink mixture  | milk powder  | 3                       | scoops |
+| Drink mixture  | taro powder  | 2                       | scoops |
+| Drink mixture  | liquid sugar | 40                      | ml     |
+| Milk to volume | coconut milk | to 400 ml total mixture | —      |
+| Drink mixture  | ice cubes    | 2–3                     | —      |
+| Top-up         | coconut milk | to serving line         | —      |
 
 ### Method
 
@@ -193,11 +202,11 @@ Made with milk powder, taro powder. Select the required variant before measuring
 3. **Measure taro powder.** Add 2 standard scoops taro powder to shaker.
 4. **Measure liquid sugar.** Add 40 ml liquid sugar to shaker.
 5. **Mix until smooth.** Mix until the powders have completely dissolved and no dry clumps remain.
-6. **Top up the mixture.** Add coconut milk until the mixture reaches 400 ml.
+6. **Top up the mixture.** Add coconut milk until all the ingredients together reach 400 ml in the shaker.
 7. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
-8. **Shake the mixture.** Shake the ingredients in the shaker until evenly combined.
+8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
-10. **Top up the drink.** Top up with coconut milk to the standard serving line.
+10. **Top up the drink.** Top up with coconut milk in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 

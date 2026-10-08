@@ -16,11 +16,15 @@ async function noOverflow(page: Page): Promise<void> {
     ).toBe(true);
 }
 
-async function capture(page: Page, filename: string): Promise<void> {
+async function capture(
+    page: Page,
+    filename: string,
+    fullPage = true,
+): Promise<void> {
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({
         path: `output/playwright/${filename}.png`,
-        fullPage: true,
+        fullPage,
         animations: 'disabled',
     });
 }
@@ -38,9 +42,54 @@ test('the visual library filters instantly and keyboard lookup opens the correct
         }),
     ).toHaveCount(0);
     await capture(page, 'recipes-library-desktop');
-    await page.getByRole('button', { name: /^HOT DRINKS/ }).click();
+    const category = page.getByRole('button', {
+        name: 'Browse categories',
+        exact: true,
+    });
+    const drawer = page.getByRole('dialog', {
+        name: 'Browse categories',
+        exact: true,
+    });
+    await expect(
+        page.getByTestId('recipe-lookup').getByRole('combobox'),
+    ).toHaveCount(1);
+    await category.click();
+    await expect(drawer.getByRole('button')).toHaveCount(11);
+    await expect(
+        drawer.getByRole('button', { name: /^All recipes/ }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await capture(page, 'recipes-categories-desktop', false);
+    await drawer.getByRole('button', { name: /^PREPARATIONS/ }).click();
+    await expect(drawer).toHaveCount(0);
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(10);
+    await category.click();
+    await drawer.getByRole('button', { name: /^HOT DRINKS/ }).click();
+    await expect(drawer).toHaveCount(0);
+    await expect(category).toHaveAttribute('aria-expanded', 'false');
+    await expect(category).toBeFocused();
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(5);
+    await expect(page).toHaveURL(/category=hot-drinks/);
+    await page.reload();
+    await expect(category).toContainText('HOT DRINKS');
     await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(5);
     const search = page.getByRole('combobox', { name: 'Find a recipe' });
+    await search.fill('straw cloud');
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(1);
+    await page.getByRole('button', { name: 'Clear search' }).click();
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(5);
+    await category.click();
+    await expect(
+        drawer.getByRole('button', { name: /^HOT DRINKS/ }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await page.keyboard.press('Escape');
+    await expect(drawer).toHaveCount(0);
+    await expect(category).toBeFocused();
+    await category.click();
+    await drawer.getByRole('button', { name: /^All recipes/ }).click();
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(54);
+    await expect(page).not.toHaveURL(/category=/);
+    await category.click();
+    await drawer.getByRole('button', { name: /^HOT DRINKS/ }).click();
     await search.fill('straw cloud');
     await expect(page.getByRole('listbox').getByRole('option')).toHaveCount(2);
     await expect(
@@ -63,17 +112,35 @@ test('the visual library filters instantly and keyboard lookup opens the correct
     await noOverflow(page);
 });
 
-for (const [locale, lookup, guided, scoops] of [
-    ['en', 'Find a recipe', 'Guided preparation', '3 standard scoops'],
-    ['cs', 'Najít recept', 'Příprava krok za krokem', '3 standardní odměrky'],
-    ['sk', 'Nájsť recept', 'Príprava krok za krokom', '3 štandardné odmerky'],
+for (const [locale, lookup, categoryLabel, guided, scoops] of [
+    [
+        'en',
+        'Find a recipe',
+        'Browse categories',
+        'Guided preparation',
+        '3 standard scoops',
+    ],
+    [
+        'cs',
+        'Najít recept',
+        'Procházet kategorie',
+        'Příprava krok za krokem',
+        '3 standardní odměrky',
+    ],
+    [
+        'sk',
+        'Nájsť recept',
+        'Prechádzať kategórie',
+        'Príprava krok za krokom',
+        '3 štandardné odmerky',
+    ],
 ] as const) {
     test(`recipe quantities and preparation controls remain readable in ${locale}`, async ({
         page,
     }) => {
         await page.setViewportSize({ width: 320, height: 740 });
         await login(page, 'limited@test.com');
-        await page.route('**/recipes/**', async (route) => {
+        await page.route('**/recipes**', async (route) => {
             const response = await route.fetch();
             const body = (await response.text())
                 .replaceAll('"locale":"en"', `"locale":"${locale}"`)
@@ -83,6 +150,30 @@ for (const [locale, lookup, guided, scoops] of [
                 );
             await route.fulfill({ response, body });
         });
+        await page.goto('/recipes');
+        const category = page.getByRole('button', {
+            name: categoryLabel,
+            exact: true,
+        });
+        await category.click();
+        const drawer = page.getByRole('dialog', {
+            name: categoryLabel,
+            exact: true,
+        });
+        await expect(drawer.getByRole('button')).toHaveCount(11);
+        await noOverflow(page);
+        await capture(page, `recipes-categories-${locale}-small-mobile`, false);
+        await drawer.getByRole('button', { name: /^PREPARATIONS/ }).click();
+        await expect(drawer).toHaveCount(0);
+        await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(10);
+        await category.click();
+        await drawer.getByRole('button', { name: /^HOT DRINKS/ }).click();
+        await expect(drawer).toHaveCount(0);
+        await expect(category).toContainText('HOT DRINKS');
+        await expect(category).toBeFocused();
+        await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(5);
+        await noOverflow(page);
+        await capture(page, `recipes-library-${locale}-small-mobile`);
         await page.goto('/recipes/hot-drinks/taro-milk-tea');
         await expect(
             page
@@ -250,6 +341,55 @@ test('mobile search handles missing recipes escape and a second recipe on the de
         page
             .getByTestId('recipe-ingredients')
             .getByText('3 standard scoops', { exact: true }),
+    ).toBeVisible();
+    await noOverflow(page);
+});
+
+test('classic matcha lists a full cup of ice for iced drinks and the authored chilling cubes for no ice', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await login(page, 'limited@test.com');
+    await page.goto('/recipes/matcha-latte/classic-matcha-latte');
+    const ingredients = page.getByTestId('recipe-ingredients');
+    for (const [size, icedMilk, noIceMilk] of [
+        ['S', '100 ml', '150 ml'],
+        ['M', '140 ml', '240 ml'],
+    ] as const) {
+        await page.getByRole('tab', { name: size, exact: true }).click();
+        await page.getByRole('tab', { name: 'With ice', exact: true }).click();
+        await expect(
+            ingredients.getByText('full serving cup', { exact: true }),
+        ).toBeVisible();
+        await expect(
+            ingredients.getByText(icedMilk, { exact: true }),
+        ).toBeVisible();
+        await page.getByRole('tab', { name: 'No ice', exact: true }).click();
+        await expect(
+            ingredients.getByText('2–3', { exact: true }),
+        ).toBeVisible();
+        await expect(
+            ingredients.getByText(noIceMilk, { exact: true }),
+        ).toBeVisible();
+    }
+    await page.getByRole('tab', { name: 'With ice', exact: true }).click();
+    await page
+        .getByRole('tab', { name: 'Guided preparation', exact: true })
+        .click();
+    await expect(
+        page.getByRole('checkbox', { name: 'ice cubes — full serving cup' }),
+    ).toBeVisible();
+    await capture(page, 'recipes-classic-ice-mobile');
+    await page.goto('/recipes/milk-tea/taro-coco-milk-tea');
+    await expect(
+        ingredients.getByText('coconut milk', { exact: true }),
+    ).toBeVisible();
+    await expect(
+        ingredients.getByText('to 300 ml total mixture', { exact: true }),
+    ).toBeVisible();
+    await page.getByRole('tab', { name: 'No ice', exact: true }).click();
+    await expect(
+        ingredients.getByText('to serving line', { exact: true }),
     ).toBeVisible();
     await noOverflow(page);
 });

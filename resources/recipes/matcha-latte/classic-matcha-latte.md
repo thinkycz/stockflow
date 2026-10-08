@@ -93,24 +93,26 @@ Made with milk, matcha. Select the required variant before measuring ingredients
 - Serving Cup
 - Matcha Bowl
 - Matcha Whisk
+- Stirring Spoon
 
 ## S — With ice
 
 ### Ingredients
 
-| Component  | Ingredient        | Amount | Unit |
-| ---------- | ----------------- | ------ | ---- |
-| Drink base | milk              | 100    | ml   |
-| Drink base | liquid sugar      | 20     | ml   |
-| Matcha     | water at 70–80 °C | 50     | ml   |
-| Matcha     | matcha            | 3.5    | g    |
+| Component  | Ingredient        | Amount           | Unit |
+| ---------- | ----------------- | ---------------- | ---- |
+| Drink base | milk              | 100              | ml   |
+| Drink base | liquid sugar      | 20               | ml   |
+| Ice        | ice cubes         | full serving cup | —    |
+| Matcha     | water at 70–80 °C | 50               | ml   |
+| Matcha     | matcha            | 3.5              | g    |
 
 ### Method
 
 1. **Measure milk.** Add 100 ml milk to serving cup.
 2. **Measure liquid sugar.** Add 20 ml liquid sugar to serving cup.
 3. **Stir to combine.** Stir the ingredients until evenly combined.
-4. **Chill the drink.** Fill the serving cup with ice.
+4. **Fill the cup with ice.** Fill the serving cup with ice.
 5. **Measure water at 70–80 °C.** Add 50 ml water at 70–80 °C to matcha bowl.
 6. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
 7. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
@@ -147,19 +149,20 @@ Made with milk, matcha. Select the required variant before measuring ingredients
 
 ### Ingredients
 
-| Component  | Ingredient        | Amount | Unit |
-| ---------- | ----------------- | ------ | ---- |
-| Drink base | milk              | 140    | ml   |
-| Drink base | liquid sugar      | 25     | ml   |
-| Matcha     | water at 70–80 °C | 60     | ml   |
-| Matcha     | matcha            | 4.5    | g    |
+| Component  | Ingredient        | Amount           | Unit |
+| ---------- | ----------------- | ---------------- | ---- |
+| Drink base | milk              | 140              | ml   |
+| Drink base | liquid sugar      | 25               | ml   |
+| Ice        | ice cubes         | full serving cup | —    |
+| Matcha     | water at 70–80 °C | 60               | ml   |
+| Matcha     | matcha            | 4.5              | g    |
 
 ### Method
 
 1. **Measure milk.** Add 140 ml milk to serving cup.
 2. **Measure liquid sugar.** Add 25 ml liquid sugar to serving cup.
 3. **Stir to combine.** Stir the ingredients until evenly combined.
-4. **Chill the drink.** Fill the serving cup with ice.
+4. **Fill the cup with ice.** Fill the serving cup with ice.
 5. **Measure water at 70–80 °C.** Add 60 ml water at 70–80 °C to matcha bowl.
 6. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
 7. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.

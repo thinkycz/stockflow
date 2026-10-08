@@ -29,9 +29,9 @@
                 "stir",
                 "add",
                 "add",
-                "add",
                 "whisk",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         },
@@ -60,9 +60,9 @@
                 "stir",
                 "add",
                 "add",
-                "add",
                 "whisk",
-                "pour"
+                "pour",
+                "add"
             ],
             "timers": {}
         }
@@ -79,22 +79,24 @@ Made with Earl Grey syrup, milk, matcha. Select the required variant before meas
 - Serving Cup
 - Matcha Bowl
 - Matcha Whisk
+- Stirring Spoon
 
 ## S — With ice
 
 ### Ingredients
 
-| Component  | Ingredient        | Amount | Unit |
-| ---------- | ----------------- | ------ | ---- |
-| Drink base | Earl Grey syrup   | 20     | ml   |
-| Drink base | milk              | 100    | ml   |
-| Matcha     | water at 70–80 °C | 50     | ml   |
-| Matcha     | matcha            | 3.5    | g    |
+| Component  | Ingredient        | Amount           | Unit |
+| ---------- | ----------------- | ---------------- | ---- |
+| Drink base | Earl Grey syrup   | 20               | ml   |
+| Ice        | ice cubes         | full serving cup | —    |
+| Drink base | milk              | 100              | ml   |
+| Matcha     | water at 70–80 °C | 50               | ml   |
+| Matcha     | matcha            | 3.5              | g    |
 
 ### Method
 
 1. **Measure Earl Grey syrup.** Add 20 ml Earl Grey syrup to serving cup.
-2. **Chill the drink.** Fill the serving cup with ice.
+2. **Fill the cup with ice.** Fill the serving cup with ice.
 3. **Measure milk.** Add 100 ml milk to serving cup.
 4. **Measure water at 70–80 °C.** Add 50 ml water at 70–80 °C to matcha bowl.
 5. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
@@ -105,14 +107,15 @@ Made with Earl Grey syrup, milk, matcha. Select the required variant before meas
 
 ### Ingredients
 
-| Component  | Ingredient        | Amount | Unit |
-| ---------- | ----------------- | ------ | ---- |
-| Drink base | Earl Grey syrup   | 20     | ml   |
-| Drink base | ice cubes         | 2–3    | —    |
-| Drink base | milk              | 100    | ml   |
-| Drink base | liquid sugar      | 5      | ml   |
-| Matcha     | water at 70–80 °C | 50     | ml   |
-| Matcha     | matcha            | 3.5    | g    |
+| Component  | Ingredient        | Amount          | Unit |
+| ---------- | ----------------- | --------------- | ---- |
+| Drink base | Earl Grey syrup   | 20              | ml   |
+| Drink base | ice cubes         | 2–3             | —    |
+| Drink base | milk              | 100             | ml   |
+| Drink base | liquid sugar      | 5               | ml   |
+| Matcha     | water at 70–80 °C | 50              | ml   |
+| Matcha     | matcha            | 3.5             | g    |
+| Top-up     | milk              | to serving line | —    |
 
 ### Method
 
@@ -121,11 +124,11 @@ Made with Earl Grey syrup, milk, matcha. Select the required variant before meas
 3. **Measure milk.** Add 100 ml milk to serving cup.
 4. **Measure liquid sugar.** Add 5 ml liquid sugar to serving cup.
 5. **Stir to combine.** Stir the ingredients until evenly combined.
-6. **Top up the drink.** Top up with milk to the standard serving line.
-7. **Measure water at 70–80 °C.** Add 50 ml water at 70–80 °C to matcha bowl.
-8. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
-9. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
-10. **Assemble the drink.** Pour the matcha into the serving cup.
+6. **Measure water at 70–80 °C.** Add 50 ml water at 70–80 °C to matcha bowl.
+7. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
+8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
+9. **Assemble the drink.** Pour the matcha into the serving cup.
+10. **Top up the drink.** Top up with milk in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
@@ -135,17 +138,18 @@ Made with Earl Grey syrup, milk, matcha. Select the required variant before meas
 
 ### Ingredients
 
-| Component  | Ingredient        | Amount | Unit |
-| ---------- | ----------------- | ------ | ---- |
-| Drink base | Earl Grey syrup   | 25     | ml   |
-| Drink base | milk              | 140    | ml   |
-| Matcha     | water at 70–80 °C | 60     | ml   |
-| Matcha     | matcha            | 4.5    | g    |
+| Component  | Ingredient        | Amount           | Unit |
+| ---------- | ----------------- | ---------------- | ---- |
+| Drink base | Earl Grey syrup   | 25               | ml   |
+| Ice        | ice cubes         | full serving cup | —    |
+| Drink base | milk              | 140              | ml   |
+| Matcha     | water at 70–80 °C | 60               | ml   |
+| Matcha     | matcha            | 4.5              | g    |
 
 ### Method
 
 1. **Measure Earl Grey syrup.** Add 25 ml Earl Grey syrup to serving cup.
-2. **Chill the drink.** Fill the serving cup with ice.
+2. **Fill the cup with ice.** Fill the serving cup with ice.
 3. **Measure milk.** Add 140 ml milk to serving cup.
 4. **Measure water at 70–80 °C.** Add 60 ml water at 70–80 °C to matcha bowl.
 5. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
@@ -156,14 +160,15 @@ Made with Earl Grey syrup, milk, matcha. Select the required variant before meas
 
 ### Ingredients
 
-| Component  | Ingredient        | Amount | Unit |
-| ---------- | ----------------- | ------ | ---- |
-| Drink base | Earl Grey syrup   | 25     | ml   |
-| Drink base | ice cubes         | 2–3    | —    |
-| Drink base | milk              | 140    | ml   |
-| Drink base | liquid sugar      | 10     | ml   |
-| Matcha     | water at 70–80 °C | 60     | ml   |
-| Matcha     | matcha            | 4.5    | g    |
+| Component  | Ingredient        | Amount          | Unit |
+| ---------- | ----------------- | --------------- | ---- |
+| Drink base | Earl Grey syrup   | 25              | ml   |
+| Drink base | ice cubes         | 2–3             | —    |
+| Drink base | milk              | 140             | ml   |
+| Drink base | liquid sugar      | 10              | ml   |
+| Matcha     | water at 70–80 °C | 60              | ml   |
+| Matcha     | matcha            | 4.5             | g    |
+| Top-up     | milk              | to serving line | —    |
 
 ### Method
 
@@ -172,11 +177,11 @@ Made with Earl Grey syrup, milk, matcha. Select the required variant before meas
 3. **Measure milk.** Add 140 ml milk to serving cup.
 4. **Measure liquid sugar.** Add 10 ml liquid sugar to serving cup.
 5. **Stir to combine.** Stir the ingredients until evenly combined.
-6. **Top up the drink.** Top up with milk to the standard serving line.
-7. **Measure water at 70–80 °C.** Add 60 ml water at 70–80 °C to matcha bowl.
-8. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
-9. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
-10. **Assemble the drink.** Pour the matcha into the serving cup.
+6. **Measure water at 70–80 °C.** Add 60 ml water at 70–80 °C to matcha bowl.
+7. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
+8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
+9. **Assemble the drink.** Pour the matcha into the serving cup.
+10. **Top up the drink.** Top up with milk in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 

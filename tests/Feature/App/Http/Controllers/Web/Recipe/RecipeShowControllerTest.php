@@ -1,35 +1,38 @@
 <?php
 
 declare(strict_types=1);
-
-use App\Domain\Recipes\RecipeCatalogService;
-use App\Models\Recipe;
 use App\Models\Store;
 use App\Models\User;
 use Database\Factories\UserFactory;
 use Thinkycz\LaravelCore\Support\Typer;
 
-\test('both roles can read an active recipe without test-session data', function (): void {
+\test('both roles read complete recipes and distinct hot and cold variants', function (): void {
     $admin = Typer::assertInstance(UserFactory::new()->admin()->createOne(), User::class);
-    $store = Store::factory()->create(['user_id' => $admin->getKey()]);
-    $limited = UserFactory::new()->limited($store)->createOne();
-    (new RecipeCatalogService())->initialize($admin);
-    $recipe = Typer::assertInstance(Recipe::query()->firstOrFail(), Recipe::class);
+    $limited = UserFactory::new()->limited(Store::factory()->create(['user_id' => $admin->getKey()]))->createOne();
+    foreach ([$admin, $limited] as $user) {
+        $this->be($user, 'users')->get('/recipes/hot-drinks/strawberry-cloud', $this->inertiaHeaders())
+            ->assertOk()->assertJsonPath('component', 'recipes/Show')
+            ->assertJsonPath('props.recipe.key', 'hot-drinks/strawberry-cloud')
+            ->assertJsonPath('props.recipe.variants.0.ingredients.0.quantity_value', 140)
+            ->assertJsonPath('props.recipe.variants.0.ingredients.0.unit', 'g')
+            ->assertJsonPath('props.recipe.variants.0.ingredients.2.quantity_value', 3.5)
+            ->assertJsonPath('props.recipe.variants.0.ingredients.6.quantity_value', 2)
+            ->assertJsonPath('props.recipe.variants.0.ingredients.6.unit', 'pieces')
+            ->assertJsonPath('props.recipe.variants.0.steps.1.action_key', 'steam')
+            ->assertJsonMissingPath('props.workers');
+        $this->be($user, 'users')->get('/recipes/matcha-specials/strawberry-cloud', $this->inertiaHeaders())
+            ->assertOk()->assertJsonPath('props.recipe.key', 'matcha-specials/strawberry-cloud')
+            ->assertJsonPath('props.recipe.variants.0.selectors.ice', 'with-ice');
+    }
+});
 
-    $this->be($admin, 'users')->get('/recipes/' . $recipe->getKey(), $this->inertiaHeaders())
-        ->assertOk()->assertJsonPath('props.is_admin', true);
-    $this->be($limited, 'users')->get('/recipes/' . $recipe->getKey(), $this->inertiaHeaders())
-        ->assertOk()->assertJsonMissingPath('props.workers')
-        ->assertJsonPath('props.recipe.variants.0.instructions.0.text', 'Add 100 ml milk to serving cup.')
-        ->assertJsonPath('props.recipe.variants.0.topping_adjustments.base_toppings', '0–1')
-        ->assertJsonPath('props.recipe.variants.0.topping_adjustments.components.0.ingredient_name', 'liquid sugar')
-        ->assertJsonPath('props.recipe.variants.0.topping_adjustments.components.0.base_quantity', 20)
-        ->assertJsonPath('props.recipe.variants.0.topping_adjustments.components.0.two_toppings_quantity', 15)
-        ->assertJsonPath('props.recipe.variants.0.topping_adjustments.components.0.three_toppings_quantity', 10)
-        ->assertJsonPath('props.recipe.variants.1.topping_adjustments.components.0.base_quantity', 25)
-        ->assertJsonMissingPath('props.recipe.variants.0.ingredients')
-        ->assertJsonMissingPath('props.recipe.variants.0.steps');
-
-    $recipe->update(['archived_at' => \now()]);
-    $this->be($limited, 'users')->get('/recipes/' . $recipe->getKey())->assertNotFound();
+\test('recipe detail supplies valid preparation links and known timers', function (): void {
+    [$admin] = \createIsolatedUserWithWarehouse();
+    $this->be($admin, 'users')->get('/recipes/hot-drinks/ceylon-milk-tea', $this->inertiaHeaders())
+        ->assertOk()->assertJsonPath('props.recipe.related.0.url', '/recipes/preparations/ceylon-milk-tea-preparation');
+    $this->be($admin, 'users')->get('/recipes/preparations/ceylon-tea-preparation', $this->inertiaHeaders())
+        ->assertOk()->assertJsonPath('props.recipe.variants.0.steps.2.timer_seconds', 600);
+    foreach (['/recipes/unknown/classic-matcha', '/recipes/hot-drinks/missing', '/recipes/1'] as $url) {
+        $this->be($admin, 'users')->get($url)->assertNotFound();
+    }
 });

@@ -161,9 +161,7 @@ const storeNavItemsByKey = computed<Record<StoreSectionNavigationKey, NavItem>>(
             href: route('recipes.index'),
             label: t('nav.recipes'),
             icon: BookOpen,
-            active:
-                activeUrl.value.startsWith('/recipes') ||
-                activeUrl.value.startsWith('/recipe-test'),
+            active: activeUrl.value.startsWith('/recipes'),
         },
         payroll: {
             key: 'payroll',

@@ -75,8 +75,6 @@ export function isStoreSectionUrl(url: string, isAdmin: boolean): boolean {
         isRouteOrChild('/attendance') ||
         isRouteOrChild('/checklists') ||
         isRouteOrChild('/recipes') ||
-        isRouteOrChild('/recipe-tests') ||
-        isRouteOrChild('/recipe-test-results') ||
         isRouteOrChild('/payroll') ||
         isRouteOrChild('/income-expenses') ||
         isRouteOrChild('/gift-vouchers')

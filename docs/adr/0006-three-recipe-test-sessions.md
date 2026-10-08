@@ -1,6 +1,6 @@
 # ADR 0006: Tříreceptové testovací sezení
 
-- Stav: accepted
+- Stav: superseded by ADR 0011 (2026-10-08)
 - Datum: 2026-08-02
 
 ## Rozhodnutí

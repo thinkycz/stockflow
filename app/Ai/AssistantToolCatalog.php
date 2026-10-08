@@ -8,7 +8,6 @@ use App\Ai\Operations\Administration\AdministrationOperationExecutor;
 use App\Ai\Operations\Finance\FinanceOperationExecutor;
 use App\Ai\Operations\Inventory\InventoryLifecycleOperationExecutor;
 use App\Ai\Operations\Operations\OperationsOperationExecutor;
-use App\Ai\Operations\Recipes\RecipeOperationExecutor;
 use App\Ai\Operations\Statements\StatementOperationExecutor;
 use App\Ai\Operations\Workforce\WorkforceOperationExecutor;
 use App\Ai\Tools\AskUserChoiceTool;
@@ -21,7 +20,6 @@ use App\Ai\Tools\ReadItemsTool;
 use App\Ai\Tools\ReadNoticeboardTool;
 use App\Ai\Tools\ReadPayrollTool;
 use App\Ai\Tools\ReadRecipesTool;
-use App\Ai\Tools\ReadRecipeTestsTool;
 use App\Ai\Tools\ReadRecurringExpensesTool;
 use App\Ai\Tools\ReadSettingsTool;
 use App\Ai\Tools\ReadShiftRequestsTool;
@@ -40,8 +38,6 @@ use App\Ai\Tools\WriteInventoryCountsTool;
 use App\Ai\Tools\WriteItemsTool;
 use App\Ai\Tools\WriteNoticeboardTool;
 use App\Ai\Tools\WritePayrollTool;
-use App\Ai\Tools\WriteRecipesTool;
-use App\Ai\Tools\WriteRecipeTestsTool;
 use App\Ai\Tools\WriteRecurringExpensesTool;
 use App\Ai\Tools\WriteSettingsTool;
 use App\Ai\Tools\WriteShiftRequestsTool;
@@ -70,7 +66,6 @@ final class AssistantToolCatalog
         $finance = Resolver::resolve(FinanceOperationExecutor::class);
         $inventory = Resolver::resolve(InventoryLifecycleOperationExecutor::class);
         $operations = Resolver::resolve(OperationsOperationExecutor::class);
-        $recipes = Resolver::resolve(RecipeOperationExecutor::class);
         $statements = Resolver::resolve(StatementOperationExecutor::class);
         $workforce = Resolver::resolve(WorkforceOperationExecutor::class);
 
@@ -94,8 +89,6 @@ final class AssistantToolCatalog
             new WriteInventoryCountsTool($actor, $conversationId, $inventory),
             new WriteStockMovementsTool($actor, $conversationId),
             new WriteStatementsTool($actor, $conversationId, $statements),
-            new WriteRecipesTool($actor, $conversationId, $recipes),
-            new WriteRecipeTestsTool($actor, $conversationId, $recipes),
             new WritePayrollTool($actor, $conversationId, $finance),
             new WriteFinancialReportsTool($actor, $conversationId, $finance),
             new WriteRecurringExpensesTool($actor, $conversationId, $finance),
@@ -111,7 +104,6 @@ final class AssistantToolCatalog
             new ReadStockMovementsTool($actor, $conversationId),
             new ReadStatementsTool($actor, $conversationId),
             new ReadRecipesTool($actor, $conversationId),
-            new ReadRecipeTestsTool($actor, $conversationId),
             new ReadPayrollTool($actor, $conversationId),
             new ReadFinancialReportsTool($actor, $conversationId),
             new ReadRecurringExpensesTool($actor, $conversationId),
@@ -176,7 +168,6 @@ final class AssistantToolCatalog
             'read_stock_movements' => ['movements'],
             'read_statements' => ['reports', 'days'],
             'read_recipes' => ['recipes', 'categories'],
-            'read_recipe_tests' => ['sessions', 'attempts'],
             'read_payroll' => ['reports', 'payslips'],
             'read_financial_reports' => ['reports', 'rows'],
             'read_recurring_expenses' => ['expenses', 'versions'],

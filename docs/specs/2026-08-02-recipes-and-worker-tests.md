@@ -1,5 +1,7 @@
 # Recepty a testování brigádníků
 
+Superseded on 2026-10-08 by [ADR 0011](../adr/0011-file-authored-recipes.md).
+
 ## Zdroj pravdy
 
 - Schválený plán z 2. 8. 2026 po `grill-with-docs` sezení.

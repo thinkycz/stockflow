@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 use App\Domain\Checklists\ChecklistService;
 use App\Domain\Payroll\PayrollReportService;
-use App\Domain\Recipes\RecipeCatalogService;
-use App\Domain\Recipes\RecipeTestService;
-use App\Domain\Recipes\RecipeTestSessionService;
 use App\Domain\Workforce\AttendanceCorrectionService;
 use App\Domain\Workforce\AttendanceService;
 use App\Domain\Workforce\ShiftAssignmentService;
@@ -16,7 +13,6 @@ use App\Enums\AttendanceActionEnum;
 use App\Enums\PayrollAdjustmentTypeEnum;
 use App\Models\AttendanceSession;
 use App\Models\ChecklistItem;
-use App\Models\Recipe;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\Worker;
@@ -32,8 +28,6 @@ use Thinkycz\LaravelCore\Support\Typer;
     $limited = UserFactory::new()->limited($store)->createOne();
     $checklistDay = (new ChecklistService())->ensureDay($store, CarbonImmutable::now(ChecklistService::TIMEZONE));
     $checklistItem = Typer::assertInstance($checklistDay->items()->firstOrFail(), ChecklistItem::class);
-    (new RecipeCatalogService())->initialize($admin);
-    $recipe = Typer::assertInstance(Recipe::query()->where('user_id', $admin->getKey())->firstOrFail(), Recipe::class);
     $historicalShift = Shift::factory()->create([
         'user_id' => $admin->getKey(),
         'store_id' => $store->getKey(),
@@ -115,9 +109,5 @@ use Thinkycz\LaravelCore\Support\Typer;
         $worker,
         true,
         $checklistItem->getLockVersion(),
-    ))->toThrow(InvalidArgumentException::class)
-        ->and(fn() => (new RecipeTestService())->start($limited, $worker, $recipe))
-        ->toThrow(InvalidArgumentException::class)
-        ->and(fn() => (new RecipeTestSessionService())->start($limited, $worker))
-        ->toThrow(InvalidArgumentException::class);
+    ))->toThrow(InvalidArgumentException::class);
 });

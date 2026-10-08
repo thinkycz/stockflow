@@ -1,0 +1,1106 @@
+[
+    {
+        "recipe": "matcha-latte/classic-matcha-latte",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "43690ee7a87fcdf2991b2ce34e4c80ec5b8c52259958a57d903ac8608b319b2a",
+        "actions_sha256": "ca600dda1c365e62a4c82cae7ca62655f8c3bc91d529d4520df2c911c1047ba5"
+    },
+    {
+        "recipe": "matcha-latte/classic-matcha-latte",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "3ec340bbac94257812163638b674a7396e7fc1d6f97d78d7cf61268769d0cb31",
+        "actions_sha256": "c71bff924ee89aa1a9703288279c62bd291647a96d37f6df109a782d4173d74b"
+    },
+    {
+        "recipe": "matcha-latte/classic-matcha-latte",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "fc540e083c653dd396af2e190225dc67efede647aebc436731636814449c351b",
+        "actions_sha256": "ca600dda1c365e62a4c82cae7ca62655f8c3bc91d529d4520df2c911c1047ba5"
+    },
+    {
+        "recipe": "matcha-latte/classic-matcha-latte",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "0fb5b7b46127260c46ce90e808918d4e76b585b8c7ee7b4755100439b60ed410",
+        "actions_sha256": "c71bff924ee89aa1a9703288279c62bd291647a96d37f6df109a782d4173d74b"
+    },
+    {
+        "recipe": "matcha-latte/mango-strawberry-matcha-latte",
+        "variant": "mango-s-with-ice",
+        "ingredients_sha256": "d9123f5e735e00621ebda968b0f5d898dd8f6d9815eaf67e9a50c90cf982e226",
+        "actions_sha256": "96ebb8e03f8f4c701de1644cf95fdbb6616c62602fe49159176f82746aeec64b"
+    },
+    {
+        "recipe": "matcha-latte/mango-strawberry-matcha-latte",
+        "variant": "mango-s-no-ice",
+        "ingredients_sha256": "1357d5ba343b03e87a483f7e4d776e9c97142f67aca3d974bec01a6ff9461800",
+        "actions_sha256": "780a6d339ca2075fd965fea18579246cf8e7fbb5894c5f5760c0543526dc7123"
+    },
+    {
+        "recipe": "matcha-latte/mango-strawberry-matcha-latte",
+        "variant": "mango-m-with-ice",
+        "ingredients_sha256": "8ed2f3aff2b70df1123aec3c27e0a30a891bf3573f97df2c7611459567b21554",
+        "actions_sha256": "96ebb8e03f8f4c701de1644cf95fdbb6616c62602fe49159176f82746aeec64b"
+    },
+    {
+        "recipe": "matcha-latte/mango-strawberry-matcha-latte",
+        "variant": "mango-m-no-ice",
+        "ingredients_sha256": "33b6e9aa64308bc88f65fce7d9a63a1e19959def6a9f93ae726567508523fecf",
+        "actions_sha256": "780a6d339ca2075fd965fea18579246cf8e7fbb5894c5f5760c0543526dc7123"
+    },
+    {
+        "recipe": "matcha-latte/mango-strawberry-matcha-latte",
+        "variant": "strawberry-s-with-ice",
+        "ingredients_sha256": "9431680bb1000d06740ae62529e23414cbb3d80ba387193a25a42c0240d70096",
+        "actions_sha256": "96ebb8e03f8f4c701de1644cf95fdbb6616c62602fe49159176f82746aeec64b"
+    },
+    {
+        "recipe": "matcha-latte/mango-strawberry-matcha-latte",
+        "variant": "strawberry-s-no-ice",
+        "ingredients_sha256": "1d3a2f75221d827d7294aa44cae8c0c401a287172295d4287e79c8d5d02f1c45",
+        "actions_sha256": "780a6d339ca2075fd965fea18579246cf8e7fbb5894c5f5760c0543526dc7123"
+    },
+    {
+        "recipe": "matcha-latte/mango-strawberry-matcha-latte",
+        "variant": "strawberry-m-with-ice",
+        "ingredients_sha256": "d9f3e707a7f7d10f07a56bd52a5fd988959568ea4f28239f931a0343dd7d1be1",
+        "actions_sha256": "96ebb8e03f8f4c701de1644cf95fdbb6616c62602fe49159176f82746aeec64b"
+    },
+    {
+        "recipe": "matcha-latte/mango-strawberry-matcha-latte",
+        "variant": "strawberry-m-no-ice",
+        "ingredients_sha256": "21166f434c802bd8e092bbd1347034610a137c05b130cf18168f8adafd714578",
+        "actions_sha256": "780a6d339ca2075fd965fea18579246cf8e7fbb5894c5f5760c0543526dc7123"
+    },
+    {
+        "recipe": "matcha-latte/jasmine-oat-latte",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "5d68c33e24e0a5a42a2550aff8043127a03c693791a5e8789cfb97c9477ae8d1",
+        "actions_sha256": "0c3a76f6e6454669fed7fd72af1d75a5f869e36614560b18091682be1a4a9c60"
+    },
+    {
+        "recipe": "matcha-latte/jasmine-oat-latte",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "2be0e488786d58d598ae5224eb7f2e49465c19dbc38e47d6243242400c2b25d5",
+        "actions_sha256": "1c1753d15836863618d4d9e2ad8d5b086455021ae9a57bf6dcc12c04c3b15fe1"
+    },
+    {
+        "recipe": "matcha-latte/jasmine-oat-latte",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "7aaa0bb25e0c30e9a44188d321ed847e24590c41d54bd480be46c0a86f17b20b",
+        "actions_sha256": "0c3a76f6e6454669fed7fd72af1d75a5f869e36614560b18091682be1a4a9c60"
+    },
+    {
+        "recipe": "matcha-latte/jasmine-oat-latte",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "1acc44d060899b3945171293b47d71be238712f1c90b58d646c435340c65cb70",
+        "actions_sha256": "1c1753d15836863618d4d9e2ad8d5b086455021ae9a57bf6dcc12c04c3b15fe1"
+    },
+    {
+        "recipe": "matcha-latte/cold-whisk-oat-latte",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "7a77c98bff6c962bef5f139b7f64898eb935c8db13346fc601603e7cfa21788a",
+        "actions_sha256": "e3da7e27568d7d33a891adc9c49d0bfe2753191ffe3b41a3378ed25f101b9b4d"
+    },
+    {
+        "recipe": "matcha-latte/cold-whisk-oat-latte",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "544c8c8f5ce4318210d502c297239c13a7f07368270f6a1a336c5e7f5a64b06a",
+        "actions_sha256": "6daba278706da972981b1c1bde46c9a646d55fe0e19fd2f18d76fadc934c71a7"
+    },
+    {
+        "recipe": "matcha-latte/cold-whisk-oat-latte",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "7b1be150b68753c8e7a50ae0a4a7d06fa5861e6bb7d145bb039cc818da0f64f2",
+        "actions_sha256": "e3da7e27568d7d33a891adc9c49d0bfe2753191ffe3b41a3378ed25f101b9b4d"
+    },
+    {
+        "recipe": "matcha-latte/cold-whisk-oat-latte",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "bfd30c5884bc4dbb6e683abf612c5671fade8035e18b5671ea3951acb12fef4c",
+        "actions_sha256": "6daba278706da972981b1c1bde46c9a646d55fe0e19fd2f18d76fadc934c71a7"
+    },
+    {
+        "recipe": "matcha-cloud/coconut-cloud",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "f6164aa4d88a5729ec26519bea75e5f88e0d0c61d3de8da9b613762fbb6b1572",
+        "actions_sha256": "2d15835034fa653f0042156d7da90fbebe82700a2fda966d2f4b788c88e5c1e5"
+    },
+    {
+        "recipe": "matcha-cloud/coconut-cloud",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "447bb9e0a137f13bc206852cc8505a3befefeeafe74ccb7730f377e9228eb914",
+        "actions_sha256": "7d3b9f26046ab375e98b948f71c42aece791212f34edbb107985d5b0ae0533a4"
+    },
+    {
+        "recipe": "matcha-cloud/coconut-cloud",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "5f7d2aa24b1fba4df06324679b9d4dace82b428f2342b7edede1e625e6897a37",
+        "actions_sha256": "2d15835034fa653f0042156d7da90fbebe82700a2fda966d2f4b788c88e5c1e5"
+    },
+    {
+        "recipe": "matcha-cloud/coconut-cloud",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "5f0fff25b67dfab049434f98c840aec07132bb3235525f7303048cfa939b90a9",
+        "actions_sha256": "7d3b9f26046ab375e98b948f71c42aece791212f34edbb107985d5b0ae0533a4"
+    },
+    {
+        "recipe": "matcha-cloud/milky-matcha-cloud",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "c31a5cf618e466cfcd05e3d5ef7988a2b8e87abdb73eef8f385203d79cc9c181",
+        "actions_sha256": "2d15835034fa653f0042156d7da90fbebe82700a2fda966d2f4b788c88e5c1e5"
+    },
+    {
+        "recipe": "matcha-cloud/milky-matcha-cloud",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "c268b9e463f2d39e8d2b3c4ce933674f8c6bf84938aebf57dba6bd58007b110f",
+        "actions_sha256": "da0c9ab039926c60df8378ebf758b84daac1c4b478d12124fe5e8347d581c84b"
+    },
+    {
+        "recipe": "matcha-cloud/milky-matcha-cloud",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "2202d0c2a3f388f77a2fabec713ee8b88e339a339f266bc5f86374fbc36b3230",
+        "actions_sha256": "2d15835034fa653f0042156d7da90fbebe82700a2fda966d2f4b788c88e5c1e5"
+    },
+    {
+        "recipe": "matcha-cloud/milky-matcha-cloud",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "1ab562693dd328adf46135a4e496887e61b074a51f239843a419eb347982d882",
+        "actions_sha256": "da0c9ab039926c60df8378ebf758b84daac1c4b478d12124fe5e8347d581c84b"
+    },
+    {
+        "recipe": "matcha-cloud/jasmine-tea-cloud",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "3d7761a7e407aedca14383f7936001695c4a8c7416bdd6011428e4a694eca0cb",
+        "actions_sha256": "2d15835034fa653f0042156d7da90fbebe82700a2fda966d2f4b788c88e5c1e5"
+    },
+    {
+        "recipe": "matcha-cloud/jasmine-tea-cloud",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "ab13a0fd330b7b093a89415383f7766d1c8b8faa9792e54a86781c301c4ede1a",
+        "actions_sha256": "e024f349165d74db17a41f266e2735adaae33157c3272a33633fcaea0f19f368"
+    },
+    {
+        "recipe": "matcha-cloud/jasmine-tea-cloud",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "9f6e4a712eb79c9260e61e6e67c1963e82e769a94249d501a39f8666486b5135",
+        "actions_sha256": "2d15835034fa653f0042156d7da90fbebe82700a2fda966d2f4b788c88e5c1e5"
+    },
+    {
+        "recipe": "matcha-cloud/jasmine-tea-cloud",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "f495e7e61776ef6845c1049f69b7669ab3c17ee13f56887c3f1ddd8dd88dcff7",
+        "actions_sha256": "e024f349165d74db17a41f266e2735adaae33157c3272a33633fcaea0f19f368"
+    },
+    {
+        "recipe": "matcha-cloud/oreo-matcha",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "e7a8b4cab5c7693511698032fc050a52701a27055eabdb6af3ab601322938cef",
+        "actions_sha256": "b8d41e02c6c18de616333dce3f9536f80431d9ef75666e169597d04e349f63e7"
+    },
+    {
+        "recipe": "matcha-cloud/oreo-matcha",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "72febc58f18bf0fc34a7de28f3e2a531962d5cad15918386515ad42935070362",
+        "actions_sha256": "0fd87963d3db3b81024bed577533f8993a3b4c817c1e0f2805aba139efc8a477"
+    },
+    {
+        "recipe": "matcha-cloud/oreo-matcha",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "9258c6fb2e040009828549e69d375bcef1f5b163de587e14db3730392e36cecd",
+        "actions_sha256": "b8d41e02c6c18de616333dce3f9536f80431d9ef75666e169597d04e349f63e7"
+    },
+    {
+        "recipe": "matcha-cloud/oreo-matcha",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "c191bc8f499c1a8798bf80641b3035af549737e11dd90d8426393d3ca4b6b408",
+        "actions_sha256": "0fd87963d3db3b81024bed577533f8993a3b4c817c1e0f2805aba139efc8a477"
+    },
+    {
+        "recipe": "matcha-cloud/lotus-matcha",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "cdfdcecd7f7fa1881ea488ffc66761ddcf5475196f079356e0388d1c9db527f7",
+        "actions_sha256": "3c75989b94cfe3863cd9b84a9616e40fa5adf39fb08e8e40fe94ee4d7728e0cb"
+    },
+    {
+        "recipe": "matcha-cloud/lotus-matcha",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "262ea9d4fe2d293daf70629d3f202a44a4f0b1bdde312b0914ab49f05f93697f",
+        "actions_sha256": "3a4517b84afcd8a52dd1d9b92875bbd7db4c34e5b81cb377eb5af0c25eb88bc6"
+    },
+    {
+        "recipe": "matcha-cloud/lotus-matcha",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "f43a0ecc08ab43dc64c6ac08789b5c436b2115d39d0af53951870975c8cfa4ee",
+        "actions_sha256": "3c75989b94cfe3863cd9b84a9616e40fa5adf39fb08e8e40fe94ee4d7728e0cb"
+    },
+    {
+        "recipe": "matcha-cloud/lotus-matcha",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "63a9f3ffba25b0bbef9c95d714d547e111c6980391b135c58da905817b2c2ba2",
+        "actions_sha256": "3a4517b84afcd8a52dd1d9b92875bbd7db4c34e5b81cb377eb5af0c25eb88bc6"
+    },
+    {
+        "recipe": "matcha-specials/strawberry-cloud",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "e7c49be240e6976b88ac35e3fa88c0e9158d1c40a9d9524c4e97321a0299c36c",
+        "actions_sha256": "6877e83ae407ae84ba0063b2ffe5f3356a8a50188480e806aceaa9d1f583cb5e"
+    },
+    {
+        "recipe": "matcha-specials/strawberry-cloud",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "e631778cf98e09eeb7c7d70c24e5328a025b96208e0b94e60f321c7964abe521",
+        "actions_sha256": "78545c89a990541ecda900bdade875f9a059d838374fa30ef60650fc5b19dfdc"
+    },
+    {
+        "recipe": "matcha-specials/strawberry-cloud",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "7db14678c733dc0834b4dab7bdd2682f97239ac49673c41860befc3570c3885f",
+        "actions_sha256": "6877e83ae407ae84ba0063b2ffe5f3356a8a50188480e806aceaa9d1f583cb5e"
+    },
+    {
+        "recipe": "matcha-specials/strawberry-cloud",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "d23546f050c79354628d047eabc3c84059094a2ac3adb3719b68a29f70c3a434",
+        "actions_sha256": "78545c89a990541ecda900bdade875f9a059d838374fa30ef60650fc5b19dfdc"
+    },
+    {
+        "recipe": "matcha-specials/brown-sugar-matcha",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "54d5c41b54f30cf88d8469a3dabba1b4667a06ab460eb7679ef7a790ca1503d9",
+        "actions_sha256": "8f20d455b2fc7ac2ca3597df39b300747f585c2635afc0e9cbb2210ec52c942f"
+    },
+    {
+        "recipe": "matcha-specials/brown-sugar-matcha",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "210f08dd35bc18e40463c81fbf8d4a92d2f23a6bd21de4ed0ce38a4946abcdef",
+        "actions_sha256": "698b071ef7ec349af9fb732e9da4d3e0bacf8371d592d1c0823f9254f8827ce2"
+    },
+    {
+        "recipe": "matcha-specials/brown-sugar-matcha",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "097e362e137a2b2e80c02bde4fdd67c9019c0771ac670370f44887de1ea54446",
+        "actions_sha256": "8f20d455b2fc7ac2ca3597df39b300747f585c2635afc0e9cbb2210ec52c942f"
+    },
+    {
+        "recipe": "matcha-specials/brown-sugar-matcha",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "4cf3c109c1db58eaa0d40e18b8c23f9714dd66a9df2a86559fe7371b4a33ad64",
+        "actions_sha256": "698b071ef7ec349af9fb732e9da4d3e0bacf8371d592d1c0823f9254f8827ce2"
+    },
+    {
+        "recipe": "matcha-specials/hojicha-cloud",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "571d1416bb4f2d6efbdcdfabbdfe52406264c59d3803bd03d4d42bfcaa29ccd4",
+        "actions_sha256": "2d15835034fa653f0042156d7da90fbebe82700a2fda966d2f4b788c88e5c1e5"
+    },
+    {
+        "recipe": "matcha-specials/hojicha-cloud",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "2847d6c5c20b1bdb1258380f215aaa534741ae1e5947ed2840be053987992abf",
+        "actions_sha256": "e024f349165d74db17a41f266e2735adaae33157c3272a33633fcaea0f19f368"
+    },
+    {
+        "recipe": "matcha-specials/hojicha-cloud",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "380d8922fb1ac64d34549897aa9a58f0ba101b314e50ce85d04dfec58eacaade",
+        "actions_sha256": "2d15835034fa653f0042156d7da90fbebe82700a2fda966d2f4b788c88e5c1e5"
+    },
+    {
+        "recipe": "matcha-specials/hojicha-cloud",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "8b8e2d521a504aa6803b00c4d5e7028698bf95475edd38a1052aab9f30e69928",
+        "actions_sha256": "e024f349165d74db17a41f266e2735adaae33157c3272a33633fcaea0f19f368"
+    },
+    {
+        "recipe": "matcha-specials/double-matcha",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "5192724cfe8b8ba79864879fde20f796ec7340e38594130ba775d241d05b5195",
+        "actions_sha256": "6877e83ae407ae84ba0063b2ffe5f3356a8a50188480e806aceaa9d1f583cb5e"
+    },
+    {
+        "recipe": "matcha-specials/double-matcha",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "a9e0358cc36d7422f03394045eb264ca28a5c4f094f43de7a2e1772fd9712115",
+        "actions_sha256": "78545c89a990541ecda900bdade875f9a059d838374fa30ef60650fc5b19dfdc"
+    },
+    {
+        "recipe": "matcha-specials/double-matcha",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "ffbcf52639d23bc6e484fb64e21af8cc8db8376167f382309f1247bac4cc6306",
+        "actions_sha256": "6877e83ae407ae84ba0063b2ffe5f3356a8a50188480e806aceaa9d1f583cb5e"
+    },
+    {
+        "recipe": "matcha-specials/double-matcha",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "f632c53015bc6af66c85222f796b13b78719262d8ad4a39cca410731b0734449",
+        "actions_sha256": "78545c89a990541ecda900bdade875f9a059d838374fa30ef60650fc5b19dfdc"
+    },
+    {
+        "recipe": "matcha-specials/pistachio-matcha",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "dffaf2ca0bc900df28cde8c1052297687e95e49e0dd86d579b3bb44592198981",
+        "actions_sha256": "b8d41e02c6c18de616333dce3f9536f80431d9ef75666e169597d04e349f63e7"
+    },
+    {
+        "recipe": "matcha-specials/pistachio-matcha",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "fd64edee10ce448c0139add1bf911a263a231d93720f3f79927e9844a9264750",
+        "actions_sha256": "0fd87963d3db3b81024bed577533f8993a3b4c817c1e0f2805aba139efc8a477"
+    },
+    {
+        "recipe": "matcha-specials/pistachio-matcha",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "96cf97c782a385da3e4ad9dba2d4bad90eb4fe4c7de69d25e8f646b5ab086dbc",
+        "actions_sha256": "b8d41e02c6c18de616333dce3f9536f80431d9ef75666e169597d04e349f63e7"
+    },
+    {
+        "recipe": "matcha-specials/pistachio-matcha",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "c4566fd1c0043dc9001ab59eb0274a0a00012e29089c0abba9e7c33cb7cdc74c",
+        "actions_sha256": "0fd87963d3db3b81024bed577533f8993a3b4c817c1e0f2805aba139efc8a477"
+    },
+    {
+        "recipe": "summer-drinks/double-strawberry",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "c80b9082e9262a9cddff3cde899a601b50b5e6f6f4ee87e9f0c526eb76bdd971",
+        "actions_sha256": "55d79fc811044621567958b04e68e375e54e9d014e0d20acd96b7be15a499e10"
+    },
+    {
+        "recipe": "summer-drinks/double-strawberry",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "e803cf4faf1518da47c8a59189782dbb61151e2c993d0b24e27b0df559becb77",
+        "actions_sha256": "82b47198370275166177257701f808e974c03bb075cb5fc9aea3dea26bbc9426"
+    },
+    {
+        "recipe": "summer-drinks/earl-grey-matcha",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "873f6a62c03847f08aa801737722bf723a1e63651b130f901b4bb302ed682952",
+        "actions_sha256": "96ebb8e03f8f4c701de1644cf95fdbb6616c62602fe49159176f82746aeec64b"
+    },
+    {
+        "recipe": "summer-drinks/earl-grey-matcha",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "d53e01ac7d8444a8ee8f7836e30ca67544219c7f76ca1cc6ba76d05d40928703",
+        "actions_sha256": "780a6d339ca2075fd965fea18579246cf8e7fbb5894c5f5760c0543526dc7123"
+    },
+    {
+        "recipe": "summer-drinks/earl-grey-matcha",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "aa601e7f8e66f01e5a1014e987616e1bde6c97c0e730a645122b9e4a6d760e66",
+        "actions_sha256": "96ebb8e03f8f4c701de1644cf95fdbb6616c62602fe49159176f82746aeec64b"
+    },
+    {
+        "recipe": "summer-drinks/earl-grey-matcha",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "add63d46e1a0886f40e5b9635043732906612c4345100d818d393d41aed1ae7f",
+        "actions_sha256": "780a6d339ca2075fd965fea18579246cf8e7fbb5894c5f5760c0543526dc7123"
+    },
+    {
+        "recipe": "summer-drinks/pina-colada-matcha",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "2b7346eead6a612f98b9df99c2865a859c8efa9716a79bdca053c3eb72602513",
+        "actions_sha256": "96ebb8e03f8f4c701de1644cf95fdbb6616c62602fe49159176f82746aeec64b"
+    },
+    {
+        "recipe": "summer-drinks/pina-colada-matcha",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "f7b90b84b849f1d95326b589fbec5abab5f2e3e1bcb410e42b84a2843c55689b",
+        "actions_sha256": "780a6d339ca2075fd965fea18579246cf8e7fbb5894c5f5760c0543526dc7123"
+    },
+    {
+        "recipe": "summer-drinks/pina-colada-matcha",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "92e2ec152a0a33292616d193c49a45faaedf10262c2d2908c0a4a7894dafccd0",
+        "actions_sha256": "96ebb8e03f8f4c701de1644cf95fdbb6616c62602fe49159176f82746aeec64b"
+    },
+    {
+        "recipe": "summer-drinks/pina-colada-matcha",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "70a7d92315e40fff61ce18b21c7fde325817c46a2ee102ab1bb18030d000c8e6",
+        "actions_sha256": "780a6d339ca2075fd965fea18579246cf8e7fbb5894c5f5760c0543526dc7123"
+    },
+    {
+        "recipe": "fresh-fruit-tea/lychee-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "e8e2c2505fa05ea63ae59051d3595964ea42668effa1cf912e55f789f70fb0ee",
+        "actions_sha256": "638f5c25262030b58db3e4678a51c403a41e542380301e5fdb316bfe2445ed9d"
+    },
+    {
+        "recipe": "fresh-fruit-tea/lychee-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "f8a29787b5419a82a3d40a2e291e54e6ec4bd142c2a44f22569c4caef21ae506",
+        "actions_sha256": "35d0dd50002fcd9a640a0fd2615b940ed1104dae541cb8f019f8a2f78287e9ef"
+    },
+    {
+        "recipe": "fresh-fruit-tea/lychee-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "a8783754282c1de864cde1d16d319749dc987b6b3520afab8d872f30029a9599",
+        "actions_sha256": "638f5c25262030b58db3e4678a51c403a41e542380301e5fdb316bfe2445ed9d"
+    },
+    {
+        "recipe": "fresh-fruit-tea/lychee-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "8a0b92891818b2b92dbe36164b88e496808a77a5469840d30551bcfbd28a7316",
+        "actions_sha256": "35d0dd50002fcd9a640a0fd2615b940ed1104dae541cb8f019f8a2f78287e9ef"
+    },
+    {
+        "recipe": "fresh-fruit-tea/strawberry-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "a62ce1d3cb4237fdfe0f5855a1b2dd118698c4565886a5b02363516bce9738d7",
+        "actions_sha256": "2ee38a4dfde020844e8f854570c60331d387082e8f88a992efc195f2efa5cc4a"
+    },
+    {
+        "recipe": "fresh-fruit-tea/strawberry-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "522c38836b559fb5167a078ff7f515ccc3866e547e85faaf81c8382f7b078a16",
+        "actions_sha256": "9476ed9b691c6e87048dd498edf91838aee447887c3e1af5615762509f3226fa"
+    },
+    {
+        "recipe": "fresh-fruit-tea/strawberry-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "16f767f80de4993e0283b01ca7785f4e3c6909db3f96171e50229c9356c1caa1",
+        "actions_sha256": "2ee38a4dfde020844e8f854570c60331d387082e8f88a992efc195f2efa5cc4a"
+    },
+    {
+        "recipe": "fresh-fruit-tea/strawberry-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "170bf4ce3c798d947d21b55fe1af69553905196fc521b26c31a8f263deb0e24e",
+        "actions_sha256": "9476ed9b691c6e87048dd498edf91838aee447887c3e1af5615762509f3226fa"
+    },
+    {
+        "recipe": "fresh-fruit-tea/lychee-red-butterfly-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "25d74990c26291e0bb5f7af887c9f9293173c19fd64dd5fc6628c4357aa1db29",
+        "actions_sha256": "42f880bb24acb899cd7996d9938ea3b2640cbcd9775ea5fab6050e4e8885d99e"
+    },
+    {
+        "recipe": "fresh-fruit-tea/lychee-red-butterfly-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "5851556fd2e1446ce0cfc58723b9f9041b3f17d1a05a401aad78ac2f9e5d40eb",
+        "actions_sha256": "49b324b0716580735bbaf73ba7857892ae3ace85c31c0539fef6d7152713de5c"
+    },
+    {
+        "recipe": "fresh-fruit-tea/lychee-red-butterfly-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "6912ed2184c17b743fd83ea972c35dc3e0e97404f1693f863dbe7552fe42eb15",
+        "actions_sha256": "42f880bb24acb899cd7996d9938ea3b2640cbcd9775ea5fab6050e4e8885d99e"
+    },
+    {
+        "recipe": "fresh-fruit-tea/lychee-red-butterfly-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "ad017c5d9c895cda0ddc6ebd5916c0fe05d331a3faaef370e312ed51ae9056a4",
+        "actions_sha256": "49b324b0716580735bbaf73ba7857892ae3ace85c31c0539fef6d7152713de5c"
+    },
+    {
+        "recipe": "fresh-fruit-tea/passion-fruit-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "ff8b574f22e4e8da0d42f3bf2c7e840e172c8c7a071f613e0d607fccac1bd2e8",
+        "actions_sha256": "c8dfeaa20d4f7d954a5044e0cedac2f819e5d7848ffddd6a7c69f306f07fa76f"
+    },
+    {
+        "recipe": "fresh-fruit-tea/passion-fruit-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "62ef05a10e6fe9260bba077fc7d6536cde5b575ed559e6a3176a39da71088ee7",
+        "actions_sha256": "abbf71b065e672f4bf28ff7e1bda42f0e707779b19a39a00a3d151c70ac19726"
+    },
+    {
+        "recipe": "fresh-fruit-tea/passion-fruit-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "3d2d0c1af2fd2f0f7fb378f637ed26fb85aaaf3e233ffefea847cf3595fc4dee",
+        "actions_sha256": "c8dfeaa20d4f7d954a5044e0cedac2f819e5d7848ffddd6a7c69f306f07fa76f"
+    },
+    {
+        "recipe": "fresh-fruit-tea/passion-fruit-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "504416fc1bba60ee489fde7780ebfe6adcbd64feb7c8793f594f4779f7390df1",
+        "actions_sha256": "abbf71b065e672f4bf28ff7e1bda42f0e707779b19a39a00a3d151c70ac19726"
+    },
+    {
+        "recipe": "fresh-fruit-tea/mango-passion-fruit-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "9deb203a8a80a9c5b93cf5048668ebee1355be9a800d1bafdd0c8fda6c14178f",
+        "actions_sha256": "09b6f3788b5999d41024ec035fe76b17099b95cbc8f1e3f1a21d0a91994c9b0a"
+    },
+    {
+        "recipe": "fresh-fruit-tea/mango-passion-fruit-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "edd55379669bbf09093503c9951b504aca1aac6d186a9b88dc494be598b8bad3",
+        "actions_sha256": "e3c449656642737e416d66caae44bd6cc2c46e10c98b7388638a7551a5a9aaae"
+    },
+    {
+        "recipe": "fresh-fruit-tea/mango-passion-fruit-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "eee05f67e4a99c420565c1b261ef1a17596f78423e12de6b89a59fb0ae285a6f",
+        "actions_sha256": "09b6f3788b5999d41024ec035fe76b17099b95cbc8f1e3f1a21d0a91994c9b0a"
+    },
+    {
+        "recipe": "fresh-fruit-tea/mango-passion-fruit-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "3a48d1316d5405e5692b48cabce6e3f272422a8ef8480bf904a437c5c0474b34",
+        "actions_sha256": "e3c449656642737e416d66caae44bd6cc2c46e10c98b7388638a7551a5a9aaae"
+    },
+    {
+        "recipe": "fresh-fruit-tea/mango-lemon-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "a40e1ca2e51733ba14f1e8ff8f664cfc001955b291e32275be7c93b0f9c7aebf",
+        "actions_sha256": "638f5c25262030b58db3e4678a51c403a41e542380301e5fdb316bfe2445ed9d"
+    },
+    {
+        "recipe": "fresh-fruit-tea/mango-lemon-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "0f5704dd880ba79cf320683ff5514342392a4d1b9ec5d4499884d1421997e796",
+        "actions_sha256": "35d0dd50002fcd9a640a0fd2615b940ed1104dae541cb8f019f8a2f78287e9ef"
+    },
+    {
+        "recipe": "fresh-fruit-tea/mango-lemon-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "d0b87cd34f6854f0cd9c3fd81556b9af131947a14f4395201de4c0f6eda54d4f",
+        "actions_sha256": "638f5c25262030b58db3e4678a51c403a41e542380301e5fdb316bfe2445ed9d"
+    },
+    {
+        "recipe": "fresh-fruit-tea/mango-lemon-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "347d8624698dd51171bad73e1e20eced9fe8e2933032ba01b7a8a2c801ac05c6",
+        "actions_sha256": "35d0dd50002fcd9a640a0fd2615b940ed1104dae541cb8f019f8a2f78287e9ef"
+    },
+    {
+        "recipe": "fresh-fruit-tea/lemon-ice-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "b27e8fa45e68ff66ebff470e5fd43a4c565db5be21d2884f93312d8a9648748b",
+        "actions_sha256": "2ee38a4dfde020844e8f854570c60331d387082e8f88a992efc195f2efa5cc4a"
+    },
+    {
+        "recipe": "fresh-fruit-tea/lemon-ice-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "220fd81f2d348856f6a816f2bc8d1d0ed25c30848fa09050767dcfdc48ace034",
+        "actions_sha256": "9476ed9b691c6e87048dd498edf91838aee447887c3e1af5615762509f3226fa"
+    },
+    {
+        "recipe": "fresh-fruit-tea/lemon-ice-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "60ecf6b2fdf2f48120514600c0e7870c7c5e26ffe08aaeb087939b4a28efcf4a",
+        "actions_sha256": "2ee38a4dfde020844e8f854570c60331d387082e8f88a992efc195f2efa5cc4a"
+    },
+    {
+        "recipe": "fresh-fruit-tea/lemon-ice-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "6dfc14c64151c71589cae453da993a389f06d12c379f0528995bac2c29a95185",
+        "actions_sha256": "9476ed9b691c6e87048dd498edf91838aee447887c3e1af5615762509f3226fa"
+    },
+    {
+        "recipe": "fresh-fruit-tea/vietnamese-peach-ice-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "f96e1fcb9d7dcd383b56610b3e557963b9a4e4f3078ae315d91505b2460b2da0",
+        "actions_sha256": "fe79ae6844d44c6050b6fd8196c98f16f80d88835cac336745d819866411bbd0"
+    },
+    {
+        "recipe": "fresh-fruit-tea/vietnamese-peach-ice-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "3130eebd576bcb4f4e3fbea3144cd68474cec38c4958b2f48fea2ee214179a3d",
+        "actions_sha256": "ff7d49d6608141f41b692339db02d1969a3b563760f193df1f782a51565e391b"
+    },
+    {
+        "recipe": "fresh-fruit-tea/vietnamese-peach-ice-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "f7ff20550f2bf9d0255c1491ea253e8d3db9a3165538687519ae37dd9db3ddf1",
+        "actions_sha256": "fe79ae6844d44c6050b6fd8196c98f16f80d88835cac336745d819866411bbd0"
+    },
+    {
+        "recipe": "fresh-fruit-tea/vietnamese-peach-ice-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "631c0e7a5bcf44605c57174d52f2cb581e01ab547457d9b5118fb28bca189d93",
+        "actions_sha256": "ff7d49d6608141f41b692339db02d1969a3b563760f193df1f782a51565e391b"
+    },
+    {
+        "recipe": "fresh-fruit-tea/dragon-fruit-peach-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "d67458215f2e1364c06fad08d7cf55883a76e2e303b4a64dc0b49ce922b89cad",
+        "actions_sha256": "ce68cbe076d0ff2b677c466b03402a474cb49c6b7f922c1492965d72217b93c1"
+    },
+    {
+        "recipe": "fresh-fruit-tea/dragon-fruit-peach-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "2182f6f4ea7342417e811bf49a5c541c6e967f71c84fe05f8621ff90a18eb02e",
+        "actions_sha256": "761085dd8d6b310c3de3a177c1601ffd4a857f295fefb0fcced80df952a3d0e4"
+    },
+    {
+        "recipe": "fresh-fruit-tea/dragon-fruit-peach-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "52024da26667663f18e8e77eff7f7bb4a03ef95eabf84772a399ba8d90f2b645",
+        "actions_sha256": "ce68cbe076d0ff2b677c466b03402a474cb49c6b7f922c1492965d72217b93c1"
+    },
+    {
+        "recipe": "fresh-fruit-tea/dragon-fruit-peach-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "7e59ca8de50907034542d6e811c1b0f85a498cf5ed5f1ccf27fde9109fe54100",
+        "actions_sha256": "761085dd8d6b310c3de3a177c1601ffd4a857f295fefb0fcced80df952a3d0e4"
+    },
+    {
+        "recipe": "fresh-fruit-tea/dragon-passion-fruit-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "096c31285fc824350f0fa6b78e8106abdc80d45a828ed35489a0ab040d8cd6b0",
+        "actions_sha256": "37ff5651f427e2961a56825120b7d073335434e612ae4892ec43faaeb08e9110"
+    },
+    {
+        "recipe": "fresh-fruit-tea/dragon-passion-fruit-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "3c393550ebf5ec7a400717d2133dead70235bc6a00900074f4a256352a3e9655",
+        "actions_sha256": "39e2654c84c9bddf33c9b61e85889f1e260b12521f10be7c00009902b7bc594c"
+    },
+    {
+        "recipe": "fresh-fruit-tea/dragon-passion-fruit-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "79913284e7ce9ca891bfba4252b9541dbedb19b0f542d53677224e8d693f7bae",
+        "actions_sha256": "37ff5651f427e2961a56825120b7d073335434e612ae4892ec43faaeb08e9110"
+    },
+    {
+        "recipe": "fresh-fruit-tea/dragon-passion-fruit-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "92988c9af6748263989b44121779b9a79d1c20a5f2c8ea6119ea1929792c78ab",
+        "actions_sha256": "39e2654c84c9bddf33c9b61e85889f1e260b12521f10be7c00009902b7bc594c"
+    },
+    {
+        "recipe": "fresh-fruit-tea/pineapple-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "d0d526218283db514b892209d64ee3591d88c3bec736afbe3c8f3fb3a86ed6de",
+        "actions_sha256": "09b6f3788b5999d41024ec035fe76b17099b95cbc8f1e3f1a21d0a91994c9b0a"
+    },
+    {
+        "recipe": "fresh-fruit-tea/pineapple-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "d3be46fe611ba5d2cace1f0c0337eeaffc758cb8c78b027a4bc59c07bdd81f56",
+        "actions_sha256": "e3c449656642737e416d66caae44bd6cc2c46e10c98b7388638a7551a5a9aaae"
+    },
+    {
+        "recipe": "fresh-fruit-tea/pineapple-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "6188136b3b53d38bb4eaa8cb0a69d3d4e4c2c95508d7619163a82b32f132393c",
+        "actions_sha256": "09b6f3788b5999d41024ec035fe76b17099b95cbc8f1e3f1a21d0a91994c9b0a"
+    },
+    {
+        "recipe": "fresh-fruit-tea/pineapple-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "b86062f1ee4a79c54b896f65e913da80b3cc2aa994b0a63dd3ba9042bad2203b",
+        "actions_sha256": "e3c449656642737e416d66caae44bd6cc2c46e10c98b7388638a7551a5a9aaae"
+    },
+    {
+        "recipe": "fresh-fruit-tea/pineapple-berry-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "9c9302bebc7d01422a497ead37be92972d12d0ea3e7a7f94c520075c88b52b4c",
+        "actions_sha256": "09b6f3788b5999d41024ec035fe76b17099b95cbc8f1e3f1a21d0a91994c9b0a"
+    },
+    {
+        "recipe": "fresh-fruit-tea/pineapple-berry-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "cc6ff85844ec40644b25f93a9842c1d582ed07c3e11f26744e9015d7685e803e",
+        "actions_sha256": "e3c449656642737e416d66caae44bd6cc2c46e10c98b7388638a7551a5a9aaae"
+    },
+    {
+        "recipe": "fresh-fruit-tea/pineapple-berry-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "ac074ec5aeaddc31b8f4e6208b7a4fdc7bd1bf2f76f1c1b8edadb7dc8993ca72",
+        "actions_sha256": "09b6f3788b5999d41024ec035fe76b17099b95cbc8f1e3f1a21d0a91994c9b0a"
+    },
+    {
+        "recipe": "fresh-fruit-tea/pineapple-berry-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "a1281f1991b2937c30fb80a9e1d5aa093fc7ba5602ff73f64384e83671bcced7",
+        "actions_sha256": "e3c449656642737e416d66caae44bd6cc2c46e10c98b7388638a7551a5a9aaae"
+    },
+    {
+        "recipe": "fresh-fruit-tea/jasmine-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "de3915c44505388b71507fcd2fbc3cfbc29ad1ece4a9269607861016bf390062",
+        "actions_sha256": "c24cb54b80cfce641f66a08feb28099bf3a4c234fc5ab910dbc91c2ed11c7f2c"
+    },
+    {
+        "recipe": "fresh-fruit-tea/jasmine-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "aa2871ec14b13e0c03eb8805695a217dc8116a94dc5b60ece960f3ba7f484029",
+        "actions_sha256": "d269cded7e32729bca41ca748457045760d211f8a69e2d5db73c262912414fdc"
+    },
+    {
+        "recipe": "fresh-fruit-tea/jasmine-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "80e9611cb2d58096e9af91d5aee679e7f29f7616d033c0299f044e491d6299a9",
+        "actions_sha256": "c24cb54b80cfce641f66a08feb28099bf3a4c234fc5ab910dbc91c2ed11c7f2c"
+    },
+    {
+        "recipe": "fresh-fruit-tea/jasmine-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "69e5bb0af8dd3c8e5527dd7d4c94766d45e152d12ecf950f813847209d7afff4",
+        "actions_sha256": "d269cded7e32729bca41ca748457045760d211f8a69e2d5db73c262912414fdc"
+    },
+    {
+        "recipe": "milk-tea/ceylon-jasmine-oolong-milk-tea",
+        "variant": "ceylon-m-with-ice",
+        "ingredients_sha256": "b9bbf44d5aa846f2253482fb12a97c9068fa1c998d93bac7dbba9c9742bdeb6a",
+        "actions_sha256": "c24cb54b80cfce641f66a08feb28099bf3a4c234fc5ab910dbc91c2ed11c7f2c"
+    },
+    {
+        "recipe": "milk-tea/ceylon-jasmine-oolong-milk-tea",
+        "variant": "ceylon-m-no-ice",
+        "ingredients_sha256": "43cbc529a542c53db404bfc0bb73aa4d59a6952ddf8b1008bb5cd18f65aa7502",
+        "actions_sha256": "d269cded7e32729bca41ca748457045760d211f8a69e2d5db73c262912414fdc"
+    },
+    {
+        "recipe": "milk-tea/ceylon-jasmine-oolong-milk-tea",
+        "variant": "ceylon-l-with-ice",
+        "ingredients_sha256": "663e28e0bcd21378e1289cea219418842399d7eca9a5ff18e2db942692cca9b5",
+        "actions_sha256": "c24cb54b80cfce641f66a08feb28099bf3a4c234fc5ab910dbc91c2ed11c7f2c"
+    },
+    {
+        "recipe": "milk-tea/ceylon-jasmine-oolong-milk-tea",
+        "variant": "ceylon-l-no-ice",
+        "ingredients_sha256": "f3b5588aa81ec4e5af6dfa90b93e3fba2cdec9e10af04dc2b991605ba67f4ddd",
+        "actions_sha256": "d269cded7e32729bca41ca748457045760d211f8a69e2d5db73c262912414fdc"
+    },
+    {
+        "recipe": "milk-tea/ceylon-jasmine-oolong-milk-tea",
+        "variant": "jasmine-m-with-ice",
+        "ingredients_sha256": "04dd8c85638074a4c771ce4ddacb7f20830a571c4522f0f66fc4012c4ad8a2f5",
+        "actions_sha256": "c24cb54b80cfce641f66a08feb28099bf3a4c234fc5ab910dbc91c2ed11c7f2c"
+    },
+    {
+        "recipe": "milk-tea/ceylon-jasmine-oolong-milk-tea",
+        "variant": "jasmine-m-no-ice",
+        "ingredients_sha256": "4440efd23d8bde94f6e498ca65b4cafa3ac9e7949e2b1fcb49c738541db9fa0f",
+        "actions_sha256": "d269cded7e32729bca41ca748457045760d211f8a69e2d5db73c262912414fdc"
+    },
+    {
+        "recipe": "milk-tea/ceylon-jasmine-oolong-milk-tea",
+        "variant": "jasmine-l-with-ice",
+        "ingredients_sha256": "b44b175a1d72bc81589b370e3f7cc118dbb5b66be7718c19f37856c807dd7a2e",
+        "actions_sha256": "c24cb54b80cfce641f66a08feb28099bf3a4c234fc5ab910dbc91c2ed11c7f2c"
+    },
+    {
+        "recipe": "milk-tea/ceylon-jasmine-oolong-milk-tea",
+        "variant": "jasmine-l-no-ice",
+        "ingredients_sha256": "7fabb2e0f1d3296919af252795667b2f934002283cb30d90293e53aae655a79b",
+        "actions_sha256": "d269cded7e32729bca41ca748457045760d211f8a69e2d5db73c262912414fdc"
+    },
+    {
+        "recipe": "milk-tea/ceylon-jasmine-oolong-milk-tea",
+        "variant": "oolong-m-with-ice",
+        "ingredients_sha256": "be8893838bf88ae8eeaf3cd368684b26c2b5145a948e56de3bf3504799b33412",
+        "actions_sha256": "c24cb54b80cfce641f66a08feb28099bf3a4c234fc5ab910dbc91c2ed11c7f2c"
+    },
+    {
+        "recipe": "milk-tea/ceylon-jasmine-oolong-milk-tea",
+        "variant": "oolong-m-no-ice",
+        "ingredients_sha256": "6a28e54642356b6bceccab60e8d0027251ddb5fa9f631abb343ca37f3a20d477",
+        "actions_sha256": "d269cded7e32729bca41ca748457045760d211f8a69e2d5db73c262912414fdc"
+    },
+    {
+        "recipe": "milk-tea/ceylon-jasmine-oolong-milk-tea",
+        "variant": "oolong-l-with-ice",
+        "ingredients_sha256": "3bb91866dc933877463aca0502476474c283ad8eafe7ae857bb7a43ce27b9029",
+        "actions_sha256": "c24cb54b80cfce641f66a08feb28099bf3a4c234fc5ab910dbc91c2ed11c7f2c"
+    },
+    {
+        "recipe": "milk-tea/ceylon-jasmine-oolong-milk-tea",
+        "variant": "oolong-l-no-ice",
+        "ingredients_sha256": "3895a460b230a520ce440f4e0a9f958e29de1d4a5698de40938462ecaf5d4df1",
+        "actions_sha256": "d269cded7e32729bca41ca748457045760d211f8a69e2d5db73c262912414fdc"
+    },
+    {
+        "recipe": "milk-tea/brown-sugar-milk-tea-fresh-milk",
+        "variant": "ceylon-milk-tea-m-with-ice",
+        "ingredients_sha256": "708dc57cb135f1ef1c4d8dc66c23ecea23b8879f2ffee8171c0bf78b6536f860",
+        "actions_sha256": "c98bfcf35a74b8a97db4e5a812c04aea0880f06d4f354aa56ecb1e34003eed61"
+    },
+    {
+        "recipe": "milk-tea/brown-sugar-milk-tea-fresh-milk",
+        "variant": "ceylon-milk-tea-m-no-ice",
+        "ingredients_sha256": "05245625fe6dcfecc1b86e330099724502ae455f33d4a01f3a6b9b23bb3f837b",
+        "actions_sha256": "02cd6f570a4806b021d924f7ec771891fc065f6324b38999dcce062209ffcd3c"
+    },
+    {
+        "recipe": "milk-tea/brown-sugar-milk-tea-fresh-milk",
+        "variant": "ceylon-milk-tea-l-with-ice",
+        "ingredients_sha256": "5cd713798d110c330b3adde8a2dd25992730f5e16fa3860186f7d6d2a97f6321",
+        "actions_sha256": "c98bfcf35a74b8a97db4e5a812c04aea0880f06d4f354aa56ecb1e34003eed61"
+    },
+    {
+        "recipe": "milk-tea/brown-sugar-milk-tea-fresh-milk",
+        "variant": "ceylon-milk-tea-l-no-ice",
+        "ingredients_sha256": "6f583a4fdb361fc79b48049a17c9b64c2ae9cd05e633bd4fa36a85fdb0d2cf9b",
+        "actions_sha256": "02cd6f570a4806b021d924f7ec771891fc065f6324b38999dcce062209ffcd3c"
+    },
+    {
+        "recipe": "milk-tea/brown-sugar-milk-tea-fresh-milk",
+        "variant": "fresh-milk-m-with-ice",
+        "ingredients_sha256": "56a30eb374c08bef683becf9ad01814c0a9960c46d8677f80ad865eaa3cbe053",
+        "actions_sha256": "c98bfcf35a74b8a97db4e5a812c04aea0880f06d4f354aa56ecb1e34003eed61"
+    },
+    {
+        "recipe": "milk-tea/brown-sugar-milk-tea-fresh-milk",
+        "variant": "fresh-milk-m-no-ice",
+        "ingredients_sha256": "1f4ff48e8df22d73db0205ac904a3b87709829199c87062491b7e09a40f8f462",
+        "actions_sha256": "02cd6f570a4806b021d924f7ec771891fc065f6324b38999dcce062209ffcd3c"
+    },
+    {
+        "recipe": "milk-tea/brown-sugar-milk-tea-fresh-milk",
+        "variant": "fresh-milk-l-with-ice",
+        "ingredients_sha256": "2358f131bfb41f57b1ca5945ebe9129f6896127b90e2aaa9dc86259161671f69",
+        "actions_sha256": "c98bfcf35a74b8a97db4e5a812c04aea0880f06d4f354aa56ecb1e34003eed61"
+    },
+    {
+        "recipe": "milk-tea/brown-sugar-milk-tea-fresh-milk",
+        "variant": "fresh-milk-l-no-ice",
+        "ingredients_sha256": "0cddda51835fc5dbe60c9bc411cd07be2145ce19ba55592bfd5e7897daa62be7",
+        "actions_sha256": "02cd6f570a4806b021d924f7ec771891fc065f6324b38999dcce062209ffcd3c"
+    },
+    {
+        "recipe": "milk-tea/taro-milk-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "5e39aa214f80717d7df665b6ccc2e0b48510f98c64e03c66cf35333a783328de",
+        "actions_sha256": "63ad6fbb055cb49749f12ac8bf9fea29a531fcf988d81f88b4da4a4d6e1ce651"
+    },
+    {
+        "recipe": "milk-tea/taro-milk-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "acbe6d4b078c5b8814389fc13f7690e7aca238c812ee11713c2d318491a10406",
+        "actions_sha256": "eae196b1fd457957f91554bb91b62e446df11b5dae9737a198e9e5fedfead4e7"
+    },
+    {
+        "recipe": "milk-tea/taro-milk-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "e3b1b0c948a0a48de68cb980b3198c7466a76b29d03b8da31188f29b4c8e89c3",
+        "actions_sha256": "63ad6fbb055cb49749f12ac8bf9fea29a531fcf988d81f88b4da4a4d6e1ce651"
+    },
+    {
+        "recipe": "milk-tea/taro-milk-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "f9e9767c2da88f6b90dc28eb38f677f243d823f1454fe27741926bfc80b75805",
+        "actions_sha256": "eae196b1fd457957f91554bb91b62e446df11b5dae9737a198e9e5fedfead4e7"
+    },
+    {
+        "recipe": "milk-tea/taro-coco-milk-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "5e39aa214f80717d7df665b6ccc2e0b48510f98c64e03c66cf35333a783328de",
+        "actions_sha256": "63ad6fbb055cb49749f12ac8bf9fea29a531fcf988d81f88b4da4a4d6e1ce651"
+    },
+    {
+        "recipe": "milk-tea/taro-coco-milk-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "acbe6d4b078c5b8814389fc13f7690e7aca238c812ee11713c2d318491a10406",
+        "actions_sha256": "eae196b1fd457957f91554bb91b62e446df11b5dae9737a198e9e5fedfead4e7"
+    },
+    {
+        "recipe": "milk-tea/taro-coco-milk-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "e3b1b0c948a0a48de68cb980b3198c7466a76b29d03b8da31188f29b4c8e89c3",
+        "actions_sha256": "63ad6fbb055cb49749f12ac8bf9fea29a531fcf988d81f88b4da4a4d6e1ce651"
+    },
+    {
+        "recipe": "milk-tea/taro-coco-milk-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "f9e9767c2da88f6b90dc28eb38f677f243d823f1454fe27741926bfc80b75805",
+        "actions_sha256": "eae196b1fd457957f91554bb91b62e446df11b5dae9737a198e9e5fedfead4e7"
+    },
+    {
+        "recipe": "milk-tea/matcha-milk-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "28daf8ceb34160b3acd75b842627e000e7ce44d4997c5f3cd57a910cc17b03c8",
+        "actions_sha256": "da4b55396f0cc651fa7812fcea9d1ca18027c3b43b77b752c70dc32ec2e6fcc2"
+    },
+    {
+        "recipe": "milk-tea/matcha-milk-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "794dc7211b97cbd640ec12f06cdc37f70cd02f6e2e6039d72d65916e370c4d46",
+        "actions_sha256": "d4ed92d73dfe572e163552e7d97058ef194bced45ee2c3fd117a30b7990d7be5"
+    },
+    {
+        "recipe": "milk-tea/matcha-milk-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "ed85ab50a5873eadbb31c709b5c2953eea79b90843e5ab9ff654f55a125dc42b",
+        "actions_sha256": "da4b55396f0cc651fa7812fcea9d1ca18027c3b43b77b752c70dc32ec2e6fcc2"
+    },
+    {
+        "recipe": "milk-tea/matcha-milk-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "2b30545cba7673680e8e258a047092df993ef86aa92d687a6d3b43dbb741713b",
+        "actions_sha256": "d4ed92d73dfe572e163552e7d97058ef194bced45ee2c3fd117a30b7990d7be5"
+    },
+    {
+        "recipe": "milk-tea/strawberry-milk-tea",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "ec9a4c8653574717bfbf8d28ddb2255491e272a697eb643f396938876fe03e5d",
+        "actions_sha256": "70d6ed4d7b06f1281e3689fa615143ac94c040bb114853a31507bf0aa0868abd"
+    },
+    {
+        "recipe": "milk-tea/strawberry-milk-tea",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "cb48bc09ddcd8b2a301337e4ed37d44fc6805dd039a26a0ddae5e16754ee6598",
+        "actions_sha256": "d4f870058478f39ada5712fe641ccc43a74349f5fda0ec65f081ab9f23137cfd"
+    },
+    {
+        "recipe": "milk-tea/strawberry-milk-tea",
+        "variant": "l-with-ice",
+        "ingredients_sha256": "5d75d2cc10e89ebc0c02b0da4e629973c968bf16823841f37f962a747a94a077",
+        "actions_sha256": "70d6ed4d7b06f1281e3689fa615143ac94c040bb114853a31507bf0aa0868abd"
+    },
+    {
+        "recipe": "milk-tea/strawberry-milk-tea",
+        "variant": "l-no-ice",
+        "ingredients_sha256": "b6d3e5ff50130a6b1d5417abd7f9015c94325f3f40c6403ed404e757e817cd79",
+        "actions_sha256": "d4f870058478f39ada5712fe641ccc43a74349f5fda0ec65f081ab9f23137cfd"
+    },
+    {
+        "recipe": "creamy-coconut/strawberry-coco",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "02ae4edce03c14950a9c23cd7422d5c3f12e4412b135ecb68c955f2b25fcee3d",
+        "actions_sha256": "f942f77e186019168ff71d0ac577175120f6dbb4dfa3ec73b704ec46c2664a47"
+    },
+    {
+        "recipe": "creamy-coconut/strawberry-coco",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "05539ff8b557efc52002a4eb0f6634c5bf8c7885c97661c57b393737829e44a3",
+        "actions_sha256": "bcfdee8a23fd6852ad4017521f30f27abe5bf31078654d8a71c0dc0b8c7a346b"
+    },
+    {
+        "recipe": "creamy-coconut/strawberry-coco",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "7a68959ea4e48306751732909293bc7bf2ac252712c3b411341b95d68f298347",
+        "actions_sha256": "f942f77e186019168ff71d0ac577175120f6dbb4dfa3ec73b704ec46c2664a47"
+    },
+    {
+        "recipe": "creamy-coconut/strawberry-coco",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "92caf6e6fd66589ee269873c904008a4e33ce8da0735621610133513ab13978b",
+        "actions_sha256": "bcfdee8a23fd6852ad4017521f30f27abe5bf31078654d8a71c0dc0b8c7a346b"
+    },
+    {
+        "recipe": "creamy-coconut/mango-coco",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "63ddcec3223a447c6fa5260bbfbfe7a9f965632bbc81caca032e4a63e5194599",
+        "actions_sha256": "f942f77e186019168ff71d0ac577175120f6dbb4dfa3ec73b704ec46c2664a47"
+    },
+    {
+        "recipe": "creamy-coconut/mango-coco",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "199c442f5fbb654505b3596547ae30727978a924c51e9c64b2addee1b66c3ef0",
+        "actions_sha256": "bcfdee8a23fd6852ad4017521f30f27abe5bf31078654d8a71c0dc0b8c7a346b"
+    },
+    {
+        "recipe": "creamy-coconut/mango-coco",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "a3147e7dff4f1e98a7a12887b806fdf54052a6e9452622672e02ed34fe343b35",
+        "actions_sha256": "f942f77e186019168ff71d0ac577175120f6dbb4dfa3ec73b704ec46c2664a47"
+    },
+    {
+        "recipe": "creamy-coconut/mango-coco",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "46643b6dcdd73fc2497b825698ef882708287d33ab48abe6c05ca801219ebf33",
+        "actions_sha256": "bcfdee8a23fd6852ad4017521f30f27abe5bf31078654d8a71c0dc0b8c7a346b"
+    },
+    {
+        "recipe": "creamy-coconut/lychee-coco",
+        "variant": "s-with-ice",
+        "ingredients_sha256": "db5fcecc2abc08d7a12a9796a834c774b9c89b7615e6ce3e39d3a571cf8b381d",
+        "actions_sha256": "f942f77e186019168ff71d0ac577175120f6dbb4dfa3ec73b704ec46c2664a47"
+    },
+    {
+        "recipe": "creamy-coconut/lychee-coco",
+        "variant": "s-no-ice",
+        "ingredients_sha256": "509eb380ca4741b3c9ad8cf22d4c7729a03b55606e75ea82d48566244eca37b8",
+        "actions_sha256": "bcfdee8a23fd6852ad4017521f30f27abe5bf31078654d8a71c0dc0b8c7a346b"
+    },
+    {
+        "recipe": "creamy-coconut/lychee-coco",
+        "variant": "m-with-ice",
+        "ingredients_sha256": "e1c43ac2565636f4c4ae8fb3800e263ec62d14feafec2ea4c5de66ef39dc985e",
+        "actions_sha256": "f942f77e186019168ff71d0ac577175120f6dbb4dfa3ec73b704ec46c2664a47"
+    },
+    {
+        "recipe": "creamy-coconut/lychee-coco",
+        "variant": "m-no-ice",
+        "ingredients_sha256": "3e0bbf7b41af8f0cf62ef66b478b5c49313b6717f03992c61e0a58c0c3b85f54",
+        "actions_sha256": "bcfdee8a23fd6852ad4017521f30f27abe5bf31078654d8a71c0dc0b8c7a346b"
+    },
+    {
+        "recipe": "preparations/black-tapioca",
+        "variant": "500-g-batch",
+        "ingredients_sha256": "f7a65bfef0d26a9a5e910921d5d7d19b539497f09ecb4f24ae9bf6523b5c0e86",
+        "actions_sha256": "16c53bd3eed704e2919414c55cf6b9dac2c6926ce444416489cb2562c5e6d553"
+    },
+    {
+        "recipe": "preparations/black-tapioca",
+        "variant": "700-g-batch",
+        "ingredients_sha256": "d603a9ba317e6b23ea4f4323e797568e2a39882f0e845220f1597305907db61d",
+        "actions_sha256": "16c53bd3eed704e2919414c55cf6b9dac2c6926ce444416489cb2562c5e6d553"
+    },
+    {
+        "recipe": "preparations/black-tapioca",
+        "variant": "1-kg-batch",
+        "ingredients_sha256": "7e873d91e92eb31309a7263d13aacda33ffabde8fbde55e017ffd29d5a4d067a",
+        "actions_sha256": "16c53bd3eed704e2919414c55cf6b9dac2c6926ce444416489cb2562c5e6d553"
+    },
+    {
+        "recipe": "preparations/sugar-machine",
+        "variant": "standard",
+        "ingredients_sha256": "bbc475b99fbe8bc16595eb044487e6f62cc4b452cdf4a1a7013e36d16f01e7fa",
+        "actions_sha256": "f4cc03237093a43d720642e7b6dd4c0a5ed6db795eb01cfc4a1fa29bd15ee1b1"
+    },
+    {
+        "recipe": "preparations/jasmine-tea-preparation",
+        "variant": "standard",
+        "ingredients_sha256": "f387d0c10479f999aa18bd2f899f4a85090fb31e721baf46d82fe38ec8835879",
+        "actions_sha256": "391888816520595fcf3ac8d3f46b40fc80c6ee526a877f6db9d3fcf0b0621cd3"
+    },
+    {
+        "recipe": "preparations/jasmine-milk-tea-preparation",
+        "variant": "standard",
+        "ingredients_sha256": "2c461ef1cdbadb5f42e8e4e6194ca09b0738772a153ff946856065e074978705",
+        "actions_sha256": "fafc8e414204b578d73820d8a5fc71e4f582d2c9681b494ae722bcdaaa68320c"
+    },
+    {
+        "recipe": "preparations/ceylon-tea-preparation",
+        "variant": "standard",
+        "ingredients_sha256": "559e07fc61bbbe696eb7dad8fe1af63683c015f384223a8b9a1dea661cd40d8b",
+        "actions_sha256": "6b7d2b632d34233fd07f9d92ab8be312ab84b269a38eba3ee41dbf9407a28497"
+    },
+    {
+        "recipe": "preparations/ceylon-milk-tea-preparation",
+        "variant": "3-5-l-batch",
+        "ingredients_sha256": "d1dbff72bbb69fbd047559f3a574bccaace920b77a9dbe310dce58446235b15d",
+        "actions_sha256": "097d9133de9a8bac79c3bd72e86c873e9c66b25bbd9c3407e39c8e856b86522d"
+    },
+    {
+        "recipe": "preparations/oolong-milk-tea-preparation",
+        "variant": "3-5-l-batch",
+        "ingredients_sha256": "40d63604e64431827ce1ed20e92facdaca2c3997d117709ca055380861812fed",
+        "actions_sha256": "6b5802bd3a71d8c9874a8919a68a22b579f387e97b3c3e79a7b0f437b1c1d54c"
+    },
+    {
+        "recipe": "preparations/oolong-milk-tea-preparation",
+        "variant": "1-5-l-batch",
+        "ingredients_sha256": "29dbd5f30db8a4b93a4c428d91cac01d1d42e8cca8ee4c1a189dd173c47ea7d2",
+        "actions_sha256": "6b5802bd3a71d8c9874a8919a68a22b579f387e97b3c3e79a7b0f437b1c1d54c"
+    },
+    {
+        "recipe": "preparations/butterfly-tea",
+        "variant": "standard",
+        "ingredients_sha256": "4a2e0c65088fe3a69e427ecdcc2361a1482fc353367611a982843c0faa565c6c",
+        "actions_sha256": "391888816520595fcf3ac8d3f46b40fc80c6ee526a877f6db9d3fcf0b0621cd3"
+    },
+    {
+        "recipe": "preparations/cream-cheese",
+        "variant": "batch",
+        "ingredients_sha256": "e39fb3ebe236f6198c78eef48a055d15ef177f0cf2a83e068891d250a33617c6",
+        "actions_sha256": "baa6c395c22f3d1f51326ff6401cf18afeba52cb038088f97805bcf941a419d3"
+    },
+    {
+        "recipe": "preparations/cream-cheese",
+        "variant": "1-portion",
+        "ingredients_sha256": "dbef7010f8fb1a52c6378f5c5c529dfc62183c63a088112cee46786111a3b783",
+        "actions_sha256": "b3609bb04b0b8a4937a8453ee6fe11737bb3c4aad6e500da8beb7431c58b1728"
+    },
+    {
+        "recipe": "preparations/creme-brulee",
+        "variant": "standard",
+        "ingredients_sha256": "43b574b1f98a7c1eca2b536b5c93a5d97cd797ca13297a15732cfc27288b38e3",
+        "actions_sha256": "baa6c395c22f3d1f51326ff6401cf18afeba52cb038088f97805bcf941a419d3"
+    }
+]

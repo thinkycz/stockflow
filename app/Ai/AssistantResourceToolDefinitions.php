@@ -32,7 +32,6 @@ final class AssistantResourceToolDefinitions
             'read_stock_movements' => self::read('stock_movements', 'Read recent stock movements and reversals.', true, true),
             'read_statements' => self::read('statements', 'Read statement months and version metadata.', false, true),
             'read_recipes' => self::read('recipes', 'Look up complete company recipes and instructions, or read recipe category metadata.', true),
-            'read_recipe_tests' => self::read('recipe_tests', 'Read recipe test sessions and attempts.'),
             'read_payroll' => self::read('payroll', 'Read payroll report lifecycle and worker totals.', false, true),
             'read_financial_reports' => self::read('income_expenses', 'Read financial report lifecycle and totals.', false, true),
             'read_recurring_expenses' => self::read('recurring_expenses', 'Read recurring expense versions.', true, true),
@@ -165,32 +164,6 @@ final class AssistantResourceToolDefinitions
                 ]),
                 'clear_statement' => self::action(true, true),
                 'restore_statement_version' => self::action(true, true),
-            ]),
-            'write_recipes' => self::writer('recipes', 'Manage recipe categories, recipes, ordering, and archive state.', [
-                'create_recipe_category' => self::action(false, false, [], ['name' => self::text(true, 'Name')]),
-                'update_recipe_category' => self::action(false, true, [], ['name' => self::text(true, 'Name')]),
-                'delete_recipe_category' => self::action(false, true),
-                'move_recipe_category' => self::action(false, true, [], ['direction' => self::select(true, 'Direction', ['up', 'down'])]),
-                'create_recipe' => self::action(false, false, ['category_id' => self::id()], self::recipeValues()),
-                'update_recipe' => self::action(false, true, ['category_id' => self::id()], self::recipeValues()),
-                'archive_recipe' => self::action(false, true, [], ['archived' => self::bool(true, 'Archived')]),
-                'move_recipe' => self::action(false, true, [], ['direction' => self::select(true, 'Direction', ['up', 'down'])]),
-            ]),
-            'write_recipe_tests' => self::writer('recipe_tests', 'Start and submit recipe test attempts or sessions.', [
-                'start_recipe_test_session' => self::action(false, false, [
-                    'actor_user_id' => self::id(),
-                    'worker_id' => self::id(),
-                ]),
-                'submit_recipe_test' => self::action(false, true, ['actor_user_id' => self::id()], [
-                    'tokens' => self::array(true, 'Tokens', self::text(true, 'Token')),
-                ]),
-                'submit_recipe_test_session' => self::action(false, true, ['actor_user_id' => self::id()], [
-                    'answers' => self::collection(true, 'Answers', [
-                        'attempt_id' => self::id(),
-                        'tokens' => self::array(true, 'Tokens', self::text(true, 'Token')),
-                        'amounts' => ['type' => 'object', 'required' => true, 'label' => 'Amounts', 'fields' => []],
-                    ]),
-                ]),
             ]),
             'write_payroll' => self::writer('payroll', 'Manage payroll report lifecycle, workers, wage overrides, adjustments, and proportional tip distribution.', [
                 'close_payroll_report' => self::payrollAction(),
@@ -372,11 +345,6 @@ final class AssistantResourceToolDefinitions
      * @return array<string, array<string, mixed>>
      */
     private static function statementDayValues(): array { return ['date' => self::date(true, 'Date'), ...self::statementAmounts(), 'cash_checked' => self::bool(false, 'Cash checked')]; }
-
-    /**
-     * @return array<string, array<string, mixed>>
-     */
-    private static function recipeValues(): array { return ['name' => self::text(true, 'Name'), 'note' => self::textarea(false, 'Note'), 'variants' => self::collection(true, 'Variants', ['name' => self::text(false, 'Variant name'), 'instructions' => self::collection(true, 'Instructions', ['type' => self::text(true, 'Type'), 'text' => self::textarea(true, 'Text'), 'action_key' => self::text(true, 'Action key'), 'quantity_value' => self::number(false, 'Quantity'), 'quantity_text' => self::text(false, 'Quantity text'), 'unit' => self::text(false, 'Unit'), 'ingredient_name' => self::text(false, 'Ingredient'), 'target' => self::text(false, 'Target'), 'icon_group' => self::text(true, 'Icon group')])])]; }
 
     /**
      * @param array<string, array<string, mixed>> $extraContext

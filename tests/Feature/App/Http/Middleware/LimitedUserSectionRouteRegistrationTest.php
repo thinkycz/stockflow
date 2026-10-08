@@ -20,7 +20,7 @@ use Thinkycz\LaravelCore\Support\Typer;
         'gift-vouchers.lookup' => 'limited-section:gift_vouchers',
         'checklist-items.update' => 'limited-section:checklists',
         'recipes.index' => 'limited-section:recipes',
-        'recipe-test-sessions.store' => 'limited-section:recipes',
+        'recipes.show' => 'limited-section:recipes',
         'stock-movements.create' => 'limited-stock-movement',
         'stock-movements.store' => 'limited-stock-movement',
         'items.search' => 'limited-stock-movement',

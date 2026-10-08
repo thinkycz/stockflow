@@ -50,19 +50,19 @@ checked by the architecture suite.
 
 ## Module ownership
 
-| Module              | Owned business behavior                                                    |
-| ------------------- | -------------------------------------------------------------------------- |
-| Identity            | Account/profile lifecycle, users and password recovery                     |
-| Stores              | Store administration, switching and store-detail projection                |
-| Catalog             | Item administration                                                        |
-| Inventory           | Stock movements, inventory lifecycle, consumption/history/forecast reports |
-| Statements          | Daily/monthly statement snapshots and mutations                            |
-| Workforce           | Workers, attendance, shifts, requests, presets and public sharing          |
-| Payroll             | Payslip assembly, exact wages and payroll mutations                        |
-| Finance             | Financial report assembly, recurring expenses and report lifecycle         |
-| BankStatements      | Imports, generation recovery, review and reconciliation                    |
-| Recipes             | Catalog instructions/adjustments and atomic test sessions                  |
-| GiftVouchers        | Issuance, redemption/reversal, voiding and branding                        |
-| Checklists          | Templates, daily snapshots, completion and excuses                         |
-| Noticeboard         | Sanitized cards, private images and recycle lifecycle                      |
-| OperationalActivity | Retention, digests and company notification configuration                  |
+| Module              | Owned business behavior                                                     |
+| ------------------- | --------------------------------------------------------------------------- |
+| Identity            | Account/profile lifecycle, users and password recovery                      |
+| Stores              | Store administration, switching and store-detail projection                 |
+| Catalog             | Item administration                                                         |
+| Inventory           | Stock movements, inventory lifecycle, consumption/history/forecast reports  |
+| Statements          | Daily/monthly statement snapshots and mutations                             |
+| Workforce           | Workers, attendance, shifts, requests, presets and public sharing           |
+| Payroll             | Payslip assembly, exact wages and payroll mutations                         |
+| Finance             | Financial report assembly, recurring expenses and report lifecycle          |
+| BankStatements      | Imports, generation recovery, review and reconciliation                     |
+| Recipes             | File-authored catalog, variants, preparation and read-only assistant lookup |
+| GiftVouchers        | Issuance, redemption/reversal, voiding and branding                         |
+| Checklists          | Templates, daily snapshots, completion and excuses                          |
+| Noticeboard         | Sanitized cards, private images and recycle lifecycle                       |
+| OperationalActivity | Retention, digests and company notification configuration                   |

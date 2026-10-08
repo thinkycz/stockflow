@@ -24,7 +24,7 @@ use Laravel\Ai\Tools\ToolNameResolver;
     $names = \array_map(ToolNameResolver::resolve(...), $tools);
 
     \expect($names)
-        ->toHaveCount(41)
+        ->toHaveCount(38)
         ->toContain(
             'read_stores',
             'write_stores',
@@ -55,9 +55,6 @@ use Laravel\Ai\Tools\ToolNameResolver;
             'read_statements',
             'write_statements',
             'read_recipes',
-            'write_recipes',
-            'read_recipe_tests',
-            'write_recipe_tests',
             'read_payroll',
             'write_payroll',
             'read_financial_reports',
@@ -89,7 +86,7 @@ use Laravel\Ai\Tools\ToolNameResolver;
             ->and($reflection->isFinal())->toBeTrue();
     }
 
-    \expect(\array_unique($classes))->toHaveCount(20);
+    \expect(\array_unique($classes))->toHaveCount(18);
 });
 
 \test('every concrete read tool executes a bounded tenant scoped query', function (): void {

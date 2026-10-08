@@ -43,18 +43,12 @@
     - `/inventory-counts` (POST `/inventory-counts` to persist a new session)
     - `/inventory-counts/history` (admin + limited, default 90-day window)
     - `/inventory-counts/{session}` (read-only session detail)
-    - `/recipes` and `/recipes/{recipe}` — company recipe catalog for both roles;
-      the index groups categories and renders every active recipe, variant,
-      ingredient row, and ordered procedure inline; the detail remains available
-      for focused reading and tests. Admin manages categories, recipes, variants,
-      structured ingredients, action steps, icon overrides, and archive state,
-      while limited accounts have read-only access to active recipes.
-    - `/recipe-tests` — limited-account workflow that records the selected worker,
-      uniformly selects one recipe variant, shows its ingredients as a fixed list,
-      serves shuffled opaque procedure-step tokens, and evaluates an untimed
-      ordering attempt against an immutable whole-variant snapshot.
-    - `/recipe-test-results` — admin-only worker overview, latest result per recipe,
-      completed-attempt counts, full per-recipe history, and attempt snapshots.
+    - `/recipes` and `/recipes/{category}/{recipe}` — shared file-authored recipe
+      library for both roles. Recipe pages offer autocomplete, category filters,
+      visual cards, explicit variant selectors, grouped ingredients, ordered
+      preparation, and a guided mode with temporary checklists and timers.
+      Recipes are maintained in `resources/recipes`; creation, editing, archiving,
+      category administration, staff tests, and recipe-test results are removed.
     - `/reports` — unified monthly financial and inventory reporting;
       `/reports/statistics` is a compatibility redirect
     - `/users` admin CRUD (GET index, GET `/create`, POST store, GET `/users/{id}/edit`,
@@ -101,14 +95,11 @@
   authenticated read and write routes. New and existing limited users have all
   sections enabled by default. Store-scoped inputs remain fixed and any
   cross-store access returns 403.
-- Recipe data belongs to the main admin company and is independent of the active
-  store. The catalog is initialized once from `TEACHA-recipes.pdf`; a deterministic
-  parser splits combined legacy lines into ingredients and procedure actions,
-  preserving fallback/source wording and never overwriting later admin edits.
-  Recipe attempts preserve worker, actor, recipe, variant, structured ingredients,
-  icons, and ordered-step snapshots even when source records later change or the
-  worker/limited account is removed. Legacy attempts keep their original snapshot
-  shape.
+- The recipe library is shared across permitted accounts and stores. A validated
+  Markdown repository reads 54 recipes in nine categories with 189 authored
+  variants, and supplies the same recipe data to the interface and assistant.
+  Recipe and staff-test tables are retired by the forward migration. See
+  `resources/recipes/README.md` for authoring and operational conventions.
 - The authenticated Shifts page shows a dynamic 0–100 attendance rating for
   completed shifts and one per-worker monthly table combining assigned hours
   with attendance quality. Limited users can inspect rating reasons but cannot

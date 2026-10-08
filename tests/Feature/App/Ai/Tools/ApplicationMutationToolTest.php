@@ -16,7 +16,6 @@ use App\Models\Item;
 use App\Models\NoticeboardCard;
 use App\Models\OperationalActivity;
 use App\Models\PayrollAdjustment;
-use App\Models\RecipeCategory;
 use App\Models\Shift;
 use App\Models\Store;
 use App\Models\User;
@@ -308,27 +307,6 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
     \expect($result['operation'])->toBe('distribute_payroll_tips')
         ->and(PayrollAdjustment::query()->orderBy('worker_id')->pluck('amount')->all())
         ->toBe(['30.00', '60.00']);
-});
-
-\test('recipe assistant creates a category through the shared catalog service', function (): void {
-    [$admin] = \createIsolatedUserWithWarehouse();
-    $tool = \nativeResourceTool($admin, 'conversation-recipes', 'write_recipes');
-    $arguments = [
-        'operation' => 'create_recipe_category',
-        'store_id' => null,
-        'target_id' => null,
-        'context_json' => '{}',
-        'values_json' => \json_encode(['name' => 'Assistant drinks'], \JSON_THROW_ON_ERROR),
-    ];
-    $arguments = \nativeResourceArguments($arguments);
-
-    \expect($tool->shouldRequestApproval(new Request($arguments, 'call-recipe')))
-        ->toBeInstanceOf(Approval::class)
-        ->and(RecipeCategory::query()->count())->toBe(0);
-
-    $tool->handle(new Request($arguments, 'call-recipe', 'invocation-recipe'));
-
-    \expect(RecipeCategory::query()->sole()->getName())->toBe('Assistant drinks');
 });
 
 \test('workforce assistant creates the same shift with worker wage snapshot', function (): void {

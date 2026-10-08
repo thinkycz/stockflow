@@ -62,16 +62,8 @@ use App\Http\Controllers\Web\Payroll\PayrollShowController;
 use App\Http\Controllers\Web\Payroll\PayrollTipDistributionController;
 use App\Http\Controllers\Web\Payroll\PayrollWageOverrideController;
 use App\Http\Controllers\Web\Payroll\PayrollWorkerController;
-use App\Http\Controllers\Web\Recipe\RecipeArchiveController;
-use App\Http\Controllers\Web\Recipe\RecipeCategoryController;
-use App\Http\Controllers\Web\Recipe\RecipeCreateController;
-use App\Http\Controllers\Web\Recipe\RecipeEditController;
 use App\Http\Controllers\Web\Recipe\RecipeIndexController;
 use App\Http\Controllers\Web\Recipe\RecipeShowController;
-use App\Http\Controllers\Web\Recipe\RecipeTestController;
-use App\Http\Controllers\Web\Recipe\RecipeTestResultIndexController;
-use App\Http\Controllers\Web\Recipe\RecipeTestResultShowController;
-use App\Http\Controllers\Web\Recipe\RecipeTestSessionController;
 use App\Http\Controllers\Web\Report\ReportController;
 use App\Http\Controllers\Web\Report\StatisticsController;
 use App\Http\Controllers\Web\Settings\SettingsController;
@@ -209,14 +201,9 @@ Resolver::resolveRouteRegistrar()
         // Store checklists (admin + limited completion)
         $router->put('checklist-items/{checklistItem}', ChecklistItemController::class)->whereNumber('checklistItem')->middleware('limited-section:checklists')->name('checklist-items.update');
 
-        // Company recipes (admin + limited read/test)
+        // File-authored recipe reference (admin + limited read)
         $router->get('recipes', RecipeIndexController::class)->middleware('limited-section:recipes')->name('recipes.index');
-        $router->get('recipes/{recipe}', RecipeShowController::class)->whereNumber('recipe')->middleware('limited-section:recipes')->name('recipes.show');
-        $router->get('recipe-tests/{recipeTest}', [RecipeTestController::class, 'show'])->whereNumber('recipeTest')->middleware('limited-section:recipes')->name('recipe-tests.show');
-        $router->put('recipe-tests/{recipeTest}', [RecipeTestController::class, 'update'])->whereNumber('recipeTest')->middleware('limited-section:recipes')->name('recipe-tests.update');
-        $router->post('recipe-test-sessions', [RecipeTestSessionController::class, 'store'])->middleware('limited-section:recipes')->name('recipe-test-sessions.store');
-        $router->get('recipe-test-sessions/{session}', [RecipeTestSessionController::class, 'show'])->whereNumber('session')->middleware('limited-section:recipes')->name('recipe-test-sessions.show');
-        $router->put('recipe-test-sessions/{session}', [RecipeTestSessionController::class, 'update'])->whereNumber('session')->middleware('limited-section:recipes')->name('recipe-test-sessions.update');
+        $router->get('recipes/{category}/{recipe}', RecipeShowController::class)->where('category', '[a-z0-9-]+')->where('recipe', '[a-z0-9-]+')->middleware('limited-section:recipes')->name('recipes.show');
 
         // Settings
         $router->get('verify-email', [VerifyEmailController::class, 'create'])->name('verify-email.show');
@@ -379,19 +366,4 @@ Resolver::resolveRouteRegistrar()
         $router->put('checklists/templates', ChecklistTemplateController::class)->name('checklists.templates.update');
         $router->put('checklist-days/{checklistDay}/excuse', [ChecklistDayExcuseController::class, 'update'])->whereNumber('checklistDay')->name('checklist-days.excuse');
         $router->delete('checklist-days/{checklistDay}/excuse', [ChecklistDayExcuseController::class, 'destroy'])->whereNumber('checklistDay')->name('checklist-days.excuse.destroy');
-
-        // Company recipe administration and personnel results
-        $router->get('recipe-categories', [RecipeCategoryController::class, 'index'])->name('recipe-categories.index');
-        $router->get('recipes/create', [RecipeCreateController::class, 'create'])->name('recipes.create');
-        $router->post('recipes', [RecipeCreateController::class, 'store'])->name('recipes.store');
-        $router->get('recipes/{recipe}/edit', [RecipeEditController::class, 'edit'])->whereNumber('recipe')->name('recipes.edit');
-        $router->put('recipes/{recipe}', [RecipeEditController::class, 'update'])->whereNumber('recipe')->name('recipes.update');
-        $router->put('recipes/{recipe}/position', [RecipeEditController::class, 'move'])->whereNumber('recipe')->name('recipes.position');
-        $router->put('recipes/{recipe}/archive', RecipeArchiveController::class)->whereNumber('recipe')->name('recipes.archive');
-        $router->post('recipe-categories', [RecipeCategoryController::class, 'store'])->name('recipe-categories.store');
-        $router->put('recipe-categories/{recipeCategory}', [RecipeCategoryController::class, 'update'])->whereNumber('recipeCategory')->name('recipe-categories.update');
-        $router->put('recipe-categories/{recipeCategory}/position', [RecipeCategoryController::class, 'move'])->whereNumber('recipeCategory')->name('recipe-categories.position');
-        $router->delete('recipe-categories/{recipeCategory}', [RecipeCategoryController::class, 'destroy'])->whereNumber('recipeCategory')->name('recipe-categories.destroy');
-        $router->get('recipe-test-results', RecipeTestResultIndexController::class)->name('recipe-test-results.index');
-        $router->get('recipe-test-results/{recipeTest}', RecipeTestResultShowController::class)->whereNumber('recipeTest')->name('recipe-test-results.show');
     });

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Models\InventorySession;
-use App\Models\RecipeTestSession;
 use Illuminate\Console\Command;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 
@@ -34,14 +33,6 @@ final class AuditIntegrityCommand extends Command
                 foreach ($sessions as $session) {
                     $found = true;
                     $this->line(\json_encode(['issue' => 'cancelled_inventory_posted', 'session_id' => $session->getKey()], \JSON_THROW_ON_ERROR));
-                }
-            });
-        RecipeTestSession::query()->whereNull('submitted_at')
-            ->whereHas('attempts', static fn($query) => $query->whereNotNull('submitted_at'))
-            ->chunkById(100, function ($sessions) use (&$found): void {
-                foreach ($sessions as $session) {
-                    $found = true;
-                    $this->line(\json_encode(['issue' => 'partially_submitted_recipe_session', 'session_id' => $session->getKey()], \JSON_THROW_ON_ERROR));
                 }
             });
 

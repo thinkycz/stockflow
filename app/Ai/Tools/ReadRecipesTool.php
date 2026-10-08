@@ -4,48 +4,28 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools;
 
-use App\Domain\Recipes\RecipeAdjustmentService;
-use App\Models\Recipe;
-use App\Models\RecipeCategory;
-use App\Models\RecipeInstruction;
-use App\Models\RecipeVariant;
+use App\Domain\Recipes\RecipeCatalogRepository;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\JsonSchema\Types\Type;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
-use Thinkycz\LaravelCore\Support\Resolver;
 use Thinkycz\LaravelCore\Support\Typer;
 
 final class ReadRecipesTool extends AbstractReadResourceTool
 {
-    /**
-     * Words commonly surrounding a recipe name in natural user questions.
-     *
-     * @var list<string>
-     */
-    private const array LOOKUP_STOP_WORDS = [
-        'a', 'an', 'ako', 'and', 'by', 'co', 'dela', 'delame', 'do', 'for', 'how',
-        'i', 'is', 'jak', 'je', 'make', 'mi', 'my', 'nas', 'nase', 'naseho', 'nasi',
-        'of', 'our', 'podle', 'postup', 'prepare', 'pripravit', 'priprava', 'prosim',
-        'recept', 'recipe', 'receptu', 'robi', 'robime', 'sa', 'se', 'show', 'the',
-        'to', 'udelat', 'ukaz', 'what', 'z', 'ze',
-    ];
+    private const array STOP_WORDS = ['a', 'an', 'ako', 'and', 'by', 'co', 'dela', 'delame', 'do', 'for', 'how', 'i', 'is', 'jak', 'je', 'make', 'mi', 'my', 'nas', 'nase', 'naseho', 'nasi', 'of', 'our', 'podle', 'postup', 'prepare', 'pripravit', 'priprava', 'prosim', 'recept', 'recipe', 'receptu', 'robi', 'robime', 'sa', 'se', 'show', 'the', 'to', 'udelat', 'ukaz', 'what', 'z', 'ze'];
 
     /**
-     * Stable provider-facing tool name.
+     * Retain the stable provider-facing recipe read name.
      */
-    public function name(): string
-    {
-        return 'read_recipes';
-    }
+    public function name(): string { return 'read_recipes'; }
 
     /**
-     * Explain the recipe and category datasets available to the model.
+     * Describe full authored recipe lookup and its company scope.
      */
     public function description(): string
     {
-        return 'Read the company recipe catalog. For any named recipe, preparation method, ingredients, or "our recipe" question, use lookup to find matching saved recipes and return their complete variants and ordered instructions in one call. Categories are metadata only and cannot establish whether a recipe exists. Recipes are company-wide, not store-scoped.';
+        return 'Read the authored company recipe library. Use lookup for named recipes or preparation questions to return complete variants, measured ingredients, ordered methods, and related preparations. Recipe identities are category/recipe slugs. Categories alone cannot establish whether a recipe exists. Recipes are company-wide, not store-scoped.';
     }
 
     /**
@@ -53,304 +33,122 @@ final class ReadRecipesTool extends AbstractReadResourceTool
      */
     public function schema(JsonSchema $schema): array
     {
-        $filters = [
-            'dataset' => $schema->string()->enum(['recipes', 'categories'])->required(),
-            'search' => $schema->string(),
-            'category_id' => $schema->integer(),
-            'archived' => $schema->boolean(),
-        ];
+        $filters = ['search' => $schema->string(), 'category' => $schema->string()];
 
-        return [
-            'request' => $schema->anyOf([
-                $schema->object([
-                    'operation' => $schema->string()->enum(['lookup'])->required(),
-                    'dataset' => $schema->string()->enum(['recipes'])->required(),
-                    'query' => $schema->string()
-                        ->description('Recipe name or natural question containing the recipe name. Use this for named recipe, ingredient, and preparation questions.')
-                        ->required(),
-                    'archived' => $schema->boolean(),
-                    'limit' => $schema->integer()->min(1)->max(50),
-                    'cursor' => $schema->string(),
-                ])->withoutAdditionalProperties(),
-                $schema->object([
-                    'operation' => $schema->string()->enum(['list'])->required(),
-                    ...$filters,
-                    'limit' => $schema->integer()->min(1)->max(50),
-                    'cursor' => $schema->string(),
-                ])->withoutAdditionalProperties(),
-                $schema->object([
-                    'operation' => $schema->string()->enum(['detail'])->required(),
-                    'dataset' => $schema->string()->enum(['recipes', 'categories'])->required(),
-                    'id' => $schema->integer()->required(),
-                ])->withoutAdditionalProperties(),
-                $schema->object([
-                    'operation' => $schema->string()->enum(['summary'])->required(),
-                    ...$filters,
-                ])->withoutAdditionalProperties(),
-            ])->required(),
-        ];
+        return ['request' => $schema->anyOf([
+            $schema->object(['operation' => $schema->string()->enum(['lookup'])->required(), 'dataset' => $schema->string()->enum(['recipes'])->required(), 'query' => $schema->string()->required(), 'category' => $schema->string(), 'limit' => $schema->integer()->min(1)->max(50), 'cursor' => $schema->string()])->withoutAdditionalProperties(),
+            $schema->object(['operation' => $schema->string()->enum(['list'])->required(), 'dataset' => $schema->string()->enum(['recipes', 'categories']), ...$filters, 'limit' => $schema->integer()->min(1)->max(50), 'cursor' => $schema->string()])->withoutAdditionalProperties(),
+            $schema->object(['operation' => $schema->string()->enum(['detail'])->required(), 'dataset' => $schema->string()->enum(['recipes', 'categories']), 'id' => $schema->string()->description('Category slug, or category/recipe slug for a recipe.')->required()])->withoutAdditionalProperties(),
+            $schema->object(['operation' => $schema->string()->enum(['summary'])->required(), 'dataset' => $schema->string()->enum(['recipes', 'categories']), ...$filters])->withoutAdditionalProperties(),
+        ])->required()];
     }
 
-    /**
-     * @param array<string, mixed> $request
-     *
+    /** @param array<string, mixed> $request
      * @return array<string, mixed>
      */
     protected function execute(array $request): array
     {
+        $catalog = new RecipeCatalogRepository();
         $operation = Typer::parseNullableString($request['operation'] ?? null) ?? 'list';
-        $dataset = $this->dataset($request);
-
-        if ($dataset === 'categories') {
-            return $this->withCompanyContext($this->categories($request, $operation), true);
-        }
-        if ($dataset !== 'recipes') {
+        $dataset = Typer::parseNullableString($request['dataset'] ?? null) ?? 'recipes';
+        if (!\in_array($dataset, ['recipes', 'categories'], true)) {
             throw new InvalidArgumentException('Unknown recipe dataset.');
         }
-
-        $query = Recipe::query()->with(['category', 'variants.instructions']);
-        Recipe::scopeForUser($query, $this->actor->resolveScopeUser());
-
-        if ($operation === 'lookup') {
-            return $this->lookup($query, $request);
+        if (!\in_array($operation, ['lookup', 'list', 'detail', 'summary'], true) || ($operation === 'lookup' && $dataset !== 'recipes')) {
+            throw new InvalidArgumentException('Unknown recipe operation.');
         }
-
-        $this->applyRecipeFilters($query, $request);
-
+        $records = $dataset === 'categories'
+            ? \array_map(static fn(array $category): array => ['id' => $category['key'], ...$category, 'url' => '/recipes?category=' . $category['key']], $catalog->categories())
+            : \array_map(static fn(array $recipe): array => ['id' => $recipe['key'], ...$recipe], $catalog->recipes());
         if ($operation === 'detail') {
-            $id = Typer::parseNullableInt($request['id'] ?? null);
-            if ($id === null) {
-                throw new InvalidArgumentException('A recipe identifier is required.');
+            $id = Typer::parseNullableString($request['id'] ?? null) ?? throw new InvalidArgumentException('A recipe slug is required.');
+            $record = \array_find($records, static fn(array $record): bool => $record['id'] === $id) ?? throw new InvalidArgumentException('Unknown recipe slug.');
+
+            return $this->context($this->detailResult($request, $dataset, $record), $dataset);
+        }
+        $search = Typer::parseNullableString($request[$operation === 'lookup' ? 'query' : 'search'] ?? null) ?? '';
+        $tokens = $this->tokens($search, $operation === 'lookup');
+        if ($operation === 'lookup' && $tokens === []) {
+            throw new InvalidArgumentException('Include a recipe name or distinctive recipe words.');
+        }
+        $category = Typer::parseNullableString($request['category'] ?? null);
+        $records = \array_values(\array_filter($records, static function (array $record) use ($tokens, $category): bool {
+            if ($category !== null && isset($record['category']) && $record['category']['key'] !== $category) {
+                return false;
+            }
+            $haystack = Str::lower(Str::ascii($record['name'] . ' ' . \implode(' ', $record['aliases'] ?? []) . ' ' . ($record['category']['name'] ?? '')));
+            foreach ($tokens as $token) {
+                if (!\str_contains($haystack, $token)) {
+                    return false;
+                }
             }
 
-            return $this->withCompanyContext(
-                $this->detailResult($request, 'recipes', $this->recipeRecord($query->findOrFail($id), true)),
-            );
-        }
-
+            return true;
+        }));
         if ($operation === 'summary') {
-            $recipes = $query->get();
+            return $this->context($this->summaryResult($request, $dataset, $dataset === 'categories'
+                ? ['category_count' => \count($records)]
+                : ['recipe_count' => \count($records), 'variant_count' => \array_sum(\array_map(static fn(array $record): int => \count($record['variants'] ?? []), $records))]), $dataset);
+        }
+        if ($operation === 'list' && $dataset === 'recipes') {
+            $records = \array_map(static function (array $record): array {
+                $record['variant_count'] = \count($record['variants'] ?? []);
+                unset($record['variants']);
 
-            return $this->withCompanyContext($this->summaryResult($request, 'recipes', [
-                'recipe_count' => $recipes->count(),
-                'archived_count' => $recipes->filter(static fn(Recipe $recipe): bool => $recipe->isArchived())->count(),
-                'variant_count' => $recipes->sum(static fn(Recipe $recipe): int => $recipe->getVariants()->count()),
-            ], $recipes->isEmpty() ? 'NO_MATCHING_DATA' : null));
+                return $record;
+            }, $records);
+        }
+        $hash = \hash('sha256', \json_encode($catalog->recipes(), \JSON_THROW_ON_ERROR));
+        $state = $this->cursorState($request, $dataset, $request);
+        if (isset($state['after']['hash']) && $state['after']['hash'] !== $hash) {
+            return $this->dataChangedResult($request, $dataset, $state['as_of']);
+        }
+        $after = Typer::parseNullableString($state['after']['id'] ?? null);
+        if ($after !== null) {
+            $index = \array_search($after, \array_column($records, 'id'), true);
+            if ($index === false) {
+                throw new InvalidArgumentException('The recipe cursor is no longer valid.');
+            }
+            $records = \array_slice($records, $index + 1);
+        }
+        $limit = $this->limit($request);
+        $page = \array_slice($records, 0, $limit);
+        $result = $this->listResult($request, $dataset, $page, $request, $limit < \count($records), ['id' => $page === [] ? null : $page[\array_key_last($page)]['id'], 'hash' => $hash]);
+        if ($operation === 'lookup') {
+            $result['matched_terms'] = $tokens;
         }
 
-        if ($operation !== 'list') {
-            throw new InvalidArgumentException('Unknown recipe read operation.');
-        }
-
-        return $this->withCompanyContext($this->paginateById(
-            $query,
-            $request,
-            'recipes',
-            $request,
-            fn(Recipe $recipe): array => $this->recipeRecord($recipe, false),
-        ));
+        return $this->context($result, $dataset);
     }
 
     /**
-     * Resource identifier used by cursors, envelopes, and audits.
+     * Use the existing resource identity for envelopes and cursor binding.
      */
-    protected function resource(): string
-    {
-        return 'recipes';
-    }
-
-    /**
-     * @param array<string, mixed> $request
-     */
-    protected function dataset(array $request): string
-    {
-        return Typer::parseNullableString($request['dataset'] ?? null) ?? 'recipes';
-    }
-
-    /**
-     * @param Builder<Recipe> $query
-     * @param array<string, mixed> $request
-     *
-     * @return array<string, mixed>
-     */
-    private function lookup(Builder $query, array $request): array
-    {
-        $lookup = Typer::parseNullableString($request['query'] ?? null);
-        if ($lookup === null || \mb_trim($lookup) === '') {
-            throw new InvalidArgumentException('A recipe name or question is required for lookup.');
-        }
-
-        $tokens = $this->lookupTokens($lookup);
-        if ($tokens === []) {
-            throw new InvalidArgumentException('Include the recipe name or distinctive recipe words in the lookup query.');
-        }
-
-        foreach ($tokens as $token) {
-            $query->where(static function (Builder $query) use ($token): void {
-                $query->where('name', 'like', '%' . $token . '%')
-                    ->orWhere('note', 'like', '%' . $token . '%');
-            });
-        }
-        if (\array_key_exists('archived', $request)) {
-            (bool) $request['archived']
-                ? $query->whereNotNull('archived_at')
-                : $query->whereNull('archived_at');
-        } else {
-            $query->whereNull('archived_at');
-        }
-
-        $result = $this->paginateById(
-            $query,
-            $request,
-            'recipes',
-            $request,
-            fn(Recipe $recipe): array => $this->recipeRecord($recipe, true),
-        );
-        $result['matched_terms'] = $tokens;
-
-        return $this->withCompanyContext($result);
-    }
-
-    /**
-     * @param Builder<Recipe> $query
-     * @param array<string, mixed> $request
-     */
-    private function applyRecipeFilters(Builder $query, array $request): void
-    {
-        $search = Typer::parseNullableString($request['search'] ?? null);
-        if ($search !== null && \mb_trim($search) !== '') {
-            Recipe::scopeSearch($query, \mb_trim($search));
-        }
-        $categoryId = Typer::parseNullableInt($request['category_id'] ?? null);
-        if ($categoryId !== null) {
-            $query->where('recipe_category_id', $categoryId);
-        }
-        if (\array_key_exists('archived', $request)) {
-            (bool) $request['archived']
-                ? $query->whereNotNull('archived_at')
-                : $query->whereNull('archived_at');
-        }
-    }
+    protected function resource(): string { return 'recipes'; }
 
     /**
      * @return list<string>
      */
-    private function lookupTokens(string $lookup): array
+    private function tokens(string $query, bool $natural): array
     {
-        $parts = \preg_split('/[^a-z0-9]+/', Str::lower(Str::ascii($lookup)), flags: \PREG_SPLIT_NO_EMPTY);
-        if ($parts === false) {
-            return [];
-        }
+        $tokens = \preg_split('/[^a-z0-9]+/', Str::lower(Str::ascii($query)), flags: \PREG_SPLIT_NO_EMPTY);
 
-        return \array_values(\array_unique(\array_filter(
-            $parts,
-            static fn(string $part): bool => \mb_strlen($part) >= 2 &&
-                !\in_array($part, self::LOOKUP_STOP_WORDS, true),
-        )));
+        return \array_values(\array_filter(
+            $tokens === false ? [] : $tokens,
+            static fn(string $token): bool => !$natural || (\mb_strlen($token) >= 2 && !\in_array($token, self::STOP_WORDS, true)),
+        ));
     }
 
-    /**
-     * @param array<string, mixed> $request
-     *
+    /** @param array<string, mixed> $result
      * @return array<string, mixed>
      */
-    private function categories(array $request, string $operation): array
-    {
-        $query = RecipeCategory::query()->where('user_id', $this->actor->resolveScopeUser()->getKey());
-        $search = Typer::parseNullableString($request['search'] ?? null);
-        if ($search !== null && \mb_trim($search) !== '') {
-            RecipeCategory::scopeSearch($query, \mb_trim($search));
-        }
-        $map = static fn(RecipeCategory $category): array => [
-            'id' => $category->getKey(),
-            'name' => $category->getName(),
-            'position' => $category->getPosition(),
-            'url' => Resolver::resolveUrlGenerator()->route('recipe-categories.index'),
-        ];
-
-        if ($operation === 'detail') {
-            $id = Typer::parseNullableInt($request['id'] ?? null);
-            if ($id === null) {
-                throw new InvalidArgumentException('A recipe category identifier is required.');
-            }
-
-            return $this->detailResult($request, 'categories', $map($query->findOrFail($id)));
-        }
-
-        if ($operation === 'summary') {
-            $count = $query->count();
-
-            return $this->summaryResult(
-                $request,
-                'categories',
-                ['category_count' => $count],
-                $count === 0 ? 'NO_MATCHING_DATA' : null,
-            );
-        }
-
-        if ($operation !== 'list') {
-            throw new InvalidArgumentException('Unknown recipe category operation.');
-        }
-
-        return $this->paginateById($query, $request, 'categories', $request, $map);
-    }
-
-    /**
-     * @param array<string, mixed> $result
-     *
-     * @return array<string, mixed>
-     */
-    private function withCompanyContext(array $result, bool $categoriesOnly = false): array
+    private function context(array $result, string $dataset): array
     {
         $result['scope'] = ['type' => 'company', 'store_scoped' => false];
-        if ($categoriesOnly) {
-            $result['capability'] = [
-                'can_determine_recipe_existence' => false,
-                'recipe_lookup_operation' => 'lookup',
-                'recipe_lookup_dataset' => 'recipes',
-            ];
+        if ($dataset === 'categories') {
+            $result['capability'] = ['can_determine_recipe_existence' => false, 'recipe_lookup_operation' => 'lookup', 'recipe_lookup_dataset' => 'recipes'];
         }
 
         return $result;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function recipeRecord(Recipe $recipe, bool $includeInstructions): array
-    {
-        $isDrink = Str::upper($recipe->getCategory()->getName()) !== 'PREPARATIONS';
-        $adjustmentService = new RecipeAdjustmentService();
-
-        return [
-            'id' => $recipe->getKey(),
-            'category_id' => $recipe->getCategoryId(),
-            'category_name' => $recipe->getCategory()->getName(),
-            'name' => $recipe->getName(),
-            'note' => $recipe->getNote(),
-            'position' => $recipe->getPosition(),
-            'archived' => $recipe->isArchived(),
-            'variants' => $recipe->getVariants()->map(static fn(RecipeVariant $variant): array => [
-                'id' => $variant->getKey(),
-                'name' => $variant->getName(),
-                'position' => $variant->getPosition(),
-                'topping_adjustments' => $isDrink ? $adjustmentService->forVariant($variant) : null,
-                ...($includeInstructions ? [
-                    'instructions' => $variant->getInstructions()->map(static fn(RecipeInstruction $instruction): array => [
-                        'id' => $instruction->getKey(),
-                        'type' => $instruction->getType(),
-                        'text' => $instruction->getText(),
-                        'action_key' => $instruction->getActionKey(),
-                        'quantity_value' => $instruction->getQuantityValue(),
-                        'quantity_text' => $instruction->getQuantityText(),
-                        'unit' => $instruction->getUnit(),
-                        'ingredient_name' => $instruction->getIngredientName(),
-                        'target' => $instruction->getTarget(),
-                        'icon_group' => $instruction->getIconGroup(),
-                    ])->values()->all(),
-                ] : []),
-            ])->values()->all(),
-            'url' => Resolver::resolveUrlGenerator()->route('recipes.show', $recipe->getKey()),
-        ];
     }
 }

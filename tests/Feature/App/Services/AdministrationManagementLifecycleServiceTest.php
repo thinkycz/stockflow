@@ -18,8 +18,6 @@ use App\Models\GiftVoucher;
 use App\Models\GiftVoucherEvent;
 use App\Models\InventorySession;
 use App\Models\NoticeboardCard;
-use App\Models\Recipe;
-use App\Models\RecipeCategory;
 use App\Models\Shift;
 use App\Models\ShiftPreset;
 use App\Models\ShiftRequest;
@@ -49,11 +47,6 @@ use Illuminate\Support\Facades\DB;
         'user_id' => $admin->getKey(),
         'store_id' => $store->getKey(),
         'date' => '2025-01-01',
-    ]);
-    $recipeCategory = RecipeCategory::factory()->create(['user_id' => $admin->getKey()]);
-    $recipe = Recipe::factory()->create([
-        'user_id' => $admin->getKey(),
-        'recipe_category_id' => $recipeCategory->getKey(),
     ]);
 
     /** @var array<string, callable(Worker): array{table: string, id: int}> $references */
@@ -156,47 +149,6 @@ use Illuminate\Support\Facades\DB;
             ]);
 
             return ['table' => 'checklist_events', 'id' => $id];
-        },
-        'recipe_test_attempts.worker_id' => static function (Worker $worker) use ($admin, $recipe): array {
-            $id = DB::table('recipe_test_attempts')->insertGetId([
-                'user_id' => $admin->getKey(),
-                'recipe_id' => $recipe->getKey(),
-                'recipe_variant_id' => null,
-                'worker_id' => $worker->getKey(),
-                'actor_user_id' => null,
-                'recipe_name' => $recipe->getName(),
-                'variant_name' => null,
-                'worker_name' => $worker->getFullName(),
-                'actor_name' => $admin->getEmail(),
-                'correct_steps' => \json_encode(['first', 'second'], \JSON_THROW_ON_ERROR),
-                'presented_tokens' => \json_encode(['second', 'first'], \JSON_THROW_ON_ERROR),
-                'submitted_tokens' => null,
-                'score' => null,
-                'passed' => null,
-                'started_at' => \now(),
-                'submitted_at' => null,
-                'created_at' => \now(),
-                'updated_at' => \now(),
-            ]);
-
-            return ['table' => 'recipe_test_attempts', 'id' => $id];
-        },
-        'recipe_test_sessions.worker_id' => static function (Worker $worker) use ($admin): array {
-            $id = DB::table('recipe_test_sessions')->insertGetId([
-                'user_id' => $admin->getKey(),
-                'worker_id' => $worker->getKey(),
-                'actor_user_id' => null,
-                'worker_name' => $worker->getFullName(),
-                'actor_name' => $admin->getEmail(),
-                'score' => null,
-                'passed' => null,
-                'started_at' => \now(),
-                'submitted_at' => null,
-                'created_at' => \now(),
-                'updated_at' => \now(),
-            ]);
-
-            return ['table' => 'recipe_test_sessions', 'id' => $id];
         },
     ];
 

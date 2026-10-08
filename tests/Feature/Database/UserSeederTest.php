@@ -6,7 +6,6 @@ use App\Models\User;
 use Database\Factories\UserFactory;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\ItemSeeder;
-use Database\Seeders\RecipeCatalogSeeder;
 use Database\Seeders\StoreSeeder;
 use Database\Seeders\UserSeeder;
 
@@ -37,5 +36,4 @@ use Database\Seeders\UserSeeder;
     UserSeeder::class,
     StoreSeeder::class,
     ItemSeeder::class,
-    RecipeCatalogSeeder::class,
 ]);

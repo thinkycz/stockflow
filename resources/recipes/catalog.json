@@ -1,0 +1,47 @@
+[
+    {
+        "key": "matcha-latte",
+        "name": "MATCHA LATTE",
+        "position": 1
+    },
+    {
+        "key": "matcha-cloud",
+        "name": "MATCHA CLOUD",
+        "position": 2
+    },
+    {
+        "key": "matcha-specials",
+        "name": "MATCHA SPECIALS",
+        "position": 3
+    },
+    {
+        "key": "summer-drinks",
+        "name": "SUMMER DRINKS",
+        "position": 4
+    },
+    {
+        "key": "fresh-fruit-tea",
+        "name": "FRESH FRUIT TEA",
+        "position": 5
+    },
+    {
+        "key": "milk-tea",
+        "name": "MILK TEA",
+        "position": 6
+    },
+    {
+        "key": "creamy-coconut",
+        "name": "CREAMY COCONUT",
+        "position": 7
+    },
+    {
+        "key": "hot-drinks",
+        "name": "HOT DRINKS",
+        "position": 8
+    },
+    {
+        "key": "preparations",
+        "name": "PREPARATIONS",
+        "position": 9
+    }
+]

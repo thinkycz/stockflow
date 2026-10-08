@@ -1,281 +1,193 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import {
-    Archive,
-    ArrowDown,
-    ArrowUp,
-    ClipboardCheck,
-    FolderCog,
-    Pencil,
-    Plus,
-    RotateCcw,
-    Search,
-    Trophy,
-} from '@lucide/vue';
+import { ArrowUpRight, BookOpen, ListFilter } from '@lucide/vue';
+import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
-import Badge from '@/components/ui/Badge.vue';
-import Button from '@/components/ui/Button.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
-import DropdownMenu from '@/components/ui/DropdownMenu.vue';
-import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
-import DropdownMenuSeparator from '@/components/ui/DropdownMenuSeparator.vue';
-import Input from '@/components/ui/Input.vue';
-import Label from '@/components/ui/Label.vue';
-import Modal from '@/components/ui/Modal.vue';
-import Pagination from '@/components/ui/Pagination.vue';
-import Select from '@/components/ui/Select.vue';
-import {
-    useRecipeCatalog,
-    type RecipeCatalogProps,
-} from '@/features/recipes/useRecipeCatalog';
+import Button from '@/components/ui/Button.vue';
+import RecipeQuickLookup from '@/features/recipes/components/RecipeQuickLookup.vue';
+import RecipeIllustration from '@/features/recipes/components/RecipeIllustration.vue';
+import { searchRecipes } from '@/features/recipes/search';
+import type {
+    RecipeCategory,
+    RecipeLookupEntry,
+    RecipeSummary,
+} from '@/features/recipes/types';
 
-const props = defineProps<RecipeCatalogProps>();
-const {
-    t,
-    route,
-    filters,
-    testModalOpen,
-    workerId,
-    starting,
-    canStartTest,
-    groupedRecipes,
-    applyFilters,
-    setArchived,
-    moveRecipe,
-    startTest,
-} = useRecipeCatalog(props);
+const props = defineProps<{
+    categories: RecipeCategory[];
+    lookup: RecipeLookupEntry[];
+    recipes: RecipeSummary[];
+    filters: { search: string; category: string };
+}>();
+const { t } = useI18n();
+const query = ref(props.filters.search);
+const category = ref(
+    props.categories.some((item) => item.key === props.filters.category)
+        ? props.filters.category
+        : '',
+);
+const matching = computed(
+    () =>
+        new Set(
+            searchRecipes(props.lookup, query.value).map((entry) => entry.key),
+        ),
+);
+const groups = computed(() =>
+    props.categories
+        .filter((item) => !category.value || item.key === category.value)
+        .map((item) => ({
+            ...item,
+            recipes: props.recipes.filter(
+                (recipe) =>
+                    recipe.category.key === item.key &&
+                    matching.value.has(recipe.key),
+            ),
+        }))
+        .filter((item) => item.recipes.length),
+);
+const count = computed(() =>
+    groups.value.reduce((total, group) => total + group.recipes.length, 0),
+);
+watch([query, category], () => {
+    const url = new URL(window.location.href);
+    for (const [key, value] of [
+        ['search', query.value],
+        ['category', category.value],
+    ]) {
+        if (value) url.searchParams.set(key!, value);
+        else url.searchParams.delete(key!);
+    }
+    window.history.replaceState(window.history.state, '', url);
+});
 </script>
 
 <template>
     <AppLayout :title="t('recipes.title')">
-        <div class="mx-auto max-w-5xl space-y-5">
-            <header class="flex flex-wrap items-start justify-between gap-3">
+        <div class="mx-auto max-w-6xl space-y-7">
+            <header class="flex items-start justify-between gap-4">
                 <div>
-                    <h1 class="font-heading text-2xl font-bold text-on-surface">
+                    <div
+                        class="mb-2 flex items-center gap-2 text-xs font-semibold tracking-wide text-primary uppercase"
+                    >
+                        <BookOpen :size="15" />{{ t('recipes.library_label') }}
+                    </div>
+                    <h1 class="font-heading text-3xl font-bold text-on-surface">
                         {{ t('recipes.title') }}
                     </h1>
-                    <p class="mt-1 text-sm text-on-surface-variant">
+                    <p
+                        class="mt-2 max-w-xl text-sm leading-6 text-on-surface-variant"
+                    >
                         {{ t('recipes.subtitle') }}
                     </p>
                 </div>
-                <div v-if="is_admin" class="flex flex-wrap gap-2">
-                    <Link :href="route('recipe-categories.index')">
-                        <Button variant="ghost" size="compact">
-                            <FolderCog :size="15" />{{
-                                t('recipes.categories.manage')
-                            }}
-                        </Button>
-                    </Link>
-                    <Link :href="route('recipe-test-results.index')">
-                        <Button variant="secondary" size="compact">
-                            <Trophy :size="15" />{{
-                                t('recipes.results.title')
-                            }}
-                        </Button>
-                    </Link>
-                    <Link :href="route('recipes.create')">
-                        <Button size="compact">
-                            <Plus :size="15" />{{ t('recipes.create') }}
-                        </Button>
-                    </Link>
-                </div>
-                <div v-else class="flex flex-col items-end gap-1">
-                    <Button
-                        :disabled="!canStartTest"
-                        size="compact"
-                        @click="testModalOpen = true"
-                    >
-                        <ClipboardCheck :size="16" />{{
-                            t('recipes.test.start')
-                        }}
-                    </Button>
-                    <p
-                        v-if="testable_recipe_count < 3"
-                        class="max-w-64 text-right text-xs text-on-surface-variant"
-                    >
-                        {{ t('recipes.test.not_enough_recipes') }}
-                    </p>
-                </div>
+                <span
+                    class="hidden rounded-2xl border border-outline-glass bg-white px-4 py-3 text-center sm:block"
+                    ><strong class="block text-2xl font-bold text-primary">{{
+                        recipes.length
+                    }}</strong
+                    ><span class="text-xs text-on-surface-variant">{{
+                        t('recipes.count_label')
+                    }}</span></span
+                >
             </header>
 
-            <form
-                class="flex flex-col gap-2 sm:flex-row"
-                @submit.prevent="applyFilters"
+            <section
+                class="rounded-2xl border border-outline-glass bg-primary/4 p-4 sm:p-5"
             >
-                <div class="relative min-w-0 flex-1">
-                    <Search
-                        class="absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant"
-                        :size="15"
-                    />
-                    <Input
-                        v-model="filters.search"
-                        class="pl-9"
-                        :placeholder="t('recipes.search_placeholder')"
-                        :aria-label="t('common.search')"
-                    />
-                </div>
-                <Select
-                    v-model="filters.category_id"
-                    class="sm:w-56"
-                    :aria-label="t('recipes.category')"
-                    :options="[
-                        { value: '', label: t('recipes.all_categories') },
-                        ...categories.map((category) => ({
-                            value: String(category.id),
-                            label: category.name,
-                        })),
-                    ]"
-                />
-                <Button type="submit" variant="secondary" size="compact">
-                    {{ t('common.apply') }}
+                <RecipeQuickLookup v-model="query" :entries="lookup" />
+            </section>
+
+            <nav
+                class="flex flex-wrap gap-2"
+                :aria-label="t('recipes.category_filter')"
+            >
+                <Button
+                    type="button"
+                    :aria-pressed="category === ''"
+                    :variant="category === '' ? 'primary' : 'secondary'"
+                    @click="category = ''"
+                >
+                    {{ t('recipes.all_categories') }}
+                    <span class="ml-1 opacity-70">{{ recipes.length }}</span>
                 </Button>
                 <Button
-                    v-if="is_admin"
+                    v-for="item in categories"
+                    :key="item.key"
                     type="button"
-                    :variant="filters.archived ? 'primary' : 'ghost'"
-                    size="compact"
-                    @click="
-                        filters.archived = !filters.archived;
-                        applyFilters();
-                    "
+                    :aria-pressed="category === item.key"
+                    :variant="category === item.key ? 'primary' : 'secondary'"
+                    @click="category = item.key"
                 >
-                    <Archive :size="14" />{{
-                        filters.archived
-                            ? t('recipes.archived')
-                            : t('recipes.active')
-                    }}
+                    {{ item.name }}
+                    <span class="ml-1 opacity-70">{{ item.recipe_count }}</span>
                 </Button>
-            </form>
+            </nav>
 
-            <template v-if="recipes.data.length">
-                <section
-                    v-for="category in groupedRecipes"
-                    :key="category.id"
-                    class="space-y-1"
-                >
+            <div
+                class="flex items-center gap-2 text-xs text-on-surface-variant"
+                role="status"
+                aria-live="polite"
+            >
+                <ListFilter :size="14" />{{ t('recipes.showing', { count }) }}
+            </div>
+            <section v-for="group in groups" :key="group.key" class="space-y-3">
+                <div class="flex items-center gap-3">
                     <h2
-                        class="px-2 pt-3 text-xs font-bold tracking-[0.14em] text-on-surface-variant uppercase"
+                        class="text-xs font-bold tracking-[0.12em] text-on-surface-variant"
                     >
-                        {{ category.name }}
+                        {{ group.name }}
                     </h2>
-                    <ul
-                        class="divide-y divide-outline-glass overflow-visible rounded-xl border border-outline-glass bg-white"
+                    <span class="h-px flex-1 bg-outline-glass" /><span
+                        class="text-xs text-on-surface-variant"
+                        >{{ group.recipes.length }}</span
                     >
-                        <li
-                            v-for="recipe in category.recipes"
-                            :key="recipe.id"
-                            class="flex min-h-11 items-center gap-2 px-3"
-                            data-testid="recipe-catalog-row"
-                        >
-                            <Link
-                                :href="route('recipes.show', recipe.id)"
-                                class="min-w-0 flex-1 py-2.5 text-sm font-semibold text-on-surface hover:text-primary"
+                </div>
+                <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    <Link
+                        v-for="recipe in group.recipes"
+                        :key="recipe.key"
+                        :href="recipe.url"
+                        class="group flex items-center gap-3 rounded-2xl border border-outline-glass bg-white p-3 transition hover:border-primary/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                        data-testid="recipe-catalog-row"
+                    >
+                        <RecipeIllustration
+                            :tags="recipe.tags"
+                            small
+                            class="shrink-0"
+                        />
+                        <div class="min-w-0 flex-1">
+                            <h3
+                                class="text-sm leading-5 font-bold text-on-surface group-hover:text-primary"
                             >
                                 {{ recipe.name }}
-                            </Link>
-                            <Badge v-if="recipe.archived" variant="warning">
-                                {{ t('recipes.archived') }}
-                            </Badge>
-                            <DropdownMenu
-                                v-if="is_admin"
-                                :label="t('recipes.row_actions')"
+                            </h3>
+                            <p
+                                class="mt-1.5 line-clamp-2 text-xs leading-5 text-on-surface-variant"
                             >
-                                <DropdownMenuItem
-                                    :href="route('recipes.edit', recipe.id)"
-                                >
-                                    <Pencil :size="16" />{{ t('common.edit') }}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    @select="moveRecipe(recipe.id, 'up')"
-                                >
-                                    <ArrowUp :size="16" />{{
-                                        t('common.move_up')
-                                    }}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    @select="moveRecipe(recipe.id, 'down')"
-                                >
-                                    <ArrowDown :size="16" />{{
-                                        t('common.move_down')
-                                    }}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    :tone="
-                                        recipe.archived ? 'default' : 'danger'
-                                    "
-                                    @select="
-                                        setArchived(recipe, !recipe.archived)
-                                    "
-                                >
-                                    <RotateCcw
-                                        v-if="recipe.archived"
-                                        :size="16"
-                                    />
-                                    <Archive v-else :size="16" />
-                                    {{
-                                        recipe.archived
-                                            ? t('recipes.restore')
-                                            : t('recipes.archive')
-                                    }}
-                                </DropdownMenuItem>
-                            </DropdownMenu>
-                        </li>
-                    </ul>
-                </section>
-            </template>
+                                {{ recipe.summary }}
+                            </p>
+                            <span
+                                class="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-primary"
+                                >{{
+                                    t(
+                                        recipe.variant_count > 1
+                                            ? 'recipes.variants_count'
+                                            : 'recipes.view_recipe',
+                                        { count: recipe.variant_count },
+                                    )
+                                }}<ArrowUpRight :size="13"
+                            /></span>
+                        </div>
+                    </Link>
+                </div>
+            </section>
             <EmptyState
-                v-else
-                :title="t('recipes.empty')"
+                v-if="!count"
+                :title="t('recipes.no_matches')"
                 :description="t('recipes.empty_help')"
             />
-
-            <Pagination
-                v-if="recipes.last_page > 1"
-                :current-page="recipes.current_page"
-                :last-page="recipes.last_page"
-                :total="recipes.total"
-                :per-page="recipes.per_page"
-                :base-url="route('recipes.index')"
-                :query-params="{
-                    search: filters.search || undefined,
-                    category_id: filters.category_id || undefined,
-                    archived: filters.archived ? 1 : undefined,
-                }"
-            />
         </div>
-
-        <Modal
-            :open="testModalOpen"
-            :title="t('recipes.test.choose_worker')"
-            @close="testModalOpen = false"
-        >
-            <Label for="test-worker" required>{{
-                t('recipes.test.worker')
-            }}</Label>
-            <Select
-                id="test-worker"
-                v-model="workerId"
-                class="mt-1"
-                :options="
-                    workers.map((worker) => ({
-                        value: String(worker.id),
-                        label: worker.name,
-                    }))
-                "
-                :placeholder="t('recipes.test.choose_worker_placeholder')"
-            />
-            <p class="mt-3 text-xs text-on-surface-variant">
-                {{ t('recipes.test.session_explanation') }}
-            </p>
-            <template #footer>
-                <Button variant="secondary" @click="testModalOpen = false">{{
-                    t('common.cancel')
-                }}</Button>
-                <Button :disabled="!workerId || starting" @click="startTest">{{
-                    starting ? t('common.saving') : t('recipes.test.start')
-                }}</Button>
-            </template>
-        </Modal>
     </AppLayout>
 </template>

@@ -169,8 +169,6 @@ class WorkerManagementService
             ['payroll_worker_entries', 'worker_id'],
             ['checklist_items', 'completed_by_worker_id'],
             ['checklist_events', 'worker_id'],
-            ['recipe_test_attempts', 'worker_id'],
-            ['recipe_test_sessions', 'worker_id'],
         ];
 
         foreach ($references as [$table, $column]) {

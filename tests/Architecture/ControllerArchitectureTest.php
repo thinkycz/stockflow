@@ -49,12 +49,18 @@ declare(strict_types=1);
     \expect(\is_dir(\base_path('app/Http/Controllers/Admin')))->toBeFalse();
 });
 
-\arch('web index controllers declare a TAKE constant', function (): void {
+\arch('database indexes declare TAKE while the file recipe library supports complete local lookup', function (): void {
     foreach (\arch_php_files(\base_path('app/Http/Controllers/Web')) as $file) {
         if (!\str_ends_with($file, 'IndexController.php')) {
             continue;
         }
         $contents = (string) \file_get_contents($file);
+
+        if ($file === \base_path('app/Http/Controllers/Web/Recipe/RecipeIndexController.php')) {
+            \expect($contents)->toContain('RecipeCatalogRepository')->not->toContain('paginate(');
+
+            continue;
+        }
 
         \expect($contents)->toMatch('/public const int TAKE/');
     }

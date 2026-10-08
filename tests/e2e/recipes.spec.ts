@@ -1,9 +1,6 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
-async function login(
-    page: import('@playwright/test').Page,
-    email: string,
-): Promise<void> {
+async function login(page: Page, email = 'test@test.com'): Promise<void> {
     await page.goto('/login');
     await page.getByLabel('Email').fill(email);
     await page.getByLabel('Password', { exact: true }).fill('password');
@@ -11,226 +8,248 @@ async function login(
     await page.waitForURL(/\/dashboard$/);
 }
 
-function normalized(value: string): string {
-    return value.replace(/\s+/g, ' ').trim().toLowerCase();
+async function noOverflow(page: Page): Promise<void> {
+    expect(
+        await page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+    ).toBe(true);
 }
 
-function instructionKey(
-    text: string,
-    instructionId: string | null,
-    quantityValue: string | null,
-    unitValue: string | null,
-): { key: string; amount: string | null } {
-    if (
-        instructionId &&
-        quantityValue !== null &&
-        ['g', 'ml'].includes((unitValue ?? '').toLowerCase())
-    ) {
-        return { key: `id|${instructionId}`, amount: quantityValue };
-    }
-    const match = normalized(text).match(/^add ([\d.,]+) (g|ml) (.+)$/);
-    if (!match)
-        return {
-            key: instructionId
-                ? `id|${instructionId}`
-                : `text|${normalized(text)}`,
-            amount: null,
-        };
-    const [, amount = '', unit = '', remainder = ''] = match;
-    const [ingredient = '', target = ''] = remainder.split(' into ');
-    return {
-        key: instructionId
-            ? `id|${instructionId}`
-            : `amount|${unit}|${ingredient}|${target}`,
-        amount,
-    };
+async function capture(page: Page, filename: string): Promise<void> {
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({
+        path: `output/playwright/${filename}.png`,
+        fullPage: true,
+        animations: 'disabled',
+    });
 }
 
-async function completeCurrentRecipe(
-    page: import('@playwright/test').Page,
-): Promise<void> {
-    const recipeName =
-        (await page.getByTestId('session-recipe-name').textContent())?.trim() ??
-        '';
-    const variantLabel = page.getByTestId('session-variant-name');
-    const variantName =
-        (await variantLabel.count()) > 0
-            ? ((await variantLabel.textContent())?.trim() ?? '')
-            : '';
-    const reference = await page.context().newPage();
-    await reference.goto(`/recipes?search=${encodeURIComponent(recipeName)}`);
-    await reference
-        .getByRole('link', { name: recipeName, exact: true })
-        .click();
-    await expect(
-        reference.getByRole('heading', { name: recipeName, exact: true }),
-    ).toBeVisible();
-    if (variantName && (await reference.getByRole('tablist').count()) > 0) {
-        await reference
-            .getByRole('tab', { name: variantName, exact: true })
-            .click();
-    }
-    await expect(
-        reference.getByTestId('recipe-instruction').first(),
-    ).toBeVisible();
-    const correct = (
-        await reference
-            .getByTestId('recipe-instruction')
-            .evaluateAll((elements) =>
-                elements.map((element) => ({
-                    text: element.lastElementChild?.textContent ?? '',
-                    instructionId: element.getAttribute('data-instruction-id'),
-                    quantityValue: element.getAttribute(
-                        'data-instruction-quantity-value',
-                    ),
-                    unitValue: element.getAttribute('data-instruction-unit'),
-                })),
-            )
-    ).map(({ text, instructionId, quantityValue, unitValue }) =>
-        instructionKey(text, instructionId, quantityValue, unitValue),
-    );
-    await reference.close();
-
-    const rows = page.getByTestId('session-instruction');
-    for (let target = 0; target < correct.length; target += 1) {
-        const keys = await rows.evaluateAll((elements) =>
-            elements.map((element) => {
-                const instructionId = element.getAttribute(
-                    'data-instruction-id',
-                );
-                if (instructionId) return `id|${instructionId}`;
-                const text = element.getAttribute('data-instruction-text');
-                if (text)
-                    return `text|${text.replace(/\s+/g, ' ').trim().toLowerCase()}`;
-                return [
-                    'amount',
-                    element.getAttribute('data-instruction-unit') ?? '',
-                    element.getAttribute('data-instruction-ingredient') ?? '',
-                    element.getAttribute('data-instruction-target') ?? '',
-                ]
-                    .map((value) =>
-                        value.replace(/\s+/g, ' ').trim().toLowerCase(),
-                    )
-                    .join('|');
-            }),
-        );
-        let current = keys.indexOf(correct[target]?.key ?? '', target);
-        expect(current).toBeGreaterThanOrEqual(target);
-        while (current > target) {
-            await rows
-                .nth(current)
-                .getByRole('button', { name: 'Move up' })
-                .click();
-            current -= 1;
-        }
-        if (correct[target]?.amount !== null) {
-            await rows
-                .nth(target)
-                .getByTestId('amount-input')
-                .fill(correct[target]?.amount ?? '');
-        }
-    }
-}
-
-test('admin browses recipes in the required sidebar position and opens results', async ({
+test('the visual library filters instantly and keyboard lookup opens the correct hot drink', async ({
     page,
 }) => {
-    await login(page, 'test@test.com');
-
-    const storeNavItems = page
-        .getByTestId('nav-section-store')
-        .locator('[data-testid^="nav-item-"]');
-    const keys = await storeNavItems.evaluateAll((items) =>
-        items.map((item) => item.getAttribute('data-testid')),
-    );
-    expect(keys.indexOf('nav-item-recipes')).toBe(
-        keys.indexOf('nav-item-checklists') + 1,
-    );
-
+    await login(page);
+    await expect(page.getByTestId('recipe-lookup')).toHaveCount(0);
     await page.getByTestId('nav-item-recipes').click();
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(54);
     await expect(
-        page.getByRole('heading', { name: 'Recipes', exact: true }),
-    ).toBeVisible();
-    await expect(page.getByText('Classic Matcha Latte')).toBeVisible();
-    await page.getByRole('button', { name: 'Manage categories' }).click();
+        page.getByRole('button', {
+            name: /create|edit|test|archive|manage categories/i,
+        }),
+    ).toHaveCount(0);
+    await capture(page, 'recipes-library-desktop');
+    await page.getByRole('button', { name: /^HOT DRINKS/ }).click();
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(5);
+    const search = page.getByRole('combobox', { name: 'Find a recipe' });
+    await search.fill('straw cloud');
+    await expect(page.getByRole('listbox').getByRole('option')).toHaveCount(2);
     await expect(
-        page.getByRole('heading', { name: 'Recipe categories', exact: true }),
+        page.getByRole('option', { name: /Strawberry Cloud HOT DRINKS/ }),
     ).toBeVisible();
-    await page.getByRole('link', { name: 'Back to recipes' }).click();
-    await page.getByRole('button', { name: 'Test results' }).click();
+    await search.press('ArrowDown');
+    await search.press('Enter');
+    await page.waitForURL('/recipes/hot-drinks/strawberry-cloud');
     await expect(
-        page.getByRole('heading', { name: 'Test results', exact: true }),
+        page.getByRole('heading', { name: 'Strawberry Cloud', exact: true }),
     ).toBeVisible();
+    const ingredients = page.getByTestId('recipe-ingredients');
+    await expect(ingredients.getByText('140 g', { exact: true })).toBeVisible();
+    await expect(ingredients.getByText('3.5 g', { exact: true })).toBeVisible();
+    await expect(
+        ingredients.getByText('2 pieces', { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByTestId('recipe-method-step')).toHaveCount(12);
+    await capture(page, 'recipes-hot-reference-desktop');
+    await noOverflow(page);
 });
 
-test('limited account reads a recipe and submits a three-recipe mobile test', async ({
+for (const [locale, lookup, guided, scoops] of [
+    ['en', 'Find a recipe', 'Guided preparation', '3 standard scoops'],
+    ['cs', 'Najít recept', 'Příprava krok za krokem', '3 standardní odměrky'],
+    ['sk', 'Nájsť recept', 'Príprava krok za krokom', '3 štandardné odmerky'],
+] as const) {
+    test(`recipe quantities and preparation controls remain readable in ${locale}`, async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 320, height: 740 });
+        await login(page, 'limited@test.com');
+        await page.route('**/recipes/**', async (route) => {
+            const response = await route.fetch();
+            const body = (await response.text())
+                .replaceAll('"locale":"en"', `"locale":"${locale}"`)
+                .replaceAll(
+                    '&quot;locale&quot;:&quot;en&quot;',
+                    `&quot;locale&quot;:&quot;${locale}&quot;`,
+                );
+            await route.fulfill({ response, body });
+        });
+        await page.goto('/recipes/hot-drinks/taro-milk-tea');
+        await expect(
+            page
+                .getByTestId('recipe-ingredients')
+                .getByText(scoops, { exact: true }),
+        ).toBeVisible();
+        await expect(
+            page.getByRole('combobox', { name: lookup }),
+        ).toBeVisible();
+        await page.getByRole('tab', { name: guided, exact: true }).click();
+        await expect(
+            page.getByRole('tab', { name: guided, exact: true }),
+        ).toHaveAttribute('aria-selected', 'true');
+        await expect(
+            page.getByRole('checkbox', { name: new RegExp(scoops) }),
+        ).toBeVisible();
+        const rowBounds = await page
+            .getByTestId('recipe-ingredients')
+            .locator('label')
+            .evaluateAll((rows) =>
+                rows.map((row) => {
+                    const name = row.querySelector('span');
+                    const amount = row.querySelector('strong');
+                    if (!name || !amount)
+                        throw new Error(
+                            'Ingredient row is missing its name or amount.',
+                        );
+                    const range = document.createRange();
+                    range.selectNodeContents(name);
+                    return {
+                        nameRight: range.getBoundingClientRect().right,
+                        amountLeft: amount.getBoundingClientRect().left,
+                    };
+                }),
+            );
+        for (const row of rowBounds)
+            expect(row.nameRight).toBeLessThanOrEqual(row.amountLeft);
+        await noOverflow(page);
+        await capture(page, `recipes-guided-${locale}-small-mobile`);
+    });
+}
+
+test('variant selectors retain flavour size and ice choices with informational topping amounts', async ({
+    page,
+}) => {
+    await login(page);
+    await page.goto('/recipes/milk-tea/ceylon-jasmine-oolong-milk-tea');
+    await page.getByRole('tab', { name: 'M', exact: true }).click();
+    await page.getByRole('tab', { name: 'No ice', exact: true }).click();
+    await page.getByRole('tab', { name: 'Jasmine', exact: true }).click();
+    await expect(page.getByTestId('recipe-selected-variant')).toHaveText(
+        'Jasmine — M — No ice',
+    );
+    await expect(
+        page
+            .getByTestId('recipe-ingredients')
+            .getByText('2–3', { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText(/Top up with jasmine milk tea/)).toBeVisible();
+    await page
+        .getByText('Sweetness when adding toppings', { exact: true })
+        .click();
+    await expect(
+        page.getByTestId('recipe-topping-component').first(),
+    ).toContainText('liquid sugar');
+    await expect(
+        page.getByTestId('recipe-topping-component').first(),
+    ).toContainText('30 ml');
+    await noOverflow(page);
+});
+
+test('an employee finds a hot recipe and completes guided preparation on mobile', async ({
     page,
 }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await login(page, 'limited@test.com');
-    await page.getByRole('button', { name: 'Menu' }).click();
+    await page.goto('/recipes');
+    await page.getByRole('combobox', { name: 'Find a recipe' }).fill('banana');
+    await page.getByRole('option', { name: /Banana Bread Matcha/ }).click();
+    await page.waitForURL('/recipes/hot-drinks/banana-bread-matcha');
     await page
-        .locator('#mobile-nav-drawer')
-        .getByTestId('nav-item-recipes')
+        .getByRole('tab', { name: 'Guided preparation', exact: true })
         .click();
-    const classicRow = page
-        .getByTestId('recipe-catalog-row')
-        .filter({ hasText: 'Classic Matcha Latte' });
-    await expect(classicRow).toBeVisible();
-    await classicRow
-        .getByRole('link', { name: 'Classic Matcha Latte' })
-        .click();
-    await expect(page.getByRole('button', { name: 'Edit' })).toHaveCount(0);
-    await expect(page.getByTestId('recipe-instruction')).toHaveCount(8);
-    await expect(page.getByTestId('recipe-topping-adjustments')).toBeVisible();
-    await expect(page.getByTestId('recipe-instruction').first()).toContainText(
-        'Add 100 ml milk to serving cup.',
+    await page
+        .getByRole('checkbox', { name: 'gingerbread syrup — 5 g' })
+        .check();
+    await expect(page.getByText('1 of 4 ingredients ready')).toBeVisible();
+    await capture(page, 'recipes-gather-mobile');
+    await page.getByRole('button', { name: 'Begin preparation' }).click();
+    await expect(page.getByTestId('guide-step-text')).toContainText(
+        '5 g gingerbread syrup',
     );
-
-    await expect(page.getByRole('button', { name: 'Start test' })).toHaveCount(
-        0,
+    await page.getByRole('button', { name: 'Done · Next' }).click();
+    await page.getByRole('button', { name: 'Done · Next' }).click();
+    await expect(page.getByTestId('guide-step-title')).toHaveText(
+        'Steam the milk',
     );
-    await page.getByRole('link', { name: 'Back to recipes' }).click();
-    await page.getByRole('button', { name: 'Start test' }).click();
-    await page.getByLabel('Worker').selectOption({ label: 'E2E Worker' });
-    await page.getByRole('button', { name: 'Start test' }).last().click();
-    await expect(page.getByText('Three-recipe test')).toBeVisible();
-
-    for (let position = 1; position <= 3; position += 1) {
-        await expect(
-            page.getByText(`${position}/3`, { exact: true }),
-        ).toBeVisible();
-        const rows = page.getByTestId('session-instruction');
-        expect(await rows.count()).toBeGreaterThan(1);
-        await rows.first().getByRole('button', { name: 'Move down' }).click();
-        for (const input of await page.getByTestId('amount-input').all()) {
-            await input.fill('0');
-        }
-        if (position < 3) {
-            await page.getByRole('button', { name: 'Next' }).click();
-        }
-    }
-    await page.getByRole('button', { name: 'Submit all recipes' }).click();
-    await expect(page.getByText('Test failed')).toBeVisible();
-    await expect(page.getByText('Combined score')).toBeVisible();
+    await page.getByRole('button', { name: 'Previous', exact: true }).click();
+    await expect(page.getByTestId('guide-step-text')).toContainText(
+        '200 g banana milk',
+    );
+    await page.getByRole('button', { name: 'Done · Next' }).click();
+    await capture(page, 'recipes-guide-mobile');
+    for (let position = 3; position < 8; position++)
+        await page.getByRole('button', { name: 'Done · Next' }).click();
+    await page.getByRole('button', { name: 'Finish', exact: true }).click();
+    await expect(
+        page.getByRole('heading', { name: 'Ready to serve' }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Make another' }).click();
+    await expect(page.getByRole('checkbox').first()).not.toBeChecked();
+    await noOverflow(page);
 });
 
-test('limited account can pass all three recipes with exact amounts', async ({
+test('known preparation timers pause resume expire and reset without losing progress', async ({
     page,
 }) => {
-    await login(page, 'limited@test.com');
-    await page.goto('/recipes');
-    await page.getByRole('button', { name: 'Start test' }).click();
-    await page.getByLabel('Worker').selectOption({ label: 'E2E Worker' });
-    await page.getByRole('button', { name: 'Start test' }).last().click();
+    await login(page);
+    await page.clock.install();
+    await page.goto('/recipes/preparations/ceylon-tea-preparation');
+    await page
+        .getByRole('tab', { name: 'Guided preparation', exact: true })
+        .click();
+    await page.getByRole('button', { name: 'Begin preparation' }).click();
+    await page.getByRole('button', { name: 'Done · Next' }).click();
+    await page.getByRole('button', { name: 'Done · Next' }).click();
+    await expect(page.getByRole('timer')).toHaveText('10:00');
+    await page.getByRole('button', { name: 'Start timer' }).click();
+    await page.clock.fastForward(5000);
+    await expect(page.getByRole('timer')).toHaveText('9:55');
+    await page.getByRole('button', { name: 'Pause timer' }).click();
+    await page.clock.fastForward(60000);
+    await expect(page.getByRole('timer')).toHaveText('9:55');
+    await page.getByRole('button', { name: 'Resume timer' }).click();
+    await page.clock.fastForward(595000);
+    await expect(page.getByRole('timer')).toHaveText('0:00');
+    await expect(
+        page.getByText('Time is up. Continue with the next step.'),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Reset timer' }).click();
+    await expect(page.getByRole('timer')).toHaveText('10:00');
+    await expect(page.getByTestId('guide-step-title')).toHaveText(
+        'Heat the mixture',
+    );
+});
 
-    for (let position = 1; position <= 3; position += 1) {
-        await completeCurrentRecipe(page);
-        if (position < 3) {
-            await page.getByRole('button', { name: 'Next' }).click();
-        }
-    }
-    await page.getByRole('button', { name: 'Submit all recipes' }).click();
-    await expect(page.getByText('Test passed')).toBeVisible();
-    await expect(page.getByText('Combined score: 100 %')).toBeVisible();
+test('mobile search handles missing recipes escape and a second recipe on the detail page', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await login(page, 'limited@test.com');
+    await page.goto('/recipes/hot-drinks/classic-matcha');
+    const search = page.getByRole('combobox', { name: 'Find a recipe' });
+    await search.fill('zzzz');
+    await expect(page.getByText('No matching recipes')).toBeVisible();
+    await search.press('Escape');
+    await expect(page.getByRole('listbox')).toHaveCount(0);
+    await search.fill('taro');
+    await page
+        .getByRole('option', { name: /Taro Milk Tea HOT DRINKS/ })
+        .click();
+    await page.waitForURL('/recipes/hot-drinks/taro-milk-tea');
+    await expect(search).toHaveValue('');
+    await expect(
+        page
+            .getByTestId('recipe-ingredients')
+            .getByText('3 standard scoops', { exact: true }),
+    ).toBeVisible();
+    await noOverflow(page);
 });

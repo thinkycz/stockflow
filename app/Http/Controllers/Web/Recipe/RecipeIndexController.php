@@ -4,84 +4,27 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Recipe;
 
-use App\Domain\Recipes\RecipeCatalogService;
-use App\Models\Recipe;
-use App\Models\RecipeCategory;
-use App\Models\User;
-use App\Models\Worker;
-use Illuminate\Database\Eloquent\Builder;
+use App\Domain\Recipes\RecipeCatalogRepository;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Thinkycz\LaravelCore\Support\Typer;
 
 class RecipeIndexController
 {
-    public const int TAKE = 60;
-
     /**
-     * Display the searchable company recipe catalog.
+     * Render the full authored library and lightweight local lookup index.
      */
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, RecipeCatalogRepository $catalog): Response
     {
-        $actor = User::mustAuth();
-        $owner = $actor->resolveScopeUser();
-        (new RecipeCatalogService())->initialize($owner);
-        $search = \mb_trim($request->string('search')->toString());
-        $categoryId = $request->integer('category_id');
-        $showArchived = $actor->isAdmin() && $request->boolean('archived');
-
-        $query = Recipe::query()->where('user_id', $owner->getKey())->with('category')->withCount('variants');
-        $showArchived ? $query->whereNotNull('archived_at') : $query->whereNull('archived_at');
-        if ($search !== '') {
-            Recipe::scopeSearch($query, $search);
-        }
-        if ($categoryId > 0) {
-            $query->where('recipe_category_id', $categoryId);
-        }
-        $paginator = $query->orderBy('recipe_category_id')->orderBy('position')->paginate(self::TAKE)->withQueryString();
-        $paginator->through(fn(Recipe $recipe): array => $this->recipeRow($recipe));
-
-        $categories = RecipeCategory::query()->where('user_id', $owner->getKey())->withCount([
-            'recipes',
-            'recipes as active_recipes_count' => static fn(Builder $query): Builder => $query->whereNull('archived_at'),
-        ])->orderBy('position')->get()->map(static fn(RecipeCategory $category): array => [
-            'id' => $category->getKey(), 'name' => $category->getName(),
-            'recipes_count' => Typer::assertInt($category->getAttribute('recipes_count')),
-            'active_recipes_count' => Typer::assertInt($category->getAttribute('active_recipes_count')),
-        ])->all();
-
-        $workers = [];
-        $testableRecipeCount = 0;
-        if (!$actor->isAdmin()) {
-            $workerQuery = Worker::query()->where('user_id', $owner->getKey());
-            Worker::scopeActive($workerQuery);
-            $workers = $workerQuery->orderBy('first_name')->orderBy('last_name')->get()
-                ->map(static fn(Worker $worker): array => ['id' => $worker->getKey(), 'name' => $worker->getFullName()])->all();
-            $testableRecipeCount = Recipe::query()->where('user_id', $owner->getKey())->whereNull('archived_at')
-                ->whereHas('variants', static fn(Builder $query): Builder => $query->has('instructions', '>=', 2))->count();
-        }
-
         return Inertia::render('recipes/Index', [
-            'is_admin' => $actor->isAdmin(),
-            'categories' => $categories,
-            'recipes' => Typer::assertStringKeyArray($paginator->toArray()),
-            'filters' => ['search' => $search, 'category_id' => $categoryId > 0 ? $categoryId : null, 'archived' => $showArchived],
-            'workers' => $workers,
-            'testable_recipe_count' => $testableRecipeCount,
-        ]);
-    }
+            'categories' => $catalog->categories(), 'lookup' => $catalog->lookupIndex(),
+            'recipes' => \array_map(static function (array $recipe): array {
+                $recipe['variant_count'] = \count($recipe['variants']);
+                unset($recipe['variants']);
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function recipeRow(Recipe $recipe): array
-    {
-        return [
-            'id' => $recipe->getKey(), 'name' => $recipe->getName(),
-            'category' => ['id' => $recipe->getCategoryId(), 'name' => $recipe->getCategory()->getName()],
-            'archived' => $recipe->isArchived(),
-            'variant_count' => Typer::assertInt($recipe->getAttribute('variants_count')),
-        ];
+                return $recipe;
+            }, $catalog->recipes()),
+            'filters' => ['search' => \mb_trim($request->string('search')->toString()), 'category' => $request->string('category')->toString()],
+        ]);
     }
 }

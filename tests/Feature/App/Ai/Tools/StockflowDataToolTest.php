@@ -13,10 +13,6 @@ use App\Models\GiftVoucher;
 use App\Models\GiftVoucherBatch;
 use App\Models\Item;
 use App\Models\OperationalDailyDigest;
-use App\Models\Recipe;
-use App\Models\RecipeCategory;
-use App\Models\RecipeInstruction;
-use App\Models\RecipeVariant;
 use App\Models\Shift;
 use App\Models\Statement;
 use App\Models\StatementDay;
@@ -243,108 +239,6 @@ function readToolResult(Tool $tool, array $arguments): array
         \JSON_THROW_ON_ERROR,
     );
 }
-
-\test('recipe lookup resolves a natural question to complete company recipe instructions', function (): void {
-    [$admin] = \createIsolatedUserWithWarehouse();
-    [$otherAdmin] = \createIsolatedUserWithWarehouse();
-    $category = RecipeCategory::factory()->createOne([
-        'user_id' => $admin->getKey(),
-        'name' => 'Čaje',
-    ]);
-    $recipe = Recipe::factory()->createOne([
-        'user_id' => $admin->getKey(),
-        'recipe_category_id' => $category->getKey(),
-        'name' => 'OOLONG MILK TEA (3.5l) (steep)',
-        'note' => '70g oolong + 30g ceylon',
-    ]);
-    $variant = RecipeVariant::factory()->createOne([
-        'recipe_id' => $recipe->getKey(),
-        'name' => '3.5 l',
-    ]);
-    foreach ([
-        '2.5l water (90 degrees) + 100g tea (let steep for 10min)',
-        '+ 900g powdered milk',
-        '+ ice up to 3.5l',
-    ] as $position => $text) {
-        RecipeInstruction::query()->create([
-            'recipe_variant_id' => $variant->getKey(),
-            'position' => $position + 1,
-            'type' => $position === 0 ? 'ingredient' : 'action',
-            'text' => $text,
-            'action_key' => $position === 0 ? 'add' : 'other',
-            'quantity_value' => $position === 0 ? 3 : null,
-            'quantity_text' => null,
-            'unit' => $position === 0 ? 'ml' : null,
-            'ingredient_name' => $position === 0 ? 'liquid sugar' : null,
-            'target' => $position === 0 ? 'shaker' : null,
-            'icon_group' => $position === 0 ? 'syrup_sweetener' : 'neutral',
-            'is_inferred' => false,
-        ]);
-    }
-    $foreignCategory = RecipeCategory::factory()->createOne(['user_id' => $otherAdmin->getKey()]);
-    Recipe::factory()->createOne([
-        'user_id' => $otherAdmin->getKey(),
-        'recipe_category_id' => $foreignCategory->getKey(),
-        'name' => 'OOLONG MILK TEA PRIVATE',
-    ]);
-
-    $tool = (new AssistantToolCatalog())->find($admin, 'recipe-lookup', 'read_recipes');
-
-    \expect($tool)->toBeInstanceOf(Tool::class);
-    $result = \readToolResult($tool, [
-        'request' => [
-            'operation' => 'lookup',
-            'dataset' => 'recipes',
-            'query' => 'jak se dela oolong milk tea podle naseho receptu',
-            'limit' => 5,
-        ],
-    ]);
-
-    \expect($result)->toMatchArray([
-        'ok' => true,
-        'resource' => 'recipes',
-        'operation' => 'lookup',
-        'dataset' => 'recipes',
-        'scope' => ['type' => 'company', 'store_scoped' => false],
-        'returned_count' => 1,
-        'complete' => true,
-    ])->and($result['records'][0]['name'])->toBe('OOLONG MILK TEA (3.5l) (steep)')
-        ->and($result['records'][0]['variants'][0]['instructions'])->toHaveCount(3)
-        ->and($result['records'][0]['variants'][0]['instructions'][0]['text'])
-        ->toBe('2.5l water (90 degrees) + 100g tea (let steep for 10min)')
-        ->and($result['records'][0]['variants'][0]['topping_adjustments'])->toMatchArray([
-            'base_toppings' => '0–1',
-            'components' => [[
-                'ingredient_name' => 'liquid sugar',
-                'unit' => 'ml',
-                'base_quantity' => 3,
-                'two_toppings_quantity' => 0,
-                'three_toppings_quantity' => 0,
-            ]],
-        ])
-        ->and(\array_column($result['records'], 'name'))->not->toContain('OOLONG MILK TEA PRIVATE');
-});
-
-\test('recipe category results state that they cannot establish recipe absence', function (): void {
-    [$admin] = \createIsolatedUserWithWarehouse();
-    RecipeCategory::factory()->createOne(['user_id' => $admin->getKey(), 'name' => 'Čaje']);
-    $tool = (new AssistantToolCatalog())->find($admin, 'recipe-category-boundary', 'read_recipes');
-
-    \expect($tool)->toBeInstanceOf(Tool::class);
-    $result = \readToolResult($tool, [
-        'request' => ['operation' => 'list', 'dataset' => 'categories'],
-    ]);
-
-    \expect($result)->toMatchArray([
-        'ok' => true,
-        'scope' => ['type' => 'company', 'store_scoped' => false],
-        'capability' => [
-            'can_determine_recipe_existence' => false,
-            'recipe_lookup_operation' => 'lookup',
-            'recipe_lookup_dataset' => 'recipes',
-        ],
-    ]);
-});
 
 \test('statement and financial readers expose the same decision data as human reports', function (): void {
     [$admin] = \createIsolatedUserWithWarehouse();

@@ -21,6 +21,5 @@ class DatabaseSeeder extends Seeder
         $this->callOnce(UserSeeder::class);
         $this->callOnce(StoreSeeder::class);
         $this->callOnce(ItemSeeder::class);
-        $this->callOnce(RecipeCatalogSeeder::class);
     }
 }

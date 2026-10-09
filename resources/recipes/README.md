@@ -4,8 +4,9 @@ The application and assistant read this directory directly. Each recipe is one
 Markdown file in its category folder. There is no recipe database, editor, or staff
 testing workflow.
 
-The library contains 54 recipes and 189 explicitly authored variants. Recipe text
-uses English; interface controls are translated into English, Czech, and Slovak.
+The library contains 56 recipes and 191 explicitly authored variants. Markdown
+sources use English; recipe content and interface controls follow the employee's
+account language in English, Czech, or Slovak.
 
 ## Change an existing recipe
 
@@ -117,7 +118,7 @@ translation edits. Czech and Slovak use decimal commas when displaying quantitie
 Notes and tips translate as complete Markdown blocks before safe HTML rendering.
 Never add another quantity or change a unit in a translated instruction.
 
-Catalogue checks cover all 54 recipes / 189 variants in all three languages and
+Catalogue checks cover all 56 recipes / 191 variants in all three languages and
 preserve the reviewed measurement fingerprints independently of component order.
 Browser checks open every variant, compare its complete visible ingredient list
 and method, and start guided preparation in each language.

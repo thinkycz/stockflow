@@ -19,7 +19,7 @@ use Thinkycz\LaravelCore\Support\Typer;
     foreach ([$admin, $limited] as $user) {
         $this->be($user, 'users')->get('/recipes?category=hot-drinks&search=matcha', $this->inertiaHeaders())
             ->assertOk()->assertJsonPath('component', 'recipes/Index')
-            ->assertJsonCount(54, 'props.recipes')->assertJsonCount(54, 'props.lookup')
+            ->assertJsonCount(56, 'props.recipes')->assertJsonCount(56, 'props.lookup')
             ->assertJsonCount(9, 'props.categories')
             ->assertJsonPath('props.categories.7.key', 'hot-drinks')
             ->assertJsonPath('props.categories.7.recipe_count', 5)

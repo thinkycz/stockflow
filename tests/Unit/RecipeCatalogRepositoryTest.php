@@ -9,9 +9,9 @@ use Thinkycz\LaravelCore\Support\Typer;
     $catalog = new RecipeCatalogRepository();
     $recipes = $catalog->recipes();
     $signatures = Typer::assertArray(\json_decode(Typer::assertString(\file_get_contents(\base_path('tests/Fixtures/recipe-measurement-signatures.json'))), true, flags: \JSON_THROW_ON_ERROR));
-    \expect($recipes)->toHaveCount(54)
+    \expect($recipes)->toHaveCount(56)
         ->and($catalog->categories())->toHaveCount(9)
-        ->and(\array_sum(\array_map(static fn(array $recipe): int => \count($recipe['variants']), $recipes)))->toBe(189)
+        ->and(\array_sum(\array_map(static fn(array $recipe): int => \count($recipe['variants']), $recipes)))->toBe(191)
         ->and($signatures)->toHaveCount(184);
 
     foreach ($signatures as $value) {

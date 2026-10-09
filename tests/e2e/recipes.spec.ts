@@ -53,7 +53,7 @@ test('the visual library filters instantly and keyboard lookup opens the correct
     await login(page);
     await expect(page.getByTestId('recipe-lookup')).toHaveCount(0);
     await page.getByTestId('nav-item-recipes').click();
-    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(54);
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(56);
     await expect(
         page.getByRole('button', {
             name: /create|edit|test|archive|manage categories/i,
@@ -104,8 +104,17 @@ test('the visual library filters instantly and keyboard lookup opens the correct
     await expect(category).toBeFocused();
     await category.click();
     await drawer.getByRole('button', { name: /^All recipes/ }).click();
-    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(54);
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(56);
     await expect(page).not.toHaveURL(/category=/);
+    await category.click();
+    await drawer.getByRole('button', { name: /^MATCHA SPECIALS/ }).click();
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(7);
+    await expect(
+        page.getByRole('link', { name: /Bueno Matcha/ }),
+    ).toBeVisible();
+    await expect(
+        page.getByRole('link', { name: /Pumpkin Spice Matcha/ }),
+    ).toBeVisible();
     await category.click();
     await drawer.getByRole('button', { name: /^HOT DRINKS/ }).click();
     await search.fill('straw cloud');
@@ -128,6 +137,35 @@ test('the visual library filters instantly and keyboard lookup opens the correct
     await expect(page.getByTestId('recipe-method-step')).toHaveCount(12);
     await capture(page, 'recipes-hot-reference-desktop');
     await noOverflow(page);
+    const desktopViewport = page.viewportSize();
+    for (const [query, slug, title] of [
+        ['bue', 'bueno-matcha', 'Bueno Matcha'],
+        ['pump', 'pumpkin-spice-matcha', 'Pumpkin Spice Matcha'],
+    ] as const) {
+        await search.fill(query);
+        await page.getByRole('option', { name: new RegExp(title) }).click();
+        await page.waitForURL(`/recipes/matcha-specials/${slug}`);
+        await expect(
+            page.getByRole('heading', { name: title, exact: true }),
+        ).toBeVisible();
+        await expect(
+            ingredients.getByText('140 g', { exact: true }),
+        ).toBeVisible();
+        await expect(
+            ingredients.getByText('4.5 g', { exact: true }),
+        ).toBeVisible();
+        await expect(
+            ingredients.getByText('60 g', { exact: true }),
+        ).toBeVisible();
+        await expect(
+            page.getByTestId('recipe-topping-adjustments'),
+        ).toHaveCount(0);
+        await capture(page, `recipes-${slug}-desktop`);
+        await page.setViewportSize({ width: 320, height: 740 });
+        await noOverflow(page);
+        await capture(page, `recipes-${slug}-mobile`);
+        if (desktopViewport) await page.setViewportSize(desktopViewport);
+    }
 });
 
 for (const [
@@ -467,7 +505,7 @@ for (const [locale, reference, guided, begin, groupName] of [
                         row.getAttribute('href'),
                 ),
             );
-        expect(links).toHaveLength(54);
+        expect(links).toHaveLength(56);
         let variantsChecked = 0;
         let iceRowsChecked = 0;
         for (const link of links) {
@@ -599,7 +637,7 @@ for (const [locale, reference, guided, begin, groupName] of [
                 variantsChecked++;
             }
         }
-        expect(variantsChecked).toBe(189);
+        expect(variantsChecked).toBe(191);
         expect(iceRowsChecked).toBe(177);
         await setEmployeeLocale(page, 'en');
     });

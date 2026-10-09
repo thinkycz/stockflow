@@ -160,6 +160,14 @@ test('the visual library filters instantly and keyboard lookup opens the correct
         await expect(
             page.getByTestId('recipe-topping-adjustments'),
         ).toHaveCount(0);
+        await expect(
+            ingredients.getByText('full serving cup', { exact: true }),
+        ).toBeVisible();
+        await expect(
+            page
+                .getByTestId('recipe-method-step')
+                .filter({ hasText: 'Fill the serving cup with ice.' }),
+        ).toHaveCount(1);
         await capture(page, `recipes-${slug}-desktop`);
         await page.setViewportSize({ width: 320, height: 740 });
         await noOverflow(page);
@@ -638,7 +646,7 @@ for (const [locale, reference, guided, begin, groupName] of [
             }
         }
         expect(variantsChecked).toBe(191);
-        expect(iceRowsChecked).toBe(177);
+        expect(iceRowsChecked).toBe(179);
         await setEmployeeLocale(page, 'en');
     });
 }

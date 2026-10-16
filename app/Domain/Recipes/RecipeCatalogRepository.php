@@ -25,7 +25,7 @@ final class RecipeCatalogRepository
     /**
      * Ingredient components use the same relative order in every authored variant.
      */
-    private const array COMPONENTS = ['Drink base', 'Drink mixture', 'Steamed milk', 'Hot tea', 'Taro mixture', 'Milk to volume', 'Matcha', 'Tea blend', 'Batch', 'Cooking', 'Rinsing', 'Sauce', 'Ice', 'Top-up', 'Cloud / topping', 'Finish'];
+    private const array COMPONENTS = ['Drink base', 'Drink mixture', 'Steamed milk', 'Hot tea', 'Taro mixture', 'Milk to volume', 'Matcha', 'Hojicha', 'Tea blend', 'Batch', 'Cooking', 'Rinsing', 'Sauce', 'Ice', 'Top-up', 'Cloud / topping', 'Finish'];
 
     /**
      * Localize authored content while keeping keys, quantities, and actions unchanged.

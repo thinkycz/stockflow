@@ -1,4 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
+import cs from '../../resources/js/i18n/cs.json' with { type: 'json' };
+import en from '../../resources/js/i18n/en.json' with { type: 'json' };
+import sk from '../../resources/js/i18n/sk.json' with { type: 'json' };
 
 async function login(page: Page, email = 'test@test.com'): Promise<void> {
     await page.goto('/login');
@@ -53,7 +56,7 @@ test('the visual library filters instantly and keyboard lookup opens the correct
     await login(page);
     await expect(page.getByTestId('recipe-lookup')).toHaveCount(0);
     await page.getByTestId('nav-item-recipes').click();
-    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(56);
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(58);
     await expect(
         page.getByRole('button', {
             name: /create|edit|test|archive|manage categories/i,
@@ -85,16 +88,16 @@ test('the visual library filters instantly and keyboard lookup opens the correct
     await expect(drawer).toHaveCount(0);
     await expect(category).toHaveAttribute('aria-expanded', 'false');
     await expect(category).toBeFocused();
-    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(5);
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(6);
     await expect(page).toHaveURL(/category=hot-drinks/);
     await page.reload();
     await expect(category).toContainText('HOT DRINKS');
-    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(5);
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(6);
     const search = page.getByRole('combobox', { name: 'Find a recipe' });
     await search.fill('straw cloud');
     await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(1);
     await page.getByRole('button', { name: 'Clear search' }).click();
-    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(5);
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(6);
     await category.click();
     await expect(
         drawer.getByRole('button', { name: /^HOT DRINKS/ }),
@@ -104,11 +107,11 @@ test('the visual library filters instantly and keyboard lookup opens the correct
     await expect(category).toBeFocused();
     await category.click();
     await drawer.getByRole('button', { name: /^All recipes/ }).click();
-    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(56);
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(58);
     await expect(page).not.toHaveURL(/category=/);
     await category.click();
     await drawer.getByRole('button', { name: /^MATCHA SPECIALS/ }).click();
-    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(7);
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(8);
     await expect(
         page.getByRole('link', { name: /Bueno Matcha/ }),
     ).toBeVisible();
@@ -220,6 +223,7 @@ for (const [
     test(`recipe quantities and preparation controls remain readable in ${locale}`, async ({
         page,
     }) => {
+        test.setTimeout(90000);
         await page.setViewportSize({ width: 320, height: 740 });
         await login(page);
         await setEmployeeLocale(page, locale);
@@ -248,7 +252,7 @@ for (const [
         await expect(drawer).toHaveCount(0);
         await expect(category).toContainText(hotDrinks);
         await expect(category).toBeFocused();
-        await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(5);
+        await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(6);
         await noOverflow(page);
         await capture(page, `recipes-library-${locale}-small-mobile`);
         await page.goto('/recipes/hot-drinks/taro-milk-tea');
@@ -296,6 +300,127 @@ for (const [
         ).toBeVisible();
         await noOverflow(page);
         await capture(page, `recipes-guided-${locale}-small-mobile`);
+        const labels = { en, cs, sk }[locale].recipes;
+        const steam = {
+            en: 'Steam the milk',
+            cs: 'Napařte mléko',
+            sk: 'Naparte mlieko',
+        }[locale];
+        for (const viewport of [
+            { width: 1440, height: 1000, name: 'desktop' },
+            { width: 320, height: 740, name: 'mobile' },
+        ]) {
+            await page.setViewportSize(viewport);
+            for (const category of ['matcha-specials', 'hot-drinks']) {
+                const hot = category === 'hot-drinks';
+                const search = page.getByRole('combobox', { name: lookup });
+                await search.fill('bueno hoj');
+                const suggestions = page
+                    .getByRole('listbox')
+                    .getByRole('option');
+                await expect(suggestions).toHaveCount(2);
+                await expect(
+                    suggestions.filter({ hasText: hotDrinks }),
+                ).toHaveCount(1);
+                await suggestions
+                    .and(
+                        page.locator(
+                            `[href="/recipes/${category}/bueno-hojicha"]`,
+                        ),
+                    )
+                    .click();
+                await page.waitForURL(`/recipes/${category}/bueno-hojicha`);
+                await expect(
+                    page.getByRole('heading', {
+                        name: 'Bueno Hojicha',
+                        exact: true,
+                    }),
+                ).toBeVisible();
+                const ingredients = page.getByTestId('recipe-ingredients');
+                await expect(
+                    ingredients.getByRole('heading', {
+                        name: 'Hojicha',
+                        exact: true,
+                    }),
+                ).toBeVisible();
+                for (const amount of [
+                    140,
+                    hot ? 50 : 60,
+                    hot ? 3.5 : 4.5,
+                    40,
+                    20,
+                    15,
+                ]) {
+                    await expect(
+                        ingredients.getByText(
+                            `${new Intl.NumberFormat(locale).format(amount)} g`,
+                            { exact: true },
+                        ),
+                    ).toBeVisible();
+                }
+                await expect(
+                    ingredients.getByText(`${hot ? 5 : 10} g`, { exact: true }),
+                ).toHaveCount(2);
+                await expect(
+                    ingredients.locator('[data-icon-group="ice"]'),
+                ).toHaveCount(hot ? 0 : 1);
+                await expect(
+                    page.getByRole('heading', { name: steam, exact: true }),
+                ).toHaveCount(hot ? 1 : 0);
+                await expect(
+                    page.getByTestId('recipe-method-step'),
+                ).toHaveCount(14);
+                await noOverflow(page);
+                const proof = `recipes-bueno-hojicha-${hot ? 'hot' : 'cold'}-${locale}-${viewport.name}`;
+                await capture(page, proof);
+                const steps = await page
+                    .getByTestId('recipe-method-step')
+                    .evaluateAll((rows) =>
+                        rows.map((row) => ({
+                            title:
+                                row.querySelector('h3')?.textContent?.trim() ??
+                                '',
+                            text:
+                                row.querySelector('p')?.textContent?.trim() ??
+                                '',
+                        })),
+                    );
+                await page
+                    .getByRole('tab', { name: guided, exact: true })
+                    .click();
+                await expect(page.getByRole('checkbox')).toHaveCount(
+                    hot ? 8 : 9,
+                );
+                await page
+                    .getByRole('button', { name: labels.begin, exact: true })
+                    .click();
+                for (let step = 0; step < steps.length; step++) {
+                    await expect(
+                        page.getByTestId('guide-step-title'),
+                    ).toHaveText(steps[step]!.title);
+                    await expect(
+                        page.getByTestId('guide-step-text'),
+                    ).toHaveText(steps[step]!.text);
+                    await noOverflow(page);
+                    if (step === 4) await capture(page, `${proof}-guide`);
+                    await page
+                        .getByRole('button', {
+                            name:
+                                step === steps.length - 1
+                                    ? labels.finish
+                                    : labels.next_step,
+                            exact: true,
+                        })
+                        .click();
+                }
+                await expect(
+                    page.getByRole('heading', {
+                        name: labels.ready_to_serve,
+                        exact: true,
+                    }),
+                ).toBeVisible();
+            }
+        }
         await setEmployeeLocale(page, 'en');
     });
 }
@@ -513,7 +638,7 @@ for (const [locale, reference, guided, begin, groupName] of [
                         row.getAttribute('href'),
                 ),
             );
-        expect(links).toHaveLength(56);
+        expect(links).toHaveLength(58);
         let variantsChecked = 0;
         let iceRowsChecked = 0;
         for (const link of links) {
@@ -645,8 +770,8 @@ for (const [locale, reference, guided, begin, groupName] of [
                 variantsChecked++;
             }
         }
-        expect(variantsChecked).toBe(191);
-        expect(iceRowsChecked).toBe(179);
+        expect(variantsChecked).toBe(193);
+        expect(iceRowsChecked).toBe(180);
         await setEmployeeLocale(page, 'en');
     });
 }

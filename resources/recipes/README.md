@@ -4,7 +4,7 @@ The application and assistant read this directory directly. Each recipe is one
 Markdown file in its category folder. There is no recipe database, editor, or staff
 testing workflow.
 
-The library contains 56 recipes and 191 explicitly authored variants. Markdown
+The library contains 58 recipes and 193 explicitly authored variants. Markdown
 sources use English; recipe content and interface controls follow the employee's
 account language in English, Czech, or Slovak.
 
@@ -44,7 +44,7 @@ array, and a `timers` object. Copy an existing recipe as the starting point.
 Each variant contains `### Ingredients` and `### Method`. The ingredient table uses
 exactly `Component | Ingredient | Amount | Unit`. Components use one order across the catalogue:
 `Drink base`, `Drink mixture`, `Steamed milk`, `Hot tea`, `Taro mixture`,
-`Milk to volume`, `Matcha`, `Tea blend`, `Batch`, `Cooking`, `Rinsing`, `Sauce`,
+`Milk to volume`, `Matcha`, `Hojicha`, `Tea blend`, `Batch`, `Cooking`, `Rinsing`, `Sauce`,
 `Ice`, `Top-up`, `Cloud / topping`, `Finish`. Omit unused components, keep each
 component's rows together, and follow this relative order. The reader rejects
 unknown groups, interleaved groups, and ice placed anywhere except `Ice`. Use decimal points in numeric
@@ -118,7 +118,7 @@ translation edits. Czech and Slovak use decimal commas when displaying quantitie
 Notes and tips translate as complete Markdown blocks before safe HTML rendering.
 Never add another quantity or change a unit in a translated instruction.
 
-Catalogue checks cover all 56 recipes / 191 variants in all three languages and
+Catalogue checks cover all 58 recipes / 193 variants in all three languages and
 preserve the reviewed measurement fingerprints independently of component order.
 Browser checks open every variant, compare its complete visible ingredient list
 and method, and start guided preparation in each language.

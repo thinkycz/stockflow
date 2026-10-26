@@ -62,6 +62,43 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->and($noIce['tips_html'])->toContain('2–3 ice cubes');
 });
 
+\test('all matcha drinks use grams in ingredient quantities and preparation instructions', function (): void {
+    foreach (['en', 'cs', 'sk'] as $locale) {
+        foreach ((new RecipeCatalogRepository(locale: $locale))->recipes() as $recipe) {
+            if (!\in_array('matcha', $recipe['tags'], true)) {
+                continue;
+            }
+            foreach ($recipe['variants'] as $variant) {
+                foreach ($variant['ingredients'] as $ingredient) {
+                    \expect($ingredient['unit'])->not->toBe('ml');
+                }
+                foreach ($variant['steps'] as $step) {
+                    \expect($step['text'])->not->toMatch('/\\bml\\b/u');
+                }
+                foreach ($variant['topping_adjustments'] as $adjustment) {
+                    \expect($adjustment['unit'])->toBe('g');
+                }
+            }
+        }
+    }
+});
+
+\test('classic milk tea L and every matcha milk tea variant reduce sweetness in steps of ten', function (): void {
+    $catalog = new RecipeCatalogRepository();
+    foreach (['ceylon-jasmine-oolong-milk-tea', 'matcha-milk-tea'] as $slug) {
+        $recipe = $catalog->find('milk-tea', $slug) ?? throw new RuntimeException('Missing milk tea.');
+        foreach ($recipe['variants'] as $variant) {
+            $reduction = $slug === 'matcha-milk-tea' || $variant['selectors']['size'] === 'L' ? 10 : 5;
+            \expect($variant['topping_adjustments'])->toHaveCount(1);
+            $adjustment = $variant['topping_adjustments'][0];
+            \expect($adjustment['reduction_step'])->toBe($reduction)
+                ->and($adjustment['unit'])->toBe($slug === 'matcha-milk-tea' ? 'g' : 'ml')
+                ->and($adjustment['two_toppings_quantity'])->toBe(\max(0, $adjustment['base_quantity'] - $reduction))
+                ->and($adjustment['three_toppings_quantity'])->toBe(\max(0, $adjustment['base_quantity'] - 2 * $reduction));
+        }
+    }
+});
+
 \test('all ice used by a method is explicitly listed in the ingredients', function (): void {
     foreach ((new RecipeCatalogRepository())->recipes() as $recipe) {
         foreach ($recipe['variants'] as $variant) {

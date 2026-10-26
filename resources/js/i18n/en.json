@@ -1801,7 +1801,7 @@
             "choose": "Choose the topping count to see how much sweetener to use.",
             "count": "Number of toppings",
             "unchanged": "Use the base amounts",
-            "reduction": "Reduce each sweetener by {amount} ml, down to 0 ml",
+            "reduction": "Reduce each sweetener by {amount}, down to {minimum}",
             "original": "Base recipe: {amount}",
             "use": "Use",
             "omit": "Leave out",

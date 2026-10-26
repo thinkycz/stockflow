@@ -87,18 +87,18 @@ Made with pineapple purée, coconut milk, matcha. Select the required variant be
 
 | Component  | Ingredient        | Amount           | Unit |
 | ---------- | ----------------- | ---------------- | ---- |
-| Drink base | pineapple purée   | 50               | ml   |
-| Drink base | coconut milk      | 100              | ml   |
-| Matcha     | water at 70–80 °C | 50               | ml   |
+| Drink base | pineapple purée   | 50               | g    |
+| Drink base | coconut milk      | 100              | g    |
+| Matcha     | water at 70–80 °C | 50               | g    |
 | Matcha     | matcha            | 3.5              | g    |
 | Ice        | ice cubes         | full serving cup | —    |
 
 ### Method
 
-1. **Measure pineapple purée.** Add 50 ml pineapple purée to serving cup.
+1. **Measure pineapple purée.** Add 50 g pineapple purée to serving cup.
 2. **Fill the cup with ice.** Fill the serving cup with ice.
-3. **Measure coconut milk.** Add 100 ml coconut milk to serving cup.
-4. **Measure water at 70–80 °C.** Add 50 ml water at 70–80 °C to matcha bowl.
+3. **Measure coconut milk.** Add 100 g coconut milk to serving cup.
+4. **Measure water at 70–80 °C.** Add 50 g water at 70–80 °C to matcha bowl.
 5. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
 6. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 7. **Assemble the drink.** Pour the matcha into the serving cup.
@@ -109,22 +109,22 @@ Made with pineapple purée, coconut milk, matcha. Select the required variant be
 
 | Component  | Ingredient        | Amount          | Unit |
 | ---------- | ----------------- | --------------- | ---- |
-| Drink base | pineapple purée   | 50              | ml   |
-| Drink base | coconut milk      | 100             | ml   |
-| Drink base | liquid sugar      | 5               | ml   |
-| Matcha     | water at 70–80 °C | 50              | ml   |
+| Drink base | pineapple purée   | 50              | g    |
+| Drink base | coconut milk      | 100             | g    |
+| Drink base | liquid sugar      | 5               | g    |
+| Matcha     | water at 70–80 °C | 50              | g    |
 | Matcha     | matcha            | 3.5             | g    |
 | Ice        | ice cubes         | 2–3             | —    |
 | Top-up     | coconut milk      | to serving line | —    |
 
 ### Method
 
-1. **Measure pineapple purée.** Add 50 ml pineapple purée to serving cup.
+1. **Measure pineapple purée.** Add 50 g pineapple purée to serving cup.
 2. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-3. **Measure coconut milk.** Add 100 ml coconut milk to serving cup.
-4. **Measure liquid sugar.** Add 5 ml liquid sugar to serving cup.
+3. **Measure coconut milk.** Add 100 g coconut milk to serving cup.
+4. **Measure liquid sugar.** Add 5 g liquid sugar to serving cup.
 5. **Stir to combine.** Stir the ingredients until evenly combined.
-6. **Measure water at 70–80 °C.** Add 50 ml water at 70–80 °C to matcha bowl.
+6. **Measure water at 70–80 °C.** Add 50 g water at 70–80 °C to matcha bowl.
 7. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
 8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 9. **Assemble the drink.** Pour the matcha into the serving cup.
@@ -140,18 +140,18 @@ Made with pineapple purée, coconut milk, matcha. Select the required variant be
 
 | Component  | Ingredient        | Amount           | Unit |
 | ---------- | ----------------- | ---------------- | ---- |
-| Drink base | pineapple purée   | 60               | ml   |
-| Drink base | coconut milk      | 140              | ml   |
-| Matcha     | water at 70–80 °C | 60               | ml   |
+| Drink base | pineapple purée   | 60               | g    |
+| Drink base | coconut milk      | 140              | g    |
+| Matcha     | water at 70–80 °C | 60               | g    |
 | Matcha     | matcha            | 4.5              | g    |
 | Ice        | ice cubes         | full serving cup | —    |
 
 ### Method
 
-1. **Measure pineapple purée.** Add 60 ml pineapple purée to serving cup.
+1. **Measure pineapple purée.** Add 60 g pineapple purée to serving cup.
 2. **Fill the cup with ice.** Fill the serving cup with ice.
-3. **Measure coconut milk.** Add 140 ml coconut milk to serving cup.
-4. **Measure water at 70–80 °C.** Add 60 ml water at 70–80 °C to matcha bowl.
+3. **Measure coconut milk.** Add 140 g coconut milk to serving cup.
+4. **Measure water at 70–80 °C.** Add 60 g water at 70–80 °C to matcha bowl.
 5. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
 6. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 7. **Assemble the drink.** Pour the matcha into the serving cup.
@@ -162,22 +162,22 @@ Made with pineapple purée, coconut milk, matcha. Select the required variant be
 
 | Component  | Ingredient        | Amount          | Unit |
 | ---------- | ----------------- | --------------- | ---- |
-| Drink base | pineapple purée   | 60              | ml   |
-| Drink base | coconut milk      | 140             | ml   |
-| Drink base | liquid sugar      | 10              | ml   |
-| Matcha     | water at 70–80 °C | 60              | ml   |
+| Drink base | pineapple purée   | 60              | g    |
+| Drink base | coconut milk      | 140             | g    |
+| Drink base | liquid sugar      | 10              | g    |
+| Matcha     | water at 70–80 °C | 60              | g    |
 | Matcha     | matcha            | 4.5             | g    |
 | Ice        | ice cubes         | 2–3             | —    |
 | Top-up     | coconut milk      | to serving line | —    |
 
 ### Method
 
-1. **Measure pineapple purée.** Add 60 ml pineapple purée to serving cup.
+1. **Measure pineapple purée.** Add 60 g pineapple purée to serving cup.
 2. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-3. **Measure coconut milk.** Add 140 ml coconut milk to serving cup.
-4. **Measure liquid sugar.** Add 10 ml liquid sugar to serving cup.
+3. **Measure coconut milk.** Add 140 g coconut milk to serving cup.
+4. **Measure liquid sugar.** Add 10 g liquid sugar to serving cup.
 5. **Stir to combine.** Stir the ingredients until evenly combined.
-6. **Measure water at 70–80 °C.** Add 60 ml water at 70–80 °C to matcha bowl.
+6. **Measure water at 70–80 °C.** Add 60 g water at 70–80 °C to matcha bowl.
 7. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
 8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 9. **Assemble the drink.** Pour the matcha into the serving cup.

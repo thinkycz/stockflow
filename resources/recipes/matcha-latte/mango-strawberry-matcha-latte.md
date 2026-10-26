@@ -157,18 +157,18 @@ Made with mango purée, milk, matcha. Select the required variant before measuri
 
 | Component  | Ingredient        | Amount           | Unit |
 | ---------- | ----------------- | ---------------- | ---- |
-| Drink base | mango purée       | 50               | ml   |
-| Drink base | milk              | 100              | ml   |
-| Matcha     | water at 70–80 °C | 50               | ml   |
+| Drink base | mango purée       | 50               | g    |
+| Drink base | milk              | 100              | g    |
+| Matcha     | water at 70–80 °C | 50               | g    |
 | Matcha     | matcha            | 3.5              | g    |
 | Ice        | ice cubes         | full serving cup | —    |
 
 ### Method
 
-1. **Measure mango purée.** Add 50 ml mango purée to serving cup.
+1. **Measure mango purée.** Add 50 g mango purée to serving cup.
 2. **Fill the cup with ice.** Fill the serving cup with ice.
-3. **Measure milk.** Add 100 ml milk to serving cup.
-4. **Measure water at 70–80 °C.** Add 50 ml water at 70–80 °C to matcha bowl.
+3. **Measure milk.** Add 100 g milk to serving cup.
+4. **Measure water at 70–80 °C.** Add 50 g water at 70–80 °C to matcha bowl.
 5. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
 6. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 7. **Assemble the drink.** Pour the matcha into the serving cup.
@@ -179,22 +179,22 @@ Made with mango purée, milk, matcha. Select the required variant before measuri
 
 | Component  | Ingredient        | Amount          | Unit |
 | ---------- | ----------------- | --------------- | ---- |
-| Drink base | mango purée       | 50              | ml   |
-| Drink base | milk              | 100             | ml   |
-| Drink base | liquid sugar      | 5               | ml   |
-| Matcha     | water at 70–80 °C | 50              | ml   |
+| Drink base | mango purée       | 50              | g    |
+| Drink base | milk              | 100             | g    |
+| Drink base | liquid sugar      | 5               | g    |
+| Matcha     | water at 70–80 °C | 50              | g    |
 | Matcha     | matcha            | 3.5             | g    |
 | Ice        | ice cubes         | 2–3             | —    |
 | Top-up     | milk              | to serving line | —    |
 
 ### Method
 
-1. **Measure mango purée.** Add 50 ml mango purée to serving cup.
+1. **Measure mango purée.** Add 50 g mango purée to serving cup.
 2. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-3. **Measure milk.** Add 100 ml milk to serving cup.
-4. **Measure liquid sugar.** Add 5 ml liquid sugar to serving cup.
+3. **Measure milk.** Add 100 g milk to serving cup.
+4. **Measure liquid sugar.** Add 5 g liquid sugar to serving cup.
 5. **Stir to combine.** Stir the ingredients until evenly combined.
-6. **Measure water at 70–80 °C.** Add 50 ml water at 70–80 °C to matcha bowl.
+6. **Measure water at 70–80 °C.** Add 50 g water at 70–80 °C to matcha bowl.
 7. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
 8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 9. **Assemble the drink.** Pour the matcha into the serving cup.
@@ -210,18 +210,18 @@ Made with mango purée, milk, matcha. Select the required variant before measuri
 
 | Component  | Ingredient        | Amount           | Unit |
 | ---------- | ----------------- | ---------------- | ---- |
-| Drink base | mango purée       | 60               | ml   |
-| Drink base | milk              | 140              | ml   |
-| Matcha     | water at 70–80 °C | 60               | ml   |
+| Drink base | mango purée       | 60               | g    |
+| Drink base | milk              | 140              | g    |
+| Matcha     | water at 70–80 °C | 60               | g    |
 | Matcha     | matcha            | 4.5              | g    |
 | Ice        | ice cubes         | full serving cup | —    |
 
 ### Method
 
-1. **Measure mango purée.** Add 60 ml mango purée to serving cup.
+1. **Measure mango purée.** Add 60 g mango purée to serving cup.
 2. **Fill the cup with ice.** Fill the serving cup with ice.
-3. **Measure milk.** Add 140 ml milk to serving cup.
-4. **Measure water at 70–80 °C.** Add 60 ml water at 70–80 °C to matcha bowl.
+3. **Measure milk.** Add 140 g milk to serving cup.
+4. **Measure water at 70–80 °C.** Add 60 g water at 70–80 °C to matcha bowl.
 5. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
 6. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 7. **Assemble the drink.** Pour the matcha into the serving cup.
@@ -232,22 +232,22 @@ Made with mango purée, milk, matcha. Select the required variant before measuri
 
 | Component  | Ingredient        | Amount          | Unit |
 | ---------- | ----------------- | --------------- | ---- |
-| Drink base | mango purée       | 60              | ml   |
-| Drink base | milk              | 140             | ml   |
-| Drink base | liquid sugar      | 10              | ml   |
-| Matcha     | water at 70–80 °C | 60              | ml   |
+| Drink base | mango purée       | 60              | g    |
+| Drink base | milk              | 140             | g    |
+| Drink base | liquid sugar      | 10              | g    |
+| Matcha     | water at 70–80 °C | 60              | g    |
 | Matcha     | matcha            | 4.5             | g    |
 | Ice        | ice cubes         | 2–3             | —    |
 | Top-up     | milk              | to serving line | —    |
 
 ### Method
 
-1. **Measure mango purée.** Add 60 ml mango purée to serving cup.
+1. **Measure mango purée.** Add 60 g mango purée to serving cup.
 2. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-3. **Measure milk.** Add 140 ml milk to serving cup.
-4. **Measure liquid sugar.** Add 10 ml liquid sugar to serving cup.
+3. **Measure milk.** Add 140 g milk to serving cup.
+4. **Measure liquid sugar.** Add 10 g liquid sugar to serving cup.
 5. **Stir to combine.** Stir the ingredients until evenly combined.
-6. **Measure water at 70–80 °C.** Add 60 ml water at 70–80 °C to matcha bowl.
+6. **Measure water at 70–80 °C.** Add 60 g water at 70–80 °C to matcha bowl.
 7. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
 8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 9. **Assemble the drink.** Pour the matcha into the serving cup.
@@ -263,18 +263,18 @@ Made with mango purée, milk, matcha. Select the required variant before measuri
 
 | Component  | Ingredient        | Amount           | Unit |
 | ---------- | ----------------- | ---------------- | ---- |
-| Drink base | strawberry purée  | 50               | ml   |
-| Drink base | milk              | 100              | ml   |
-| Matcha     | water at 70–80 °C | 50               | ml   |
+| Drink base | strawberry purée  | 50               | g    |
+| Drink base | milk              | 100              | g    |
+| Matcha     | water at 70–80 °C | 50               | g    |
 | Matcha     | matcha            | 3.5              | g    |
 | Ice        | ice cubes         | full serving cup | —    |
 
 ### Method
 
-1. **Measure strawberry purée.** Add 50 ml strawberry purée to serving cup.
+1. **Measure strawberry purée.** Add 50 g strawberry purée to serving cup.
 2. **Fill the cup with ice.** Fill the serving cup with ice.
-3. **Measure milk.** Add 100 ml milk to serving cup.
-4. **Measure water at 70–80 °C.** Add 50 ml water at 70–80 °C to matcha bowl.
+3. **Measure milk.** Add 100 g milk to serving cup.
+4. **Measure water at 70–80 °C.** Add 50 g water at 70–80 °C to matcha bowl.
 5. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
 6. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 7. **Assemble the drink.** Pour the matcha into the serving cup.
@@ -285,22 +285,22 @@ Made with mango purée, milk, matcha. Select the required variant before measuri
 
 | Component  | Ingredient        | Amount          | Unit |
 | ---------- | ----------------- | --------------- | ---- |
-| Drink base | strawberry purée  | 50              | ml   |
-| Drink base | milk              | 100             | ml   |
-| Drink base | liquid sugar      | 5               | ml   |
-| Matcha     | water at 70–80 °C | 50              | ml   |
+| Drink base | strawberry purée  | 50              | g    |
+| Drink base | milk              | 100             | g    |
+| Drink base | liquid sugar      | 5               | g    |
+| Matcha     | water at 70–80 °C | 50              | g    |
 | Matcha     | matcha            | 3.5             | g    |
 | Ice        | ice cubes         | 2–3             | —    |
 | Top-up     | milk              | to serving line | —    |
 
 ### Method
 
-1. **Measure strawberry purée.** Add 50 ml strawberry purée to serving cup.
+1. **Measure strawberry purée.** Add 50 g strawberry purée to serving cup.
 2. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-3. **Measure milk.** Add 100 ml milk to serving cup.
-4. **Measure liquid sugar.** Add 5 ml liquid sugar to serving cup.
+3. **Measure milk.** Add 100 g milk to serving cup.
+4. **Measure liquid sugar.** Add 5 g liquid sugar to serving cup.
 5. **Stir to combine.** Stir the ingredients until evenly combined.
-6. **Measure water at 70–80 °C.** Add 50 ml water at 70–80 °C to matcha bowl.
+6. **Measure water at 70–80 °C.** Add 50 g water at 70–80 °C to matcha bowl.
 7. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
 8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 9. **Assemble the drink.** Pour the matcha into the serving cup.
@@ -316,18 +316,18 @@ Made with mango purée, milk, matcha. Select the required variant before measuri
 
 | Component  | Ingredient        | Amount           | Unit |
 | ---------- | ----------------- | ---------------- | ---- |
-| Drink base | strawberry purée  | 60               | ml   |
-| Drink base | milk              | 140              | ml   |
-| Matcha     | water at 70–80 °C | 60               | ml   |
+| Drink base | strawberry purée  | 60               | g    |
+| Drink base | milk              | 140              | g    |
+| Matcha     | water at 70–80 °C | 60               | g    |
 | Matcha     | matcha            | 4.5              | g    |
 | Ice        | ice cubes         | full serving cup | —    |
 
 ### Method
 
-1. **Measure strawberry purée.** Add 60 ml strawberry purée to serving cup.
+1. **Measure strawberry purée.** Add 60 g strawberry purée to serving cup.
 2. **Fill the cup with ice.** Fill the serving cup with ice.
-3. **Measure milk.** Add 140 ml milk to serving cup.
-4. **Measure water at 70–80 °C.** Add 60 ml water at 70–80 °C to matcha bowl.
+3. **Measure milk.** Add 140 g milk to serving cup.
+4. **Measure water at 70–80 °C.** Add 60 g water at 70–80 °C to matcha bowl.
 5. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
 6. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 7. **Assemble the drink.** Pour the matcha into the serving cup.
@@ -338,22 +338,22 @@ Made with mango purée, milk, matcha. Select the required variant before measuri
 
 | Component  | Ingredient        | Amount          | Unit |
 | ---------- | ----------------- | --------------- | ---- |
-| Drink base | strawberry purée  | 60              | ml   |
-| Drink base | milk              | 140             | ml   |
-| Drink base | liquid sugar      | 10              | ml   |
-| Matcha     | water at 70–80 °C | 60              | ml   |
+| Drink base | strawberry purée  | 60              | g    |
+| Drink base | milk              | 140             | g    |
+| Drink base | liquid sugar      | 10              | g    |
+| Matcha     | water at 70–80 °C | 60              | g    |
 | Matcha     | matcha            | 4.5             | g    |
 | Ice        | ice cubes         | 2–3             | —    |
 | Top-up     | milk              | to serving line | —    |
 
 ### Method
 
-1. **Measure strawberry purée.** Add 60 ml strawberry purée to serving cup.
+1. **Measure strawberry purée.** Add 60 g strawberry purée to serving cup.
 2. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-3. **Measure milk.** Add 140 ml milk to serving cup.
-4. **Measure liquid sugar.** Add 10 ml liquid sugar to serving cup.
+3. **Measure milk.** Add 140 g milk to serving cup.
+4. **Measure liquid sugar.** Add 10 g liquid sugar to serving cup.
 5. **Stir to combine.** Stir the ingredients until evenly combined.
-6. **Measure water at 70–80 °C.** Add 60 ml water at 70–80 °C to matcha bowl.
+6. **Measure water at 70–80 °C.** Add 60 g water at 70–80 °C to matcha bowl.
 7. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
 8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 9. **Assemble the drink.** Pour the matcha into the serving cup.

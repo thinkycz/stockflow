@@ -30,15 +30,20 @@ const reduction = computed(() =>
     count.value === 'base'
         ? t('recipes.topping_adjustments.unchanged')
         : t('recipes.topping_adjustments.reduction', {
-              amount: count.value === 'two' ? 5 : 10,
+              amount: format(
+                  (props.components[0]?.reduction_step ?? 5) *
+                      (count.value === 'two' ? 1 : 2),
+                  props.components[0]?.unit ?? 'ml',
+              ),
+              minimum: format(0, props.components[0]?.unit ?? 'ml'),
           }),
 );
 watch(
     () => props.components,
     () => (count.value = 'base'),
 );
-function format(value: number): string {
-    return `${new Intl.NumberFormat(locale.value).format(value)} ml`;
+function format(value: number, unit: string): string {
+    return `${new Intl.NumberFormat(locale.value).format(value)} ${unit}`;
 }
 </script>
 
@@ -94,7 +99,10 @@ function format(value: number): string {
                     <p class="mt-1 text-xs leading-5 text-on-surface-variant">
                         {{
                             t('recipes.topping_adjustments.original', {
-                                amount: format(component.base_quantity),
+                                amount: format(
+                                    component.base_quantity,
+                                    component.unit,
+                                ),
                             })
                         }}
                     </p>
@@ -113,7 +121,7 @@ function format(value: number): string {
                         class="mt-0.5 font-heading text-2xl font-bold text-primary tabular-nums"
                         data-testid="recipe-topping-amount"
                     >
-                        {{ format(component.quantity) }}
+                        {{ format(component.quantity, component.unit) }}
                     </p>
                 </div>
             </div>

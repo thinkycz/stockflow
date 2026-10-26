@@ -14,7 +14,7 @@ use Thinkycz\LaravelCore\Support\Typer;
  * @phpstan-type CategoryRow array{key: string, name: string, position: int, recipe_count: int}
  * @phpstan-type IngredientRow array{key: string, group: string, name: string, quantity_value: float|int|null, quantity_text: string|null, unit: string|null, icon_group: string}
  * @phpstan-type StepRow array{key: string, title: string, text: string, action_key: string, timer_seconds: int|null}
- * @phpstan-type AdjustmentRow array{ingredient_name: string, unit: string, base_quantity: float|int, two_toppings_quantity: float|int, three_toppings_quantity: float|int}
+ * @phpstan-type AdjustmentRow array{ingredient_name: string, unit: string, reduction_step: int, base_quantity: float|int, two_toppings_quantity: float|int, three_toppings_quantity: float|int}
  * @phpstan-type VariantRow array{key: string, name: string, selectors: array<string, string>, selector_labels: array<string, string>, ingredients: list<IngredientRow>, steps: list<StepRow>, tips_html: string, topping_adjustments: list<AdjustmentRow>}
  * @phpstan-type RelatedRow array{key: string, name: string, url: string}
  * @phpstan-type RecipeRow array{key: string, slug: string, name: string, category: CategoryRow, position: int, summary: string, tags: list<string>, aliases: list<string>, equipment: list<string>, variants: list<VariantRow>, notes_html: string, related: list<RelatedRow>, url: string}
@@ -202,12 +202,16 @@ final class RecipeCatalogRepository
                 }
             }
             $selectors = $this->selectors(Typer::assertArray($variant['selectors'] ?? []));
+            $toppingReduction = Typer::assertInt($variant['topping_reduction'] ?? 5);
+            if (!\in_array($toppingReduction, [0, 5, 10], true)) {
+                throw new RuntimeException('Topping reduction must be 0, 5 or 10: ' . $path);
+            }
             $variants[] = ['key' => $key, 'name' => $name, 'selectors' => $selectors,
                 'selector_labels' => \array_map(fn(string $value): string => $this->translator->text(match ($value) {
                     'with-ice' => 'With ice', 'no-ice' => 'No ice', default => $value,
                 }), $selectors),
                 'ingredients' => $ingredients, 'steps' => $steps, 'tips_html' => $this->markdown($this->subsection($content, 'Tips')),
-                'topping_adjustments' => $category['key'] === 'preparations' ? [] : $this->adjustments($ingredients)];
+                'topping_adjustments' => $category['key'] === 'preparations' ? [] : $this->adjustments($ingredients, $toppingReduction, isset($selectors['ice']) && \in_array('matcha', Typer::assertArray($metadata['tags'] ?? []), true))];
         }
         if ($variants === [] || \count(\array_column($variants, 'key')) !== \count(\array_unique(\array_column($variants, 'key')))) {
             throw new RuntimeException('Missing or duplicate variants: ' . $path);
@@ -293,15 +297,18 @@ final class RecipeCatalogRepository
     /** @param list<IngredientRow> $ingredients
      * @return list<AdjustmentRow>
      */
-    private function adjustments(array $ingredients): array
+    private function adjustments(array $ingredients, int $reduction, bool $allowGrams): array
     {
+        if ($reduction === 0) {
+            return [];
+        }
         $rows = [];
         foreach ($ingredients as $ingredient) {
-            if ($ingredient['unit'] !== 'ml' || $ingredient['quantity_value'] === null || ($ingredient['name'] !== 'liquid sugar' && !\str_ends_with($ingredient['name'], ' syrup'))) {
+            if (($ingredient['unit'] !== 'ml' && (!$allowGrams || $ingredient['unit'] !== 'g')) || $ingredient['quantity_value'] === null || ($ingredient['name'] !== 'liquid sugar' && !\str_ends_with($ingredient['name'], ' syrup'))) {
                 continue;
             }
-            $rows[] = ['ingredient_name' => $ingredient['name'], 'unit' => 'ml', 'base_quantity' => $ingredient['quantity_value'],
-                'two_toppings_quantity' => \max(0, $ingredient['quantity_value'] - 5), 'three_toppings_quantity' => \max(0, $ingredient['quantity_value'] - 10)];
+            $rows[] = ['ingredient_name' => $ingredient['name'], 'unit' => $ingredient['unit'], 'reduction_step' => $reduction, 'base_quantity' => $ingredient['quantity_value'],
+                'two_toppings_quantity' => \max(0, $ingredient['quantity_value'] - $reduction), 'three_toppings_quantity' => \max(0, $ingredient['quantity_value'] - 2 * $reduction)];
         }
 
         return $rows;

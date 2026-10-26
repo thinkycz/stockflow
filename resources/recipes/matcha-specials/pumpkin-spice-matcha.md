@@ -26,7 +26,8 @@
                 "pour",
                 "garnish"
             ],
-            "timers": {}
+            "timers": {},
+            "topping_reduction": 0
         }
     ]
 }

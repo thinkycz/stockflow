@@ -66,14 +66,14 @@ Made with oat milk, matcha. Select the required variant before measuring ingredi
 | Component       | Ingredient   | Amount           | Unit |
 | --------------- | ------------ | ---------------- | ---- |
 | Ice             | ice cubes    | full serving cup | —    |
-| Cloud / topping | oat milk     | 100              | ml   |
-| Cloud / topping | liquid sugar | 20               | ml   |
+| Cloud / topping | oat milk     | 100              | g    |
+| Cloud / topping | liquid sugar | 20               | g    |
 | Cloud / topping | matcha       | 3.5              | g    |
 
 ### Method
 
-1. **Measure oat milk.** Add 100 ml oat milk to mixing bowl.
-2. **Measure liquid sugar.** Add 20 ml liquid sugar to mixing bowl.
+1. **Measure oat milk.** Add 100 g oat milk to mixing bowl.
+2. **Measure liquid sugar.** Add 20 g liquid sugar to mixing bowl.
 3. **Measure matcha.** Add 3.5 g matcha to mixing bowl.
 4. **Whip the mixture.** Whip until smooth.
 5. **Fill the cup with ice.** Fill the serving cup with ice.
@@ -87,14 +87,14 @@ Made with oat milk, matcha. Select the required variant before measuring ingredi
 | --------------- | ------------ | --------------- | ---- |
 | Ice             | ice cubes    | 2–3             | —    |
 | Top-up          | oat milk     | to serving line | —    |
-| Cloud / topping | oat milk     | 100             | ml   |
-| Cloud / topping | liquid sugar | 25              | ml   |
+| Cloud / topping | oat milk     | 100             | g    |
+| Cloud / topping | liquid sugar | 25              | g    |
 | Cloud / topping | matcha       | 3.5             | g    |
 
 ### Method
 
-1. **Measure oat milk.** Add 100 ml oat milk to mixing bowl.
-2. **Measure liquid sugar.** Add 25 ml liquid sugar to mixing bowl.
+1. **Measure oat milk.** Add 100 g oat milk to mixing bowl.
+2. **Measure liquid sugar.** Add 25 g liquid sugar to mixing bowl.
 3. **Measure matcha.** Add 3.5 g matcha to mixing bowl.
 4. **Whip the mixture.** Whip until smooth.
 5. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
@@ -112,14 +112,14 @@ Made with oat milk, matcha. Select the required variant before measuring ingredi
 | Component       | Ingredient   | Amount           | Unit |
 | --------------- | ------------ | ---------------- | ---- |
 | Ice             | ice cubes    | full serving cup | —    |
-| Cloud / topping | oat milk     | 140              | ml   |
-| Cloud / topping | liquid sugar | 25               | ml   |
+| Cloud / topping | oat milk     | 140              | g    |
+| Cloud / topping | liquid sugar | 25               | g    |
 | Cloud / topping | matcha       | 4.5              | g    |
 
 ### Method
 
-1. **Measure oat milk.** Add 140 ml oat milk to mixing bowl.
-2. **Measure liquid sugar.** Add 25 ml liquid sugar to mixing bowl.
+1. **Measure oat milk.** Add 140 g oat milk to mixing bowl.
+2. **Measure liquid sugar.** Add 25 g liquid sugar to mixing bowl.
 3. **Measure matcha.** Add 4.5 g matcha to mixing bowl.
 4. **Whip the mixture.** Whip until smooth.
 5. **Fill the cup with ice.** Fill the serving cup with ice.
@@ -133,14 +133,14 @@ Made with oat milk, matcha. Select the required variant before measuring ingredi
 | --------------- | ------------ | --------------- | ---- |
 | Ice             | ice cubes    | 2–3             | —    |
 | Top-up          | oat milk     | to serving line | —    |
-| Cloud / topping | oat milk     | 140             | ml   |
-| Cloud / topping | liquid sugar | 35              | ml   |
+| Cloud / topping | oat milk     | 140             | g    |
+| Cloud / topping | liquid sugar | 35              | g    |
 | Cloud / topping | matcha       | 4.5             | g    |
 
 ### Method
 
-1. **Measure oat milk.** Add 140 ml oat milk to mixing bowl.
-2. **Measure liquid sugar.** Add 35 ml liquid sugar to mixing bowl.
+1. **Measure oat milk.** Add 140 g oat milk to mixing bowl.
+2. **Measure liquid sugar.** Add 35 g liquid sugar to mixing bowl.
 3. **Measure matcha.** Add 4.5 g matcha to mixing bowl.
 4. **Whip the mixture.** Whip until smooth.
 5. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.

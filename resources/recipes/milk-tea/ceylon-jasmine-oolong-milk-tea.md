@@ -35,7 +35,8 @@
                 "flavour": "Ceylon"
             },
             "actions": ["add", "add", "ice", "shake", "pour"],
-            "timers": {}
+            "timers": {},
+            "topping_reduction": 10
         },
         {
             "key": "ceylon-l-no-ice",
@@ -46,7 +47,8 @@
                 "flavour": "Ceylon"
             },
             "actions": ["add", "add", "add", "shake", "pour", "add"],
-            "timers": {}
+            "timers": {},
+            "topping_reduction": 10
         },
         {
             "key": "jasmine-m-with-ice",
@@ -79,7 +81,8 @@
                 "flavour": "Jasmine"
             },
             "actions": ["add", "add", "ice", "shake", "pour"],
-            "timers": {}
+            "timers": {},
+            "topping_reduction": 10
         },
         {
             "key": "jasmine-l-no-ice",
@@ -90,7 +93,8 @@
                 "flavour": "Jasmine"
             },
             "actions": ["add", "add", "add", "shake", "pour", "add"],
-            "timers": {}
+            "timers": {},
+            "topping_reduction": 10
         },
         {
             "key": "oolong-m-with-ice",
@@ -123,7 +127,8 @@
                 "flavour": "Oolong"
             },
             "actions": ["add", "add", "ice", "shake", "pour"],
-            "timers": {}
+            "timers": {},
+            "topping_reduction": 10
         },
         {
             "key": "oolong-l-no-ice",
@@ -134,7 +139,8 @@
                 "flavour": "Oolong"
             },
             "actions": ["add", "add", "add", "shake", "pour", "add"],
-            "timers": {}
+            "timers": {},
+            "topping_reduction": 10
         }
     ]
 }

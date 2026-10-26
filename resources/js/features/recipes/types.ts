@@ -40,6 +40,7 @@ export type RecipeVariant = {
     topping_adjustments: Array<{
         ingredient_name: string;
         unit: string;
+        reduction_step: number;
         base_quantity: number;
         two_toppings_quantity: number;
         three_toppings_quantity: number;

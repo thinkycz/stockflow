@@ -109,22 +109,22 @@ Made with whipping cream, milk, matcha, dried coconut. Select the required varia
 
 | Component       | Ingredient     | Amount           | Unit |
 | --------------- | -------------- | ---------------- | ---- |
-| Drink base      | coconut water  | 100              | ml   |
-| Drink base      | liquid sugar   | 20               | ml   |
+| Drink base      | coconut water  | 100              | g    |
+| Drink base      | liquid sugar   | 20               | g    |
 | Ice             | ice cubes      | full serving cup | —    |
-| Cloud / topping | whipping cream | 40               | ml   |
-| Cloud / topping | milk           | 40               | ml   |
+| Cloud / topping | whipping cream | 40               | g    |
+| Cloud / topping | milk           | 40               | g    |
 | Cloud / topping | matcha         | 3.5              | g    |
 | Finish          | dried coconut  | 2                | g    |
 
 ### Method
 
-1. **Measure coconut water.** Add 100 ml coconut water to serving cup.
-2. **Measure liquid sugar.** Add 20 ml liquid sugar to serving cup.
+1. **Measure coconut water.** Add 100 g coconut water to serving cup.
+2. **Measure liquid sugar.** Add 20 g liquid sugar to serving cup.
 3. **Stir to combine.** Stir the ingredients until evenly combined.
 4. **Fill the cup with ice.** Fill the serving cup with ice.
-5. **Measure whipping cream.** Add 40 ml whipping cream to mixing bowl.
-6. **Measure milk.** Add 40 ml milk to mixing bowl.
+5. **Measure whipping cream.** Add 40 g whipping cream to mixing bowl.
+6. **Measure milk.** Add 40 g milk to mixing bowl.
 7. **Measure matcha.** Add 3.5 g matcha to mixing bowl.
 8. **Whip the cloud.** Whip until thick.
 9. **Assemble the drink.** Pour the matcha cloud into the serving cup.
@@ -136,22 +136,22 @@ Made with whipping cream, milk, matcha, dried coconut. Select the required varia
 
 | Component       | Ingredient     | Amount | Unit |
 | --------------- | -------------- | ------ | ---- |
-| Drink base      | coconut water  | 150    | ml   |
-| Drink base      | liquid sugar   | 25     | ml   |
+| Drink base      | coconut water  | 150    | g    |
+| Drink base      | liquid sugar   | 25     | g    |
 | Ice             | ice cubes      | 2–3    | —    |
-| Cloud / topping | whipping cream | 40     | ml   |
-| Cloud / topping | milk           | 40     | ml   |
+| Cloud / topping | whipping cream | 40     | g    |
+| Cloud / topping | milk           | 40     | g    |
 | Cloud / topping | matcha         | 3.5    | g    |
 | Finish          | dried coconut  | 2      | g    |
 
 ### Method
 
-1. **Measure coconut water.** Add 150 ml coconut water to serving cup.
-2. **Measure liquid sugar.** Add 25 ml liquid sugar to serving cup.
+1. **Measure coconut water.** Add 150 g coconut water to serving cup.
+2. **Measure liquid sugar.** Add 25 g liquid sugar to serving cup.
 3. **Stir to combine.** Stir the ingredients until evenly combined.
 4. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-5. **Measure whipping cream.** Add 40 ml whipping cream to mixing bowl.
-6. **Measure milk.** Add 40 ml milk to mixing bowl.
+5. **Measure whipping cream.** Add 40 g whipping cream to mixing bowl.
+6. **Measure milk.** Add 40 g milk to mixing bowl.
 7. **Measure matcha.** Add 3.5 g matcha to mixing bowl.
 8. **Whip the cloud.** Whip until thick.
 9. **Assemble the drink.** Pour the matcha cloud into the serving cup.
@@ -167,22 +167,22 @@ Made with whipping cream, milk, matcha, dried coconut. Select the required varia
 
 | Component       | Ingredient     | Amount           | Unit |
 | --------------- | -------------- | ---------------- | ---- |
-| Drink base      | coconut water  | 140              | ml   |
-| Drink base      | liquid sugar   | 25               | ml   |
+| Drink base      | coconut water  | 140              | g    |
+| Drink base      | liquid sugar   | 25               | g    |
 | Ice             | ice cubes      | full serving cup | —    |
-| Cloud / topping | whipping cream | 50               | ml   |
-| Cloud / topping | milk           | 50               | ml   |
+| Cloud / topping | whipping cream | 50               | g    |
+| Cloud / topping | milk           | 50               | g    |
 | Cloud / topping | matcha         | 4.5              | g    |
 | Finish          | dried coconut  | 2                | g    |
 
 ### Method
 
-1. **Measure coconut water.** Add 140 ml coconut water to serving cup.
-2. **Measure liquid sugar.** Add 25 ml liquid sugar to serving cup.
+1. **Measure coconut water.** Add 140 g coconut water to serving cup.
+2. **Measure liquid sugar.** Add 25 g liquid sugar to serving cup.
 3. **Stir to combine.** Stir the ingredients until evenly combined.
 4. **Fill the cup with ice.** Fill the serving cup with ice.
-5. **Measure whipping cream.** Add 50 ml whipping cream to mixing bowl.
-6. **Measure milk.** Add 50 ml milk to mixing bowl.
+5. **Measure whipping cream.** Add 50 g whipping cream to mixing bowl.
+6. **Measure milk.** Add 50 g milk to mixing bowl.
 7. **Measure matcha.** Add 4.5 g matcha to mixing bowl.
 8. **Whip the cloud.** Whip until thick.
 9. **Assemble the drink.** Pour the matcha cloud into the serving cup.
@@ -194,22 +194,22 @@ Made with whipping cream, milk, matcha, dried coconut. Select the required varia
 
 | Component       | Ingredient     | Amount | Unit |
 | --------------- | -------------- | ------ | ---- |
-| Drink base      | coconut water  | 200    | ml   |
-| Drink base      | liquid sugar   | 35     | ml   |
+| Drink base      | coconut water  | 200    | g    |
+| Drink base      | liquid sugar   | 35     | g    |
 | Ice             | ice cubes      | 2–3    | —    |
-| Cloud / topping | whipping cream | 50     | ml   |
-| Cloud / topping | milk           | 50     | ml   |
+| Cloud / topping | whipping cream | 50     | g    |
+| Cloud / topping | milk           | 50     | g    |
 | Cloud / topping | matcha         | 4.5    | g    |
 | Finish          | dried coconut  | 2      | g    |
 
 ### Method
 
-1. **Measure coconut water.** Add 200 ml coconut water to serving cup.
-2. **Measure liquid sugar.** Add 35 ml liquid sugar to serving cup.
+1. **Measure coconut water.** Add 200 g coconut water to serving cup.
+2. **Measure liquid sugar.** Add 35 g liquid sugar to serving cup.
 3. **Stir to combine.** Stir the ingredients until evenly combined.
 4. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-5. **Measure whipping cream.** Add 50 ml whipping cream to mixing bowl.
-6. **Measure milk.** Add 50 ml milk to mixing bowl.
+5. **Measure whipping cream.** Add 50 g whipping cream to mixing bowl.
+6. **Measure milk.** Add 50 g milk to mixing bowl.
 7. **Measure matcha.** Add 4.5 g matcha to mixing bowl.
 8. **Whip the cloud.** Whip until thick.
 9. **Assemble the drink.** Pour the matcha cloud into the serving cup.

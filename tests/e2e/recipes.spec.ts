@@ -564,8 +564,8 @@ test('classic matcha lists a full cup of ice for iced drinks and the authored ch
     await page.goto('/recipes/matcha-latte/classic-matcha-latte');
     const ingredients = page.getByTestId('recipe-ingredients');
     for (const [size, icedMilk, noIceMilk] of [
-        ['S', '100 ml', '150 ml'],
-        ['M', '140 ml', '240 ml'],
+        ['S', '100 g', '150 g'],
+        ['M', '140 g', '240 g'],
     ] as const) {
         await page.getByRole('tab', { name: size, exact: true }).click();
         await page.getByRole('tab', { name: 'With ice', exact: true }).click();
@@ -776,6 +776,108 @@ for (const [locale, reference, guided, begin, groupName] of [
     });
 }
 
+for (const locale of ['en', 'cs', 'sk'] as const) {
+    test(`milk tea topping reductions show the correct step and unit in ${locale}`, async ({
+        page,
+    }) => {
+        test.setTimeout(60000);
+        await login(page);
+        await setEmployeeLocale(page, locale);
+        const messages = { en, cs, sk }[locale].recipes;
+        const guidance = page.getByTestId('recipe-topping-adjustments');
+        const count = guidance.getByRole('tablist', {
+            name: messages.topping_adjustments.count,
+        });
+        for (const width of [1280, 390]) {
+            await page.setViewportSize({ width, height: 844 });
+            for (const [slug, unit, base] of [
+                ['ceylon-jasmine-oolong-milk-tea', 'ml', 40],
+                ['matcha-milk-tea', 'g', 55],
+            ] as const) {
+                await page.goto(`/recipes/milk-tea/${slug}`);
+                await page.getByRole('tab', { name: 'L', exact: true }).click();
+                await expect(
+                    guidance.getByTestId('recipe-topping-amount'),
+                ).toHaveText(`${base} ${unit}`);
+                for (const [toppings, reduction] of [
+                    ['2', 10],
+                    ['3', 20],
+                ] as const) {
+                    await count
+                        .getByRole('tab', { name: toppings, exact: true })
+                        .click();
+                    await expect(
+                        guidance.getByTestId('recipe-topping-amount'),
+                    ).toHaveText(`${base - reduction} ${unit}`);
+                    await expect(
+                        guidance.getByTestId('recipe-topping-rule'),
+                    ).toHaveText(
+                        messages.topping_adjustments.reduction
+                            .replace('{amount}', `${reduction} ${unit}`)
+                            .replace('{minimum}', `0 ${unit}`),
+                    );
+                }
+                await page.getByRole('tab', { name: 'M', exact: true }).click();
+                await expect(
+                    count.getByRole('tab', { name: '0–1', exact: true }),
+                ).toHaveAttribute('aria-selected', 'true');
+                await count
+                    .getByRole('tab', { name: '2', exact: true })
+                    .click();
+                await expect(
+                    guidance.getByTestId('recipe-topping-amount'),
+                ).toHaveText(slug === 'matcha-milk-tea' ? '35 g' : '25 ml');
+                await noOverflow(page);
+                if (slug === 'matcha-milk-tea') {
+                    await expect(
+                        page.getByTestId('recipe-ingredients'),
+                    ).not.toContainText(/\d+ ml/);
+                    await capture(
+                        page,
+                        `recipes-matcha-grams-${locale}-${width}`,
+                    );
+                    await page
+                        .getByRole('tab', {
+                            name: messages.guided,
+                            exact: true,
+                        })
+                        .click();
+                    await page
+                        .getByRole('button', {
+                            name: messages.begin,
+                            exact: true,
+                        })
+                        .click();
+                    await expect(
+                        page.getByTestId('guide-step-text'),
+                    ).toContainText('200 g');
+                    for (let step = 1; step < 9; step++) {
+                        await page
+                            .getByRole('button', {
+                                name: messages.next_step,
+                                exact: true,
+                            })
+                            .click();
+                    }
+                    await page
+                        .getByRole('button', {
+                            name: messages.finish,
+                            exact: true,
+                        })
+                        .click();
+                    await expect(
+                        page.getByRole('heading', {
+                            name: messages.ready_to_serve,
+                            exact: true,
+                        }),
+                    ).toBeVisible();
+                }
+            }
+        }
+        await setEmployeeLocale(page, 'en');
+    });
+}
+
 test('Czech sweetness guidance handles the screenshot case, multiple sweeteners and keyboard selection on phones', async ({
     page,
 }) => {
@@ -789,11 +891,11 @@ test('Czech sweetness guidance handles the screenshot case, multiple sweeteners 
         guidance.getByTestId('recipe-topping-component'),
     ).toContainText('tekutý cukr');
     await expect(guidance.getByTestId('recipe-topping-amount')).toHaveText(
-        '5 ml',
+        '5 g',
     );
     await count.getByRole('tab', { name: '2', exact: true }).click();
     await expect(guidance.getByTestId('recipe-topping-amount')).toHaveText(
-        '0 ml',
+        '0 g',
     );
     await expect(
         guidance.getByText('Nepřidávat', { exact: true }),
@@ -815,14 +917,14 @@ test('Czech sweetness guidance handles the screenshot case, multiple sweeteners 
         count.getByRole('tab', { name: '3', exact: true }),
     ).toHaveAttribute('aria-selected', 'true');
     await expect(guidance.getByTestId('recipe-topping-amount')).toHaveText(
-        '0 ml',
+        '0 g',
     );
     await page.getByRole('tab', { name: 'M', exact: true }).click();
     await expect(
         count.getByRole('tab', { name: '0–1', exact: true }),
     ).toHaveAttribute('aria-selected', 'true');
     await expect(guidance.getByTestId('recipe-topping-amount')).toHaveText(
-        '10 ml',
+        '10 g',
     );
     await page.getByRole('tab', { name: 'S ledem', exact: true }).click();
     await expect(guidance).toHaveCount(0);

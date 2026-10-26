@@ -26,7 +26,8 @@
                 "whip",
                 "pour"
             ],
-            "timers": {}
+            "timers": {},
+            "topping_reduction": 0
         }
     ]
 }

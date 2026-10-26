@@ -1801,7 +1801,7 @@
             "choose": "Vyberte počet toppingů a podívejte se, kolik sladidla použít.",
             "count": "Počet toppingů",
             "unchanged": "Použijte základní množství",
-            "reduction": "Každé sladidlo snižte o {amount} ml, nejméně na 0 ml",
+            "reduction": "Každé sladidlo snižte o {amount}, nejméně na {minimum}",
             "original": "Základní recept: {amount}",
             "use": "Použijte",
             "omit": "Nepřidávat",

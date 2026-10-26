@@ -40,6 +40,11 @@ array, and a `timers` object. Copy an existing recipe as the starting point.
 - `timers` maps a one-based method step to seconds, for example `{"3": 600}` for a
   known ten-minute step. Leave it `{}` when the source gives no exact duration.
   Ranges, visual endpoints, and "a few minutes" must not become fixed timers.
+- Optional variant metadata `topping_reduction` sets the sweetener reduction for
+  two toppings, doubled for three toppings. Allowed values are `5` (default) and
+  `10`, or `0` to omit the guidance. Use `10` for Classic Milk Tea L (all tea
+  flavours and ice options) and every Matcha Milk Tea variant. Bueno Matcha and
+  Pumpkin Spice Matcha retain their fixed formulas without topping guidance (`0`).
 
 Each variant contains `### Ingredients` and `### Method`. The ingredient table uses
 exactly `Component | Ingredient | Amount | Unit`. Components use one order across the catalogue:
@@ -128,9 +133,13 @@ and method, and start guided preparation in each language.
 No-ice recipes still use the specified 2–3 chilling cubes, adjusted sweetener
 amounts, and top-ups. All ice, including chilling cubes and batch dilution, belongs in the `Ice` component. Both ice variants list their ice amounts explicitly. Follow
 the selected variant rather than subtracting ice from another variant. Topping
-guidance is shown separately: liquid sugar and syrup in
-millilitres are reduced by 5 ml for two toppings or 10 ml for three, with a minimum
-of zero. It does not alter the authored method or apply to gram-based hot drinks.
+guidance is shown separately: liquid sugar and syrup are reduced by 5 for two
+toppings or 10 for three, with a minimum of zero, in the ingredient's unit.
+Classic Milk Tea L and Matcha Milk Tea instead use reductions of 10 and 20.
+All measured ingredients in matcha drinks use grams, including milk, syrup and
+water, with the approved numeric doses preserved. Cold matcha topping guidance
+therefore also uses grams. It does not alter the authored method or apply to
+gram-based hot drinks.
 
 Preparation checklists, progress, and timers are temporary page state. They are
 reset when changing variants or leaving the recipe. Prices are omitted.

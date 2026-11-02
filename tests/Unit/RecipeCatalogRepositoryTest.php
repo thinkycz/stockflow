@@ -9,9 +9,9 @@ use Thinkycz\LaravelCore\Support\Typer;
     $catalog = new RecipeCatalogRepository();
     $recipes = $catalog->recipes();
     $signatures = Typer::assertArray(\json_decode(Typer::assertString(\file_get_contents(\base_path('tests/Fixtures/recipe-measurement-signatures.json'))), true, flags: \JSON_THROW_ON_ERROR));
-    \expect($recipes)->toHaveCount(58)
+    \expect($recipes)->toHaveCount(59)
         ->and($catalog->categories())->toHaveCount(9)
-        ->and(\array_sum(\array_map(static fn(array $recipe): int => \count($recipe['variants']), $recipes)))->toBe(193)
+        ->and(\array_sum(\array_map(static fn(array $recipe): int => \count($recipe['variants']), $recipes)))->toBe(194)
         ->and($signatures)->toHaveCount(184);
 
     foreach ($signatures as $value) {
@@ -33,9 +33,10 @@ use Thinkycz\LaravelCore\Support\Typer;
     }
 });
 
-\test('the five hot drinks retain weights standard scoops and the counted strawberry garnish', function (): void {
+\test('hot drinks retain weights standard scoops and the counted strawberry garnish', function (): void {
     $catalog = new RecipeCatalogRepository();
     $expected = [
+        'bueno-matcha' => [['white chocolate syrup', 5, 'g'], ['hazelnut syrup', 5, 'g'], ['milk', 140, 'g'], ['water at 70–80 °C', 50, 'g'], ['matcha', 3.5, 'g'], ['whipping cream', 40, 'g'], ['milk', 20, 'g'], ['Nutella', 15, 'g']],
         'classic-matcha' => [['milk', 200, 'g'], ['water at 70–80 °C', 50, 'g'], ['Himawari matcha', 3.5, 'g']],
         'strawberry-cloud' => [['milk', 140, 'g'], ['water at 70–80 °C', 50, 'g'], ['Himawari matcha', 3.5, 'g'], ['whipping cream', 30, 'g'], ['milk', 30, 'g'], ['strawberry syrup', 30, 'g'], ['dried strawberries', 2, 'pieces']],
         'banana-bread-matcha' => [['gingerbread syrup', 5, 'g'], ['banana milk', 200, 'g'], ['water at 70–80 °C', 50, 'g'], ['Himawari matcha', 3.5, 'g']],

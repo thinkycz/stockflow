@@ -30,11 +30,11 @@ use Thinkycz\LaravelCore\Support\Typer;
     $ids = [...\array_column(Typer::assertArray($first['records']), 'id'), ...\array_column(Typer::assertArray($second['records']), 'id')];
     \expect($first['has_more'])->toBeTrue()
         ->and($first['returned_count'])->toBe(50)
-        ->and($second['returned_count'])->toBe(8)
+        ->and($second['returned_count'])->toBe(9)
         ->and($second['complete'])->toBeTrue()
-        ->and(\array_unique($ids))->toHaveCount(58);
+        ->and(\array_unique($ids))->toHaveCount(59);
     $summary = \fileRecipeRead($tool, ['operation' => 'summary', 'dataset' => 'recipes']);
-    \expect($summary['summary'])->toMatchArray(['recipe_count' => 58, 'variant_count' => 193]);
+    \expect($summary['summary'])->toMatchArray(['recipe_count' => 59, 'variant_count' => 194]);
 });
 
 \test('assistant recipes follow the administrator language and retain English preparation aliases', function (string $locale, string $milk): void {

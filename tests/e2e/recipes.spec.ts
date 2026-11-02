@@ -56,7 +56,7 @@ test('the visual library filters instantly and keyboard lookup opens the correct
     await login(page);
     await expect(page.getByTestId('recipe-lookup')).toHaveCount(0);
     await page.getByTestId('nav-item-recipes').click();
-    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(58);
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(59);
     await expect(
         page.getByRole('button', {
             name: /create|edit|test|archive|manage categories/i,
@@ -88,16 +88,16 @@ test('the visual library filters instantly and keyboard lookup opens the correct
     await expect(drawer).toHaveCount(0);
     await expect(category).toHaveAttribute('aria-expanded', 'false');
     await expect(category).toBeFocused();
-    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(6);
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(7);
     await expect(page).toHaveURL(/category=hot-drinks/);
     await page.reload();
     await expect(category).toContainText('HOT DRINKS');
-    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(6);
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(7);
     const search = page.getByRole('combobox', { name: 'Find a recipe' });
     await search.fill('straw cloud');
     await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(1);
     await page.getByRole('button', { name: 'Clear search' }).click();
-    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(6);
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(7);
     await category.click();
     await expect(
         drawer.getByRole('button', { name: /^HOT DRINKS/ }),
@@ -107,7 +107,7 @@ test('the visual library filters instantly and keyboard lookup opens the correct
     await expect(category).toBeFocused();
     await category.click();
     await drawer.getByRole('button', { name: /^All recipes/ }).click();
-    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(58);
+    await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(59);
     await expect(page).not.toHaveURL(/category=/);
     await category.click();
     await drawer.getByRole('button', { name: /^MATCHA SPECIALS/ }).click();
@@ -146,7 +146,11 @@ test('the visual library filters instantly and keyboard lookup opens the correct
         ['pump', 'pumpkin-spice-matcha', 'Pumpkin Spice Matcha'],
     ] as const) {
         await search.fill(query);
-        await page.getByRole('option', { name: new RegExp(title) }).click();
+        await page
+            .getByRole('option', {
+                name: new RegExp(`${title} MATCHA SPECIALS`),
+            })
+            .click();
         await page.waitForURL(`/recipes/matcha-specials/${slug}`);
         await expect(
             page.getByRole('heading', { name: title, exact: true }),
@@ -252,7 +256,7 @@ for (const [
         await expect(drawer).toHaveCount(0);
         await expect(category).toContainText(hotDrinks);
         await expect(category).toBeFocused();
-        await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(6);
+        await expect(page.getByTestId('recipe-catalog-row')).toHaveCount(7);
         await noOverflow(page);
         await capture(page, `recipes-library-${locale}-small-mobile`);
         await page.goto('/recipes/hot-drinks/taro-milk-tea');
@@ -311,35 +315,36 @@ for (const [
             { width: 320, height: 740, name: 'mobile' },
         ]) {
             await page.setViewportSize(viewport);
-            for (const category of ['matcha-specials', 'hot-drinks']) {
+            for (const [category, slug, title] of [
+                ['matcha-specials', 'bueno-hojicha', 'Bueno Hojicha'],
+                ['hot-drinks', 'bueno-hojicha', 'Bueno Hojicha'],
+                ['hot-drinks', 'bueno-matcha', 'Bueno Matcha'],
+            ] as const) {
                 const hot = category === 'hot-drinks';
                 const search = page.getByRole('combobox', { name: lookup });
-                await search.fill('bueno hoj');
+                await search.fill(title);
                 const suggestions = page
                     .getByRole('listbox')
-                    .getByRole('option');
+                    .getByRole('option')
+                    .filter({ hasText: title });
                 await expect(suggestions).toHaveCount(2);
                 await expect(
                     suggestions.filter({ hasText: hotDrinks }),
                 ).toHaveCount(1);
                 await suggestions
-                    .and(
-                        page.locator(
-                            `[href="/recipes/${category}/bueno-hojicha"]`,
-                        ),
-                    )
+                    .and(page.locator(`[href="/recipes/${category}/${slug}"]`))
                     .click();
-                await page.waitForURL(`/recipes/${category}/bueno-hojicha`);
+                await page.waitForURL(`/recipes/${category}/${slug}`);
                 await expect(
                     page.getByRole('heading', {
-                        name: 'Bueno Hojicha',
+                        name: title,
                         exact: true,
                     }),
                 ).toBeVisible();
                 const ingredients = page.getByTestId('recipe-ingredients');
                 await expect(
                     ingredients.getByRole('heading', {
-                        name: 'Hojicha',
+                        name: slug === 'bueno-matcha' ? 'Matcha' : 'Hojicha',
                         exact: true,
                     }),
                 ).toBeVisible();
@@ -371,7 +376,7 @@ for (const [
                     page.getByTestId('recipe-method-step'),
                 ).toHaveCount(14);
                 await noOverflow(page);
-                const proof = `recipes-bueno-hojicha-${hot ? 'hot' : 'cold'}-${locale}-${viewport.name}`;
+                const proof = `recipes-${slug}-${hot ? 'hot' : 'cold'}-${locale}-${viewport.name}`;
                 await capture(page, proof);
                 const steps = await page
                     .getByTestId('recipe-method-step')
@@ -638,7 +643,7 @@ for (const [locale, reference, guided, begin, groupName] of [
                         row.getAttribute('href'),
                 ),
             );
-        expect(links).toHaveLength(58);
+        expect(links).toHaveLength(59);
         let variantsChecked = 0;
         let iceRowsChecked = 0;
         for (const link of links) {
@@ -770,7 +775,7 @@ for (const [locale, reference, guided, begin, groupName] of [
                 variantsChecked++;
             }
         }
-        expect(variantsChecked).toBe(193);
+        expect(variantsChecked).toBe(194);
         expect(iceRowsChecked).toBe(180);
         await setEmployeeLocale(page, 'en');
     });

@@ -126,15 +126,15 @@ Made with lemongrass, Ceylon tea, peach purée, lemon syrup. Select the required
 
 ### Method
 
-1. **Measure peach slice.** Add 1 peach slice to shaker.
-2. **Measure orange slice.** Add 1 orange slice to shaker.
+1. **Measure peach slice.** Add peach slices to shaker according to the ingredient list.
+2. **Measure orange slice.** Add orange slices to shaker according to the ingredient list.
 3. **Measure lemongrass.** Add lemongrass to the shaker as needed.
 4. **Crush the fruit.** Crush the fruit and lemongrass in the shaker to release their juices.
-5. **Measure brewed Ceylon tea.** Add 250 ml brewed Ceylon tea to shaker.
-6. **Measure liquid sugar.** Add 20 ml liquid sugar to shaker.
-7. **Measure peach purée.** Add 30 ml peach purée to shaker.
-8. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-9. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+5. **Measure brewed Ceylon tea.** Add measured brewed Ceylon tea to shaker.
+6. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+7. **Measure peach purée.** Add measured peach purée to shaker.
+8. **Measure lemon syrup.** Add measured lemon syrup to shaker.
+9. **Measure the ice.** Measure the ice according to the ingredient list, then transfer it to the shaker.
 10. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 11. **Assemble the drink.** Pour into the serving cup.
 
@@ -156,22 +156,22 @@ Made with lemongrass, Ceylon tea, peach purée, lemon syrup. Select the required
 
 ### Method
 
-1. **Measure peach slice.** Add 1 peach slice to shaker.
-2. **Measure orange slice.** Add 1 orange slice to shaker.
+1. **Measure peach slice.** Add peach slices to shaker according to the ingredient list.
+2. **Measure orange slice.** Add orange slices to shaker according to the ingredient list.
 3. **Measure lemongrass.** Add lemongrass to the shaker as needed.
 4. **Crush the fruit.** Crush the fruit and lemongrass in the shaker to release their juices.
-5. **Measure brewed Ceylon tea.** Add 250 ml brewed Ceylon tea to shaker.
-6. **Measure liquid sugar.** Add 25 ml liquid sugar to shaker.
-7. **Measure peach purée.** Add 30 ml peach purée to shaker.
-8. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-9. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
+5. **Measure brewed Ceylon tea.** Add measured brewed Ceylon tea to shaker.
+6. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+7. **Measure peach purée.** Add measured peach purée to shaker.
+8. **Measure lemon syrup.** Add measured lemon syrup to shaker.
+9. **Measure ice cubes.** Add ice cubes to the shaker for chilling according to the ingredient list.
 10. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 11. **Assemble the drink.** Pour into the serving cup.
 12. **Top up the drink.** Top up with brewed Ceylon tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## L — With ice
 
@@ -190,15 +190,15 @@ Made with lemongrass, Ceylon tea, peach purée, lemon syrup. Select the required
 
 ### Method
 
-1. **Measure peach slice.** Add 1 peach slice to shaker.
-2. **Measure orange slice.** Add 1 orange slice to shaker.
+1. **Measure peach slice.** Add peach slices to shaker according to the ingredient list.
+2. **Measure orange slice.** Add orange slices to shaker according to the ingredient list.
 3. **Measure lemongrass.** Add lemongrass to the shaker as needed.
 4. **Crush the fruit.** Crush the fruit and lemongrass in the shaker to release their juices.
-5. **Measure brewed Ceylon tea.** Add 350 ml brewed Ceylon tea to shaker.
-6. **Measure liquid sugar.** Add 30 ml liquid sugar to shaker.
-7. **Measure peach purée.** Add 40 ml peach purée to shaker.
-8. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-9. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+5. **Measure brewed Ceylon tea.** Add measured brewed Ceylon tea to shaker.
+6. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+7. **Measure peach purée.** Add measured peach purée to shaker.
+8. **Measure lemon syrup.** Add measured lemon syrup to shaker.
+9. **Measure the ice.** Measure the ice according to the ingredient list, then transfer it to the shaker.
 10. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 11. **Assemble the drink.** Pour into the serving cup.
 
@@ -220,22 +220,22 @@ Made with lemongrass, Ceylon tea, peach purée, lemon syrup. Select the required
 
 ### Method
 
-1. **Measure peach slice.** Add 1 peach slice to shaker.
-2. **Measure orange slice.** Add 1 orange slice to shaker.
+1. **Measure peach slice.** Add peach slices to shaker according to the ingredient list.
+2. **Measure orange slice.** Add orange slices to shaker according to the ingredient list.
 3. **Measure lemongrass.** Add lemongrass to the shaker as needed.
 4. **Crush the fruit.** Crush the fruit and lemongrass in the shaker to release their juices.
-5. **Measure brewed Ceylon tea.** Add 350 ml brewed Ceylon tea to shaker.
-6. **Measure liquid sugar.** Add 40 ml liquid sugar to shaker.
-7. **Measure peach purée.** Add 40 ml peach purée to shaker.
-8. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-9. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
+5. **Measure brewed Ceylon tea.** Add measured brewed Ceylon tea to shaker.
+6. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+7. **Measure peach purée.** Add measured peach purée to shaker.
+8. **Measure lemon syrup.** Add measured lemon syrup to shaker.
+9. **Measure ice cubes.** Add ice cubes to the shaker for chilling according to the ingredient list.
 10. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 11. **Assemble the drink.** Pour into the serving cup.
 12. **Top up the drink.** Top up with brewed Ceylon tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## Related preparations
 

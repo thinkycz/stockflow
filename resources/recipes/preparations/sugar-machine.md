@@ -36,8 +36,8 @@ Prepare the sugar machine batch before making drinks. Follow the selected batch 
 
 ### Method
 
-1. **Measure hot water.** Add 600 ml hot water to pot.
-2. **Measure granulated sugar.** Add 1 kg granulated sugar to pot.
+1. **Measure hot water.** Add measured hot water to pot.
+2. **Measure granulated sugar.** Add measured granulated sugar to pot.
 3. **Heat the mixture.** Bring to a boil on maximum heat, then turn off the heat immediately.
 4. **Let it cool.** Allow the liquid sugar to cool slightly.
 5. **Assemble the drink.** Pour the liquid sugar into the sugar machine.

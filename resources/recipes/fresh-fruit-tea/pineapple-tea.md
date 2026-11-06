@@ -116,13 +116,13 @@ Made with jasmine tea, pineapple purée, lemon syrup. Select the required varian
 
 ### Method
 
-1. **Measure pineapple pieces.** Add 1 standard scoop pineapple pieces to shaker.
-2. **Measure lemon slices.** Add 1 lemon slice to shaker.
-3. **Measure brewed jasmine tea.** Add 250 ml brewed jasmine tea to shaker.
-4. **Measure liquid sugar.** Add 20 ml liquid sugar to shaker.
-5. **Measure pineapple purée.** Add 30 ml pineapple purée to shaker.
-6. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-7. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+1. **Measure pineapple pieces.** Add measured pineapple pieces to shaker.
+2. **Measure lemon slices.** Add lemon slices to shaker according to the ingredient list.
+3. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to shaker.
+4. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+5. **Measure pineapple purée.** Add measured pineapple purée to shaker.
+6. **Measure lemon syrup.** Add measured lemon syrup to shaker.
+7. **Measure the ice.** Measure the ice according to the ingredient list, then transfer it to the shaker.
 8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 
@@ -143,20 +143,20 @@ Made with jasmine tea, pineapple purée, lemon syrup. Select the required varian
 
 ### Method
 
-1. **Measure pineapple pieces.** Add 1 standard scoop pineapple pieces to shaker.
-2. **Measure lemon slices.** Add 1 lemon slice to shaker.
-3. **Measure brewed jasmine tea.** Add 250 ml brewed jasmine tea to shaker.
-4. **Measure liquid sugar.** Add 25 ml liquid sugar to shaker.
-5. **Measure pineapple purée.** Add 30 ml pineapple purée to shaker.
-6. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-7. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
+1. **Measure pineapple pieces.** Add measured pineapple pieces to shaker.
+2. **Measure lemon slices.** Add lemon slices to shaker according to the ingredient list.
+3. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to shaker.
+4. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+5. **Measure pineapple purée.** Add measured pineapple purée to shaker.
+6. **Measure lemon syrup.** Add measured lemon syrup to shaker.
+7. **Measure ice cubes.** Add ice cubes to the shaker for chilling according to the ingredient list.
 8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 10. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## L — With ice
 
@@ -174,13 +174,13 @@ Made with jasmine tea, pineapple purée, lemon syrup. Select the required varian
 
 ### Method
 
-1. **Measure pineapple pieces.** Add 2 standard scoops pineapple pieces to shaker.
-2. **Measure lemon slices.** Add 2 lemon slices to shaker.
-3. **Measure brewed jasmine tea.** Add 350 ml brewed jasmine tea to shaker.
-4. **Measure liquid sugar.** Add 30 ml liquid sugar to shaker.
-5. **Measure pineapple purée.** Add 40 ml pineapple purée to shaker.
-6. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-7. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+1. **Measure pineapple pieces.** Add measured pineapple pieces to shaker.
+2. **Measure lemon slices.** Add lemon slices to shaker according to the ingredient list.
+3. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to shaker.
+4. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+5. **Measure pineapple purée.** Add measured pineapple purée to shaker.
+6. **Measure lemon syrup.** Add measured lemon syrup to shaker.
+7. **Measure the ice.** Measure the ice according to the ingredient list, then transfer it to the shaker.
 8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 
@@ -201,20 +201,20 @@ Made with jasmine tea, pineapple purée, lemon syrup. Select the required varian
 
 ### Method
 
-1. **Measure pineapple pieces.** Add 2 standard scoops pineapple pieces to shaker.
-2. **Measure lemon slices.** Add 2 lemon slices to shaker.
-3. **Measure brewed jasmine tea.** Add 350 ml brewed jasmine tea to shaker.
-4. **Measure liquid sugar.** Add 40 ml liquid sugar to shaker.
-5. **Measure pineapple purée.** Add 40 ml pineapple purée to shaker.
-6. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-7. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
+1. **Measure pineapple pieces.** Add measured pineapple pieces to shaker.
+2. **Measure lemon slices.** Add lemon slices to shaker according to the ingredient list.
+3. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to shaker.
+4. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+5. **Measure pineapple purée.** Add measured pineapple purée to shaker.
+6. **Measure lemon syrup.** Add measured lemon syrup to shaker.
+7. **Measure ice cubes.** Add ice cubes to the shaker for chilling according to the ingredient list.
 8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 10. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## Related preparations
 

@@ -1,3 +1,5 @@
+import { createI18n } from 'vue-i18n';
+import { formatQuantity } from '../../resources/js/features/recipes/portions';
 import { expect, test, type Page } from '@playwright/test';
 import cs from '../../resources/js/i18n/cs.json' with { type: 'json' };
 import en from '../../resources/js/i18n/en.json' with { type: 'json' };
@@ -168,12 +170,13 @@ test('the visual library filters instantly and keyboard lookup opens the correct
             page.getByTestId('recipe-topping-adjustments'),
         ).toHaveCount(0);
         await expect(
-            ingredients.getByText('full serving cup', { exact: true }),
+            ingredients.getByText('1 full serving cup', { exact: true }),
         ).toBeVisible();
         await expect(
-            page
-                .getByTestId('recipe-method-step')
-                .filter({ hasText: 'Fill the serving cup with ice.' }),
+            page.getByTestId('recipe-method-step').filter({
+                hasText:
+                    'Add ice to the serving cup according to the ingredient list.',
+            }),
         ).toHaveCount(1);
         await capture(page, `recipes-${slug}-desktop`);
         await page.setViewportSize({ width: 320, height: 740 });
@@ -480,7 +483,7 @@ test('an employee finds a hot recipe and completes guided preparation on mobile'
     await capture(page, 'recipes-gather-mobile');
     await page.getByRole('button', { name: 'Begin preparation' }).click();
     await expect(page.getByTestId('guide-step-text')).toContainText(
-        '5 g gingerbread syrup',
+        'measured gingerbread syrup',
     );
     await page.getByRole('button', { name: 'Done · Next' }).click();
     await page.getByRole('button', { name: 'Done · Next' }).click();
@@ -489,7 +492,7 @@ test('an employee finds a hot recipe and completes guided preparation on mobile'
     );
     await page.getByRole('button', { name: 'Previous', exact: true }).click();
     await expect(page.getByTestId('guide-step-text')).toContainText(
-        '200 g banana milk',
+        'measured banana milk',
     );
     await page.getByRole('button', { name: 'Done · Next' }).click();
     await capture(page, 'recipes-guide-mobile');
@@ -575,7 +578,7 @@ test('classic matcha lists a full cup of ice for iced drinks and the authored ch
         await page.getByRole('tab', { name: size, exact: true }).click();
         await page.getByRole('tab', { name: 'With ice', exact: true }).click();
         await expect(
-            ingredients.getByText('full serving cup', { exact: true }),
+            ingredients.getByText('1 full serving cup', { exact: true }),
         ).toBeVisible();
         await expect(
             ingredients.getByText(icedMilk, { exact: true }),
@@ -593,7 +596,7 @@ test('classic matcha lists a full cup of ice for iced drinks and the authored ch
         .getByRole('tab', { name: 'Guided preparation', exact: true })
         .click();
     await expect(
-        page.getByRole('checkbox', { name: 'ice cubes — full serving cup' }),
+        page.getByRole('checkbox', { name: 'ice cubes — 1 full serving cup' }),
     ).toBeVisible();
     await capture(page, 'recipes-classic-ice-mobile');
     await page.goto('/recipes/milk-tea/taro-coco-milk-tea');
@@ -605,7 +608,9 @@ test('classic matcha lists a full cup of ice for iced drinks and the authored ch
     ).toBeVisible();
     await page.getByRole('tab', { name: 'No ice', exact: true }).click();
     await expect(
-        ingredients.getByText('to serving line', { exact: true }),
+        ingredients.getByText('to the serving line in each cup', {
+            exact: true,
+        }),
     ).toBeVisible();
     await noOverflow(page);
 });
@@ -690,12 +695,13 @@ for (const [locale, reference, guided, begin, groupName] of [
                     name: ingredient.name,
                     group: ingredient.group,
                     icon: ingredient.icon_group,
-                    amount:
-                        ingredient.quantity_value === null
-                            ? ingredient.quantity_text
-                            : new Intl.NumberFormat(locale, {
-                                  maximumFractionDigits: 3,
-                              }).format(ingredient.quantity_value),
+                    amount: formatQuantity(ingredient, locale, (key, values) =>
+                        createI18n({
+                            legacy: false,
+                            locale,
+                            messages: { en, cs, sk },
+                        }).global.t(key, values),
+                    ),
                 }));
                 const rows = await page
                     .getByTestId('recipe-ingredient-row')
@@ -855,7 +861,13 @@ for (const locale of ['en', 'cs', 'sk'] as const) {
                         .click();
                     await expect(
                         page.getByTestId('guide-step-text'),
-                    ).toContainText('200 g');
+                    ).toContainText(
+                        locale === 'en'
+                            ? 'measured'
+                            : locale === 'cs'
+                              ? 'odměřené množství'
+                              : 'odmerané množstvo',
+                    );
                     for (let step = 1; step < 9; step++) {
                         await page
                             .getByRole('button', {
@@ -963,4 +975,118 @@ test('Czech sweetness guidance handles the screenshot case, multiple sweeteners 
     ).toBeVisible();
     await expect(guidance).toHaveCount(0);
     await setEmployeeLocale(page, 'en');
+});
+
+for (const locale of ['en', 'cs', 'sk'] as const) {
+    test(`portions scale ingredients and reset preparation in ${locale} on desktop and mobile`, async ({
+        page,
+    }) => {
+        await login(page);
+        await setEmployeeLocale(page, locale);
+        const messages = { en, cs, sk }[locale].recipes;
+        for (const width of [1280, 390]) {
+            await page.setViewportSize({ width, height: 900 });
+            await page.goto('/recipes/matcha-latte/classic-matcha-latte');
+            const portions = page.getByTestId('recipe-portions');
+            const plus = page.getByTestId('recipe-portions-plus');
+            const minus = page.getByTestId('recipe-portions-minus');
+            const amounts = page.getByTestId('ingredient-amount');
+            await expect(portions).toHaveText('1');
+            await minus.click();
+            await expect(portions).toHaveText(locale === 'en' ? '0.5' : '0,5');
+            await expect(minus).toBeDisabled();
+            await expect(amounts.first()).toHaveText('50 g');
+            await plus.click();
+            await plus.click();
+            await plus.click();
+            await expect(portions).toHaveText('3');
+            await expect(amounts.first()).toHaveText('300 g');
+            await expect(
+                page.getByTestId('recipe-method-step').first(),
+            ).not.toContainText('100 g');
+            await page
+                .getByRole('tab', { name: messages.no_ice, exact: true })
+                .click();
+            await expect(portions).toHaveText('3');
+            await expect(amounts.first()).toHaveText('450 g');
+            await expect(page.getByTestId('recipe-ingredients')).toContainText(
+                '6–9',
+            );
+            await page
+                .getByRole('tab', { name: messages.guided, exact: true })
+                .click();
+            await expect(portions).toHaveText('3');
+            await page.getByRole('checkbox').first().check();
+            await minus.click();
+            await expect(page.getByRole('checkbox').first()).not.toBeChecked();
+            await page
+                .getByRole('button', { name: messages.begin, exact: true })
+                .click();
+            await expect(page.getByTestId('guide-step-title')).toBeVisible();
+            await plus.click();
+            await expect(page.getByTestId('guide-step-title')).toHaveCount(0);
+            await expect(page.getByRole('checkbox').first()).not.toBeChecked();
+            await noOverflow(page);
+            await capture(page, `recipe-portions-${locale}-${width}`);
+            await page.reload();
+            await expect(portions).toHaveText('1');
+            await plus.click();
+            await page
+                .getByTestId('recipe-lookup')
+                .getByRole('combobox')
+                .fill('banana bread');
+            await page.getByRole('listbox').getByRole('option').first().click();
+            await expect(portions).toHaveText('1');
+        }
+        await setEmployeeLocale(page, 'en');
+    });
+}
+
+test('portion changes reset active timers and scale topping guidance', async ({
+    page,
+}) => {
+    await login(page);
+    await setEmployeeLocale(page, 'en');
+    await page.goto('/recipes/matcha-latte/classic-matcha-latte');
+    await page.getByTestId('recipe-portions-plus').click();
+    await page.getByTestId('recipe-portions-plus').click();
+    const toppings = page.getByTestId('recipe-topping-adjustments');
+    await toppings.getByRole('tab', { name: '2', exact: true }).click();
+    await expect(page.getByTestId('recipe-topping-amount').first()).toHaveText(
+        '45 g',
+    );
+    await page.getByTestId('recipe-portions-minus').click();
+    await expect(page.getByTestId('recipe-topping-amount').first()).toHaveText(
+        '30 g',
+    );
+    await page.goto('/recipes/preparations/black-tapioca');
+    await page
+        .getByRole('tab', { name: 'Guided preparation', exact: true })
+        .click();
+    await page
+        .getByRole('button', { name: 'Begin preparation', exact: true })
+        .click();
+    for (let index = 0; index < 4; index++)
+        await page
+            .getByRole('button', { name: 'Done · Next', exact: true })
+            .click();
+    await page
+        .getByRole('button', { name: 'Start timer', exact: true })
+        .click();
+    await expect(
+        page.getByRole('button', { name: 'Pause timer', exact: true }),
+    ).toBeVisible();
+    await page.getByTestId('recipe-portions-plus').click();
+    await expect(page.getByRole('timer')).toHaveCount(0);
+    await page
+        .getByRole('button', { name: 'Begin preparation', exact: true })
+        .click();
+    for (let index = 0; index < 4; index++)
+        await page
+            .getByRole('button', { name: 'Done · Next', exact: true })
+            .click();
+    await expect(page.getByRole('timer')).toHaveText('40:00');
+    await expect(
+        page.getByRole('button', { name: 'Start timer', exact: true }),
+    ).toBeVisible();
 });

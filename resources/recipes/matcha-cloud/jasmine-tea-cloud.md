@@ -121,13 +121,13 @@ Made with jasmine tea, whipping cream, milk, matcha. Select the required variant
 
 ### Method
 
-1. **Measure brewed jasmine tea.** Add 100 g brewed jasmine tea to serving cup.
-2. **Measure liquid sugar.** Add 25 g liquid sugar to serving cup.
+1. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to serving cup.
+2. **Measure liquid sugar.** Add measured liquid sugar to serving cup.
 3. **Stir to combine.** Stir the ingredients until evenly combined.
-4. **Fill the cup with ice.** Fill the serving cup with ice.
-5. **Measure whipping cream.** Add 40 g whipping cream to mixing bowl.
-6. **Measure milk.** Add 40 g milk to mixing bowl.
-7. **Measure matcha.** Add 3.5 g matcha to mixing bowl.
+4. **Add ice.** Add ice to the serving cup according to the ingredient list.
+5. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+6. **Measure milk.** Add measured milk to mixing bowl.
+7. **Measure matcha.** Add measured matcha to mixing bowl.
 8. **Whip the cloud.** Whip until thick.
 9. **Assemble the drink.** Pour the matcha cloud into the serving cup.
 10. **Finish the drink.** Garnish with matcha powder as needed.
@@ -149,13 +149,13 @@ Made with jasmine tea, whipping cream, milk, matcha. Select the required variant
 
 ### Method
 
-1. **Measure brewed jasmine tea.** Add 100 g brewed jasmine tea to serving cup.
-2. **Measure liquid sugar.** Add 30 g liquid sugar to serving cup.
+1. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to serving cup.
+2. **Measure liquid sugar.** Add measured liquid sugar to serving cup.
 3. **Stir to combine.** Stir the ingredients until evenly combined.
-4. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-5. **Measure whipping cream.** Add 40 g whipping cream to mixing bowl.
-6. **Measure milk.** Add 40 g milk to mixing bowl.
-7. **Measure matcha.** Add 3.5 g matcha to mixing bowl.
+4. **Measure ice cubes.** Add ice cubes to the serving cup for chilling according to the ingredient list.
+5. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+6. **Measure milk.** Add measured milk to mixing bowl.
+7. **Measure matcha.** Add measured matcha to mixing bowl.
 8. **Whip the cloud.** Whip until thick.
 9. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line, leaving room for the cloud. Stir the base gently to combine.
 10. **Assemble the drink.** Pour the matcha cloud into the serving cup.
@@ -163,7 +163,7 @@ Made with jasmine tea, whipping cream, milk, matcha. Select the required variant
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## M — With ice
 
@@ -181,13 +181,13 @@ Made with jasmine tea, whipping cream, milk, matcha. Select the required variant
 
 ### Method
 
-1. **Measure brewed jasmine tea.** Add 140 g brewed jasmine tea to serving cup.
-2. **Measure liquid sugar.** Add 35 g liquid sugar to serving cup.
+1. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to serving cup.
+2. **Measure liquid sugar.** Add measured liquid sugar to serving cup.
 3. **Stir to combine.** Stir the ingredients until evenly combined.
-4. **Fill the cup with ice.** Fill the serving cup with ice.
-5. **Measure whipping cream.** Add 50 g whipping cream to mixing bowl.
-6. **Measure milk.** Add 50 g milk to mixing bowl.
-7. **Measure matcha.** Add 4.5 g matcha to mixing bowl.
+4. **Add ice.** Add ice to the serving cup according to the ingredient list.
+5. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+6. **Measure milk.** Add measured milk to mixing bowl.
+7. **Measure matcha.** Add measured matcha to mixing bowl.
 8. **Whip the cloud.** Whip until thick.
 9. **Assemble the drink.** Pour the matcha cloud into the serving cup.
 10. **Finish the drink.** Garnish with matcha powder as needed.
@@ -209,13 +209,13 @@ Made with jasmine tea, whipping cream, milk, matcha. Select the required variant
 
 ### Method
 
-1. **Measure brewed jasmine tea.** Add 140 g brewed jasmine tea to serving cup.
-2. **Measure liquid sugar.** Add 45 g liquid sugar to serving cup.
+1. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to serving cup.
+2. **Measure liquid sugar.** Add measured liquid sugar to serving cup.
 3. **Stir to combine.** Stir the ingredients until evenly combined.
-4. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-5. **Measure whipping cream.** Add 50 g whipping cream to mixing bowl.
-6. **Measure milk.** Add 50 g milk to mixing bowl.
-7. **Measure matcha.** Add 4.5 g matcha to mixing bowl.
+4. **Measure ice cubes.** Add ice cubes to the serving cup for chilling according to the ingredient list.
+5. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+6. **Measure milk.** Add measured milk to mixing bowl.
+7. **Measure matcha.** Add measured matcha to mixing bowl.
 8. **Whip the cloud.** Whip until thick.
 9. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line, leaving room for the cloud. Stir the base gently to combine.
 10. **Assemble the drink.** Pour the matcha cloud into the serving cup.
@@ -223,7 +223,7 @@ Made with jasmine tea, whipping cream, milk, matcha. Select the required variant
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## Related preparations
 

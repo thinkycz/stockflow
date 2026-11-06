@@ -37,8 +37,8 @@ Prepared Ceylon milk tea, heated with sugar for a warm serving.
 
 ### Method
 
-1. **Measure prepared Ceylon milk tea.** Add 300 g prepared Ceylon milk tea to heating vessel.
-2. **Measure granulated sugar.** Add 10 g granulated sugar to heating vessel.
+1. **Measure prepared Ceylon milk tea.** Add measured prepared Ceylon milk tea to heating vessel.
+2. **Measure granulated sugar.** Add measured granulated sugar to heating vessel.
 3. **Heat the tea.** Heat the milk tea until hot, stirring until the sugar dissolves.
 4. **Assemble the drink.** Pour the hot milk tea into the serving cup.
 

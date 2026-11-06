@@ -72,11 +72,11 @@ Made with oat milk, matcha. Select the required variant before measuring ingredi
 
 ### Method
 
-1. **Measure oat milk.** Add 100 g oat milk to mixing bowl.
-2. **Measure liquid sugar.** Add 20 g liquid sugar to mixing bowl.
-3. **Measure matcha.** Add 3.5 g matcha to mixing bowl.
+1. **Measure oat milk.** Add measured oat milk to mixing bowl.
+2. **Measure liquid sugar.** Add measured liquid sugar to mixing bowl.
+3. **Measure matcha.** Add measured matcha to mixing bowl.
 4. **Whip the mixture.** Whip until smooth.
-5. **Fill the cup with ice.** Fill the serving cup with ice.
+5. **Add ice.** Add ice to the serving cup according to the ingredient list.
 6. **Assemble the drink.** Pour the whipped latte into the serving cup.
 
 ## S — No ice
@@ -93,17 +93,17 @@ Made with oat milk, matcha. Select the required variant before measuring ingredi
 
 ### Method
 
-1. **Measure oat milk.** Add 100 g oat milk to mixing bowl.
-2. **Measure liquid sugar.** Add 25 g liquid sugar to mixing bowl.
-3. **Measure matcha.** Add 3.5 g matcha to mixing bowl.
+1. **Measure oat milk.** Add measured oat milk to mixing bowl.
+2. **Measure liquid sugar.** Add measured liquid sugar to mixing bowl.
+3. **Measure matcha.** Add measured matcha to mixing bowl.
 4. **Whip the mixture.** Whip until smooth.
-5. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
+5. **Measure ice cubes.** Add ice cubes to the serving cup for chilling according to the ingredient list.
 6. **Assemble the drink.** Pour the whipped latte into the serving cup.
 7. **Top up the drink.** Top up with oat milk in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## M — With ice
 
@@ -118,11 +118,11 @@ Made with oat milk, matcha. Select the required variant before measuring ingredi
 
 ### Method
 
-1. **Measure oat milk.** Add 140 g oat milk to mixing bowl.
-2. **Measure liquid sugar.** Add 25 g liquid sugar to mixing bowl.
-3. **Measure matcha.** Add 4.5 g matcha to mixing bowl.
+1. **Measure oat milk.** Add measured oat milk to mixing bowl.
+2. **Measure liquid sugar.** Add measured liquid sugar to mixing bowl.
+3. **Measure matcha.** Add measured matcha to mixing bowl.
 4. **Whip the mixture.** Whip until smooth.
-5. **Fill the cup with ice.** Fill the serving cup with ice.
+5. **Add ice.** Add ice to the serving cup according to the ingredient list.
 6. **Assemble the drink.** Pour the whipped latte into the serving cup.
 
 ## M — No ice
@@ -139,14 +139,14 @@ Made with oat milk, matcha. Select the required variant before measuring ingredi
 
 ### Method
 
-1. **Measure oat milk.** Add 140 g oat milk to mixing bowl.
-2. **Measure liquid sugar.** Add 35 g liquid sugar to mixing bowl.
-3. **Measure matcha.** Add 4.5 g matcha to mixing bowl.
+1. **Measure oat milk.** Add measured oat milk to mixing bowl.
+2. **Measure liquid sugar.** Add measured liquid sugar to mixing bowl.
+3. **Measure matcha.** Add measured matcha to mixing bowl.
 4. **Whip the mixture.** Whip until smooth.
-5. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
+5. **Measure ice cubes.** Add ice cubes to the serving cup for chilling according to the ingredient list.
 6. **Assemble the drink.** Pour the whipped latte into the serving cup.
 7. **Top up the drink.** Top up with oat milk in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.

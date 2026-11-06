@@ -38,10 +38,10 @@ Prepare the creme brulee batch before making drinks. Follow the selected batch s
 
 ### Method
 
-1. **Measure whipping cream.** Add 250 ml whipping cream to mixing bowl.
-2. **Measure crème brûlée powder.** Add 3 standard scoops crème brûlée powder to mixing bowl.
-3. **Measure milk.** Add 50 ml milk to mixing bowl.
-4. **Measure sweetened condensed milk (Salko).** Add 50 ml sweetened condensed milk (Salko) to mixing bowl.
+1. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+2. **Measure crème brûlée powder.** Add measured crème brûlée powder to mixing bowl.
+3. **Measure milk.** Add measured milk to mixing bowl.
+4. **Measure sweetened condensed milk (Salko).** Add measured sweetened condensed milk (Salko) to mixing bowl.
 5. **Mix until thick.** Mix for 7–10 minutes, until thick.
 
 ## Notes

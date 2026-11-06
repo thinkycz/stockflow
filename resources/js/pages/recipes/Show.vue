@@ -12,6 +12,8 @@ import {
     Pause,
     Utensils,
     Info,
+    Minus,
+    Plus,
 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -25,6 +27,7 @@ import RecipeIllustration from '@/features/recipes/components/RecipeIllustration
 import RecipeIngredients from '@/features/recipes/components/RecipeIngredients.vue';
 import RecipeActionIcon from '@/features/recipes/components/RecipeActionIcon.vue';
 import RecipeToppingAdjustments from '@/features/recipes/components/RecipeToppingAdjustments.vue';
+import { nextPortions, scaleIngredients } from '@/features/recipes/portions';
 import { nextVariant } from '@/features/recipes/search';
 import { useRecipePreparation } from '@/features/recipes/useRecipePreparation';
 import type {
@@ -36,7 +39,8 @@ const props = defineProps<{
     recipe: RecipeDocument;
     lookup: RecipeLookupEntry[];
 }>();
-const { t } = useI18n();
+const { t, locale } = useI18n();
+const portions = ref(1);
 const query = ref('');
 const variantKey = ref(props.recipe.variants[0]?.key ?? '');
 const selected = computed(
@@ -45,9 +49,13 @@ const selected = computed(
             (variant) => variant.key === variantKey.value,
         ) ?? props.recipe.variants[0],
 );
+const ingredients = computed(() =>
+    scaleIngredients(selected.value?.ingredients ?? [], portions.value),
+);
 const mode = ref('reference');
 const guide = useRecipePreparation(selected);
 const { checked, stepIndex, step, finished, progress } = guide;
+watch(portions, () => guide.restart());
 const dimensions = computed(() =>
     [
         ...new Set(
@@ -71,6 +79,7 @@ const dimensions = computed(() =>
 watch(
     () => props.recipe.key,
     () => {
+        portions.value = 1;
         variantKey.value = props.recipe.variants[0]?.key ?? '';
         mode.value = 'reference';
         query.value = '';
@@ -145,6 +154,47 @@ const timerStarted = computed(
             <section v-if="selected" class="space-y-6">
                 <div class="flex flex-wrap items-end justify-between gap-5">
                     <div class="flex flex-wrap gap-5">
+                        <fieldset>
+                            <legend
+                                class="mb-2 text-xs font-semibold text-on-surface-variant"
+                            >
+                                {{ t('recipes.portions.label') }}
+                            </legend>
+                            <div class="flex items-center gap-3">
+                                <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    :disabled="portions === 0.5"
+                                    :aria-label="t('recipes.portions.decrease')"
+                                    data-testid="recipe-portions-minus"
+                                    @click="
+                                        portions = nextPortions(portions, -1)
+                                    "
+                                    ><Minus :size="16" aria-hidden="true"
+                                /></Button>
+                                <output
+                                    class="min-w-10 text-center font-bold tabular-nums"
+                                    aria-live="polite"
+                                    :aria-label="t('recipes.portions.label')"
+                                    data-testid="recipe-portions"
+                                    >{{
+                                        new Intl.NumberFormat(locale).format(
+                                            portions,
+                                        )
+                                    }}</output
+                                >
+                                <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    :aria-label="t('recipes.portions.increase')"
+                                    data-testid="recipe-portions-plus"
+                                    @click="
+                                        portions = nextPortions(portions, 1)
+                                    "
+                                    ><Plus :size="16" aria-hidden="true"
+                                /></Button>
+                            </div>
+                        </fieldset>
                         <fieldset
                             v-for="dimension in dimensions"
                             :key="dimension.key"
@@ -214,9 +264,7 @@ const timerStarted = computed(
                             >
                                 {{ t('recipes.ingredients') }}
                             </h2>
-                            <RecipeIngredients
-                                :ingredients="selected.ingredients"
-                            />
+                            <RecipeIngredients :ingredients="ingredients" />
                             <p
                                 class="mt-5 border-t border-outline-glass pt-4 text-xs leading-5 text-on-surface-variant"
                             >
@@ -264,6 +312,9 @@ const timerStarted = computed(
                                 }}</Button
                             >
                         </div>
+                        <p class="mb-5 text-sm text-on-surface-variant">
+                            {{ t('recipes.portions.method_hint') }}
+                        </p>
                         <ol class="space-y-5">
                             <li
                                 v-for="(item, index) in selected.steps"
@@ -402,7 +453,7 @@ const timerStarted = computed(
                             </div>
                             <RecipeIngredients
                                 v-model="checked"
-                                :ingredients="selected.ingredients"
+                                :ingredients="ingredients"
                                 checklist
                             />
                             <p class="mt-4 text-xs font-semibold text-primary">
@@ -538,6 +589,7 @@ const timerStarted = computed(
                 <RecipeToppingAdjustments
                     v-if="selected.topping_adjustments.length"
                     :components="selected.topping_adjustments"
+                    :portions="portions"
                 />
             </section>
 

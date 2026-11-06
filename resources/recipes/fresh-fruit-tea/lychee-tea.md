@@ -121,14 +121,14 @@ Made with lychees, jasmine tea, lychee purée, lemon syrup. Select the required 
 
 ### Method
 
-1. **Measure lychees.** Add 1 regular or 2 small lychees to shaker.
-2. **Measure lemon slices.** Add 1 lemon slice to shaker.
+1. **Measure lychees.** Add lychees to shaker according to the ingredient list.
+2. **Measure lemon slices.** Add lemon slices to shaker according to the ingredient list.
 3. **Crush the fruit.** Crush the fruit in the shaker to release its juice.
-4. **Measure brewed jasmine tea.** Add 250 ml brewed jasmine tea to shaker.
-5. **Measure liquid sugar.** Add 20 ml liquid sugar to shaker.
-6. **Measure lychee purée.** Add 30 ml lychee purée to shaker.
-7. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-8. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+4. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to shaker.
+5. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+6. **Measure lychee purée.** Add measured lychee purée to shaker.
+7. **Measure lemon syrup.** Add measured lemon syrup to shaker.
+8. **Measure the ice.** Measure the ice according to the ingredient list, then transfer it to the shaker.
 9. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 10. **Assemble the drink.** Pour into the serving cup.
 
@@ -149,21 +149,21 @@ Made with lychees, jasmine tea, lychee purée, lemon syrup. Select the required 
 
 ### Method
 
-1. **Measure lychees.** Add 1 regular or 2 small lychees to shaker.
-2. **Measure lemon slices.** Add 1 lemon slice to shaker.
+1. **Measure lychees.** Add lychees to shaker according to the ingredient list.
+2. **Measure lemon slices.** Add lemon slices to shaker according to the ingredient list.
 3. **Crush the fruit.** Crush the fruit in the shaker to release its juice.
-4. **Measure brewed jasmine tea.** Add 250 ml brewed jasmine tea to shaker.
-5. **Measure liquid sugar.** Add 25 ml liquid sugar to shaker.
-6. **Measure lychee purée.** Add 30 ml lychee purée to shaker.
-7. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-8. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
+4. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to shaker.
+5. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+6. **Measure lychee purée.** Add measured lychee purée to shaker.
+7. **Measure lemon syrup.** Add measured lemon syrup to shaker.
+8. **Measure ice cubes.** Add ice cubes to the shaker for chilling according to the ingredient list.
 9. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 10. **Assemble the drink.** Pour into the serving cup.
 11. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## L — With ice
 
@@ -181,14 +181,14 @@ Made with lychees, jasmine tea, lychee purée, lemon syrup. Select the required 
 
 ### Method
 
-1. **Measure lychees.** Add 2 regular or 3 small lychees to shaker.
-2. **Measure lemon slices.** Add 2 lemon slices to shaker.
+1. **Measure lychees.** Add lychees to shaker according to the ingredient list.
+2. **Measure lemon slices.** Add lemon slices to shaker according to the ingredient list.
 3. **Crush the fruit.** Crush the fruit in the shaker to release its juice.
-4. **Measure brewed jasmine tea.** Add 350 ml brewed jasmine tea to shaker.
-5. **Measure liquid sugar.** Add 30 ml liquid sugar to shaker.
-6. **Measure lychee purée.** Add 40 ml lychee purée to shaker.
-7. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-8. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+4. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to shaker.
+5. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+6. **Measure lychee purée.** Add measured lychee purée to shaker.
+7. **Measure lemon syrup.** Add measured lemon syrup to shaker.
+8. **Measure the ice.** Measure the ice according to the ingredient list, then transfer it to the shaker.
 9. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 10. **Assemble the drink.** Pour into the serving cup.
 
@@ -209,21 +209,21 @@ Made with lychees, jasmine tea, lychee purée, lemon syrup. Select the required 
 
 ### Method
 
-1. **Measure lychees.** Add 2 regular or 3 small lychees to shaker.
-2. **Measure lemon slices.** Add 2 lemon slices to shaker.
+1. **Measure lychees.** Add lychees to shaker according to the ingredient list.
+2. **Measure lemon slices.** Add lemon slices to shaker according to the ingredient list.
 3. **Crush the fruit.** Crush the fruit in the shaker to release its juice.
-4. **Measure brewed jasmine tea.** Add 350 ml brewed jasmine tea to shaker.
-5. **Measure liquid sugar.** Add 40 ml liquid sugar to shaker.
-6. **Measure lychee purée.** Add 40 ml lychee purée to shaker.
-7. **Measure lemon syrup.** Add 5 ml lemon syrup to shaker.
-8. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
+4. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to shaker.
+5. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+6. **Measure lychee purée.** Add measured lychee purée to shaker.
+7. **Measure lemon syrup.** Add measured lemon syrup to shaker.
+8. **Measure ice cubes.** Add ice cubes to the shaker for chilling according to the ingredient list.
 9. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 10. **Assemble the drink.** Pour into the serving cup.
 11. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## Related preparations
 

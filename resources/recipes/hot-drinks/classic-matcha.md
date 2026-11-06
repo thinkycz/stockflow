@@ -41,9 +41,9 @@ Himawari matcha with steamed milk. Prepare the matcha separately before assembli
 
 ### Method
 
-1. **Measure milk.** Add 200 g milk to milk jug.
+1. **Measure milk.** Add measured milk to milk jug.
 2. **Steam the milk.** Steam the milk in the milk jug.
-3. **Measure water at 70–80 °C.** Add 50 g water at 70–80 °C to matcha bowl.
-4. **Measure Himawari matcha.** Add 3.5 g Himawari matcha to matcha bowl.
+3. **Measure water at 70–80 °C.** Add measured water at 70–80 °C to matcha bowl.
+4. **Measure Himawari matcha.** Add measured Himawari matcha to matcha bowl.
 5. **Whisk the matcha.** Whisk until smooth and no dry clumps remain.
 6. **Assemble the drink.** Pour the steamed milk into the serving cup, then add the prepared matcha.

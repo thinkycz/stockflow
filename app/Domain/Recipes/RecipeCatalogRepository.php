@@ -12,7 +12,7 @@ use Thinkycz\LaravelCore\Support\Typer;
  * Read the authored Markdown catalog without database persistence.
  *
  * @phpstan-type CategoryRow array{key: string, name: string, position: int, recipe_count: int}
- * @phpstan-type IngredientRow array{key: string, group: string, name: string, quantity_value: float|int|null, quantity_text: string|null, unit: string|null, icon_group: string}
+ * @phpstan-type IngredientRow array{key: string, group: string, name: string, quantity_value: float|int|null, quantity_text: string|null, quantity_scaling: array{kind: string, values: list<float>, unit: string|null}|null, unit: string|null, icon_group: string}
  * @phpstan-type StepRow array{key: string, title: string, text: string, action_key: string, timer_seconds: int|null}
  * @phpstan-type AdjustmentRow array{ingredient_name: string, unit: string, reduction_step: int, base_quantity: float|int, two_toppings_quantity: float|int, three_toppings_quantity: float|int}
  * @phpstan-type VariantRow array{key: string, name: string, selectors: array<string, string>, selector_labels: array<string, string>, ingredients: list<IngredientRow>, steps: list<StepRow>, tips_html: string, topping_adjustments: list<AdjustmentRow>}
@@ -287,7 +287,7 @@ final class RecipeCatalogRepository
             }
             $rows[] = ['key' => 'ingredient-' . (\count($rows) + 1), 'group' => $cells[0], 'name' => $cells[1],
                 'quantity_value' => $number === null ? null : ($number === \floor($number) ? (int) $number : $number),
-                'quantity_text' => $number === null ? $cells[2] : null, 'unit' => $cells[3] === '—' ? null : $cells[3],
+                'quantity_text' => $number === null ? $cells[2] : null, 'quantity_scaling' => $number === null ? $this->quantityScaling($cells[2]) : null, 'unit' => $cells[3] === '—' ? null : $cells[3],
                 'icon_group' => $this->iconGroup($cells[1])];
         }
 
@@ -312,6 +312,30 @@ final class RecipeCatalogRepository
         }
 
         return $rows;
+    }
+
+    /**
+     * Describe scalable amounts before localization; never interpret translated prose.
+     *
+     * @return array{kind: string, values: list<float>, unit: string|null}|null
+     */
+    private function quantityScaling(string $amount): array|null
+    {
+        if (\preg_match('/^(\\d+(?:\\.\\d+)?)–(\\d+(?:\\.\\d+)?)$/u', $amount, $matches) === 1) {
+            return ['kind' => 'range', 'values' => [(float) $matches[1], (float) $matches[2]], 'unit' => null];
+        }
+        if (\preg_match('/^(\\d+) regular or (\\d+) small$/', $amount, $matches) === 1) {
+            return ['kind' => 'alternatives', 'values' => [(float) $matches[1], (float) $matches[2]], 'unit' => null];
+        }
+        if (\preg_match('/^to (\\d+(?:\\.\\d+)?) (ml|L) total (batch|mixture)$/', $amount, $matches) === 1) {
+            return ['kind' => $matches[3], 'values' => [(float) $matches[1]], 'unit' => $matches[2]];
+        }
+
+        return match ($amount) {
+            'full serving cup' => ['kind' => 'cups', 'values' => [1.0], 'unit' => null],
+            'to serving line' => ['kind' => 'serving_line', 'values' => [], 'unit' => null],
+            default => null,
+        };
     }
 
     /**

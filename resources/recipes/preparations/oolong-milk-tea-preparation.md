@@ -54,13 +54,13 @@ Prepare the oolong milk tea preparation batch before making drinks. Follow the s
 
 ### Method
 
-1. **Measure oolong tea leaves.** Divide 70 g oolong tea leaves between the two tea bags.
-2. **Measure Ceylon tea leaves.** Divide 30 g Ceylon tea leaves between the same two tea bags.
-3. **Measure water at 90 °C.** Add 2.5 L water at 90 °C to container. Immerse the two filled tea bags in the water.
-4. **Steep the tea.** Steep for 10 minutes. Remove both tea bags before continuing.
-5. **Measure milk powder.** Add 900 g milk powder to container.
+1. **Measure oolong tea leaves.** Divide measured oolong tea leaves between the tea bags.
+2. **Measure Ceylon tea leaves.** Divide measured Ceylon tea leaves between the same tea bags.
+3. **Measure water at 90 °C.** Add measured water at 90 °C to container. Immerse the filled tea bags in the water.
+4. **Steep the tea.** Steep for 10 minutes. Remove the tea bags before continuing.
+5. **Measure milk powder.** Add measured milk powder to container.
 6. **Stir to combine.** Stir until completely dissolved.
-7. **Chill the batch.** Add ice until the total volume reaches 3.5 L.
+7. **Chill the batch.** Add ice until the total batch volume matches the ingredient list.
 
 ## 1.5 L batch
 
@@ -76,10 +76,10 @@ Prepare the oolong milk tea preparation batch before making drinks. Follow the s
 
 ### Method
 
-1. **Measure oolong tea leaves.** Add 30 g oolong tea leaves to tea bag.
-2. **Measure Ceylon tea leaves.** Add 13 g Ceylon tea leaves to the same tea bag.
-3. **Measure water at 90 °C.** Add 1.07 L water at 90 °C to container. Immerse the filled tea bag in the water.
+1. **Measure oolong tea leaves.** Add measured oolong tea leaves to tea bag.
+2. **Measure Ceylon tea leaves.** Add measured Ceylon tea leaves to the same tea bag.
+3. **Measure water at 90 °C.** Add measured water at 90 °C to container. Immerse the filled tea bag in the water.
 4. **Steep the tea.** Steep for 10 minutes. Remove the tea bag before continuing.
-5. **Measure milk powder.** Add 386 g milk powder to container.
+5. **Measure milk powder.** Add measured milk powder to container.
 6. **Stir to combine.** Stir until completely dissolved.
-7. **Chill the batch.** Add ice until the total volume reaches 1.5 L.
+7. **Chill the batch.** Add ice until the total batch volume matches the ingredient list.

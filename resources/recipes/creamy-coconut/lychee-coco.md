@@ -121,12 +121,12 @@ Made with lychees, whipping cream, milk, lychee purée. Select the required vari
 
 ### Method
 
-1. **Measure lychees.** Add 2 lychees to serving cup.
-2. **Fill the cup with ice.** Fill the serving cup with ice.
-3. **Measure coconut water.** Add 100 ml coconut water to serving cup.
-4. **Measure whipping cream.** Add 30 ml whipping cream to mixing bowl.
-5. **Measure milk.** Add 30 ml milk to mixing bowl.
-6. **Measure lychee purée.** Add 30 ml lychee purée to mixing bowl.
+1. **Measure lychees.** Add lychees to serving cup according to the ingredient list.
+2. **Add ice.** Add ice to the serving cup according to the ingredient list.
+3. **Measure coconut water.** Add measured coconut water to serving cup.
+4. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+5. **Measure milk.** Add measured milk to mixing bowl.
+6. **Measure lychee purée.** Add measured lychee purée to mixing bowl.
 7. **Whip the cloud.** Whip until thick.
 8. **Assemble the drink.** Pour the cloud into the serving cup.
 9. **Finish the drink.** Garnish with coconut flakes as needed.
@@ -149,14 +149,14 @@ Made with lychees, whipping cream, milk, lychee purée. Select the required vari
 
 ### Method
 
-1. **Measure lychees.** Add 2 lychees to serving cup.
-2. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-3. **Measure coconut water.** Add 100 ml coconut water to serving cup.
-4. **Measure liquid sugar.** Add 5 ml liquid sugar to serving cup.
+1. **Measure lychees.** Add lychees to serving cup according to the ingredient list.
+2. **Measure ice cubes.** Add ice cubes to the serving cup for chilling according to the ingredient list.
+3. **Measure coconut water.** Add measured coconut water to serving cup.
+4. **Measure liquid sugar.** Add measured liquid sugar to serving cup.
 5. **Stir to combine.** Stir the ingredients until evenly combined.
-6. **Measure whipping cream.** Add 30 ml whipping cream to mixing bowl.
-7. **Measure milk.** Add 30 ml milk to mixing bowl.
-8. **Measure lychee purée.** Add 30 ml lychee purée to mixing bowl.
+6. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+7. **Measure milk.** Add measured milk to mixing bowl.
+8. **Measure lychee purée.** Add measured lychee purée to mixing bowl.
 9. **Whip the cloud.** Whip until thick.
 10. **Top up the drink.** Top up with coconut water in the serving cup to the standard serving line, leaving room for the cloud. Stir the base gently to combine.
 11. **Assemble the drink.** Pour the cloud into the serving cup.
@@ -164,7 +164,7 @@ Made with lychees, whipping cream, milk, lychee purée. Select the required vari
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## M — With ice
 
@@ -182,12 +182,12 @@ Made with lychees, whipping cream, milk, lychee purée. Select the required vari
 
 ### Method
 
-1. **Measure lychees.** Add 3 lychees to serving cup.
-2. **Fill the cup with ice.** Fill the serving cup with ice.
-3. **Measure coconut water.** Add 140 ml coconut water to serving cup.
-4. **Measure whipping cream.** Add 40 ml whipping cream to mixing bowl.
-5. **Measure milk.** Add 40 ml milk to mixing bowl.
-6. **Measure lychee purée.** Add 40 ml lychee purée to mixing bowl.
+1. **Measure lychees.** Add lychees to serving cup according to the ingredient list.
+2. **Add ice.** Add ice to the serving cup according to the ingredient list.
+3. **Measure coconut water.** Add measured coconut water to serving cup.
+4. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+5. **Measure milk.** Add measured milk to mixing bowl.
+6. **Measure lychee purée.** Add measured lychee purée to mixing bowl.
 7. **Whip the cloud.** Whip until thick.
 8. **Assemble the drink.** Pour the cloud into the serving cup.
 9. **Finish the drink.** Garnish with coconut flakes as needed.
@@ -210,14 +210,14 @@ Made with lychees, whipping cream, milk, lychee purée. Select the required vari
 
 ### Method
 
-1. **Measure lychees.** Add 3 lychees to serving cup.
-2. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-3. **Measure coconut water.** Add 140 ml coconut water to serving cup.
-4. **Measure liquid sugar.** Add 10 ml liquid sugar to serving cup.
+1. **Measure lychees.** Add lychees to serving cup according to the ingredient list.
+2. **Measure ice cubes.** Add ice cubes to the serving cup for chilling according to the ingredient list.
+3. **Measure coconut water.** Add measured coconut water to serving cup.
+4. **Measure liquid sugar.** Add measured liquid sugar to serving cup.
 5. **Stir to combine.** Stir the ingredients until evenly combined.
-6. **Measure whipping cream.** Add 40 ml whipping cream to mixing bowl.
-7. **Measure milk.** Add 40 ml milk to mixing bowl.
-8. **Measure lychee purée.** Add 40 ml lychee purée to mixing bowl.
+6. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+7. **Measure milk.** Add measured milk to mixing bowl.
+8. **Measure lychee purée.** Add measured lychee purée to mixing bowl.
 9. **Whip the cloud.** Whip until thick.
 10. **Top up the drink.** Top up with coconut water in the serving cup to the standard serving line, leaving room for the cloud. Stir the base gently to combine.
 11. **Assemble the drink.** Pour the cloud into the serving cup.
@@ -225,4 +225,4 @@ Made with lychees, whipping cream, milk, lychee purée. Select the required vari
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.

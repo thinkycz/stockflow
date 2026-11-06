@@ -120,13 +120,13 @@ Made with jasmine milk tea, matcha. Select the required variant before measuring
 
 ### Method
 
-1. **Measure jasmine milk tea.** Add 200 g jasmine milk tea to shaker.
-2. **Measure liquid sugar.** Add 45 g liquid sugar to shaker.
-3. **Measure water at 70–80 °C.** Add 50 g water at 70–80 °C to matcha bowl.
-4. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
+1. **Measure jasmine milk tea.** Add measured jasmine milk tea to shaker.
+2. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+3. **Measure water at 70–80 °C.** Add measured water at 70–80 °C to matcha bowl.
+4. **Measure matcha.** Add measured matcha to matcha bowl.
 5. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 6. **Assemble the drink.** Pour the matcha into the shaker.
-7. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+7. **Measure the ice.** Measure the ice according to the ingredient list, then transfer it to the shaker.
 8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 
@@ -145,20 +145,20 @@ Made with jasmine milk tea, matcha. Select the required variant before measuring
 
 ### Method
 
-1. **Measure jasmine milk tea.** Add 200 g jasmine milk tea to shaker.
-2. **Measure liquid sugar.** Add 50 g liquid sugar to shaker.
-3. **Measure water at 70–80 °C.** Add 50 g water at 70–80 °C to matcha bowl.
-4. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
+1. **Measure jasmine milk tea.** Add measured jasmine milk tea to shaker.
+2. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+3. **Measure water at 70–80 °C.** Add measured water at 70–80 °C to matcha bowl.
+4. **Measure matcha.** Add measured matcha to matcha bowl.
 5. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 6. **Assemble the drink.** Pour the matcha into the shaker.
-7. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
+7. **Measure ice cubes.** Add ice cubes to the shaker for chilling according to the ingredient list.
 8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 10. **Top up the drink.** Top up with jasmine milk tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## L — With ice
 
@@ -174,13 +174,13 @@ Made with jasmine milk tea, matcha. Select the required variant before measuring
 
 ### Method
 
-1. **Measure jasmine milk tea.** Add 300 g jasmine milk tea to shaker.
-2. **Measure liquid sugar.** Add 55 g liquid sugar to shaker.
-3. **Measure water at 70–80 °C.** Add 60 g water at 70–80 °C to matcha bowl.
-4. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
+1. **Measure jasmine milk tea.** Add measured jasmine milk tea to shaker.
+2. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+3. **Measure water at 70–80 °C.** Add measured water at 70–80 °C to matcha bowl.
+4. **Measure matcha.** Add measured matcha to matcha bowl.
 5. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 6. **Assemble the drink.** Pour the matcha into the shaker.
-7. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+7. **Measure the ice.** Measure the ice according to the ingredient list, then transfer it to the shaker.
 8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 
@@ -199,20 +199,20 @@ Made with jasmine milk tea, matcha. Select the required variant before measuring
 
 ### Method
 
-1. **Measure jasmine milk tea.** Add 300 g jasmine milk tea to shaker.
-2. **Measure liquid sugar.** Add 65 g liquid sugar to shaker.
-3. **Measure water at 70–80 °C.** Add 60 g water at 70–80 °C to matcha bowl.
-4. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
+1. **Measure jasmine milk tea.** Add measured jasmine milk tea to shaker.
+2. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+3. **Measure water at 70–80 °C.** Add measured water at 70–80 °C to matcha bowl.
+4. **Measure matcha.** Add measured matcha to matcha bowl.
 5. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 6. **Assemble the drink.** Pour the matcha into the shaker.
-7. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
+7. **Measure ice cubes.** Add ice cubes to the shaker for chilling according to the ingredient list.
 8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 10. **Top up the drink.** Top up with jasmine milk tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## Related preparations
 

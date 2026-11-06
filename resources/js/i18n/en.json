@@ -1805,7 +1805,25 @@
             "original": "Base recipe: {amount}",
             "use": "Use",
             "omit": "Leave out",
-            "informational": "The ingredient list and preparation steps show the base amounts for 0–1 toppings."
+            "informational": "The ingredient list shows the base amounts for 0–1 toppings, scaled to the selected number of portions."
+        },
+        "portions": {
+            "label": "Number of portions",
+            "decrease": "Decrease portions",
+            "increase": "Increase portions",
+            "method_hint": "Use the ingredient amounts for the selected number of portions."
+        },
+        "quantities": {
+            "alternatives": "{regular} regular or {small} small",
+            "batch": "to {amount} {unit} total batch",
+            "mixture": "to {amount} {unit} total mixture",
+            "cups": {
+                "one": "{amount} full serving cup",
+                "other": "{amount} full serving cups",
+                "few": "{amount} full serving cups",
+                "many": "{amount} full serving cups"
+            },
+            "serving_line": "to the serving line in each cup"
         }
     },
     "attendance": {

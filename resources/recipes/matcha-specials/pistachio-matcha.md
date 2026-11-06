@@ -128,14 +128,14 @@ Made with pistachio paste, milk, sweetened condensed milk (Salko), whipping crea
 
 ### Method
 
-1. **Measure pistachio paste.** Spread 15 g pistachio paste inside the serving cup.
-2. **Measure milk.** Add 100 g milk to serving cup.
-3. **Measure sweetened condensed milk (Salko).** Add 20 g sweetened condensed milk (Salko) to serving cup.
+1. **Measure pistachio paste.** Spread measured pistachio paste inside the serving cup.
+2. **Measure milk.** Add measured milk to serving cup.
+3. **Measure sweetened condensed milk (Salko).** Add measured sweetened condensed milk (Salko) to serving cup.
 4. **Stir to combine.** Stir the ingredients until evenly combined.
-5. **Fill the cup with ice.** Fill the serving cup with ice.
-6. **Measure whipping cream.** Add 40 g whipping cream to mixing bowl.
-7. **Measure milk.** Add 40 g milk to mixing bowl.
-8. **Measure matcha.** Add 3.5 g matcha to mixing bowl.
+5. **Add ice.** Add ice to the serving cup according to the ingredient list.
+6. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+7. **Measure milk.** Add measured milk to mixing bowl.
+8. **Measure matcha.** Add measured matcha to mixing bowl.
 9. **Whip the cloud.** Whip until thick.
 10. **Assemble the drink.** Pour the matcha cloud into the serving cup.
 11. **Finish the drink.** Garnish with chopped pistachios as needed.
@@ -159,15 +159,15 @@ Made with pistachio paste, milk, sweetened condensed milk (Salko), whipping crea
 
 ### Method
 
-1. **Measure pistachio paste.** Spread 15 g pistachio paste inside the serving cup.
-2. **Measure milk.** Add 100 g milk to serving cup.
-3. **Measure sweetened condensed milk (Salko).** Add 20 g sweetened condensed milk (Salko) to serving cup.
+1. **Measure pistachio paste.** Spread measured pistachio paste inside the serving cup.
+2. **Measure milk.** Add measured milk to serving cup.
+3. **Measure sweetened condensed milk (Salko).** Add measured sweetened condensed milk (Salko) to serving cup.
 4. **Stir to combine.** Stir the ingredients until evenly combined.
-5. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-6. **Measure liquid sugar.** Add 5 g liquid sugar to serving cup.
-7. **Measure whipping cream.** Add 40 g whipping cream to mixing bowl.
-8. **Measure milk.** Add 40 g milk to mixing bowl.
-9. **Measure matcha.** Add 3.5 g matcha to mixing bowl.
+5. **Measure ice cubes.** Add ice cubes to the serving cup for chilling according to the ingredient list.
+6. **Measure liquid sugar.** Add measured liquid sugar to serving cup.
+7. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+8. **Measure milk.** Add measured milk to mixing bowl.
+9. **Measure matcha.** Add measured matcha to mixing bowl.
 10. **Whip the cloud.** Whip until thick.
 11. **Top up the drink.** Top up with milk in the serving cup to the standard serving line, leaving room for the cloud. Stir the base gently to combine.
 12. **Assemble the drink.** Pour the matcha cloud into the serving cup.
@@ -175,7 +175,7 @@ Made with pistachio paste, milk, sweetened condensed milk (Salko), whipping crea
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## M — With ice
 
@@ -194,14 +194,14 @@ Made with pistachio paste, milk, sweetened condensed milk (Salko), whipping crea
 
 ### Method
 
-1. **Measure pistachio paste.** Spread 25 g pistachio paste inside the serving cup.
-2. **Measure milk.** Add 140 g milk to serving cup.
-3. **Measure sweetened condensed milk (Salko).** Add 30 g sweetened condensed milk (Salko) to serving cup.
+1. **Measure pistachio paste.** Spread measured pistachio paste inside the serving cup.
+2. **Measure milk.** Add measured milk to serving cup.
+3. **Measure sweetened condensed milk (Salko).** Add measured sweetened condensed milk (Salko) to serving cup.
 4. **Stir to combine.** Stir the ingredients until evenly combined.
-5. **Fill the cup with ice.** Fill the serving cup with ice.
-6. **Measure whipping cream.** Add 50 g whipping cream to mixing bowl.
-7. **Measure milk.** Add 50 g milk to mixing bowl.
-8. **Measure matcha.** Add 4.5 g matcha to mixing bowl.
+5. **Add ice.** Add ice to the serving cup according to the ingredient list.
+6. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+7. **Measure milk.** Add measured milk to mixing bowl.
+8. **Measure matcha.** Add measured matcha to mixing bowl.
 9. **Whip the cloud.** Whip until thick.
 10. **Assemble the drink.** Pour the matcha cloud into the serving cup.
 11. **Finish the drink.** Garnish with chopped pistachios as needed.
@@ -225,15 +225,15 @@ Made with pistachio paste, milk, sweetened condensed milk (Salko), whipping crea
 
 ### Method
 
-1. **Measure pistachio paste.** Spread 25 g pistachio paste inside the serving cup.
-2. **Measure milk.** Add 140 g milk to serving cup.
-3. **Measure sweetened condensed milk (Salko).** Add 30 g sweetened condensed milk (Salko) to serving cup.
+1. **Measure pistachio paste.** Spread measured pistachio paste inside the serving cup.
+2. **Measure milk.** Add measured milk to serving cup.
+3. **Measure sweetened condensed milk (Salko).** Add measured sweetened condensed milk (Salko) to serving cup.
 4. **Stir to combine.** Stir the ingredients until evenly combined.
-5. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-6. **Measure liquid sugar.** Add 10 g liquid sugar to serving cup.
-7. **Measure whipping cream.** Add 50 g whipping cream to mixing bowl.
-8. **Measure milk.** Add 50 g milk to mixing bowl.
-9. **Measure matcha.** Add 4.5 g matcha to mixing bowl.
+5. **Measure ice cubes.** Add ice cubes to the serving cup for chilling according to the ingredient list.
+6. **Measure liquid sugar.** Add measured liquid sugar to serving cup.
+7. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+8. **Measure milk.** Add measured milk to mixing bowl.
+9. **Measure matcha.** Add measured matcha to mixing bowl.
 10. **Whip the cloud.** Whip until thick.
 11. **Top up the drink.** Top up with milk in the serving cup to the standard serving line, leaving room for the cloud. Stir the base gently to combine.
 12. **Assemble the drink.** Pour the matcha cloud into the serving cup.
@@ -241,4 +241,4 @@ Made with pistachio paste, milk, sweetened condensed milk (Salko), whipping crea
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.

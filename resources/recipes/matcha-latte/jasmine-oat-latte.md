@@ -116,13 +116,13 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 
 ### Method
 
-1. **Measure brewed jasmine tea.** Add 70 g brewed jasmine tea to serving cup.
-2. **Measure oat milk.** Add 50 g oat milk to serving cup.
-3. **Measure liquid sugar.** Add 25 g liquid sugar to serving cup.
+1. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to serving cup.
+2. **Measure oat milk.** Add measured oat milk to serving cup.
+3. **Measure liquid sugar.** Add measured liquid sugar to serving cup.
 4. **Stir to combine.** Stir the ingredients until evenly combined.
-5. **Fill the cup with ice.** Fill the serving cup with ice.
-6. **Measure water at 70–80 °C.** Add 50 g water at 70–80 °C to matcha bowl.
-7. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
+5. **Add ice.** Add ice to the serving cup according to the ingredient list.
+6. **Measure water at 70–80 °C.** Add measured water at 70–80 °C to matcha bowl.
+7. **Measure matcha.** Add measured matcha to matcha bowl.
 8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 9. **Assemble the drink.** Pour the matcha into the serving cup.
 
@@ -142,20 +142,20 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 
 ### Method
 
-1. **Measure brewed jasmine tea.** Add 70 g brewed jasmine tea to serving cup.
-2. **Measure oat milk.** Add 50 g oat milk to serving cup.
-3. **Measure liquid sugar.** Add 30 g liquid sugar to serving cup.
+1. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to serving cup.
+2. **Measure oat milk.** Add measured oat milk to serving cup.
+3. **Measure liquid sugar.** Add measured liquid sugar to serving cup.
 4. **Stir to combine.** Stir the ingredients until evenly combined.
-5. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-6. **Measure water at 70–80 °C.** Add 50 g water at 70–80 °C to matcha bowl.
-7. **Measure matcha.** Add 3.5 g matcha to matcha bowl.
+5. **Measure ice cubes.** Add ice cubes to the serving cup for chilling according to the ingredient list.
+6. **Measure water at 70–80 °C.** Add measured water at 70–80 °C to matcha bowl.
+7. **Measure matcha.** Add measured matcha to matcha bowl.
 8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 9. **Assemble the drink.** Pour the matcha into the serving cup.
 10. **Top up the drink.** Top up with oat milk in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## M — With ice
 
@@ -172,13 +172,13 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 
 ### Method
 
-1. **Measure brewed jasmine tea.** Add 90 g brewed jasmine tea to serving cup.
-2. **Measure oat milk.** Add 70 g oat milk to serving cup.
-3. **Measure liquid sugar.** Add 35 g liquid sugar to serving cup.
+1. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to serving cup.
+2. **Measure oat milk.** Add measured oat milk to serving cup.
+3. **Measure liquid sugar.** Add measured liquid sugar to serving cup.
 4. **Stir to combine.** Stir the ingredients until evenly combined.
-5. **Fill the cup with ice.** Fill the serving cup with ice.
-6. **Measure water at 70–80 °C.** Add 60 g water at 70–80 °C to matcha bowl.
-7. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
+5. **Add ice.** Add ice to the serving cup according to the ingredient list.
+6. **Measure water at 70–80 °C.** Add measured water at 70–80 °C to matcha bowl.
+7. **Measure matcha.** Add measured matcha to matcha bowl.
 8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 9. **Assemble the drink.** Pour the matcha into the serving cup.
 
@@ -198,20 +198,20 @@ Made with jasmine tea, oat milk, matcha. Select the required variant before meas
 
 ### Method
 
-1. **Measure brewed jasmine tea.** Add 90 g brewed jasmine tea to serving cup.
-2. **Measure oat milk.** Add 70 g oat milk to serving cup.
-3. **Measure liquid sugar.** Add 45 g liquid sugar to serving cup.
+1. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to serving cup.
+2. **Measure oat milk.** Add measured oat milk to serving cup.
+3. **Measure liquid sugar.** Add measured liquid sugar to serving cup.
 4. **Stir to combine.** Stir the ingredients until evenly combined.
-5. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-6. **Measure water at 70–80 °C.** Add 60 g water at 70–80 °C to matcha bowl.
-7. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
+5. **Measure ice cubes.** Add ice cubes to the serving cup for chilling according to the ingredient list.
+6. **Measure water at 70–80 °C.** Add measured water at 70–80 °C to matcha bowl.
+7. **Measure matcha.** Add measured matcha to matcha bowl.
 8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 9. **Assemble the drink.** Pour the matcha into the serving cup.
 10. **Top up the drink.** Top up with oat milk in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## Related preparations
 

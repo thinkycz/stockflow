@@ -52,11 +52,11 @@ Himawari matcha with steamed banana milk and gingerbread syrup.
 
 ### Method
 
-1. **Measure gingerbread syrup.** Add 5 g gingerbread syrup to serving cup.
-2. **Measure banana milk.** Add 200 g banana milk to milk jug.
+1. **Measure gingerbread syrup.** Add measured gingerbread syrup to serving cup.
+2. **Measure banana milk.** Add measured banana milk to milk jug.
 3. **Steam the milk.** Steam the banana milk in the milk jug.
-4. **Measure water at 70–80 °C.** Add 50 g water at 70–80 °C to matcha bowl.
-5. **Measure Himawari matcha.** Add 3.5 g Himawari matcha to matcha bowl.
+4. **Measure water at 70–80 °C.** Add measured water at 70–80 °C to matcha bowl.
+5. **Measure Himawari matcha.** Add measured Himawari matcha to matcha bowl.
 6. **Whisk the matcha.** Whisk until smooth and no dry clumps remain.
 7. **Stir to combine.** Pour the steamed banana milk into the serving cup and stir in the syrup.
 8. **Assemble the drink.** Pour the prepared matcha over the banana milk.

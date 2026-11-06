@@ -111,12 +111,12 @@ Made with jasmine tea, peach purée. Select the required variant before measurin
 
 ### Method
 
-1. **Measure brewed jasmine tea.** Add 200 ml brewed jasmine tea to shaker.
-2. **Measure liquid sugar.** Add 20 ml liquid sugar to shaker.
-3. **Measure peach purée.** Add 30 ml peach purée to shaker.
-4. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+1. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to shaker.
+2. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+3. **Measure peach purée.** Add measured peach purée to shaker.
+4. **Measure the ice.** Measure the ice according to the ingredient list, then transfer it to the shaker.
 5. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
-6. **Measure dragon fruit pieces.** Add 1.5 standard scoops dragon fruit pieces to serving cup.
+6. **Measure dragon fruit pieces.** Add measured dragon fruit pieces to serving cup.
 7. **Crush the fruit.** Smash the dragon fruit in the serving cup.
 8. **Assemble the drink.** Pour the shaken tea over the dragon fruit.
 
@@ -135,19 +135,19 @@ Made with jasmine tea, peach purée. Select the required variant before measurin
 
 ### Method
 
-1. **Measure brewed jasmine tea.** Add 200 ml brewed jasmine tea to shaker.
-2. **Measure liquid sugar.** Add 25 ml liquid sugar to shaker.
-3. **Measure peach purée.** Add 30 ml peach purée to shaker.
-4. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
+1. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to shaker.
+2. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+3. **Measure peach purée.** Add measured peach purée to shaker.
+4. **Measure ice cubes.** Add ice cubes to the shaker for chilling according to the ingredient list.
 5. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
-6. **Measure dragon fruit pieces.** Add 1.5 standard scoops dragon fruit pieces to serving cup.
+6. **Measure dragon fruit pieces.** Add measured dragon fruit pieces to serving cup.
 7. **Crush the fruit.** Smash the dragon fruit in the serving cup.
 8. **Assemble the drink.** Pour the shaken tea over the dragon fruit.
 9. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## L — With ice
 
@@ -163,12 +163,12 @@ Made with jasmine tea, peach purée. Select the required variant before measurin
 
 ### Method
 
-1. **Measure brewed jasmine tea.** Add 300 ml brewed jasmine tea to shaker.
-2. **Measure liquid sugar.** Add 30 ml liquid sugar to shaker.
-3. **Measure peach purée.** Add 40 ml peach purée to shaker.
-4. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+1. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to shaker.
+2. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+3. **Measure peach purée.** Add measured peach purée to shaker.
+4. **Measure the ice.** Measure the ice according to the ingredient list, then transfer it to the shaker.
 5. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
-6. **Measure dragon fruit pieces.** Add 2 standard scoops dragon fruit pieces to serving cup.
+6. **Measure dragon fruit pieces.** Add measured dragon fruit pieces to serving cup.
 7. **Crush the fruit.** Smash the dragon fruit in the serving cup.
 8. **Assemble the drink.** Pour the shaken tea over the dragon fruit.
 
@@ -187,19 +187,19 @@ Made with jasmine tea, peach purée. Select the required variant before measurin
 
 ### Method
 
-1. **Measure brewed jasmine tea.** Add 300 ml brewed jasmine tea to shaker.
-2. **Measure liquid sugar.** Add 40 ml liquid sugar to shaker.
-3. **Measure peach purée.** Add 40 ml peach purée to shaker.
-4. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
+1. **Measure brewed jasmine tea.** Add measured brewed jasmine tea to shaker.
+2. **Measure liquid sugar.** Add measured liquid sugar to shaker.
+3. **Measure peach purée.** Add measured peach purée to shaker.
+4. **Measure ice cubes.** Add ice cubes to the shaker for chilling according to the ingredient list.
 5. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
-6. **Measure dragon fruit pieces.** Add 2 standard scoops dragon fruit pieces to serving cup.
+6. **Measure dragon fruit pieces.** Add measured dragon fruit pieces to serving cup.
 7. **Crush the fruit.** Smash the dragon fruit in the serving cup.
 8. **Assemble the drink.** Pour the shaken tea over the dragon fruit.
 9. **Top up the drink.** Top up with brewed jasmine tea in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## Related preparations
 

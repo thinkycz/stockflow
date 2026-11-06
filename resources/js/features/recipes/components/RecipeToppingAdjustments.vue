@@ -3,20 +3,25 @@ import { Candy } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Tabs from '@/components/ui/Tabs.vue';
+import { scaleToppingAdjustments } from '../portions';
 import type { RecipeVariant } from '../types';
 
 const props = defineProps<{
     components: RecipeVariant['topping_adjustments'];
+    portions: number;
 }>();
 const { t, locale } = useI18n();
 const count = ref('base');
+const scaled = computed(() =>
+    scaleToppingAdjustments(props.components, props.portions),
+);
 const choices = computed(() => [
     { value: 'base', label: '0–1' },
     { value: 'two', label: '2' },
     { value: 'three', label: '3' },
 ]);
 const amounts = computed(() =>
-    props.components.map((component) => ({
+    scaled.value.map((component) => ({
         ...component,
         quantity:
             count.value === 'two'
@@ -31,11 +36,11 @@ const reduction = computed(() =>
         ? t('recipes.topping_adjustments.unchanged')
         : t('recipes.topping_adjustments.reduction', {
               amount: format(
-                  (props.components[0]?.reduction_step ?? 5) *
+                  (scaled.value[0]?.reduction_step ?? 5) *
                       (count.value === 'two' ? 1 : 2),
-                  props.components[0]?.unit ?? 'ml',
+                  scaled.value[0]?.unit ?? 'ml',
               ),
-              minimum: format(0, props.components[0]?.unit ?? 'ml'),
+              minimum: format(0, scaled.value[0]?.unit ?? 'ml'),
           }),
 );
 watch(
@@ -43,7 +48,7 @@ watch(
     () => (count.value = 'base'),
 );
 function format(value: number, unit: string): string {
-    return `${new Intl.NumberFormat(locale.value).format(value)} ${unit}`;
+    return `${new Intl.NumberFormat(locale.value, { maximumFractionDigits: 3 }).format(value)} ${unit}`;
 }
 </script>
 

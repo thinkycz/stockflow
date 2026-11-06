@@ -90,16 +90,16 @@ Made with strawberry purée, milk, matcha, whipping cream. Select the required v
 
 ### Method
 
-1. **Measure strawberry purée.** Add 30 g strawberry purée to serving cup.
-2. **Fill the cup with ice.** Fill the serving cup with ice.
-3. **Measure milk.** Add 140 g milk to serving cup.
-4. **Measure water at 70–80 °C.** Add 50 g water at 70–80 °C to matcha bowl.
-5. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
+1. **Measure strawberry purée.** Add measured strawberry purée to serving cup.
+2. **Add ice.** Add ice to the serving cup according to the ingredient list.
+3. **Measure milk.** Add measured milk to serving cup.
+4. **Measure water at 70–80 °C.** Add measured water at 70–80 °C to matcha bowl.
+5. **Measure matcha.** Add measured matcha to matcha bowl.
 6. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 7. **Assemble the drink.** Pour the matcha into the serving cup.
-8. **Measure whipping cream.** Add 40 g whipping cream to mixing bowl.
-9. **Measure milk.** Add 40 g milk to mixing bowl.
-10. **Measure strawberry syrup.** Add 40 g strawberry syrup to mixing bowl.
+8. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+9. **Measure milk.** Add measured milk to mixing bowl.
+10. **Measure strawberry syrup.** Add measured strawberry syrup to mixing bowl.
 11. **Whip the cloud.** Whip until thick.
 12. **Assemble the drink.** Pour the strawberry cloud into the serving cup.
 13. **Finish the drink.** Garnish with dried strawberries as needed.
@@ -124,18 +124,18 @@ Made with strawberry purée, milk, matcha, whipping cream. Select the required v
 
 ### Method
 
-1. **Measure strawberry purée.** Add 30 g strawberry purée to serving cup.
-2. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-3. **Measure milk.** Add 140 g milk to serving cup.
-4. **Measure liquid sugar.** Add 5 g liquid sugar to serving cup.
+1. **Measure strawberry purée.** Add measured strawberry purée to serving cup.
+2. **Measure ice cubes.** Add ice cubes to the serving cup for chilling according to the ingredient list.
+3. **Measure milk.** Add measured milk to serving cup.
+4. **Measure liquid sugar.** Add measured liquid sugar to serving cup.
 5. **Stir to combine.** Stir the ingredients until evenly combined.
-6. **Measure water at 70–80 °C.** Add 50 g water at 70–80 °C to matcha bowl.
-7. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
+6. **Measure water at 70–80 °C.** Add measured water at 70–80 °C to matcha bowl.
+7. **Measure matcha.** Add measured matcha to matcha bowl.
 8. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 9. **Assemble the drink.** Pour the matcha into the serving cup.
-10. **Measure whipping cream.** Add 40 g whipping cream to mixing bowl.
-11. **Measure milk.** Add 40 g milk to mixing bowl.
-12. **Measure strawberry syrup.** Add 40 g strawberry syrup to mixing bowl.
+10. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+11. **Measure milk.** Add measured milk to mixing bowl.
+12. **Measure strawberry syrup.** Add measured strawberry syrup to mixing bowl.
 13. **Whip the cloud.** Whip until thick.
 14. **Top up the drink.** Top up with milk in the serving cup to the standard serving line, leaving room for the cloud. Stir the base gently to combine.
 15. **Assemble the drink.** Pour the strawberry cloud into the serving cup.
@@ -143,7 +143,7 @@ Made with strawberry purée, milk, matcha, whipping cream. Select the required v
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## Notes
 

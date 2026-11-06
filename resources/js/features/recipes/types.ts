@@ -19,6 +19,17 @@ export type RecipeIngredient = {
     name: string;
     quantity_value: number | null;
     quantity_text: string | null;
+    quantity_scaling: {
+        kind:
+            | 'range'
+            | 'alternatives'
+            | 'batch'
+            | 'mixture'
+            | 'cups'
+            | 'serving_line';
+        values: number[];
+        unit: string | null;
+    } | null;
     unit: string | null;
     icon_group: string;
 };

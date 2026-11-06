@@ -59,8 +59,8 @@ use Thinkycz\LaravelCore\Support\Typer;
     \expect($iced['topping_adjustments'][0])->toMatchArray(['base_quantity' => 20, 'two_toppings_quantity' => 15, 'three_toppings_quantity' => 10])
         ->and($noIce['topping_adjustments'][0]['base_quantity'])->toBe(25)
         ->and($noIce['ingredients'][0]['quantity_value'])->toBe(150)
-        ->and(\array_column($noIce['steps'], 'text'))->toContain('Add 2–3 ice cubes to the serving cup for chilling.')
-        ->and($noIce['tips_html'])->toContain('2–3 ice cubes');
+        ->and(\array_column($noIce['steps'], 'text'))->toContain('Add ice cubes to the serving cup for chilling according to the ingredient list.')
+        ->and($noIce['tips_html'])->toContain('listed ice cubes');
 });
 
 \test('all matcha drinks use grams in ingredient quantities and preparation instructions', function (): void {
@@ -218,11 +218,11 @@ use Thinkycz\LaravelCore\Support\Typer;
         ->and($butterfly['variants'][0]['steps'][2]['timer_seconds'])->toBeNull();
 });
 
-\test('tea bags are immersed and removed with the correct batch count and tapioca is drained', function (): void {
+\test('tea bags are immersed and removed without fixed batch counts and tapioca is drained', function (): void {
     $catalog = new RecipeCatalogRepository();
     $oolong = $catalog->find('preparations', 'oolong-milk-tea-preparation') ?? throw new RuntimeException('Missing oolong.');
-    \expect($oolong['variants'][0]['steps'][2]['text'])->toContain('two filled tea bags')
-        ->and($oolong['variants'][0]['steps'][3]['text'])->toContain('Remove both tea bags')
+    \expect($oolong['variants'][0]['steps'][2]['text'])->toContain('filled tea bags')
+        ->and($oolong['variants'][0]['steps'][3]['text'])->toContain('Remove the tea bags')
         ->and($oolong['variants'][1]['steps'][2]['text'])->toContain('Immerse the filled tea bag')
         ->and($oolong['variants'][1]['steps'][3]['text'])->toContain('Remove the tea bag');
     foreach ($catalog->recipes() as $recipe) {
@@ -271,3 +271,36 @@ use Thinkycz\LaravelCore\Support\Typer;
         \rmdir($directory);
     }
 })->with(['timer', 'method', 'link', 'action', 'unit']);
+
+\test('scalable text quantities retain the same structured meaning in every language', function (): void {
+    $english = (new RecipeCatalogRepository())->recipes();
+    $kinds = [];
+    foreach (['en', 'cs', 'sk'] as $locale) {
+        foreach ((new RecipeCatalogRepository(locale: $locale))->recipes() as $index => $recipe) {
+            foreach ($recipe['variants'] as $variantIndex => $variant) {
+                foreach ($variant['ingredients'] as $ingredientIndex => $ingredient) {
+                    $scaling = $ingredient['quantity_scaling'];
+                    \expect($scaling)->toBe($english[$index]['variants'][$variantIndex]['ingredients'][$ingredientIndex]['quantity_scaling']);
+                    if ($scaling !== null) {
+                        $kinds[] = $scaling['kind'];
+                    }
+                    if ($ingredient['quantity_value'] !== null) {
+                        \expect($scaling)->toBeNull();
+                    }
+                }
+                foreach ($variant['steps'] as $step) {
+                    \expect($step['text'])->not->toMatch('/\\d+(?:[.,]\\d+)?(?:–\\d+)?\\s+(?:g|kg|ml|L|scoops?|pieces?)\\b/u');
+                }
+            }
+        }
+    }
+    \expect(\array_unique($kinds))->toContain('range', 'alternatives', 'batch', 'mixture', 'cups', 'serving_line');
+    $matcha = (new RecipeCatalogRepository())->find('hot-drinks', 'classic-matcha') ?? throw new RuntimeException('Missing matcha.');
+    \expect($matcha['variants'][0]['steps'][2]['text'])->toContain('70–80 °C');
+    $tapioca = (new RecipeCatalogRepository())->find('preparations', 'black-tapioca') ?? throw new RuntimeException('Missing tapioca.');
+    foreach ($tapioca['variants'] as $variant) {
+        \expect($variant['steps'][3]['text'])->toContain('1500')
+            ->and($variant['steps'][4]['timer_seconds'])->toBe(2400)
+            ->and($variant['steps'][5]['timer_seconds'])->toBe(2400);
+    }
+});

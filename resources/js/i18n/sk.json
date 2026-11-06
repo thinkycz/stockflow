@@ -1805,7 +1805,25 @@
             "original": "Základný recept: {amount}",
             "use": "Použite",
             "omit": "Nepridávať",
-            "informational": "Zoznam surovín a postup uvádzajú základné množstvá pre 0–1 topping."
+            "informational": "Zoznam surovín uvádza základné množstvá pre 0–1 topping, prepočítané na zvolený počet porcií."
+        },
+        "portions": {
+            "label": "Počet porcií",
+            "decrease": "Ubrať porciu",
+            "increase": "Pridať porciu",
+            "method_hint": "Použite množstvá zo zoznamu surovín pre zvolený počet porcií."
+        },
+        "quantities": {
+            "alternatives": "{regular} bežné alebo {small} malé",
+            "batch": "do {amount} {unit} celkového objemu dávky",
+            "mixture": "do {amount} {unit} celkového objemu zmesi",
+            "cups": {
+                "one": "{amount} plný pohár",
+                "few": "{amount} plné poháre",
+                "many": "{amount} plného pohára",
+                "other": "{amount} plných pohárov"
+            },
+            "serving_line": "po rysku v každom pohári"
         }
     },
     "attendance": {

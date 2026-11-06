@@ -48,10 +48,10 @@ Prepare the cream cheese batch before making drinks. Follow the selected batch s
 
 ### Method
 
-1. **Measure whipping cream.** Add 250 ml whipping cream to mixing bowl.
-2. **Measure sweetened condensed milk (Salko).** Add 100 ml sweetened condensed milk (Salko) to mixing bowl.
-3. **Measure cream cheese.** Add 100 g cream cheese to mixing bowl.
-4. **Measure milk.** Add 90 ml milk to mixing bowl.
+1. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+2. **Measure sweetened condensed milk (Salko).** Add measured sweetened condensed milk (Salko) to mixing bowl.
+3. **Measure cream cheese.** Add measured cream cheese to mixing bowl.
+4. **Measure milk.** Add measured milk to mixing bowl.
 5. **Mix until thick.** Mix until thick.
 
 ## 1 portion
@@ -67,10 +67,10 @@ Prepare the cream cheese batch before making drinks. Follow the selected batch s
 
 ### Method
 
-1. **Measure whipping cream.** Add 50 ml whipping cream to mixing bowl.
-2. **Measure sweetened condensed milk (Salko).** Add 20 ml sweetened condensed milk (Salko) to mixing bowl.
-3. **Measure milk.** Add 18 ml milk to mixing bowl.
-4. **Measure cream cheese.** Add 20 g cream cheese to mixing bowl.
+1. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+2. **Measure sweetened condensed milk (Salko).** Add measured sweetened condensed milk (Salko) to mixing bowl.
+3. **Measure milk.** Add measured milk to mixing bowl.
+4. **Measure cream cheese.** Add measured cream cheese to mixing bowl.
 5. **Whip the cloud.** Whip until thick.
 
 ## Notes

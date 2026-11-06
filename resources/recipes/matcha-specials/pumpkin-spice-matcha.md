@@ -64,17 +64,17 @@ Oat milk matcha with pumpkin spice syrup, a gingerbread cloud and a Lotus biscui
 
 ### Method
 
-1. **Measure pumpkin spice syrup.** Add 10 g pumpkin spice syrup to serving cup.
-2. **Measure oat milk.** Add 140 g oat milk to serving cup.
+1. **Measure pumpkin spice syrup.** Add measured pumpkin spice syrup to serving cup.
+2. **Measure oat milk.** Add measured oat milk to serving cup.
 3. **Stir to combine.** Stir the ingredients until evenly combined.
-4. **Fill the cup with ice.** Fill the serving cup with ice.
-5. **Measure water at 70–80 °C.** Add 60 g water at 70–80 °C to matcha bowl.
-6. **Measure matcha.** Add 4.5 g matcha to matcha bowl.
+4. **Add ice.** Add ice to the serving cup according to the ingredient list.
+5. **Measure water at 70–80 °C.** Add measured water at 70–80 °C to matcha bowl.
+6. **Measure matcha.** Add measured matcha to matcha bowl.
 7. **Whisk the matcha.** Whisk the powder and water until smooth, with no dry clumps remaining.
 8. **Assemble the drink.** Pour the matcha into the serving cup.
-9. **Measure whipping cream.** Add 40 g whipping cream to mixing bowl.
-10. **Measure milk.** Add 40 g milk to mixing bowl.
-11. **Measure gingerbread syrup.** Add 10 g gingerbread syrup to mixing bowl.
+9. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+10. **Measure milk.** Add measured milk to mixing bowl.
+11. **Measure gingerbread syrup.** Add measured gingerbread syrup to mixing bowl.
 12. **Whip the cloud.** Whip until thick.
 13. **Assemble the drink.** Pour the gingerbread cloud into the serving cup.
 14. **Finish the drink.** Garnish with Lotus biscuit crumbs as needed.

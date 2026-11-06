@@ -38,7 +38,7 @@ Prepare the butterfly tea batch before making drinks. Follow the selected batch 
 
 ### Method
 
-1. **Measure dry butterfly pea tea.** Add 5 g dry butterfly pea tea to container.
-2. **Measure hot water.** Add 300 ml hot water to container.
+1. **Measure dry butterfly pea tea.** Add measured dry butterfly pea tea to container.
+2. **Measure hot water.** Add measured hot water to container.
 3. **Steep the tea.** Steep until the tea is a deep, dark blue, then strain out the tea leaves.
-4. **Chill the batch.** Add ice until the total volume reaches 600 ml.
+4. **Chill the batch.** Add ice until the total batch volume matches the ingredient list.

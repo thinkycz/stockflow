@@ -115,13 +115,13 @@ Made with milk powder, taro powder. Select the required variant before measuring
 
 ### Method
 
-1. **Measure hot water.** Add 100 ml hot water to shaker.
-2. **Measure milk powder.** Add 2 standard scoops milk powder to shaker.
-3. **Measure taro powder.** Add 1.5 standard scoops taro powder to shaker.
-4. **Measure liquid sugar.** Add 20 ml liquid sugar to shaker.
+1. **Measure hot water.** Add measured hot water to shaker.
+2. **Measure milk powder.** Add measured milk powder to shaker.
+3. **Measure taro powder.** Add measured taro powder to shaker.
+4. **Measure liquid sugar.** Add measured liquid sugar to shaker.
 5. **Mix until smooth.** Mix until the powders have completely dissolved and no dry clumps remain.
-6. **Top up the mixture.** Add milk until all the ingredients together reach 300 ml in the shaker.
-7. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+6. **Top up the mixture.** Add milk until the total mixture volume matches the ingredient list.
+7. **Measure the ice.** Measure the ice according to the ingredient list, then transfer it to the shaker.
 8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 
@@ -141,20 +141,20 @@ Made with milk powder, taro powder. Select the required variant before measuring
 
 ### Method
 
-1. **Measure hot water.** Add 100 ml hot water to shaker.
-2. **Measure milk powder.** Add 2 standard scoops milk powder to shaker.
-3. **Measure taro powder.** Add 1.5 standard scoops taro powder to shaker.
-4. **Measure liquid sugar.** Add 25 ml liquid sugar to shaker.
+1. **Measure hot water.** Add measured hot water to shaker.
+2. **Measure milk powder.** Add measured milk powder to shaker.
+3. **Measure taro powder.** Add measured taro powder to shaker.
+4. **Measure liquid sugar.** Add measured liquid sugar to shaker.
 5. **Mix until smooth.** Mix until the powders have completely dissolved and no dry clumps remain.
-6. **Top up the mixture.** Add milk until all the ingredients together reach 300 ml in the shaker.
-7. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
+6. **Top up the mixture.** Add milk until the total mixture volume matches the ingredient list.
+7. **Measure ice cubes.** Add ice cubes to the shaker for chilling according to the ingredient list.
 8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 10. **Top up the drink.** Top up with milk in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## L — With ice
 
@@ -171,13 +171,13 @@ Made with milk powder, taro powder. Select the required variant before measuring
 
 ### Method
 
-1. **Measure hot water.** Add 100 ml hot water to shaker.
-2. **Measure milk powder.** Add 3 standard scoops milk powder to shaker.
-3. **Measure taro powder.** Add 2 standard scoops taro powder to shaker.
-4. **Measure liquid sugar.** Add 30 ml liquid sugar to shaker.
+1. **Measure hot water.** Add measured hot water to shaker.
+2. **Measure milk powder.** Add measured milk powder to shaker.
+3. **Measure taro powder.** Add measured taro powder to shaker.
+4. **Measure liquid sugar.** Add measured liquid sugar to shaker.
 5. **Mix until smooth.** Mix until the powders have completely dissolved and no dry clumps remain.
-6. **Top up the mixture.** Add milk until all the ingredients together reach 400 ml in the shaker.
-7. **Add a full cup of ice.** Fill the serving cup with ice, then transfer the ice to the shaker.
+6. **Top up the mixture.** Add milk until the total mixture volume matches the ingredient list.
+7. **Measure the ice.** Measure the ice according to the ingredient list, then transfer it to the shaker.
 8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 
@@ -197,17 +197,17 @@ Made with milk powder, taro powder. Select the required variant before measuring
 
 ### Method
 
-1. **Measure hot water.** Add 100 ml hot water to shaker.
-2. **Measure milk powder.** Add 3 standard scoops milk powder to shaker.
-3. **Measure taro powder.** Add 2 standard scoops taro powder to shaker.
-4. **Measure liquid sugar.** Add 40 ml liquid sugar to shaker.
+1. **Measure hot water.** Add measured hot water to shaker.
+2. **Measure milk powder.** Add measured milk powder to shaker.
+3. **Measure taro powder.** Add measured taro powder to shaker.
+4. **Measure liquid sugar.** Add measured liquid sugar to shaker.
 5. **Mix until smooth.** Mix until the powders have completely dissolved and no dry clumps remain.
-6. **Top up the mixture.** Add milk until all the ingredients together reach 400 ml in the shaker.
-7. **Measure ice cubes.** Add 2–3 ice cubes to the shaker for chilling.
+6. **Top up the mixture.** Add milk until the total mixture volume matches the ingredient list.
+7. **Measure ice cubes.** Add ice cubes to the shaker for chilling according to the ingredient list.
 8. **Shake the mixture.** Close the shaker and shake until the ingredients are evenly combined.
 9. **Assemble the drink.** Pour into the serving cup.
 10. **Top up the drink.** Top up with milk in the serving cup to the standard serving line. Stir gently to combine.
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.

@@ -13,7 +13,7 @@ account language in English, Czech, or Slovak.
 1. Open its Markdown file, for example
    [Classic Matcha](hot-drinks/classic-matcha.md).
 2. Edit the ingredients, method, equipment, summary, or notes.
-3. Keep the ingredient quantities and method quantities consistent. Do not convert
+3. Keep exact ingredient quantities in the ingredient table; methods refer to the measured ingredients without repeating doses. Preserve preparation times, temperatures, and heat settings. Do not convert
    weights to volumes or guess missing amounts or preparation times.
 4. Run `make fix` and `make check`. Catalog validation runs as part of the checks.
 
@@ -79,7 +79,7 @@ Number each method step sequentially, with a short bold title and a complete
 instruction on the same line:
 
 ```markdown
-1. **Measure milk.** Add 200 g milk to the milk jug.
+1. **Measure milk.** Add measured milk to the milk jug.
 2. **Steam the milk.** Steam the milk in the milk jug.
 ```
 
@@ -141,6 +141,21 @@ water, with the approved numeric doses preserved. Cold matcha topping guidance
 therefore also uses grams. It does not alter the authored method or apply to
 gram-based hot drinks.
 
+The portion selector defaults to 1 and follows 0.5, 1, 2, 3, and so on. One
+portion means one authored formula of the selected variant, including an entire
+batch for preparation recipes. Numeric doses, ranges, alternative piece counts,
+full serving cups, and target batch/mixture volumes scale from the original
+formula. Top-ups remain per serving cup; "as needed" and "a few" remain qualitative.
+The parser supplies structured `quantity_scaling` metadata before localization.
+Never parse localized text or scale temperatures, times, or heat settings.
+Topping adjustments apply per portion before multiplication.
+
+Methods must work for any portion count: refer to the ingredient list for doses
+and target volumes, retaining the ingredient, destination, order, and preparation
+conditions. Update EN/CS/SK templates together when changing a method.
+
+Portions persist across variant and view changes, but reset to 1 on another recipe
+or page reload. Changing portions resets preparation progress and timers.
 Preparation checklists, progress, and timers are temporary page state. They are
 reset when changing variants or leaving the recipe. Prices are omitted.
 

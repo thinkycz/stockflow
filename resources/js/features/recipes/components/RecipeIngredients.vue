@@ -2,6 +2,7 @@
 import { computed, useId } from 'vue';
 import { useI18n } from 'vue-i18n';
 import RecipeInstructionIcon from './RecipeInstructionIcon.vue';
+import { formatQuantity } from '../portions';
 import type { RecipeIngredient } from '../types';
 
 const props = withDefaults(
@@ -22,12 +23,9 @@ const groups = computed(() =>
     ),
 );
 function amount(ingredient: RecipeIngredient): string {
-    const quantity =
-        ingredient.quantity_value === null
-            ? (ingredient.quantity_text ?? '')
-            : new Intl.NumberFormat(locale.value, {
-                  maximumFractionDigits: 3,
-              }).format(ingredient.quantity_value);
+    const quantity = formatQuantity(ingredient, locale.value, (key, values) =>
+        t(key, values),
+    );
     const unit =
         ingredient.unit === 'scoops'
             ? t(

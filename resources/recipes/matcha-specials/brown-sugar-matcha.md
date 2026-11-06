@@ -122,11 +122,11 @@ Made with milk, whipping cream, matcha, matcha powder. Select the required varia
 ### Method
 
 1. **Finish the drink.** Coat the inside rim of the serving cup with brown sugar syrup.
-2. **Measure milk.** Add 100 g milk to serving cup.
-3. **Fill the cup with ice.** Fill the serving cup with ice.
-4. **Measure whipping cream.** Add 40 g whipping cream to mixing bowl.
-5. **Measure milk.** Add 40 g milk to mixing bowl.
-6. **Measure matcha.** Add 3.5 g matcha to mixing bowl.
+2. **Measure milk.** Add measured milk to serving cup.
+3. **Add ice.** Add ice to the serving cup according to the ingredient list.
+4. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+5. **Measure milk.** Add measured milk to mixing bowl.
+6. **Measure matcha.** Add measured matcha to mixing bowl.
 7. **Whip the cloud.** Whip until thick.
 8. **Assemble the drink.** Pour the matcha cloud into the serving cup.
 9. **Finish the drink.** Garnish with matcha powder as needed.
@@ -150,13 +150,13 @@ Made with milk, whipping cream, matcha, matcha powder. Select the required varia
 ### Method
 
 1. **Finish the drink.** Coat the inside rim of the serving cup with brown sugar syrup.
-2. **Measure milk.** Add 100 g milk to serving cup.
-3. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-4. **Measure liquid sugar.** Add 5 g liquid sugar to serving cup.
+2. **Measure milk.** Add measured milk to serving cup.
+3. **Measure ice cubes.** Add ice cubes to the serving cup for chilling according to the ingredient list.
+4. **Measure liquid sugar.** Add measured liquid sugar to serving cup.
 5. **Stir to combine.** Stir the ingredients until evenly combined.
-6. **Measure whipping cream.** Add 40 g whipping cream to mixing bowl.
-7. **Measure milk.** Add 40 g milk to mixing bowl.
-8. **Measure matcha.** Add 3.5 g matcha to mixing bowl.
+6. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+7. **Measure milk.** Add measured milk to mixing bowl.
+8. **Measure matcha.** Add measured matcha to mixing bowl.
 9. **Whip the cloud.** Whip until thick.
 10. **Top up the drink.** Top up with milk in the serving cup to the standard serving line, leaving room for the cloud. Stir the base gently to combine.
 11. **Assemble the drink.** Pour the matcha cloud into the serving cup.
@@ -164,7 +164,7 @@ Made with milk, whipping cream, matcha, matcha powder. Select the required varia
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
 
 ## M — With ice
 
@@ -183,11 +183,11 @@ Made with milk, whipping cream, matcha, matcha powder. Select the required varia
 ### Method
 
 1. **Finish the drink.** Coat the inside rim of the serving cup with brown sugar syrup.
-2. **Measure milk.** Add 140 g milk to serving cup.
-3. **Fill the cup with ice.** Fill the serving cup with ice.
-4. **Measure whipping cream.** Add 50 g whipping cream to mixing bowl.
-5. **Measure milk.** Add 50 g milk to mixing bowl.
-6. **Measure matcha.** Add 4.5 g matcha to mixing bowl.
+2. **Measure milk.** Add measured milk to serving cup.
+3. **Add ice.** Add ice to the serving cup according to the ingredient list.
+4. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+5. **Measure milk.** Add measured milk to mixing bowl.
+6. **Measure matcha.** Add measured matcha to mixing bowl.
 7. **Whip the cloud.** Whip until thick.
 8. **Assemble the drink.** Pour the matcha cloud into the serving cup.
 9. **Finish the drink.** Garnish with matcha powder as needed.
@@ -211,13 +211,13 @@ Made with milk, whipping cream, matcha, matcha powder. Select the required varia
 ### Method
 
 1. **Finish the drink.** Coat the inside rim of the serving cup with brown sugar syrup.
-2. **Measure milk.** Add 140 g milk to serving cup.
-3. **Measure ice cubes.** Add 2–3 ice cubes to the serving cup for chilling.
-4. **Measure liquid sugar.** Add 10 g liquid sugar to serving cup.
+2. **Measure milk.** Add measured milk to serving cup.
+3. **Measure ice cubes.** Add ice cubes to the serving cup for chilling according to the ingredient list.
+4. **Measure liquid sugar.** Add measured liquid sugar to serving cup.
 5. **Stir to combine.** Stir the ingredients until evenly combined.
-6. **Measure whipping cream.** Add 50 g whipping cream to mixing bowl.
-7. **Measure milk.** Add 50 g milk to mixing bowl.
-8. **Measure matcha.** Add 4.5 g matcha to mixing bowl.
+6. **Measure whipping cream.** Add measured whipping cream to mixing bowl.
+7. **Measure milk.** Add measured milk to mixing bowl.
+8. **Measure matcha.** Add measured matcha to mixing bowl.
 9. **Whip the cloud.** Whip until thick.
 10. **Top up the drink.** Top up with milk in the serving cup to the standard serving line, leaving room for the cloud. Stir the base gently to combine.
 11. **Assemble the drink.** Pour the matcha cloud into the serving cup.
@@ -225,4 +225,4 @@ Made with milk, whipping cream, matcha, matcha powder. Select the required varia
 
 ### Tips
 
-- This no-ice variant still uses 2–3 ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
+- This no-ice variant still uses the listed ice cubes for chilling. Keep the listed liquid and sweetener amounts; do not reuse the with-ice quantities.
